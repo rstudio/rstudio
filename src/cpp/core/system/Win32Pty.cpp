@@ -399,7 +399,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
                                    OPEN_EXISTING,
-                                   0 /*dwFlagsAndAttributes*/,
+                                   FILE_FLAG_OVERLAPPED,
                                    NULL /*hTemplateFile*/);
       if (*pStdInWrite == INVALID_HANDLE_VALUE)
       {
@@ -420,7 +420,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
                                    OPEN_EXISTING,
-                                   0 /*dwFlagsAndAttributes*/,
+                                   FILE_FLAG_OVERLAPPED,
                                    NULL /*hTemplateFile*/);
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
@@ -440,7 +440,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
                                    OPEN_EXISTING,
-                                   0 /*dwFlagsAndAttributes*/,
+                                   FILE_FLAG_OVERLAPPED,
                                    NULL /*hTemplateFile*/);
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
@@ -570,6 +570,78 @@ Error WinPty::setSize(int cols, int rows)
 Error WinPty::interrupt()
 {
   // TODO (gary)
+   return Success();
+}
+
+Error WinPty::writeToPty(HANDLE hPipe, const std::string& input)
+{
+   if (input.empty())
+      return Success();
+
+   OVERLAPPED over;
+   memset(&over, 0, sizeof(over));
+
+   DWORD dwWritten;
+   BOOL bSuccess = ::WriteFile(hPipe,
+                               input.data(),
+                               input.length(),
+                               &dwWritten,
+                               &over);
+   DWORD dwErr = ::GetLastError();
+   if (!bSuccess && dwErr == ERROR_IO_PENDING)
+   {
+      bSuccess = GetOverlappedResult(hPipe,
+                                     &over,
+                                     &dwWritten,
+                                     TRUE /*wait*/);
+      dwErr = ::GetLastError();
+   }
+   if (!bSuccess)
+      return systemError(dwErr, ERROR_LOCATION);
+
+   return Success();
+}
+
+
+Error WinPty::readFromPty(HANDLE hPipe, std::string* pOutput)
+{
+   // check for available bytes
+   DWORD dwAvail = 0;
+   if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
+   {
+      if (::GetLastError() == ERROR_BROKEN_PIPE)
+         return Success();
+      else
+         return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+
+   // no data available
+   if (dwAvail == 0)
+      return Success();
+
+   // read data which is available
+   DWORD nBytesRead = dwAvail;
+   std::vector<CHAR> buffer(dwAvail, 0);
+   OVERLAPPED over;
+   memset(&over, 0, sizeof(over));
+   BOOL bSuccess = ::ReadFile(hPipe, &(buffer[0]), dwAvail, NULL, &over);
+   DWORD dwErr = ::GetLastError();
+   if (!bSuccess && dwErr == ERROR_IO_PENDING)
+   {
+      bSuccess = GetOverlappedResult(hPipe,
+                                     &over,
+                                     &nBytesRead,
+                                     TRUE /*wait*/);
+      dwErr = ::GetLastError();
+   }
+
+   if (!bSuccess)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   // append to output
+   pOutput->append(&(buffer[0]), nBytesRead);
+
+   // success
    return Success();
 }
 

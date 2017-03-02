@@ -67,34 +67,6 @@ FilePath getWinPtyPath()
    return FilePath();
 }
 
-Error readPipe(HANDLE hPipe, std::string* pOutput)
-{
-   DWORD dwAvail = 0;
-   if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
-   {
-      if (::GetLastError() == ERROR_BROKEN_PIPE)
-         return Success();
-      else
-         return systemError(::GetLastError(), ERROR_LOCATION);
-   }
-
-   // no data available
-   if (dwAvail == 0)
-      return Success();
-
-   // read data which is available
-   DWORD nBytesRead;
-   std::vector<CHAR> buffer(dwAvail, 0);
-   if (!::ReadFile(hPipe, &(buffer[0]), dwAvail, &nBytesRead, NULL))
-      return systemError(::GetLastError(), ERROR_LOCATION);
-
-   // append to output
-   pOutput->append(&(buffer[0]), nBytesRead);
-
-   // success
-   return Success();
-}
-
 } // anonymous namespace
 
 TEST_CASE("Win32PtyTests")
@@ -239,7 +211,7 @@ TEST_CASE("Win32PtyTests")
       while (tries && stdOut.empty())
       {
          ::Sleep(100);
-         err = readPipe(hOutRead, &stdOut);
+         err = WinPty::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
          tries--;
       }
