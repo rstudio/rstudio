@@ -375,15 +375,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       } 
       else
       {
-         boolean useRetina = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getUseRetinaIcons();
-
-         if (imageResource_ != null && useRetina) {
-            String name = imageResource_.getName();
-            if (name.substring(name.length() - 2, name.length()) == "2x") {
-               return new ImageResource2x(imageResource_);
-            }
-         }
-         
          return imageResource_;
       }
    }

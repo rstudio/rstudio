@@ -114,6 +114,7 @@ class CommandBundleGeneratorHelper
          factory.addImport("org.rstudio.core.client.command.AppCommand");
          factory.addImport("org.rstudio.core.client.command.MenuCallback");
          factory.addImport("org.rstudio.core.client.command.ShortcutManager");
+         factory.addImport("org.rstudio.core.client.command.ImageResource2x");
          SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
          emitConstructor(writer, images);
@@ -332,12 +333,12 @@ class CommandBundleGeneratorHelper
       
       if (images.hasImage(name))
       {
-        String imageName = name;
+        String resource2x = "null";
         if (images.hasImage(name + "2x"))
-          imageName = name + "2x";
+          resource2x = images.getImageRef(name + "2x");
 
-        writer.println(name + "_.setImageResource("
-                                             + images.getImageRef(imageName) + ");");
+        writer.println(name + "_.setImageResource(new ImageResource2x("
+                                             + images.getImageRef(name) + ", " + resource2x + "));");
       }
 
       writer.println("addCommand(\"" + Generator.escape(name) + "\", " + name + "_);");

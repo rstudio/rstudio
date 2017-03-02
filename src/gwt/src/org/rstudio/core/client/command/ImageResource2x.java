@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command;
 
+import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeUri;
 
@@ -21,56 +23,79 @@ public class ImageResource2x implements ImageResource
 {
    public ImageResource2x(ImageResource ref)
    {
+      this(ref, null);
+   }
+
+   public ImageResource2x(ImageResource ref, ImageResource ref2x)
+   {
       ref_ = ref;
+      ref2x_ = ref2x;
+
+      if (RStudioGinjector.INSTANCE != null &&
+          RStudioGinjector.INSTANCE.getSession() != null &&
+          RStudioGinjector.INSTANCE.getSession().getSessionInfo() != null)
+         useRetina_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getUseRetinaIcons();
+   }
+
+   private boolean useRetina()
+   {
+      return useRetina_ && ref2x_ != null;
+   }
+
+   private ImageResource getResource()
+   {
+      return useRetina() ? ref2x_ : ref_;
    }
    
    @Override
    public String getName()
    {
-      return ref_.getName();
+      return getResource().getName();
    }
 
    @Override
    public int getHeight()
    {
-      return ref_.getHeight() / 2;
+      return useRetina() ? getResource().getHeight() / 2 : getResource().getHeight();
    }
 
    @Override
    public int getLeft()
    {
-      return ref_.getLeft();
+      return getResource().getLeft();
    }
 
    @Override
    public SafeUri getSafeUri()
    {
-      return ref_.getSafeUri();
+      return getResource().getSafeUri();
    }
 
    @Override
    public int getTop()
    {
-      return ref_.getTop();
+      return getResource().getTop();
    }
 
    @Override
    public String getURL()
    {
-      return ref_.getURL();
+      return getResource().getURL();
    }
 
    @Override
    public int getWidth()
    {
-      return ref_.getWidth() / 2;
+      return useRetina() ? getResource().getWidth() / 2 : getResource().getWidth();
    }
 
    @Override
    public boolean isAnimated()
    {
-      return ref_.isAnimated();
+      return getResource().isAnimated();
    }
    
    private ImageResource ref_;
+   private ImageResource ref2x_;
+   private boolean useRetina_ = false;
 }
