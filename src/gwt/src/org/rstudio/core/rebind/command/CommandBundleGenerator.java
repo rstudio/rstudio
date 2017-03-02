@@ -332,8 +332,12 @@ class CommandBundleGeneratorHelper
       
       if (images.hasImage(name))
       {
-         writer.println(name + "_.setImageResource("
-                                             + images.getImageRef(name) + ");");
+        String imageName = name;
+        if (images.hasImage(name + "2x"))
+          imageName = name + "2x";
+
+        writer.println(name + "_.setImageResource("
+                                             + images.getImageRef(imageName) + ");");
       }
 
       writer.println("addCommand(\"" + Generator.escape(name) + "\", " + name + "_);");
@@ -428,7 +432,7 @@ class CommandBundleGeneratorHelper
             iri.addImage(commandId);
          }
 
-         if (resourceNames.contains(keyRetina + "2x.png"))
+         if (resourceNames.contains(key + "2x.png"))
          {
             writer.println("ImageResource " + commandId + "2x();");
             iri.addImage(commandId + "2x");
