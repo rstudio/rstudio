@@ -374,6 +374,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       } 
       else
       {
+         if (imageResource_ != null) {
+            String name = imageResource_.getName();
+            if (name.substring(name.length() - 2, name.length()) == "2x") {
+               return new ImageResource2x(imageResource_);
+            }
+         }
+         
          return imageResource_;
       }
    }
