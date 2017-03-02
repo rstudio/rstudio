@@ -141,6 +141,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
+import org.rstudio.studio.client.workbench.model.BootInfo;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -298,6 +299,26 @@ public class RemoteServer implements Server
                             ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
+   }
+
+   public void bootInit(
+                   final ServerRequestCallback<BootInfo> requestCallback)
+   {      
+      // send boot request
+      sendRequest(RPC_SCOPE, 
+                  BOOT_INIT, 
+                  new ServerRequestCallback<BootInfo>() {
+
+         public void onResponseReceived(BootInfo bootInfo)
+         {
+            requestCallback.onResponseReceived(bootInfo);
+         }
+   
+         public void onError(ServerError error)
+         {
+            requestCallback.onError(error);
+         }
+      });
    }
     
    public void clientInit(
@@ -5073,6 +5094,7 @@ public class RemoteServer implements Server
    private static final String FILE_SHOW = "file_show";
 
    // session methods
+   private static final String BOOT_INIT = "boot_init";
    private static final String CLIENT_INIT = "client_init";
    private static final String ACCEPT_AGREEMENT = "accept_agreement";
    private static final String SUSPEND_SESSION = "suspend_session";
