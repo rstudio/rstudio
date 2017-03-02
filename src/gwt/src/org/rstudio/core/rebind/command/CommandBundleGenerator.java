@@ -435,6 +435,7 @@ class CommandBundleGeneratorHelper
 
          if (resourceNames.contains(key + "2x.png"))
          {
+            writer.println("@Source(\"" + commandId + "@2x.png\")");
             writer.println("ImageResource " + commandId + "2x();");
             iri.addImage(commandId + "2x");
          }

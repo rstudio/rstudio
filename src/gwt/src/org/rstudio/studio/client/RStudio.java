@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.thirdparty.json.JSONArray;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
