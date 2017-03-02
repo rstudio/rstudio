@@ -23,6 +23,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionHttpConnection.hpp>
+#include <session/SessionUserSettings.hpp>
 
 using namespace rstudio::core;
 
@@ -33,7 +34,13 @@ namespace boot_init {
 void handleBootInit(boost::shared_ptr<HttpConnection> ptrConnection)
 {
    json::Object bootInfo ;
-   bootInfo["use_retina_icons"] = false;
+
+   json::Object uiPrefs = userSettings().uiPrefs();
+   json::Object::iterator it = uiPrefs.find("use_retina_icons");
+   if (it != uiPrefs.end())
+      bootInfo["use_retina_icons"] = it->second;
+   else
+      bootInfo["use_retina_icons"] = false;
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
