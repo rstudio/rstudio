@@ -38,6 +38,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -374,7 +375,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       } 
       else
       {
-         if (imageResource_ != null) {
+         boolean useRetina = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getUseRetinaIcons();
+
+         if (imageResource_ != null && useRetina) {
             String name = imageResource_.getName();
             if (name.substring(name.length() - 2, name.length()) == "2x") {
                return new ImageResource2x(imageResource_);
@@ -635,4 +638,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private static final String WINDOW_MODE_BACKGROUND = "background";
    private static final String WINDOW_MODE_MAIN = "main";
    private static final String WINDOW_MODE_ANY = "any";
+   
+   private UIPrefs uiPrefs_;
 }
