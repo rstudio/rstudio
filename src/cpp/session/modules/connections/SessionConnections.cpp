@@ -171,6 +171,31 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    return R_NilValue;
 }
 
+void addObjectSpecifiers(const json::Array& specifiers, 
+                         r::exec::RFunction* pFunction)
+{
+   for (unsigned i = 0; i < specifiers.size(); i++) 
+   {
+      // make sure we're dealing with a json object
+      const json::Value& val = specifiers[i];
+      if (val.type() != json::ObjectType)
+         continue;
+
+      // extract the name and type of the specifier
+      std::string name, type;
+      Error error = json::readObject(val.get_obj(), 
+            "name", &name, "type", &type);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // add as a named argument to the function
+      pFunction->addParam(name, type);
+   }
+}
+
 SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
@@ -304,18 +329,17 @@ Error readConnectionIdParam(const json::JsonRpcRequest& request,
    return connectionIdFromJson(connectionIdJson, pConnectionId);
 }
 
-Error readConnectionIdAndTableParams(const json::JsonRpcRequest& request,
-                                     ConnectionId* pConnectionId,
-                                     std::string* pTable)
+Error readConnectionIdAndObjectParams(const json::JsonRpcRequest& request,
+                                      ConnectionId* pConnectionId,
+                                      json::Array* pObjectSpecifier)
 {
    // get connection param
    Error error = readConnectionIdParam(request, pConnectionId);
    if (error)
       return error;
 
-   // get table param
-   std::string table;
-   return json::readParam(request.params, 1, pTable);
+   // get object param
+   return json::readParam(request.params, 1, pObjectSpecifier);
 }
 
 Error connectionExecuteAction(const json::JsonRpcRequest& request,
@@ -336,12 +360,14 @@ Error connectionExecuteAction(const json::JsonRpcRequest& request,
                                  action).call();
 }
 
-void connectionListTables(const json::JsonRpcRequest& request,
-                          const json::JsonRpcFunctionContinuation& continuation)
+void connectionListObjects(const json::JsonRpcRequest& request,
+                           const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection param
    ConnectionId connectionId;
-   Error error = readConnectionIdParam(request, &connectionId);
+   json::Array objectSpecifier;
+   Error error = readConnectionIdAndObjectParams(request, &connectionId,
+         &objectSpecifier);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -354,9 +380,11 @@ void connectionListTables(const json::JsonRpcRequest& request,
 
    // get the list of tables
    std::vector<std::string> tables;
-   error = r::exec::RFunction(".rs.connectionListTables",
+   r::exec::RFunction listObjects(".rs.connectionListObjects",
                                  connectionId.type,
-                                 connectionId.host).call(&tables);
+                                 connectionId.host);
+   addObjectSpecifiers(objectSpecifier, &listObjects);
+   error = listObjects.call(&tables);
    if (error)
    {
       continuation(error, &response);
@@ -404,8 +432,9 @@ void connectionListFields(const json::JsonRpcRequest& request,
 {
    // get connection and table params
    ConnectionId connectionId;
-   std::string table;
-   Error error = readConnectionIdAndTableParams(request, &connectionId, &table);
+   json::Array objectSpecifier;
+   Error error = readConnectionIdAndObjectParams(request, &connectionId,
+         &objectSpecifier);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -416,23 +445,25 @@ void connectionListFields(const json::JsonRpcRequest& request,
    // get the list of fields
    r::sexp::Protect rProtect;
    SEXP sexpResult;
-   error = r::exec::RFunction(".rs.connectionListColumns",
+   r::exec::RFunction listCols(".rs.connectionListColumns",
                                  connectionId.type,
-                                 connectionId.host,
-                                 table).call(&sexpResult, &rProtect);
-
+                                 connectionId.host);
+   
+   addObjectSpecifiers(objectSpecifier, &listCols);
+   error = listCols.call(&sexpResult, &rProtect);
 
    // send the response
    sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
 }
 
-void connectionPreviewTable(const json::JsonRpcRequest& request,
-                          const json::JsonRpcFunctionContinuation& continuation)
+void connectionPreviewObject(const json::JsonRpcRequest& request,
+                             const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection and table params
    ConnectionId connectionId;
-   std::string table;
-   Error error = readConnectionIdAndTableParams(request, &connectionId, &table);
+   json::Array objectSpecifier;
+   Error error = readConnectionIdAndObjectParams(request, &connectionId,
+         &objectSpecifier);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -443,11 +474,12 @@ void connectionPreviewTable(const json::JsonRpcRequest& request,
    // view the table
    r::sexp::Protect rProtect;
    SEXP sexpResult;
-   error = r::exec::RFunction(".rs.connectionPreviewTable",
+   r::exec::RFunction previewObject(".rs.connectionPreviewObject",
                                  connectionId.type,
                                  connectionId.host,
-                                 table,
-                                 1000).call(&sexpResult, &rProtect);
+                                 1000);
+   addObjectSpecifiers(objectSpecifier, &previewObject); 
+   error = previewObject.call(&sexpResult, &rProtect);
 
    // send the response
    sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
@@ -629,9 +661,9 @@ Error initialize()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "connection_disconnect", connectionDisconnect))
       (bind(registerRpcMethod, "connection_execute_action", connectionExecuteAction))
-      (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_tables", connectionListTables))
+      (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_objects", connectionListObjects))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
-      (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_table", connectionPreviewTable))
+      (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 

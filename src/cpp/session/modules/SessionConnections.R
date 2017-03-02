@@ -154,33 +154,36 @@ options(connectionObserver = list(
       connection$disconnect()
 })
 
-.rs.addFunction("connectionListTables", function(type, host) {
+.rs.addFunction("connectionListObjects", function(type, host, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) 
-      connection$listTables()
+      connection$listObjects(...)
    else
       character()
 })
 
-.rs.addFunction("connectionListColumns", function(type, host, table) {
+.rs.addFunction("connectionListColumns", function(type, host, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection))
-      listColumnsCode <- connection$listColumns(table)
+      listColumnsCode <- connection$listColumns(...)
    else
       NULL
 })
 
-.rs.addFunction("connectionPreviewTable", function(type, host, table, limit) {
+.rs.addFunction("connectionPreviewObject", function(type, host, limit, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) {
-      df <- connection$previewTable(table, limit)
-      .rs.viewDataFrame(df, table, TRUE)
+      df <- connection$previewObject(limit, ...)
+
+      # use the last element of the specifier to caption the frame
+      args <- list(...)
+      .rs.viewDataFrame(df, args[[length(args)]], TRUE)
    }
 
    NULL

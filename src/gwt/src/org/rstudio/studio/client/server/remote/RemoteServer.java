@@ -152,6 +152,7 @@ import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
@@ -4970,35 +4971,38 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void connectionListTables(
+   public void connectionListObjects(
                               ConnectionId connectionId,
+                              ConnectionObjectSpecifier container,
                               ServerRequestCallback<JsArrayString> callback)
    {
-      sendRequest(RPC_SCOPE, CONNECTION_LIST_TABLES, connectionId, callback);
-      
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connectionId));
+      params.set(1, new JSONArray(container.asJsArray()));
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_OBJECTS, params, callback);
    }
 
    @Override
    public void connectionListFields(
                               ConnectionId connectionId, 
-                              String table,
+                              ConnectionObjectSpecifier object,
                               ServerRequestCallback<JsArray<Field>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connectionId));
-      params.set(1, new JSONString(table));
+      params.set(1, new JSONArray(object.asJsArray()));
       sendRequest(RPC_SCOPE, CONNECTION_LIST_FIELDS, params, callback);
    }
    
    @Override
-   public void connectionPreviewTable(ConnectionId connectionId,
-                                      String table,
-                                      ServerRequestCallback<Void> callback)
+   public void connectionPreviewObject(ConnectionId connectionId,
+                                       ConnectionObjectSpecifier object,
+                                       ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connectionId));
-      params.set(1, new JSONString(table));
-      sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_TABLE, params, callback);
+      params.set(1, new JSONArray(object.asJsArray()));
+      sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_OBJECT, params, callback);
    }
    
    public void getNewConnectionContext(
@@ -5439,9 +5443,9 @@ public class RemoteServer implements Server
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
    private static final String CONNECTION_EXECUTE_ACTION = "connection_execute_action";
-   private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
+   private static final String CONNECTION_LIST_OBJECTS = "connection_list_objects";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
-   private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";
+   private static final String CONNECTION_PREVIEW_OBJECT = "connection_preview_object";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 

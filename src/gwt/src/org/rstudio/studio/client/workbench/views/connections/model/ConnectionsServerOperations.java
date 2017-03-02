@@ -34,16 +34,17 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
                                 String action,
                                 ServerRequestCallback<Void> callback);
    
-   void connectionListTables(ConnectionId connectionId,
-                             ServerRequestCallback<JsArrayString> callback);
+   void connectionListObjects(ConnectionId connectionId,
+                              ConnectionObjectSpecifier object,
+                              ServerRequestCallback<JsArrayString> callback);
    
    void connectionListFields(ConnectionId connectionId,
-                             String table,
+                             ConnectionObjectSpecifier object,
                              ServerRequestCallback<JsArray<Field>> callback);
    
-   void connectionPreviewTable(ConnectionId connectionId,
-                               String table,
-                               ServerRequestCallback<Void> callback);
+   void connectionPreviewObject(ConnectionId connectionId,
+                                ConnectionObjectSpecifier object,
+                                ServerRequestCallback<Void> callback);
    
    void getNewConnectionContext(
             ServerRequestCallback<NewConnectionContext> callback);

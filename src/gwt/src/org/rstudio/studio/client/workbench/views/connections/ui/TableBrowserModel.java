@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 
@@ -199,8 +200,9 @@ public class TableBrowserModel implements TreeViewModel
       
       private void listTables(final CommandWithArg<JsArrayString> onCompleted)
       {
-         server_.connectionListTables(
+         server_.connectionListObjects(
             connection_.getId(), 
+            new ConnectionObjectSpecifier(),
             new SimpleRequestCallback<JsArrayString>() {
                @Override
                public void onResponseReceived(JsArrayString tables)
@@ -264,7 +266,7 @@ public class TableBrowserModel implements TreeViewModel
 
          server_.connectionListFields(
                connection_.getId(),
-               table_,
+               new ConnectionObjectSpecifier(table_, "table"),
                new SimpleRequestCallback<JsArray<Field>>() {
                   @Override
                   public void onResponseReceived(JsArray<Field> fields)
@@ -384,6 +386,6 @@ public class TableBrowserModel implements TreeViewModel
    private static NoSelectionModel<Field> noFieldSelectionModel_ =
          new NoSelectionModel<Field>();
    
-   static final TableBrowser.Resources RES = TableBrowser.RES;
+   static final ObjectBrowser.Resources RES = ObjectBrowser.RES;
   
 }

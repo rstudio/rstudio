@@ -1,7 +1,7 @@
 /*
- * TableBrowser.java
+ * ObjectBrowser.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,9 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class TableBrowser extends Composite implements RequiresResize
+public class ObjectBrowser extends Composite implements RequiresResize
 {
-   public TableBrowser()
+   public ObjectBrowser()
    {  
       // create tables model and widget
       tablesModel_ = new TableBrowserModel();

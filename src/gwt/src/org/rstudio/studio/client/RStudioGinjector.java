@@ -88,7 +88,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShi
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
-import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser;
+import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowserModel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -202,7 +202,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewConnectionShinyHost newConnectionShinyHost);
    void injectMembers(ConnectionCodePanel connectionCodePanel);
    void injectMembers(ConnectionExplorer connectionExplorer);
-   void injectMembers(TableBrowser tableBrowser);
+   void injectMembers(ObjectBrowser tableBrowser);
    void injectMembers(TableBrowserModel tableBrowserModel);
    void injectMembers(ChunkOptionsPopupPanel panel);
    void injectMembers(ChunkSatellite satellite);
