@@ -825,24 +825,40 @@ void ensureLongPath(FilePath* pFilePath)
       *pFilePath = FilePath(string_utils::systemToUtf8(buffer));
    }
 }
-
-FilePath expandComSpec()
+Error expandEnvironmentVariables(std::string value, std::string* pResult)
 {
-   LPCWSTR lpSrc = L"%COMSPEC%";
-   DWORD requiredSize = ::ExpandEnvironmentStringsW(lpSrc, NULL, 0);
-   if (!requiredSize)
-      return FilePath();
+   if (value.empty())
+   {
+      *pResult = value;
+      return Success();
+   }
 
-   std::vector<wchar_t> buffer;
-   buffer.reserve(requiredSize);
-   int result = ::ExpandEnvironmentStringsW(lpSrc,
+   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), NULL, 0);
+   if (!sizeRequired)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   std::vector<char> buffer;
+   buffer.reserve(sizeRequired);
+   int result = ::ExpandEnvironmentStrings(value.c_str(),
                                            &buffer[0],
                                            buffer.capacity());
 
-   if (!result || result > buffer.capacity())
-      return FilePath();
+   if (!result)
+      return systemError(GetLastError(), ERROR_LOCATION);
+   else if (result > buffer.capacity())
+      return systemError(ERROR_MORE_DATA, ERROR_LOCATION); // not expected
 
-   return FilePath(&buffer[0]);
+   *pResult = std::string(&buffer[0]);
+   return Success();
+}
+
+FilePath expandComSpec()
+{
+   std::string result;
+   Error err = expandEnvironmentVariables("%COMSPEC%", &result);
+   if (err)
+      return FilePath();
+   return FilePath(result);
 }
 
 Error terminateProcess(PidType pid)

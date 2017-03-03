@@ -14,6 +14,7 @@
  */
 #include <core/system/RegistryKey.hpp>
 
+#include <core/system/System.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
@@ -64,35 +65,6 @@ HKEY RegistryKey::handle()
 {
    return hKey_;
 }
-
-namespace {
-Error expandEnvironmentVariables(std::string value, std::string* pResult)
-{
-   if (value.empty())
-   {
-      *pResult = value;
-      return Success();
-   }
-
-   size_t sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), NULL, 0);
-   if (!sizeRequired)
-      return systemError(GetLastError(), ERROR_LOCATION);
-
-   std::vector<char> buffer;
-   buffer.reserve(sizeRequired);
-   int result = ::ExpandEnvironmentStrings(value.c_str(),
-                                           &buffer[0],
-                                           buffer.capacity());
-
-   if (!result)
-      return systemError(GetLastError(), ERROR_LOCATION);
-   else if (result > buffer.capacity())
-      return systemError(ERROR_MORE_DATA, ERROR_LOCATION); // not expected
-
-   *pResult = std::string(&buffer[0]);
-   return Success();
-}
-} // anonymous namespace
 
 std::string RegistryKey::getStringValue(std::string name,
                                         std::string defaultValue)

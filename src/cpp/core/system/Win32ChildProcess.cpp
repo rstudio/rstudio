@@ -197,13 +197,37 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
+   options_ = options;
+
+   // RSTUDIO_PTY_CONERR runtime enabling of CONERR channel with
+   // winpty agent. For testing/debugging.
+   std::string envVar = "%RSTUDIO_PTY_CONERR%";
+   std::string conErr;
+   Error err = expandEnvironmentVariables(envVar, &conErr);
+   if (!err && !conErr.compare("1"))
+      options_.pseudoterminal.get().conerr = true;
+
    // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
+
+   // RSTUDIO_PTY_TERM environment variable for easier testing of
+   // other potential terminal shell programs. The path must be
+   // in the context of a 32-bit application, even if running 64-bit
+   // rsession. So, for example, 64-bit PowerShell would be
+   // %windir%\sysnative\windowspowershell\v1.0\powershell.exe
+   envVar = "%RSTUDIO_PTY_TERM%";
+   std::string rstudioTerm;
+   err = expandEnvironmentVariables(envVar, &rstudioTerm);
+   if (!err && rstudioTerm.compare(envVar))
+   {
+      exe_ = rstudioTerm;
+      return;
+   }
+
    FilePath cmd = expandComSpec();
    if (!cmd.exists())
       exe_ = findOnPath("cmd.exe");
    else
       exe_ = cmd.absolutePathNative();
-   options_ = options;
 }
 
 ChildProcess::~ChildProcess()
@@ -322,17 +346,11 @@ Error ChildProcess::run()
    // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      pImpl_->pty.init(exe_, args_, options_);
-
-      error = pImpl_->pty.startPty(&pImpl_->hStdInWrite, &pImpl_->hStdOutRead);
-      if (error)
-         return error;
-
-      error = pImpl_->pty.runProcess(&pImpl_->hProcess);
-      if (error)
-         return error;
-
-      return Success();
+      return pImpl_->pty.start(exe_, args_, options_,
+                               &pImpl_->hStdInWrite,
+                               &pImpl_->hStdOutRead,
+                               &pImpl_->hStdErrRead,
+                               &pImpl_->hProcess);
    }
 
    // Standard input pipe
@@ -660,6 +678,18 @@ void AsyncChildProcess::poll()
       reportError(error);
    if (!stdOut.empty() && callbacks_.onStdout)
       callbacks_.onStdout(*this, stdOut);
+
+   // check stderr
+   // when using winpty, hStdErrRead is optional
+   if (pImpl_->hStdErrRead)
+   {
+      std::string stdErr;
+      error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
+      if (error)
+         reportError(error);
+      if (!stdErr.empty() && callbacks_.onStderr)
+         callbacks_.onStderr(*this, stdErr);
+   }
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);

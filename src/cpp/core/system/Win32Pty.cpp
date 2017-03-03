@@ -319,14 +319,42 @@ WinPty::~WinPty()
    stopPty();
 }
 
-void WinPty::init(
-      const std::string& exe,
-      const std::vector<std::string> args,
-      const ProcessOptions& options)
+Error WinPty::start(const std::string& exe,
+                    const std::vector<std::string> args,
+                    const ProcessOptions& options,
+                    HANDLE* pStdInWrite,
+                    HANDLE* pStdOutRead,
+                    HANDLE* pStdErrRead,
+                    HANDLE* pProcess)
 {
    exe_ = exe;
    args_ = args;
    options_ = options;
+
+   CloseHandleOnExitScope closeStdInWrite(pStdInWrite, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdOutRead(pStdOutRead, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdErrRead(pStdErrRead, ERROR_LOCATION);
+   CloseHandleOnExitScope closeProcessHandle(pProcess, ERROR_LOCATION);
+
+   // Startup the pty agent process
+   Error err = startPty(pStdInWrite, pStdOutRead, pStdErrRead);
+   if (err)
+      return err;
+
+
+   // Start the user's process inside the agent's hidden console
+   err = runProcess(pProcess);
+   if (err)
+   {
+      stopPty();
+      return err;
+   }
+
+   closeStdInWrite.detach();
+   closeStdOutRead.detach();
+   closeStdErrRead.detach();
+   closeProcessHandle.detach();
+   return Success();
 }
 
 Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead)
@@ -366,6 +394,8 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       agentFlags |= WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION;
    if (options_.pseudoterminal.get().plainText)
       agentFlags |= WINPTY_FLAG_PLAIN_OUTPUT; // no ESC sequences
+   if (options_.pseudoterminal.get().conerr)
+      agentFlags |= WINPTY_FLAG_CONERR;
 
    int mousemode = WINPTY_MOUSE_MODE_AUTO;
    DWORD timeoutMs = 1000;
@@ -433,7 +463,8 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       }
    }
 
-   if (pStdErrRead && conerr_name && conerr_name(pPty_))
+   if (options_.pseudoterminal.get().conerr &&
+       pStdErrRead && conerr_name && conerr_name(pPty_))
    {
       *pStdErrRead = ::CreateFileW(conerr_name(pPty_),
                                    GENERIC_READ,
@@ -442,7 +473,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    OPEN_EXISTING,
                                    FILE_FLAG_OVERLAPPED,
                                    NULL /*hTemplateFile*/);
-      if (*pStdOutRead == INVALID_HANDLE_VALUE)
+      if (*pStdErrRead == INVALID_HANDLE_VALUE)
       {
          DWORD err = ::GetLastError();
          stopPty();
