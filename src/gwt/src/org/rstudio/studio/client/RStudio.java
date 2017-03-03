@@ -258,6 +258,7 @@ public class RStudio implements EntryPoint
       rpcRequest.send(new RpcRequestCallback() {
          public void onError(RpcRequest request, RpcError error)
          {
+            Debug.log(error.getMessage());
             GWT.runAsync(runCallback);
          }
 
