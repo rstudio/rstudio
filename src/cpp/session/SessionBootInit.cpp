@@ -36,11 +36,11 @@ void handleBootInit(boost::shared_ptr<HttpConnection> ptrConnection)
    json::Object bootInfo ;
 
    json::Object uiPrefs = userSettings().uiPrefs();
-   json::Object::iterator it = uiPrefs.find("use_retina_icons");
+   json::Object::iterator it = uiPrefs.find("use_2x_resolution");
    if (it != uiPrefs.end())
-      bootInfo["use_retina_icons"] = it->second;
+      bootInfo["use_2x_resolution"] = it->second;
    else
-      bootInfo["use_retina_icons"] = false;
+      bootInfo["use_2x_resolution"] = false;
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

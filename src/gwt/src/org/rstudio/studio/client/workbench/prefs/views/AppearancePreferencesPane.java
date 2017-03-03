@@ -158,15 +158,15 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
-      iconsResolution_ = new CheckBox("Use Retina Icons", false);
-      iconsResolution_.setValue(uiPrefs_.useRetinaIcons().getGlobalValue());
+      iconsResolution_ = new CheckBox("Use High Resolution", false);
+      iconsResolution_.setValue(uiPrefs_.getUse2xResolution().getGlobalValue());
 
       iconsResolution_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
-            uiPrefs_.useRetinaIcons().setGlobalValue(iconsResolution_.getValue());
+            uiPrefs_.getUse2xResolution().setGlobalValue(iconsResolution_.getValue());
          }
       });
       

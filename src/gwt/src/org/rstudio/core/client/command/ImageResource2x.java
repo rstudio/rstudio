@@ -32,17 +32,17 @@ public class ImageResource2x implements ImageResource
       ref_ = ref;
       ref2x_ = ref2x;
 
-      useRetina_ = BootInstance.getInstance().getBootInfo().getUseRetinaIcons();
+      use2xResolution_ = BootInstance.getInstance().getBootInfo().getUse2xResolution();
    }
 
-   private boolean useRetina()
+   private boolean getUse2xResolution()
    {
-      return useRetina_ && ref2x_ != null;
+      return use2xResolution_ && ref2x_ != null;
    }
 
    private ImageResource getResource()
    {
-      return useRetina() ? ref2x_ : ref_;
+      return getUse2xResolution() ? ref2x_ : ref_;
    }
    
    @Override
@@ -54,7 +54,7 @@ public class ImageResource2x implements ImageResource
    @Override
    public int getHeight()
    {
-      return useRetina() ? getResource().getHeight() / 2 : getResource().getHeight();
+      return getUse2xResolution() ? getResource().getHeight() / 2 : getResource().getHeight();
    }
 
    @Override
@@ -84,7 +84,7 @@ public class ImageResource2x implements ImageResource
    @Override
    public int getWidth()
    {
-      return useRetina() ? getResource().getWidth() / 2 : getResource().getWidth();
+      return getUse2xResolution() ? getResource().getWidth() / 2 : getResource().getWidth();
    }
 
    @Override
@@ -95,5 +95,5 @@ public class ImageResource2x implements ImageResource
    
    private ImageResource ref_;
    private ImageResource ref2x_;
-   private boolean useRetina_ = false;
+   private boolean use2xResolution_ = false;
 }
