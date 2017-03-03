@@ -169,8 +169,6 @@ public class AppearancePreferencesPane extends PreferencesPane
             uiPrefs_.getUse2xResolution().setGlobalValue(iconsResolution_.getValue());
          }
       });
-      
-      leftPanel.add(iconsResolution_);
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");

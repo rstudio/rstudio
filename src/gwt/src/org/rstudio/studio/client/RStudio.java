@@ -243,34 +243,7 @@ public class RStudio implements EntryPoint
          }
       };
 
-      final String BOOT_INIT = "boot_init";
-      final String rserverURL = GWT.getHostPageBaseURL() + "rpc" /* RPC_SCOPE */ + "/" + BOOT_INIT;
-      com.google.gwt.json.client.JSONArray params = new com.google.gwt.json.client.JSONArray();
-      RpcRequest rpcRequest = new RpcRequest(rserverURL,      /* url */
-                                             BOOT_INIT,       /* method */
-                                             params,          /* params */
-                                             null,            /* kwparams */
-                                             false,           /* redactLog */
-                                             null,            /* sourceWindow */
-                                             null,            /* clientId */
-                                             "");             /* clientVersion */
-
-      rpcRequest.send(new RpcRequestCallback() {
-         public void onError(RpcRequest request, RpcError error)
-         {
-            Debug.log(error.getMessage());
-            GWT.runAsync(runCallback);
-         }
-
-         public void onResponseReceived(final RpcRequest request,
-                                        RpcResponse response)
-         {
-            BootInfo result = response.<BootInfo> getResult();
-            BootInstance.getInstance().setBootInfo(result);
-            
-            GWT.runAsync(runCallback);
-         }
-      });
+      GWT.runAsync(runCallback);
    }
    
    private void ensureStylesInjected()
