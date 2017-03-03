@@ -22,7 +22,14 @@ public class BootInfo extends JavaScriptObject
    {
    }
 
+   public static BootInfo empty()
+   {
+      return (BootInfo)JavaScriptObject.createObject().cast();
+   }
+
    public final native boolean getUseRetinaIcons() /*-{
-      return typeof(this.use_retina_icons) !== "undefined" ? this.use_retina_icons : true;
+      var isEmpty = (this === null || typeof(this) === "undefined");
+
+      return !isEmpty && typeof(this.use_retina_icons) !== "undefined" ? this.use_retina_icons : true;
    }-*/;
 }

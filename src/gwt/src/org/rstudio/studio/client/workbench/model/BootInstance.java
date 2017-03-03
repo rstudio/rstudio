@@ -38,5 +38,5 @@ public class BootInstance {
       bootInfo_ = bootInfo;
    }
 
-   BootInfo bootInfo_ = null;
+   BootInfo bootInfo_ = BootInfo.empty();
 }
