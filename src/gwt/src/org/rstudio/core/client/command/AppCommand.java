@@ -527,7 +527,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
-         text.append(AbstractImagePrototype.create(icon).getHTML());
+         SafeHtml imageHtml = createMenuImageHtml(icon);
+         text.append(imageHtml.asString());
       }
       else
       {
@@ -598,6 +599,17 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "src", image.getSafeUri().asString()));
+      sb.appendHtmlConstant("</img>");   
+      return sb.toSafeHtml();
+   }
+
+   private static SafeHtml createMenuImageHtml(ImageResource image)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+        "width", Integer.toString(image.getWidth()),
+        "height", Integer.toString(image.getHeight()),
         "src", image.getSafeUri().asString()));
       sb.appendHtmlConstant("</img>");   
       return sb.toSafeHtml();
