@@ -120,6 +120,7 @@ void ConsoleProcess::commonInit()
          options_.pseudoterminal = core::system::Pseudoterminal(
                   session::options().winptyPath(),
                   false /*plainText*/,
+                  false /*conerr*/,
                   options_.cols,
                   options_.rows);
       }

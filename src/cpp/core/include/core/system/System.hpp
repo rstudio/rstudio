@@ -134,6 +134,7 @@ bool isWin7OrLater();
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
 void ensureLongPath(FilePath* pFilePath);
+Error expandEnvironmentVariables(std::string value, std::string* pResult);
 FilePath expandComSpec();
 
 // close a handle then set it to NULL (so we can call this function
