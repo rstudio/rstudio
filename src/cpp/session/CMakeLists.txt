@@ -61,7 +61,6 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
-   SessionBootInit.cpp
    SessionClientInit.cpp
    SessionConsoleInput.cpp
    SessionConsoleProcess.cpp

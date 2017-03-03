@@ -17,7 +17,6 @@
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
 #include "SessionSuspend.hpp"
-#include "SessionBootInit.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
 #include "SessionUriHandlers.hpp"
@@ -415,12 +414,6 @@ bool waitForMethod(const std::string& method,
 
       if (ptrConnection)
       {
-         // check for boot_init
-         if ( isMethod(ptrConnection, kBootInit) )
-         {
-            boot_init::handleBootInit(ptrConnection);
-         }
-
          // check for client_init
          if ( isMethod(ptrConnection, kClientInit) )
          {

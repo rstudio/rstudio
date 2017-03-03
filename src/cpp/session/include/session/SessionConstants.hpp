@@ -81,7 +81,6 @@
 #define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
-const char * const kBootInit = "boot_init" ;
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
