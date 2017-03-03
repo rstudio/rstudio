@@ -1,5 +1,5 @@
 /*
- * ImageResource.java
+ * ImageResource2x.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
