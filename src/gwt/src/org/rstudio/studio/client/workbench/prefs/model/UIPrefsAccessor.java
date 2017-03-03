@@ -628,7 +628,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> useRetinaIcons()
    {
-      return bool("use_retina_icons", true);
+      return bool("use_retina_icons", false);
    }
    
    private String getDefaultPdfPreview()
