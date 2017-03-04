@@ -141,6 +141,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
+import org.rstudio.studio.client.workbench.model.BootInfo;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -299,7 +300,7 @@ public class RemoteServer implements Server
    {
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
-    
+
    public void clientInit(
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      

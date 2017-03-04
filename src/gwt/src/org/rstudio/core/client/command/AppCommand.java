@@ -38,6 +38,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -526,7 +527,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
-         text.append(AbstractImagePrototype.create(icon).getHTML());
+         SafeHtml imageHtml = createMenuImageHtml(icon);
+         text.append(imageHtml.asString());
       }
       else
       {
@@ -601,6 +603,17 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.appendHtmlConstant("</img>");   
       return sb.toSafeHtml();
    }
+
+   private static SafeHtml createMenuImageHtml(ImageResource image)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+        "width", Integer.toString(image.getWidth()),
+        "height", Integer.toString(image.getHeight()),
+        "src", image.getSafeUri().asString()));
+      sb.appendHtmlConstant("</img>");   
+      return sb.toSafeHtml();
+   }
    
    private boolean enabled_ = true;
    private boolean visible_ = true;
@@ -628,4 +641,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private static final String WINDOW_MODE_BACKGROUND = "background";
    private static final String WINDOW_MODE_MAIN = "main";
    private static final String WINDOW_MODE_ANY = "any";
+   
+   private UIPrefs uiPrefs_;
 }

@@ -626,6 +626,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("wrap_tab_navigation", false);
    }
    
+   public PrefValue<Boolean> getUse2xResolution()
+   {
+      return bool("use_2x_resolution", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
