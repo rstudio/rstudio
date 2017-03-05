@@ -1,5 +1,5 @@
 /*
- * SessionConsoleProcess.cpp
+ * SessionConsoleProcessTests.cpp
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
