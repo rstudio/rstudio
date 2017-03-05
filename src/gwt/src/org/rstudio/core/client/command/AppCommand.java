@@ -599,6 +599,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "width", Integer.toString(image.getWidth()),
+        "height", Integer.toString(image.getHeight()),
         "src", image.getSafeUri().asString()));
       sb.appendHtmlConstant("</img>");   
       return sb.toSafeHtml();
