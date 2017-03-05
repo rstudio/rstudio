@@ -31,7 +31,7 @@ context("queue and fetch input")
 
    boost::shared_ptr<ConsoleProcessInfo> pCPI =
          boost::make_shared<ConsoleProcessInfo>(
-            "caption", "title", "" /*handle*/, kNoTerminal,
+            "test caption", "test title", "fakehandle", 9999 /*terminal*/,
             false /*allowRestart*/, InteractionNever);
 
    boost::shared_ptr<ConsoleProcess> pCP =
