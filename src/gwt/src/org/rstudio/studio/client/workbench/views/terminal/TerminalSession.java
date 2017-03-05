@@ -262,8 +262,27 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
+      // On Windows, rapid typing sometimes causes RPC messages for writeStandardInput
+      // to arrive out of sequence in the terminal; send a sequence number with each
+      // message so server can put messages back in order
+      if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
+      {
+         // Last message has flushed server, start tracking sequences again.
+         inputSequence_ = 0;
+      }
+      else if (inputSequence_ >= Integer.MAX_VALUE - 100)
+      {
+         // Very diligent typist!  Tell server to flush its input
+         // queue, temporarily ignoring sequences.
+         inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+      }
+      else
+      {
+         inputSequence_++;
+      }
+
       consoleProcess_.writeStandardInput(
-            ShellInput.create(userInput,  true /* echo input*/), 
+            ShellInput.create(inputSequence_, userInput,  true /* echo input*/), 
             new VoidServerRequestCallback() {
 
                @Override
@@ -572,6 +591,7 @@ public class TerminalSession extends XTermWidget
    private boolean connecting_;
    private boolean terminating_;
    private StringBuilder inputQueue_ = new StringBuilder();
+   private int inputSequence_ = -1;
    private boolean newTerminal_ = true;
    private int cols_ = ConsoleProcessInfo.DEFAULT_COLS;
    private int rows_ = ConsoleProcessInfo.DEFAULT_ROWS;;
