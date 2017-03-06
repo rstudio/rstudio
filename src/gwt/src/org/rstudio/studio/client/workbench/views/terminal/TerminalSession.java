@@ -268,7 +268,14 @@ public class TerminalSession extends XTermWidget
       // message so server can put messages back in order
       if (BrowseCap.isWindowsDesktop())
       {
-         if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
+         if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
+         {
+            // First message sent for this client-side terminal instance, start
+            // by flushing the server-side queue to reset server's "last-sequence"
+            // back to default.
+            inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+         }
+         else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
          {
             // Last message has flushed server, start tracking sequences again.
             inputSequence_ = 0;
