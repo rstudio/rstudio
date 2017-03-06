@@ -22,17 +22,15 @@ import com.google.gwt.safehtml.shared.SafeUri;
 
 public class ImageResource2x implements ImageResource
 {
-   public ImageResource2x(ImageResource ref)
+   public ImageResource2x(ImageResource ref2x)
    {
-      this(ref, null);
+      this(null, ref2x);
    }
 
    public ImageResource2x(ImageResource ref, ImageResource ref2x)
    {
       ref_ = ref;
       ref2x_ = ref2x;
-
-      use2xResolution_ = BootInstance.getInstance().getBootInfo().getUse2xResolution();
    }
 
    private boolean getUse2xResolution()
@@ -95,5 +93,5 @@ public class ImageResource2x implements ImageResource
    
    private ImageResource ref_;
    private ImageResource ref2x_;
-   private boolean use2xResolution_ = false;
+   private boolean use2xResolution_ = true;
 }

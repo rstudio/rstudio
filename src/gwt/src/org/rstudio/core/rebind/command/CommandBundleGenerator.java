@@ -333,12 +333,11 @@ class CommandBundleGeneratorHelper
       
       if (images.hasImage(name))
       {
-        String resource2x = "null";
+        String resourceName = images.getImageRef(name);
         if (images.hasImage(name + "2x"))
-          resource2x = images.getImageRef(name + "2x");
+          resourceName = "new ImageResource2x(" + images.getImageRef(name + "2x") + ")";
 
-        writer.println(name + "_.setImageResource(new ImageResource2x("
-                                             + images.getImageRef(name) + ", " + resource2x + "));");
+        writer.println(name + "_.setImageResource(" + resourceName + ");");
       }
 
       writer.println("addCommand(\"" + Generator.escape(name) + "\", " + name + "_);");
@@ -427,17 +426,16 @@ class CommandBundleGeneratorHelper
 
          String key = packageName_.replace('.', '/') + "/" + commandId;
 
-         if (resourceNames.contains(key + ".png"))
-         {
-            writer.println("ImageResource " + commandId + "();");
-            iri.addImage(commandId);
-         }
-
          if (resourceNames.contains(key + "_2x.png"))
          {
             writer.println("@Source(\"" + commandId + "_2x.png\")");
             writer.println("ImageResource " + commandId + "2x();");
             iri.addImage(commandId + "2x");
+         }
+         else if (resourceNames.contains(key + ".png"))
+         {
+            writer.println("ImageResource " + commandId + "();");
+            iri.addImage(commandId);
          }
       }
       writer.println("public static final " + className + " INSTANCE = " +
