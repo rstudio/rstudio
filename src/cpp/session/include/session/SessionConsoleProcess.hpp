@@ -17,7 +17,7 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
-#include <queue>
+#include <deque>
 
 #include <boost/regex.hpp>
 #include <boost/signals.hpp>
@@ -35,6 +35,10 @@ namespace core {
 namespace rstudio {
 namespace session {
 namespace console_process {
+
+const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
+const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
+const int kAutoFlushLength = 20;
 
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
@@ -62,17 +66,26 @@ public:
    struct Input
    {
       explicit Input(const std::string& text, bool echoInput = true)
-         : interrupt(false), text(text), echoInput(echoInput)
+         : interrupt(false), text(text), echoInput(echoInput),
+           sequence(kIgnoreSequence)
       {
       }
 
-      Input() : interrupt(false), echoInput(false) {}
+      explicit Input(int sequence, const std::string& text, bool echoInput = true)
+         : interrupt(false), text(text), echoInput(echoInput), sequence(sequence)
+      {
+      }
+
+      Input() : interrupt(false), echoInput(false), sequence(kIgnoreSequence) {}
 
       bool empty() { return !interrupt && text.empty(); }
 
       bool interrupt ;
       std::string text;
       bool echoInput;
+
+      // used to reassemble out-of-order input messages
+      int sequence;
    };
 
 public:
@@ -111,6 +124,7 @@ public:
 
    core::Error start();
    void enqueInput(const Input& input);
+   Input dequeInput();
    void enqueOutput(const std::string& output, bool error);
    void enquePrompt(const std::string& prompt);
    void interrupt();
@@ -165,7 +179,8 @@ private:
    bool childProcsSent_;
 
    // Pending input (writes or ptyInterrupts)
-   std::queue<Input> inputQueue_;
+   std::deque<Input> inputQueue_;
+   int lastInputSequence_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
