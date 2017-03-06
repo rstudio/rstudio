@@ -114,7 +114,7 @@ class CommandBundleGeneratorHelper
          factory.addImport("org.rstudio.core.client.command.AppCommand");
          factory.addImport("org.rstudio.core.client.command.MenuCallback");
          factory.addImport("org.rstudio.core.client.command.ShortcutManager");
-         factory.addImport("org.rstudio.core.client.command.ImageResource2x");
+         factory.addImport("org.rstudio.core.client.resources.ImageResource2x");
          SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
          emitConstructor(writer, images);
