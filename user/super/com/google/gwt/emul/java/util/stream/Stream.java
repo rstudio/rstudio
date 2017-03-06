@@ -129,10 +129,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
     Stream<T> result = new StreamImpl<T>(null, spliterator);
 
-    result.onClose(a::close);
-    result.onClose(b::close);
-
-    return result;
+    return result.onClose(a::close).onClose(b::close);
   }
 
   static <T> Stream<T> empty() {

@@ -127,10 +127,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
     LongStream result = new LongStreamImpl(null, spliterator);
 
-    result.onClose(a::close);
-    result.onClose(b::close);
-
-    return result;
+    return result.onClose(a::close).onClose(b::close);
   }
 
   static LongStream empty() {

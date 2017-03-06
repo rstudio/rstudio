@@ -127,10 +127,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
     IntStream result = new IntStreamImpl(null, spliterator);
 
-    result.onClose(a::close);
-    result.onClose(b::close);
-
-    return result;
+    return result.onClose(a::close).onClose(b::close);
   }
 
   static IntStream empty() {

@@ -124,10 +124,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
     DoubleStream result = new DoubleStreamImpl(null, spliterator);
 
-    result.onClose(a::close);
-    result.onClose(b::close);
-
-    return result;
+    return result.onClose(a::close).onClose(b::close);
   }
 
   static DoubleStream empty() {
