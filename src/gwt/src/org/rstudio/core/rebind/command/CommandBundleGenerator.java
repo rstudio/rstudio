@@ -426,16 +426,17 @@ class CommandBundleGeneratorHelper
 
          String key = packageName_.replace('.', '/') + "/" + commandId;
 
+         if (resourceNames.contains(key + ".png"))
+         {
+            writer.println("ImageResource " + commandId + "();");
+            iri.addImage(commandId);
+         }
+
          if (resourceNames.contains(key + "_2x.png"))
          {
             writer.println("@Source(\"" + commandId + "_2x.png\")");
             writer.println("ImageResource " + commandId + "2x();");
             iri.addImage(commandId + "2x");
-         }
-         else if (resourceNames.contains(key + ".png"))
-         {
-            writer.println("ImageResource " + commandId + "();");
-            iri.addImage(commandId);
          }
       }
       writer.println("public static final " + className + " INSTANCE = " +
