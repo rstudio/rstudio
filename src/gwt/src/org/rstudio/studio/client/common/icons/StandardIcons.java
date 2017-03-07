@@ -37,7 +37,9 @@ public interface StandardIcons extends ClientBundle
    ImageResource import_dataset2x();
 
    ImageResource empty_command();
-   ImageResource show_log();
+
+   @Source("show_log_2x.png")
+   ImageResource show_log2x();
 
    @Source("help_2x.png")
    ImageResource help2x();
