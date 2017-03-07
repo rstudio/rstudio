@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -163,7 +164,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       ImageResource presentationIcon();
 
       @Source("MarkdownDocumentIcon.png")
-      ImageResource documentIcon();
+      ImageResource documentIcon2x();
 
       @Source("MarkdownOptionsIcon.png")
       ImageResource optionsIcon();
@@ -213,7 +214,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          // Special treatment for built-in templates with known names
          if (templateName.equals(RmdTemplateData.DOCUMENT_TEMPLATE))
          {
-            img = resources.documentIcon();
+            img = new ImageResource2x(resources.documentIcon2x());
          } 
          else if (templateName.equals(RmdTemplateData.PRESENTATION_TEMPLATE))
          {
