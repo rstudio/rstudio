@@ -158,7 +158,9 @@ public class ActionCenter extends Composite
       ImageResource chevronDown();
       ImageResource chevronUp();
       ImageResource packratIcon();
-      ImageResource packratIconSmall();
+
+      @Source("packratIconSmall_2x.png")
+      ImageResource packratIconSmall2x();
       
       @Source("ActionCenter.css")
       Styles styles();

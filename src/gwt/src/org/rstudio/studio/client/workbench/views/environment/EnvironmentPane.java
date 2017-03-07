@@ -469,7 +469,7 @@ public class EnvironmentPane extends WorkbenchPane
       else if (name.startsWith("package:") ||
                name.equals("base") || 
                local)
-         return EnvironmentResources.INSTANCE.packageEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.packageEnvironment2x());
       else 
          return new ImageResource2x(EnvironmentResources.INSTANCE.attachedEnvironment2x());
    }

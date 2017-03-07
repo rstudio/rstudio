@@ -36,8 +36,8 @@ public interface EnvironmentResources extends ClientBundle
    @Source("GlobalEnvironment_2x.png")
    ImageResource globalEnvironment2x();
    
-   @Source("PackageEnvironment.png")
-   ImageResource packageEnvironment();
+   @Source("PackageEnvironment_2x.png")
+   ImageResource packageEnvironment2x();
    
    @Source("AttachedEnvironment_2x.png")
    ImageResource attachedEnvironment2x();

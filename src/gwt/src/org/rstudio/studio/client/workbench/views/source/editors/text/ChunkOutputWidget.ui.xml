@@ -192,7 +192,7 @@
                ui:field="expander_"></g:HTMLPanel>
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
         <g:Image styleName="{style.popout}" 
-                 resource="{res.popoutIcon}"
+                 resource="{res.popoutIcon2x}"
                  title="Show in New Window"
                  ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"

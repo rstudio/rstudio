@@ -96,8 +96,8 @@ public class ChunkOutputWidget extends Composite
       @Source("RemoveChunkIcon.png")
       ImageResource removeChunkIcon();
 
-      @Source("PopoutChunkIcon.png")
-      ImageResource popoutIcon();
+      @Source("PopoutChunkIcon_2x.png")
+      ImageResource popoutIcon2x();
    }
    
    public interface ChunkStyle extends CssResource
