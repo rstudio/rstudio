@@ -191,7 +191,8 @@ public interface ThemeResources extends ClientBundle
    ImageResource syntaxErrorDark();
    
    
-   ImageResource codeTransform();
+   @Source("codeTransform_2x.png")
+   ImageResource codeTransform2x();
 
    ImageResource closeChevron();
    
@@ -216,7 +217,8 @@ public interface ThemeResources extends ClientBundle
    @Source("handCursor.png")
    DataResource handCursor();
    
-   ImageResource executeChunk();
+   @Source("executeChunk_2x.png")
+   ImageResource executeChunk2x();
    
    ImageResource checkboxOff();
    ImageResource checkboxOn();

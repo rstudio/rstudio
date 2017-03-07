@@ -46,6 +46,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -499,7 +500,7 @@ public class TextEditingTargetWidget
    {
       if (codeTransform_ == null)
       {
-         ImageResource icon = ThemeResources.INSTANCE.codeTransform();
+         ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
          menu.addItem(commands_.codeCompletion().createMenuItem(false));

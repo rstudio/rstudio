@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -181,7 +182,7 @@ public class GlobalToolbar extends Toolbar
       
          ImageResource vcsIcon = null;
          if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
-            vcsIcon = icons.git();
+            vcsIcon = new ImageResource2x(icons.git2x());
          else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
             vcsIcon = icons.svn();
          
