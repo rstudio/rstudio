@@ -24,11 +24,11 @@ public interface EnvironmentResources extends ClientBundle
    public static final EnvironmentResources INSTANCE =
            GWT.create(EnvironmentResources.class);
 
-   @Source("ExpandIcon.png")
-   ImageResource expandIcon();
+   @Source("ExpandIcon_2x.png")
+   ImageResource expandIcon2x();
 
-   @Source("CollapseIcon.png")
-   ImageResource collapseIcon();
+   @Source("CollapseIcon_2x.png")
+   ImageResource collapseIcon2x();
    
    @Source("TracedFunction.png")
    ImageResource tracedFunction();

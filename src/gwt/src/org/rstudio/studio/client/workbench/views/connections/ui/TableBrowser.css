@@ -20,7 +20,7 @@
   padding-bottom: 1px;
 }
 .cellTreeItemImage {
-  
+
 }
 
 .cellTreeItemImageValue {
@@ -33,7 +33,7 @@
 }
 
 .cellTreeOpenItem {
-  
+
 }
 .cellTreeTopItem {
   font-weight: normal;
@@ -41,10 +41,17 @@
   padding: 2px 0px 2px 6px !important;
 }
 .cellTreeTopItemImage {
-  
+  width: 14px !important;
+  height: 14px !important;
 }
 .cellTreeTopItemImageValue {
+  padding-left: 14px !important;
   border-bottom: none;
+}
+.cellTreeTopItemImage > img{
+  width: 14px !important;
+  height: 14px !important;
+  background-size: 14px 14px !important;
 }
 
 .cellTreeKeyboardSelectedItem {

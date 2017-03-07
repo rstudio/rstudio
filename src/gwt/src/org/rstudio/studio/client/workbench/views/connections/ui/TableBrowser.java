@@ -130,7 +130,7 @@ public class TableBrowser extends Composite implements RequiresResize
       ImageResource zoomDataset();
       
       @ImageOptions(flipRtl = true)
-      @Source("ExpandIcon.png")
+      @Source("ExpandIcon_2x.png")
       ImageResource cellTreeClosedItem();
 
       /**
@@ -139,12 +139,10 @@ public class TableBrowser extends Composite implements RequiresResize
       @ImageOptions(flipRtl = true)
       @Source("progress.gif")
       ImageResource cellTreeLoading();
-
     
       @ImageOptions(flipRtl = true)
-      @Source("CollapseIcon.png")
+      @Source("CollapseIcon_2x.png")
       ImageResource cellTreeOpenItem();
-      
       
       @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
       public Style cellTreeStyle();   
