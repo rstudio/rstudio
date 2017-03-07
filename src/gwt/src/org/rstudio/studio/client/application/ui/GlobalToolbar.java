@@ -184,7 +184,7 @@ public class GlobalToolbar extends Toolbar
          if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
             vcsIcon = new ImageResource2x(icons.git2x());
          else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
-            vcsIcon = icons.svn();
+            vcsIcon = new ImageResource2x(icons.svn2x());
          
          ToolbarButton vcsButton = new ToolbarButton(
                null,

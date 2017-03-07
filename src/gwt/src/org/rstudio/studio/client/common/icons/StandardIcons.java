@@ -47,7 +47,9 @@ public interface StandardIcons extends ClientBundle
    @Source("git_2x.png")
    ImageResource git2x();
 
-   ImageResource svn();
+   @Source("svn_2x.png")
+   ImageResource svn2x();
+
    ImageResource viewer_window();
 
    @Source("run_2x.png")
