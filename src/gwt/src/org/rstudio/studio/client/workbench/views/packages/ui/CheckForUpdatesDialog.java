@@ -84,7 +84,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
      
      ImageButtonColumn<PendingAction> newsColumn = 
         new ImageButtonColumn<PendingAction>(
-          AbstractImagePrototype.create(ThemeResources.INSTANCE.newsButton()),
+          ThemeResources.INSTANCE.newsButton(),
           new OperationWithInput<PendingAction>() {
             public void execute(PendingAction action)
             {

@@ -420,7 +420,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
-          AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage()),
+          ThemeResources.INSTANCE.removePackage(),
           new OperationWithInput<PackageInfo>() {
             @Override
             public void execute(PackageInfo packageInfo)

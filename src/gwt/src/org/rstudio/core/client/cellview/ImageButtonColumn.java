@@ -18,14 +18,14 @@ import org.rstudio.core.client.widget.OperationWithInput;
 
 import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 public class ImageButtonColumn<T> extends Column<T, String>
 {
-   public ImageButtonColumn(final AbstractImagePrototype imagePrototype,
+   public ImageButtonColumn(final ImageResource image,
                             final OperationWithInput<T> onClick,
                             final String title)
    {
@@ -39,7 +39,13 @@ public class ImageButtonColumn<T> extends Column<T, String>
             {
                sb.appendHtmlConstant("<span title=\"" + title + "\" " +
                                      "style=\"cursor: pointer;\">");
-               sb.appendHtmlConstant(imagePrototype.getHTML());
+               sb.appendHtmlConstant("<img src=\"");
+               sb.appendHtmlConstant(image.getSafeUri().asString());
+               sb.appendHtmlConstant("\" width=\"");
+               sb.appendHtmlConstant(new Integer(image.getWidth()).toString());
+               sb.appendHtmlConstant("\" height=\"");
+               sb.appendHtmlConstant(new Integer(image.getHeight()).toString());
+               sb.appendHtmlConstant("\">");
                sb.appendHtmlConstant("</span>");
             }
          }                                
