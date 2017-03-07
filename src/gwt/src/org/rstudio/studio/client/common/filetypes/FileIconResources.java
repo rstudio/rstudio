@@ -65,27 +65,63 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconDCF();
    
    // Ace modes
-   ImageResource iconClojure();
-   ImageResource iconCoffee();
-   ImageResource iconCsharp();
-   ImageResource iconGitignore();
-   ImageResource iconGo();
-   ImageResource iconGroovy();
-   ImageResource iconHaskell();
-   ImageResource iconHaxe();
-   ImageResource iconJava();
-   ImageResource iconJulia();
-   ImageResource iconLisp();
-   ImageResource iconLua();
-   ImageResource iconMakefile();
-   ImageResource iconMatlab();
-   ImageResource iconPerl();
-   ImageResource iconRuby();
-   ImageResource iconRust();
-   ImageResource iconScala();
-   ImageResource iconSnippets();
+   @Source("iconClojure_2x.png")
+   ImageResource iconClojure2x();
+
+   @Source("iconCoffee_2x.png")
+   ImageResource iconCoffee2x();
+
+   @Source("iconCsharp_2x.png")
+   ImageResource iconCsharp2x();
+
+   @Source("iconGitignore_2x.png")
+   ImageResource iconGitignore2x();
+
+   @Source("iconGo_2x.png")
+   ImageResource iconGo2x();
+
+   @Source("iconGroovy_2x.png")
+   ImageResource iconGroovy2x();
+
+   @Source("iconHaskell_2x.png")
+   ImageResource iconHaskell2x();
+
+   @Source("iconHaxe_2x.png")
+   ImageResource iconHaxe2x();
+
+   @Source("iconJava_2x.png")
+   ImageResource iconJava2x();
+
+   @Source("iconJulia_2x.png")
+   ImageResource iconJulia2x();
+
+   @Source("iconLisp_2x.png")
+   ImageResource iconLisp2x();
+
+   @Source("iconLua_2x.png")
+   ImageResource iconLua2x();
+
+   @Source("iconMakefile_2x.png")
+   ImageResource iconMakefile2x();
+
+   @Source("iconMatlab_2x.png")
+   ImageResource iconMatlab2x();
+
+   @Source("iconPerl_2x.png")
+   ImageResource iconPerl2x();
+
+   @Source("iconRuby_2x.png")
+   ImageResource iconRuby2x();
+
+   @Source("iconRust_2x.png")
+   ImageResource iconRust2x();
+
+   @Source("iconScala_2x.png")
+   ImageResource iconScala2x();
+
+   @Source("iconSnippets_2x.png")
+   ImageResource iconSnippets2x();
    
-   ImageResource iconStan();
-   
-   
+   @Source("iconStan_2x.png")
+   ImageResource iconStan2x();
 }

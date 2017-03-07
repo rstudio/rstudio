@@ -18,6 +18,7 @@ import java.util.HashMap;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -164,98 +165,98 @@ public class FileTypeRegistry
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true, true);
    
    public static final TextFileType CLOJURE = 
-         new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", ICONS.iconClojure(),
+         new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", new ImageResource2x(ICONS.iconClojure2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType COFFEE = 
-         new TextFileType("coffee", "Coffee", EditorLanguage.LANG_COFFEE, ".coffee", ICONS.iconCoffee(),
+         new TextFileType("coffee", "Coffee", EditorLanguage.LANG_COFFEE, ".coffee", new ImageResource2x(ICONS.iconCoffee2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType CSHARP = 
-         new TextFileType("csharp", "C#", EditorLanguage.LANG_CSHARP, ".cs", ICONS.iconCsharp(),
+         new TextFileType("csharp", "C#", EditorLanguage.LANG_CSHARP, ".cs", new ImageResource2x(ICONS.iconCsharp2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    
    public static final TextFileType GITIGNORE = 
-         new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", ICONS.iconGitignore(),
+         new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", new ImageResource2x(ICONS.iconGitignore2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType GO = 
-         new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", ICONS.iconGo(),
+         new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", new ImageResource2x(ICONS.iconGo2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType GROOVY = 
-         new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY, ".groovy", ICONS.iconGroovy(),
+         new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY, ".groovy", new ImageResource2x(ICONS.iconGroovy2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType HASKELL = 
-         new TextFileType("haskell", "Haskell", EditorLanguage.LANG_HASKELL, ".haskell", ICONS.iconHaskell(),
+         new TextFileType("haskell", "Haskell", EditorLanguage.LANG_HASKELL, ".haskell", new ImageResource2x(ICONS.iconHaskell2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType HAXE = 
-         new TextFileType("haxe", "Haxe", EditorLanguage.LANG_HAXE, ".haxe", ICONS.iconHaxe(),
+         new TextFileType("haxe", "Haxe", EditorLanguage.LANG_HAXE, ".haxe", new ImageResource2x(ICONS.iconHaxe2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType JAVA = 
-         new TextFileType("java", "Java", EditorLanguage.LANG_JAVA, ".java", ICONS.iconJava(),
+         new TextFileType("java", "Java", EditorLanguage.LANG_JAVA, ".java", new ImageResource2x(ICONS.iconJava2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType JULIA = 
-         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", ICONS.iconJulia(),
+         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", new ImageResource2x(ICONS.iconJulia2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType LISP = 
-         new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", ICONS.iconLisp(),
+         new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", new ImageResource2x(ICONS.iconLisp2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType LUA = 
-         new TextFileType("lua", "Lua", EditorLanguage.LANG_LUA, ".lua", ICONS.iconLua(),
+         new TextFileType("lua", "Lua", EditorLanguage.LANG_LUA, ".lua", new ImageResource2x(ICONS.iconLua2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType MAKEFILE = 
-         new TextFileType("makefile", "Makefile", EditorLanguage.LANG_MAKEFILE, ".makefile", ICONS.iconMakefile(),
+         new TextFileType("makefile", "Makefile", EditorLanguage.LANG_MAKEFILE, ".makefile", new ImageResource2x(ICONS.iconMakefile2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType MATLAB = 
-         new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", ICONS.iconMatlab(),
+         new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", new ImageResource2x(ICONS.iconMatlab2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType PERL = 
-         new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".pl", ICONS.iconPerl(),
+         new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".pl", new ImageResource2x(ICONS.iconPerl2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType RUBY = 
-         new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".rb", ICONS.iconRuby(),
+         new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".rb", new ImageResource2x(ICONS.iconRuby2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType RUST = 
-         new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", ICONS.iconRust(),
+         new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", new ImageResource2x(ICONS.iconRust2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType SCALA = 
-         new TextFileType("scala", "Scala", EditorLanguage.LANG_SCALA, ".scala", ICONS.iconScala(),
+         new TextFileType("scala", "Scala", EditorLanguage.LANG_SCALA, ".scala", new ImageResource2x(ICONS.iconScala2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType SNIPPETS =
-         new TextFileType("snippets", "Snippets", EditorLanguage.LANG_SNIPPETS, ".snippets", ICONS.iconSnippets(),
+         new TextFileType("snippets", "Snippets", EditorLanguage.LANG_SNIPPETS, ".snippets", new ImageResource2x(ICONS.iconSnippets2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
@@ -319,12 +320,12 @@ public class FileTypeRegistry
       register("configure.win", SH, icons.iconSh());
       register("cleanup", SH, icons.iconSh());
       register("cleanup.win", SH, icons.iconSh());
-      register("Makefile", MAKEFILE, icons.iconMakefile());
-      register("Makefile.in", MAKEFILE, icons.iconMakefile());
-      register("Makefile.win", MAKEFILE, icons.iconMakefile());
-      register("Makevars", MAKEFILE, icons.iconMakefile());
-      register("Makevars.in", MAKEFILE, icons.iconMakefile());
-      register("Makevars.win", MAKEFILE, icons.iconMakefile());
+      register("Makefile", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
+      register("Makefile.in", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
+      register("Makefile.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
+      register("Makevars", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
+      register("Makevars.in", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
+      register("Makevars.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("TUTORIAL", DCF, icons.iconDCF());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
@@ -375,30 +376,30 @@ public class FileTypeRegistry
       register("*.yml", YAML, icons.iconYaml());
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
-      register("*.stan", STAN, icons.iconStan());
+      register("*.stan", STAN, new ImageResource2x(icons.iconStan2x()));
       
-      register("*.clj", CLOJURE, icons.iconClojure());
-      register("*.cloj", CLOJURE, icons.iconClojure());
-      register("*.clojure", CLOJURE, icons.iconClojure());
-      register("*.coffee", COFFEE, icons.iconCoffee());
-      register("*.cs", CSHARP, icons.iconCsharp());
-      register(".gitignore", GITIGNORE, icons.iconGitignore());
-      register("*.go", GO, icons.iconGo());
-      register("*.groovy", GROOVY, icons.iconGroovy());
-      register("*.haskell", HASKELL, icons.iconHaskell());
-      register("*.haxe", HAXE, icons.iconHaxe());
-      register("*.java", JAVA, icons.iconJava());
-      register("*.julia", JULIA, icons.iconJulia());
-      register("*.lisp", LISP, icons.iconLisp());
-      register(".emacs", LISP, icons.iconLisp());
-      register("*.el", LISP, icons.iconLisp());
-      register("*.lua", LUA, icons.iconLua());
-      register("*.m", MATLAB, icons.iconMatlab());
-      register("*.pl", PERL, icons.iconPerl());
-      register("*.rb", RUBY, icons.iconRuby());
-      register("*.rs", RUST, icons.iconRust());
-      register("*.scala", SCALA, icons.iconScala());
-      register("*.snippets", SNIPPETS, icons.iconSnippets());
+      register("*.clj", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
+      register("*.cloj", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
+      register("*.clojure", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
+      register("*.coffee", COFFEE, new ImageResource2x(icons.iconCoffee2x()));
+      register("*.cs", CSHARP, new ImageResource2x(icons.iconCsharp2x()));
+      register(".gitignore", GITIGNORE, new ImageResource2x(icons.iconGitignore2x()));
+      register("*.go", GO, new ImageResource2x(icons.iconGo2x()));
+      register("*.groovy", GROOVY, new ImageResource2x(icons.iconGroovy2x()));
+      register("*.haskell", HASKELL, new ImageResource2x(icons.iconHaskell2x()));
+      register("*.haxe", HAXE, new ImageResource2x(icons.iconHaxe2x()));
+      register("*.java", JAVA, new ImageResource2x(icons.iconJava2x()));
+      register("*.julia", JULIA, new ImageResource2x(icons.iconJulia2x()));
+      register("*.lisp", LISP, new ImageResource2x(icons.iconLisp2x()));
+      register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
+      register("*.el", LISP, new ImageResource2x(icons.iconLisp2x()));
+      register("*.lua", LUA, new ImageResource2x(icons.iconLua2x()));
+      register("*.m", MATLAB, new ImageResource2x(icons.iconMatlab2x()));
+      register("*.pl", PERL, new ImageResource2x(icons.iconPerl2x()));
+      register("*.rb", RUBY, new ImageResource2x(icons.iconRuby2x()));
+      register("*.rs", RUST, new ImageResource2x(icons.iconRust2x()));
+      register("*.scala", SCALA, new ImageResource2x(icons.iconScala2x()));
+      register("*.snippets", SNIPPETS, new ImageResource2x(icons.iconSnippets2x()));
       register("*.Rprofvis", PROFILER, icons.iconRprofile());
 
       registerIcon(".jpg", icons.iconPng());
