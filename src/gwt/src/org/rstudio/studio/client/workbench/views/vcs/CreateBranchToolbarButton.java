@@ -50,7 +50,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                                     GitServerOperations gitServer)
    {
       super("Create Branch",
-            new ImageResource2x(StandardIcons.INSTANCE.mermaid()),
+            new ImageResource2x(StandardIcons.INSTANCE.mermaid2x()),
             (ClickHandler) null);
       
       globalDisplay_ = globalDisplay;

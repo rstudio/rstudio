@@ -287,7 +287,7 @@ public class TextEditingTargetWidget
       
       rmdOptionsButton_ = new ToolbarButton(
             null,  
-            StandardIcons.INSTANCE.options(),
+            new ImageResource2x(StandardIcons.INSTANCE.options2x()),
             rmdOptionsMenu, 
             false);
       

@@ -50,12 +50,14 @@ public interface StandardIcons extends ClientBundle
    ImageResource run();
 
    @Source("mermaid_2x.png")
-   ImageResource mermaid();
+   ImageResource mermaid2x();
 
    ImageResource export_menu();
    ImageResource functionLetter();
    ImageResource methodLetter();
    ImageResource lambdaLetter();
    ImageResource outline();
-   ImageResource options();
+
+   @Source("options_2x.png")
+   ImageResource options2x();
 }
