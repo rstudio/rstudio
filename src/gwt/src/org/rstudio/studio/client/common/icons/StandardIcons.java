@@ -47,7 +47,9 @@ public interface StandardIcons extends ClientBundle
 
    ImageResource svn();
    ImageResource viewer_window();
-   ImageResource run();
+
+   @Source("run_2x.png")
+   ImageResource run2x();
 
    @Source("mermaid_2x.png")
    ImageResource mermaid2x();
