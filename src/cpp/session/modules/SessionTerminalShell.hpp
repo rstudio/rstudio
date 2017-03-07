@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {
@@ -50,9 +51,19 @@ struct TerminalShell
         type(DefaultShell)
    {}
 
+   TerminalShell(
+         TerminalShellType type,
+         std::string name,
+         core::FilePath path)
+      :
+        type(type),
+        name(name),
+        path(path)
+   {}
+
    TerminalShellType type;
    std::string name;
-   std::string path;
+   core::FilePath path;
    std::vector<std::string> args;
 
    core::json::Object toJson() const;
@@ -69,9 +80,15 @@ public:
    // Get details on one type; returns false if type not available
    bool getInfo(TerminalShell::TerminalShellType type, TerminalShell* pShellInfo) const;
 
+   // Number of available shells (including pseudo-shell "default")
+   inline int count() const { return shells_.size(); }
+
 private:
    std::vector<TerminalShell> shells_;
 };
+
+// If we are using git bash then return its path
+core::FilePath getGitBashShell();
 
 } // namespace workbench
 } // namespace handlers
