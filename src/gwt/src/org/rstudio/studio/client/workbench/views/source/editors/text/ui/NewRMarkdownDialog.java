@@ -169,11 +169,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       @Source("MarkdownOptionsIcon.png")
       ImageResource optionsIcon();
       
-      @Source("MarkdownTemplateIcon.png")
-      ImageResource templateIcon();
+      @Source("MarkdownTemplateIcon_2x.png")
+      ImageResource templateIcon2x();
 
-      @Source("MarkdownShinyIcon.png")
-      ImageResource shinyIcon();
+      @Source("MarkdownShinyIcon_2x.png")
+      ImageResource shinyIcon2x();
    }
 
    public NewRMarkdownDialog(
@@ -237,13 +237,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       // Add the Shiny template
       TemplateMenuItem shinyItem = new TemplateMenuItem(TEMPLATE_SHINY);
-      shinyItem.addIcon(resources.shinyIcon());
+      shinyItem.addIcon(new ImageResource2x(resources.shinyIcon2x()));
       listTemplates_.addItem(shinyItem);
        
       // Add the "From Template" item at the end of the list
       TemplateMenuItem templateItem = 
             new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
-      templateItem.addIcon(resources.templateIcon());
+      templateItem.addIcon(new ImageResource2x(resources.templateIcon2x()));
       listTemplates_.addItem(templateItem);
       
       // Save templates to the current project directory if available, and the
