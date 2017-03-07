@@ -439,7 +439,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
-              StandardIcons.INSTANCE.import_dataset(),
+              new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
       return dataImportButton_;
 

@@ -22,20 +22,27 @@ public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
    ImageResource stock_new();
+
    @Source("chunk_menu_2x.png")
    ImageResource chunk_menu2x();
+
    ImageResource go_up();
    ImageResource right_arrow();
    ImageResource click_feedback();
    ImageResource more_actions();
+
    @Source("import_dataset_2x.png")
    ImageResource import_dataset2x();
+
    ImageResource empty_command();
    ImageResource show_log();
+
    @Source("help_2x.png")
    ImageResource help2x();
+
    @Source("git_2x.png")
    ImageResource git2x();
+
    ImageResource svn();
    ImageResource viewer_window();
    ImageResource run();
