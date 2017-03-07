@@ -23,29 +23,74 @@ public interface FileIconResources extends ClientBundle
    public static final FileIconResources INSTANCE =
                                            GWT.create(FileIconResources.class);
 
-   ImageResource iconCsv();
-   ImageResource iconFolder();
-   ImageResource iconPublicFolder();
-   ImageResource iconUpFolder();
-   ImageResource iconPdf();
-   ImageResource iconPng();
-   ImageResource iconRdata();
-   ImageResource iconRproject();
-   ImageResource iconRdoc();
-   ImageResource iconRhistory();
-   ImageResource iconRprofile();
-   ImageResource iconTex();
-   ImageResource iconText();
-   ImageResource iconPython();
-   ImageResource iconSql();
-   ImageResource iconSh();
-   ImageResource iconYaml();
-   ImageResource iconXml();
-   ImageResource iconMarkdown();
-   ImageResource iconMermaid();
-   ImageResource iconGraphviz();
-   ImageResource iconH();
-   ImageResource iconRmarkdown();
+   @Source("iconCsv_2x.png")
+   ImageResource iconCsv2x();
+
+   @Source("iconFolder_2x.png")
+   ImageResource iconFolder2x();
+
+   @Source("iconPublicFolder_2x.png")
+   ImageResource iconPublicFolder2x();
+
+   @Source("iconUpFolder_2x.png")
+   ImageResource iconUpFolder2x();
+
+   @Source("iconPdf_2x.png")
+   ImageResource iconPdf2x();
+
+   @Source("iconPng_2x.png")
+   ImageResource iconPng2x();
+
+   @Source("iconRdata_2x.png")
+   ImageResource iconRdata2x();
+
+   @Source("iconRproject_2x.png")
+   ImageResource iconRproject2x();
+
+   @Source("iconRdoc_2x.png")
+   ImageResource iconRdoc2x();
+
+   @Source("iconRhistory_2x.png")
+   ImageResource iconRhistory2x();
+
+   @Source("iconRprofile_2x.png")
+   ImageResource iconRprofile2x();
+
+   @Source("iconTex_2x.png")
+   ImageResource iconTex2x();
+
+   @Source("iconText_2x.png")
+   ImageResource iconText2x();
+
+   @Source("iconPython_2x.png")
+   ImageResource iconPython2x();
+
+   @Source("iconSql_2x.png")
+   ImageResource iconSql2x();
+
+   @Source("iconSh_2x.png")
+   ImageResource iconSh2x();
+
+   @Source("iconYaml_2x.png")
+   ImageResource iconYaml2x();
+
+   @Source("iconXml_2x.png")
+   ImageResource iconXml2x();
+
+   @Source("iconMarkdown_2x.png")
+   ImageResource iconMarkdown2x();
+
+   @Source("iconMermaid_2x.png")
+   ImageResource iconMermaid2x();
+
+   @Source("iconGraphviz_2x.png")
+   ImageResource iconGraphviz2x();
+
+   @Source("iconH_2x.png")
+   ImageResource iconH2x();
+
+   @Source("iconRmarkdown_2x.png")
+   ImageResource iconRmarkdown2x();
 
    @Source("iconC_2x.png")
    ImageResource iconC2x();

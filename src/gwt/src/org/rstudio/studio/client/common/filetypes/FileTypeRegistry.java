@@ -44,13 +44,13 @@ public class FileTypeRegistry
 
    public static final TextFileType TEXT =
          new TextFileType("text", "Text File", EditorLanguage.LANG_PLAIN, "",
-                          ICONS.iconText(),
+                          new ImageResource2x(ICONS.iconText2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, true, false, false);
 
    public static final TextFileType R =
          new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
-                       ICONS.iconRdoc());
+                       new ImageResource2x(ICONS.iconRdoc2x()));
 
    public static final TextFileType RD =
       new TextFileType("r_doc", "Rd File", EditorLanguage.LANG_RDOC, ".Rd",
@@ -78,7 +78,7 @@ public class FileTypeRegistry
 
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
-                      ICONS.iconText(), false, false, false, false, false,
+                      new ImageResource2x(ICONS.iconText2x()), false, false, false, false, false,
                       false, false, false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
@@ -87,16 +87,16 @@ public class FileTypeRegistry
 
    public static final TexFileType TEX =
          new TexFileType("tex", "TeX", EditorLanguage.LANG_TEX, ".tex",
-                          ICONS.iconTex());
+                          new ImageResource2x(ICONS.iconTex2x()));
 
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", "R History", ".Rhistory",
-                            ICONS.iconRhistory(),
+                            new ImageResource2x(ICONS.iconRhistory2x()),
                             true);
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
-                              ".Rmd", ICONS.iconRmarkdown(), true);
+                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true);
    
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
@@ -106,7 +106,7 @@ public class FileTypeRegistry
 
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
-                           ".md", ICONS.iconMarkdown(), true);
+                           ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true);
 
 
    public static final RWebContentFileType RHTML =
@@ -137,29 +137,29 @@ public class FileTypeRegistry
    
 
    public static final TextFileType PYTHON = new ScriptFileType(
-     "python", "Python", EditorLanguage.LANG_PYTHON, ".py",ICONS.iconPython(),
+     "python", "Python", EditorLanguage.LANG_PYTHON, ".py",new ImageResource2x(ICONS.iconPython2x()),
      "python", true);
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
-                          ICONS.iconSql(), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconSql2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType SH = new ScriptFileType(
-         "sh", "Shell", EditorLanguage.LANG_SH, ".sh", ICONS.iconSh(),
+         "sh", "Shell", EditorLanguage.LANG_SH, ".sh", new ImageResource2x(ICONS.iconSh2x()),
          null, false);
    
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yml",
-                          ICONS.iconYaml(), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconYaml2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
-                          ICONS.iconXml(), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconXml2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
-   public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), true, false);
+   public static final TextFileType H = new CppFileType("h", ".h", new ImageResource2x(ICONS.iconH2x()), true, false);
    public static final TextFileType C = new CppFileType("c", ".c", new ImageResource2x(ICONS.iconC2x()), false, false);
    public static final TextFileType HPP = new CppFileType("hpp", ".hpp", new ImageResource2x(ICONS.iconHpp2x()), true, false);
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", new ImageResource2x(ICONS.iconCpp2x()), true, true);
@@ -288,94 +288,94 @@ public class FileTypeRegistry
 
       FileIconResources icons = ICONS;
 
-      register("", TEXT, icons.iconText());
-      register("*.txt", TEXT, icons.iconText());
-      register("*.log", TEXT, icons.iconText());
-      register("README", TEXT, icons.iconText());
-      register(".gitignore", TEXT, icons.iconText());
-      register(".Rbuildignore", TEXT, icons.iconText());
+      register("", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("*.txt", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("*.log", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("README", TEXT, new ImageResource2x(icons.iconText2x()));
+      register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
+      register(".Rbuildignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register("packrat.lock", DCF, new ImageResource2x(icons.iconDCF2x()));
-      register("*.r", R, icons.iconRdoc());
-      register("*.q", R, icons.iconRdoc());
-      register("*.s", R, icons.iconRdoc());
-      register(".Rprofile", R, icons.iconRprofile());
-      register("Rprofile.site", R, icons.iconRprofile());
-      register(".Renviron", SH, icons.iconSh());
-      register("Renviron.site", SH, icons.iconSh());
+      register("*.r", R, new ImageResource2x(icons.iconRdoc2x()));
+      register("*.q", R, new ImageResource2x(icons.iconRdoc2x()));
+      register("*.s", R, new ImageResource2x(icons.iconRdoc2x()));
+      register(".Rprofile", R, new ImageResource2x(icons.iconRprofile2x()));
+      register("Rprofile.site", R, new ImageResource2x(icons.iconRprofile2x()));
+      register(".Renviron", SH, new ImageResource2x(icons.iconSh2x()));
+      register("Renviron.site", SH, new ImageResource2x(icons.iconSh2x()));
       register("DESCRIPTION", DCF, new ImageResource2x(icons.iconDCF2x()));
-      register("INDEX", TEXT, icons.iconText());
-      register("LICENCE", TEXT, icons.iconText());
-      register("MD5", TEXT, icons.iconText());
-      register("NEWS", TEXT, icons.iconText());
-      register("PORTING", TEXT, icons.iconText());
-      register("COPYING", TEXT, icons.iconText());
-      register("COPYING.LIB", TEXT, icons.iconText());
-      register("BUGS", TEXT, icons.iconText());
-      register("CHANGES", TEXT, icons.iconText());
-      register("CHANGELOG", TEXT, icons.iconText());
-      register("INSTALL", SH, icons.iconSh());
-      register("TODO", TEXT, icons.iconText());
-      register("THANKS", TEXT, icons.iconText());
-      register("configure", SH, icons.iconSh());
-      register("configure.win", SH, icons.iconSh());
-      register("cleanup", SH, icons.iconSh());
-      register("cleanup.win", SH, icons.iconSh());
+      register("INDEX", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("LICENCE", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("MD5", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("NEWS", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("PORTING", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("COPYING", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("COPYING.LIB", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("BUGS", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("CHANGES", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("CHANGELOG", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("INSTALL", SH, new ImageResource2x(icons.iconSh2x()));
+      register("TODO", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("THANKS", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("configure", SH, new ImageResource2x(icons.iconSh2x()));
+      register("configure.win", SH, new ImageResource2x(icons.iconSh2x()));
+      register("cleanup", SH, new ImageResource2x(icons.iconSh2x()));
+      register("cleanup.win", SH, new ImageResource2x(icons.iconSh2x()));
       register("Makefile", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makefile.in", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makefile.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makevars", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makevars.in", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makevars.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
-      register("TUTORIAL", DCF, icons.iconDCF2x());
-      register("NAMESPACE", NAMESPACE, icons.iconText());
-      register("*.rhistory", RHISTORY, icons.iconRhistory());
-      register("*.rproj", RPROJECT, icons.iconRproject());
+      register("TUTORIAL", DCF, new ImageResource2x(icons.iconDCF2x()));
+      register("NAMESPACE", NAMESPACE, new ImageResource2x(icons.iconText2x()));
+      register("*.rhistory", RHISTORY, new ImageResource2x(icons.iconRhistory2x()));
+      register("*.rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.rnw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
       register("*.rtex", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
       register("*.snw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
       register("*.nw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
-      register("*.tex", TEX, icons.iconTex());
-      register("*.latex", TEX, icons.iconTex());
-      register("*.sty", TEX, icons.iconTex());
-      register("*.cls", TEX, icons.iconTex());
-      register("*.bbl", TEX, icons.iconTex());
-      register("*.dtx", TEX, icons.iconTex());
-      register("*.ins", TEX, icons.iconTex());
+      register("*.tex", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.latex", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.sty", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.cls", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.bbl", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.dtx", TEX, new ImageResource2x(icons.iconTex2x()));
+      register("*.ins", TEX, new ImageResource2x(icons.iconTex2x()));
       register("*.rhtml", RHTML, new ImageResource2x(icons.iconRhtml2x()));
       register("*.htm", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.html", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
-      register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
-      register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
+      register("*.rmd", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
+      register("*.rmarkdown", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
       register("*.nb.html", RNOTEBOOK, new ImageResource2x(icons.iconRnotebook2x()));
       register("*.rpres", RPRESENTATION, new ImageResource2x(icons.iconRpresentation2x()));
-      register("*.md", MARKDOWN, icons.iconMarkdown());
-      register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
-      register("*.markdown*", MARKDOWN, icons.iconMarkdown());
-      register("*.bib", TEXT, icons.iconText());
+      register("*.md", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
+      register("*.mdtxt", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
+      register("*.markdown*", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
+      register("*.bib", TEXT, new ImageResource2x(icons.iconText2x()));
       register("*.c", C, new ImageResource2x(icons.iconC2x()));
       register("*.cpp", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.cc", CPP, new ImageResource2x(icons.iconCpp2x()));
-      register("*.h", H, icons.iconH());
+      register("*.h", H, new ImageResource2x(icons.iconH2x()));
       register("*.hpp", HPP, new ImageResource2x(icons.iconHpp2x()));
-      register("*.f", TEXT, icons.iconText());
-      register("*.Rout.save", TEXT, icons.iconText());
+      register("*.f", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("*.Rout.save", TEXT, new ImageResource2x(icons.iconText2x()));
       register("*.rd", RD, new ImageResource2x(icons.iconRd2x()));
-      register("*.rdata", RDATA, icons.iconRdata());
-      register("*.rda", RDATA, icons.iconRdata());
-      register("*.Rproj", RPROJECT, icons.iconRproject());
+      register("*.rdata", RDATA, new ImageResource2x(icons.iconRdata2x()));
+      register("*.rda", RDATA, new ImageResource2x(icons.iconRdata2x()));
+      register("*.Rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
-      register("*.mmd", MERMAID, icons.iconMermaid());
-      register("*.gv", GRAPHVIZ, icons.iconGraphviz());
-      register("*.dot", GRAPHVIZ, icons.iconGraphviz());
-      register("*.py", PYTHON, icons.iconPython());
-      register("*.sql", SQL, icons.iconSql());
-      register("*.sh", SH, icons.iconSh());
-      register("*.yml", YAML, icons.iconYaml());
-      register("*.yaml", YAML, icons.iconYaml());
-      register("*.xml", XML, icons.iconXml());
+      register("*.mmd", MERMAID, new ImageResource2x(icons.iconMermaid2x()));
+      register("*.gv", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));
+      register("*.dot", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));
+      register("*.py", PYTHON, new ImageResource2x(icons.iconPython2x()));
+      register("*.sql", SQL, new ImageResource2x(icons.iconSql2x()));
+      register("*.sh", SH, new ImageResource2x(icons.iconSh2x()));
+      register("*.yml", YAML, new ImageResource2x(icons.iconYaml2x()));
+      register("*.yaml", YAML, new ImageResource2x(icons.iconYaml2x()));
+      register("*.xml", XML, new ImageResource2x(icons.iconXml2x()));
       register("*.stan", STAN, new ImageResource2x(icons.iconStan2x()));
       
       register("*.clj", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
@@ -400,18 +400,18 @@ public class FileTypeRegistry
       register("*.rs", RUST, new ImageResource2x(icons.iconRust2x()));
       register("*.scala", SCALA, new ImageResource2x(icons.iconScala2x()));
       register("*.snippets", SNIPPETS, new ImageResource2x(icons.iconSnippets2x()));
-      register("*.Rprofvis", PROFILER, icons.iconRprofile());
+      register("*.Rprofvis", PROFILER, new ImageResource2x(icons.iconRprofile2x()));
 
-      registerIcon(".jpg", icons.iconPng());
-      registerIcon(".jpeg", icons.iconPng());
-      registerIcon(".gif", icons.iconPng());
-      registerIcon(".bmp", icons.iconPng());
-      registerIcon(".tiff", icons.iconPng());
-      registerIcon(".tif", icons.iconPng());
-      registerIcon(".png", icons.iconPng());
+      registerIcon(".jpg", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".jpeg", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".gif", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".bmp", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".tiff", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".tif", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".png", new ImageResource2x(icons.iconPng2x()));
 
-      registerIcon(".pdf", icons.iconPdf());
-      registerIcon(".csv", icons.iconCsv());
+      registerIcon(".pdf", new ImageResource2x(icons.iconPdf2x()));
+      registerIcon(".csv", new ImageResource2x(icons.iconCsv2x()));
       registerIcon(".docx", new ImageResource2x(icons.iconWord2x()));
 
       for (FileType fileType : FileType.ALL_FILE_TYPES)
@@ -606,9 +606,9 @@ public class FileTypeRegistry
       if (file.isDirectory())
       {
          if (file.isPublicFolder())
-            return ICONS.iconPublicFolder();
+            return new ImageResource2x(ICONS.iconPublicFolder2x());
          else
-            return ICONS.iconFolder();
+            return new ImageResource2x(ICONS.iconFolder2x());
       }
 
       return getIconForFilename(file.getName());
@@ -624,7 +624,7 @@ public class FileTypeRegistry
       if (icon != null)
          return icon;
 
-      return ICONS.iconText();
+      return new ImageResource2x(ICONS.iconText2x());
    }
 
    private void register(String filespec, FileType fileType, ImageResource icon)

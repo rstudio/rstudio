@@ -24,6 +24,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -148,7 +149,7 @@ public class FilesList extends Composite
             public ImageResource getValue(FileSystemItem object)
             {
                if (object == parentPath_)
-                  return FileIconResources.INSTANCE.iconUpFolder();
+                  return new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x());
                else
                   return fileTypeRegistry.getIconForFile(object);
             }
