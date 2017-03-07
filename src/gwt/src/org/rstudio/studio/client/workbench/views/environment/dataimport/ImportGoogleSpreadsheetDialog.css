@@ -55,8 +55,13 @@
    outline: none;
 }
 
+.spreadsheetIcon {
+   width: 16px;
+   height: 16px;
+}
+
 @sprite .spreadsheetIcon {
-   gwt-image: 'spreadsheet'; 
+   gwt-image: 'spreadsheet_2x'; 
 }
 
 td.iconCell {
