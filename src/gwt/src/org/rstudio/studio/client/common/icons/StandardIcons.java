@@ -50,7 +50,8 @@ public interface StandardIcons extends ClientBundle
    @Source("svn_2x.png")
    ImageResource svn2x();
 
-   ImageResource viewer_window();
+   @Source("viewer_window_2x.png")
+   ImageResource viewer_window2x();
 
    @Source("run_2x.png")
    ImageResource run2x();
