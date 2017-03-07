@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -462,15 +463,15 @@ public class EnvironmentPane extends WorkbenchPane
    private ImageResource imageOfEnvironment(String name, boolean local)
    {
       if (name.endsWith("()"))
-         return EnvironmentResources.INSTANCE.functionEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.functionEnvironment2x());
       else if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
-         return EnvironmentResources.INSTANCE.globalEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.globalEnvironment2x());
       else if (name.startsWith("package:") ||
                name.equals("base") || 
                local)
          return EnvironmentResources.INSTANCE.packageEnvironment();
       else 
-         return EnvironmentResources.INSTANCE.attachedEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.attachedEnvironment2x());
    }
    
    private void setEnvironments(JsArray<EnvironmentFrame> environments)
