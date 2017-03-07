@@ -54,7 +54,7 @@ public class FileTypeRegistry
 
    public static final TextFileType RD =
       new TextFileType("r_doc", "Rd File", EditorLanguage.LANG_RDOC, ".Rd",
-                       ICONS.iconRd(),
+                       new ImageResource2x(ICONS.iconRd2x()),
                        true, // word-wrap
                        true, // source on save aka preview on save
                        false, false, false,
@@ -66,7 +66,7 @@ public class FileTypeRegistry
 
    public static final TextFileType DCF =
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
-                          ICONS.iconDCF(), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconDCF2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
    public static final TextFileType STAN = new StanFileType();
@@ -83,7 +83,7 @@ public class FileTypeRegistry
 
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave",
-          EditorLanguage.LANG_SWEAVE, ".Rnw",ICONS.iconRsweave());
+          EditorLanguage.LANG_SWEAVE, ".Rnw",new ImageResource2x(ICONS.iconRsweave2x()));
 
    public static final TexFileType TEX =
          new TexFileType("tex", "TeX", EditorLanguage.LANG_TEX, ".tex",
@@ -100,7 +100,7 @@ public class FileTypeRegistry
    
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
-                                 ".nb.html", ICONS.iconRnotebook(), true);
+                                 ".nb.html", new ImageResource2x(ICONS.iconRnotebook2x()), true);
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
@@ -111,27 +111,27 @@ public class FileTypeRegistry
 
    public static final RWebContentFileType RHTML =
          new RWebContentFileType("r_html", "R HTML", EditorLanguage.LANG_RHTML,
-                              ".Rhtml", ICONS.iconRhtml(), false);
+                              ".Rhtml", new ImageResource2x(ICONS.iconRhtml2x()), false);
 
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_HTML,
-                              ".html", ICONS.iconHTML(), false);
+                              ".html", new ImageResource2x(ICONS.iconHTML2x()), false);
 
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
-                          ICONS.iconCss(),
+                          new ImageResource2x(ICONS.iconCss2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
-                          ICONS.iconJavascript(),
+                          new ImageResource2x(ICONS.iconJavascript2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
    
    public static final TextFileType JSON =
          new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",
-                          ICONS.iconJavascript(),
+                          new ImageResource2x(ICONS.iconJavascript2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
    
@@ -160,9 +160,9 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false);
    
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), true, false);
-   public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false, false);
-   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true, false);
-   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true, true);
+   public static final TextFileType C = new CppFileType("c", ".c", new ImageResource2x(ICONS.iconC2x()), false, false);
+   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", new ImageResource2x(ICONS.iconHpp2x()), true, false);
+   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", new ImageResource2x(ICONS.iconCpp2x()), true, true);
    
    public static final TextFileType CLOJURE = 
          new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", new ImageResource2x(ICONS.iconClojure2x()),
@@ -294,7 +294,7 @@ public class FileTypeRegistry
       register("README", TEXT, icons.iconText());
       register(".gitignore", TEXT, icons.iconText());
       register(".Rbuildignore", TEXT, icons.iconText());
-      register("packrat.lock", DCF, icons.iconDCF());
+      register("packrat.lock", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
@@ -302,7 +302,7 @@ public class FileTypeRegistry
       register("Rprofile.site", R, icons.iconRprofile());
       register(".Renviron", SH, icons.iconSh());
       register("Renviron.site", SH, icons.iconSh());
-      register("DESCRIPTION", DCF, icons.iconDCF());
+      register("DESCRIPTION", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("INDEX", TEXT, icons.iconText());
       register("LICENCE", TEXT, icons.iconText());
       register("MD5", TEXT, icons.iconText());
@@ -326,14 +326,14 @@ public class FileTypeRegistry
       register("Makevars", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makevars.in", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("Makevars.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
-      register("TUTORIAL", DCF, icons.iconDCF());
+      register("TUTORIAL", DCF, icons.iconDCF2x());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
-      register("*.rnw", SWEAVE, icons.iconRsweave());
-      register("*.rtex", SWEAVE, icons.iconRsweave());
-      register("*.snw", SWEAVE, icons.iconRsweave());
-      register("*.nw", SWEAVE, icons.iconRsweave());
+      register("*.rnw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
+      register("*.rtex", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
+      register("*.snw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
+      register("*.nw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));
       register("*.tex", TEX, icons.iconTex());
       register("*.latex", TEX, icons.iconTex());
       register("*.sty", TEX, icons.iconTex());
@@ -341,32 +341,32 @@ public class FileTypeRegistry
       register("*.bbl", TEX, icons.iconTex());
       register("*.dtx", TEX, icons.iconTex());
       register("*.ins", TEX, icons.iconTex());
-      register("*.rhtml", RHTML, icons.iconRhtml());
-      register("*.htm", HTML, icons.iconHTML());
-      register("*.html", HTML, icons.iconHTML());
-      register("*.css", CSS, icons.iconCss());
-      register("*.js", JS, icons.iconJavascript());
-      register("*.json", JSON, icons.iconJavascript());
+      register("*.rhtml", RHTML, new ImageResource2x(icons.iconRhtml2x()));
+      register("*.htm", HTML, new ImageResource2x(icons.iconHTML2x()));
+      register("*.html", HTML, new ImageResource2x(icons.iconHTML2x()));
+      register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
+      register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
+      register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
-      register("*.nb.html", RNOTEBOOK, icons.iconRnotebook());
-      register("*.rpres", RPRESENTATION, icons.iconRpresentation());
+      register("*.nb.html", RNOTEBOOK, new ImageResource2x(icons.iconRnotebook2x()));
+      register("*.rpres", RPRESENTATION, new ImageResource2x(icons.iconRpresentation2x()));
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
       register("*.markdown*", MARKDOWN, icons.iconMarkdown());
       register("*.bib", TEXT, icons.iconText());
-      register("*.c", C, icons.iconC());
-      register("*.cpp", CPP, icons.iconCpp());
-      register("*.cc", CPP, icons.iconCpp());
+      register("*.c", C, new ImageResource2x(icons.iconC2x()));
+      register("*.cpp", CPP, new ImageResource2x(icons.iconCpp2x()));
+      register("*.cc", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.h", H, icons.iconH());
-      register("*.hpp", HPP, icons.iconHpp());
+      register("*.hpp", HPP, new ImageResource2x(icons.iconHpp2x()));
       register("*.f", TEXT, icons.iconText());
       register("*.Rout.save", TEXT, icons.iconText());
-      register("*.rd", RD, icons.iconRd());
+      register("*.rd", RD, new ImageResource2x(icons.iconRd2x()));
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
-      register("*.dcf", DCF, icons.iconDCF());
+      register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.mmd", MERMAID, icons.iconMermaid());
       register("*.gv", GRAPHVIZ, icons.iconGraphviz());
       register("*.dot", GRAPHVIZ, icons.iconGraphviz());
@@ -412,7 +412,7 @@ public class FileTypeRegistry
 
       registerIcon(".pdf", icons.iconPdf());
       registerIcon(".csv", icons.iconCsv());
-      registerIcon(".docx", icons.iconWord());
+      registerIcon(".docx", new ImageResource2x(icons.iconWord2x()));
 
       for (FileType fileType : FileType.ALL_FILE_TYPES)
       {

@@ -45,24 +45,52 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconMermaid();
    ImageResource iconGraphviz();
    ImageResource iconH();
-   ImageResource iconC();
-   ImageResource iconHpp();
-   ImageResource iconCpp();
-   ImageResource iconHTML();
-   ImageResource iconCss();
-   ImageResource iconJavascript();
-   ImageResource iconRsweave();
-   ImageResource iconRd();
-   ImageResource iconRhtml();
    ImageResource iconRmarkdown();
-   ImageResource iconRnotebook();
-   ImageResource iconRpresentation();
+
+   @Source("iconC_2x.png")
+   ImageResource iconC2x();
+
+   @Source("iconHpp_2x.png")
+   ImageResource iconHpp2x();
+
+   @Source("iconCpp_2x.png")
+   ImageResource iconCpp2x();
+
+   @Source("iconHTML_2x.png")
+   ImageResource iconHTML2x();
+
+   @Source("iconCss_2x.png")
+   ImageResource iconCss2x();
+
+   @Source("iconJavascript_2x.png")
+   ImageResource iconJavascript2x();
+
+   @Source("iconRsweave_2x.png")
+   ImageResource iconRsweave2x();
+
+   @Source("iconRd_2x.png")
+   ImageResource iconRd2x();
+
+   @Source("iconRhtml_2x.png")
+   ImageResource iconRhtml2x();
+
+   @Source("iconRnotebook_2x.png")
+   ImageResource iconRnotebook2x();
+
+   @Source("iconRpresentation_2x.png")
+   ImageResource iconRpresentation2x();
+
+   @Source("iconWord_2x.png")
+   ImageResource iconWord2x();
+
+   @Source("iconDCF_2x.png")
+   ImageResource iconDCF2x();
+
    @Source("iconSourceViewer_2x.png")
    ImageResource iconSourceViewer2x();
+
    @Source("iconProfiler_2x.png")
    ImageResource iconProfiler2x();
-   ImageResource iconWord();
-   ImageResource iconDCF();
    
    // Ace modes
    @Source("iconClojure_2x.png")
