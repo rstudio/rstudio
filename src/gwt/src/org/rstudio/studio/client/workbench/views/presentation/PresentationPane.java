@@ -33,6 +33,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
@@ -97,7 +98,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
          
          ToolbarButton moreButton = new ToolbarButton("More",
-                                                      StandardIcons.INSTANCE.more_actions(),
+                                                      new ImageResource2x(
+                                                         StandardIcons.INSTANCE.more_actions2x()),
                                                       moreMenu);
 
          toolbar.addRightWidget(moreButton);

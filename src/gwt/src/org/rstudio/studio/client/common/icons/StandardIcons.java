@@ -29,7 +29,9 @@ public interface StandardIcons extends ClientBundle
    ImageResource go_up();
    ImageResource right_arrow();
    ImageResource click_feedback();
-   ImageResource more_actions();
+
+   @Source("more_actions_2x.png")
+   ImageResource more_actions2x();
 
    @Source("import_dataset_2x.png")
    ImageResource import_dataset2x();
@@ -49,7 +51,7 @@ public interface StandardIcons extends ClientBundle
 
    @Source("mermaid_2x.png")
    ImageResource mermaid();
-   
+
    ImageResource export_menu();
    ImageResource functionLetter();
    ImageResource methodLetter();
