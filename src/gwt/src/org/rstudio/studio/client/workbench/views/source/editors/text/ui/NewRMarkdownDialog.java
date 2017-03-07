@@ -160,8 +160,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    public interface Resources extends ClientBundle
    {
-      @Source("MarkdownPresentationIcon.png")
-      ImageResource presentationIcon();
+      @Source("MarkdownPresentationIcon_2x.png")
+      ImageResource presentationIcon2x();
 
       @Source("MarkdownDocumentIcon.png")
       ImageResource documentIcon2x();
@@ -218,7 +218,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          } 
          else if (templateName.equals(RmdTemplateData.PRESENTATION_TEMPLATE))
          {
-            img = resources.presentationIcon();
+            img = new ImageResource2x(resources.presentationIcon2x());
          }
          else
          {
