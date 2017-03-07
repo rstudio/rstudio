@@ -30,6 +30,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
@@ -370,7 +371,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (isCheckable())
       {
          return isChecked() ? 
-            ThemeResources.INSTANCE.menuCheck() :
+            new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
             null;
       } 
       else
