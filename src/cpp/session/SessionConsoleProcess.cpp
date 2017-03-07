@@ -329,7 +329,10 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       {
          std::string inputText = input.text;
 #ifdef _WIN32
-         string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+         if (!options_.smartTerminal)
+         {
+            string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+         }
 #endif
          Error error = ops.writeToStdin(inputText, false);
          if (error)
