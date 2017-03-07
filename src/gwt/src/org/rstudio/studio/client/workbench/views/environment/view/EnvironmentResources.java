@@ -45,8 +45,8 @@ public interface EnvironmentResources extends ClientBundle
    @Source("FunctionEnvironment_2x.png")
    ImageResource functionEnvironment2x();
    
-   @Source("ObjectListView.png")
-   ImageResource objectListView();
+   @Source("ObjectListView_2x.png")
+   ImageResource objectListView2x();
    
    @Source("ObjectGridView.png")
    ImageResource objectGridView();
