@@ -46,7 +46,10 @@ public interface StandardIcons extends ClientBundle
    ImageResource svn();
    ImageResource viewer_window();
    ImageResource run();
+
+   @Source("mermaid_2x.png")
    ImageResource mermaid();
+   
    ImageResource export_menu();
    ImageResource functionLetter();
    ImageResource methodLetter();
