@@ -57,8 +57,10 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconRmarkdown();
    ImageResource iconRnotebook();
    ImageResource iconRpresentation();
-   ImageResource iconSourceViewer();
-   ImageResource iconProfiler();
+   @Source("iconSourceViewer_2x.png")
+   ImageResource iconSourceViewer2x();
+   @Source("iconProfiler_2x.png")
+   ImageResource iconProfiler2x();
    ImageResource iconWord();
    ImageResource iconDCF();
    
