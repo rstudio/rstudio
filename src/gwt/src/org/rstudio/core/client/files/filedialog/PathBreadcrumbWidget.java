@@ -142,7 +142,7 @@ public class PathBreadcrumbWidget
       
       if (projDir != null)
       {
-         Image projIcon = new Image(RES.projectImage());
+         Image projIcon = new Image(new ImageResource2x(RES.projectImage2x()));
          projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
 
          projIcon.addClickHandler(new ClickHandler()
