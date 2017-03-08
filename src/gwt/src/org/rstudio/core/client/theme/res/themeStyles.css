@@ -72,12 +72,12 @@
 @url HORIZONTALHANDLE horizontalHandle;
 @url VERTICALHANDLE verticalHandle;
 @url BACKGROUNDGRADIENT backgroundGradient;
-@url MAXIMIZE maximize;
-@url MAXIMIZESELECTED maximizeSelected;
-@url RESTORE restore;
-@url RESTORESELECTED restoreSelected;
-@url MINIMIZE minimize;
-@url MINIMIZESELECTED minimizeSelected;
+@url MAXIMIZE maximize2x;
+@url MAXIMIZESELECTED maximizeSelected2x;
+@url RESTORE restore2x;
+@url RESTORESELECTED restoreSelected2x;
+@url MINIMIZE minimize2x;
+@url MINIMIZESELECTED minimizeSelected2x;
 @url PODMINIMIZEDLEFT podMinimizedLeft;
 @url PODMINIMIZEDRIGHT podMinimizedRight;
 @url PODMINIMIZEDTILE podMinimizedTile;
@@ -538,25 +538,31 @@ pre {
 .windowframe .maximize {
    background-image: MAXIMIZE;
    z-index: 50;
+   background-size: 14px 14px;
 }
 .windowframe-maximized .maximize,
 .windowframe-exclusive .maximize {
    background-image: RESTORE;
    z-index: 50;
+   background-size: 14px 14px;
 }
 .windowframe .minimize {
    background-image: MINIMIZE;
    z-index: 50;
+   background-size: 14px 14px;
 }
 .windowframe .maximize:hover {
    background-image: MAXIMIZESELECTED;
+   background-size: 14px 14px;
 }
 .windowframe-maximized .maximize:hover,
 .windowframe-exclusive .maximize:hover {
    background-image: RESTORESELECTED;
+   background-size: 14px 14px;
 }
 .windowframe .minimize:hover {
    background-image: MINIMIZESELECTED;
+   background-size: 14px 14px;
 }
 
 .windowframe-exclusive .minimize {
@@ -621,14 +627,17 @@ pre {
 }
 .minimizedWindow .maximize:hover {
    background-image: MAXIMIZESELECTED;
+   background-size: 14px 14px;
 }
 .minimizedWindow .minimize:hover {
    background-image: RESTORESELECTED;
+   background-size: 14px 14px;
 }
 .minimizedWindow .center {
    background-image: PODMINIMIZEDTILE;
    padding-top: 3px;
    padding-bottom: 5px;
+   background-size: 14px 14px;
 }
 .minimizedWindow .title {
    margin-left: -4px;
