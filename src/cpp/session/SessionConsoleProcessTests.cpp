@@ -33,7 +33,7 @@ context("queue and fetch input")
          boost::make_shared<ConsoleProcessInfo>(
             "test caption", "test title", "fakehandle", 9999 /*terminal*/,
             false /*allowRestart*/, InteractionNever,
-            modules::workbench::TerminalShell::DefaultShell);
+            TerminalShell::DefaultShell);
 
    boost::shared_ptr<ConsoleProcess> pCP =
          ConsoleProcess::createTerminalProcess(procOptions, pCPI);

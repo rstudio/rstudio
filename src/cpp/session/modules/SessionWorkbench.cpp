@@ -666,7 +666,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 Error getTerminalShells(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   AvailableTerminalShells availableShells;
+   console_process::AvailableTerminalShells availableShells;
    json::Array shells;
    availableShells.toJson(&shells);
 

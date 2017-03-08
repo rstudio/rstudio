@@ -21,11 +21,10 @@
 
 namespace rstudio {
 namespace session {
-namespace modules { 
-namespace workbench {
+namespace console_process {
 namespace tests {
 
-using namespace workbench;
+using namespace console_process;
 
 context("session terminal shell tests")
 {
@@ -125,7 +124,6 @@ context("session terminal shell tests")
 }
 
 } // namespace tests
-} // namespace workbench
-} // namespace modules
+} // namespace console_process
 } // namespace session
 } // namespace rstudio

@@ -26,8 +26,7 @@
 
 namespace rstudio {
 namespace session {
-namespace modules { 
-namespace workbench {
+namespace console_process {
 
 namespace {
 
@@ -190,15 +189,14 @@ bool AvailableTerminalShells::getInfo(TerminalShell::TerminalShellType type,
 
 core::FilePath getGitBashShell()
 {
-   core::FilePath gitExePath = git::detectedGitExePath();
+   core::FilePath gitExePath = modules::git::detectedGitExePath();
    if (!gitExePath.empty())
       return gitExePath.parent().childPath("sh.exe");
    else
        return core::FilePath();
 }
 
-} // namespace workbench
-} // namespace modules
+} // namespace console_process
 } // namesapce session
 } // namespace rstudio
 

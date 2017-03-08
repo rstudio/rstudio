@@ -23,8 +23,7 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {      
-namespace workbench {
+namespace console_process {
 
 // Information describing one shell type for embedded interactive terminal
 struct TerminalShell
@@ -90,8 +89,7 @@ private:
 // If we are using git bash then return its path
 core::FilePath getGitBashShell();
 
-} // namespace workbench
-} // namespace handlers
+} // namespace console_process
 } // namespace session
 } // namespace rstudio
 

@@ -34,8 +34,7 @@ const std::string bogusHandle1("unit-test03");
 const int sequence = 1;
 const bool allowRestart = true;
 const InteractionMode mode = InteractionAlways;
-const modules::workbench::TerminalShell::TerminalShellType shellType =
-        modules::workbench::TerminalShell::DefaultShell;
+const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
 
 const size_t maxLines = 1000;
 

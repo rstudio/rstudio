@@ -36,7 +36,7 @@ ConsoleProcessInfo::ConsoleProcessInfo()
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false),
-     shellType_(modules::workbench::TerminalShell::DefaultShell)
+     shellType_(TerminalShell::DefaultShell)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -50,7 +50,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const int terminalSequence,
          bool allowRestart,
          InteractionMode mode,
-         modules::workbench::TerminalShell::TerminalShellType shellType,
+         TerminalShell::TerminalShellType shellType,
          int maxOutputLines)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
@@ -67,7 +67,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
    : caption_(caption), terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(modules::workbench::TerminalShell::DefaultShell)
+     altBufferActive_(false), shellType_(TerminalShell::DefaultShell)
 {
 }
 
@@ -222,7 +222,7 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    pProc->childProcs_ = obj["child_procs"].get_bool();
    int shellTypeInt = obj["shell_type"].get_int();
    pProc->shellType_ =
-      static_cast<modules::workbench::TerminalShell::TerminalShellType>(shellTypeInt);
+      static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
 
    return pProc;
 }
