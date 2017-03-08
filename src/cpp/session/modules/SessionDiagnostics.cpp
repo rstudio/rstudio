@@ -860,7 +860,11 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode;
-   error = core::readStringFromFile(filePath, &rCode);
+   error = core::readStringFromFile(
+            filePath,
+            &rCode,
+            string_utils::LineEndingPosix);
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -975,7 +979,11 @@ bool collectLint(int depth,
       return true;
    
    std::string contents;
-   Error error = core::readStringFromFile(path, &contents);
+   Error error = core::readStringFromFile(
+            path,
+            &contents,
+            string_utils::LineEndingPosix);
+   
    if (error)
    {
       LOG_ERROR(error);
