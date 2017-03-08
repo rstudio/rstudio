@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -84,7 +86,7 @@ public class SVNPane extends WorkbenchPane implements Display
 
       toolbar.addLeftWidget(new ToolbarButton(
           "More",
-          StandardIcons.INSTANCE.more_actions(),
+          new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
           moreMenu));
 
       toolbar.addLeftSeparator();

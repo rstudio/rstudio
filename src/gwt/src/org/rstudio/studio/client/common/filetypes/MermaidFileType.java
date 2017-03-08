@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.filetypes;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
 public class MermaidFileType extends PreviewableFromRFileType
@@ -22,6 +23,6 @@ public class MermaidFileType extends PreviewableFromRFileType
    public MermaidFileType()
    {
       super("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
-            FileIconResources.INSTANCE.iconMermaid(), "DiagrammeR::mermaid");
+            new ImageResource2x(FileIconResources.INSTANCE.iconMermaid2x()), "DiagrammeR::mermaid");
    }
 }

@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -633,7 +634,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       @Override
       public ImageResource getIcon()
       {
-         return FileIconResources.INSTANCE.iconRdata(); 
+         return new ImageResource2x(FileIconResources.INSTANCE.iconRdata2x()); 
       }
 
       @Override

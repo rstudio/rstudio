@@ -16,7 +16,7 @@
                           styleName='{res.themeStyles.searchBox}'/>
             </div>
             <g:Image ui:field='close_'
-                     resource='{res.clearSearch}'
+                     resource='{res.clearSearch2x}'
                      styleName='{res.themeStyles.clearSearch}'/>
          </div>
          <div class="{res.themeStyles.right}"></div>

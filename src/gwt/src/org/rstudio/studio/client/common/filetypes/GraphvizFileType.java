@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.filetypes;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
 public class GraphvizFileType extends PreviewableFromRFileType
@@ -22,6 +23,6 @@ public class GraphvizFileType extends PreviewableFromRFileType
    public GraphvizFileType()
    {
       super("graphviz", "GraphViz", EditorLanguage.LANG_GRAPHVIZ, ".gv",
-            FileIconResources.INSTANCE.iconGraphviz(), "DiagrammeR::grViz");
+            new ImageResource2x(FileIconResources.INSTANCE.iconGraphviz2x()), "DiagrammeR::grViz");
    }
 }

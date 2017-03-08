@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -364,7 +365,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
      
-      ImageResource icon = ThemeResources.INSTANCE.codeTransform();
+      ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));

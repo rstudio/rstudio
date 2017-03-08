@@ -1,6 +1,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.Scheduler;
@@ -44,7 +45,7 @@ public abstract class CheckableMenuItem extends MenuItem
    {
       return AppCommand.formatMenuLabel(
             isChecked() ? 
-                  ThemeResources.INSTANCE.menuCheck() :
+                  new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
                   null,
             getLabel(), "");
       

@@ -33,6 +33,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -119,7 +120,7 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public ImageResource getIcon()
    {
-      return FileIconResources.INSTANCE.iconText();
+      return new ImageResource2x(FileIconResources.INSTANCE.iconText2x());
    }
    
    @Override

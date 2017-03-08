@@ -46,6 +46,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -286,7 +287,7 @@ public class TextEditingTargetWidget
       
       rmdOptionsButton_ = new ToolbarButton(
             null,  
-            StandardIcons.INSTANCE.options(),
+            new ImageResource2x(StandardIcons.INSTANCE.options2x()),
             rmdOptionsMenu, 
             false);
       
@@ -414,7 +415,7 @@ public class TextEditingTargetWidget
       
       toggleDocOutlineButton_ = new LatchingToolbarButton(
          "",
-            StandardIcons.INSTANCE.outline(),
+            new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             new ClickHandler()
             {
                @Override
@@ -499,7 +500,7 @@ public class TextEditingTargetWidget
    {
       if (codeTransform_ == null)
       {
-         ImageResource icon = ThemeResources.INSTANCE.codeTransform();
+         ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
          menu.addItem(commands_.codeCompletion().createMenuItem(false));
@@ -965,7 +966,7 @@ public class TextEditingTargetWidget
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
-      knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
+      knitDocumentButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
       
       runDocumentMenuButton_.setVisible(isShinyPrerendered);
       setKnitDocumentMenuVisible(isShinyPrerendered);

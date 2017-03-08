@@ -87,17 +87,17 @@ public class ChunkOutputWidget extends Composite
    
    public interface Resources extends ClientBundle
    {
-      @Source("ExpandChunkIcon.png")
-      ImageResource expandChunkIcon();
+      @Source("ExpandChunkIcon_2x.png")
+      ImageResource expandChunkIcon2x();
       
-      @Source("CollapseChunkIcon.png")
-      ImageResource collapseChunkIcon();
+      @Source("CollapseChunkIcon_2x.png")
+      ImageResource collapseChunkIcon2x();
 
-      @Source("RemoveChunkIcon.png")
-      ImageResource removeChunkIcon();
+      @Source("RemoveChunkIcon_2x.png")
+      ImageResource removeChunkIcon2x();
 
-      @Source("PopoutChunkIcon.png")
-      ImageResource popoutIcon();
+      @Source("PopoutChunkIcon_2x.png")
+      ImageResource popoutIcon2x();
    }
    
    public interface ChunkStyle extends CssResource

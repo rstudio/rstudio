@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 
 public class CodeBrowserType extends EditableFileType
@@ -22,7 +23,7 @@ public class CodeBrowserType extends EditableFileType
    public CodeBrowserType()
    {
       super("r_code_browser", "R Code Browser",
-            FileIconResources.INSTANCE.iconRdoc());
+            new ImageResource2x(FileIconResources.INSTANCE.iconRdoc2x()));
    }
 
    @Override

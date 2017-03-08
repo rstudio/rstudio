@@ -26,6 +26,7 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
@@ -61,7 +62,7 @@ public class CompileOutputPane extends WorkbenchPane
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
-      ImageResource showLogImage = StandardIcons.INSTANCE.show_log();
+      ImageResource showLogImage = new ImageResource2x(StandardIcons.INSTANCE.show_log2x());
       if (hasLogs_)
       {
          showLogButton_ = new ToolbarButton("View Log", 

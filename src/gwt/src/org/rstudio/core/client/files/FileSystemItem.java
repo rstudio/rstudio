@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
@@ -196,34 +197,34 @@ public class FileSystemItem extends JavaScriptObject
       if (isDirectory())
       {
          if (isPublicFolder())
-            return RES.iconPublicFolder();
+            return new ImageResource2x(RES.iconPublicFolder2x());
          else
-            return RES.iconFolder();
+            return new ImageResource2x(RES.iconFolder2x());
       }
 
       Match m = EXT_PATTERN.match(getName(), 0);
       if (m == null)
-         return RES.iconText();
+         return new ImageResource2x(RES.iconText2x());
 
       String lowerExt = m.getValue().toLowerCase();
       if (lowerExt.equals(".csv"))
       {
-         return RES.iconCsv();
+         return new ImageResource2x(RES.iconCsv2x());
       }
       else if (lowerExt.equals(".pdf"))
       {
-         return RES.iconPdf();
+         return new ImageResource2x(RES.iconPdf2x());
       }
       else if (lowerExt.equals(".jpg") || lowerExt.equals(".jpeg") ||
                lowerExt.equals(".gif") || lowerExt.equals(".bmp")  ||
                lowerExt.equals(".tiff")   || lowerExt.equals(".tif") ||
                lowerExt.equals(".png"))
       {
-         return RES.iconPng();
+         return new ImageResource2x(RES.iconPng2x());
       }
       else
       {
-         return RES.iconText();
+         return new ImageResource2x(RES.iconText2x());
       }
    }
 

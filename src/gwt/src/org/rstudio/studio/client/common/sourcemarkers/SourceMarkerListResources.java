@@ -57,8 +57,8 @@ public interface SourceMarkerListResources extends ClientBundle
    @Source("SourceMarkerList.css")
    Styles styles();
    
-   @Source("images/logContextButton.png")
-   ImageResource logContextButton();
+   @Source("images/logContextButton_2x.png")
+   ImageResource logContextButton2x();
     
    public static SourceMarkerListResources INSTANCE = 
       (SourceMarkerListResources)GWT.create(SourceMarkerListResources.class) ;

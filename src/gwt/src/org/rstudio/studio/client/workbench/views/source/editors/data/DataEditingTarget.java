@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -160,7 +161,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public ImageResource getIcon()
    {
-      return FileIconResources.INSTANCE.iconCsv();
+      return new ImageResource2x(FileIconResources.INSTANCE.iconCsv2x());
    }
 
    private DataItem getDataItem()

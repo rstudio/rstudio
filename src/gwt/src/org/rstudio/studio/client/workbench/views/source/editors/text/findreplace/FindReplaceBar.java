@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckboxLabel;
@@ -40,7 +41,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       @Source("FindReplaceBar.css")
       Styles styles();
 
-      ImageResource findReplace();
+      @Source("findReplace_2x.png")
+      ImageResource findReplace2x();
       ImageResource findReplaceLatched();
    }
 
@@ -318,7 +320,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
    public static ImageResource getFindIcon()
    {
-      return RES.findReplace();
+      return new ImageResource2x(RES.findReplace2x());
    }
    
    public static ImageResource getFindLatchedIcon()

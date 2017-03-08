@@ -42,6 +42,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -161,7 +162,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public ImageResource getIcon()
    {
-      return FileIconResources.INSTANCE.iconProfiler();
+      return new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x());
    }
 
    @Override
