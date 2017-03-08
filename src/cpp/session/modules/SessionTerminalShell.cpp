@@ -31,6 +31,7 @@ namespace workbench {
 
 namespace {
 
+#ifdef _WIN32
 void addShell(const core::FilePath& expectedPath,
               TerminalShell::TerminalShellType type,
               const std::string& title,
@@ -47,6 +48,7 @@ void addShell(const std::string& expectedPath,
 {
    addShell(core::FilePath(expectedPath), type, title, pShells);
 }
+#endif
 
 void scanAvailableShells(std::vector<TerminalShell>* pShells)
 {
@@ -191,6 +193,8 @@ core::FilePath getGitBashShell()
    core::FilePath gitExePath = git::detectedGitExePath();
    if (!gitExePath.empty())
       return gitExePath.parent().childPath("sh.exe");
+   else
+       return core::FilePath();
 }
 
 } // namespace workbench
