@@ -30,8 +30,8 @@ public interface EnvironmentResources extends ClientBundle
    @Source("CollapseIcon_2x.png")
    ImageResource collapseIcon2x();
    
-   @Source("TracedFunction.png")
-   ImageResource tracedFunction();
+   @Source("TracedFunction_2x.png")
+   ImageResource tracedFunction2x();
    
    @Source("GlobalEnvironment_2x.png")
    ImageResource globalEnvironment2x();

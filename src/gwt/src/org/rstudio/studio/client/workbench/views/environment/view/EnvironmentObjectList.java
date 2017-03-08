@@ -192,8 +192,8 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                }
                else if (object.hasTraceInfo())
                {
-                  imageUri = EnvironmentResources.INSTANCE
-                        .tracedFunction().getSafeUri().asString();
+                  imageUri = new ImageResource2x(EnvironmentResources.INSTANCE
+                        .tracedFunction2x()).getSafeUri().asString();
                   imageStyle += (" " + style_.unclickableIcon());
                }
                if (imageUri.length() > 0)
