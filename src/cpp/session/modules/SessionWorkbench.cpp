@@ -864,86 +864,40 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
-Error startShellDialog(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+Error startTerminal(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
 {
    using namespace session::module_context;
    using namespace session::console_process;
 
-   // TERM setting, must correspond to one of the values in the
-   // client-side enum TerminalType. For now we treat XTERM as a
-   // "smart terminal" and anything else as DUMB (RStudio 1.0 behavior).
-   // On Win32, only "smart" is supported at the moment, and the
-   // TerminalType is ignored.
-   std::string term;
-   
-   // initial size of the pseudo-terminal
-   int cols, rows;
-   
-   // terminal handle (empty string if starting a new terminal)
-   std::string termHandle;
-   
-   // terminal caption
+   int cols, rows; // initial pseudo-terminal size
+   std::string termHandle; // empty if starting a new terminal
    std::string termCaption;
-   
-   // terminal title
    std::string termTitle;
-   
-   // terminal sequence
    int termSequence = kNoTerminal;
    
-   // allow process restart with existing handle
-   bool allowRestart;
-
-   // monitor if there are child processes
-   bool reportHasSubprocs;
-
    Error error = json::readParams(request.params,
-                                  &term,
                                   &cols,
                                   &rows,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
-                                  &termSequence,
-                                  &allowRestart,
-                                  &reportHasSubprocs);
+                                  &termSequence);
    if (error)
       return error;
    
-   bool smartTerm = !term.compare("XTERM");
-
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
 #ifndef _WIN32
    // set terminal
-   core::system::setenv(&shellEnv, "TERM", smartTerm ? core::system::kSmartTerm :
-                                                       core::system::kDumbTerm);
-
-   if (!smartTerm)
-   {
-      std::string path = module_context::createAliasedPath(
-               module_context::safeCurrentPath());
-      std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
-      core::system::setenv(&shellEnv, "PS1", prompt);
-   }
+   core::system::setenv(&shellEnv, "TERM", core::system::kSmartTerm);
 
    // set xterm title to show current working directory after each command
-   if (smartTerm)
-   {
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                           "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
-   }
+   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
+                        "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
    
-   // disable screen oriented facillites
-   if (!smartTerm)
-   {
-      core::system::unsetenv(&shellEnv, "EDITOR");
-      core::system::unsetenv(&shellEnv, "VISUAL");
-      core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
-   }
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 #endif
@@ -961,8 +915,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::ProcessOptions options;
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
-   options.smartTerminal = smartTerm;
-   options.reportHasSubprocs = reportHasSubprocs;
+   options.smartTerminal = true;
+   options.reportHasSubprocs = true;
    options.cols = cols;
    options.rows = rows;
 
@@ -971,7 +925,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence, allowRestart,
+            termCaption, termTitle, termHandle, termSequence, true /*allowRestart*/,
             InteractionAlways, console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
@@ -1106,7 +1060,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
-      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog))
+      (bind(registerRpcMethod, "start_terminal", startTerminal))
       (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }
