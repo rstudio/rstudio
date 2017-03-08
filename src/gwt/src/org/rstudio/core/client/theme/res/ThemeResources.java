@@ -163,7 +163,8 @@ public interface ThemeResources extends ClientBundle
    @Source("searchFieldRight.png")
    DataResource searchFieldRight();
 
-   ImageResource clearSearch();
+   @Source("clearSearch_2x.png")
+   ImageResource clearSearch2x();
 
    @Source("workspaceSectionHeaderTile.png")
    DataResource workspaceSectionHeaderTile();
