@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
@@ -152,11 +153,11 @@ public class StatusBarWidget extends Composite
       else if (type == StatusBar.SCOPE_FUNCTION)
          scopeIcon_.setResource(StandardIcons.INSTANCE.functionLetter());
       else if (type == StatusBar.SCOPE_CHUNK)
-         scopeIcon_.setResource(RES.chunk());
+         scopeIcon_.setResource(new ImageResource2x(RES.chunk2x()));
       else if (type == StatusBar.SCOPE_SECTION)
-         scopeIcon_.setResource(RES.section());
+         scopeIcon_.setResource(new ImageResource2x(RES.section2x()));
       else if (type == StatusBar.SCOPE_SLIDE)
-         scopeIcon_.setResource(RES.slide());
+         scopeIcon_.setResource(new ImageResource2x(RES.slide2x()));
       else
          scopeIcon_.setResource(CodeIcons.INSTANCE.function());
    }
@@ -282,9 +283,14 @@ public class StatusBarWidget extends Composite
    
    public interface Resources extends ClientBundle
    {
-      ImageResource chunk();
-      ImageResource section();
-      ImageResource slide();
+      @Source("chunk_2x.png")
+      ImageResource chunk2x();
+
+      @Source("section_2x.png")
+      ImageResource section2x();
+
+      @Source("slide_2x.png")
+      ImageResource slide2x();
    }
    
    public static Resources RES = GWT.create(Resources.class);
