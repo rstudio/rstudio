@@ -472,18 +472,21 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
    }
    
+   @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
    
+   @Override
    public void getTerminalShells(
          ServerRequestCallback<RpcObjectList<TerminalShellInfo>> requestCallback)
    {
 	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
    }
 
+   @Override
    public void startTerminal(
                      int cols, int rows,
                      String terminalHandle,

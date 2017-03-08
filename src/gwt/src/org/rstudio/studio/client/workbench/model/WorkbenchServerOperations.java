@@ -1,7 +1,7 @@
 /*
  * WorkbenchServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
@@ -44,20 +43,23 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FilesServerOperations,
@@ -119,7 +121,10 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
-   
+  
+   void getTerminalShells(
+         ServerRequestCallback<RpcObjectList<TerminalShellInfo>> requestCallback);
+
    /**
     * Start a terminal session
     * 
