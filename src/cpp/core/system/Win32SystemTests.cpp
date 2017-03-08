@@ -16,6 +16,7 @@
 #ifdef _WIN32
 
 #include <core/system/System.hpp>
+#include <core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
@@ -35,7 +36,19 @@ TEST_CASE("Win32SystemTests")
 
    SECTION("Test Win7 or Later")
    {
-      CHECK(isWin7OrLater());
+      if (isWin7OrLater())
+      {
+         CHECK(isVistaOrLater());
+      }
+   }
+
+   SECTION("Test Win10 or Later")
+   {
+      if (isWin10OrLater())
+      {
+         CHECK(isWin7OrLater());
+         CHECK(isVistaOrLater());
+      }
    }
 
    SECTION("Expand Empty Environment Variable")
@@ -73,6 +86,38 @@ TEST_CASE("Win32SystemTests")
       FilePath command = expandComSpec();
       CHECK_FALSE(command.empty());
       CHECK(command.exists());
+   }
+
+   SECTION("Windows architecture bitness assumptions")
+   {
+      std::string windir;
+      Error err = expandEnvironmentVariables("%windir%", &windir);
+      FilePath windirPath(windir);
+      CHECK(windirPath.exists());
+
+      core::FilePath sysWowPath(windir + "\\" + "syswow64");
+      core::FilePath sysNativePath(windir + "\\" + "sysnative");
+      core::FilePath sys32Path(windir + "\\" + "system32");
+
+      CHECK(sys32Path.exists());
+
+      if (!isWin64())
+      {
+         CHECK_FALSE(isCurrentProcessWin64());
+         CHECK_FALSE(sysWowPath.exists());
+         CHECK_FALSE(sysNativePath.exists());
+      }
+      else
+      {
+         if (isCurrentProcessWin64())
+         {
+            CHECK(sysWowPath.exists());
+         }
+         else
+         {
+            CHECK(sysNativePath.exists());
+         }
+      }
    }
 }
 

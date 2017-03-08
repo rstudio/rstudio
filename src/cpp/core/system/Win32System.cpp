@@ -222,7 +222,12 @@ void log(LogLevel logLevel, const std::string& message)
 bool isWin64()
 {
    return !getenv("PROCESSOR_ARCHITEW6432").empty()
-         || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
+      || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
+}
+
+bool isCurrentProcessWin64()
+{
+   return getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
 bool isVistaOrLater()
@@ -253,6 +258,23 @@ bool isWin7OrLater()
       // 6.0 Vista, 6.1 Win7, 6.2 Win8, 6.3 Win8.1, >6 is Win10+
       return osVersion.dwMajorVersion > 6 ||
              osVersion.dwMajorVersion == 6 && osVersion.dwMinorVersion > 0;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return false;
+   }
+}
+
+bool isWin10OrLater()
+{
+   OSVERSIONINFOA osVersion;
+   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
+   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+   if (::GetVersionExA(&osVersion))
+   {
+      return osVersion.dwMajorVersion > 6;
    }
    else
    {

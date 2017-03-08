@@ -51,6 +51,7 @@
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
+#include "SessionTerminalShell.hpp"
 
 #include "SessionSpelling.hpp"
 
@@ -633,9 +634,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    // if we are using git bash then return its path
    if (git::isGitEnabled() && userSettings().vcsUseGitBash())
    {
-      FilePath gitExePath = git::detectedGitExePath();
-      if (!gitExePath.empty())
-         terminalPath = gitExePath.parent().childPath("sh.exe");
+      terminalPath = getGitBashShell();
    }
 
 #elif defined(__APPLE__)
@@ -660,6 +659,20 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
                   module_context::shellWorkingDirectory().absolutePath();
    optionsJson["extra_path_entries"] = extraPathEntries;
    pResponse->setResult(optionsJson);
+
+   return Success();
+}
+
+Error getTerminalShells(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   AvailableTerminalShells availableShells;
+   json::Array shells;
+   availableShells.toJson(&shells);
+
+   json::Object results;
+   results["shells"] = shells;
+   pResponse->setResult(results);
 
    return Success();
 }
@@ -1091,6 +1104,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
+      (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "start_shell_dialog", startShellDialog))
       (bind(registerRpcMethod, "execute_code", executeCode));

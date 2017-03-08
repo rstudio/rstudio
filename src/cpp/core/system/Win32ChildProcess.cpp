@@ -199,29 +199,7 @@ void ChildProcess::init(const ProcessOptions& options)
 {
    options_ = options;
 
-   // RSTUDIO_PTY_CONERR runtime enabling of CONERR channel with
-   // winpty agent. For testing/debugging.
-   std::string envVar = "%RSTUDIO_PTY_CONERR%";
-   std::string conErr;
-   Error err = expandEnvironmentVariables(envVar, &conErr);
-   if (!err && !conErr.compare("1"))
-      options_.pseudoterminal.get().conerr = true;
-
    // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
-
-   // RSTUDIO_PTY_TERM environment variable for easier testing of
-   // other potential terminal shell programs. The path must be
-   // in the context of a 32-bit application, even if running 64-bit
-   // rsession. So, for example, 64-bit PowerShell would be
-   // %windir%\sysnative\windowspowershell\v1.0\powershell.exe
-   envVar = "%RSTUDIO_PTY_TERM%";
-   std::string rstudioTerm;
-   err = expandEnvironmentVariables(envVar, &rstudioTerm);
-   if (!err && rstudioTerm.compare(envVar))
-   {
-      exe_ = rstudioTerm;
-      return;
-   }
 
    FilePath cmd = expandComSpec();
    if (!cmd.exists())
