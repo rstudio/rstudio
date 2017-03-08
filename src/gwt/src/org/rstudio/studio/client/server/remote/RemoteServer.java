@@ -488,6 +488,7 @@ public class RemoteServer implements Server
 
    @Override
    public void startTerminal(
+                     int shellType,
                      int cols, int rows,
                      String terminalHandle,
                      String caption,
@@ -496,12 +497,13 @@ public class RemoteServer implements Server
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(cols));
-      params.set(1, new JSONNumber(rows));
-      params.set(2, new JSONString(StringUtil.notNull(terminalHandle)));
-      params.set(3, new JSONString(StringUtil.notNull(caption)));
-      params.set(4, new JSONString(StringUtil.notNull(title)));
-      params.set(5, new JSONNumber(sequence));
+      params.set(0, new JSONNumber(shellType));
+      params.set(1, new JSONNumber(cols));
+      params.set(2, new JSONNumber(rows));
+      params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
+      params.set(4, new JSONString(StringUtil.notNull(caption)));
+      params.set(5, new JSONString(StringUtil.notNull(title)));
+      params.set(6, new JSONNumber(sequence));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,

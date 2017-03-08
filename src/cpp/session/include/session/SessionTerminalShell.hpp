@@ -36,14 +36,14 @@ struct TerminalShell
    {
       DefaultShell = 0, // Bash (Mac/Linux), %comspec% on Windows
 
-#if defined(_WIN32)
-      GitBash      = 1, // Bash from Windows Git
-      WSLBash      = 2, // Windows Services for Linux (64-bit Windows-10 only)
-      Cmd32        = 3, // Windows command shell (32-bit)
-      Cmd64        = 4, // Windows command shell (64-bit)
-      PS32         = 5, // PowerShell (32-bit)
-      PS64         = 6  // PowerShell (64-bit)
-#endif
+      GitBash      = 1, // Win32: Bash from Windows Git
+      WSLBash      = 2, // Win32: Windows Services for Linux (64-bit Windows-10 only)
+      Cmd32        = 3, // Win32: Windows command shell (32-bit)
+      Cmd64        = 4, // Win32: Windows command shell (64-bit)
+      PS32         = 5, // Win32: PowerShell (32-bit)
+      PS64         = 6, // Win32: PowerShell (64-bit)
+
+      Max          = PS64
    };
 
    TerminalShell()

@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionTerminalShell.hpp"
+#include <session/SessionTerminalShell.hpp>
 
 #include <boost/foreach.hpp>
 

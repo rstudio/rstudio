@@ -20,6 +20,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <session/SessionTerminalShell.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -53,12 +55,20 @@ private:
    ConsoleProcessInfo();
 
 public:
+   // constructor for interactive terminals
    ConsoleProcessInfo(
          const std::string& caption,
          const std::string& title,
          const std::string& handle,
-         const int terminalSequence,
+         int terminalSequence,
          bool allowRestart,
+         InteractionMode mode,
+         modules::workbench::TerminalShell::TerminalShellType shellType,
+         int maxOutputLines = kDefaultMaxOutputLines);
+
+   // constructor for non-terminals
+   ConsoleProcessInfo(
+         const std::string& caption,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
@@ -111,6 +121,12 @@ public:
    void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }
    bool getHasChildProcs() const { return childProcs_; }
 
+   // What type of shell is this child process running in?
+   modules::workbench::TerminalShell::TerminalShellType getShellType() const
+   {
+      return shellType_;
+   }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -131,6 +147,7 @@ private:
    boost::optional<int> exitCode_;
    bool childProcs_;
    bool altBufferActive_;
+   modules::workbench::TerminalShell::TerminalShellType shellType_;
 };
 
 } // namespace console_process

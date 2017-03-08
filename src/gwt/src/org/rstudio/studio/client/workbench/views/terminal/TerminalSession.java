@@ -110,7 +110,8 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(getCols(), getRows(), getHandle(), getCaption(), 
+      server_.startTerminal(TerminalShellInfo.SHELL_DEFAULT,
+            getCols(), getRows(), getHandle(), getCaption(), 
             getTitle(), getSequence(), new ServerRequestCallback<ConsoleProcess>()
       {
          @Override

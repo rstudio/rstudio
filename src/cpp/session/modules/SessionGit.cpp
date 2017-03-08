@@ -331,9 +331,8 @@ protected:
          options.workingDir = workingDir.get();
 
       boost::shared_ptr<ConsoleProcessInfo> pCPI =
-            boost::make_shared<ConsoleProcessInfo>(
-               caption, "" /*title*/, "" /*handle*/, kNoTerminal,
-               false /*allowRestart*/, console_process::InteractionNever);
+            boost::make_shared<ConsoleProcessInfo>(caption,
+                                                   console_process::InteractionNever);
       
 #ifdef _WIN32
       *ppCP = ConsoleProcess::create(gitBin(), args.args(), options, pCPI);

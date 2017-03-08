@@ -138,6 +138,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * above the terminal pane (e.g. show current working directory via bash's
     * PROMPT_COMMAND feature.</p>
     * 
+    * @param shellType one of TerminalShellInfo SHELL_* enum values
     * @param cols initial number of text columns for pseudoterminal
     * @param rows initial number of text rows for pseudoterminal
     * @param handle initial terminal handle (pass empty or null string for new terminal)
@@ -146,8 +147,9 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param sequence relative order of terminal creation (1-based)
     * @param requestCallback callback from server upon completion
     */
-   void startTerminal(int cols, int rows, String handle, String caption, String title,
-                      int sequence, ServerRequestCallback<ConsoleProcess> requestCallback);
+   void startTerminal(int shellType, int cols, int rows, String handle, 
+                      String caption, String title, int sequence, 
+                      ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

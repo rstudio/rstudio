@@ -47,11 +47,11 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/RVersionSettings.hpp>
+#include <session/SessionTerminalShell.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
-#include "SessionTerminalShell.hpp"
 
 #include "SessionSpelling.hpp"
 
@@ -870,6 +870,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    using namespace session::module_context;
    using namespace session::console_process;
 
+   int shellTypeInt;
    int cols, rows; // initial pseudo-terminal size
    std::string termHandle; // empty if starting a new terminal
    std::string termCaption;
@@ -877,6 +878,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    int termSequence = kNoTerminal;
    
    Error error = json::readParams(request.params,
+                                  &shellTypeInt,
                                   &cols,
                                   &rows,
                                   &termHandle,
@@ -885,6 +887,17 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termSequence);
    if (error)
       return error;
+
+#ifndef _WIN32
+   TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+#else
+   TerminalShell::TerminalShellType shellType =
+         static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
+   if (shellType < TerminalShell::DefaultShell || shellType > TerminalShell::Max)
+   {
+       shellType = TerminalShell::DefaultShell;
+   }
+#endif
    
    // configure environment for shell
    core::system::Options shellEnv;
@@ -926,7 +939,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
             termCaption, termTitle, termHandle, termSequence, true /*allowRestart*/,
-            InteractionAlways, console_process::kDefaultTerminalMaxOutputLines);
+            InteractionAlways, shellType, console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
