@@ -26,7 +26,9 @@ public interface StandardIcons extends ClientBundle
    @Source("chunk_menu_2x.png")
    ImageResource chunk_menu2x();
 
-   ImageResource go_up();
+   @Source("go_up_2x.png")
+   ImageResource go_up2x();
+
    ImageResource right_arrow();
    ImageResource click_feedback();
 
