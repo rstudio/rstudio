@@ -25,7 +25,7 @@ import com.google.gwt.user.cellview.client.Column;
 
 public class ImageButtonColumn<T> extends Column<T, String>
 {
-   public ImageButtonColumn(final ImageResource image,
+   public ImageButtonColumn(final ImageResource2x image,
                             final OperationWithInput<T> onClick,
                             final String title)
    {
@@ -39,13 +39,7 @@ public class ImageButtonColumn<T> extends Column<T, String>
             {
                sb.appendHtmlConstant("<span title=\"" + title + "\" " +
                                      "style=\"cursor: pointer;\">");
-               sb.appendHtmlConstant("<img src=\"");
-               sb.appendHtmlConstant(image.getSafeUri().asString());
-               sb.appendHtmlConstant("\" width=\"");
-               sb.appendHtmlConstant(new Integer(image.getWidth()).toString());
-               sb.appendHtmlConstant("\" height=\"");
-               sb.appendHtmlConstant(new Integer(image.getHeight()).toString());
-               sb.appendHtmlConstant("\">");
+               sb.appendHtmlConstant(image.getSafeHtml());
                sb.appendHtmlConstant("</span>");
             }
          }                                

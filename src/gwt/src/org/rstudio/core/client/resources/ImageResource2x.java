@@ -18,6 +18,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.model.BootInstance;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeUri;
 
 public class ImageResource2x implements ImageResource
@@ -89,6 +91,21 @@ public class ImageResource2x implements ImageResource
    public boolean isAnimated()
    {
       return getResource().isAnimated();
+   }
+
+   public SafeHtml getSafeHtml()
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+
+      sb.appendHtmlConstant("<img src=\"");
+      sb.appendHtmlConstant(getSafeUri().asString());
+      sb.appendHtmlConstant("\" width=\"");
+      sb.appendHtmlConstant(new Integer(getWidth()).toString());
+      sb.appendHtmlConstant("\" height=\"");
+      sb.appendHtmlConstant(new Integer(getHeight()).toString());
+      sb.appendHtmlConstant("\">");
+
+      return sb.toSafeHtml();
    }
    
    private ImageResource ref_;
