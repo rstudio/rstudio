@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.cellview;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 
 import com.google.gwt.cell.client.ButtonCell;
@@ -39,7 +40,7 @@ public class ImageButtonColumn<T> extends Column<T, String>
             {
                sb.appendHtmlConstant("<span title=\"" + title + "\" " +
                                      "style=\"cursor: pointer;\">");
-               sb.appendHtmlConstant(image.getSafeHtml());
+               sb.append(image.getSafeHtml());
                sb.appendHtmlConstant("</span>");
             }
          }                                
