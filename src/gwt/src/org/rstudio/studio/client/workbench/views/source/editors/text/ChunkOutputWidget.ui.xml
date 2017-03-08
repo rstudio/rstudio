@@ -203,7 +203,7 @@
                  ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
-                 resource="{res.removeChunkIcon}"
+                 resource="{res.removeChunkIcon2x}"
                  title="Clear Output"></g:Image>
         <g:Image styleName="{style.expand}" 
                  resource="{res.collapseChunkIcon2x}"
