@@ -634,7 +634,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    // if we are using git bash then return its path
    if (git::isGitEnabled() && userSettings().vcsUseGitBash())
    {
-      terminalPath = getGitBashShell();
+      terminalPath = console_process::getGitBashShell();
    }
 
 #elif defined(__APPLE__)
@@ -888,16 +888,12 @@ Error startTerminal(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-#ifndef _WIN32
-   TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
-#else
    TerminalShell::TerminalShellType shellType =
          static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
    if (shellType < TerminalShell::DefaultShell || shellType > TerminalShell::Max)
    {
        shellType = TerminalShell::DefaultShell;
    }
-#endif
    
    // configure environment for shell
    core::system::Options shellEnv;
