@@ -41,7 +41,7 @@ context("session terminal shell tests")
    test_that("Can generate json array of shells")
    {
       AvailableTerminalShells shells;
-      int origCount = shells.count();
+      size_t origCount = shells.count();
       expect_true(origCount > 0);
       core::json::Array arr;
       shells.toJson(&arr);

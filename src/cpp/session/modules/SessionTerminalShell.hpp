@@ -81,7 +81,7 @@ public:
    bool getInfo(TerminalShell::TerminalShellType type, TerminalShell* pShellInfo) const;
 
    // Number of available shells (including pseudo-shell "default")
-   inline int count() const { return shells_.size(); }
+   inline size_t count() const { return shells_.size(); }
 
 private:
    std::vector<TerminalShell> shells_;

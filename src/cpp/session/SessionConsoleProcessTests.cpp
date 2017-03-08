@@ -59,7 +59,7 @@ context("queue and fetch input")
    {
       const std::string orig = "abcdefghijklmnopqrstuvwxyz";
 
-      for (int i = 0; i < orig.length(); i++)
+      for (size_t i = 0; i < orig.length(); i++)
       {
          std::string oneChar;
          oneChar.push_back(orig[i]);
@@ -83,7 +83,7 @@ context("queue and fetch input")
    {
       const std::string orig = "abcdefghijklmnopqrstuvwxyz";
 
-      for (int i = 0; i < orig.length(); i++)
+      for (size_t i = 0; i < orig.length(); i++)
       {
          std::string oneChar;
          oneChar.push_back(orig[i]);
@@ -121,7 +121,7 @@ context("queue and fetch input")
       input.push_back(ConsoleProcess::Input(10, std::string("D")));
       input.push_back(ConsoleProcess::Input(11, std::string("!")));
 
-      for (int i = 0; i < input.size(); i++)
+      for (size_t i = 0; i < input.size(); i++)
       {
          pCP->enqueInput(input[i]);
       }
@@ -155,7 +155,7 @@ context("queue and fetch input")
          lastAdded = i;
       }
 
-      for (int i = 0; i < input.size(); i++)
+      for (size_t i = 0; i < input.size(); i++)
       {
          pCP->enqueInput(input[i]);
       }
@@ -210,7 +210,7 @@ context("queue and fetch input")
       input.push_back(ConsoleProcess::Input(0, postFlushText));
       expected += postFlushText;
 
-      for (int i = 0; i < input.size(); i++)
+      for (size_t i = 0; i < input.size(); i++)
       {
          pCP->enqueInput(input[i]);
       }
