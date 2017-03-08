@@ -15,7 +15,6 @@
 package org.rstudio.core.client.resources;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.model.BootInstance;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
