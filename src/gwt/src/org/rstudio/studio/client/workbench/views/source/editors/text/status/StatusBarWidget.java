@@ -143,15 +143,15 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setVisible(true);
          
            if (type == StatusBar.SCOPE_CLASS)
-         scopeIcon_.setResource(CodeIcons.INSTANCE.clazz());
+         scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.clazz2x()));
       else if (type == StatusBar.SCOPE_NAMESPACE)
-         scopeIcon_.setResource(CodeIcons.INSTANCE.namespace());
+         scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.namespace2x()));
       else if (type == StatusBar.SCOPE_LAMBDA)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.lambdaLetter());
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.lambdaLetter2x()));
       else if (type == StatusBar.SCOPE_ANON)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.functionLetter());
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
       else if (type == StatusBar.SCOPE_FUNCTION)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.functionLetter());
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
       else if (type == StatusBar.SCOPE_CHUNK)
          scopeIcon_.setResource(new ImageResource2x(RES.chunk2x()));
       else if (type == StatusBar.SCOPE_SECTION)
@@ -159,7 +159,7 @@ public class StatusBarWidget extends Composite
       else if (type == StatusBar.SCOPE_SLIDE)
          scopeIcon_.setResource(new ImageResource2x(RES.slide2x()));
       else
-         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
+         scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.function2x()));
    }
    
    private void initMessage(String message)
