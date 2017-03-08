@@ -22,28 +22,30 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
 
 public class GitStatusRenderer implements SafeHtmlRenderer<String>
 {
    interface StatusResources extends ClientBundle
    {
-      @Source("images/statusAdded.png")
-      ImageResource statusAdded();
-      @Source("images/statusDeleted.png")
-      ImageResource statusDeleted();
-      @Source("images/statusModified.png")
-      ImageResource statusModified();
-      @Source("images/statusNone.png")
-      ImageResource statusNone();
-      @Source("images/statusCopied.png")
-      ImageResource statusCopied();
-      @Source("images/statusUntracked.png")
-      ImageResource statusUntracked();
-      @Source("images/statusUnmerged.png")
-      ImageResource statusUnmerged();
-      @Source("images/statusRenamed.png")
-      ImageResource statusRenamed();
+      @Source("images/statusAdded_2x.png")
+      ImageResource statusAdded2x();
+      @Source("images/statusDeleted_2x.png")
+      ImageResource statusDeleted2x();
+      @Source("images/statusModified_2x.png")
+      ImageResource statusModified2x();
+      @Source("images/statusNone_2x.png")
+      ImageResource statusNone2x();
+      @Source("images/statusCopied_2x.png")
+      ImageResource statusCopied2x();
+      @Source("images/statusUntracked_2x.png")
+      ImageResource statusUntracked2x();
+      @Source("images/statusUnmerged_2x.png")
+      ImageResource statusUnmerged2x();
+      @Source("images/statusRenamed_2x.png")
+      ImageResource statusRenamed2x();
    }
 
    public GitStatusRenderer()
@@ -121,23 +123,23 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       switch (c)
       {
          case 'A':
-            return resources_.statusAdded();
+            return new ImageResource2x(resources_.statusAdded2x());
          case 'M':
-            return resources_.statusModified();
+            return new ImageResource2x(resources_.statusModified2x());
          case 'D':
-            return resources_.statusDeleted();
+            return new ImageResource2x(resources_.statusDeleted2x());
          case 'R':
-            return resources_.statusRenamed();
+            return new ImageResource2x(resources_.statusRenamed2x());
          case 'C':
-            return resources_.statusCopied();
+            return new ImageResource2x(resources_.statusCopied2x());
          case '?':
-            return resources_.statusUntracked();
+            return new ImageResource2x(resources_.statusUntracked2x());
          case 'U':
-            return resources_.statusUnmerged();
+            return new ImageResource2x(resources_.statusUnmerged2x());
          case ' ':
-            return resources_.statusNone();
+            return new ImageResource2x(resources_.statusNone2x());
          default:
-            return resources_.statusNone();
+            return new ImageResource2x(resources_.statusNone2x());
       }
    }
 
