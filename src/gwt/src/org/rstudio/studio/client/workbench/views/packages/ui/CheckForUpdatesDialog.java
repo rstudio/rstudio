@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -84,7 +85,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
      
      ImageButtonColumn<PendingAction> newsColumn = 
         new ImageButtonColumn<PendingAction>(
-          ThemeResources.INSTANCE.newsButton(),
+          new ImageResource2x(ThemeResources.INSTANCE.newsButton(), null),
           new OperationWithInput<PendingAction>() {
             public void execute(PendingAction action)
             {
