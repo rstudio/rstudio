@@ -58,8 +58,8 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       if (str.length() != 2)
          return null;
 
-      ImageResource indexImg = imgForStatus(str.charAt(0));
-      ImageResource treeImg = imgForStatus(str.charAt(1));
+      ImageResource2x indexImg = imgForStatus(str.charAt(0));
+      ImageResource2x treeImg = imgForStatus(str.charAt(1));
 
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.append(SafeHtmlUtils.fromTrustedString(
@@ -69,9 +69,8 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
             SafeHtmlUtils.htmlEscape(descForStatus(str)) +
             "\">"));
 
-      builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(
-            indexImg).getHTML()));
-      builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(treeImg).getHTML()));
+      builder.append(indexImg.getSafeHtml());
+      builder.append(treeImg.getSafeHtml());
 
       builder.appendHtmlConstant("</span>");
 
@@ -118,7 +117,7 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       }
    }
    
-   private ImageResource imgForStatus(char c)
+   private ImageResource2x imgForStatus(char c)
    {
       switch (c)
       {
