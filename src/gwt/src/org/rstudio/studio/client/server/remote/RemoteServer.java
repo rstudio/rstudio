@@ -188,6 +188,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
@@ -476,6 +477,12 @@ public class RemoteServer implements Server
                      ServerRequestCallback<TerminalOptions> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
+   }
+   
+   public void getTerminalShells(
+         ServerRequestCallback<RpcObjectList<TerminalShellInfo>> requestCallback)
+   {
+	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
    }
 
    public void startTerminal(
@@ -5081,6 +5088,7 @@ public class RemoteServer implements Server
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
+   private static final String GET_TERMINAL_SHELLS = "get_terminal_shells";
    private static final String START_TERMINAL = "start_terminal";
    private static final String SEARCH_CODE = "search_code";
    private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
