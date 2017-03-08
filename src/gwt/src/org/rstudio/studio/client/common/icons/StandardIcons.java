@@ -72,7 +72,8 @@ public interface StandardIcons extends ClientBundle
    @Source("lambdaLetter_2x.png")
    ImageResource lambdaLetter2x();
 
-   ImageResource outline();
+   @Source("outline_2x.png")
+   ImageResource outline2x();
 
    @Source("options_2x.png")
    ImageResource options2x();

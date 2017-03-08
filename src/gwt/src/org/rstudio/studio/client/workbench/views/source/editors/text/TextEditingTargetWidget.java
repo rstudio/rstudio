@@ -415,7 +415,7 @@ public class TextEditingTargetWidget
       
       toggleDocOutlineButton_ = new LatchingToolbarButton(
          "",
-            StandardIcons.INSTANCE.outline(),
+            new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             new ClickHandler()
             {
                @Override
