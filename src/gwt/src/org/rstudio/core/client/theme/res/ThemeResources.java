@@ -205,7 +205,8 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource closeChevron();
    
-   ImageResource removePackage();
+   @Source("removePackage_2x.png")
+   ImageResource removePackage2x();
    
    ImageResource newsButton();
    
