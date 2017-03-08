@@ -618,12 +618,14 @@ pre {
    height: 14px;
    background: RESTORE center no-repeat;
    margin: 4px 4px 0 0;
+   background-size: 14px 14px;
 }
 .minimizedWindow .maximize {
    width: 14px;
    height: 14px;
    background: MAXIMIZE center no-repeat;
    margin: 4px 3px 0 0;
+   background-size: 14px 14px;
 }
 .minimizedWindow .maximize:hover {
    background-image: MAXIMIZESELECTED;
@@ -637,7 +639,6 @@ pre {
    background-image: PODMINIMIZEDTILE;
    padding-top: 3px;
    padding-bottom: 5px;
-   background-size: 14px 14px;
 }
 .minimizedWindow .title {
    margin-left: -4px;
