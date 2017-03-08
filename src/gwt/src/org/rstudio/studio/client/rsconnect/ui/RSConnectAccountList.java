@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -46,7 +47,7 @@ public class RSConnectAccountList extends Composite
          HorizontalPanel panel = new HorizontalPanel();
          Image icon = new Image(account.isCloudAccount() ? 
                RSConnectResources.INSTANCE.cloudAccountIconSmall() : 
-               RSConnectResources.INSTANCE.localAccountIconSmall());
+               new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconSmall2x()));
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
          panel.add(icon);
 

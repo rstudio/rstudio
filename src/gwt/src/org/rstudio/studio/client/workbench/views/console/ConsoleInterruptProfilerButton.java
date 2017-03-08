@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import org.rstudio.core.client.layout.DelayFadeInHelper;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
@@ -34,7 +35,7 @@ public class ConsoleInterruptProfilerButton extends Composite
 {
    public static Image CreateProfilerButton()
    {
-      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();
+      ImageResource icon = new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x());
       Image button = new Image(icon);
       button.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLeftImage());
       button.getElement().getStyle().setMarginRight(4,Unit.PX);
@@ -54,7 +55,7 @@ public class ConsoleInterruptProfilerButton extends Composite
       SimplePanel panel = new SimplePanel();
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
       
-      ImageResource icon = FileIconResources.INSTANCE.iconProfiler();
+      ImageResource icon = new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x());
       Image button = CreateProfilerButton();
 
       width_ = icon.getWidth() + 6;

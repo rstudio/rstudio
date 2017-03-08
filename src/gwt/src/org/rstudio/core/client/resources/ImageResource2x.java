@@ -12,27 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.command;
+package org.rstudio.core.client.resources;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.model.BootInstance;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeUri;
 
 public class ImageResource2x implements ImageResource
 {
-   public ImageResource2x(ImageResource ref)
+   public ImageResource2x(ImageResource ref2x)
    {
-      this(ref, null);
+      this(null, ref2x);
    }
 
    public ImageResource2x(ImageResource ref, ImageResource ref2x)
    {
       ref_ = ref;
       ref2x_ = ref2x;
-
-      use2xResolution_ = BootInstance.getInstance().getBootInfo().getUse2xResolution();
    }
 
    private boolean getUse2xResolution()
@@ -92,8 +92,23 @@ public class ImageResource2x implements ImageResource
    {
       return getResource().isAnimated();
    }
+
+   public SafeHtml getSafeHtml()
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+
+      sb.appendHtmlConstant("<img src=\"");
+      sb.appendHtmlConstant(getSafeUri().asString());
+      sb.appendHtmlConstant("\" width=\"");
+      sb.appendHtmlConstant(new Integer(getWidth()).toString());
+      sb.appendHtmlConstant("\" height=\"");
+      sb.appendHtmlConstant(new Integer(getHeight()).toString());
+      sb.appendHtmlConstant("\">");
+
+      return sb.toSafeHtml();
+   }
    
    private ImageResource ref_;
    private ImageResource ref2x_;
-   private boolean use2xResolution_ = false;
+   private boolean use2xResolution_ = true;
 }

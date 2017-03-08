@@ -19,10 +19,13 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -76,7 +79,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(moreButton_ = new ToolbarButton(
             "More",
-            StandardIcons.INSTANCE.more_actions(),
+            new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
             moreMenu));
 
       toolbar.addRightWidget(createBranchToolbarButton_);

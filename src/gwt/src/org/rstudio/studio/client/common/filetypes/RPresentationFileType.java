@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.filetypes;
 
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
 public class RPresentationFileType extends RWebContentFileType
@@ -26,7 +27,7 @@ public class RPresentationFileType extends RWebContentFileType
             "R Presentation", 
             EditorLanguage.LANG_RMARKDOWN,
             ".Rpres", 
-            FileIconResources.INSTANCE.iconRpresentation(), 
+            new ImageResource2x(FileIconResources.INSTANCE.iconRpresentation2x()), 
             true, 
             false);
    }

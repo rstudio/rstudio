@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -60,26 +61,26 @@ class CodeSearchSuggestion implements Suggestion
       switch(sourceItem.getType())
       {
       case SourceItem.FUNCTION:
-         image = StandardIcons.INSTANCE.functionLetter();
+         image = new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x());
          break;
       case SourceItem.METHOD:
-         image = StandardIcons.INSTANCE.methodLetter();
+         image = new ImageResource2x(StandardIcons.INSTANCE.methodLetter2x());
          break;
       case SourceItem.CLASS:
-         image = CodeIcons.INSTANCE.clazz();
+         image = new ImageResource2x(CodeIcons.INSTANCE.clazz2x());
          break;
       case SourceItem.ENUM:
-         image = CodeIcons.INSTANCE.enumType();
+         image = new ImageResource2x(CodeIcons.INSTANCE.enumType2x());
          break;
       case SourceItem.ENUM_VALUE:
-         image = CodeIcons.INSTANCE.enumValue();
+         image = new ImageResource2x(CodeIcons.INSTANCE.enumValue2x());
          break;
       case SourceItem.NAMESPACE:
-         image = CodeIcons.INSTANCE.namespace();
+         image = new ImageResource2x(CodeIcons.INSTANCE.namespace2x());
          break;
       case SourceItem.NONE:
       default:
-         image = CodeIcons.INSTANCE.keyword();
+         image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());
          break;
       }
       

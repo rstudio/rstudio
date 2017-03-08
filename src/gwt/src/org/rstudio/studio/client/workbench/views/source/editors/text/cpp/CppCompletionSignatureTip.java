@@ -1,8 +1,24 @@
+/*
+ * CppCompletionSignatureTip.java
+ *
+ * Copyright (C) 2009-17 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -64,7 +80,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       HorizontalPanel panel = new HorizontalPanel();
       panel.setStyleName(RES.styles().pagingWidget());
       
-      Image upImage = new Image(RES.upArrow());
+      Image upImage = new Image(new ImageResource2x(RES.upArrow2x()));
       upImage.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -78,7 +94,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       pagingLabel_ = new Label();
       panel.add(pagingLabel_);
       
-      Image downImage = new Image(RES.downArrow());
+      Image downImage = new Image(new ImageResource2x(RES.downArrow2x()));
       downImage.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)

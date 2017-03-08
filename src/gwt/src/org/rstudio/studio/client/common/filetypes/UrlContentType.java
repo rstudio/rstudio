@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 
 public class UrlContentType extends EditableFileType
@@ -22,7 +23,7 @@ public class UrlContentType extends EditableFileType
    public UrlContentType()
    {
       super("urlcontent", "Generic Content",
-            FileIconResources.INSTANCE.iconText());
+            new ImageResource2x(FileIconResources.INSTANCE.iconText2x()));
    }
 
    @Override

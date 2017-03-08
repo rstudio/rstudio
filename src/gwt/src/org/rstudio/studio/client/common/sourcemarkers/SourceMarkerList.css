@@ -78,6 +78,12 @@ div.disclosure {
    margin-top: 1px;
    margin-right: 3px;
 }
+
+.selectedRow div.disclosure {
+   width: 20;
+   height: 18;
+}
+
 @sprite .selectedRow div.disclosure {
-   gwt-image: 'logContextButton';
+   gwt-image: 'logContextButton2x';
 }

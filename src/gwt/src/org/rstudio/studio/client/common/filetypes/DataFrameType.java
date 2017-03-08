@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 
 public class DataFrameType extends EditableFileType
@@ -22,7 +23,7 @@ public class DataFrameType extends EditableFileType
    public DataFrameType()
    {
       super("r_dataframe", "R Data Frame",
-            FileIconResources.INSTANCE.iconRdata());
+            new ImageResource2x(FileIconResources.INSTANCE.iconRdata2x()));
    }
 
    @Override

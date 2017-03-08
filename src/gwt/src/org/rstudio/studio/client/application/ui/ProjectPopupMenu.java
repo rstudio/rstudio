@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -78,7 +79,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
           
          toolbarButton_ = new ToolbarButton(
                 buttonText, 
-                RESOURCES.projectMenu(),
+                new ImageResource2x(RESOURCES.projectMenu2x()),
                 this, 
                 true);
           
@@ -169,7 +170,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
 
    interface Resources extends ClientBundle
    {
-      ImageResource projectMenu();
+      @Source("projectMenu_2x.png")
+      ImageResource projectMenu2x();
    }
    
    private void rebuildMenu(final JsArray<SharedProjectDetails> sharedProjects,

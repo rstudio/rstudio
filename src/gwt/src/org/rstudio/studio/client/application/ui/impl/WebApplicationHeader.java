@@ -37,6 +37,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -393,7 +394,7 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
         
-         ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),
+         ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
               new ClickHandler() {
             public void onClick(ClickEvent event)
             {
@@ -510,7 +511,8 @@ public class WebApplicationHeader extends Composite
    
    interface Resources extends ClientBundle
    {
-      ImageResource signOut();
+      @Source("signOut_2x.png")
+      ImageResource signOut2x();
    }
    
    private static final Resources RESOURCES =  

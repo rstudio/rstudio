@@ -131,18 +131,23 @@ public interface ThemeResources extends ClientBundle
    ImageResource menuDownArrow();
    ImageResource linkDownArrow();
 
-   @Source("maximize.png")
-   DataResource maximize();
-   @Source("maximizeSelected.png")
-   DataResource maximizeSelected();
-   @Source("minimize.png")
-   DataResource minimize();
-   @Source("minimizeSelected.png")
-   DataResource minimizeSelected();
-   @Source("restore.png")
-   DataResource restore();
-   @Source("restoreSelected.png")
-   DataResource restoreSelected();
+   @Source("maximize_2x.png")
+   DataResource maximize2x();
+
+   @Source("maximizeSelected_2x.png")
+   DataResource maximizeSelected2x();
+
+   @Source("minimize_2x.png")
+   DataResource minimize2x();
+
+   @Source("minimizeSelected_2x.png")
+   DataResource minimizeSelected2x();
+
+   @Source("restore_2x.png")
+   DataResource restore2x();
+
+   @Source("restoreSelected_2x.png")
+   DataResource restoreSelected2x();
 
    @Source("podMinimizedLeft.png")
    DataResource podMinimizedLeft();
@@ -158,7 +163,8 @@ public interface ThemeResources extends ClientBundle
    @Source("searchFieldRight.png")
    DataResource searchFieldRight();
 
-   ImageResource clearSearch();
+   @Source("clearSearch_2x.png")
+   ImageResource clearSearch2x();
 
    @Source("workspaceSectionHeaderTile.png")
    DataResource workspaceSectionHeaderTile();
@@ -167,10 +173,13 @@ public interface ThemeResources extends ClientBundle
 
    @Source("inlineEditIcon.png")
    DataResource inlineEditIcon();
+
    @Source("inlineDeleteIcon.png")
    DataResource inlineDeleteIcon();
 
-   ImageResource paneLayoutIcon();
+   @Source("paneLayoutIcon_2x.png")
+   ImageResource paneLayoutIcon2x();
+
    ImageResource smallMagGlassIcon();
    ImageResource dropDownArrow();
    ImageResource mediumDropDownArrow();
@@ -191,11 +200,13 @@ public interface ThemeResources extends ClientBundle
    ImageResource syntaxErrorDark();
    
    
-   ImageResource codeTransform();
+   @Source("codeTransform_2x.png")
+   ImageResource codeTransform2x();
 
    ImageResource closeChevron();
    
-   ImageResource removePackage();
+   @Source("removePackage_2x.png")
+   ImageResource removePackage2x();
    
    ImageResource newsButton();
    
@@ -216,13 +227,15 @@ public interface ThemeResources extends ClientBundle
    @Source("handCursor.png")
    DataResource handCursor();
    
-   ImageResource executeChunk();
+   @Source("executeChunk_2x.png")
+   ImageResource executeChunk2x();
    
    ImageResource checkboxOff();
    ImageResource checkboxOn();
    ImageResource checkboxTri();
    
-   ImageResource menuCheck();
+   @Source("menuCheck_2x.png")
+   ImageResource menuCheck2x();
    
    ImageResource user();
 }

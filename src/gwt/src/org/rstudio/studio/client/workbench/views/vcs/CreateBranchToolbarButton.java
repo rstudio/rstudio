@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -49,7 +50,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                                     GitServerOperations gitServer)
    {
       super("Create Branch",
-            StandardIcons.INSTANCE.mermaid(),
+            new ImageResource2x(StandardIcons.INSTANCE.mermaid2x()),
             (ClickHandler) null);
       
       globalDisplay_ = globalDisplay;

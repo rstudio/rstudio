@@ -67,6 +67,8 @@ public class SafeHtmlUtil
    {
       sb.append(SafeHtmlUtil.createOpenTag("img",
                                            "class", style,
+                                           "width", Integer.toString(image.getWidth()),
+                                           "height", Integer.toString(image.getHeight()),
                                            "src", image.getSafeUri().asString()));
       sb.appendHtmlConstant("</img>");   
    }

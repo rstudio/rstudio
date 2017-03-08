@@ -51,6 +51,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.Base64ImageCell;
@@ -158,11 +159,10 @@ public class ConnectionsPane extends WorkbenchPane
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
       connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
       
-      
       // add explore column
       ImageButtonColumn<Connection> exploreColumn = 
             new ImageButtonColumn<Connection>(
-              AbstractImagePrototype.create(RES.connectionExploreButton()),
+              new ImageResource2x(RES.connectionExploreButton2x()),
               new OperationWithInput<Connection>() {
                 @Override
                 public void execute(Connection connection)
@@ -661,7 +661,8 @@ public class ConnectionsPane extends WorkbenchPane
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
       Styles dataGridStyle();
         
-      ImageResource connectionExploreButton();
+      @Source("connectionExploreButton_2x.png")
+      ImageResource connectionExploreButton2x();
    }
    
    public interface Styles extends RStudioDataGridStyle

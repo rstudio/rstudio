@@ -20,12 +20,17 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
+import org.rstudio.core.client.resources.ImageResource_2x;
+
 public interface DataImportResources extends ClientBundle
 {
    public static final DataImportResources INSTANCE = GWT.create(DataImportResources.class);
    
    @Source("copyCodeToClipboard.png")
    ImageResource copyImage();
+
+   @Source("copyCodeToClipboard_2x.png")
+   ImageResource copyImage2x();
    
    interface Style extends CssResource {
    }
