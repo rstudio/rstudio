@@ -74,7 +74,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.child_procs;
    }-*/;
    
-   public final native boolean getShellType() /*-{
+   public final native int getShellType() /*-{
       return this.shell_type;
    }-*/;
 
