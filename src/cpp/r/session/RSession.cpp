@@ -112,7 +112,7 @@ bool s_initialized = false;
 bool s_suspended = false;
 
 // temporarily suppress output
-bool s_suppressOuput = false;
+bool s_suppressOutput = false;
 
 FilePath rHistoryFilePath()
 {
@@ -826,7 +826,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
 {
    try
    {
-      if (!s_suppressOuput)
+      if (!s_suppressOutput)
       {
          // get output
          std::string output = std::string(buf,buflen);
@@ -1797,12 +1797,12 @@ FilePath tempDir()
 
 SuppressOutputInScope::SuppressOutputInScope()
 {
-  s_suppressOuput = true;
+  s_suppressOutput = true;
 }
 
 SuppressOutputInScope::~SuppressOutputInScope()
 {
-   s_suppressOuput = false;
+   s_suppressOutput = false;
 }
 
 } // namespace utils
