@@ -83,7 +83,7 @@ public class GeneralPrefs extends JavaScriptObject
       return this.show_last_dot_value;
    }-*/;
    
-   public native final int getDefaultTerminalShell() /*-{
+   public native final int getDefaultTerminalShellValue() /*-{
       return this.default_shell;
    }-*/;
    

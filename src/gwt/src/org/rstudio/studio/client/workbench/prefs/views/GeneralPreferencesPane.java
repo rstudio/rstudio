@@ -69,6 +69,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       session_ = session;
+      server_ = server;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
 
@@ -223,47 +224,12 @@ public class GeneralPreferencesPane extends PreferencesPane
                           prefs_.checkForUpdates()));
       }
       
-      // TODO (gary) temporary pref to hide terminal feature by default on Windows;
-      // remove outer check when ready to enable on Windows
-      if (BrowseCap.isWindowsDesktop() && prefs_.enableXTerm().getValue())
+      if (session.getSessionInfo().getAllowShell() && haveTerminalShellPref())
       {
-         if (session.getSessionInfo().getAllowShell() && haveTerminalShellPref())
-         {
-            terminalShell_ = new SelectWidget("Default terminal shell:");
-            spaced(terminalShell_);
-            add(terminalShell_);
-            terminalShell_.setEnabled(false);
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  server.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
-                  {
-                     @Override
-                     public void onResponseReceived(JsArray<TerminalShellInfo> shells)
-                     {
-                        for (int i = 0; i < shells.length(); i++)
-                        {
-                           TerminalShellInfo info = shells.get(i);
-                           GeneralPreferencesPane.this.terminalShell_.addChoice(
-                                 info.getShellName(), Integer.toString(info.getShellType()));
-                        }
-                        if (GeneralPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
-                        {
-                           GeneralPreferencesPane.this.terminalShell_.setEnabled((true));
-                        }
-                        
-                        // TODO (gary) select the default
-                     }
-
-                     @Override
-                     public void onError(ServerError error) { }
-                  });
-               }
-            });
-
-         }
+         terminalShell_ = new SelectWidget("Default terminal shell:");
+         spaced(terminalShell_);
+         add(terminalShell_);
+         terminalShell_.setEnabled(false);
       }
       
       showServerHomePage_.setEnabled(false);
@@ -282,7 +248,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs rPrefs)
    {
       // general prefs
-      GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
+      final GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
       showServerHomePage_.setEnabled(true);
       reuseSessionsForProjectLinks_.setEnabled(true);
@@ -308,6 +274,42 @@ public class GeneralPreferencesPane extends PreferencesPane
             break; 
       }
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<TerminalShellInfo> shells)
+               {
+                  int currentShell = generalPrefs.getDefaultTerminalShellValue();
+                  int currentShellIndex = 0;
+
+                  GeneralPreferencesPane.this.terminalShell_.getListBox().clear();
+                  
+                  for (int i = 0; i < shells.length(); i++)
+                  {
+                     TerminalShellInfo info = shells.get(i);
+                     GeneralPreferencesPane.this.terminalShell_.addChoice(
+                           info.getShellName(), Integer.toString(info.getShellType()));
+                     if (info.getShellType() == currentShell)
+                        currentShellIndex = i;
+                  }
+                  if (GeneralPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
+                  {
+                     GeneralPreferencesPane.this.terminalShell_.setEnabled((true));
+                     GeneralPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error) { }
+            });
+         }
+      });
 
       loadRData_.setValue(generalPrefs.getLoadRData());
       dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
@@ -372,9 +374,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
          
          int defaultShell = TerminalShellInfo.SHELL_DEFAULT;
-         if (terminalShell_ != null)
+         if (terminalShell_ != null && terminalShell_.isEnabled())
          {
-            // TODO (gary) determine new default shell value
+            int idx = terminalShell_.getListBox().getSelectedIndex();
+            String valStr = terminalShell_.getListBox().getValue(idx);
+            defaultShell = StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
          }
 
          // set general prefs
@@ -432,6 +436,11 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private boolean haveTerminalShellPref()
    {
+      // TODO (gary) temporary pref to hide terminal feature by default on Windows;
+      // remove this check when ready to turn on for Windows
+      if (!BrowseCap.isWindowsDesktop() | !prefs_.enableXTerm().getValue())
+         return false;
+      
       return Desktop.isDesktop() && BrowseCap.isWindows();
    }
 
@@ -453,4 +462,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget terminalShell_;
    private final UIPrefs prefs_;
    private final Session session_;
+   private final Server server_;
 }
