@@ -436,11 +436,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private boolean haveTerminalShellPref()
    {
-      // TODO (gary) temporary pref to hide terminal feature by default on Windows;
-      // remove this check when ready to turn on for Windows
-      if (!BrowseCap.isWindowsDesktop() | !prefs_.enableXTerm().getValue())
-         return false;
-      
       return Desktop.isDesktop() && BrowseCap.isWindows();
    }
 

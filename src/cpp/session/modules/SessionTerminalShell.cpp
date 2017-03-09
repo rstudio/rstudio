@@ -174,6 +174,18 @@ void AvailableTerminalShells::toJson(core::json::Array* pArray) const
 bool AvailableTerminalShells::getInfo(TerminalShell::TerminalShellType type,
                                       TerminalShell* pShellInfo) const
 {
+   if (type == TerminalShell::DefaultShell)
+   {
+      type = userSettings().defaultTerminalShellValue();
+      if (type == TerminalShell::DefaultShell)
+      {
+         // Preference never set; pick first one available
+         if (!shells_.empty())
+         {
+            type = shells_.at(0).type;
+         }
+      }
+   }
    BOOST_FOREACH(const TerminalShell& shell, shells_)
    {
       if (shell.type == type)

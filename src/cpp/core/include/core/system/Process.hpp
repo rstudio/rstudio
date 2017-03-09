@@ -139,8 +139,8 @@ struct ProcessOptions
    // create the process with CREATE_BREAKAWAY_FROM_JOB
    bool breakawayFromJob;
 
-   // consoleio command path
-   std::string consoleIoPath;
+   // terminal shell path
+   FilePath shellPath;
 #endif
 
    bool redirectStdErrToStdOut;

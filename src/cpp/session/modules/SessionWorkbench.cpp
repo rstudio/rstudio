@@ -930,6 +930,18 @@ Error startTerminal(const json::JsonRpcRequest& request,
    options.cols = cols;
    options.rows = rows;
 
+   // set path to shell
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   if (shells.getInfo(shellType, &shell))
+   {
+      options.shellPath = shell.path;
+   }
+
+   // last-ditch, use %comspec%
+   if (!options.shellPath.exists())
+      options.shellPath = core::system::expandComSpec();
+
    if (termCaption.empty())
       termCaption = "Shell";
 
