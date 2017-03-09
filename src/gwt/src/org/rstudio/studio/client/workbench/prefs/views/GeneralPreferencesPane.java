@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,15 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
-import com.google.inject.Inject;
-
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -37,6 +29,9 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.Server;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -45,6 +40,19 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+import com.google.inject.Inject;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -54,6 +62,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UIPrefs prefs,
                                  Session session,
                                  final GlobalDisplay globalDisplay,
+                                 final Server server,
                                  WorkbenchContext context)
    {
       fsContext_ = fsContext;
@@ -214,6 +223,49 @@ public class GeneralPreferencesPane extends PreferencesPane
                           prefs_.checkForUpdates()));
       }
       
+      // TODO (gary) temporary pref to hide terminal feature by default on Windows;
+      // remove outer check when ready to enable on Windows
+      if (BrowseCap.isWindowsDesktop() && prefs_.enableXTerm().getValue())
+      {
+         if (session.getSessionInfo().getAllowShell() && haveTerminalShellPref())
+         {
+            terminalShell_ = new SelectWidget("Default terminal shell:");
+            spaced(terminalShell_);
+            add(terminalShell_);
+            terminalShell_.setEnabled(false);
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  server.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsArray<TerminalShellInfo> shells)
+                     {
+                        for (int i = 0; i < shells.length(); i++)
+                        {
+                           TerminalShellInfo info = shells.get(i);
+                           GeneralPreferencesPane.this.terminalShell_.addChoice(
+                                 info.getShellName(), Integer.toString(info.getShellType()));
+                        }
+                        if (GeneralPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
+                        {
+                           GeneralPreferencesPane.this.terminalShell_.setEnabled((true));
+                        }
+                        
+                        // TODO (gary) select the default
+                     }
+
+                     @Override
+                     public void onError(ServerError error) { }
+                  });
+               }
+            });
+
+         }
+      }
+      
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
@@ -318,6 +370,12 @@ public class GeneralPreferencesPane extends PreferencesPane
                saveAction = SaveAction.SAVEASK; 
                break; 
          }
+         
+         int defaultShell = TerminalShellInfo.SHELL_DEFAULT;
+         if (terminalShell_ != null)
+         {
+            // TODO (gary) determine new default shell value
+         }
 
          // set general prefs
          GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
@@ -328,7 +386,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                                          dirChooser_.getText(),
                                                          getDefaultRVersion(),
                                                          getRestoreProjectRVersion(),
-                                                         showLastDotValue_.getValue());
+                                                         showLastDotValue_.getValue(),
+                                                         defaultShell);
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -371,7 +430,10 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
-    
+   private boolean haveTerminalShellPref()
+   {
+      return Desktop.isDesktop() && BrowseCap.isWindows();
+   }
 
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
@@ -388,6 +450,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
+   private SelectWidget terminalShell_;
    private final UIPrefs prefs_;
    private final Session session_;
 }

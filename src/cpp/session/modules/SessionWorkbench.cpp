@@ -286,6 +286,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    bool reuseSessionsForProjectLinks;
    std::string initialWorkingDir, showUserHomePage;
    json::Object defaultRVersionJson;
+   int defaultTerminalShell;
    error = json::readObject(generalPrefs,
                             "show_user_home_page", &showUserHomePage,
                             "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
@@ -295,7 +296,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "initial_working_dir", &initialWorkingDir,
                             "default_r_version", &defaultRVersionJson,
                             "restore_project_r_version", &restoreProjectRVersion,
-                            "show_last_dot_value", &showLastDotValue);
+                            "show_last_dot_value", &showLastDotValue,
+                            "default_shell", &defaultTerminalShell);
    if (error)
       return error;
 
@@ -311,6 +313,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setShowLastDotValue(showLastDotValue);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   userSettings().setDefaultTerminalShellValue(
+      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
    userSettings().endUpdate();
 
    // refresh environment if lastDotValueChanged
@@ -527,6 +531,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["default_r_version"] = defaultRVersionJson;
    generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
    generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
+   generalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
 
    // get history prefs
    json::Object historyPrefs;
@@ -669,11 +674,7 @@ Error getTerminalShells(const json::JsonRpcRequest& request,
    console_process::AvailableTerminalShells availableShells;
    json::Array shells;
    availableShells.toJson(&shells);
-
-   json::Object results;
-   results["shells"] = shells;
-   pResponse->setResult(results);
-
+   pResponse->setResult(shells);
    return Success();
 }
 

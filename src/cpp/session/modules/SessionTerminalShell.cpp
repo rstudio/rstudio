@@ -51,8 +51,6 @@ void addShell(const std::string& expectedPath,
 
 void scanAvailableShells(std::vector<TerminalShell>* pShells)
 {
-   pShells->push_back(TerminalShell());
-
 #ifdef _WIN32
    // On Vista and above virtual directories allow processes to get at both
    // 32 and 64-bit system binaries (cmd.exe and powershell.exe).
@@ -88,6 +86,8 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
          LOG_ERROR(err);
          return;
       }
+
+      addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", pShells);
 
       std::string cmd32;
       std::string cmd64;
@@ -128,20 +128,18 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       addShell(ps32, TerminalShell::PS32, "Windows PowerShell (32-bit)", pShells);
       addShell(ps64, TerminalShell::PS64, "Windows PowerShell (64-bit)", pShells);
 
-      if (core::system::isWin10OrLater())
+      // Is there a better way to detect WSL? This will match any 64-bit
+      // bash.exe found in same location as the WSL bash.
+      if (core::system::isWin64())
       {
-         // Is there a better way to detect WSL? This will treat any 64-bit
-         // bash.exe found in same location as the WSL bash.
          addShell(bashWSL, TerminalShell::WSLBash,
                   "Bash (Windows Subsystem for Linux)", pShells);
       }
-
-      addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", pShells);
    }
 
    // If nothing found try to add %comspec% so there's something
    // available on Windows.
-   if (pShells->size() < 2)
+   if (pShells->empty())
    {
       addShell(core::system::expandComSpec(),
                TerminalShell::Cmd32, "Command Prompt", pShells);

@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
@@ -60,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FilesServerOperations,
@@ -123,7 +123,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                      ServerRequestCallback<TerminalOptions> requestCallback);
   
    void getTerminalShells(
-         ServerRequestCallback<RpcObjectList<TerminalShellInfo>> requestCallback);
+         ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback);
 
    /**
     * Start a terminal session

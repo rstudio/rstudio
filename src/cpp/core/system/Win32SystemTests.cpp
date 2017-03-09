@@ -42,15 +42,6 @@ TEST_CASE("Win32SystemTests")
       }
    }
 
-   SECTION("Test Win10 or Later")
-   {
-      if (isWin10OrLater())
-      {
-         CHECK(isWin7OrLater());
-         CHECK(isVistaOrLater());
-      }
-   }
-
    SECTION("Expand Empty Environment Variable")
    {
       std::string orig;

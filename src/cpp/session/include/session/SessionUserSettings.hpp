@@ -30,6 +30,8 @@
 
 #include <core/system/FileChangeEvent.hpp>
 
+#include <session/SessionTerminalShell.hpp>
+
 namespace rstudio {
 namespace session {
 
@@ -115,6 +117,9 @@ public:
 
    bool showLastDotValue() const;
    void setShowLastDotValue(bool show);
+
+   console_process::TerminalShell::TerminalShellType defaultTerminalShellValue() const;
+   void setDefaultTerminalShellValue(console_process::TerminalShell::TerminalShellType shell);
 
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);

@@ -481,7 +481,7 @@ public class RemoteServer implements Server
    
    @Override
    public void getTerminalShells(
-         ServerRequestCallback<RpcObjectList<TerminalShellInfo>> requestCallback)
+         ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback)
    {
 	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
    }
