@@ -930,6 +930,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    options.cols = cols;
    options.rows = rows;
 
+#ifdef _WIN32
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;
@@ -941,6 +942,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    // last-ditch, use %comspec%
    if (!options.shellPath.exists())
       options.shellPath = core::system::expandComSpec();
+#endif
 
    if (termCaption.empty())
       termCaption = "Shell";
