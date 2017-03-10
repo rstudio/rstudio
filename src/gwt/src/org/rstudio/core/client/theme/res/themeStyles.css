@@ -1291,11 +1291,9 @@ body.ubuntu_mono .searchBox {
   margin-bottom: 4px;
 }
 
-/* checkboxes on the Cocoa (Mac) desktop client and checks/radio buttons on the
- * Linux desktop client have some rendering and positioning inconsistencies, so
- * we redraw them with CSS. */
+/* checks/radio buttons on the Linux desktop client have some rendering and
+ * positioning inconsistencies, so we redraw them with CSS. */
 
-.macintosh .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-RadioButton input[type="radio"],
 .windows-highdpi .gwt-CheckBox input[type="checkbox"],
@@ -1310,7 +1308,6 @@ body.ubuntu_mono .searchBox {
   margin: 3px 3px 5px 3px;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-CheckBox input[type="checkbox"],
 .windows-highdpi .gwt-CheckBox input[type="checkbox"] {
   -webkit-border-radius: 3px;
@@ -1321,8 +1318,6 @@ body.ubuntu_mono .searchBox {
   -webkit-border-radius: 7px;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:focus,
-.macintosh .gwt-CheckBox input[type="checkbox"]:active,
 .linux .gwt-CheckBox input[type="checkbox"]:focus,
 .linux .gwt-CheckBox input[type="checkbox"]:active,
 .linux .gwt-RadioButton input[type="radio"]:focus,
@@ -1335,7 +1330,6 @@ body.ubuntu_mono .searchBox {
   border-color: #707070;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:checked,
 .linux .gwt-CheckBox input[type="checkbox"]:checked,
 .linux .gwt-RadioButton input[type="radio"]:checked,
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked,
@@ -1344,7 +1338,6 @@ body.ubuntu_mono .searchBox {
   position: relative;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
 .linux .gwt-CheckBox input[type="checkbox"]:checked:before, 
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before {
   background: MACCHECK;
@@ -1355,7 +1348,6 @@ body.ubuntu_mono .searchBox {
   background: RADIOBUTTONON;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
 .linux .gwt-CheckBox input[type="checkbox"]:checked:before,
 .linux .gwt-RadioButton input[type="radio"]:checked:before,
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before,
