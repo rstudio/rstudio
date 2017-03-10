@@ -405,15 +405,30 @@ public:
    {
       using namespace boost;
 
+      // objects to be populated from git's output
       std::vector<FileWithStatus> files;
-
-      std::vector<std::string> lines;
+      
+      // build shell arguments
+      ShellArgs arguments;
+      
+#ifdef _WIN32
+      // by default on Windows, git will return paths which contain characters
+      // not in the ASCII set with a so-called 'quoted octal encoding'.
+      // this is controlled by the 'core.quotepath' configuration option;
+      // by setting this to off we ensure that git will return us a
+      // plain UTF-8 encoded path which requires no further processing
+      arguments << "-c" << "core.quotepath=off";
+#endif
+      
+      arguments << "status" << "--porcelain" << "--" << dir;
+      
       std::string output;
-      Error error = runGit(ShellArgs() << "status" << "--porcelain" << "--" << dir,
-                           &output);
+      Error error = runGit(arguments, &output);
       if (error)
          return error;
-      lines = split(output);
+      
+      // split and parse each line of status output
+      std::vector<std::string> lines = split(output);
 
       for (std::vector<std::string>::iterator it = lines.begin();
            it != lines.end();
@@ -428,21 +443,13 @@ public:
 
          std::string filePath = line.substr(3);
 
-         // git status --porcelain will quote paths that contain special
-         // characters (e.g. spaces on Windows). strip those characters
-         // when encountered
-         std::string::size_type n = filePath.size();
-         if (n >= 2 && filePath[0] == '"' && filePath[n - 1] == '"')
-         {
-            filePath = filePath.substr(1, n - 2);
-            boost::algorithm::replace_all(filePath, "\\\"", "\"");
-         }
-
          // remove trailing slashes
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
             filePath = filePath.substr(0, filePath.size() - 1);
 
-         file.path = root_.childPath(string_utils::systemToUtf8(filePath));
+         // file paths are returned as UTF-8 encoded paths,
+         // so no need to re-encode here
+         file.path = root_.childPath(filePath);
 
          files.push_back(file);
       }
