@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.MultiLineLabel;
@@ -54,7 +55,7 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
 
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
-      Image image = new Image(images.dialog_warning());
+      Image image = new Image(new ImageResource2x(images.dialog_warning2x()));
       horizontalPanel.add(image);
 
       // add message widget

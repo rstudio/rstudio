@@ -23,7 +23,7 @@
       <table class="{style.label}" cellspacing="8" cellpadding="0" align="center">
          <tr>
             <td valign="top">
-               <g:Image resource='{messageDialogImages.dialog_warning}'/>
+               <g:Image resource='{messageDialogImages.dialog_warning2x}'/>
             </td>
             <td valign="top" class="{style.labelCell}">
                <strong>This <span ui:field="subject_"/> is extremely large

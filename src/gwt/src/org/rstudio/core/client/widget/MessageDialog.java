@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 
@@ -109,19 +111,19 @@ public class MessageDialog extends ModalDialogBase
       switch(type_)
       {
       case INFO:
-         image = new Image(images.dialog_info());
+         image = new Image(new ImageResource2x(images.dialog_info2x()));
          break;
       case WARNING:
-         image = new Image(images.dialog_warning());
+         image = new Image(new ImageResource2x(images.dialog_warning2x()));
          break;
       case ERROR:
-         image = new Image(images.dialog_error());
+         image = new Image(new ImageResource2x(images.dialog_error2x()));
          break;
       case QUESTION:
-         image = new Image(images.dialog_question());
+         image = new Image(new ImageResource2x(images.dialog_question2x()));
          break;
       case POPUP_BLOCKED:
-         image = new Image(images.dialog_popup_blocked());
+         image = new Image(new ImageResource2x(images.dialog_popup_blocked2x()));
          break;
       }
       horizontalPanel.add(image);

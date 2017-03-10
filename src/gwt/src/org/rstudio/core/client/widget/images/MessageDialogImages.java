@@ -22,9 +22,18 @@ public interface MessageDialogImages extends ClientBundle
 {
    public static final MessageDialogImages INSTANCE =
                                        GWT.create(MessageDialogImages.class);
-   ImageResource dialog_info();
-   ImageResource dialog_error();
-   ImageResource dialog_warning();
-   ImageResource dialog_question();
-   ImageResource dialog_popup_blocked();
+   @Source("dialog_info_2x.png")
+   ImageResource dialog_info2x();
+
+   @Source("dialog_error_2x.png")
+   ImageResource dialog_error2x();
+
+   @Source("dialog_warning_2x.png")
+   ImageResource dialog_warning2x();
+
+   @Source("dialog_question_2x.png")
+   ImageResource dialog_question2x();
+
+   @Source("dialog_popup_blocked_2x.png")
+   ImageResource dialog_popup_blocked2x();
 }
