@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -43,8 +44,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
       this("New Project", 
            "Create a new project in an empty directory",
            "Create New Project",
-           NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
-           NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
+           new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIcon2x()),
+           new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIconLarge2x()));
    }
    
    public NewDirectoryPage(String title, 

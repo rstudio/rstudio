@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 
 public class SvnPage extends VersionControlPage
@@ -23,8 +24,8 @@ public class SvnPage extends VersionControlPage
       super("Subversion", 
             "Checkout a project from a Subversion repository",
             "Checkout Subversion Repository",
-            NewProjectResources.INSTANCE.svnIcon(),
-            NewProjectResources.INSTANCE.svnIconLarge());
+            new ImageResource2x(NewProjectResources.INSTANCE.svnIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.svnIconLarge2x()));
    }
    
 

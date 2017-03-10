@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
@@ -27,8 +28,8 @@ public class PublishRPubsPage
    public PublishRPubsPage(String title, String subTitle)
    {
       super(title, subTitle, "Publish to RPubs", 
-            RSConnectResources.INSTANCE.rpubsPublish(), 
-            RSConnectResources.INSTANCE.rpubsPublishLarge());
+            new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublish2x()), 
+            new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublishLarge2x()));
    }
 
    @Override

@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -601,7 +602,7 @@ public class RSConnect implements SessionInitHandler,
             }));
             HorizontalPanel panel = new HorizontalPanel();
             Image errorImage = 
-                  new Image(MessageDialogImages.INSTANCE.dialog_error());
+                  new Image(new ImageResource2x(MessageDialogImages.INSTANCE.dialog_error2x()));
             errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);
             errorImage.getElement().getStyle().setMarginRight(1, Unit.EM);
             panel.add(errorImage);

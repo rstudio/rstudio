@@ -18,6 +18,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -145,7 +146,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return res_.iconRMarkdown();
+      return new ImageResource2x(res_.iconRMarkdown2x());
    }
 
    @Override

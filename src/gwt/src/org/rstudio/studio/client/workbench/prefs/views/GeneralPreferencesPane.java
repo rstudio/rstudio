@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -348,7 +349,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconR();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconR2x());
    }
 
    @Override

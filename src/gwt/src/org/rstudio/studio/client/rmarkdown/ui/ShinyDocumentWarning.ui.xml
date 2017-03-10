@@ -15,7 +15,7 @@
 	  }
 	</ui:style>
 	<g:HTMLPanel>
-	<g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon}"></g:Image>
+	<g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon2x}"></g:Image>
 	<g:HTML styleName="{style.warning}">
 	  This R Markdown document contains Shiny content, but was rendered to 
 	  a static file. Shiny content in the document may not appear, and will not

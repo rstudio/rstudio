@@ -45,12 +45,23 @@ public interface PreferencesDialogBaseResources extends ClientBundle
    @Source("PreferencesDialogBase.css")
    Styles styles();
    
-   ImageResource iconCodeEditing();
-   ImageResource iconCompilePdf();
-   ImageResource iconR();
-   ImageResource iconSpelling();
-   ImageResource iconSourceControl();
-   ImageResource iconPublishing();
+   @Source("iconCodeEditing_2x.png")
+   ImageResource iconCodeEditing2x();
+
+   @Source("iconCompilePdf_2x.png")
+   ImageResource iconCompilePdf2x();
+
+   @Source("iconR_2x.png")
+   ImageResource iconR2x();
+
+   @Source("iconSpelling_2x.png")
+   ImageResource iconSpelling2x();
+
+   @Source("iconSourceControl_2x.png")
+   ImageResource iconSourceControl2x();
+
+   @Source("iconPublishing_2x.png")
+   ImageResource iconPublishing2x();
    
    static PreferencesDialogBaseResources INSTANCE = (PreferencesDialogBaseResources)GWT.create(PreferencesDialogBaseResources.class) ;
 }

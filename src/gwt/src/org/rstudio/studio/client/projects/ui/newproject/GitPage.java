@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 
 public class GitPage extends VersionControlPage
@@ -23,8 +24,8 @@ public class GitPage extends VersionControlPage
       super("Git", 
             "Clone a project from a Git repository",
             "Clone Git Repository",
-            NewProjectResources.INSTANCE.gitIcon(),
-            NewProjectResources.INSTANCE.gitIconLarge());
+            new ImageResource2x(NewProjectResources.INSTANCE.gitIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.gitIconLarge2x()));
    }
    
    @Override
