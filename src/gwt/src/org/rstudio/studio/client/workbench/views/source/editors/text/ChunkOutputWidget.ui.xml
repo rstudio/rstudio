@@ -45,6 +45,9 @@
    {
       right: 12px;
       padding: 5px;
+
+      width: 11px !important;
+      height: 10px !important;
    }
    
    .noclear .clear
