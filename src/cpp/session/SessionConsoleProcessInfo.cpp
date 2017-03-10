@@ -118,7 +118,7 @@ std::string ConsoleProcessInfo::getSavedBufferChunk(
    // Read buffer (trims to maxOutputLines_ when chunk zero is requested)
    std::string buffer = console_persist::getSavedBuffer(
             handle_,
-            requestedChunk == 0 ? 0 : maxOutputLines_);
+            requestedChunk == 0 ? maxOutputLines_ : 0);
 
    *pMoreAvailable = false;
 

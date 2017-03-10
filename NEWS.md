@@ -25,6 +25,7 @@
 * New Terminal tab for fluid shell interaction within the IDE
 * Support for xterm emulation including color output and full-screen console apps
 * Support for multiple terminals, each with persistent scrollback buffer
+* Web links in terminal can be clicked and opened in default browser (new tab for server)
 * Windows terminal supports multiple terminal shell types
   * Git Bash, if installed
   * Command Prompt (cmd.exe), 32-bit and 64-bit depending on OS support
