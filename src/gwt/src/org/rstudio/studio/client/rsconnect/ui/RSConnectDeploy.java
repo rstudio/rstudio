@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -959,17 +960,17 @@ public class RSConnectDeploy extends Composite
              contentType_ == RSConnect.CONTENT_TYPE_HTML)
          {
             descriptionImage_.setResource(
-                  RSConnectResources.INSTANCE.previewPlot());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewPlot2x()));
          }
          else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          {
             descriptionImage_.setResource(
-                  RSConnectResources.INSTANCE.previewPresentation());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewPresentation2x()));
          }
          else
          {
             descriptionImage_.setResource(
-                     RSConnectResources.INSTANCE.previewDoc());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewDoc2x()));
          }
       }
       

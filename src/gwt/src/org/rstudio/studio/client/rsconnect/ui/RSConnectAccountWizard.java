@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
@@ -81,8 +82,8 @@ public class RSConnectAccountWizard
    {
       return new NewRSConnectAccountPage("Connect Publishing Account", 
             "Pick an account", "Connect Publishing Account", 
-            RSConnectResources.INSTANCE.publishIcon(),
-            RSConnectResources.INSTANCE.publishIconLarge(),
+            new ImageResource2x(RSConnectResources.INSTANCE.publishIcon2x()),
+            new ImageResource2x(RSConnectResources.INSTANCE.publishIconLarge2x()),
             createSelectorPage(showCloudPage));
    }
    

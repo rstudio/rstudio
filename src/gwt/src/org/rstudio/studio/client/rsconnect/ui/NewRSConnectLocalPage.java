@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardIntermediatePage;
@@ -32,8 +33,8 @@ public class NewRSConnectLocalPage
       super(RSConnectAccountWizard.SERVICE_NAME, 
             RSConnectAccountWizard.SERVICE_DESCRIPTION,
             "RStudio Connect Account",
-            RSConnectResources.INSTANCE.localAccountIcon(), 
-            RSConnectResources.INSTANCE.localAccountIconLarge(),
+            new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), 
+            new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconLarge2x()),
             new NewRSConnectAuthPage());
    }
 

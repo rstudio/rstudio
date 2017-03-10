@@ -15,6 +15,7 @@
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
@@ -47,7 +48,7 @@ public class PublishDocServicePage
       if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
          connectPage = new PublishMultiplePage(rscTitle, rscDesc, 
-               RSConnectResources.INSTANCE.localAccountIcon(), input);
+               new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input);
       }
       else 
       {
@@ -55,13 +56,13 @@ public class PublishDocServicePage
          {
             // static input implies static output
             connectPage = new PublishFilesPage(rscTitle, rscDesc,
-                  RSConnectResources.INSTANCE.localAccountIcon(), input, 
+                  new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
                   false, true);
          }
          else
          {
             connectPage = new PublishReportSourcePage(rscTitle, rscDesc, 
-                  RSConnectResources.INSTANCE.localAccountIcon(), input, 
+                  new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
                   false);
          }
       }
