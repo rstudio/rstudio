@@ -111,6 +111,7 @@ context("session terminal shell tests")
 
    // Only uncomment this test on a system known to have Windows Services
    // for Linux installed.
+#if 0
    test_that("WSL Bash is detected")
    {
       AvailableTerminalShells shells;
@@ -119,6 +120,7 @@ context("session terminal shell tests")
       expect_true(shell.type == TerminalShell::WSLBash);
       expect_true(shell.path.exists());
    }
+#endif
 
 #endif
 }
