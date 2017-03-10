@@ -1762,10 +1762,11 @@ public class GwtAstBuilder {
       x.resolve(blockScope);
       // Calculate what type this reference is going to bind to, and what single abstract method
       TypeBinding binding = x.expectedType();
-      MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false).original();
-
+      MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false);
+      MethodBinding declarationSamBinding =
+          binding.getSingleAbstractMethod(blockScope, false).original();
       // Get the interface method is binds to
-      JMethod interfaceMethod = typeMap.get(samBinding);
+      JMethod interfaceMethod = typeMap.get(declarationSamBinding);
       JInterfaceType funcType = (JInterfaceType) typeMap.get(binding);
       SourceInfo info = makeSourceInfo(x);
 
@@ -1889,7 +1890,8 @@ public class GwtAstBuilder {
       // interface Foo { m(int x, int y); } bound to reference foo(int... args)
       // if varargs and incoming param is not already a var-arg, we'll need to convert
       // trailing args of the target interface into an array
-      if (referredMethodBinding.isVarargs() && !samBinding.parameters[varArg].isArrayType()) {
+      if (referredMethodBinding.isVarargs()
+          && !samBinding.parameters[varArg].isArrayType()) {
         varArgInitializers = Lists.newArrayList();
       }
 
@@ -1903,8 +1905,9 @@ public class GwtAstBuilder {
         // an explicit qualifier (A::m vs instance::m) the method in the functional interface will
         // have an additional parameter for the instance preceding all the method parameters.
         TypeBinding samParameterBinding =
-            samBinding.parameters[paramNumber
-                + (samBinding.parameters.length - referredMethodBinding.parameters.length)];
+            declarationSamBinding.parameters[paramNumber
+                + (declarationSamBinding.parameters.length
+                - referredMethodBinding.parameters.length)];
         // if it is not the trailing param or varargs, or interface method is already varargs
         if (varArgInitializers == null
             || !referredMethodBinding.isVarargs()
@@ -1935,7 +1938,7 @@ public class GwtAstBuilder {
       // is handled there.
       if (samMethod.getType() != JPrimitiveType.VOID) {
         JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
-            samBinding.returnType);
+            declarationSamBinding.returnType);
         samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
       } else {
         samMethodBody.getBlock().addStmt(samCall.makeStatement());

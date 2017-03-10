@@ -1746,5 +1746,15 @@ public class Java8Test extends GWTTestCase {
     assertEquals("Hi", new SubSub_SuperDefaultMethodDevirtualizationOrder() {
     }.m());
   }
+
+  private static String first(String... strings) {
+    return strings[0];
+  }
+
+  // Regresion test for https://github.com/gwtproject/gwt/issues/9497
+  public void testVarargsFunctionalConversion() {
+    Function<String[], String> function = CompilerMiscRegressionTest::first;
+    assertEquals("Hello", function.apply(new String[] {"Hello", "GoodBye"}));
+  }
 }
 
