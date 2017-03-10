@@ -361,7 +361,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 5;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, smallMaxLines);
+                             allowRestart, mode, shellType, smallMaxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
