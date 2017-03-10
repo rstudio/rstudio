@@ -266,23 +266,6 @@ bool isWin7OrLater()
    }
 }
 
-bool isWin10OrLater()
-{
-   OSVERSIONINFOA osVersion;
-   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
-   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-
-   if (::GetVersionExA(&osVersion))
-   {
-      return osVersion.dwMajorVersion > 6;
-   }
-   else
-   {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return false;
-   }
-}
-
 std::string username()
 {
    return system::getenv("USERNAME");

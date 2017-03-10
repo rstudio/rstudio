@@ -44,6 +44,10 @@ public class TerminalList implements Iterable<String>,
        * @param caption terminal caption, shown in terminal picker
        * @param title terminal title, shown in toolbar above active terminal
        * @param sequence terminal sequence number
+       * @param childProcs is terminal busy
+       * @param cols number of columns in pseudoterminal
+       * @param rows number of rows in pseudoterminal
+       * @param shellType type of shell to run
        */
       private TerminalMetadata(String handle,
                                String caption,
@@ -51,7 +55,8 @@ public class TerminalList implements Iterable<String>,
                                int sequence,
                                boolean childProcs,
                                int cols,
-                               int rows)
+                               int rows,
+                               int shellType)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
@@ -60,6 +65,7 @@ public class TerminalList implements Iterable<String>,
          childProcs_ = childProcs;
          cols_ = cols;
          rows_ = rows;
+         shellType_ = shellType;
       }
 
       private TerminalMetadata(TerminalMetadata original,
@@ -71,7 +77,8 @@ public class TerminalList implements Iterable<String>,
               original.sequence_,
               original.childProcs_,
               original.cols_,
-              original.rows_);
+              original.rows_,
+              original.shellType_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -82,7 +89,8 @@ public class TerminalList implements Iterable<String>,
               procInfo.getTerminalSequence(),
               procInfo.getHasChildProcs(),
               ConsoleProcessInfo.DEFAULT_COLS,
-              ConsoleProcessInfo.DEFAULT_ROWS
+              ConsoleProcessInfo.DEFAULT_ROWS,
+              procInfo.getShellType()
               );
       }
 
@@ -94,7 +102,8 @@ public class TerminalList implements Iterable<String>,
               term.getSequence(),
               term.getHasChildProcs(),
               term.getCols(),
-              term.getRows());
+              term.getRows(),
+              term.getShellType());
       }
 
       /**
@@ -125,6 +134,7 @@ public class TerminalList implements Iterable<String>,
       
       public int getCols() { return cols_; }
       public int getRows() { return rows_; }
+      public int getShellType() { return shellType_; }
 
       private String handle_;
       private String caption_;
@@ -133,6 +143,7 @@ public class TerminalList implements Iterable<String>,
       private boolean childProcs_;
       private int cols_;
       private int rows_;
+      private int shellType_;
    }
 
    protected TerminalList() 
@@ -212,7 +223,8 @@ public class TerminalList implements Iterable<String>,
                current.sequence_,
                childProcs,
                current.cols_,
-               current.rows_));
+               current.rows_,
+               current.shellType_));
          return true;
       }
       return false;
@@ -311,7 +323,8 @@ public class TerminalList implements Iterable<String>,
                     null,  // title
                     true,  // childProcs
                     ConsoleProcessInfo.DEFAULT_COLS,
-                    ConsoleProcessInfo.DEFAULT_ROWS);
+                    ConsoleProcessInfo.DEFAULT_ROWS,
+                    TerminalShellInfo.SHELL_DEFAULT);
    }
 
    /**
@@ -333,7 +346,8 @@ public class TerminalList implements Iterable<String>,
                     existing.getTitle(),
                     existing.getChildProcs(),
                     existing.getCols(),
-                    existing.getRows());
+                    existing.getRows(),
+                    existing.getShellType());
       return true;
    }
 
@@ -402,10 +416,11 @@ public class TerminalList implements Iterable<String>,
                              String title,
                              boolean hasChildProcs,
                              int cols,
-                             int rows)
+                             int rows,
+                             int shellType)
    {
       TerminalSession newSession = new TerminalSession(
-            sequence, terminalHandle, caption, title, hasChildProcs, cols, rows);
+            sequence, terminalHandle, caption, title, hasChildProcs, cols, rows, shellType);
       newSession.connect();
       updateTerminalBusyStatus();
    }

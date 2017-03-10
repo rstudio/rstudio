@@ -137,7 +137,6 @@ bool isCurrentProcessWin64();
 
 bool isVistaOrLater();
 bool isWin7OrLater();
-bool isWin10OrLater();
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
 void ensureLongPath(FilePath* pFilePath);

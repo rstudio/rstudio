@@ -37,7 +37,10 @@ namespace console_persist {
 // 2017/02/03 - console -> console01
 //                Reset state to eliminate previously saved buffers that
 //                haven't had their alt-buffer stripped during save.
-#define kConsoleDir "console01"
+// 2017/03/08 - console01 -> console02
+//                Added shell type property to allow Windows to track
+//                multiple terminal types (cmd, powershell, git bash, etc.)
+#define kConsoleDir "console02"
 
 namespace {
 

@@ -47,11 +47,11 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/RVersionSettings.hpp>
+#include <session/SessionTerminalShell.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
 #include "SessionSVN.hpp"
-#include "SessionTerminalShell.hpp"
 
 #include "SessionSpelling.hpp"
 
@@ -286,6 +286,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    bool reuseSessionsForProjectLinks;
    std::string initialWorkingDir, showUserHomePage;
    json::Object defaultRVersionJson;
+   int defaultTerminalShell;
    error = json::readObject(generalPrefs,
                             "show_user_home_page", &showUserHomePage,
                             "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
@@ -295,7 +296,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "initial_working_dir", &initialWorkingDir,
                             "default_r_version", &defaultRVersionJson,
                             "restore_project_r_version", &restoreProjectRVersion,
-                            "show_last_dot_value", &showLastDotValue);
+                            "show_last_dot_value", &showLastDotValue,
+                            "default_shell", &defaultTerminalShell);
    if (error)
       return error;
 
@@ -311,6 +313,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setShowLastDotValue(showLastDotValue);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   userSettings().setDefaultTerminalShellValue(
+      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
    userSettings().endUpdate();
 
    // refresh environment if lastDotValueChanged
@@ -527,6 +531,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["default_r_version"] = defaultRVersionJson;
    generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
    generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
+   generalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
 
    // get history prefs
    json::Object historyPrefs;
@@ -634,7 +639,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    // if we are using git bash then return its path
    if (git::isGitEnabled() && userSettings().vcsUseGitBash())
    {
-      terminalPath = getGitBashShell();
+      terminalPath = console_process::getGitBashShell();
    }
 
 #elif defined(__APPLE__)
@@ -666,14 +671,10 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 Error getTerminalShells(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   AvailableTerminalShells availableShells;
+   console_process::AvailableTerminalShells availableShells;
    json::Array shells;
    availableShells.toJson(&shells);
-
-   json::Object results;
-   results["shells"] = shells;
-   pResponse->setResult(results);
-
+   pResponse->setResult(shells);
    return Success();
 }
 
@@ -864,86 +865,49 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
-Error startShellDialog(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+Error startTerminal(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
 {
    using namespace session::module_context;
    using namespace session::console_process;
 
-   // TERM setting, must correspond to one of the values in the
-   // client-side enum TerminalType. For now we treat XTERM as a
-   // "smart terminal" and anything else as DUMB (RStudio 1.0 behavior).
-   // On Win32, only "smart" is supported at the moment, and the
-   // TerminalType is ignored.
-   std::string term;
-   
-   // initial size of the pseudo-terminal
-   int cols, rows;
-   
-   // terminal handle (empty string if starting a new terminal)
-   std::string termHandle;
-   
-   // terminal caption
+   int shellTypeInt;
+   int cols, rows; // initial pseudo-terminal size
+   std::string termHandle; // empty if starting a new terminal
    std::string termCaption;
-   
-   // terminal title
    std::string termTitle;
-   
-   // terminal sequence
    int termSequence = kNoTerminal;
    
-   // allow process restart with existing handle
-   bool allowRestart;
-
-   // monitor if there are child processes
-   bool reportHasSubprocs;
-
    Error error = json::readParams(request.params,
-                                  &term,
+                                  &shellTypeInt,
                                   &cols,
                                   &rows,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
-                                  &termSequence,
-                                  &allowRestart,
-                                  &reportHasSubprocs);
+                                  &termSequence);
    if (error)
       return error;
-   
-   bool smartTerm = !term.compare("XTERM");
 
+   TerminalShell::TerminalShellType shellType =
+         static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
+   if (shellType < TerminalShell::DefaultShell || shellType > TerminalShell::Max)
+   {
+       shellType = TerminalShell::DefaultShell;
+   }
+   
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
 #ifndef _WIN32
    // set terminal
-   core::system::setenv(&shellEnv, "TERM", smartTerm ? core::system::kSmartTerm :
-                                                       core::system::kDumbTerm);
-
-   if (!smartTerm)
-   {
-      std::string path = module_context::createAliasedPath(
-               module_context::safeCurrentPath());
-      std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
-      core::system::setenv(&shellEnv, "PS1", prompt);
-   }
+   core::system::setenv(&shellEnv, "TERM", core::system::kSmartTerm);
 
    // set xterm title to show current working directory after each command
-   if (smartTerm)
-   {
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                           "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
-   }
+   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
+                        "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
    
-   // disable screen oriented facillites
-   if (!smartTerm)
-   {
-      core::system::unsetenv(&shellEnv, "EDITOR");
-      core::system::unsetenv(&shellEnv, "VISUAL");
-      core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
-   }
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 #endif
@@ -961,18 +925,32 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::ProcessOptions options;
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
-   options.smartTerminal = smartTerm;
-   options.reportHasSubprocs = reportHasSubprocs;
+   options.smartTerminal = true;
+   options.reportHasSubprocs = true;
    options.cols = cols;
    options.rows = rows;
+
+#ifdef _WIN32
+   // set path to shell
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   if (shells.getInfo(shellType, &shell))
+   {
+      options.shellPath = shell.path;
+   }
+
+   // last-ditch, use %comspec%
+   if (!options.shellPath.exists())
+      options.shellPath = core::system::expandComSpec();
+#endif
 
    if (termCaption.empty())
       termCaption = "Shell";
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence, allowRestart,
-            InteractionAlways, console_process::kDefaultTerminalMaxOutputLines);
+            termCaption, termTitle, termHandle, termSequence, true /*allowRestart*/,
+            InteractionAlways, shellType, console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
@@ -1106,7 +1084,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
-      (bind(registerRpcMethod, "start_shell_dialog", startShellDialog))
+      (bind(registerRpcMethod, "start_terminal", startTerminal))
       (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }

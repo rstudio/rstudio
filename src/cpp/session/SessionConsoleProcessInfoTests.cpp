@@ -35,6 +35,8 @@ const std::string bogusHandle1("unit-test03");
 const int sequence = 1;
 const bool allowRestart = true;
 const InteractionMode mode = InteractionAlways;
+const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+
 const size_t maxLines = 1000;
 
 bool testHandle(const std::string& handle)
@@ -54,7 +56,8 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getMaxOutputLines() == second.getMaxOutputLines() &&
            first.getShowOnOutput() == second.getShowOnOutput() &&
            first.getExitCode()  == second.getExitCode() &&
-           first.getHasChildProcs() == second.getHasChildProcs());
+           first.getHasChildProcs() == second.getHasChildProcs() &&
+           first.getShellType() == second.getShellType());
 }
 
 } // anonymous namespace
@@ -65,7 +68,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
@@ -78,14 +81,12 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK_FALSE(cpi.getShowOnOutput());
       CHECK_FALSE(cpi.getExitCode());
       CHECK(cpi.getHasChildProcs());
+      CHECK(cpi.getShellType() == shellType);
    }
 
    SECTION("Generate a handle")
    {
-      ConsoleProcessInfo cpi(emptyStr /*caption*/, emptyStr /*title*/,
-                             emptyStr /*handle*/, kNoTerminal,
-                             false /*allowRestart*/, InteractionNever,
-                             0 /*maxLines*/);
+      ConsoleProcessInfo cpi(emptyStr /*caption*/, InteractionNever, 0 /*maxLines */);
 
       std::string handle = cpi.getHandle();
       CHECK(handle.empty());
@@ -97,7 +98,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Change properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       std::string altCaption("other caption");
       CHECK(altCaption.compare(caption));
@@ -138,7 +139,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
@@ -161,9 +162,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Compare ConsoleProcInfos with different exit codes")
    {
       ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence,
-                                  allowRestart, mode, maxLines);
+                                  allowRestart, mode, shellType, maxLines);
       ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence,
-                                   allowRestart, mode, maxLines);
+                                   allowRestart, mode, shellType, maxLines);
 
       cpiFirst.setExitCode(1);
       cpiSecond.setExitCode(12);
@@ -173,7 +174,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore")
    {
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence,
-                                 allowRestart, mode, maxLines);
+                                 allowRestart, mode, shellType, maxLines);
 
       core::json::Object origJson = cpiOrig.toJson();
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -191,7 +192,7 @@ TEST_CASE("ConsoleProcessInfo")
       // back what we saved (trimmed based on maxLines). Be nice to abstract
       // all of this away, but bigger fish and all of that.
       ConsoleProcessInfo cpi(caption, title, handle1, kNoTerminal,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       // bufferedOutput is the accessor for the non-terminal buffer cache
       std::string orig = cpi.bufferedOutput();
@@ -221,7 +222,7 @@ TEST_CASE("ConsoleProcessInfo")
       // in the JSON. Same comment on the leaky abstractions here as for
       // previous non-terminal test.
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -257,7 +258,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore terminals with multiple chunks")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -322,9 +323,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Delete unknown log files")
    {
       ConsoleProcessInfo cpiGood(caption, title, handle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
       ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence,
-                             allowRestart, mode, maxLines);
+                             allowRestart, mode, shellType, maxLines);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
       CHECK(orig1.length() < kOutputBufferSize);

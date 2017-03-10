@@ -267,9 +267,8 @@ core::Error createConsoleProc(const ShellArgs& args,
       options.stdOutFile = outputFile;
 
    using namespace session::console_process;
-   boost::shared_ptr<ConsoleProcessInfo> pCPI = boost::make_shared<ConsoleProcessInfo>(
-            caption, "" /*title*/, "" /*handle*/, kNoTerminal,
-            false /*allowRestart*/, InteractionPossible);
+   boost::shared_ptr<ConsoleProcessInfo> pCPI =
+           boost::make_shared<ConsoleProcessInfo>(caption, InteractionPossible);
 
    // create the process
    *ppCP = ConsoleProcess::create(command, options, pCPI);

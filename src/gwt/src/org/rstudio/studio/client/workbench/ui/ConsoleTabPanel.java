@@ -260,14 +260,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
 
       // Determine initial visibility of terminal tab
       terminalTabVisible_ = uiPrefs_.showTerminalTab().getValue();
-
-      // TODO (gary) this is a temporary feature gate
-      if (terminalTabVisible_ && BrowseCap.isWindowsDesktop() && 
-            !uiPrefs_.enableXTerm().getValue())
-      {
-         terminalTabVisible_ = false;
-      }
-
       if (terminalTabVisible_ && !session_.getSessionInfo().getAllowShell())
       {
          terminalTabVisible_ = false;

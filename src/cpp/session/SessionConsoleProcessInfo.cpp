@@ -35,7 +35,8 @@ ConsoleProcessInfo::ConsoleProcessInfo()
    : terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false)
+     altBufferActive_(false),
+     shellType_(TerminalShell::DefaultShell)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -49,12 +50,24 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const int terminalSequence,
          bool allowRestart,
          InteractionMode mode,
+         TerminalShell::TerminalShellType shellType,
          int maxOutputLines)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false)
+     altBufferActive_(false), shellType_(shellType)
+{
+}
+
+ConsoleProcessInfo::ConsoleProcessInfo(
+         const std::string& caption,
+         InteractionMode mode,
+         int maxOutputLines)
+   : caption_(caption), terminalSequence_(kNoTerminal), allowRestart_(false),
+     interactionMode_(mode), maxOutputLines_(maxOutputLines),
+     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
+     altBufferActive_(false), shellType_(TerminalShell::DefaultShell)
 {
 }
 
@@ -164,7 +177,8 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["terminal_sequence"] = terminalSequence_;
    result["allow_restart"] = allowRestart_;
    result["title"] = title_;
-   result["childProcs"] = childProcs_;
+   result["child_procs"] = childProcs_;
+   result["shell_type"] = static_cast<int>(shellType_);
 
    return result;
 }
@@ -205,7 +219,10 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    pProc->terminalSequence_ = obj["terminal_sequence"].get_int();
    pProc->allowRestart_ = obj["allow_restart"].get_bool();
    pProc->title_ = obj["title"].get_str();
-   pProc->childProcs_ = obj["childProcs"].get_bool();
+   pProc->childProcs_ = obj["child_procs"].get_bool();
+   int shellTypeInt = obj["shell_type"].get_int();
+   pProc->shellType_ =
+      static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
 
    return pProc;
 }

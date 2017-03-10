@@ -198,14 +198,7 @@ void ChildProcess::init(const std::string& command,
 void ChildProcess::init(const ProcessOptions& options)
 {
    options_ = options;
-
-   // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
-
-   FilePath cmd = expandComSpec();
-   if (!cmd.exists())
-      exe_ = findOnPath("cmd.exe");
-   else
-      exe_ = cmd.absolutePathNative();
+   exe_ = options_.shellPath.absolutePathNative();
 }
 
 ChildProcess::~ChildProcess()
