@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionTerminalShell.hpp"
+#include <session/SessionTerminalShell.hpp>
 
 #include <core/system/System.hpp>
 
@@ -21,22 +21,14 @@
 
 namespace rstudio {
 namespace session {
-namespace modules { 
-namespace workbench {
+namespace console_process {
 namespace tests {
 
-using namespace workbench;
+using namespace console_process;
 
 context("session terminal shell tests")
 {
-   test_that("have default shell")
-   {
-      AvailableTerminalShells shells;
-      expect_true(shells.count() > 0);
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::DefaultShell, &shell));
-      expect_true(shell.type == TerminalShell::DefaultShell);
-   }
+#ifdef _WIN32
 
    test_that("Can generate json array of shells")
    {
@@ -48,11 +40,10 @@ context("session terminal shell tests")
       expect_true(origCount == arr.size());
    }
 
-#ifdef _WIN32
    test_that("Windows has 32-bit command prompt")
    {
       AvailableTerminalShells shells;
-      expect_true(shells.count() > 1);
+      expect_true(shells.count() > 0);
       TerminalShell shell;
       expect_true(shells.getInfo(TerminalShell::Cmd32, &shell));
       expect_true(shell.type == TerminalShell::Cmd32);
@@ -62,7 +53,7 @@ context("session terminal shell tests")
    test_that("Windows has 32-bit powershell")
    {
       AvailableTerminalShells shells;
-      expect_true(shells.count() > 1);
+      expect_true(shells.count() > 0);
       TerminalShell shell;
       expect_true(shells.getInfo(TerminalShell::PS32, &shell));
       expect_true(shell.type == TerminalShell::PS32);
@@ -74,7 +65,7 @@ context("session terminal shell tests")
       if (core::system::isWin64())
       {
          AvailableTerminalShells shells;
-         expect_true(shells.count() > 1);
+         expect_true(shells.count() > 0);
          TerminalShell shell;
          expect_true(shells.getInfo(TerminalShell::Cmd64, &shell));
          expect_true(shell.type == TerminalShell::Cmd64);
@@ -87,7 +78,7 @@ context("session terminal shell tests")
       if (core::system::isWin64())
       {
          AvailableTerminalShells shells;
-         expect_true(shells.count() > 1);
+         expect_true(shells.count() > 0);
          TerminalShell shell;
          expect_true(shells.getInfo(TerminalShell::PS64, &shell));
          expect_true(shell.type == TerminalShell::PS64);
@@ -95,19 +86,16 @@ context("session terminal shell tests")
       }
    }
 
-   test_that("WSL Bash on 64-bit Windows-10 is detected if installed")
+   test_that("WSL Bash is detected if installed")
    {
-      if (core::system::isWin64() && core::system::isWin10OrLater())
-      {
          AvailableTerminalShells shells;
-         expect_true(shells.count() > 1);
+         expect_true(shells.count() > 0);
          TerminalShell shell;
          if (shells.getInfo(TerminalShell::WSLBash, &shell))
          {
             expect_true(shell.type == TerminalShell::WSLBash);
             expect_true(shell.path.exists());
          }
-      }
    }
 
    test_that("Git Bash is detected if installed")
@@ -121,11 +109,23 @@ context("session terminal shell tests")
       }
    }
 
+   // Only uncomment this test on a system known to have Windows Services
+   // for Linux installed.
+#if 0
+   test_that("WSL Bash is detected")
+   {
+      AvailableTerminalShells shells;
+      TerminalShell shell;
+      expect_true(shells.getInfo(TerminalShell::WSLBash, &shell));
+      expect_true(shell.type == TerminalShell::WSLBash);
+      expect_true(shell.path.exists());
+   }
+#endif
+
 #endif
 }
 
 } // namespace tests
-} // namespace workbench
-} // namespace modules
+} // namespace console_process
 } // namespace session
 } // namespace rstudio

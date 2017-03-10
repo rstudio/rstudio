@@ -584,11 +584,6 @@ public class UIPrefsAccessor extends Prefs
       return string("execution_behavior", EXECUTE_STATEMENT);
    }
    
-   public PrefValue<Boolean> enableXTerm()
-   {
-      return bool("enable_xterm", false);
-   }
-   
    public PrefValue<Boolean> showTerminalTab()
    {
       return bool("show_terminal_tab", true);

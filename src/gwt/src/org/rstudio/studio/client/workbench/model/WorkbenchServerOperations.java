@@ -1,7 +1,7 @@
 /*
  * WorkbenchServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,6 @@
  *
  */
 package org.rstudio.studio.client.workbench.model;
-
-import com.google.gwt.core.client.JavaScriptObject;
 
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -44,20 +42,24 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FilesServerOperations,
@@ -119,7 +121,10 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
-   
+  
+   void getTerminalShells(
+         ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback);
+
    /**
     * Start a terminal session
     * 
@@ -133,6 +138,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * above the terminal pane (e.g. show current working directory via bash's
     * PROMPT_COMMAND feature.</p>
     * 
+    * @param shellType one of TerminalShellInfo SHELL_* enum values
     * @param cols initial number of text columns for pseudoterminal
     * @param rows initial number of text rows for pseudoterminal
     * @param handle initial terminal handle (pass empty or null string for new terminal)
@@ -141,8 +147,9 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param sequence relative order of terminal creation (1-based)
     * @param requestCallback callback from server upon completion
     */
-   void startTerminal(int cols, int rows, String handle, String caption, String title,
-                      int sequence, ServerRequestCallback<ConsoleProcess> requestCallback);
+   void startTerminal(int shellType, int cols, int rows, String handle, 
+                      String caption, String title, int sequence, 
+                      ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

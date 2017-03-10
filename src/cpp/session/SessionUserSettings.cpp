@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,7 @@ const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
 const char * const kLineEndings = "lineEndingConversion";
 const char * const kUseNewlineInMakefiles = "newlineInMakefiles";
+const char * const kDefaultTerminalShell = "defaultTerminalShell";
 
 template <typename T>
 T readPref(const json::Object& prefs,
@@ -537,6 +538,18 @@ void UserSettings::setShowLastDotValue(bool show)
    settings_.set("showLastDotValue", show);
 }
 
+console_process::TerminalShell::TerminalShellType UserSettings::defaultTerminalShellValue() const
+{
+   return static_cast<console_process::TerminalShell::TerminalShellType>(
+            settings_.getInt(kDefaultTerminalShell,
+               static_cast<int>(console_process::TerminalShell::DefaultShell)));
+}
+
+void UserSettings::setDefaultTerminalShellValue(
+      console_process::TerminalShell::TerminalShellType shell)
+{
+   settings_.set(kDefaultTerminalShell, static_cast<int>(shell));
+}
 
 core::FilePath UserSettings::initialWorkingDirectory() const
 {

@@ -68,6 +68,7 @@ public class TerminalSession extends XTermWidget
     * @param hasChildProcs does session have child processes
     * @param cols number of columns in terminal
     * @param rows number of rows in terminal
+    * @param shellType type of shell to run
     */
    public TerminalSession(int sequence,
                           String handle,
@@ -75,12 +76,14 @@ public class TerminalSession extends XTermWidget
                           String title,
                           boolean hasChildProcs,
                           int cols,
-                          int rows)
+                          int rows,
+                          int shellType)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
       terminalHandle_ = handle;
       hasChildProcs_ = hasChildProcs;
+      shellType_ = shellType;
       setTitle(title);
 
       if (StringUtil.isNullOrEmpty(caption))
@@ -110,7 +113,8 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(getCols(), getRows(), getHandle(), getCaption(), 
+      server_.startTerminal(getShellType(),
+            getCols(), getRows(), getHandle(), getCaption(), 
             getTitle(), getSequence(), new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -445,6 +449,15 @@ public class TerminalSession extends XTermWidget
       terminalHandle_ = consoleProcess_.getProcessInfo().getHandle();
       return terminalHandle_;
    }
+   
+   public int getShellType()
+   {
+      if (consoleProcess_ == null)
+      {
+         return shellType_;
+      }
+      return consoleProcess_.getProcessInfo().getShellType();
+   }
 
    /**
     * Does this terminal's shell program (i.e. bash) have any child processes?
@@ -598,6 +611,7 @@ public class TerminalSession extends XTermWidget
    private final int sequence_;
    private String terminalHandle_;
    private boolean hasChildProcs_;
+   private int shellType_;
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
