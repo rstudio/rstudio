@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -48,8 +49,8 @@ public class NewPackagePage extends NewDirectoryPage
       super("R Package",
             "Create a new R package",
             "Create R Package",
-            NewProjectResources.INSTANCE.packageIcon(),
-            NewProjectResources.INSTANCE.packageIconLarge());
+            new ImageResource2x(NewProjectResources.INSTANCE.packageIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.packageIconLarge2x()));
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       styles_ = NewProjectResources.INSTANCE.styles();
