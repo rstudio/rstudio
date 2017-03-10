@@ -111,12 +111,21 @@ public class RSConnectDeploy extends Composite
    }
    
    public interface DeployResources extends ClientBundle
-   {  
-      ImageResource publishShinyIllustration();
-      ImageResource publishRmdIllustration();
-      ImageResource publishPlotIllustration();
-      ImageResource publishPresentationIllustration();
-      ImageResource publishHTMLIllustration();
+   {
+      @Source("publishShinyIllustration_2x.png")
+      ImageResource publishShinyIllustration2x();
+
+      @Source("publishRmdIllustration_2x.png")
+      ImageResource publishRmdIllustration2x();
+
+      @Source("publishPlotIllustration_2x.png")
+      ImageResource publishPlotIllustration2x();
+
+      @Source("publishPresentationIllustration_2x.png")
+      ImageResource publishPresentationIllustration2x();
+
+      @Source("publishHTMLIllustration_2x.png")
+      ImageResource publishHTMLIllustration2x();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -1006,15 +1015,15 @@ public class RSConnectDeploy extends Composite
       
       ImageResource illustration = null;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP)
-         illustration = RESOURCES.publishShinyIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
-         illustration = RESOURCES.publishPlotIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
-         illustration = RESOURCES.publishRmdIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_HTML)
-         illustration = RESOURCES.publishHTMLIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
-         illustration = RESOURCES.publishPresentationIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());
       if (illustration != null)
          deployIllustration_.setResource(illustration);
    }
