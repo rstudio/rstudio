@@ -13,6 +13,7 @@
  *
  */
 #include <session/SessionConsoleProcessInfo.hpp>
+#include <boost/lexical_cast.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -353,6 +354,47 @@ TEST_CASE("ConsoleProcessInfo")
 
       cpiGood.deleteLogFile();
       cpiBad.deleteLogFile();
+   }
+
+   SECTION("Persist and restore terminals with multiple chunks and trimmable buffer")
+   {
+      const int smallMaxLines = 5;
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
+                             allowRestart, mode, smallMaxLines);
+
+      // blow away anything that might have been left over from a previous
+      // failed run
+      cpi.deleteLogFile();
+
+      bool moreAvailable;
+      std::string loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
+
+      // fill buffer with more than one chunk and more lines than the
+      // maximum specified; each line is one-chunk in length, and filled
+      // with digits corresponding to the line #, "0000...", "1111..."
+      for (int i = 0; i < smallMaxLines + 2; i++)
+      {
+         std::string str = boost::lexical_cast<std::string>(i);
+         std::string line(kOutputBufferSize - 1, str[0]);
+         line += "\n";
+         cpi.appendToOutputBuffer(line);
+      }
+
+      // now when we request the first chunk, we expect the buffer to
+      // be trimmed to have smallMaxLines + 1 before first chunk is returned
+      std::string expected(kOutputBufferSize -1, '2');
+      expected = std::string("\n") + expected;
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(moreAvailable);
+      CHECK_FALSE(loaded.compare(expected));
+
+     // cleanup
+      cpi.deleteLogFile();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
    }
 }
 
