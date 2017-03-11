@@ -1753,7 +1753,7 @@ public class Java8Test extends GWTTestCase {
 
   // Regresion test for https://github.com/gwtproject/gwt/issues/9497
   public void testVarargsFunctionalConversion() {
-    Function<String[], String> function = CompilerMiscRegressionTest::first;
+    java.util.function.Function<String[], String> function = Java8Test::first;
     assertEquals("Hello", function.apply(new String[] {"Hello", "GoodBye"}));
   }
 }
