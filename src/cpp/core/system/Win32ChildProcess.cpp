@@ -143,6 +143,7 @@ struct ChildProcess::Impl
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
         closeProcess_(&hProcess, ERROR_LOCATION),
+        pid((PidType)-1),
         ctrlC(0x03)
    {
    }
@@ -151,6 +152,7 @@ struct ChildProcess::Impl
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
+   PidType pid;
    WinPty pty;
    char ctrlC;
 
@@ -317,11 +319,16 @@ Error ChildProcess::run()
    // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      return pImpl_->pty.start(exe_, args_, options_,
+      error = pImpl_->pty.start(exe_, args_, options_,
                                &pImpl_->hStdInWrite,
                                &pImpl_->hStdOutRead,
                                &pImpl_->hStdErrRead,
                                &pImpl_->hProcess);
+      if (!error)
+      {
+         pImpl_->pid = ::GetProcessId(pImpl_->hProcess);
+      }
+      return error;
    }
 
    // Standard input pipe
@@ -479,6 +486,7 @@ Error ChildProcess::run()
 
    // save handle to process
    pImpl_->hProcess = pi.hProcess;
+   pImpl_->pid = ::GetProcessId(pImpl_->hProcess);
 
    // success
    return Success();
@@ -572,7 +580,7 @@ struct AsyncChildProcess::AsyncImpl
       return fCheck;
    }
 
-   bool computeHasSubProcess(HANDLE hProcess)
+   bool computeHasSubProcess(PidType pid)
    {
       return core::system::hasSubprocesses(pid);
    }
@@ -715,7 +723,7 @@ void AsyncChildProcess::poll()
    pAsyncImpl_->initTimers(options().reportHasSubprocs);
    if (pAsyncImpl_->checkChildCount())
    {
-      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->hProcess);
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
       if (callbacks_.onHasSubprocs)
       {
          callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);

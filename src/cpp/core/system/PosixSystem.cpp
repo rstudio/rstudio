@@ -752,7 +752,7 @@ bool hasSubprocesses(PidType pid)
 Error daemonize()
 {
    // fork
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
    if (pid < 0)
       return systemError(errno, ERROR_LOCATION); // fork error
    else if (pid > 0)
@@ -1307,7 +1307,7 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
 
    // error
    if (pid < 0)

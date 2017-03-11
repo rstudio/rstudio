@@ -147,7 +147,7 @@ struct ChildProcess::Impl
    {
    }
 
-   pid_t pid;
+   PidType pid;
    int fdStdin;
    int fdStdout;
    int fdStderr;
@@ -156,7 +156,7 @@ struct ChildProcess::Impl
    int fdMaster;
    char ctrlC;
 
-   void init(pid_t pid, int fdStdin, int fdStdout, int fdStderr)
+   void init(PidType pid, int fdStdin, int fdStdout, int fdStderr)
    {
       this->pid = pid;
       this->fdStdin = fdStdin;
@@ -165,7 +165,7 @@ struct ChildProcess::Impl
       this->fdMaster = -1;
    }
 
-   void init(pid_t pid, int fdMaster)
+   void init(PidType pid, int fdMaster)
    {
       this->pid = pid;
       this->fdStdin = fdMaster;
@@ -352,7 +352,7 @@ Error ChildProcess::terminate()
    else
    {
       // determine target pid (kill just this pid or pid + children)
-      pid_t pid = pImpl_->pid;
+      PidType pid = pImpl_->pid;
       if (options_.detachSession || options_.terminateChildren)
       {
          pid = -pid;
@@ -386,7 +386,7 @@ bool ChildProcess::hasSubprocess() const
 Error ChildProcess::run()
 {  
    // declarations
-   pid_t pid = 0;
+   PidType pid = 0;
    int fdInput[2] = {0,0};
    int fdOutput[2] = {0,0};
    int fdError[2] = {0,0};
@@ -402,7 +402,7 @@ Error ChildProcess::run()
       winSize.ws_row = options_.pseudoterminal.get().rows;
       winSize.ws_xpixel = 0;
       winSize.ws_ypixel = 0;
-      Error error = posixCall<pid_t>(
+      Error error = posixCall<PidType>(
          boost::bind(::forkpty, &fdMaster, nullName, nullTermp, &winSize),
          ERROR_LOCATION,
          &pid);
@@ -436,7 +436,7 @@ Error ChildProcess::run()
       }
 
       // fork
-      error = posixCall<pid_t>(::fork, ERROR_LOCATION, &pid);
+      error = posixCall<PidType>(::fork, ERROR_LOCATION, &pid);
       if (error)
       {
          closePipe(fdInput, ERROR_LOCATION);
@@ -667,7 +667,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
 {
    // blocking wait for exit
    int status;
-   pid_t result = posixCall<pid_t>(
+   PidType result = posixCall<PidType>(
       boost::bind(::waitpid, pImpl_->pid, &status, 0));
 
    // always close all of the pipes
@@ -738,7 +738,7 @@ struct AsyncChildProcess::AsyncImpl
       return fCheck;
    }
 
-   bool computeHasSubProcess(pid_t pid)
+   bool computeHasSubProcess(PidType pid)
    {
       return core::system::hasSubprocesses(pid);
    }
@@ -876,7 +876,7 @@ void AsyncChildProcess::poll()
    // case we'll allow the exit sequence to proceed and simply pass -1 as
    // the exit status.
    int status;
-   pid_t result = posixCall<pid_t>(
+   PidType result = posixCall<PidType>(
             boost::bind(::waitpid, pImpl_->pid, &status, WNOHANG));
 
    // either a normal exit or an error while waiting

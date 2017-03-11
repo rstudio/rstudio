@@ -138,10 +138,13 @@ struct ProcessOptions
 
    // create the process with CREATE_BREAKAWAY_FROM_JOB
    bool breakawayFromJob;
-
-   // terminal shell path
-   FilePath shellPath;
 #endif
+
+   // interactive terminal shell
+   FilePath shellPath;
+
+   // interactive terminal shell arguments
+   std::vector<std::string> args;
 
    bool redirectStdErrToStdOut;
 
