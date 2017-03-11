@@ -574,8 +574,7 @@ struct AsyncChildProcess::AsyncImpl
 
    bool computeHasSubProcess(HANDLE hProcess)
    {
-      // TODO (gary) implement
-      return false;
+      return core::system::hasSubprocesses(pid);
    }
 
    static boost::posix_time::ptime now()

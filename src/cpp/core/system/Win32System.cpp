@@ -876,6 +876,11 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
+bool hasSubprocesses(PidType pid)
+{
+   // TODO (gary) implement
+   return false;
+}
 
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {

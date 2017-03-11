@@ -740,36 +740,7 @@ struct AsyncChildProcess::AsyncImpl
 
    bool computeHasSubProcess(pid_t pid)
    {
-      // TODO (gary) the 'pgrep' approach should be Mac-only; for Linux we
-      // should be using /proc to compute child process counts. See
-      // PosixChildProcessTracker.cpp.
-
-// #ifdef __APPLE__
-
-      // pgrep -P ppid returns 0 if there are matches, non-zero
-      // otherwise
-      shell_utils::ShellCommand cmd("pgrep");
-      cmd << "-P" << pid;
-
-      core::system::ProcessOptions options;
-      options.detachSession = true;
-
-      core::system::ProcessResult result;
-      Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
-                         options,
-                         &result);
-      if (error)
-      {
-         // err on the side of assuming child processes, so we don't kill
-         // a job unintentionally
-         LOG_ERROR(error);
-         return true;
-      }
-
-      return result.exitStatus == 0;
-// #else // !__APPLE__
-      // TODO (gary) Linux subprocess detection using procfs
-// #endif
+      return core::system::hasSubprocesses(pid);
    }
 
    static boost::posix_time::ptime now()
