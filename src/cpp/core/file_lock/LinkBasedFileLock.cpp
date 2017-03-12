@@ -37,14 +37,14 @@
 #include <boost/foreach.hpp>
 #include <boost/system/error_code.hpp>
 
-#define DEBUG(__X__)                                                           \
+#define LOG(__X__)                                                             \
    do                                                                          \
    {                                                                           \
       if (::rstudio::core::FileLock::isLoggingEnabled())                       \
       {                                                                        \
          std::stringstream ss;                                                 \
          ss << "(PID " << ::getpid() << "): " << __X__;                        \
-         LOG_DEBUG_MESSAGE(ss.str());                                          \
+         LOG_INFO_MESSAGE(ss.str());                                           \
       }                                                                        \
    } while (0)
 
@@ -151,7 +151,7 @@ public:
       {
          BOOST_FOREACH(const FilePath& lockFilePath, registration_)
          {
-            DEBUG("Bumping write time: " << lockFilePath.absolutePath());
+            LOG("Bumping write time: " << lockFilePath.absolutePath());
             lockFilePath.setLastWriteTime();
          }
       }
@@ -167,7 +167,7 @@ public:
             Error error = lockFilePath.removeIfExists();
             if (error)
                LOG_ERROR(error);
-            DEBUG("Clearing lock: " << lockFilePath.absolutePath());
+            LOG("Clearing lock: " << lockFilePath.absolutePath());
          }
          registration_.clear();
       }
@@ -288,7 +288,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       {
          // note that multiple processes may attempt to remove this
          // file at the same time, so errors shouldn't be fatal
-         DEBUG("Removing stale lockfile: " << lockFilePath.absolutePath());
+         LOG("Removing stale lockfile: " << lockFilePath.absolutePath());
          Error error = lockFilePath.remove();
          if (error)
             LOG_ERROR(error);
@@ -297,7 +297,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       // ... it's not stale -- someone else has the lock, cannot proceed
       else
       {
-         DEBUG("No lock available: " << lockFilePath.absolutePath());
+         LOG("No lock available: " << lockFilePath.absolutePath());
          return systemError(boost::system::errc::no_lock_available,
                             ERROR_LOCATION);
       }
@@ -313,7 +313,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    error = writeLockFile(lockFilePath);
    if (error)
    {
-      DEBUG("Failed to acquire lock (lost race?): " << lockFilePath.absolutePath());
+      LOG("Failed to acquire lock (lost race?): " << lockFilePath.absolutePath());
       return systemError(boost::system::errc::no_lock_available,
                          error,
                          ERROR_LOCATION);
@@ -325,14 +325,14 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // register our lock (for refresh)
    pImpl_->lockFilePath = lockFilePath;
    lockRegistration().registerLock(lockFilePath);
-   DEBUG("Acquired lock: " << lockFilePath.absolutePath());
+   LOG("Acquired lock: " << lockFilePath.absolutePath());
    return Success();
 }
 
 Error LinkBasedFileLock::release()
 {
    const FilePath& lockFilePath = pImpl_->lockFilePath;
-   DEBUG("Released lock: " << lockFilePath.absolutePath());
+   LOG("Released lock: " << lockFilePath.absolutePath());
    
    Error error = lockFilePath.remove();
    if (error)
