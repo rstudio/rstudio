@@ -239,10 +239,7 @@ void ChildProcess::init(const std::string& command,
    init("/bin/sh", args, options);
 }
 
-// Initialize for an interactive terminal; directly launches via
-// "env" instead of launching "env" via "bin/sh". On Linux,
-// the latter left two processes running; "sh" as the parent
-// of "bash", which messed up counting child processes of the shell.
+// Initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
    if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
@@ -251,13 +248,9 @@ void ChildProcess::init(const ProcessOptions& options)
                "stdOutFile/stdErrFile options cannot be used with interactive terminal");
    }
 
-   std::vector<std::string> args;
-   args.push_back("bash");
-   if (!options.smartTerminal)
-      args.push_back("--norc"); // don't read .bashrc for interactive shell
-   else
-      args.push_back("-l"); // act like a login shell
-   init("/usr/bin/env", args, options);
+   options_ = options;
+   exe_ = options_.shellPath.absolutePath();
+   args_ = options_.args;
 }
 
 ChildProcess::~ChildProcess()

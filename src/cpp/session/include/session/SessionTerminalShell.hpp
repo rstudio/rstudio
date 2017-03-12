@@ -33,7 +33,7 @@ struct TerminalShell
    // OS. For all others, only bash is supported.
    enum TerminalShellType
    {
-      DefaultShell = 0, // Bash (Mac/Linux), %comspec% on Windows
+      DefaultShell = 0, // Selected by user
 
       GitBash      = 1, // Win32: Bash from Windows Git
       WSLBash      = 2, // Win32: Windows Services for Linux (64-bit Windows-10 only)
@@ -42,7 +42,9 @@ struct TerminalShell
       PS32         = 5, // Win32: PowerShell (32-bit)
       PS64         = 6, // Win32: PowerShell (64-bit)
 
-      Max          = PS64
+      PosixBash    = 7, // Posix: Bash
+
+      Max          = PosixBash
    };
 
    TerminalShell()
@@ -53,11 +55,13 @@ struct TerminalShell
    TerminalShell(
          TerminalShellType type,
          std::string name,
-         core::FilePath path)
+         core::FilePath path,
+         std::vector<std::string> args)
       :
         type(type),
         name(name),
-        path(path)
+        path(path),
+        args(args)
    {}
 
    TerminalShellType type;
@@ -81,6 +85,9 @@ public:
 
    // Number of available shells (including pseudo-shell "default")
    inline size_t count() const { return shells_.size(); }
+
+   // Get a standard system shell
+   static bool getSystemShell(TerminalShell* pShellInfo);
 
 private:
    std::vector<TerminalShell> shells_;

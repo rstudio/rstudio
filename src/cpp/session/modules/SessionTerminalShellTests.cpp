@@ -120,7 +120,27 @@ context("session terminal shell tests")
       expect_true(shell.type == TerminalShell::WSLBash);
       expect_true(shell.path.exists());
    }
+
+   test_that("No Posix Bash on Windows")
+   {
+      AvailableTerminalShells shells;
+      TerminalShell shell;
+      expect_false(shells.getInfo(TerminalShell::PosixBash, &shell));
+    }
+
 #endif
+
+
+#else // Posix
+   test_that("One shell (bash) on Posix")
+   {
+      AvailableTerminalShells shells;
+      TerminalShell shell;
+      expect_true(shells.getInfo(TerminalShell::PosixBash, &shell));
+      expect_true(shell.type == TerminalShell::PosixBash);
+      expect_true(shell.path.exists());
+      expect_true(shell.args.size() > 0);
+   }
 
 #endif
 }

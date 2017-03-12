@@ -201,6 +201,7 @@ void ChildProcess::init(const ProcessOptions& options)
 {
    options_ = options;
    exe_ = options_.shellPath.absolutePathNative();
+   args_ = options_.args;
 }
 
 ChildProcess::~ChildProcess()
