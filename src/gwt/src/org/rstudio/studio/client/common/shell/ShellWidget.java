@@ -269,14 +269,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
       Element outputElement = output_.getElement();
       if (outputElement.hasChildNodes())
       {
-         Node errorNode = outputElement.getChild(
+         // the last output group includes a <span> for each output type; pick
+         // up the one referring to the error we just emitted
+         Node lastNode = outputElement.getChild(
                outputElement.getChildCount() - 1);
-         if (clearErrors_)
+         if (lastNode.hasChildNodes())
          {
-            errorNodes_.clear();
-            clearErrors_ = false;
+            Node errorNode = lastNode.getChild(lastNode.getChildCount() - 1);
+            if (clearErrors_)
+            {
+               errorNodes_.clear();
+               clearErrors_ = false;
+            }
+            errorNodes_.put(error, errorNode);
          }
-         errorNodes_.put(error, errorNode);
       }
    }
    
@@ -294,7 +300,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          if (expand)
             errorWidget.setTracebackVisible(true);
          
-         output_.getElement().replaceChild(errorWidget.getElement(), 
+         errorNode.getParentNode().replaceChild(errorWidget.getElement(),
                                            errorNode);
          
          scrollPanel_.onContentSizeChanged();
