@@ -30,24 +30,15 @@ namespace console_process {
 
 namespace {
 
-#ifdef _WIN32
 void addShell(const core::FilePath& expectedPath,
               TerminalShell::TerminalShellType type,
               const std::string& title,
+              std::vector<std::string> args,
               std::vector<TerminalShell>* pShells)
 {
    if (expectedPath.exists())
-      pShells->push_back(TerminalShell(type, title, expectedPath));
+      pShells->push_back(TerminalShell(type, title, expectedPath, args));
 }
-
-void addShell(const std::string& expectedPath,
-              TerminalShell::TerminalShellType type,
-              const std::string& title,
-              std::vector<TerminalShell>* pShells)
-{
-   addShell(core::FilePath(expectedPath), type, title, pShells);
-}
-#endif
 
 void scanAvailableShells(std::vector<TerminalShell>* pShells)
 {
@@ -64,11 +55,13 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
    // * On a 64-bit OS, a 64-bit process sees 32-bit bins in %windir%\syswow64,
    //   and 64-bit bins in %windir%\system32.
 
+   std::vector<std::string> args;
+
    if (!core::system::isVistaOrLater())
    {
       // Below Vista, just use %comspec%
       addShell(core::system::expandComSpec(),
-               TerminalShell::Cmd32, "Command Prompt", pShells);
+               TerminalShell::Cmd32, "Command Prompt", args, pShells);
    }
    else
    {
@@ -87,65 +80,63 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
          return;
       }
 
-      addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", pShells);
+      addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", args, pShells);
 
-      std::string cmd32;
-      std::string cmd64;
-      std::string ps32;
-      std::string ps64;
-      std::string bashWSL; // Windows Subsystem for Linux
+      core::FilePath cmd32;
+      core::FilePath cmd64;
+      core::FilePath ps32;
+      core::FilePath ps64;
+      core::FilePath bashWSL; // Windows Subsystem for Linux
 
       if (core::system::isWin64())
       {
          if (core::system::isCurrentProcessWin64())
          {
-            cmd32 = windir + wow64 + cmd;
-            cmd64 = windir + sys32 + cmd;
-            ps32 = windir + wow64 + ps;
-            ps64 = windir + sys32 + ps;
-            bashWSL = windir + sys32 + bash;
+            cmd32 = core::FilePath(windir + wow64 + cmd);
+            cmd64 = core::FilePath(windir + sys32 + cmd);
+            ps32 = core::FilePath(windir + wow64 + ps);
+            ps64 = core::FilePath(windir + sys32 + ps);
+            bashWSL = core::FilePath(windir + sys32 + bash);
          }
          else
          {
-            cmd32 = windir + sys32 + cmd;
-            cmd64 = windir + sysnative + cmd;
-            ps32 = windir + sys32 + ps;
-            ps64 = windir + sysnative + ps;
-            bashWSL = windir + sysnative + bash;
+            cmd32 = core::FilePath(windir + sys32 + cmd);
+            cmd64 = core::FilePath(windir + sysnative + cmd);
+            ps32 = core::FilePath(windir + sys32 + ps);
+            ps64 = core::FilePath(windir + sysnative + ps);
+            bashWSL = core::FilePath(windir + sysnative + bash);
          }
       }
       else // 32-bit windows
       {
-         cmd32 = windir + sys32 + cmd;
-         cmd64.clear();
-         ps32 = windir + sys32 + ps;
-         ps64.clear();
-         bashWSL.clear();
+         cmd32 = core::FilePath(windir + sys32 + cmd);
+         ps32 = core::FilePath(windir + sys32 + ps);
       }
 
-      addShell(cmd32, TerminalShell::Cmd32, "Command Prompt (32-bit)", pShells);
-      addShell(cmd64, TerminalShell::Cmd64, "Command Prompt (64-bit)", pShells);
-      addShell(ps32, TerminalShell::PS32, "Windows PowerShell (32-bit)", pShells);
-      addShell(ps64, TerminalShell::PS64, "Windows PowerShell (64-bit)", pShells);
+      addShell(cmd32, TerminalShell::Cmd32, "Command Prompt (32-bit)", args, pShells);
+      addShell(cmd64, TerminalShell::Cmd64, "Command Prompt (64-bit)", args, pShells);
+      addShell(ps32, TerminalShell::PS32, "Windows PowerShell (32-bit)", args, pShells);
+      addShell(ps64, TerminalShell::PS64, "Windows PowerShell (64-bit)", args, pShells);
 
       // Is there a better way to detect WSL? This will match any 64-bit
       // bash.exe found in same location as the WSL bash.
       if (core::system::isWin64())
       {
          addShell(bashWSL, TerminalShell::WSLBash,
-                  "Bash (Windows Subsystem for Linux)", pShells);
+                  "Bash (Windows Subsystem for Linux)", args, pShells);
       }
    }
+#endif
 
-   // If nothing found try to add %comspec% so there's something
-   // available on Windows.
+   // If nothing found add standard shell (%comspec% on Windows, Bash on Posix)
    if (pShells->empty())
    {
-      addShell(core::system::expandComSpec(),
-               TerminalShell::Cmd32, "Command Prompt", pShells);
+      TerminalShell sysShell;
+      if (AvailableTerminalShells::getSystemShell(&sysShell))
+      {
+         addShell(sysShell.path, sysShell.type, sysShell.name, sysShell.args, pShells);
+      }
    }
-
-#endif
 }
 
 } // anonymous namespace
@@ -201,9 +192,40 @@ core::FilePath getGitBashShell()
 {
    core::FilePath gitExePath = modules::git::detectedGitExePath();
    if (!gitExePath.empty())
-      return gitExePath.parent().childPath("sh.exe");
+   {
+      core::FilePath gitBashPath =
+            gitExePath.parent().parent().complete("usr/bin/bash.exe");
+      if (gitBashPath.exists())
+         return gitBashPath;
+      else
+         return core::FilePath();
+   }
    else
        return core::FilePath();
+}
+
+bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
+{
+#ifdef _WIN32
+   pShellInfo->path = core::system::expandComSpec();
+   if (core::system::isWin64())
+   {
+      pShellInfo->type = TerminalShell::Cmd64;
+      pShellInfo->name = "Command Prompt (64-bit)";
+   }
+   else
+   {
+      pShellInfo->type = TerminalShell::Cmd32;
+      pShellInfo->name = "Command Prompt (32-bit)";
+   }
+#else
+   pShellInfo->name = "Bash";
+   pShellInfo->type = TerminalShell::PosixBash;
+   pShellInfo->path = core::FilePath("/usr/bin/env");
+   pShellInfo->args.push_back("bash");
+   pShellInfo->args.push_back("-l"); // act like a login shell
+#endif
+   return true;
 }
 
 } // namespace console_process

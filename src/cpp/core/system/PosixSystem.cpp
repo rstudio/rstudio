@@ -719,11 +719,40 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
+bool hasSubprocesses(PidType pid)
+{
+// #if defined(HAVE_PROCSELF)
+   // TODO (gary) implement using /proc on platforms that have it
+//   return false;
+// #else
+   // pgrep -P ppid returns 0 if there are matches, non-zero
+   // otherwise
+   shell_utils::ShellCommand cmd("pgrep");
+   cmd << "-P" << pid;
+
+   core::system::ProcessOptions options;
+   options.detachSession = true;
+
+   core::system::ProcessResult result;
+   Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                            options,
+                            &result);
+   if (error)
+   {
+      // err on the side of assuming child processes, so we don't kill
+      // a job unintentionally
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return result.exitStatus == 0;
+// #endif
+}
 
 Error daemonize()
 {
    // fork
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
    if (pid < 0)
       return systemError(errno, ERROR_LOCATION); // fork error
    else if (pid > 0)
@@ -1278,7 +1307,7 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
 
    // error
    if (pid < 0)

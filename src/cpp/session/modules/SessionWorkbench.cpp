@@ -930,19 +930,25 @@ Error startTerminal(const json::JsonRpcRequest& request,
    options.cols = cols;
    options.rows = rows;
 
-#ifdef _WIN32
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;
    if (shells.getInfo(shellType, &shell))
    {
       options.shellPath = shell.path;
+      options.args = shell.args;
    }
 
-   // last-ditch, use %comspec%
+   // last-ditch, use system shell
    if (!options.shellPath.exists())
-      options.shellPath = core::system::expandComSpec();
-#endif
+   {
+      TerminalShell sysShell;
+      if (AvailableTerminalShells::getSystemShell(&sysShell))
+      {
+         options.shellPath = sysShell.path;
+         options.args = sysShell.args;
+      }
+   }
 
    if (termCaption.empty())
       termCaption = "Shell";

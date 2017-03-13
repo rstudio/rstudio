@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <shlobj.h>
+#include <tlhelp32.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -876,6 +877,40 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
+bool hasSubprocesses(PidType pid)
+{
+   HANDLE hSnapShot;
+   CloseHandleOnExitScope closeSnapShot(&hSnapShot, ERROR_LOCATION);
+
+   hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if (hSnapShot == INVALID_HANDLE_VALUE)
+   {
+      // err on the side of assuming child processes, so we don't kill
+      // a job unintentionally
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return true;
+   }
+
+   PROCESSENTRY32 pe32;
+   pe32.dwSize = sizeof(pe32);
+   if (!Process32First(hSnapShot, &pe32))
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return true;
+   }
+
+   do
+   {
+      if (pe32.th32ParentProcessID == pid)
+      {
+         // Found a child process
+         return true;
+      }
+   } while (Process32Next(hSnapShot, &pe32));
+
+   // Didn't find a child process
+   return false;
+}
 
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {
