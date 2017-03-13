@@ -408,10 +408,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
             virtualConsole_ = new VirtualConsole(trailing);
          }
 
-         int oldLineCount = DomUtils.countLinesRecursive(
+         int oldLineCount = DomUtils.countLines(
                virtualConsole_.getParent(), true);
          virtualConsole_.submit(text, className);
-         int newLineCount = DomUtils.countLinesRecursive(
+         int newLineCount = DomUtils.countLines(
                virtualConsole_.getParent(), true);
          lines_ += newLineCount - oldLineCount;
       }

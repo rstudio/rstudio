@@ -39,7 +39,7 @@ public class DomUtilsTests extends GWTTestCase
       s2.setInnerText("Line3\n");
       pre.appendChild(s2);
       
-      Assert.assertEquals(3, DomUtils.countLinesRecursive(pre, true));
+      Assert.assertEquals(3, DomUtils.countLines(pre, true));
    }
    
    public void testTrimExcess()
