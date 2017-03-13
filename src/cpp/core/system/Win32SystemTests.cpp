@@ -110,6 +110,77 @@ TEST_CASE("Win32SystemTests")
          }
       }
    }
+
+   SECTION("Correct detection of no child processes")
+   {
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+
+      ZeroMemory(&si, sizeof(si));
+      si.cb = sizeof(si);
+      ZeroMemory(&pi, sizeof(pi));
+
+      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+      cmd.copy(&(cmdBuf[0]), cmd.size());
+
+      // Start the child process.
+      CHECK(CreateProcess(
+               NULL,          // No module name (use command line)
+               &(cmdBuf[0]),  // Command
+               NULL,          // Process handle not inheritable
+               NULL,          // Thread handle not inheritable
+               FALSE,         // Set handle inheritance to FALSE
+               0,             // No creation flags
+               NULL,          // Use parent's environment block
+               NULL,          // Use parent's starting directory
+               &si,           // Pointer to STARTUPINFO structure
+               &pi));         // Pointer to PROCESS_INFORMATION structure
+
+      CHECK_FALSE(hasSubprocesses(pi.dwProcessId));
+
+      CHECK(TerminateProcess(pi.hProcess, 1));
+
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+   }
+
+   SECTION("Correct detection of child processes")
+   {
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+
+      ZeroMemory(&si, sizeof(si));
+      si.cb = sizeof(si);
+      ZeroMemory(&pi, sizeof(pi));
+
+      std::string cmd = "cmd.exe /S /C \"ping -n 8 www.rstudio.com\" 1> nul";
+      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+      cmd.copy(&(cmdBuf[0]), cmd.size());
+
+      // Start the child process.
+      CHECK(CreateProcess(
+               NULL,          // No module name (use command line)
+               &(cmdBuf[0]),  // Command
+               NULL,          // Process handle not inheritable
+               NULL,          // Thread handle not inheritable
+               FALSE,         // Set handle inheritance to FALSE
+               0,             // No creation flags
+               NULL,          // Use parent's environment block
+               NULL,          // Use parent's starting directory
+               &si,           // Pointer to STARTUPINFO structure
+               &pi));         // Pointer to PROCESS_INFORMATION structure
+
+      ::Sleep(100); // give child time to start
+      CHECK(hasSubprocesses(pi.dwProcessId));
+
+      CHECK(TerminateProcess(pi.hProcess, 1));
+
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+   }
 }
 
 } // end namespace tests
