@@ -519,7 +519,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                          String rightImageDesc)
    {
       StringBuilder text = new StringBuilder();
-      int topOffset = -10;
+      int topOffset = -7;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
