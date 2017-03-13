@@ -143,7 +143,7 @@ struct ChildProcess::Impl
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
         closeProcess_(&hProcess, ERROR_LOCATION),
-        pid((PidType)-1),
+        pid(static_cast<PidType>(-1)),
         ctrlC(0x03)
    {
    }

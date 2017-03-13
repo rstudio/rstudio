@@ -199,8 +199,6 @@ core::FilePath getGitBashShell()
 
 bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
-   std::vector<std::string> args;
-
 #ifdef _WIN32
    pShellInfo->path = core::system::expandComSpec();
    if (core::system::isWin64())
