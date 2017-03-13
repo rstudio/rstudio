@@ -560,7 +560,7 @@ public class EnvironmentPane extends WorkbenchPane
                {
                   setObjectDisplayType(type);
                }
-            }, 2);
+            }, -1);
    }
    
    // An extension of the toolbar popup menu that gets environment names from
