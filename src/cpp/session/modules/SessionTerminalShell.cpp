@@ -192,7 +192,14 @@ core::FilePath getGitBashShell()
 {
    core::FilePath gitExePath = modules::git::detectedGitExePath();
    if (!gitExePath.empty())
-      return gitExePath.parent().childPath("sh.exe");
+   {
+      core::FilePath gitBashPath =
+            gitExePath.parent().parent().complete("usr/bin/bash.exe");
+      if (gitBashPath.exists())
+         return gitBashPath;
+      else
+         return core::FilePath();
+   }
    else
        return core::FilePath();
 }
