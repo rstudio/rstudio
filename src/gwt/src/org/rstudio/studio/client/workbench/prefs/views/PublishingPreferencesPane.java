@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -243,7 +244,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconPublishing();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconPublishing2x());
    }
 
    @Override

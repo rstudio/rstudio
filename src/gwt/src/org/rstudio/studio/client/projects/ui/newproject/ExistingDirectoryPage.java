@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
@@ -28,8 +29,8 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       super("Existing Directory", 
             "Associate a project with an existing working directory",
             "Create Project from Existing Directory",
-            NewProjectResources.INSTANCE.existingDirectoryIcon(),
-            NewProjectResources.INSTANCE.existingDirectoryIconLarge());
+            new ImageResource2x(NewProjectResources.INSTANCE.existingDirectoryIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.existingDirectoryIconLarge2x()));
       
 
    }

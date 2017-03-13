@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 import java.util.HashMap;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -68,7 +69,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return RES.iconBuild();
+      return new ImageResource2x(RES.iconBuild2x());
    }
 
    @Override

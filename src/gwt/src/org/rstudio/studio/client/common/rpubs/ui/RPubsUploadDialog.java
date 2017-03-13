@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.rpubs.ui;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -120,7 +121,7 @@ public class RPubsUploadDialog extends ModalDialogBase
   
       HorizontalPanel headerPanel = new HorizontalPanel();
       headerPanel.addStyleName(styles.headerPanel());
-      headerPanel.add(new Image(RESOURCES.publishLarge()));
+      headerPanel.add(new Image(new ImageResource2x(RESOURCES.publishLarge2x())));
       
       Label headerLabel = new Label("Publish to RPubs");
       headerLabel.addStyleName(styles.headerLabel());
@@ -368,7 +369,8 @@ public class RPubsUploadDialog extends ModalDialogBase
       @Source("RPubsUploadDialog.css")
       Styles styles();
       
-      ImageResource publishLarge();
+      @Source("publishLarge_2x.png")
+      ImageResource publishLarge2x();
    }
 
    private final boolean isPublished_;

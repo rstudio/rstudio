@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
@@ -114,7 +115,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconCompilePdf();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCompilePdf2x());
    }
 
    @Override

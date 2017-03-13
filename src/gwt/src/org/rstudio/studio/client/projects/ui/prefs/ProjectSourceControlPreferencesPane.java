@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -96,7 +97,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconSourceControl();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconSourceControl2x());
    }
 
    @Override

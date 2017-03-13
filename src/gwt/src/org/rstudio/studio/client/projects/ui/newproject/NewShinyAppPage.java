@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 
@@ -27,8 +28,8 @@ public class NewShinyAppPage extends NewDirectoryPage
       super("Shiny Web Application", 
             "Create a new Shiny web application",
             "Create Shiny Web Application",
-            NewProjectResources.INSTANCE.shinyAppIcon(),
-            NewProjectResources.INSTANCE.shinyAppIconLarge());
+            new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIconLarge2x()));
    }
     
    @Override 

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -55,8 +56,8 @@ public class NewDirectoryNavigationPage
       super("New Directory", 
             "Start a project in a brand new working directory",
             "Project Type",
-            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
-            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge(),
+            new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIconLarge2x()),
             createPages(sessionInfo),
             new WizardNavigationPageProducer<NewProjectInput, NewProjectResult>()
             {

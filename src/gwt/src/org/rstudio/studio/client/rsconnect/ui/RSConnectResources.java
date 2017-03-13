@@ -26,32 +26,32 @@ public interface RSConnectResources extends ClientBundle
    @Source("localAccountIconSmall_2x.png")
    ImageResource localAccountIconSmall2x();
 
-   @Source("localAccountIcon.png")
-   ImageResource localAccountIcon();
+   @Source("localAccountIcon_2x.png")
+   ImageResource localAccountIcon2x();
 
-   @Source("localAccountIconLarge.png")
-   ImageResource localAccountIconLarge();
+   @Source("localAccountIconLarge_2x.png")
+   ImageResource localAccountIconLarge2x();
 
-   @Source("cloudAccountIconSmall.png")
-   ImageResource cloudAccountIconSmall();
+   @Source("cloudAccountIconSmall_2x.png")
+   ImageResource cloudAccountIconSmall2x();
 
    @Source("cloudAccountIcon.png")
    ImageResource cloudAccountIcon();
 
-   @Source("cloudAccountIconLarge.png")
-   ImageResource cloudAccountIconLarge();
+   @Source("cloudAccountIconLarge_2x.png")
+   ImageResource cloudAccountIconLarge2x();
    
-   @Source("publishIcon.png")
-   ImageResource publishIcon();
+   @Source("publishIcon_2x.png")
+   ImageResource publishIcon2x();
 
-   @Source("publishIconLarge.png")
-   ImageResource publishIconLarge();
+   @Source("publishIconLarge_2x.png")
+   ImageResource publishIconLarge2x();
 
-   @Source("rpubsPublish.png")
-   ImageResource rpubsPublish();
+   @Source("rpubsPublish_2x.png")
+   ImageResource rpubsPublish2x();
 
-   @Source("rpubsPublishLarge.png")
-   ImageResource rpubsPublishLarge();
+   @Source("rpubsPublishLarge_2x.png")
+   ImageResource rpubsPublishLarge2x();
    
    @Source("publishSingleRmd.png")
    ImageResource publishSingleRmd();
@@ -65,15 +65,15 @@ public interface RSConnectResources extends ClientBundle
    @Source("publishDocWithoutSource.png")
    ImageResource publishDocWithoutSource();
    
-   @Source("previewDoc.png")
-   ImageResource previewDoc();
+   @Source("previewDoc_2x.png")
+   ImageResource previewDoc2x();
    
-   @Source("previewPlot.png")
-   ImageResource previewPlot();
+   @Source("previewPlot_2x.png")
+   ImageResource previewPlot2x();
    
    @Source("republishPlot.png")
    ImageResource republishPlot();
    
-   @Source("previewPresentation.png")
-   ImageResource previewPresentation();
+   @Source("previewPresentation_2x.png")
+   ImageResource previewPresentation2x();
 }

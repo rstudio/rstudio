@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
@@ -137,7 +138,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconSpelling();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconSpelling2x());
    }
 
    @Override

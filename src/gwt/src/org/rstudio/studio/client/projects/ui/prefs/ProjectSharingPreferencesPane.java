@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -23,7 +24,7 @@ public class ProjectSharingPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return ProjectPreferencesDialogResources.INSTANCE.iconShare();
+      return new ImageResource2x(ProjectPreferencesDialogResources.INSTANCE.iconShare2x());
    }
 
    @Override

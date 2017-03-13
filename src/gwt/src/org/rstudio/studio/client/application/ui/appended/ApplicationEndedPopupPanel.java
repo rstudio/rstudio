@@ -31,6 +31,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CenterPanel;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.studio.client.application.Desktop;
@@ -140,31 +142,31 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       switch(mode)
       {
       case QUIT:
-         image = new Image(RESOURCES.applicationQuit());
+         image = new Image(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText("R Session Ended");
          button.setText("Start New Session");
          break;
          
       case SUICIDE:
-         image = new Image(RESOURCES.applicationSuicide());
+         image = new Image(new ImageResource2x(RESOURCES.applicationSuicide2x()));
          captionLabel.setText("R Session Aborted");
          button.setText("Start New Session");
          break;
        
       case DISCONNECTED:
-         image = new Image(RESOURCES.applicationDisconnected());
+         image = new Image(new ImageResource2x(RESOURCES.applicationDisconnected2x()));
          captionLabel.setText("R Session Disconnected");
          button.setText("Reconnect");
          break;
          
       case OFFLINE:
-         image = new Image(RESOURCES.applicationOffline());
+         image = new Image(new ImageResource2x(RESOURCES.applicationOffline2x()));
          captionLabel.setText("RStudio Temporarily Offline");
          button.setText("Reconnect");
          break;
          
       case QUIT_MULTI:
-         image = new Image(RESOURCES.applicationQuit());
+         image = new Image(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText("R Session Ended");
          button.setText("Reconnect");
          break;
@@ -249,10 +251,17 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       @Source("ApplicationEndedPopupPanel.css")
       Styles styles();
       
-      ImageResource applicationQuit();
-      ImageResource applicationSuicide();
-      ImageResource applicationDisconnected();
-      ImageResource applicationOffline();
+      @Source("applicationQuit_2x.png")
+      ImageResource applicationQuit2x();
+
+      @Source("applicationSuicide_2x.png")
+      ImageResource applicationSuicide2x();
+
+      @Source("applicationDisconnected_2x.png")
+      ImageResource applicationDisconnected2x();
+
+      @Source("applicationOffline_2x.png")
+      ImageResource applicationOffline2x();
 
       ImageResource panelTopLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
