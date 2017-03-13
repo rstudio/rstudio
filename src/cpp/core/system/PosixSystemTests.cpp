@@ -16,8 +16,7 @@
 #ifndef _WIN32
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <signal.h>
 
 #include <tests/TestThat.hpp>
 
@@ -28,6 +27,31 @@ namespace tests {
 
 context("PosixSystemTests")
 {
+
+   test_that("No subprocess detected correctly")
+   {
+      // This assumes this test program has no child processes!
+      expect_false(hasSubprocesses(getpid()));
+   }
+
+   test_that("Subprocess detected correctly")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "2", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         expect_true(hasSubprocesses(getpid()));
+
+         kill(pid, SIGKILL);
+      }
+   }
 }
 
 } // end namespace tests
