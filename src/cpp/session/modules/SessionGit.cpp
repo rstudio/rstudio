@@ -82,6 +82,33 @@ const char * const kVcsId = "Git";
 
 namespace {
 
+ShellArgs gitArgs()
+{
+   ShellArgs args;
+   
+#ifdef _WIN32
+   // by default on Windows, git will return paths which contain characters
+   // not in the ASCII set with a so-called 'quoted octal encoding'.
+   // this is controlled by the 'core.quotepath' configuration option;
+   // by setting this to off we ensure that git will return us a
+   // plain UTF-8 encoded path which requires no further processing. note
+   // that having this set by default in the config file is not enough for
+   // some APIs, e.g.
+   //
+   //    git rm --cached "鬼門.txt"
+   //
+   // can fail even if the config has core.quotepath=off; despite that the
+   // following will succeed:
+   //
+   //    git -c core.quotepath=off rm --cached "鬼門.txt"
+   //
+   // so we just make sure to always use that in git APIs that accept filepaths
+   args << "-c" << "core.quotepath=off";
+#endif
+   
+   return args;
+}
+
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
 std::vector<std::string> s_branches;
@@ -408,16 +435,7 @@ public:
       std::vector<FileWithStatus> files;
       
       // build shell arguments
-      ShellArgs arguments;
-      
-#ifdef _WIN32
-      // by default on Windows, git will return paths which contain characters
-      // not in the ASCII set with a so-called 'quoted octal encoding'.
-      // this is controlled by the 'core.quotepath' configuration option;
-      // by setting this to off we ensure that git will return us a
-      // plain UTF-8 encoded path which requires no further processing
-      arguments << "-c" << "core.quotepath=off";
-#endif
+      ShellArgs arguments = gitArgs();
       
       arguments << "status" << "--porcelain" << "--" << dir;
       
@@ -460,12 +478,12 @@ public:
 
    core::Error add(const std::vector<FilePath>& filePaths)
    {
-      return runGit(ShellArgs() << "add" << "--" << filePaths);
+      return runGit(gitArgs() << "add" << "--" << filePaths);
    }
 
    core::Error remove(const std::vector<FilePath>& filePaths)
    {
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       args << "rm" << "--";
       appendPathArgs(filePaths, &args);
       return runGit(args);
@@ -487,7 +505,7 @@ public:
       if (!trackedPaths.empty())
       {
          // -f means don't fail on unmerged entries
-         return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+         return runGit(gitArgs() << "checkout" << "-f" << "--" << trackedPaths);
       }
       else
       {
@@ -556,12 +574,12 @@ public:
 
       // Detect if HEAD does not exist (i.e. no commits in repo yet)
       int exitCode;
-      error = runGit(ShellArgs() << "rev-parse" << "HEAD", NULL, NULL,
+      error = runGit(gitArgs() << "rev-parse" << "HEAD", NULL, NULL,
                      &exitCode);
       if (error)
          return error;
 
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       if (exitCode == 0)
          args << "reset" << "HEAD" << "--" ;
       else
@@ -908,7 +926,7 @@ public:
                           int contextLines,
                           std::string* pOutput)
    {
-      ShellArgs args = ShellArgs() << "diff";
+      ShellArgs args = gitArgs() << "diff";
       args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
@@ -975,7 +993,7 @@ public:
    core::Error applyPatch(const FilePath& patchFile,
                           PatchMode patchMode)
    {
-      ShellArgs args = ShellArgs() << "apply";
+      ShellArgs args = gitArgs() << "apply";
       if (patchMode == PatchModeStage)
          args << "--cached";
       args << "--";
@@ -1027,7 +1045,7 @@ public:
    {
       if (searchText.empty())
       {
-         ShellArgs args = ShellArgs() << "log";
+         ShellArgs args = gitArgs() << "log";
          args << "--pretty=oneline";
          if (!rev.empty())
             args << rev;
@@ -1061,11 +1079,11 @@ public:
                    const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
-      ShellArgs args = ShellArgs() << "log" << "--encoding=UTF-8"
+      ShellArgs args = gitArgs() << "log" << "--encoding=UTF-8"
                        << "--pretty=raw" << "--decorate=full"
                        << "--date-order";
 
-      ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
+      ShellArgs revListArgs = gitArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
       if (!fileFilter.empty())
@@ -1256,7 +1274,7 @@ public:
    {
       boost::format fmt("%1%:%2%");
       ShellArgs args =
-            ShellArgs() << "show" << boost::str(fmt % rev % filename);
+            gitArgs() << "show" << boost::str(fmt % rev % filename);
 
       return runGit(args, pOutput);
    }
