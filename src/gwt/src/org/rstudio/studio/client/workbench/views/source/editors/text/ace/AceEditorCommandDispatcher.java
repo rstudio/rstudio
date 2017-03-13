@@ -19,7 +19,9 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.CommandType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.ExecutionPolicy;
@@ -133,7 +135,11 @@ public class AceEditorCommandDispatcher
    
    private void fireEvent(CommandType type, ExecutionPolicy policy)
    {
-      events_.fireEvent(new AceEditorCommandEvent(type, policy));
+      AceEditorCommandEvent event = new AceEditorCommandEvent(type, policy);
+      if (Satellite.isCurrentWindowSatellite())
+         events_.fireEventToSatellite(event, WindowEx.get());
+      else
+         events_.fireEvent(event);
    }
    
    // Private fields ----
