@@ -30,8 +30,21 @@ context("PosixSystemTests")
 
    test_that("No subprocess detected correctly")
    {
-      // This assumes this test program has no child processes!
-      expect_false(hasSubprocesses(getpid()));
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         expect_false(hasSubprocesses(pid));
+
+         kill(pid, SIGKILL);
+      }
    }
 
    test_that("Subprocess detected correctly")
