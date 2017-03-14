@@ -210,17 +210,21 @@ public interface ThemeResources extends ClientBundle
    
    ImageResource newsButton();
    
-   @Source("activeBreakpoint.png")
-   DataResource activeBreakpoint();
-   @Source("inactiveBreakpoint.png")
-   DataResource inactiveBreakpoint();
-   @Source("pendingBreakpoint.png")
-   DataResource pendingBreakpoint();
-   @Source("executingLine.png")
-   DataResource executingLine();
+   @Source("activeBreakpoint_2x.png")
+   DataResource activeBreakpoint2x();
+
+   @Source("inactiveBreakpoint_2x.png")
+   DataResource inactiveBreakpoint2x();
+
+   @Source("pendingBreakpoint_2x.png")
+   DataResource pendingBreakpoint2x();
+
+   @Source("executingLine_2x.png")
+   DataResource executingLine2x();
    
-   @Source("macCheck.png")
-   DataResource macCheck();
+   @Source("macCheck_2x.png")
+   DataResource macCheck2x();
+
    @Source("radioButtonOn.png")
    DataResource radioButtonOn();
    

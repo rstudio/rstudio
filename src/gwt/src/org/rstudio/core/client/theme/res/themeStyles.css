@@ -105,10 +105,10 @@
 
 @url WORKSPACESECTIONHEADERTILE workspaceSectionHeaderTile;
 
-@url ACTIVEBREAKPOINT activeBreakpoint;
-@url INACTIVEBREAKPOINT inactiveBreakpoint;
-@url PENDINGBREAKPOINT pendingBreakpoint;
-@url EXECUTINGLINE executingLine;
+@url ACTIVEBREAKPOINT activeBreakpoint2x;
+@url INACTIVEBREAKPOINT inactiveBreakpoint2x;
+@url PENDINGBREAKPOINT pendingBreakpoint2x;
+@url EXECUTINGLINE executingLine2x;
 
 @url INFO syntaxInfo;
 @url WARNING syntaxWarning;
@@ -120,7 +120,7 @@
 
 @url HANDCURSOR handCursor;
 
-@url MACCHECK macCheck;
+@url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn;
 
 body.windows, body.macintosh, body.linux {}
@@ -1348,6 +1348,7 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-CheckBox input[type="checkbox"]:checked:before, 
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before {
   background: MACCHECK;
+  background-size: 10px 9px;
 }
 
 .linux .gwt-RadioButton input[type="radio"]:checked:before,
