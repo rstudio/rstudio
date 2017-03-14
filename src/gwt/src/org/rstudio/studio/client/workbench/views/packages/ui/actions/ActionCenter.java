@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui.actions;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 
 import com.google.gwt.core.client.GWT;
