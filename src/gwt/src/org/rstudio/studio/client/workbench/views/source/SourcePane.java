@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DocTabLayoutPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -81,7 +82,7 @@ public class SourcePane extends Composite implements Display,
             manageChevronVisibility();
          }
       });
-      chevron_ = new Image(ThemeResources.INSTANCE.chevron());
+      chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
       chevron_.addClickHandler(new ClickHandler()
       {

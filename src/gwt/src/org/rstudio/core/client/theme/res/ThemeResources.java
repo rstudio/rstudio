@@ -185,7 +185,9 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource dropDownArrow();
    ImageResource mediumDropDownArrow();
-   ImageResource chevron();
+
+   @Source("chevron_2x.png")
+   ImageResource chevron2x();
 
    ImageResource help();
    
