@@ -218,7 +218,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       {
          if (directoryItem.equalTo(FileSystemItem.home()))
          {
-            image_.setResource(FileDialogResources.INSTANCE.homeImage());
+            image_.setResource(new ImageResource2x(FileDialogResources.INSTANCE.homeImage2x()));
             name_.setHTML("Home");
          }
          else
