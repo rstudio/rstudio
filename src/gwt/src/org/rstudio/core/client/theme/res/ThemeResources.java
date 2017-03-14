@@ -224,7 +224,8 @@ public interface ThemeResources extends ClientBundle
    @Source("removePackage_2x.png")
    ImageResource removePackage2x();
    
-   ImageResource newsButton();
+   @Source("newsButton_2x.png")
+   ImageResource newsButton2x();
    
    @Source("activeBreakpoint_2x.png")
    DataResource activeBreakpoint2x();
