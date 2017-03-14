@@ -21,7 +21,9 @@ import com.google.gwt.resources.client.ImageResource;
 public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
-   ImageResource stock_new();
+
+   @Source("stock_new_2x.png")
+   ImageResource stock_new2x();
 
    @Source("chunk_menu_2x.png")
    ImageResource chunk_menu2x();
