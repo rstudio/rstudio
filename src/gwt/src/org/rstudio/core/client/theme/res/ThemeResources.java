@@ -188,7 +188,10 @@ public interface ThemeResources extends ClientBundle
    ImageResource help();
    
    ImageResource infoSmall();
-   ImageResource warningSmall();
+
+   @Source("warningSmall_2x.png")
+   ImageResource warningSmall2x();
+
    ImageResource errorSmall();
    
    ImageResource syntaxInfo();

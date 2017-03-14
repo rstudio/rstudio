@@ -43,7 +43,7 @@
        </g:VerticalPanel>
      </g:HorizontalPanel>
      <g:HorizontalPanel visible="false" ui:field="warningBar_">
-       <g:Image styleName="{style.icon}" resource="{res.warningSmall}"></g:Image>
+       <g:Image styleName="{style.icon}" resource="{res.warningSmall2x}"></g:Image>
        <g:VerticalPanel styleName="{style.contents}" ui:field="warnings_">
        </g:VerticalPanel>
      </g:HorizontalPanel>

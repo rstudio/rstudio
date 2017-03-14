@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class InfoBar extends Composite 
@@ -41,7 +43,7 @@ public class InfoBar extends Composite
       switch(mode)
       {
       case WARNING:
-         icon_ = new Image(ThemeResources.INSTANCE.warningSmall());
+         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          break;
       case ERROR:
          icon_ = new Image(ThemeResources.INSTANCE.errorSmall());
