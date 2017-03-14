@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -61,7 +62,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
       ToolbarButton exportButton = new ToolbarButton(
-            "Export", StandardIcons.INSTANCE.export_menu(),
+            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       addLeftWidget(exportButton);
       addLeftSeparator();
