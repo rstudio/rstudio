@@ -95,12 +95,12 @@ public class WebApplicationHeader extends Composite
       outerPanel_.getElement().getStyle().setPosition(Position.RELATIVE);
       
       // large logo
-      logoLarge_ = new Image(ThemeResources.INSTANCE.rstudio());
+      logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
       logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
       
       // small logo
-      logoSmall_ = new Image(ThemeResources.INSTANCE.rstudio_small());
+      logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
       logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
@@ -192,8 +192,8 @@ public class WebApplicationHeader extends Composite
                logoAnchor_.setHref(logoTargetUrl_);
                logoAnchor_.setTitle("RStudio Server Home");
 
-               logoLarge_.setResource(ThemeResources.INSTANCE.rstudio_home());
-               logoSmall_.setResource(ThemeResources.INSTANCE.rstudio_home_small());
+               logoLarge_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home2x()));
+               logoSmall_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home_small2x()));
             }
             else
             {

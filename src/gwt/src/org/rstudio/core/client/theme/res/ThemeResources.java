@@ -63,14 +63,21 @@ public interface ThemeResources extends ClientBundle
 
    @Source("verticalHandle.png")
    DataResource verticalHandle();
+
    @Source("horizontalHandle.png")
    DataResource horizontalHandle();
 
-   ImageResource rstudio();
-   ImageResource rstudio_small();
+   @Source("rstudio_2x.png")
+   ImageResource rstudio2x();
+
+   @Source("rstudio_small_2x.png")
+   ImageResource rstudio_small2x();
    
-   ImageResource rstudio_home();
-   ImageResource rstudio_home_small();
+   @Source("rstudio_home_2x.png")
+   ImageResource rstudio_home2x();
+
+   @Source("rstudio_home_small_2x.png")
+   ImageResource rstudio_home_small2x();
    
    @Source("backgroundGradient.png")
    DataResource backgroundGradient();
