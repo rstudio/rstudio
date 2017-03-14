@@ -19,6 +19,8 @@
    position: absolute;
    left: 3px;
    top: 0.5em;
+   width: 11px;
+   height: 10px;
 }
 
 .tracebackHeader
