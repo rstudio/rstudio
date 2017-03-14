@@ -48,8 +48,8 @@ public interface EnvironmentResources extends ClientBundle
    @Source("ObjectListView_2x.png")
    ImageResource objectListView2x();
    
-   @Source("ObjectGridView.png")
-   ImageResource objectGridView();
+   @Source("ObjectGridView_2x.png")
+   ImageResource objectGridView2x();
    
    @Source("EnvironmentObjects.css")
    EnvironmentStyle environmentStyle();
