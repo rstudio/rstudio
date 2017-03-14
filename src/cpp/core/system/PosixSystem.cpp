@@ -719,12 +719,11 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
-bool hasSubprocesses(PidType pid)
+// Detect subprocesses via shelling out to pgrep, kinda expensive but used
+// on Mac and any other Posix system without procfs.
+namespace {
+bool hasSubprocessesViaPgrep(PidType pid)
 {
-// #if defined(HAVE_PROCSELF)
-   // TODO (gary) implement using /proc on platforms that have it
-//   return false;
-// #else
    // pgrep -P ppid returns 0 if there are matches, non-zero
    // otherwise
    shell_utils::ShellCommand cmd("pgrep");
@@ -744,9 +743,100 @@ bool hasSubprocesses(PidType pid)
       LOG_ERROR(error);
       return true;
    }
-
    return result.exitStatus == 0;
-// #endif
+}
+} // anonymous namespace
+
+bool hasSubprocesses(PidType pid)
+{
+   core::FilePath procFsPath("/proc");
+   if (!procFsPath.exists())
+   {
+      return hasSubprocessesViaPgrep(pid);
+   }
+
+   std::vector<FilePath> children;
+   Error error = procFsPath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true; // err on the side of assuming child processes exist
+   }
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      // only interested in the numeric directories (pid)
+      std::string filename = child.filename();
+      bool isNumber = true;
+      for (std::string::const_iterator k = filename.begin(); k != filename.end(); ++k)
+         isNumber &= isdigit(*k);
+
+      if (!isNumber)
+         continue;
+
+      int fd = ::open(filename.c_str(), O_RDONLY);
+      if (fd == -1)
+         continue;
+
+      // We want to skip the pid, exe name enclosed in (paren), single character.
+      // After that is the parent pid (ppid). So, find the closing paren,
+      // then parse the subsequence int.
+      //
+      // An example:
+      //    4075 (My Program) S 4074 ....
+      //
+      // This is coming straight from RAM, so don't bother with buffered I/O.
+      char ch = '\0';
+      while (read(fd, &ch, sizeof(ch)) == sizeof(ch))
+      {
+         if (ch == ')')
+            break;
+      }
+      if (ch != ')')
+      {
+         ::close(fd);
+         return true;
+      }
+
+      while (read(fd, &ch, sizeof(ch)) == sizeof(ch))
+      {
+         if (isdigit(ch))
+            break;
+      }
+
+      int ppid = -1;
+      int i = 0;
+      char strPpid[16];
+      strPpid[i] = '\0';
+
+      if (isdigit(ch))
+      {
+         strPpid[i++] = ch;
+         strPpid[i] = '\0';
+      }
+      else
+      {
+         ::close(fd);
+         return true;
+      }
+      while (i < 15 && read(fd, &ch, sizeof(ch)) == sizeof(ch))
+      {
+         if (isdigit(ch))
+         {
+            strPpid[i++] = ch;
+            strPpid[i] = '\0';
+         }
+         else
+         {
+            ppid = boost::lexical_cast<int>(strPpid);
+            break;
+         }
+      }
+      ::close(fd);
+
+      if (ppid == pid)
+         return true;
+   }
+   return false;
 }
 
 Error daemonize()
