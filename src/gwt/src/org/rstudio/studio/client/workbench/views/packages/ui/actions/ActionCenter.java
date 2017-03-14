@@ -39,8 +39,8 @@ public class ActionCenter extends Composite
 {
    public ActionCenter(final Command onSizeChanged)
    { 
-      icon_ = new Image(RESOURCES.packratIcon());
-      chevronUp_ = new Image(RESOURCES.chevronUp());
+      icon_ = new Image(new ImageResource2x(RESOURCES.packratIcon2x()));
+      chevronUp_ = new Image(new ImageResource2x(RESOURCES.chevronUp2x()));
       chevronUp_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -50,7 +50,7 @@ public class ActionCenter extends Composite
             onSizeChanged.execute();;
          } 
       });
-      chevronDown_ = new Image(RESOURCES.chevronDown());
+      chevronDown_ = new Image(new ImageResource2x(RESOURCES.chevronDown2x()));
       chevronDown_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -155,9 +155,14 @@ public class ActionCenter extends Composite
    
    static interface Resources extends ClientBundle
    {
-      ImageResource chevronDown();
-      ImageResource chevronUp();
-      ImageResource packratIcon();
+      @Source("chevronDown_2x.png")
+      ImageResource chevronDown2x();
+
+      @Source("chevronUp_2x.png")
+      ImageResource chevronUp2x();
+
+      @Source("packratIcon_2x.png")
+      ImageResource packratIcon2x();
 
       @Source("packratIconSmall_2x.png")
       ImageResource packratIconSmall2x();
