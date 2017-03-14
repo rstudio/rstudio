@@ -265,21 +265,25 @@ pre {
 .ace_breakpoint
 {
    background-image: ACTIVEBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_pending-breakpoint
 {
 	background-image: PENDINGBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_inactive-breakpoint
 {
 	background-image: INACTIVEBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_executing-line
 {
 	background-image: EXECUTINGLINE !important;
+   background-size: 10px 10px;
 }
 
 
