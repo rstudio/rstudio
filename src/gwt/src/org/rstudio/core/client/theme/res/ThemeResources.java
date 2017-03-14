@@ -131,12 +131,16 @@ public interface ThemeResources extends ClientBundle
    @Source("busyTab.gif")
    ImageResource busyTab();
 
-   ImageResource closeDialog();
+   @Source("closeDialog_2x.png")
+   ImageResource closeDialog2x();
   
    ImageResource toolbarSeparator();
 
-   ImageResource menuDownArrow();
-   ImageResource linkDownArrow();
+   @Source("menuDownArrow_2x.png")
+   ImageResource menuDownArrow2x();
+
+   @Source("linkDownArrow_2x.png")
+   ImageResource linkDownArrow2x();
 
    @Source("maximize_2x.png")
    DataResource maximize2x();
@@ -175,8 +179,12 @@ public interface ThemeResources extends ClientBundle
 
    @Source("workspaceSectionHeaderTile.png")
    DataResource workspaceSectionHeaderTile();
-   ImageResource zoomDataset();
-   ImageResource viewFunctionCode();
+
+   @Source("zoomDataset_2x.png")
+   ImageResource zoomDataset2x();
+
+   @Source("viewFunctionCode_2x.png")
+   ImageResource viewFunctionCode2x();
 
    @Source("inlineEditIcon.png")
    DataResource inlineEditIcon();
@@ -190,7 +198,8 @@ public interface ThemeResources extends ClientBundle
    @Source("smallMagGlassIcon_2x.png")
    ImageResource smallMagGlassIcon2x();
 
-   ImageResource dropDownArrow();
+   @Source("dropDownArrow_2x.png")
+   ImageResource dropDownArrow2x();
 
    @Source("mediumDropDownArrow_2x.png")
    ImageResource mediumDropDownArrow2x();
@@ -198,28 +207,44 @@ public interface ThemeResources extends ClientBundle
    @Source("chevron_2x.png")
    ImageResource chevron2x();
 
-   ImageResource help();
-   
-   ImageResource infoSmall();
+   @Source("help_2x.png")
+   ImageResource help2x();
+
+   @Source("infoSmall_2x.png")
+   ImageResource infoSmall2x();
 
    @Source("warningSmall_2x.png")
    ImageResource warningSmall2x();
 
-   ImageResource errorSmall();
-   
-   ImageResource syntaxInfo();
-   ImageResource syntaxWarning();
-   ImageResource syntaxError();
-   
-   ImageResource syntaxInfoDark();
-   ImageResource syntaxWarningDark();
+   @Source("errorSmall_2x.png")
+   ImageResource errorSmall2x();
+
+   @Source("syntaxInfo_2x.png")
+   ImageResource syntaxInfo2x();
+
+   @Source("syntaxWarning_2x.png")
+   ImageResource syntaxWarning2x();
+
+   @Source("syntaxError_2x.png")
+   ImageResource syntaxError2x();
+
+   @Source("syntaxInfoDark_2x.png")
+   ImageResource syntaxInfoDark2x();
+
+   @Source("syntaxWarningDark_2x.png")
+   ImageResource syntaxWarningDark2x();
+
+   @Source("syntaxErrorDark_2x.png")
    ImageResource syntaxErrorDark();
-   
+
+   @Source("syntaxErrorDark_2x.png")
+   ImageResource syntaxErrorDark2x();
    
    @Source("codeTransform_2x.png")
    ImageResource codeTransform2x();
 
-   ImageResource closeChevron();
+   @Source("closeChevron_2x.png")
+   ImageResource closeChevron2x();
    
    @Source("removePackage_2x.png")
    ImageResource removePackage2x();
@@ -244,9 +269,9 @@ public interface ThemeResources extends ClientBundle
 
    @Source("radioButtonOn.png")
    DataResource radioButtonOn();
-   
-   @Source("handCursor.png")
-   DataResource handCursor();
+
+   @Source("handCursor_2x.png")
+   DataResource handCursor2x();
    
    @Source("executeChunk_2x.png")
    ImageResource executeChunk2x();
@@ -258,5 +283,6 @@ public interface ThemeResources extends ClientBundle
    @Source("menuCheck_2x.png")
    ImageResource menuCheck2x();
    
+   @Source("user_2x.png")
    ImageResource user();
 }

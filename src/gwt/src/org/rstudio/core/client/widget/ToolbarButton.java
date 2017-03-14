@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -93,7 +94,7 @@ public class ToolbarButton extends FocusWidget
    public ToolbarButton(ToolbarPopupMenu menu, boolean rightAlignMenu)
    {
       this((String)null, 
-           ThemeResources.INSTANCE.menuDownArrow(), 
+           new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), 
            (ImageResource) null,
            (ClickHandler) null);
       
@@ -133,7 +134,7 @@ public class ToolbarButton extends FocusWidget
                         ToolbarPopupMenu menu,
                         boolean rightAlignMenu)
    {
-      this(text, leftImage, ThemeResources.INSTANCE.menuDownArrow(), null);
+      this(text, leftImage, new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), null);
 
       addMenuHandlers(menu, rightAlignMenu);
       

@@ -46,11 +46,11 @@ public class InfoBar extends Composite
          icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          break;
       case ERROR:
-         icon_ = new Image(ThemeResources.INSTANCE.errorSmall());
+         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x()));
          break;
       case INFO:
       default:
-         icon_ = new Image(ThemeResources.INSTANCE.infoSmall());
+         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
          break;
       
       }

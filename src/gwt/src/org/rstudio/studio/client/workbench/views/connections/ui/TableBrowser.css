@@ -68,7 +68,7 @@
 }
 
 @sprite .tableViewDataset {
-   gwt-image: 'zoomDataset';
+   gwt-image: 'zoomDataset2x';
    background-position: right center; 
    float: right;
    width: 35px;

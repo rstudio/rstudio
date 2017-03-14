@@ -97,7 +97,7 @@ public class ChunkPlotPage extends ChunkOutputPage
          if (hasWarnings)
             condImage.setResource(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          else if (hasMessages)
-            condImage.setResource(ThemeResources.INSTANCE.infoSmall());
+            condImage.setResource(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
          condImage.setWidth("8px");
          condImage.setHeight("7px");
          Style style = condImage.getElement().getStyle();

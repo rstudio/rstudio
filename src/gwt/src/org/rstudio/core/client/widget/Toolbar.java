@@ -29,6 +29,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -319,7 +320,7 @@ public class Toolbar extends Composite
          addLeftWidget(label);
       else
          addRightWidget(label);
-      Image image = new Image(ThemeResources.INSTANCE.menuDownArrow());
+      Image image = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
       image.getElement().getStyle().setMarginLeft(5, Unit.PX);
       image.getElement().getStyle().setMarginRight(8, Unit.PX);
       image.getElement().getStyle().setMarginBottom(2, Unit.PX);

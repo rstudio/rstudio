@@ -110,15 +110,15 @@
 @url PENDINGBREAKPOINT pendingBreakpoint2x;
 @url EXECUTINGLINE executingLine2x;
 
-@url INFO syntaxInfo;
-@url WARNING syntaxWarning;
-@url ERROR syntaxError;
+@url INFO syntaxInfo2x;
+@url WARNING syntaxWarning2x;
+@url ERROR syntaxError2x;
 
-@url INFODARK syntaxInfoDark;
-@url WARNINGDARK syntaxWarningDark;
-@url ERRORDARK syntaxErrorDark;
+@url INFODARK syntaxInfoDark2x;
+@url WARNINGDARK syntaxWarningDark2x;
+@url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor;
+@url HANDCURSOR handCursor2x;
 
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn;
@@ -1167,12 +1167,12 @@ body.ubuntu_mono .searchBox {
 }
 
 @sprite td.environmentDataFrameCol {
-   gwt-image: 'zoomDataset';
+   gwt-image: 'zoomDataset2x';
    background-position: right center; 
 }
 
 @sprite td.environmentFunctionCol {
-   gwt-image: 'viewFunctionCode';
+   gwt-image: 'viewFunctionCode2x';
    background-position: right center;
 }
 
