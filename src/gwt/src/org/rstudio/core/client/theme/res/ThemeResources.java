@@ -180,7 +180,9 @@ public interface ThemeResources extends ClientBundle
    @Source("paneLayoutIcon_2x.png")
    ImageResource paneLayoutIcon2x();
 
-   ImageResource smallMagGlassIcon();
+   @Source("smallMagGlassIcon_2x.png")
+   ImageResource smallMagGlassIcon2x();
+
    ImageResource dropDownArrow();
    ImageResource mediumDropDownArrow();
    ImageResource chevron();
