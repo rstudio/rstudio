@@ -79,7 +79,8 @@
         <g:Image styleName="{style.button}" title="Modify Chunk Options"
                  ui:field="options_"></g:Image>
         <g:Image styleName="{style.prevButton}" ui:field="runPrevious_"></g:Image>
-        <g:Image styleName="{style.button}" resource="{res.runChunk}"
+        <g:Image styleName="{style.button}"
+                 resource="{res.runChunk2x}"
                  ui:field="run_"></g:Image>
      </g:FlowPanel>
    </g:HTMLPanel>

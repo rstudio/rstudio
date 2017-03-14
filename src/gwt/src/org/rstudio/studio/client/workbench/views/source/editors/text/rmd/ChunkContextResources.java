@@ -19,11 +19,24 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface ChunkContextResources extends ClientBundle
 {
-   ImageResource runChunk();
-   ImageResource runChunkPending();
-   ImageResource runPreviousChunksLight();
-   ImageResource runPreviousChunksDark();
-   ImageResource interruptChunk();
-   ImageResource chunkOptionsLight();
-   ImageResource chunkOptionsDark();
+   @Source("runChunk_2x.png")
+   ImageResource runChunk2x();
+
+   @Source("runChunkPending_2x.png")
+   ImageResource runChunkPending2x();
+
+   @Source("runPreviousChunksLight_2x.png")
+   ImageResource runPreviousChunksLight2x();
+
+   @Source("runPreviousChunksDark_2x.png")
+   ImageResource runPreviousChunksDark2x();
+
+   @Source("interruptChunk_2x.png")
+   ImageResource interruptChunk2x();
+
+   @Source("chunkOptionsLight_2x.png")
+   ImageResource chunkOptionsLight2x();
+
+   @Source("chunkOptionsDark_2x.png")
+   ImageResource chunkOptionsDark2x();
 }
