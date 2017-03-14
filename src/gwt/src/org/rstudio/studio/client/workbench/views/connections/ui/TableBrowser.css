@@ -72,7 +72,9 @@
    background-position: right center; 
    float: right;
    width: 35px;
+   height: 15px;
    cursor: pointer;
+   background-size: 32px 15px;
 }
 
 
