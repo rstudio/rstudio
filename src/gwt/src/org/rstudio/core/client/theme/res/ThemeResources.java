@@ -191,7 +191,9 @@ public interface ThemeResources extends ClientBundle
    ImageResource smallMagGlassIcon2x();
 
    ImageResource dropDownArrow();
-   ImageResource mediumDropDownArrow();
+
+   @Source("mediumDropDownArrow_2x.png")
+   ImageResource mediumDropDownArrow2x();
 
    @Source("chevron_2x.png")
    ImageResource chevron2x();
