@@ -809,21 +809,33 @@ bool hasSubprocesses(PidType pid)
 
       size_t i = contents.find_last_of(')');
       if (i == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no closing parenthesis");
          continue;
+      }
 
       i = contents.find_first_of("0123456789", i);
       if (i == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no integer after closing parenthesis");
          continue;
+      }
 
       size_t j = contents.find_first_not_of("0123456789", i);
       if (j == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no non-int after first int");
          continue;
+      }
 
       // extremely unexpected/unlikely, but make sure we don't have some funky
       // super-large integer here that could cause lexical_cast to throw
       size_t ppidLen = j - i;
       if (ppidLen > 9)
+      {
+         LOG_ERROR_MESSAGE("stat file ppid too large");
          continue;
+      }
       int ppid = boost::lexical_cast<int>(contents.substr(i, ppidLen));
       if (ppid == pid)
          return true;
