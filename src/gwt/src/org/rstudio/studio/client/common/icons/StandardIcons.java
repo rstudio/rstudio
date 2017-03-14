@@ -63,7 +63,8 @@ public interface StandardIcons extends ClientBundle
    @Source("mermaid_2x.png")
    ImageResource mermaid2x();
 
-   ImageResource export_menu();
+   @Source("export_menu_2x.png")
+   ImageResource export_menu2x();
 
    @Source("functionLetter_2x.png")
    ImageResource functionLetter2x();
