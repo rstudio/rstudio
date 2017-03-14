@@ -295,6 +295,10 @@ public class NewRSConnectAuthPage
                @Override
                public void execute(NewRSConnectAccountResult input)
                {
+                  // do nothing if no result returned
+                  if (input == null)
+                     return;
+                  
                   // save intermediate result
                   result_ = input;
 
