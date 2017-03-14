@@ -755,6 +755,23 @@ bool hasSubprocesses(PidType pid)
       return hasSubprocessesViaPgrep(pid);
    }
 
+   // We iterate all /proc/###/stat files, where ### is a process id.
+   //
+   // The parent pid is the fourth field (whitespace separated) in the
+   // single-line of the stat file. The first field is an int, second field
+   // is a string enclosed in parenthesis (...), the third is a single
+   // character, and the fourth is the parent pid (int). There are numerous
+   // fields after that, all ints of varying sizes.
+   //
+   // The trick is that the third field can contain arbitrary text,
+   // including whitespace and more parenthesis, inside its surrounding
+   // parenthesis. The safe way to parse this is to search the file
+   // in reverse for the closing parenthesis, then seek forward until we
+   // reach the first integer character.
+   //
+   // An example:
+   //    4075 (My )(great Program) S 4074 ....
+
    std::vector<FilePath> children;
    Error error = procFsPath.children(&children);
    if (error)
@@ -762,77 +779,52 @@ bool hasSubprocesses(PidType pid)
       LOG_ERROR(error);
       return true; // err on the side of assuming child processes exist
    }
+
    BOOST_FOREACH(const FilePath& child, children)
    {
       // only interested in the numeric directories (pid)
       std::string filename = child.filename();
       bool isNumber = true;
       for (std::string::const_iterator k = filename.begin(); k != filename.end(); ++k)
-         isNumber &= isdigit(*k);
+      {
+         if (!isdigit(*k))
+         {
+            isNumber = false;
+            break;
+         }
+      }
 
       if (!isNumber)
          continue;
 
-      int fd = ::open(filename.c_str(), O_RDONLY);
-      if (fd == -1)
+      // load the stat file
+      std::string contents;
+      FilePath statFile(child.complete("stat"));
+      Error error = rstudio::core::readStringFromFile(statFile, &contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      size_t i = contents.find_last_of(')');
+      if (i == std::string::npos)
          continue;
 
-      // We want to skip the pid, exe name enclosed in (paren), single character.
-      // After that is the parent pid (ppid). So, find the closing paren,
-      // then parse the subsequence int.
-      //
-      // An example:
-      //    4075 (My Program) S 4074 ....
-      //
-      // This is coming straight from RAM, so don't bother with buffered I/O.
-      char ch = '\0';
-      while (read(fd, &ch, sizeof(ch)) == sizeof(ch))
-      {
-         if (ch == ')')
-            break;
-      }
-      if (ch != ')')
-      {
-         ::close(fd);
-         return true;
-      }
+      i = contents.find_first_of("0123456789", i);
+      if (i == std::string::npos)
+         continue;
 
-      while (read(fd, &ch, sizeof(ch)) == sizeof(ch))
-      {
-         if (isdigit(ch))
-            break;
-      }
+      size_t j = contents.find_first_not_of("0123456789", i);
+      if (j == std::string::npos)
+         continue;
 
-      int ppid = -1;
-      int i = 0;
-      char strPpid[16];
-      strPpid[i] = '\0';
-
-      if (isdigit(ch))
-      {
-         strPpid[i++] = ch;
-         strPpid[i] = '\0';
-      }
-      else
-      {
-         ::close(fd);
-         return true;
-      }
-      while (i < 15 && read(fd, &ch, sizeof(ch)) == sizeof(ch))
-      {
-         if (isdigit(ch))
-         {
-            strPpid[i++] = ch;
-            strPpid[i] = '\0';
-         }
-         else
-         {
-            ppid = boost::lexical_cast<int>(strPpid);
-            break;
-         }
-      }
-      ::close(fd);
-
+      // extremely unexpected/unlikely, but make sure we don't have some funky
+      // super-large integer here that could cause lexical_cast to throw
+      size_t ppidLen = j - i;
+      if (ppidLen > 9)
+         continue;
+      int ppid = boost::lexical_cast<int>(contents.substr(i, ppidLen));
       if (ppid == pid)
          return true;
    }
