@@ -61,7 +61,6 @@ public class Runtime {
     } else {
       _ = @Runtime::createSubclassPrototype(*)(superTypeIdOrPrototype);
       _.@Object::castableTypeMap = castableTypeMap;
-      _.constructor = _;
       if (!superTypeIdOrPrototype) {
         // Set the typeMarker on java.lang.Object's prototype, implicitly setting it for all
         // Java subclasses (String and Arrays have special handling in Cast and Array respectively).
@@ -136,6 +135,11 @@ public class Runtime {
     // base_test.html for an example.
     if (!(parts[0] in cur) && cur.execScript) {
         cur.execScript('var ' + parts[0]);
+    }
+
+    if(optCtor) {
+      var clazz = optCtor.prototype.@Object::___clazz;
+      clazz.@Class::jsConstructor = optCtor;
     }
 
     // Certain browsers cannot parse code in the form for((a in b); c;);

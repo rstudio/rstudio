@@ -124,15 +124,14 @@ public final class Class<T> implements Type {
   /**
     * Used by {@link WebModePayloadSink} to create uninitialized instances.
     */
-   @DoNotInline
-   static native JavaScriptObject getPrototypeForClass(Class<?> clazz) /*-{
-     if (clazz.@Class::isPrimitive()()) {
-       return null;
-     }
-     var typeId = clazz.@Class::typeId;
-     var prototype = @com.google.gwt.lang.Runtime::prototypesByTypeId[typeId];
-     return prototype;
-   }-*/;
+  @DoNotInline
+  static native JavaScriptObject getPrototypeForClass(Class<?> clazz) /*-{
+    if (clazz.@Class::isPrimitive()()) {
+      return null;
+    }
+    var typeId = clazz.@Class::typeId;
+    return @com.google.gwt.lang.Runtime::prototypesByTypeId[typeId];
+  }-*/;
 
   public static boolean isClassMetadataEnabled() {
     // This body may be replaced by the compiler
@@ -301,6 +300,8 @@ public final class Class<T> implements Type {
   private JavaScriptObject typeId;
 
   private JavaScriptObject arrayLiterals;
+
+  private JavaScriptObject jsConstructor;
 
   // Assign a sequential id to each class literal to avoid calling hashCode which bring Impl as
   // a dependency.

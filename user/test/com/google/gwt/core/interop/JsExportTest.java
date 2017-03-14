@@ -45,6 +45,10 @@ public class JsExportTest extends GWTTestCase {
     $wnd.$global = $global;
   }-*/;
 
+  private native boolean isClosureFormattedOutputEnabled() /*-{
+    return !!(window.goog && window.goog.global);
+  }-*/;
+
   public void testMethodExport() {
     myClassExportsMethodCallMe1();
     assertTrue(MyClassExportsMethod.calledFromCallMe1);
@@ -206,6 +210,29 @@ public class JsExportTest extends GWTTestCase {
   private static class NativeMyClassExportsConstructor {
     public NativeMyClassExportsConstructor(@SuppressWarnings("unused") int a) { }
   }
+
+  public void testGetJsConstructor() {
+    if (isClosureFormattedOutputEnabled()) {
+      return; // Closure formatted output doesn't support jsConstructor.
+    }
+    Object constructorFn = getJsConstructor(MyClassExportsConstructor.class);
+    assertSame(getMyClassExportsConstructor(), constructorFn);
+    assertSame(MyClassExportsConstructor.class, getClass(constructorFn));
+
+    assertNull(getJsConstructor(Object.class));
+    assertNull(getJsConstructor(String.class));
+  }
+
+  @JsProperty(namespace = "$global.woo", name = "MyClassExportsConstructor")
+  private static native Object getMyClassExportsConstructor();
+
+  private static native Object getJsConstructor(Class<?> clazz) /*-{
+    return clazz.@Class::jsConstructor;
+  }-*/;
+
+  private static native Class<?> getClass(Object ctor) /*-{
+    return ctor.prototype.@Object::___clazz;
+  }-*/;
 
   public void testExportedField() {
     assertEquals(100, MyExportedClass.EXPORTED_1);
