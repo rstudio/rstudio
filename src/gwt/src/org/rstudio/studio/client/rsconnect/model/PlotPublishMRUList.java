@@ -96,7 +96,7 @@ public class PlotPublishMRUList
          displayName += " (" + mruEntry.server + ")";
          
          menu.addItem(new MenuItem(AppCommand.formatMenuLabel(
-               RSConnectResources.INSTANCE.republishPlot(), 
+               RSConnectResources.INSTANCE.republishPlot2x(), 
                displayName, null), true, 
                new Command() 
          {
