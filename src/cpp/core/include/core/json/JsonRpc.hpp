@@ -64,7 +64,7 @@ enum errc_t {
 } // namespace core
 } // namespace rstudio
 
-namespace boost {
+namespace RSTUDIO_BOOST_NAMESPACE {
 namespace system {
 template <>
 struct is_error_code_enum<rstudio::core::json::errc::errc_t>

@@ -19,7 +19,6 @@
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/locale.hpp>
 
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>

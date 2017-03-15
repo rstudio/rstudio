@@ -155,6 +155,8 @@ if(UNIX)
    # prefer static link to our custom built version
    set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
+      add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
+
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
@@ -166,12 +168,14 @@ if(UNIX)
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
       endforeach()
    else()
+      add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
       find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
    endif()
 
 # WIN32 BOOST
 else()
      # hard-code to our own prebuilt boost libs
+     add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
      set(Boost_COMPILER "-mgw49")
      if(RSTUDIO_SESSION_WIN64)
         set(BOOST_ARCH "64")

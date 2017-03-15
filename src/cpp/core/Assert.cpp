@@ -26,8 +26,8 @@
 using namespace rstudio;
 using namespace core;
 
-namespace boost
-{
+namespace RSTUDIO_BOOST_NAMESPACE {
+
 void assertion_failed(char const * expr,
                       char const * function,
                       char const * file,
