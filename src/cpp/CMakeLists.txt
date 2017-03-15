@@ -138,6 +138,9 @@ if (RSTUDIO_BOOST_VERSION)
    set(BOOST_VERSION "${RSTUDIO_BOOST_VERSION}")
 endif()
 
+# disable Boost Signals deprecation warning
+add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
+
 list(APPEND BOOST_LIBS
    date_time
    filesystem
