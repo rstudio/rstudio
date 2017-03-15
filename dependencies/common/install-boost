@@ -24,15 +24,15 @@ INSTALL_DIR=`pwd`
 PLATFORM=`uname`
 
 # vars
-BOOST_VERSION_NUMBER=1.50.0
-BOOST_VERSION=boost_1_50_0
+BOOST_VERSION_NUMBER=1.63.0
+BOOST_VERSION=boost_1_63_0
 BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
-BOOST_MODULES="algorithm asio array bind chrono circular_buffer crc    
-   date_time filesystem foreach format function interprocess iostreams 
-   lambda lexical_cast optional program_options random range ref       
-   regex scope_exit signals smart_ptr spirit string_algo system        
+BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
+   date_time filesystem foreach format function interprocess iostreams
+   lambda lexical_cast optional program_options random range ref
+   regex scope_exit signals smart_ptr spirit string_algo system
    test thread tokenizer type_traits typeof unordered utility variant"
 
 # install if we aren't already installed
@@ -40,11 +40,13 @@ if ! test -e $BOOST_DIR
 then
    # download boost
    BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
-   if [ "$PLATFORM" == "Darwin" ]
-   then
-      curl -L $BOOST_URL > $BOOST_TAR
-   else
-      wget -c $BOOST_URL -O $BOOST_TAR
+   if [ ! -f "$BOOST_TAR" ]; then
+      if [ "$PLATFORM" == "Darwin" ]
+      then
+         curl -L $BOOST_URL > $BOOST_TAR
+      else
+         wget -c $BOOST_URL -O $BOOST_TAR
+      fi
    fi
    
    # remove existing boost installation
@@ -98,11 +100,12 @@ then
 
    # rename libraries in the boost install dir
    cd $BOOST_DIR/lib
-
+   for file in *; do
+      mv $file ${file/rstudio_/}
+   done
 
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
-   sudo rm -rf $BOOST_TAR
    sudo rm -rf $BOOST_BUILD_DIR
 
 else
