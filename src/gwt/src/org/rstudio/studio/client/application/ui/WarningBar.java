@@ -47,7 +47,9 @@ public class WarningBar extends Composite
       ImageResource warningBarRight();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource warningBarTile();
-      ImageResource warningIconSmall(); 
+
+      @Source("warningIconSmall_2x.png")
+      ImageResource warningIconSmall2x(); 
    }
 
    interface Styles extends CssResource
