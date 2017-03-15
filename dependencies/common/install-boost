@@ -101,7 +101,7 @@ then
    # rename libraries in the boost install dir
    cd $BOOST_DIR/lib
    for file in *; do
-      mv $file ${file/rstudio_/}
+      sudo mv $file ${file/rstudio_/}
    done
 
    # go back to the original install dir and remove build dir
