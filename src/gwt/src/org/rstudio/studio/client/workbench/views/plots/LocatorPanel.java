@@ -32,6 +32,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HasCustomizableToolbar.Customizer;
 import org.rstudio.core.client.widget.SmallButton;
@@ -47,7 +48,7 @@ public class LocatorPanel extends LayoutPanel
    {
       setStylePrimaryName(ThemeStyles.INSTANCE.locatorPanel());
           
-      feedbackImage_ = new Image(StandardIcons.INSTANCE.click_feedback());
+      feedbackImage_ = new Image(new ImageResource2x(StandardIcons.INSTANCE.click_feedback2x()));
       feedbackImage_.setVisible(false);
       add(feedbackImage_);
       setWidgetTopHeight(feedbackImage_, 0, Unit.PX, FB_HEIGHT, Unit.PX);

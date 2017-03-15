@@ -26,7 +26,9 @@ public interface ManipulatorResources extends ClientBundle
    @Source("ManipulatorStyles.css")
    ManipulatorStyles manipulatorStyles();
    
-   ImageResource manipulateButton();
+   @Source("manipulateButton_2x.png")
+   ImageResource manipulateButton2x();
+
    ImageResource manipulateProgress();
    
    @Source("manipulateSliderBar.png")
