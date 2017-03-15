@@ -74,6 +74,7 @@ public class ImageResource2x implements ImageResource
       return getResource().getTop();
    }
 
+   @SuppressWarnings("deprecation")
    @Override
    public String getURL()
    {
