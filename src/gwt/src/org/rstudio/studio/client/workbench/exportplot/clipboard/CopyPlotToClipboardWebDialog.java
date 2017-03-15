@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
@@ -56,7 +57,7 @@ public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
      
       HorizontalPanel infoPanel = new HorizontalPanel();
       
-      Image rightMouseImage = new Image(resources.rightMouse());
+      Image rightMouseImage = new Image(new ImageResource2x(resources.rightMouse2x()));
       infoPanel.add(rightMouseImage);
       
       Label label = new Label("Right click on the plot image above to " +
