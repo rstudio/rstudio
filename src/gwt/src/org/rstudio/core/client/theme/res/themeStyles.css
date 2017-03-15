@@ -1173,6 +1173,8 @@ body.ubuntu_mono .searchBox {
 }
 
 @sprite td.environmentFunctionCol {
+   width: 32px;
+   height: 15px;
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
