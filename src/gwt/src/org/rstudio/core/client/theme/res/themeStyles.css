@@ -1167,6 +1167,8 @@ body.ubuntu_mono .searchBox {
 }
 
 @sprite td.environmentDataFrameCol {
+   width: 32px;
+   height: 15px;
    gwt-image: 'zoomDataset2x';
    background-position: right center;
    background-size: 32px 15px;
