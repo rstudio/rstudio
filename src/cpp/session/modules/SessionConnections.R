@@ -67,8 +67,8 @@ options(connectionObserver = list(
       # execute the object types function once to get the list of known 
       # object types; this is presumed to be static over the lifetime of the
       # connection
-      if (!inherits(listObjects, "function")) {
-         stop("listObjects must be a function returning a list of object types", 
+      if (!inherits(listObjectTypes, "function")) {
+         stop("listObjectTypes must be a function returning a list of object types", 
               call. = FALSE)
       }
 
@@ -95,7 +95,7 @@ options(connectionObserver = list(
       }
       
       # apply tree flattener to provided object tree
-      objectTree <- listObjects()
+      objectTree <- listObjectTypes()
       objectTypes <- lapply(names(objectTree), function(name) {
          promote(name, objectTree[[name]])
       })
