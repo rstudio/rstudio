@@ -93,8 +93,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource splitterTileH();
 
-      @Source("../../dialog/images/blankFileIcon.png")
-      ImageResource blankFileIcon();
+      @Source("../../dialog/images/blankFileIcon_2x.png")
+      ImageResource blankFileIcon2x();
    }
 
    interface Styles extends SharedStyles
