@@ -38,6 +38,8 @@
    
    .errorCommandImage {
       cursor: pointer;
+      width: 9px !important;
+      height: 9px !important;
    }
    
    .errorMessage {
@@ -68,13 +70,21 @@
 	<g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
 	  <g:HTMLPanel styleName="{style.consoleErrorCommands}">
 	     <g:HTMLPanel>
-		     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.errorCommandImage}"></g:Image>
+		     <g:Image resource="{traceback}"
+                  ui:field="showTracebackImage"
+                  width="9"
+                  height="9"
+                  styleName="{style.errorCommandImage}"></g:Image>
 		     <g:Anchor styleName="{style.errorCommandText}" ui:field="showTracebackText">
 		        Show Traceback
 		     </g:Anchor>
 	     </g:HTMLPanel>
         <g:HTMLPanel>
-           <g:Image resource="{rerun}" ui:field="rerunImage" styleName="{style.errorCommandImage}"></g:Image>
+           <g:Image resource="{rerun}"
+                    ui:field="rerunImage"
+                    width="9"
+                    height="9"
+                    styleName="{style.errorCommandImage}"></g:Image>
            <g:Anchor styleName="{style.errorCommandText}" ui:field="rerunText">
               Rerun with Debug
            </g:Anchor>
