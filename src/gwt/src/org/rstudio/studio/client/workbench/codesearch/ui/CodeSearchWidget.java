@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.codesearch.ui;
 
 
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.TextBoxWithCue;
@@ -42,7 +43,7 @@ public class CodeSearchWidget extends SearchWidget
       
       CodeSearchResources res = CodeSearchResources.INSTANCE;
       
-      setIcon(res.gotoFunction());       
+      setIcon(new ImageResource2x(res.gotoFunction2x()));       
       
       addStyleName(res.styles().codeSearchWidget());
    }

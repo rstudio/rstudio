@@ -57,8 +57,14 @@
       margin-left: 0.3em;
    }
 	</ui:style>
-   <ui:image src="traceback.png" field="traceback"></ui:image>
-   <ui:image src="rerun.png" field="rerun"></ui:image>
+   <ui:image src="traceback_2x.png"
+             width="9"
+             height="9"
+             field="traceback"></ui:image>
+   <ui:image src="rerun_2x.png"
+             width="9"
+             height="9"
+             field="rerun"></ui:image>
 	<g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
 	  <g:HTMLPanel styleName="{style.consoleErrorCommands}">
 	     <g:HTMLPanel>

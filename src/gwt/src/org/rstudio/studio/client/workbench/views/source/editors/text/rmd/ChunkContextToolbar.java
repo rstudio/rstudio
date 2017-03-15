@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -83,13 +84,13 @@ public class ChunkContextToolbar extends Composite
       switch(state)
       {
       case STATE_RESTING:
-         run_.setResource(RES.runChunk());
+         run_.setResource(new ImageResource2x(RES.runChunk2x()));
          break;
       case STATE_QUEUED:
-         run_.setResource(RES.runChunkPending());
+         run_.setResource(new ImageResource2x(RES.runChunkPending2x()));
          break;
       case STATE_EXECUTING:
-         run_.setResource(RES.interruptChunk());
+         run_.setResource(new ImageResource2x(RES.interruptChunk2x()));
          break;
       }
       state_ = state;
@@ -109,8 +110,9 @@ public class ChunkContextToolbar extends Composite
    
    private void initOptions(boolean dark)
    {
-      options_.setResource(dark ? RES.chunkOptionsDark() :
-                                  RES.chunkOptionsLight());
+      options_.setResource(new ImageResource2x(
+         dark ? RES.chunkOptionsDark2x() :
+         RES.chunkOptionsLight2x()));
       
       DOM.sinkEvents(options_.getElement(), Event.ONCLICK);
       DOM.setEventListener(options_.getElement(), new EventListener()
@@ -160,8 +162,9 @@ public class ChunkContextToolbar extends Composite
    {
       runPrevious_.setTitle(RStudioGinjector.INSTANCE.getCommands()
                             .executePreviousChunks().getMenuLabel(false));
-      runPrevious_.setResource(dark ? RES.runPreviousChunksDark() :
-                                      RES.runPreviousChunksLight());
+      runPrevious_.setResource(new ImageResource2x(
+         dark ? RES.runPreviousChunksDark2x() :
+         RES.runPreviousChunksLight2x()));
       DOM.sinkEvents(runPrevious_.getElement(), Event.ONCLICK);
       DOM.setEventListener(runPrevious_.getElement(), new EventListener()
       {

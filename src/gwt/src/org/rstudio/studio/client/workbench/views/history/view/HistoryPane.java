@@ -56,8 +56,11 @@ public class HistoryPane extends WorkbenchPane
       @Source("HistoryPane.css")
       Styles styles();
 
-      ImageResource searchResultsContextButton();
-      ImageResource searchResultsContextButton2();
+      @Source("searchResultsContextButton_2x.png")
+      ImageResource searchResultsContextButton2x();
+
+      @Source("searchResultsContextButton2_2x.png")
+      ImageResource searchResultsContextButton22x();
    }
 
    interface Styles extends CssResource

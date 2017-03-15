@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -52,7 +53,7 @@ public class HelpButton extends Composite
    public HelpButton(final String rstudioLinkName, 
                      final boolean includeVersionInfo)
    {
-      Image helpImage = new Image(ThemeResources.INSTANCE.help());
+      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setCursor(Cursor.POINTER);
       helpImage.addClickHandler(new ClickHandler() {
 

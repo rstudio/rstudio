@@ -105,22 +105,22 @@
 
 @url WORKSPACESECTIONHEADERTILE workspaceSectionHeaderTile;
 
-@url ACTIVEBREAKPOINT activeBreakpoint;
-@url INACTIVEBREAKPOINT inactiveBreakpoint;
-@url PENDINGBREAKPOINT pendingBreakpoint;
-@url EXECUTINGLINE executingLine;
+@url ACTIVEBREAKPOINT activeBreakpoint2x;
+@url INACTIVEBREAKPOINT inactiveBreakpoint2x;
+@url PENDINGBREAKPOINT pendingBreakpoint2x;
+@url EXECUTINGLINE executingLine2x;
 
-@url INFO syntaxInfo;
-@url WARNING syntaxWarning;
-@url ERROR syntaxError;
+@url INFO syntaxInfo2x;
+@url WARNING syntaxWarning2x;
+@url ERROR syntaxError2x;
 
-@url INFODARK syntaxInfoDark;
-@url WARNINGDARK syntaxWarningDark;
-@url ERRORDARK syntaxErrorDark;
+@url INFODARK syntaxInfoDark2x;
+@url WARNINGDARK syntaxWarningDark2x;
+@url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor;
+@url HANDCURSOR handCursor2x;
 
-@url MACCHECK macCheck;
+@url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn;
 
 body.windows, body.macintosh, body.linux {}
@@ -265,21 +265,25 @@ pre {
 .ace_breakpoint
 {
    background-image: ACTIVEBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_pending-breakpoint
 {
 	background-image: PENDINGBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_inactive-breakpoint
 {
 	background-image: INACTIVEBREAKPOINT !important;
+   background-size: 10px 10px;
 }
 
 .ace_executing-line
 {
 	background-image: EXECUTINGLINE !important;
+   background-size: 10px 10px;
 }
 
 
@@ -1163,13 +1167,15 @@ body.ubuntu_mono .searchBox {
 }
 
 @sprite td.environmentDataFrameCol {
-   gwt-image: 'zoomDataset';
-   background-position: right center; 
+   gwt-image: 'zoomDataset2x';
+   background-position: right center;
+   background-size: 32px 15px;
 }
 
 @sprite td.environmentFunctionCol {
-   gwt-image: 'viewFunctionCode';
+   gwt-image: 'viewFunctionCode2x';
    background-position: right center;
+   background-size: 32px 15px;
 }
 
 .odd {
@@ -1348,6 +1354,7 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-CheckBox input[type="checkbox"]:checked:before, 
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before {
   background: MACCHECK;
+  background-size: 10px 9px;
 }
 
 .linux .gwt-RadioButton input[type="radio"]:checked:before,
@@ -1441,36 +1448,42 @@ body.ubuntu_mono .searchBox {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: INFO;
+   background-size: 16px 14px;
 }
 
 .ace_gutter-cell.ace_warning {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: WARNING;
+   background-size: 16px 14px;
 }
 
 .ace_gutter-cell.ace_error {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: ERROR;
+   background-size: 16px 14px;
 }
 
 .editor_dark .ace_gutter-cell.ace_info {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: INFODARK;
+   background-size: 16px 14px;
 }
 
 .editor_dark .ace_gutter-cell.ace_warning {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: WARNINGDARK;
+   background-size: 16px 14px;
 }
 
 .editor_dark .ace_gutter-cell.ace_error {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: ERRORDARK;
+   background-size: 16px 14px;
 }
 
 .menuSubheader {

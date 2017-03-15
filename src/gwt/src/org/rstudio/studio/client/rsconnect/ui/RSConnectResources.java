@@ -71,8 +71,8 @@ public interface RSConnectResources extends ClientBundle
    @Source("previewPlot_2x.png")
    ImageResource previewPlot2x();
    
-   @Source("republishPlot.png")
-   ImageResource republishPlot();
+   @Source("republishPlot_2x.png")
+   ImageResource republishPlot2x();
    
    @Source("previewPresentation_2x.png")
    ImageResource previewPresentation2x();

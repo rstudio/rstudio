@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -48,7 +49,7 @@ public class DataTable
    {
       filterButton_ = new LatchingToolbarButton(
               "Filter",
-              DataViewerResources.INSTANCE.filterIcon(),
+              new ImageResource2x(DataViewerResources.INSTANCE.filterIcon2x()),
               new ClickHandler() {
                  public void onClick(ClickEvent event)
                  {

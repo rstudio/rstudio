@@ -544,7 +544,7 @@ public class EnvironmentPane extends WorkbenchPane
       if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
          return new ImageResource2x(EnvironmentResources.INSTANCE.objectListView2x());
       else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
-         return EnvironmentResources.INSTANCE.objectGridView();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.objectGridView2x());
       return null;
    }
    

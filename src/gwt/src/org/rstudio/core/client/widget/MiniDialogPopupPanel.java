@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -66,7 +67,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       HorizontalPanel toolsPanel = new HorizontalPanel();
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
-            ThemeResources.INSTANCE.closeChevron(),
+            new ImageResource2x(ThemeResources.INSTANCE.closeChevron2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
                {

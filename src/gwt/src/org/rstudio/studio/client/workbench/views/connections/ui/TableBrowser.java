@@ -127,7 +127,8 @@ public class TableBrowser extends Composite implements RequiresResize
    
    public interface Resources extends CellTree.Resources {
       
-      ImageResource zoomDataset();
+      @Source("zoomDataset_2x.png")
+      ImageResource zoomDataset2x();
       
       @ImageOptions(flipRtl = true)
       @Source("ExpandIcon_2x.png")

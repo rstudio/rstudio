@@ -17,6 +17,7 @@ package org.rstudio.studio.client.shiny.ui;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -128,7 +129,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
    
    private void addCaptionWithCloseButton(String caption)
    {
-      final Image closeIcon = new Image(ThemeResources.INSTANCE.closeDialog());
+      final Image closeIcon = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeDialog2x()));
       Style closeIconStyle = closeIcon.getElement().getStyle();
       closeIconStyle.setCursor(Style.Cursor.POINTER);
       closeIconStyle.setMarginTop(2, Unit.PX);

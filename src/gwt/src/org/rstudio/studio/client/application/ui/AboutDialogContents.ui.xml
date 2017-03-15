@@ -36,6 +36,8 @@
 		.logo {
 	      float: left;
 	      margin-right: 20px;
+	      width: 48px;
+	      height: 48px;
 	   }
 	   
 	   .productInfo {
@@ -53,7 +55,10 @@
 	<g:HTMLPanel styleName="{style.aboutBox}">
 	   <g:HTMLPanel styleName="{style.outerProductInfo}">
 		   <g:HTMLPanel styleName="{style.productInfo}">
-				<g:Image resource='{res.rstudio}' styleName="{style.logo}"/>
+				<g:Image resource='{res.rstudio2x}'
+                     styleName="{style.logo}"
+                     width="48"
+                     height="48"/>
 				<g:Label text="RStudio" styleName="{style.productName}"></g:Label>
 				<g:HTMLPanel styleName="{style.productVersion}">
 					<g:InlineLabel text="Version "></g:InlineLabel>

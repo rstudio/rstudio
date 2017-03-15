@@ -903,7 +903,7 @@ public class CompletionRequester
          case RCompletionType.FILE:
             return getIconForFilename(name);
          case RCompletionType.DIRECTORY:
-            return ICONS.folder();
+            return new ImageResource2x(ICONS.folder2x());
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
             return new ImageResource2x(ICONS.keyword2x());

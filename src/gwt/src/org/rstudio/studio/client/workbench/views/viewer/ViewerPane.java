@@ -19,6 +19,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -73,7 +74,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
       
       exportButton_ = new ToolbarButton(
-            "Export", StandardIcons.INSTANCE.export_menu(),
+            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       toolbar_.addLeftWidget(exportButton_);  
       exportButton_.setVisible(false);

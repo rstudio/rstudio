@@ -11,4 +11,6 @@
    display: block;
    position: relative;
    cursor: default;
+   width: 18px;
+   height: 18px;
 }

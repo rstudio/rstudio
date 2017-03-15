@@ -10,13 +10,17 @@
       <tr>
          <td class="{res.styles.left}"></td>
          <td class="{res.styles.center}" valign="top">
-            <g:Image resource="{res.warningIconSmall}"
+            <g:Image resource="{res.warningIconSmall2x}"
+                     width="21"
+                     height="17"
                      styleName="{res.styles.warningIcon}"/>
             <span ui:field="label_" class="{res.styles.label}"/>
          </td>
          <td class="{res.styles.center}" align="right">
             <g:Image ui:field="dismiss_"
-                     resource="{themeRes.closeTab}"
+                     resource="{themeRes.closeTab2x}"
+                     width="9"
+                     height="9"
                      styleName="{res.styles.dismiss}"
                      title="Dismiss"/>
          </td>

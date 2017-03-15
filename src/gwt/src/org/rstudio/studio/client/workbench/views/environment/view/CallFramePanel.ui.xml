@@ -3,7 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" field="environmentStyle" />
     <ui:style src="CallFramePanel.css" type="org.rstudio.studio.client.workbench.views.environment.view.CallFramePanelStyle"></ui:style>
-    <ui:image src="ExecutionArrow.png" field="executionArrow"></ui:image>
+    <ui:image src="ExecutionArrow_2x.png"
+              width="10"
+              height="11"
+              field="executionArrow"></ui:image>
     <g:HeaderPanel styleName="{environmentStyle.environmentPanel}">
         <g:LayoutPanel styleName="{environmentStyle.categoryHeaderRow}" ui:field="callFramePanelHeader" />
         <g:ResizeLayoutPanel styleName="{environmentStyle.fillHeight}">

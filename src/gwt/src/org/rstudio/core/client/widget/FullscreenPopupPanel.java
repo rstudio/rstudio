@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.resources.ImageResource2x;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -78,12 +80,12 @@ public class FullscreenPopupPanel extends ModalPopupPanel
                                      21, Unit.PX);
       layoutPanel.setWidgetLeftRight(titleWidget,
                                      27, Unit.PX,
-                                     27+RES.close().getWidth() + 15, Unit.PX);
+                                     27+RES.close2x().getWidth() + 15, Unit.PX);
    }
    
    private void addCloseButton(NineUpBorder border)
    {
-      Image closeIcon = new Image(RES.close());
+      Image closeIcon = new Image(new ImageResource2x(RES.close2x()));
       closeIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
       closeIcon.addClickHandler(new ClickHandler()
       {
@@ -146,8 +148,8 @@ public class FullscreenPopupPanel extends ModalPopupPanel
       @Source("fullscreenPopupBottomRight.png")
       ImageResource bottomRight();
 
-      @Source("fullscreenPopupClose.png")
-      ImageResource close();
+      @Source("fullscreenPopupClose_2x.png")
+      ImageResource close2x();
    }
 
    public interface Styles extends NineUpBorder.Styles

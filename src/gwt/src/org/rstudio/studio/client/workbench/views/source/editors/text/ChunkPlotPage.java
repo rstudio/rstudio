@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
@@ -94,9 +95,9 @@ public class ChunkPlotPage extends ChunkOutputPage
       {
          Image condImage = new Image();
          if (hasWarnings)
-            condImage.setResource(ThemeResources.INSTANCE.warningSmall());
+            condImage.setResource(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          else if (hasMessages)
-            condImage.setResource(ThemeResources.INSTANCE.infoSmall());
+            condImage.setResource(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
          condImage.setWidth("8px");
          condImage.setHeight("7px");
          Style style = condImage.getElement().getStyle();

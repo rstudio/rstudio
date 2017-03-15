@@ -34,6 +34,7 @@ import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -1067,7 +1068,7 @@ public class DocTabLayoutPanel
 
          appendDirtyMarker();
 
-         Image img = new Image(ThemeResources.INSTANCE.closeTab());
+         Image img = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x()));
          img.setStylePrimaryName(styles_.closeTabButton());
          img.addStyleName(ThemeStyles.INSTANCE.handCursor());
          contentPanel_.add(img);

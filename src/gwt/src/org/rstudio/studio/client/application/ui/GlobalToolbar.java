@@ -71,7 +71,7 @@ public class GlobalToolbar extends Toolbar
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarButton newButton = new ToolbarButton("",
-                                                  icons.stock_new(),
+                                                  new ImageResource2x(icons.stock_new2x()),
                                                   newMenu_);
       addLeftWidget(newButton);
       addLeftSeparator();

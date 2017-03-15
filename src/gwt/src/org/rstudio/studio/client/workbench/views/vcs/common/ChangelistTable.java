@@ -50,11 +50,11 @@ public abstract class ChangelistTable extends Composite
    public interface ChangelistTableCellTableResources extends CellTable.Resources
    {
       @Override
-      @Source("ascendingArrow.png")
+      @Source("ascendingArrow_2x.png")
       ImageResource cellTableSortAscending();
 
       @Override
-      @Source("descendingArrow.png")
+      @Source("descendingArrow_2x.png")
       ImageResource cellTableSortDescending();
 
       @Override

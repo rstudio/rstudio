@@ -21,7 +21,9 @@ import com.google.gwt.resources.client.ImageResource;
 public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
-   ImageResource stock_new();
+
+   @Source("stock_new_2x.png")
+   ImageResource stock_new2x();
 
    @Source("chunk_menu_2x.png")
    ImageResource chunk_menu2x();
@@ -30,7 +32,9 @@ public interface StandardIcons extends ClientBundle
    ImageResource go_up2x();
 
    ImageResource right_arrow();
-   ImageResource click_feedback();
+
+   @Source("click_feedback_2x.png")
+   ImageResource click_feedback2x();
 
    @Source("more_actions_2x.png")
    ImageResource more_actions2x();
@@ -61,7 +65,8 @@ public interface StandardIcons extends ClientBundle
    @Source("mermaid_2x.png")
    ImageResource mermaid2x();
 
-   ImageResource export_menu();
+   @Source("export_menu_2x.png")
+   ImageResource export_menu2x();
 
    @Source("functionLetter_2x.png")
    ImageResource functionLetter2x();

@@ -26,14 +26,14 @@ public interface FilesListDataGridResources extends DataGrid.Resources
    static FilesListDataGridResources INSTANCE =
     (FilesListDataGridResources)GWT.create(FilesListDataGridResources.class);
 
-   @Source("ascendingArrow.png")
+   @Source("ascendingArrow_2x.png")
    @ImageOptions(flipRtl = true)
    ImageResource cellTableSortAscending();
 
    /**
     * Icon used when a column is sorted in descending order.
     */
-   @Source("descendingArrow.png")
+   @Source("descendingArrow_2x.png")
    @ImageOptions(flipRtl = true)
    ImageResource cellTableSortDescending();
    

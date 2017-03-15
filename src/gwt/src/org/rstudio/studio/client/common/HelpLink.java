@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -56,7 +57,7 @@ public class HelpLink extends Composite
 
       HorizontalPanel helpPanel = new HorizontalPanel();
     
-      Image helpImage = new Image(ThemeResources.INSTANCE.help());
+      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
       helpLink_ = new HyperlinkLabel(caption);

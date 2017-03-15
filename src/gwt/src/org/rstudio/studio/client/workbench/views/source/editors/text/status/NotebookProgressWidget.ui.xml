@@ -42,7 +42,7 @@
        <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_"
                     width="150px">
        </g:HTMLPanel>
-       <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk}" 
+       <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk2x}" 
                 ui:field="interruptButton_">
        </g:Image>
      </g:HorizontalPanel>

@@ -25,43 +25,43 @@ public class Pager extends SimplePager
    interface SimplePagerResources extends SimplePager.Resources
    {
       @Override
-      @Source("images/PageForwardButton.png")
+      @Source("images/PageForwardButton_2x.png")
       ImageResource simplePagerFastForward();
 
       @Override
-      @Source("images/PageForwardButtonDisabled.png")
+      @Source("images/PageForwardButtonDisabled_2x.png")
       ImageResource simplePagerFastForwardDisabled();
 
       @Override
-      @Source("images/PageFirstButton.png")
+      @Source("images/PageFirstButton_2x.png")
       ImageResource simplePagerFirstPage();
 
       @Override
-      @Source("images/PageFirstButtonDisabled.png")
+      @Source("images/PageFirstButtonDisabled_2x.png")
       ImageResource simplePagerFirstPageDisabled();
 
       @Override
-      @Source("images/PageLastButton.png")
+      @Source("images/PageLastButton_2x.png")
       ImageResource simplePagerLastPage();
 
       @Override
-      @Source("images/PageLastButtonDisabled.png")
+      @Source("images/PageLastButtonDisabled_2x.png")
       ImageResource simplePagerLastPageDisabled();
 
       @Override
-      @Source("images/PageNextButton.png")
+      @Source("images/PageNextButton_2x.png")
       ImageResource simplePagerNextPage();
 
       @Override
-      @Source("images/PageNextButtonDisabled.png")
+      @Source("images/PageNextButtonDisabled_2x.png")
       ImageResource simplePagerNextPageDisabled();
 
       @Override
-      @Source("images/PagePreviousButton.png")
+      @Source("images/PagePreviousButton_2x.png")
       ImageResource simplePagerPreviousPage();
 
       @Override
-      @Source("images/PagePreviousButtonDisabled.png")
+      @Source("images/PagePreviousButtonDisabled_2x.png")
       ImageResource simplePagerPreviousPageDisabled();
 
       @Override

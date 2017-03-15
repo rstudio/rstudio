@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.WindowState;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
@@ -52,7 +53,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          center.add(label);
          if (canClose)
          {
-            closeButton_ = new Image(ThemeResources.INSTANCE.closeTab());
+            closeButton_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x()));
             closeButton_.setStylePrimaryName(styles.closeTabButton());
             closeButton_.addStyleName(ThemeStyles.INSTANCE.handCursor());
             center.add(closeButton_);

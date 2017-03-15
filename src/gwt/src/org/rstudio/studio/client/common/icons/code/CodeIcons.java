@@ -55,8 +55,8 @@ public interface CodeIcons extends ClientBundle
    @Source("file_2x.png")
    ImageResource file2x();
 
-   @Source("folder.png")
-   ImageResource folder();
+   @Source("folder_2x.png")
+   ImageResource folder2x();
 
    @Source("macro_2x.png")
    ImageResource macro2x();

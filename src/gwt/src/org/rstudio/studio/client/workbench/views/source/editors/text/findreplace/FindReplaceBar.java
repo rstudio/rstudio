@@ -146,7 +146,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       btnClose_.getElement().appendChild(
-            new Image(ThemeResources.INSTANCE.closeTab()).getElement());
+            new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 
       txtFind_.addKeyDownHandler(new KeyDownHandler()
       {

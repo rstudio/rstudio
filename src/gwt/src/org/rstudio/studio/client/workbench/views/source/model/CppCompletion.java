@@ -102,7 +102,7 @@ public class CppCompletion extends JavaScriptObject
       case FILE:
          return REGISTRY.getIconForFilename(getTypedText());
       case DIRECTORY:
-         return icons.folder();
+         return new ImageResource2x(icons.folder2x());
       default:
          return new ImageResource2x(icons.keyword2x());
       }
