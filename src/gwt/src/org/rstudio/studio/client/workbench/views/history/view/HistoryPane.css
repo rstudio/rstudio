@@ -78,9 +78,11 @@
 }
 
 @sprite div.disclosure {
-   gwt-image: 'searchResultsContextButton2';
+   gwt-image: 'searchResultsContextButton22x';
    margin-top: 1px;
+   background-size: 14px 15px;
 }
 @sprite .selected div.disclosure {
-   gwt-image: 'searchResultsContextButton';
+   gwt-image: 'searchResultsContextButton2x';
+   background-size: 14px 15px;
 }
