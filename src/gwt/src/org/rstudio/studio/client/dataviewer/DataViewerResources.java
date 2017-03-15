@@ -23,6 +23,6 @@ public interface DataViewerResources extends ClientBundle
    public static final DataViewerResources INSTANCE =
            GWT.create(DataViewerResources.class);
 
-   @Source("FilterIcon.png")
-   ImageResource filterIcon();
+   @Source("FilterIcon_2x.png")
+   ImageResource filterIcon2x();
 }
