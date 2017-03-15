@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
@@ -66,7 +67,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return ProjectPreferencesDialogResources.INSTANCE.iconPackrat();
+      return new ImageResource2x(ProjectPreferencesDialogResources.INSTANCE.iconPackrat2x());
    }
 
    @Override

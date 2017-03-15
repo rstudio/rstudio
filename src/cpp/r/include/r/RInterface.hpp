@@ -1,7 +1,7 @@
 /*
  * RInterface.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,8 +46,8 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
-typedef struct RCNTXT_333 {
-    struct RCNTXT_333 *nextcontext;
+typedef struct RCNTXT_34 {
+    struct RCNTXT_34 *nextcontext;
     int callflag;
 #ifdef _WIN32
     struct
@@ -85,12 +85,12 @@ typedef struct RCNTXT_333 {
     SEXP srcref;
     int browserfinish;
     SEXP returnValue;
-    struct RCNTXT_333 *jumptarget;
+    struct RCNTXT_34 *jumptarget;
     int jumpmask;
-} RCNTXT_333;
+} RCNTXT_34;
 
-typedef struct RCNTXT_330 {
-    struct RCNTXT_330 *nextcontext;
+typedef struct RCNTXT_33 {
+    struct RCNTXT_33 *nextcontext;
     int callflag;
 #ifdef _WIN32
     struct
@@ -125,9 +125,9 @@ typedef struct RCNTXT_330 {
     SEXP srcref;
     int browserfinish;
     SEXP returnValue;
-    struct RCNTXT_330 *jumptarget;
+    struct RCNTXT_33 *jumptarget;
     int jumpmask;
-} RCNTXT_330;
+} RCNTXT_33;
 
 typedef struct RCNTXT_32 {
     struct RCNTXT_32 *nextcontext;

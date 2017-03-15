@@ -44,6 +44,7 @@ import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
@@ -72,17 +73,17 @@ public class GitReviewPanel extends ResizeComposite implements Display
       @Source("../../dialog/images/toolbarTile.png")
       ImageResource toolbarTile();
 
-      @Source("../../dialog/images/stageAllFiles.png")
-      ImageResource stageAllFiles();
+      @Source("../../dialog/images/stageAllFiles_2x.png")
+      ImageResource stageAllFiles2x();
 
-      @Source("../../dialog/images/discard.png")
-      ImageResource discard();
+      @Source("../../dialog/images/discard_2x.png")
+      ImageResource discard2x();
 
-      @Source("../../dialog/images/ignore.png")
-      ImageResource ignore();
+      @Source("../../dialog/images/ignore_2x.png")
+      ImageResource ignore2x();
 
-      @Source("../../dialog/images/stage.png")
-      ImageResource stage();
+      @Source("../../dialog/images/stage_2x.png")
+      ImageResource stage2x();
 
       @Source("../../dialog/images/splitterTileV.png")
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -92,8 +93,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource splitterTileH();
 
-      @Source("../../dialog/images/blankFileIcon.png")
-      ImageResource blankFileIcon();
+      @Source("../../dialog/images/blankFileIcon_2x.png")
+      ImageResource blankFileIcon2x();
    }
 
    interface Styles extends SharedStyles
@@ -251,7 +252,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage",
-            RES.stage(),
+            new ImageResource2x(RES.stage2x()),
             (ClickHandler) null));
 
       topToolbar_.addLeftSeparator();
@@ -262,7 +263,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
             (ClickHandler) null));
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Ignore", RES.ignore(), (ClickHandler) null));
+            "Ignore", new ImageResource2x(RES.ignore2x()), (ClickHandler) null));
 
       
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
@@ -277,13 +278,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
       toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
 
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage All", RES.stage(), (ClickHandler) null));
+            "Stage All", new ImageResource2x(RES.stage2x()), (ClickHandler) null));
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", RES.discard(), (ClickHandler) null));
+            "Discard All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
 
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Unstage All", RES.discard(), (ClickHandler) null));
+            "Unstage All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
       unstageAllButton_.setVisible(false);
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
@@ -559,7 +560,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
       
       MenuItem stageMenu = new MenuItem(
-           AppCommand.formatMenuLabel(RES.stage(), "Stage", ""),
+           AppCommand.formatMenuLabel(new ImageResource2x(RES.stage2x()), "Stage", ""),
            true,
            new Command() {
               @Override
@@ -578,7 +579,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
     
       
      MenuItem revertMenu = new MenuItem(
-           AppCommand.formatMenuLabel(RES.discard(), "Revert...", ""),
+           AppCommand.formatMenuLabel(new ImageResource2x(RES.discard2x()), "Revert...", ""),
            true,
            new Command() {
               @Override
@@ -592,7 +593,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
          menu.addItem(revertMenu);
       
       MenuItem ignoreMenu = new MenuItem(
-            AppCommand.formatMenuLabel(RES.ignore(), "Ignore...", ""),
+            AppCommand.formatMenuLabel(new ImageResource2x(RES.ignore2x()), "Ignore...", ""),
             true,
             new Command() {
                @Override

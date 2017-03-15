@@ -16,6 +16,7 @@ package org.rstudio.studio.client;
 
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.core.client.StringUtilTests;
+import org.rstudio.core.client.dom.DomUtilsTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -29,6 +30,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
         suite.addTestSuite(RTokenizerTests.class);
         suite.addTestSuite(VirtualConsoleTests.class);
         suite.addTestSuite(StringUtilTests.class);
+        suite.addTestSuite(DomUtilsTests.class);
         return suite;
     }
 }

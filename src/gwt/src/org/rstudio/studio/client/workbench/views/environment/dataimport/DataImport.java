@@ -19,6 +19,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -257,7 +258,9 @@ public class DataImport extends Composite
    
    PushButton makeCopyButton()
    {
-      return new PushButton(new Image(dataImportResources_.copyImage()), new ClickHandler()
+      return new PushButton(new Image(new ImageResource2x(
+         dataImportResources_.copyImage(),
+         dataImportResources_.copyImage2x())), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent arg0)

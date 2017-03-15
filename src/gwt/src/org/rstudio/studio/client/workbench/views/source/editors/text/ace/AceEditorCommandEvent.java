@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
-public class AceEditorCommandEvent extends GwtEvent<AceEditorCommandEvent.Handler>
+import com.google.gwt.event.shared.EventHandler;
+
+@JavaScriptSerializable
+public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEvent.Handler>
 {
    public static enum CommandType
    {
@@ -38,6 +41,12 @@ public class AceEditorCommandEvent extends GwtEvent<AceEditorCommandEvent.Handle
    {
       FOCUSED,
       ALWAYS;
+   }
+   
+   // Required for '@JavaScriptSerializable' but is otherwise unused
+   public AceEditorCommandEvent()
+   {
+      this(null, null);
    }
    
    public AceEditorCommandEvent(CommandType command, ExecutionPolicy policy)

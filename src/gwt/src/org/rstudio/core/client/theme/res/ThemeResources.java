@@ -63,14 +63,21 @@ public interface ThemeResources extends ClientBundle
 
    @Source("verticalHandle.png")
    DataResource verticalHandle();
+
    @Source("horizontalHandle.png")
    DataResource horizontalHandle();
 
-   ImageResource rstudio();
-   ImageResource rstudio_small();
+   @Source("rstudio_2x.png")
+   ImageResource rstudio2x();
+
+   @Source("rstudio_small_2x.png")
+   ImageResource rstudio_small2x();
    
-   ImageResource rstudio_home();
-   ImageResource rstudio_home_small();
+   @Source("rstudio_home_2x.png")
+   ImageResource rstudio_home2x();
+
+   @Source("rstudio_home_small_2x.png")
+   ImageResource rstudio_home_small2x();
    
    @Source("backgroundGradient.png")
    DataResource backgroundGradient();
@@ -119,30 +126,40 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource menuBevel();
 
-   @Source("closeTabSelected.png")
-   ImageResource closeTab();
+   @Source("closeTabSelected_2x.png")
+   ImageResource closeTab2x();
+
    @Source("busyTab.gif")
    ImageResource busyTab();
 
-   ImageResource closeDialog();
+   @Source("closeDialog_2x.png")
+   ImageResource closeDialog2x();
   
    ImageResource toolbarSeparator();
 
-   ImageResource menuDownArrow();
-   ImageResource linkDownArrow();
+   @Source("menuDownArrow_2x.png")
+   ImageResource menuDownArrow2x();
 
-   @Source("maximize.png")
-   DataResource maximize();
-   @Source("maximizeSelected.png")
-   DataResource maximizeSelected();
-   @Source("minimize.png")
-   DataResource minimize();
-   @Source("minimizeSelected.png")
-   DataResource minimizeSelected();
-   @Source("restore.png")
-   DataResource restore();
-   @Source("restoreSelected.png")
-   DataResource restoreSelected();
+   @Source("linkDownArrow_2x.png")
+   ImageResource linkDownArrow2x();
+
+   @Source("maximize_2x.png")
+   DataResource maximize2x();
+
+   @Source("maximizeSelected_2x.png")
+   DataResource maximizeSelected2x();
+
+   @Source("minimize_2x.png")
+   DataResource minimize2x();
+
+   @Source("minimizeSelected_2x.png")
+   DataResource minimizeSelected2x();
+
+   @Source("restore_2x.png")
+   DataResource restore2x();
+
+   @Source("restoreSelected_2x.png")
+   DataResource restoreSelected2x();
 
    @Source("podMinimizedLeft.png")
    DataResource podMinimizedLeft();
@@ -158,71 +175,115 @@ public interface ThemeResources extends ClientBundle
    @Source("searchFieldRight.png")
    DataResource searchFieldRight();
 
-   ImageResource clearSearch();
+   @Source("clearSearch_2x.png")
+   ImageResource clearSearch2x();
 
    @Source("workspaceSectionHeaderTile.png")
    DataResource workspaceSectionHeaderTile();
-   ImageResource zoomDataset();
-   ImageResource viewFunctionCode();
 
-   @Source("inlineEditIcon.png")
-   DataResource inlineEditIcon();
-   @Source("inlineDeleteIcon.png")
-   DataResource inlineDeleteIcon();
+   @Source("zoomDataset_2x.png")
+   ImageResource zoomDataset2x();
 
-   ImageResource paneLayoutIcon();
-   ImageResource smallMagGlassIcon();
-   ImageResource dropDownArrow();
-   ImageResource mediumDropDownArrow();
-   ImageResource chevron();
+   @Source("viewFunctionCode_2x.png")
+   ImageResource viewFunctionCode2x();
 
-   ImageResource help();
-   
-   ImageResource infoSmall();
-   ImageResource warningSmall();
-   ImageResource errorSmall();
-   
-   ImageResource syntaxInfo();
-   ImageResource syntaxWarning();
-   ImageResource syntaxError();
-   
-   ImageResource syntaxInfoDark();
-   ImageResource syntaxWarningDark();
+   @Source("inlineEditIcon_2x.png")
+   DataResource inlineEditIcon2x();
+
+   @Source("inlineDeleteIcon_2x.png")
+   DataResource inlineDeleteIcon2x();
+
+   @Source("paneLayoutIcon_2x.png")
+   ImageResource paneLayoutIcon2x();
+
+   @Source("smallMagGlassIcon_2x.png")
+   ImageResource smallMagGlassIcon2x();
+
+   @Source("dropDownArrow_2x.png")
+   ImageResource dropDownArrow2x();
+
+   @Source("mediumDropDownArrow_2x.png")
+   ImageResource mediumDropDownArrow2x();
+
+   @Source("chevron_2x.png")
+   ImageResource chevron2x();
+
+   @Source("help_2x.png")
+   ImageResource help2x();
+
+   @Source("infoSmall_2x.png")
+   ImageResource infoSmall2x();
+
+   @Source("warningSmall_2x.png")
+   ImageResource warningSmall2x();
+
+   @Source("errorSmall_2x.png")
+   ImageResource errorSmall2x();
+
+   @Source("syntaxInfo_2x.png")
+   ImageResource syntaxInfo2x();
+
+   @Source("syntaxWarning_2x.png")
+   ImageResource syntaxWarning2x();
+
+   @Source("syntaxError_2x.png")
+   ImageResource syntaxError2x();
+
+   @Source("syntaxInfoDark_2x.png")
+   ImageResource syntaxInfoDark2x();
+
+   @Source("syntaxWarningDark_2x.png")
+   ImageResource syntaxWarningDark2x();
+
+   @Source("syntaxErrorDark_2x.png")
    ImageResource syntaxErrorDark();
-   
-   
-   ImageResource codeTransform();
 
-   ImageResource closeChevron();
+   @Source("syntaxErrorDark_2x.png")
+   ImageResource syntaxErrorDark2x();
    
-   ImageResource removePackage();
+   @Source("codeTransform_2x.png")
+   ImageResource codeTransform2x();
+
+   @Source("closeChevron_2x.png")
+   ImageResource closeChevron2x();
    
-   ImageResource newsButton();
+   @Source("removePackage_2x.png")
+   ImageResource removePackage2x();
    
-   @Source("activeBreakpoint.png")
-   DataResource activeBreakpoint();
-   @Source("inactiveBreakpoint.png")
-   DataResource inactiveBreakpoint();
-   @Source("pendingBreakpoint.png")
-   DataResource pendingBreakpoint();
-   @Source("executingLine.png")
-   DataResource executingLine();
+   @Source("newsButton_2x.png")
+   ImageResource newsButton2x();
    
-   @Source("macCheck.png")
-   DataResource macCheck();
+   @Source("activeBreakpoint_2x.png")
+   DataResource activeBreakpoint2x();
+
+   @Source("inactiveBreakpoint_2x.png")
+   DataResource inactiveBreakpoint2x();
+
+   @Source("pendingBreakpoint_2x.png")
+   DataResource pendingBreakpoint2x();
+
+   @Source("executingLine_2x.png")
+   DataResource executingLine2x();
+   
+   @Source("macCheck_2x.png")
+   DataResource macCheck2x();
+
    @Source("radioButtonOn.png")
    DataResource radioButtonOn();
+
+   @Source("handCursor_2x.png")
+   DataResource handCursor2x();
    
-   @Source("handCursor.png")
-   DataResource handCursor();
-   
-   ImageResource executeChunk();
+   @Source("executeChunk_2x.png")
+   ImageResource executeChunk2x();
    
    ImageResource checkboxOff();
    ImageResource checkboxOn();
    ImageResource checkboxTri();
    
-   ImageResource menuCheck();
+   @Source("menuCheck_2x.png")
+   ImageResource menuCheck2x();
    
+   @Source("user_2x.png")
    ImageResource user();
 }

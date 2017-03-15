@@ -128,12 +128,19 @@ void safePosixCall(const boost::function<T()>& func,
 #endif
 
 #ifdef _WIN32
+
+// Is 64-bit Windows?
 bool isWin64();
+
+// Is calling process 64-bit?
+bool isCurrentProcessWin64();
+
 bool isVistaOrLater();
 bool isWin7OrLater();
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
 void ensureLongPath(FilePath* pFilePath);
+Error expandEnvironmentVariables(std::string value, std::string* pResult);
 FilePath expandComSpec();
 
 // close a handle then set it to NULL (so we can call this function
@@ -269,6 +276,9 @@ void fixupExecutablePath(FilePath* pExePath);
 void abort();
 
 Error terminateProcess(PidType pid);
+
+// Returns true if pid has one or more subprocesses
+bool hasSubprocesses(PidType pid);
    
 } // namespace system
 } // namespace core 

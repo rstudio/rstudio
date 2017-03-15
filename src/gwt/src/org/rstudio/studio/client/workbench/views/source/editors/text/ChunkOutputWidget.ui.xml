@@ -24,6 +24,12 @@
       cursor: pointer;
       z-index: 25;
    }
+
+   .expand
+   {
+      width: 11px !important;
+      height: 10px !important;
+   }
    
    .baresize .clear, .baresize .expand, .baresize .popout
    {
@@ -39,6 +45,9 @@
    {
       right: 12px;
       padding: 5px;
+
+      width: 11px !important;
+      height: 10px !important;
    }
    
    .noclear .clear
@@ -192,15 +201,15 @@
                ui:field="expander_"></g:HTMLPanel>
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
         <g:Image styleName="{style.popout}" 
-                 resource="{res.popoutIcon}"
+                 resource="{res.popoutIcon2x}"
                  title="Show in New Window"
                  ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
-                 resource="{res.removeChunkIcon}"
+                 resource="{res.removeChunkIcon2x}"
                  title="Clear Output"></g:Image>
         <g:Image styleName="{style.expand}" 
-                 resource="{res.collapseChunkIcon}"
+                 resource="{res.collapseChunkIcon2x}"
                  title="Expand/Collapse Output"
                  ui:field="expand_"></g:Image>
         <g:SimplePanel styleName="{style.root}" ui:field="root_">

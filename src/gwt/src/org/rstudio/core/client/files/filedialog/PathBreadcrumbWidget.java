@@ -29,6 +29,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -60,7 +61,7 @@ public class PathBreadcrumbWidget
          linkUp_.setVisible(false);
          linkUp_.setStylePrimaryName(RES.styles().goUp());
          linkUp_.addStyleName(ThemeStyles.INSTANCE.handCursor());
-         Image image = new Image(FileIconResources.INSTANCE.iconUpFolder());
+         Image image = new Image(new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x()));
          linkUp_.getElement().appendChild(image.getElement());
       }
       else
@@ -141,7 +142,7 @@ public class PathBreadcrumbWidget
       
       if (projDir != null)
       {
-         Image projIcon = new Image(RES.projectImage());
+         Image projIcon = new Image(new ImageResource2x(RES.projectImage2x()));
          projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
 
          projIcon.addClickHandler(new ClickHandler()

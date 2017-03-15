@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -110,12 +111,21 @@ public class RSConnectDeploy extends Composite
    }
    
    public interface DeployResources extends ClientBundle
-   {  
-      ImageResource publishShinyIllustration();
-      ImageResource publishRmdIllustration();
-      ImageResource publishPlotIllustration();
-      ImageResource publishPresentationIllustration();
-      ImageResource publishHTMLIllustration();
+   {
+      @Source("publishShinyIllustration_2x.png")
+      ImageResource publishShinyIllustration2x();
+
+      @Source("publishRmdIllustration_2x.png")
+      ImageResource publishRmdIllustration2x();
+
+      @Source("publishPlotIllustration_2x.png")
+      ImageResource publishPlotIllustration2x();
+
+      @Source("publishPresentationIllustration_2x.png")
+      ImageResource publishPresentationIllustration2x();
+
+      @Source("publishHTMLIllustration_2x.png")
+      ImageResource publishHTMLIllustration2x();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -959,17 +969,17 @@ public class RSConnectDeploy extends Composite
              contentType_ == RSConnect.CONTENT_TYPE_HTML)
          {
             descriptionImage_.setResource(
-                  RSConnectResources.INSTANCE.previewPlot());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewPlot2x()));
          }
          else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          {
             descriptionImage_.setResource(
-                  RSConnectResources.INSTANCE.previewPresentation());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewPresentation2x()));
          }
          else
          {
             descriptionImage_.setResource(
-                     RSConnectResources.INSTANCE.previewDoc());
+                  new ImageResource2x(RSConnectResources.INSTANCE.previewDoc2x()));
          }
       }
       
@@ -1005,15 +1015,15 @@ public class RSConnectDeploy extends Composite
       
       ImageResource illustration = null;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP)
-         illustration = RESOURCES.publishShinyIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
-         illustration = RESOURCES.publishPlotIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
-         illustration = RESOURCES.publishRmdIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_HTML)
-         illustration = RESOURCES.publishHTMLIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
-         illustration = RESOURCES.publishPresentationIllustration();
+         illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());
       if (illustration != null)
          deployIllustration_.setResource(illustration);
    }

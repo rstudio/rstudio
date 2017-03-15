@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <shlobj.h>
+#include <tlhelp32.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -222,7 +223,12 @@ void log(LogLevel logLevel, const std::string& message)
 bool isWin64()
 {
    return !getenv("PROCESSOR_ARCHITEW6432").empty()
-         || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
+      || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
+}
+
+bool isCurrentProcessWin64()
+{
+   return getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
 bool isVistaOrLater()
@@ -825,24 +831,40 @@ void ensureLongPath(FilePath* pFilePath)
       *pFilePath = FilePath(string_utils::systemToUtf8(buffer));
    }
 }
-
-FilePath expandComSpec()
+Error expandEnvironmentVariables(std::string value, std::string* pResult)
 {
-   LPCWSTR lpSrc = L"%COMSPEC%";
-   DWORD requiredSize = ::ExpandEnvironmentStringsW(lpSrc, NULL, 0);
-   if (!requiredSize)
-      return FilePath();
+   if (value.empty())
+   {
+      *pResult = value;
+      return Success();
+   }
 
-   std::vector<wchar_t> buffer;
-   buffer.reserve(requiredSize);
-   int result = ::ExpandEnvironmentStringsW(lpSrc,
+   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), NULL, 0);
+   if (!sizeRequired)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   std::vector<char> buffer;
+   buffer.reserve(sizeRequired);
+   int result = ::ExpandEnvironmentStrings(value.c_str(),
                                            &buffer[0],
                                            buffer.capacity());
 
-   if (!result || result > buffer.capacity())
-      return FilePath();
+   if (!result)
+      return systemError(GetLastError(), ERROR_LOCATION);
+   else if (result > buffer.capacity())
+      return systemError(ERROR_MORE_DATA, ERROR_LOCATION); // not expected
 
-   return FilePath(&buffer[0]);
+   *pResult = std::string(&buffer[0]);
+   return Success();
+}
+
+FilePath expandComSpec()
+{
+   std::string result;
+   Error err = expandEnvironmentVariables("%COMSPEC%", &result);
+   if (err)
+      return FilePath();
+   return FilePath(result);
 }
 
 Error terminateProcess(PidType pid)
@@ -855,6 +877,40 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
+bool hasSubprocesses(PidType pid)
+{
+   HANDLE hSnapShot;
+   CloseHandleOnExitScope closeSnapShot(&hSnapShot, ERROR_LOCATION);
+
+   hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if (hSnapShot == INVALID_HANDLE_VALUE)
+   {
+      // err on the side of assuming child processes, so we don't kill
+      // a job unintentionally
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return true;
+   }
+
+   PROCESSENTRY32 pe32;
+   pe32.dwSize = sizeof(pe32);
+   if (!Process32First(hSnapShot, &pe32))
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return true;
+   }
+
+   do
+   {
+      if (pe32.th32ParentProcessID == pid)
+      {
+         // Found a child process
+         return true;
+      }
+   } while (Process32Next(hSnapShot, &pe32));
+
+   // Didn't find a child process
+   return false;
+}
 
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {

@@ -188,6 +188,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
@@ -300,7 +301,7 @@ public class RemoteServer implements Server
    {
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
-    
+
    public void clientInit(
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
@@ -472,47 +473,41 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
    }
    
+   @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
-
-   public void startTerminal(int cols, int rows,
-                             String handle, String caption, String title, int sequence,
-                             ServerRequestCallback<ConsoleProcess> requestCallback)
-   {
-      invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM,
-                             cols, rows, handle, caption, title, sequence,
-                             true /*allowProcessRestart*/,
-                             true /*reportChildCount*/,
-                             requestCallback);
-   }
    
-   private void invokeStartShellDialog(
-                     ConsoleProcess.TerminalType terminalType,
+   @Override
+   public void getTerminalShells(
+         ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback)
+   {
+	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
+   }
+
+   @Override
+   public void startTerminal(
+                     int shellType,
                      int cols, int rows,
                      String terminalHandle,
                      String caption,
                      String title,
                      int sequence,
-                     boolean allowProcessRestart,
-                     boolean reportChildCount,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(terminalType.toString()));
+      params.set(0, new JSONNumber(shellType));
       params.set(1, new JSONNumber(cols));
       params.set(2, new JSONNumber(rows));
       params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
       params.set(4, new JSONString(StringUtil.notNull(caption)));
       params.set(5, new JSONString(StringUtil.notNull(title)));
       params.set(6, new JSONNumber(sequence));
-      params.set(7, JSONBoolean.getInstance(allowProcessRestart));
-      params.set(8, JSONBoolean.getInstance(reportChildCount));
 
       sendRequest(RPC_SCOPE,
-                  START_SHELL_DIALOG,
+                  START_TERMINAL,
                   params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
@@ -5101,7 +5096,8 @@ public class RemoteServer implements Server
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
-   private static final String START_SHELL_DIALOG = "start_shell_dialog";
+   private static final String GET_TERMINAL_SHELLS = "get_terminal_shells";
+   private static final String START_TERMINAL = "start_terminal";
    private static final String SEARCH_CODE = "search_code";
    private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
    private static final String GET_METHOD_DEFINITION = "get_method_definition";

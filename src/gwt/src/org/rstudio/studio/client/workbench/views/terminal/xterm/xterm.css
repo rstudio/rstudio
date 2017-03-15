@@ -64,6 +64,21 @@
     resize: none;
 }
 
+.terminal a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.terminal a:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.terminal a.xterm-invalid-link:hover {
+    cursor: text;
+    text-decoration: none;
+}
+
 
 
 .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar).focus.xterm-cursor-blink .terminal-cursor {

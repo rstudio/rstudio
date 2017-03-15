@@ -19,6 +19,7 @@ import java.util.HashSet;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -29,7 +30,7 @@ public class ProfilerType extends EditableFileType
    public ProfilerType()
    {
       super("r_prof", "R Profiler",
-            FileIconResources.INSTANCE.iconRdoc());
+            new ImageResource2x(FileIconResources.INSTANCE.iconRdoc2x()));
    }
    
    @Override

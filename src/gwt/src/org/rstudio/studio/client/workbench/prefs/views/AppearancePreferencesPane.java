@@ -18,7 +18,10 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -26,6 +29,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
@@ -154,6 +158,18 @@ public class AppearancePreferencesPane extends PreferencesPane
       theme_.addStyleName(res.styles().themeChooser());
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
+      
+      iconsResolution_ = new CheckBox("Use High Resolution", false);
+      iconsResolution_.setValue(uiPrefs_.getUse2xResolution().getGlobalValue());
+
+      iconsResolution_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> arg0)
+         {
+            uiPrefs_.getUse2xResolution().setGlobalValue(iconsResolution_.getValue());
+         }
+      });
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
@@ -188,7 +204,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return res_.iconAppearance();
+      return new ImageResource2x(res_.iconAppearance2x());
    }
    
    @Override
@@ -241,6 +257,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
+   private CheckBox iconsResolution_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

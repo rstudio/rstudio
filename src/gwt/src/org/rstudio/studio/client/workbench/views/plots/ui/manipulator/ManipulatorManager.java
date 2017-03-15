@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressImage;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -43,7 +44,7 @@ public class ManipulatorManager
       
       // create manipulator button
       manipulatorButton_ = new ToolbarButton(
-            resources.manipulateButton(),
+            new ImageResource2x(resources.manipulateButton2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
                {

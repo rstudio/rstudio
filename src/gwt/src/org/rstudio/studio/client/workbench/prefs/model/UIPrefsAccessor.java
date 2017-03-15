@@ -584,11 +584,6 @@ public class UIPrefsAccessor extends Prefs
       return string("execution_behavior", EXECUTE_STATEMENT);
    }
    
-   public PrefValue<Boolean> enableXTerm()
-   {
-      return bool("enable_xterm", false);
-   }
-   
    public PrefValue<Boolean> showTerminalTab()
    {
       return bool("show_terminal_tab", true);
@@ -624,6 +619,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> wrapTabNavigation()
    {
       return bool("wrap_tab_navigation", false);
+   }
+   
+   public PrefValue<Boolean> getUse2xResolution()
+   {
+      return bool("use_2x_resolution", false);
    }
    
    private String getDefaultPdfPreview()

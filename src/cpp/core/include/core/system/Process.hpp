@@ -51,12 +51,14 @@ struct Pseudoterminal
 #ifdef _WIN32
          const FilePath& winptyPath,
          bool plainText,
+         bool conerr,
 #endif
          int cols, int rows)
       :
 #ifdef _WIN32
         winptyPath(winptyPath),
         plainText(plainText),
+        conerr(conerr),
 #endif
         cols(cols), rows(rows)
    {
@@ -64,6 +66,7 @@ struct Pseudoterminal
 #ifdef _WIN32
    FilePath winptyPath;
    bool plainText;
+   bool conerr;
 #endif
    int cols;
    int rows;
@@ -135,10 +138,13 @@ struct ProcessOptions
 
    // create the process with CREATE_BREAKAWAY_FROM_JOB
    bool breakawayFromJob;
-
-   // consoleio command path
-   std::string consoleIoPath;
 #endif
+
+   // interactive terminal shell
+   FilePath shellPath;
+
+   // interactive terminal shell arguments
+   std::vector<std::string> args;
 
    bool redirectStdErrToStdOut;
 

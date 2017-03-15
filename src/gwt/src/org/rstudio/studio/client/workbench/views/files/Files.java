@@ -384,6 +384,9 @@ public class Files
          public void execute(final FileSystemItem targetFile,
                              final ProgressIndicator progress)
          {
+            if (targetFile == null)
+               return;
+            
             server_.copyFile(selectedFiles.get(0),
                  targetFile,
                  false,

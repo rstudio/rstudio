@@ -42,7 +42,7 @@ void saveConsoleProcesses();
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
-     childProcsSent_(false), started_(false)
+     childProcsSent_(false), lastInputSequence_(kIgnoreSequence), started_(false)
 {
    regexInit();
 
@@ -56,7 +56,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
-     started_(false)
+     lastInputSequence_(kIgnoreSequence), started_(false)
 {
    commonInit();
 }
@@ -67,7 +67,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
-     started_(false)
+     lastInputSequence_(kIgnoreSequence), started_(false)
 {
    commonInit();
 }
@@ -120,6 +120,7 @@ void ConsoleProcess::commonInit()
          options_.pseudoterminal = core::system::Pseudoterminal(
                   session::options().winptyPath(),
                   false /*plainText*/,
+                  false /*conerr*/,
                   options_.cols,
                   options_.rows);
       }
@@ -191,7 +192,83 @@ Error ConsoleProcess::start()
 
 void ConsoleProcess::enqueInput(const Input& input)
 {
-   inputQueue_.push(input);
+   if (input.sequence == kIgnoreSequence)
+   {
+      inputQueue_.push_back(input);
+      return;
+   }
+
+   if (input.sequence == kFlushSequence)
+   {
+      inputQueue_.push_back(input);
+
+      // set everything in queue to "ignore" so it will be pulled from
+      // queue as-is, even with gaps
+      for (std::deque<Input>::iterator it = inputQueue_.begin();
+           it != inputQueue_.end(); it++)
+      {
+         (*it).sequence = kIgnoreSequence;
+      }
+      lastInputSequence_ = kIgnoreSequence;
+      return;
+   }
+
+   // insert in order by sequence
+   for (std::deque<Input>::iterator it = inputQueue_.begin();
+        it != inputQueue_.end(); it++)
+   {
+      if (input.sequence < (*it).sequence)
+      {
+         inputQueue_.insert(it, input);
+         return;
+      }
+   }
+   inputQueue_.push_back(input);
+}
+
+ConsoleProcess::Input ConsoleProcess::dequeInput()
+{
+   // Pull next available Input from queue; return an empty Input
+   // if none available or if an out-of-sequence entry is
+   // reached; assumption is the missing item(s) will eventually
+   // arrive and unblock the backlog.
+   if (inputQueue_.empty())
+      return Input();
+
+   Input input = inputQueue_.front();
+   if (input.sequence == kIgnoreSequence || input.sequence == kFlushSequence)
+   {
+      inputQueue_.pop_front();
+      return input;
+   }
+
+   if (input.sequence == lastInputSequence_ + 1)
+   {
+      lastInputSequence_++;
+      inputQueue_.pop_front();
+      return input;
+   }
+
+   // Getting here means input is out of sequence. We want to prevent
+   // getting permanently stuck if a message gets lost and the
+   // gap(s) never get filled in. So we'll flush it if input piles up.
+   if (inputQueue_.size() >= kAutoFlushLength)
+   {
+      // set everything in queue to "ignore" so it will be pulled from
+      // queue as-is, even with gaps
+      for (std::deque<Input>::iterator it = inputQueue_.begin();
+           it != inputQueue_.end(); it++)
+      {
+         lastInputSequence_ = (*it).sequence;
+         (*it).sequence = kIgnoreSequence;
+      }
+
+      input.sequence = kIgnoreSequence;
+      inputQueue_.pop_front();
+      return input;
+   }
+
+   return Input();
 }
 
 void ConsoleProcess::enqueOutput(const std::string& output,
@@ -233,12 +310,9 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       return false;
 
    // process input queue
-   while (!inputQueue_.empty())
+   Input input = dequeInput();
+   while (!input.empty())
    {
-      // pop input
-      Input input = inputQueue_.front();
-      inputQueue_.pop();
-
       // pty interrupt
       if (input.interrupt)
       {
@@ -255,7 +329,10 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       {
          std::string inputText = input.text;
 #ifdef _WIN32
-         string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+         if (!options_.smartTerminal)
+         {
+            string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+         }
 #endif
          Error error = ops.writeToStdin(inputText, false);
          if (error)
@@ -269,6 +346,8 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
                procInfo_->appendToOutputBuffer("\n");
          }
       }
+
+      input = dequeInput();
    }
 
    if (newCols_ != -1 && newRows_ != -1)
@@ -519,6 +598,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
 
    ConsoleProcess::Input input;
    error = json::readObjectParam(request.params, 1,
+                                 "sequence", &input.sequence,
                                  "interrupt", &input.interrupt,
                                  "text", &input.text,
                                  "echo_input", &input.echoInput);

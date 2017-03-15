@@ -27,6 +27,7 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -137,7 +138,7 @@ public class BuildPane extends WorkbenchPane
          // add more menu
          ToolbarButton moreButton = new ToolbarButton(
                                       "More",
-                                      StandardIcons.INSTANCE.more_actions(),
+                                      new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
                                       moreMenu);
          toolbar.addLeftWidget(moreButton);
       }

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -55,7 +56,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconCompilePdf();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCompilePdf2x());
    }
 
    @Override

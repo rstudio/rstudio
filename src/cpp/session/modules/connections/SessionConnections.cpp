@@ -541,9 +541,6 @@ Error installSpark(const json::JsonRpcRequest& request,
    boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
          boost::make_shared<console_process::ConsoleProcessInfo>(
             "Installing Spark " + sparkVersion,
-            "" /*title*/,
-            "" /*handle*/,
-            console_process::kNoTerminal, false /*allowRestart*/,
             console_process::InteractionNever);
 
    // create and execute console process

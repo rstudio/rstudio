@@ -74,6 +74,7 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -1287,7 +1288,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       embedIcon(
             shortcutCell,
-            ThemeResources.INSTANCE.syntaxInfo(),
+            new ImageResource2x(ThemeResources.INSTANCE.syntaxInfo2x()),
             "Masked by RStudio command: ",
             maskedIndex);
       
@@ -1301,7 +1302,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       embedIcon(
             shortcutCell,
-            ThemeResources.INSTANCE.syntaxWarning(),
+            new ImageResource2x(ThemeResources.INSTANCE.syntaxWarning2x()),
             "Conflicts with command: ",
             maskedIndex);
       

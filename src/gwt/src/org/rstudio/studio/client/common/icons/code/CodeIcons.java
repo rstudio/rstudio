@@ -22,20 +22,51 @@ public interface CodeIcons extends ClientBundle
 {
    public static final CodeIcons INSTANCE = GWT.create(CodeIcons.class);
    
-   ImageResource variable();
-   ImageResource function();
-   ImageResource clazz();
-   ImageResource namespace();
-   ImageResource enumType();
-   ImageResource enumValue();
-   ImageResource keyword();
-   ImageResource dataFrame();
-   ImageResource help();
-   ImageResource rPackage();
-   ImageResource file();
-   ImageResource folder();
-   ImageResource macro();
-   ImageResource environment();
-   ImageResource context();
-   ImageResource snippet();
+   @Source("variable_2x.png")
+   ImageResource variable2x();
+
+   @Source("function_2x.png")
+   ImageResource function2x();
+
+   @Source("clazz_2x.png")
+   ImageResource clazz2x();
+
+   @Source("namespace_2x.png")
+   ImageResource namespace2x();
+
+   @Source("enumType_2x.png")
+   ImageResource enumType2x();
+
+   @Source("enumValue_2x.png")
+   ImageResource enumValue2x();
+
+   @Source("keyword_2x.png")
+   ImageResource keyword2x();
+
+   @Source("dataFrame_2x.png")
+   ImageResource dataFrame2x();
+
+   @Source("help_2x.png")
+   ImageResource help2x();
+
+   @Source("rPackage_2x.png")
+   ImageResource rPackage2x();
+
+   @Source("file_2x.png")
+   ImageResource file2x();
+
+   @Source("folder_2x.png")
+   ImageResource folder2x();
+
+   @Source("macro_2x.png")
+   ImageResource macro2x();
+
+   @Source("environment_2x.png")
+   ImageResource environment2x();
+
+   @Source("context_2x.png")
+   ImageResource context2x();
+
+   @Source("snippet_2x.png")
+   ImageResource snippet2x();
 }

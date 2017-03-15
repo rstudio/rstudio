@@ -37,6 +37,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
@@ -381,7 +382,7 @@ public class DirectoryContentsWidget
       if (parentDirectory != null)
          addItem(parentDirectory,
                  "..",
-                 FileIconResources.INSTANCE.iconUpFolder());
+                 new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x()));
 
       for (FileSystemItem fsi : contents)
          addItem(fsi, null, null);

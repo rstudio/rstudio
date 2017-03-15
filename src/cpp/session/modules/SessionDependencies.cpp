@@ -400,12 +400,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
          boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing Packages",
-            "" /*title*/,
-            "" /*handle*/,
-            console_process::kNoTerminal,
-            false /*allowRestart*/,
-            console_process::InteractionNever);
+            "Installing Packages", console_process::InteractionNever);
 
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;

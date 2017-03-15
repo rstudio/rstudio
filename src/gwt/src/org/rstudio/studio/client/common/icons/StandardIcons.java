@@ -21,25 +21,65 @@ import com.google.gwt.resources.client.ImageResource;
 public interface StandardIcons extends ClientBundle
 {
    public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
-   ImageResource stock_new();
-   ImageResource chunk_menu();
-   ImageResource go_up();
+
+   @Source("stock_new_2x.png")
+   ImageResource stock_new2x();
+
+   @Source("chunk_menu_2x.png")
+   ImageResource chunk_menu2x();
+
+   @Source("go_up_2x.png")
+   ImageResource go_up2x();
+
    ImageResource right_arrow();
-   ImageResource click_feedback();
-   ImageResource more_actions();
-   ImageResource import_dataset();
+
+   @Source("click_feedback_2x.png")
+   ImageResource click_feedback2x();
+
+   @Source("more_actions_2x.png")
+   ImageResource more_actions2x();
+
+   @Source("import_dataset_2x.png")
+   ImageResource import_dataset2x();
+
    ImageResource empty_command();
-   ImageResource show_log();
-   ImageResource help();
-   ImageResource git();
-   ImageResource svn();
-   ImageResource viewer_window();
-   ImageResource run();
-   ImageResource mermaid();
-   ImageResource export_menu();
-   ImageResource functionLetter();
-   ImageResource methodLetter();
-   ImageResource lambdaLetter();
-   ImageResource outline();
-   ImageResource options();
+
+   @Source("show_log_2x.png")
+   ImageResource show_log2x();
+
+   @Source("help_2x.png")
+   ImageResource help2x();
+
+   @Source("git_2x.png")
+   ImageResource git2x();
+
+   @Source("svn_2x.png")
+   ImageResource svn2x();
+
+   @Source("viewer_window_2x.png")
+   ImageResource viewer_window2x();
+
+   @Source("run_2x.png")
+   ImageResource run2x();
+
+   @Source("mermaid_2x.png")
+   ImageResource mermaid2x();
+
+   @Source("export_menu_2x.png")
+   ImageResource export_menu2x();
+
+   @Source("functionLetter_2x.png")
+   ImageResource functionLetter2x();
+
+   @Source("methodLetter_2x.png")
+   ImageResource methodLetter2x();
+
+   @Source("lambdaLetter_2x.png")
+   ImageResource lambdaLetter2x();
+
+   @Source("outline_2x.png")
+   ImageResource outline2x();
+
+   @Source("options_2x.png")
+   ImageResource options2x();
 }

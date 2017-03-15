@@ -30,6 +30,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -369,7 +371,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (isCheckable())
       {
          return isChecked() ? 
-            ThemeResources.INSTANCE.menuCheck() :
+            new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
             null;
       } 
       else
@@ -517,7 +519,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                          String rightImageDesc)
    {
       StringBuilder text = new StringBuilder();
-      int topOffset = -10;
+      int topOffset = -7;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
@@ -526,7 +528,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
-         text.append(AbstractImagePrototype.create(icon).getHTML());
+         SafeHtml imageHtml = createMenuImageHtml(icon);
+         text.append(imageHtml.asString());
       }
       else
       {
@@ -597,6 +600,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "width", Integer.toString(image.getWidth()),
+        "height", Integer.toString(image.getHeight()),
+        "src", image.getSafeUri().asString()));
+      sb.appendHtmlConstant("</img>");   
+      return sb.toSafeHtml();
+   }
+
+   private static SafeHtml createMenuImageHtml(ImageResource image)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+        "width", Integer.toString(image.getWidth()),
+        "height", Integer.toString(image.getHeight()),
         "src", image.getSafeUri().asString()));
       sb.appendHtmlConstant("</img>");   
       return sb.toSafeHtml();
@@ -628,4 +644,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private static final String WINDOW_MODE_BACKGROUND = "background";
    private static final String WINDOW_MODE_MAIN = "main";
    private static final String WINDOW_MODE_ANY = "any";
+   
+   private UIPrefs uiPrefs_;
 }

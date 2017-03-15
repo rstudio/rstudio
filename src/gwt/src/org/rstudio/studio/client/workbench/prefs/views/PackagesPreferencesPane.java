@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -164,7 +165,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return res_.iconPackages();
+      return new ImageResource2x(res_.iconPackages2x());
    }
 
    @Override

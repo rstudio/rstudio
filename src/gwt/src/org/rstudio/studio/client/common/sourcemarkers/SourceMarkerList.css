@@ -50,24 +50,54 @@
    outline: none;
 }
 
+.errorIcon {
+   width: 16px !important;
+   height: 14px !important;
+   background-size: 16px 14px !important;
+}
+
+.warningIcon {
+   width: 16px !important;
+   height: 14px !important;
+   background-size: 16px 14px !important;
+}
+
+.boxIcon {
+   width: 16px !important;
+   height: 14px !important;
+   background-size: 16px 14px !important;
+}
+
+.infoIcon {
+   width: 16px !important;
+   height: 14px !important;
+   background-size: 16px 14px !important;
+}
+
+.styleIcon {
+   width: 16px !important;
+   height: 14px !important;
+   background-size: 16px 14px !important;
+}
+
 @sprite .errorIcon {
-   gwt-image: 'error';
+   gwt-image: 'error2x';
 }
 
 @sprite .warningIcon {
-   gwt-image: 'warning';
+   gwt-image: 'warning2x';
 }
 
 @sprite .boxIcon {
-   gwt-image: 'badbox';
+   gwt-image: 'badbox2x';
 }
 
 @sprite .infoIcon {
-   gwt-image: 'info';
+   gwt-image: 'info2x';
 }
 
 @sprite .styleIcon {
-   gwt-image: 'style';
+   gwt-image: 'style2x';
 }
 
 .noIcon {
@@ -78,6 +108,12 @@ div.disclosure {
    margin-top: 1px;
    margin-right: 3px;
 }
+
+.selectedRow div.disclosure {
+   width: 20;
+   height: 18;
+}
+
 @sprite .selectedRow div.disclosure {
-   gwt-image: 'logContextButton';
+   gwt-image: 'logContextButton2x';
 }

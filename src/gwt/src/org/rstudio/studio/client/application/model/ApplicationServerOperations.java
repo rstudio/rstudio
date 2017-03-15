@@ -24,7 +24,7 @@ import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import com.google.gwt.core.client.JsArray;
 
 public interface ApplicationServerOperations extends PrefsServerOperations
-{    
+{   
    // establish new session for this client
    void clientInit(ServerRequestCallback<SessionInfo> requestCallback);
 

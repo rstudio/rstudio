@@ -37,7 +37,8 @@ public interface CodeSearchResources extends ClientBundle
    @Source("CodeSearch.css")
    Styles styles();
  
-   ImageResource gotoFunction();
+   @Source("gotoFunction_2x.png")
+   ImageResource gotoFunction2x();
    
    public static CodeSearchResources INSTANCE = 
       (CodeSearchResources)GWT.create(CodeSearchResources.class) ;

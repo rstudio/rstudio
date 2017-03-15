@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -70,14 +71,14 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       @Source("../../dialog/images/toolbarTile.png")
       ImageResource toolbarTile();
 
-      @Source("../../dialog/images/stageAllFiles.png")
-      ImageResource stageAllFiles();
+      @Source("../../dialog/images/stageAllFiles_2x.png")
+      ImageResource stageAllFiles2x();
 
-      @Source("../../dialog/images/discard.png")
-      ImageResource discard();
+      @Source("../../dialog/images/discard_2x.png")
+      ImageResource discard2x();
 
-      @Source("../../dialog/images/stage.png")
-      ImageResource stage();
+      @Source("../../dialog/images/stage_2x.png")
+      ImageResource stage2x();
 
       @Source("../../dialog/images/splitterTileV.png")
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -87,8 +88,8 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource splitterTileH();
 
-      @Source("../../dialog/images/blankFileIcon.png")
-      ImageResource blankFileIcon();
+      @Source("../../dialog/images/blankFileIcon_2x.png")
+      ImageResource blankFileIcon2x();
    }
 
    interface Styles extends SharedStyles
@@ -257,7 +258,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", RES.discard(), (ClickHandler) null));
+            "Discard All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 

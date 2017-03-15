@@ -34,8 +34,15 @@ public interface PreferencesDialogResources extends ClientBundle
    @Source("PreferencesDialog.css")
    Styles styles();
 
-   ImageResource iconAppearance();
-   ImageResource iconPanes();
-   ImageResource iconPackages();
-   ImageResource iconRMarkdown();
+   @Source("iconAppearance_2x.png")
+   ImageResource iconAppearance2x();
+
+   @Source("iconPanes_2x.png")
+   ImageResource iconPanes2x();
+
+   @Source("iconPackages_2x.png")
+   ImageResource iconPackages2x();
+
+   @Source("iconRMarkdown_2x.png")
+   ImageResource iconRMarkdown2x();
 }

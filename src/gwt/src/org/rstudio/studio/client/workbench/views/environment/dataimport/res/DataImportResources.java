@@ -26,6 +26,9 @@ public interface DataImportResources extends ClientBundle
    
    @Source("copyCodeToClipboard.png")
    ImageResource copyImage();
+
+   @Source("copyCodeToClipboard_2x.png")
+   ImageResource copyImage2x();
    
    interface Style extends CssResource {
    }

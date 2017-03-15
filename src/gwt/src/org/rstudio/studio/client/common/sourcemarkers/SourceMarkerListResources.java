@@ -39,26 +39,26 @@ public interface SourceMarkerListResources extends ClientBundle
       String disclosure();
    }
 
-   @Source("images/error.png")
-   ImageResource error();
+   @Source("images/error_2x.png")
+   ImageResource error2x();
   
-   @Source("org/rstudio/core/client/theme/res/warningSmall.png")
-   ImageResource warning();
+   @Source("org/rstudio/core/client/theme/res/warningSmall_2x.png")
+   ImageResource warning2x();
 
-   @Source("images/badbox.png")
-   ImageResource badbox();
+   @Source("images/badbox_2x.png")
+   ImageResource badbox2x();
    
-   @Source("images/info.png")
-   ImageResource info();
+   @Source("images/info_2x.png")
+   ImageResource info2x();
    
-   @Source("images/style.png")
-   ImageResource style();
+   @Source("images/style_2x.png")
+   ImageResource style2x();
 
    @Source("SourceMarkerList.css")
    Styles styles();
    
-   @Source("images/logContextButton.png")
-   ImageResource logContextButton();
+   @Source("images/logContextButton_2x.png")
+   ImageResource logContextButton2x();
     
    public static SourceMarkerListResources INSTANCE = 
       (SourceMarkerListResources)GWT.create(SourceMarkerListResources.class) ;

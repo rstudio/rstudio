@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -182,7 +183,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconSourceControl();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconSourceControl2x());
    }
 
    @Override

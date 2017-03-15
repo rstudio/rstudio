@@ -29,8 +29,8 @@ public class ChunkHtmlPreview extends Composite
    
    public interface Resources extends ClientBundle
    {
-      @Source("HtmlWidgetIcon.png")
-      ImageResource htmlWidgetIcon();
+      @Source("HtmlWidgetIcon_2x.png")
+      ImageResource htmlWidgetIcon2x();
    }
 
    interface ChunkHtmlPreviewUiBinder extends UiBinder<Widget, ChunkHtmlPreview>

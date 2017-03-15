@@ -30,6 +30,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
@@ -262,7 +263,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        String editLabel = AppCommand.formatMenuLabel(
           commands_.renameFile().getImageResource(), "View File", null);
        String importLabel = AppCommand.formatMenuLabel(
-          StandardIcons.INSTANCE.import_dataset(), 
+          new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()), 
           "Import Dataset...", 
           null);
        

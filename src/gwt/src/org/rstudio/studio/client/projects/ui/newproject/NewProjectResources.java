@@ -27,22 +27,47 @@ public interface NewProjectResources extends ClientBundle
    static NewProjectResources INSTANCE = 
                   (NewProjectResources)GWT.create(NewProjectResources.class);
    
+   @Source("newProjectDirectoryIcon_2x.png")
+   ImageResource newProjectDirectoryIcon2x();
+
+   @Source("newProjectDirectoryIconLarge_2x.png")
+   ImageResource newProjectDirectoryIconLarge2x();
+
+   @Source("packageIcon_2x.png")
+   ImageResource packageIcon2x();
+
+   @Source("packageIconLarge_2x.png")
+   ImageResource packageIconLarge2x();
+
+   @Source("shinyAppIcon_2x.png")
+   ImageResource shinyAppIcon2x();
+
+   @Source("shinyAppIconLarge_2x.png")
+   ImageResource shinyAppIconLarge2x();
+
+   @Source("existingDirectoryIcon_2x.png")
+   ImageResource existingDirectoryIcon2x();
+
+   @Source("existingDirectoryIconLarge_2x.png")
+   ImageResource existingDirectoryIconLarge2x();
+
+   @Source("projectFromRepositoryIcon_2x.png")
+   ImageResource projectFromRepositoryIcon2x();
+
+   @Source("projectFromRepositoryIconLarge_2x.png")
+   ImageResource projectFromRepositoryIconLarge2x();
    
-   ImageResource newProjectDirectoryIcon();
-   ImageResource newProjectDirectoryIconLarge();
-   ImageResource packageIcon();
-   ImageResource packageIconLarge();
-   ImageResource shinyAppIcon();
-   ImageResource shinyAppIconLarge();
-   ImageResource existingDirectoryIcon();
-   ImageResource existingDirectoryIconLarge();
-   ImageResource projectFromRepositoryIcon();
-   ImageResource projectFromRepositoryIconLarge();
-   
-   ImageResource gitIcon();
-   ImageResource gitIconLarge();
-   ImageResource svnIcon();
-   ImageResource svnIconLarge();
+   @Source("gitIcon_2x.png")
+   ImageResource gitIcon2x();
+
+   @Source("gitIconLarge_2x.png")
+   ImageResource gitIconLarge2x();
+
+   @Source("svnIcon_2x.png")
+   ImageResource svnIcon2x();
+
+   @Source("svnIconLarge_2x.png")
+   ImageResource svnIconLarge2x();
    
    static interface Styles extends CssResource
    {

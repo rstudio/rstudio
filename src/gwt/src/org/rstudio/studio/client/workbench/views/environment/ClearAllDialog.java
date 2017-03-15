@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.MultiLineLabel;
@@ -76,7 +77,7 @@ public class ClearAllDialog extends ModalDialogBase
 
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
-      Image image = new Image(images.dialog_warning());
+      Image image = new Image(new ImageResource2x(images.dialog_warning2x()));
       horizontalPanel.add(image);
 
       // add message widget

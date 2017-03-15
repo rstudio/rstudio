@@ -3738,7 +3738,10 @@ public class Source implements InsertSourceHandler,
 
    public void onFileEdit(FileEditEvent event)
    {
-      fileTypeRegistry_.editFile(event.getFile());
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         fileTypeRegistry_.editFile(event.getFile());
+      }
    }
 
    public void onBeforeShow(BeforeShowEvent event)

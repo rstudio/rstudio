@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
@@ -76,34 +77,34 @@ public class CppCompletion extends JavaScriptObject
       switch(getType())
       {
       case UNKNOWN:
-         return icons.keyword();
+         return new ImageResource2x(icons.keyword2x());
       case VARIABLE:
-         return icons.variable();
+         return new ImageResource2x(icons.variable2x());
       case FUNCTION:
       case CONSTRUCTOR:
       case DESTRUCTOR:
-         return icons.function();
+         return new ImageResource2x(icons.function2x());
       case CLASS:
       case STRUCT:
-         return icons.clazz();
+         return new ImageResource2x(icons.clazz2x());
       case NAMESPACE:
-         return icons.namespace();
+         return new ImageResource2x(icons.namespace2x());
       case ENUM:
-         return icons.enumType();
+         return new ImageResource2x(icons.enumType2x());
       case ENUM_VALUE:
-         return icons.enumValue();
+         return new ImageResource2x(icons.enumValue2x());
       case KEYWORD:
-         return icons.keyword();
+         return new ImageResource2x(icons.keyword2x());
       case MACRO:
-         return icons.macro();
+         return new ImageResource2x(icons.macro2x());
       case SNIPPET:
-         return icons.snippet();
+         return new ImageResource2x(icons.snippet2x());
       case FILE:
          return REGISTRY.getIconForFilename(getTypedText());
       case DIRECTORY:
-         return icons.folder();
+         return new ImageResource2x(icons.folder2x());
       default:
-         return icons.keyword();
+         return new ImageResource2x(icons.keyword2x());
       }
    }
    

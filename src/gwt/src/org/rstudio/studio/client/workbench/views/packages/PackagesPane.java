@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -420,7 +421,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
-          AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage()),
+          new ImageResource2x(ThemeResources.INSTANCE.removePackage2x()),
           new OperationWithInput<PackageInfo>() {
             @Override
             public void execute(PackageInfo packageInfo)

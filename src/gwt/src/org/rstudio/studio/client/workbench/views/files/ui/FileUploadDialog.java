@@ -23,6 +23,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HtmlFormModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -217,12 +218,12 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       {
          if (directoryItem.equalTo(FileSystemItem.home()))
          {
-            image_.setResource(FileDialogResources.INSTANCE.homeImage());
+            image_.setResource(new ImageResource2x(FileDialogResources.INSTANCE.homeImage2x()));
             name_.setHTML("Home");
          }
          else
          {
-            image_.setResource(FileIconResources.INSTANCE.iconFolder());
+            image_.setResource(new ImageResource2x(FileIconResources.INSTANCE.iconFolder2x()));
             name_.setHTML("&nbsp;" + directoryItem.getPath());
          }
       }

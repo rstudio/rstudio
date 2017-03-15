@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -159,20 +160,20 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    public interface Resources extends ClientBundle
    {
-      @Source("MarkdownPresentationIcon.png")
-      ImageResource presentationIcon();
+      @Source("MarkdownPresentationIcon_2x.png")
+      ImageResource presentationIcon2x();
 
       @Source("MarkdownDocumentIcon.png")
-      ImageResource documentIcon();
+      ImageResource documentIcon2x();
 
       @Source("MarkdownOptionsIcon.png")
       ImageResource optionsIcon();
       
-      @Source("MarkdownTemplateIcon.png")
-      ImageResource templateIcon();
+      @Source("MarkdownTemplateIcon_2x.png")
+      ImageResource templateIcon2x();
 
-      @Source("MarkdownShinyIcon.png")
-      ImageResource shinyIcon();
+      @Source("MarkdownShinyIcon_2x.png")
+      ImageResource shinyIcon2x();
    }
 
    public NewRMarkdownDialog(
@@ -213,11 +214,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          // Special treatment for built-in templates with known names
          if (templateName.equals(RmdTemplateData.DOCUMENT_TEMPLATE))
          {
-            img = resources.documentIcon();
+            img = new ImageResource2x(resources.documentIcon2x());
          } 
          else if (templateName.equals(RmdTemplateData.PRESENTATION_TEMPLATE))
          {
-            img = resources.presentationIcon();
+            img = new ImageResource2x(resources.presentationIcon2x());
          }
          else
          {
@@ -236,13 +237,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       // Add the Shiny template
       TemplateMenuItem shinyItem = new TemplateMenuItem(TEMPLATE_SHINY);
-      shinyItem.addIcon(resources.shinyIcon());
+      shinyItem.addIcon(new ImageResource2x(resources.shinyIcon2x()));
       listTemplates_.addItem(shinyItem);
        
       // Add the "From Template" item at the end of the list
       TemplateMenuItem templateItem = 
             new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
-      templateItem.addIcon(resources.templateIcon());
+      templateItem.addIcon(new ImageResource2x(resources.templateIcon2x()));
       listTemplates_.addItem(templateItem);
       
       // Save templates to the current project directory if available, and the

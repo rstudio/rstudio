@@ -9,14 +9,14 @@
          <div class="{res.themeStyles.left}"></div>
          <div class="{res.themeStyles.center}">
             <g:Image ui:field='icon_'
-                     resource='{res.smallMagGlassIcon}'
+                     resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div class="{res.themeStyles.searchBoxContainer}">
                <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'
                           styleName='{res.themeStyles.searchBox}'/>
             </div>
             <g:Image ui:field='close_'
-                     resource='{res.clearSearch}'
+                     resource='{res.clearSearch2x}'
                      styleName='{res.themeStyles.clearSearch}'/>
          </div>
          <div class="{res.themeStyles.right}"></div>

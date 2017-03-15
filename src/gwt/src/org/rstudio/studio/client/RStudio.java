@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
+import com.google.gwt.thirdparty.json.JSONArray;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
@@ -33,6 +34,10 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.jsonrpc.RpcError;
+import org.rstudio.core.client.jsonrpc.RpcRequest;
+import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
+import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -67,6 +72,8 @@ import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
@@ -158,7 +165,7 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication(final Command dismissProgressAnimation)
    {
-      GWT.runAsync(new RunAsyncCallback()
+      final RunAsyncCallback runCallback = new RunAsyncCallback()
       {
          public void onFailure(Throwable reason)
          {
@@ -232,7 +239,9 @@ public class RStudio implements EntryPoint
                }
             });
          }
-      });
+      };
+
+      GWT.runAsync(runCallback);
    }
    
    private void ensureStylesInjected()

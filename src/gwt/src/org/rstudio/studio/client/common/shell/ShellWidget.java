@@ -267,14 +267,23 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // information for this error, we'll need to swap out the simple error
       // element for the extended error element. 
       Element outputElement = output_.getElement();
-      Node errorNode = outputElement.getChild(
-            outputElement.getChildCount() - 1);
-      if (clearErrors_)
+      if (outputElement.hasChildNodes())
       {
-         errorNodes_.clear();
-         clearErrors_ = false;
+         // the last output group includes a <span> for each output type; pick
+         // up the one referring to the error we just emitted
+         Node lastNode = outputElement.getChild(
+               outputElement.getChildCount() - 1);
+         if (lastNode.hasChildNodes())
+         {
+            Node errorNode = lastNode.getChild(lastNode.getChildCount() - 1);
+            if (clearErrors_)
+            {
+               errorNodes_.clear();
+               clearErrors_ = false;
+            }
+            errorNodes_.put(error, errorNode);
+         }
       }
-      errorNodes_.put(error, errorNode);
    }
    
    public void consoleWriteExtendedError(
@@ -291,7 +300,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          if (expand)
             errorWidget.setTracebackVisible(true);
          
-         output_.getElement().replaceChild(errorWidget.getElement(), 
+         errorNode.getParentNode().replaceChild(errorWidget.getElement(),
                                            errorNode);
          
          scrollPanel_.onContentSizeChanged();
@@ -355,9 +364,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // make sure we're starting on a new line
       if (virtualConsole_ != null)
       {
-         Element child = Element.as(virtualConsole_.getParent().getLastChild());
-         if (!child.getInnerText().endsWith("\n"))
+         Node child = virtualConsole_.getParent().getLastChild();
+         if (child != null &&
+             child.getNodeType() == Node.ELEMENT_NODE &&
+             !Element.as(child).getInnerText().endsWith("\n"))
+         {
             virtualConsole_.submit("\n");
+         }
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
       }
@@ -401,10 +414,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
             virtualConsole_ = new VirtualConsole(trailing);
          }
 
-         int oldLineCount = DomUtils.countLinesRecursive(
+         int oldLineCount = DomUtils.countLines(
                virtualConsole_.getParent(), true);
          virtualConsole_.submit(text, className);
-         int newLineCount = DomUtils.countLinesRecursive(
+         int newLineCount = DomUtils.countLines(
                virtualConsole_.getParent(), true);
          lines_ += newLineCount - oldLineCount;
       }
@@ -432,8 +445,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       int linesToTrim = lines_ - maxLines_;
       if (linesToTrim > 0)
       {
-         lines_ -= DomUtils.trimLines(output_.getElement(),
-                                      lines_ - maxLines_);
+         lines_ -= DomUtils.trimLines(output_.getElement(), linesToTrim);
          return true;
       }
 

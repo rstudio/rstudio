@@ -245,7 +245,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       controls_.add(new VerticalSpacer("20px"));
       
       container_ = new HorizontalPanel();
-      Image image = new Image(NewProjectResources.INSTANCE.shinyAppIcon());
+      Image image = new Image(NewProjectResources.INSTANCE.shinyAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
       container_.add(controls_);

@@ -22,34 +22,36 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
 
 public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 {
    interface StatusResources extends ClientBundle
    {
-      @Source("images/statusAdded.png")
-      ImageResource statusAdded();
-      @Source("images/statusConflicted.png")
-      ImageResource statusConflicted();
-      @Source("images/statusDeleted.png")
-      ImageResource statusDeleted();
-      @Source("images/statusExternal.png")
-      ImageResource statusExternal();
-      @Source("images/statusIgnored.png")
-      ImageResource statusIgnored();
-      @Source("images/statusMissing.png")
-      ImageResource statusMissing();
+      @Source("images/statusAdded_2x.png")
+      ImageResource statusAdded2x();
+      @Source("images/statusConflicted_2x.png")
+      ImageResource statusConflicted2x();
+      @Source("images/statusDeleted_2x.png")
+      ImageResource statusDeleted2x();
+      @Source("images/statusExternal_2x.png")
+      ImageResource statusExternal2x();
+      @Source("images/statusIgnored_2x.png")
+      ImageResource statusIgnored2x();
+      @Source("images/statusMissing_2x.png")
+      ImageResource statusMissing2x();
 //      @Source("images/statusMerged")
 //      ImageResource statusMerged();
-      @Source("images/statusModified.png")
-      ImageResource statusModified();
-      @Source("images/statusNone.png")
-      ImageResource statusNone();
-      @Source("images/statusObstructed.png")
-      ImageResource statusObstructed();
-      @Source("images/statusUnversioned.png")
-      ImageResource statusUnversioned();
+      @Source("images/statusModified_2x.png")
+      ImageResource statusModified2x();
+      @Source("images/statusNone_2x.png")
+      ImageResource statusNone2x();
+      @Source("images/statusObstructed_2x.png")
+      ImageResource statusObstructed2x();
+      @Source("images/statusUnversioned_2x.png")
+      ImageResource statusUnversioned2x();
    }
 
    public SVNStatusRenderer()
@@ -62,7 +64,7 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
       if (str.length() != 1)
          return SafeHtmlUtils.fromString(str);
 
-      ImageResource img = imgForStatus(str.charAt(0));
+      ImageResource2x img = imgForStatus(str.charAt(0));
 
       if (img == null)
          return SafeHtmlUtils.fromString(str);
@@ -75,8 +77,7 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
             SafeHtmlUtils.htmlEscape(descForStatus(str)) +
             "\">"));
 
-      builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(
-            img).getHTML()));
+      builder.append(img.getSafeHtml());
 
       builder.appendHtmlConstant("</span>");
 
@@ -119,32 +120,32 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 
   
    
-   private ImageResource imgForStatus(char c)
+   private ImageResource2x imgForStatus(char c)
    {
       switch (c)
       {
          case 'A':
-            return resources_.statusAdded();
+            return new ImageResource2x(resources_.statusAdded2x());
          case 'C':
-            return resources_.statusConflicted();
+            return new ImageResource2x(resources_.statusConflicted2x());
          case 'D':
-            return resources_.statusDeleted();
+            return new ImageResource2x(resources_.statusDeleted2x());
          case 'X':
-            return resources_.statusExternal();
+            return new ImageResource2x(resources_.statusExternal2x());
          case 'I':
-            return resources_.statusIgnored();
+            return new ImageResource2x(resources_.statusIgnored2x());
          case '!':
-            return resources_.statusMissing();
+            return new ImageResource2x(resources_.statusMissing2x());
 //         case 'G':
 //            return resources_.statusMerged();
          case 'M':
-            return resources_.statusModified();
+            return new ImageResource2x(resources_.statusModified2x());
          case ' ':
-            return resources_.statusNone();
+            return new ImageResource2x(resources_.statusNone2x());
          case '~':
-            return resources_.statusObstructed();
+            return new ImageResource2x(resources_.statusObstructed2x());
          case '?':
-            return resources_.statusUnversioned();
+            return new ImageResource2x(resources_.statusUnversioned2x());
          default:
             return null;
       }

@@ -32,6 +32,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
@@ -510,7 +511,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return PreferencesDialogBaseResources.INSTANCE.iconCodeEditing();
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
    }
 
    @Override

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
@@ -184,15 +185,15 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                       object.isExpanding ? 
                          CoreResources.INSTANCE.progress() :
                          object.expanded ?
-                            EnvironmentResources.INSTANCE.collapseIcon() :
-                            EnvironmentResources.INSTANCE.expandIcon();
+                            new ImageResource2x(EnvironmentResources.INSTANCE.collapseIcon2x()) :
+                            new ImageResource2x(EnvironmentResources.INSTANCE.expandIcon2x());
 
                   imageUri = expandImage.getSafeUri().asString();
                }
                else if (object.hasTraceInfo())
                {
-                  imageUri = EnvironmentResources.INSTANCE
-                        .tracedFunction().getSafeUri().asString();
+                  imageUri = new ImageResource2x(EnvironmentResources.INSTANCE
+                        .tracedFunction2x()).getSafeUri().asString();
                   imageStyle += (" " + style_.unclickableIcon());
                }
                if (imageUri.length() > 0)

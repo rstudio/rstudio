@@ -127,10 +127,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    public interface Resources extends CellTree.Resources {
       
-      ImageResource zoomDataset();
+      @Source("zoomDataset_2x.png")
+      ImageResource zoomDataset2x();
       
       @ImageOptions(flipRtl = true)
-      @Source("ExpandIcon.png")
+      @Source("ExpandIcon_2x.png")
       ImageResource cellTreeClosedItem();
 
       /**
@@ -139,12 +140,10 @@ public class ObjectBrowser extends Composite implements RequiresResize
       @ImageOptions(flipRtl = true)
       @Source("progress.gif")
       ImageResource cellTreeLoading();
-
     
       @ImageOptions(flipRtl = true)
-      @Source("CollapseIcon.png")
+      @Source("CollapseIcon_2x.png")
       ImageResource cellTreeOpenItem();
-      
       
       @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
       public Style cellTreeStyle();   

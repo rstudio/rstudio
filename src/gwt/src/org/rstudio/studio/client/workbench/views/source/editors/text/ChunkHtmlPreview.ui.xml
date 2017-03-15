@@ -18,7 +18,7 @@
 }
 </ui:style>
 <g:HTMLPanel styleName="{style.wrapper}">
-   <g:Image styleName="{style.icon}" resource="{res.htmlWidgetIcon}">
+   <g:Image styleName="{style.icon}" resource="{res.htmlWidgetIcon2x}">
 </g:Image>
 </g:HTMLPanel>
 </ui:UiBinder> 

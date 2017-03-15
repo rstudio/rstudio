@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -438,7 +439,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
-              StandardIcons.INSTANCE.import_dataset(),
+              new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
       return dataImportButton_;
 
@@ -462,15 +463,15 @@ public class EnvironmentPane extends WorkbenchPane
    private ImageResource imageOfEnvironment(String name, boolean local)
    {
       if (name.endsWith("()"))
-         return EnvironmentResources.INSTANCE.functionEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.functionEnvironment2x());
       else if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
-         return EnvironmentResources.INSTANCE.globalEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.globalEnvironment2x());
       else if (name.startsWith("package:") ||
                name.equals("base") || 
                local)
-         return EnvironmentResources.INSTANCE.packageEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.packageEnvironment2x());
       else 
-         return EnvironmentResources.INSTANCE.attachedEnvironment();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.attachedEnvironment2x());
    }
    
    private void setEnvironments(JsArray<EnvironmentFrame> environments)
@@ -541,9 +542,9 @@ public class EnvironmentPane extends WorkbenchPane
    private ImageResource imageOfViewType(int type)
    {
       if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
-         return EnvironmentResources.INSTANCE.objectListView();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.objectListView2x());
       else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
-         return EnvironmentResources.INSTANCE.objectGridView();
+         return new ImageResource2x(EnvironmentResources.INSTANCE.objectGridView2x());
       return null;
    }
    
@@ -559,7 +560,7 @@ public class EnvironmentPane extends WorkbenchPane
                {
                   setObjectDisplayType(type);
                }
-            }, 2);
+            }, -1);
    }
    
    // An extension of the toolbar popup menu that gets environment names from

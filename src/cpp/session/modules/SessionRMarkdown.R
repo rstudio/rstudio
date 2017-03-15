@@ -134,8 +134,12 @@
    # check for required files
    templateYaml <- file.path(path, "template.yaml")
    skeletonPath <- file.path(path, "skeleton")
-   if (!file.exists(templateYaml))
-      return(NULL)
+   if (!file.exists(templateYaml)) {
+      templateYaml <- file.path(path, "template.yml")
+      if (!file.exists(templateYaml))
+         return(NULL)
+   }
+
    if (!file.exists(file.path(skeletonPath, "skeleton.Rmd")))
       return(NULL)
 

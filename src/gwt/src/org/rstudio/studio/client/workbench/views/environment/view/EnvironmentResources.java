@@ -24,32 +24,32 @@ public interface EnvironmentResources extends ClientBundle
    public static final EnvironmentResources INSTANCE =
            GWT.create(EnvironmentResources.class);
 
-   @Source("ExpandIcon.png")
-   ImageResource expandIcon();
+   @Source("ExpandIcon_2x.png")
+   ImageResource expandIcon2x();
 
-   @Source("CollapseIcon.png")
-   ImageResource collapseIcon();
+   @Source("CollapseIcon_2x.png")
+   ImageResource collapseIcon2x();
    
-   @Source("TracedFunction.png")
-   ImageResource tracedFunction();
+   @Source("TracedFunction_2x.png")
+   ImageResource tracedFunction2x();
    
-   @Source("GlobalEnvironment.png")
-   ImageResource globalEnvironment();
+   @Source("GlobalEnvironment_2x.png")
+   ImageResource globalEnvironment2x();
    
-   @Source("PackageEnvironment.png")
-   ImageResource packageEnvironment();
+   @Source("PackageEnvironment_2x.png")
+   ImageResource packageEnvironment2x();
    
-   @Source("AttachedEnvironment.png")
-   ImageResource attachedEnvironment();
+   @Source("AttachedEnvironment_2x.png")
+   ImageResource attachedEnvironment2x();
 
-   @Source("FunctionEnvironment.png")
-   ImageResource functionEnvironment();
+   @Source("FunctionEnvironment_2x.png")
+   ImageResource functionEnvironment2x();
    
-   @Source("ObjectListView.png")
-   ImageResource objectListView();
+   @Source("ObjectListView_2x.png")
+   ImageResource objectListView2x();
    
-   @Source("ObjectGridView.png")
-   ImageResource objectGridView();
+   @Source("ObjectGridView_2x.png")
+   ImageResource objectGridView2x();
    
    @Source("EnvironmentObjects.css")
    EnvironmentStyle environmentStyle();

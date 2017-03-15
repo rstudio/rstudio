@@ -143,6 +143,7 @@ struct ChildProcess::Impl
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
         closeProcess_(&hProcess, ERROR_LOCATION),
+        pid(static_cast<PidType>(-1)),
         ctrlC(0x03)
    {
    }
@@ -151,6 +152,7 @@ struct ChildProcess::Impl
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
+   PidType pid;
    WinPty pty;
    char ctrlC;
 
@@ -197,13 +199,9 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-   // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
-   FilePath cmd = expandComSpec();
-   if (!cmd.exists())
-      exe_ = findOnPath("cmd.exe");
-   else
-      exe_ = cmd.absolutePathNative();
    options_ = options;
+   exe_ = options_.shellPath.absolutePathNative();
+   args_ = options_.args;
 }
 
 ChildProcess::~ChildProcess()
@@ -322,17 +320,16 @@ Error ChildProcess::run()
    // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      pImpl_->pty.init(exe_, args_, options_);
-
-      error = pImpl_->pty.startPty(&pImpl_->hStdInWrite, &pImpl_->hStdOutRead);
-      if (error)
-         return error;
-
-      error = pImpl_->pty.runProcess(&pImpl_->hProcess);
-      if (error)
-         return error;
-
-      return Success();
+      error = pImpl_->pty.start(exe_, args_, options_,
+                               &pImpl_->hStdInWrite,
+                               &pImpl_->hStdOutRead,
+                               &pImpl_->hStdErrRead,
+                               &pImpl_->hProcess);
+      if (!error)
+      {
+         pImpl_->pid = ::GetProcessId(pImpl_->hProcess);
+      }
+      return error;
    }
 
    // Standard input pipe
@@ -490,6 +487,7 @@ Error ChildProcess::run()
 
    // save handle to process
    pImpl_->hProcess = pi.hProcess;
+   pImpl_->pid = ::GetProcessId(pImpl_->hProcess);
 
    // success
    return Success();
@@ -583,10 +581,9 @@ struct AsyncChildProcess::AsyncImpl
       return fCheck;
    }
 
-   bool computeHasSubProcess(HANDLE hProcess)
+   bool computeHasSubProcess(PidType pid)
    {
-      // TODO (gary) implement
-      return false;
+      return core::system::hasSubprocesses(pid);
    }
 
    static boost::posix_time::ptime now()
@@ -661,6 +658,18 @@ void AsyncChildProcess::poll()
    if (!stdOut.empty() && callbacks_.onStdout)
       callbacks_.onStdout(*this, stdOut);
 
+   // check stderr
+   // when using winpty, hStdErrRead is optional
+   if (pImpl_->hStdErrRead)
+   {
+      std::string stdErr;
+      error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
+      if (error)
+         reportError(error);
+      if (!stdErr.empty() && callbacks_.onStderr)
+         callbacks_.onStderr(*this, stdErr);
+   }
+
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);
 
@@ -715,7 +724,7 @@ void AsyncChildProcess::poll()
    pAsyncImpl_->initTimers(options().reportHasSubprocs);
    if (pAsyncImpl_->checkChildCount())
    {
-      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->hProcess);
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
       if (callbacks_.onHasSubprocs)
       {
          callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);

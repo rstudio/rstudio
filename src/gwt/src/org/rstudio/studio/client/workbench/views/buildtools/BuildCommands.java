@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -40,7 +41,9 @@ public class BuildCommands
          commands.checkPackage().remove();
          commands.testPackage().remove();
          commands.buildAll().setImageResource(
-                           BuildPaneResources.INSTANCE.iconBuild());
+                           new ImageResource2x(
+                              BuildPaneResources.INSTANCE.iconBuild2x()
+                           ));
          commands.buildAll().setMenuLabel("_Build All");
          commands.buildAll().setButtonLabel("Build All");
          commands.buildAll().setDesc("Build all");

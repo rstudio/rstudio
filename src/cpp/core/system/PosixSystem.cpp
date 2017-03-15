@@ -719,11 +719,134 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
+// Detect subprocesses via shelling out to pgrep, kinda expensive but used
+// on Mac and any other Posix system without procfs.
+namespace {
+bool hasSubprocessesViaPgrep(PidType pid)
+{
+   // pgrep -P ppid returns 0 if there are matches, non-zero
+   // otherwise
+   shell_utils::ShellCommand cmd("pgrep");
+   cmd << "-P" << pid;
+
+   core::system::ProcessOptions options;
+   options.detachSession = true;
+
+   core::system::ProcessResult result;
+   Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                            options,
+                            &result);
+   if (error)
+   {
+      // err on the side of assuming child processes, so we don't kill
+      // a job unintentionally
+      LOG_ERROR(error);
+      return true;
+   }
+   return result.exitStatus == 0;
+}
+} // anonymous namespace
+
+bool hasSubprocesses(PidType pid)
+{
+   core::FilePath procFsPath("/proc");
+   if (!procFsPath.exists())
+   {
+      return hasSubprocessesViaPgrep(pid);
+   }
+
+   // We iterate all /proc/###/stat files, where ### is a process id.
+   //
+   // The parent pid is the fourth field (whitespace separated) in the
+   // single-line of the stat file. The first field is an int, second field
+   // is a string enclosed in parenthesis (...), the third is a single
+   // character, and the fourth is the parent pid (int). There are numerous
+   // fields after that, all ints of varying sizes.
+   //
+   // The trick is that the third field can contain arbitrary text,
+   // including whitespace and more parenthesis, inside its surrounding
+   // parenthesis. The safe way to parse this is to search the file
+   // in reverse for the closing parenthesis, then seek forward until we
+   // reach the first integer character.
+   //
+   // An example:
+   //    4075 (My )(great Program) S 4074 ....
+
+   std::vector<FilePath> children;
+   Error error = procFsPath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true; // err on the side of assuming child processes exist
+   }
+
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      // only interested in the numeric directories (pid)
+      std::string filename = child.filename();
+      bool isNumber = true;
+      for (std::string::const_iterator k = filename.begin(); k != filename.end(); ++k)
+      {
+         if (!isdigit(*k))
+         {
+            isNumber = false;
+            break;
+         }
+      }
+
+      if (!isNumber)
+         continue;
+
+      // load the stat file
+      std::string contents;
+      FilePath statFile(child.complete("stat"));
+      Error error = rstudio::core::readStringFromFile(statFile, &contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      size_t i = contents.find_last_of(')');
+      if (i == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no closing parenthesis");
+         continue;
+      }
+
+      i = contents.find_first_of("0123456789", i);
+      if (i == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no integer after closing parenthesis");
+         continue;
+      }
+
+      size_t j = contents.find_first_not_of("0123456789", i);
+      if (j == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no non-int after first int");
+         continue;
+      }
+
+      // extremely unexpected/unlikely, but make sure we don't have some funky
+      // super-large integer here that could cause lexical_cast to throw
+      size_t ppidLen = j - i;
+      if (ppidLen > 9)
+      {
+         LOG_ERROR_MESSAGE("stat file ppid too large");
+         continue;
+      }
+      int ppid = boost::lexical_cast<int>(contents.substr(i, ppidLen));
+      if (ppid == pid)
+         return true;
+   }
+   return false;
+}
 
 Error daemonize()
 {
    // fork
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
    if (pid < 0)
       return systemError(errno, ERROR_LOCATION); // fork error
    else if (pid > 0)
@@ -1278,7 +1401,7 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
-   pid_t pid = ::fork();
+   PidType pid = ::fork();
 
    // error
    if (pid < 0)

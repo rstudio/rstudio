@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -67,6 +68,7 @@ public class TerminalSession extends XTermWidget
     * @param hasChildProcs does session have child processes
     * @param cols number of columns in terminal
     * @param rows number of rows in terminal
+    * @param shellType type of shell to run
     */
    public TerminalSession(int sequence,
                           String handle,
@@ -74,12 +76,14 @@ public class TerminalSession extends XTermWidget
                           String title,
                           boolean hasChildProcs,
                           int cols,
-                          int rows)
+                          int rows,
+                          int shellType)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
       terminalHandle_ = handle;
       hasChildProcs_ = hasChildProcs;
+      shellType_ = shellType;
       setTitle(title);
 
       if (StringUtil.isNullOrEmpty(caption))
@@ -109,7 +113,8 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(getCols(), getRows(), getHandle(), getCaption(), 
+      server_.startTerminal(getShellType(),
+            getCols(), getRows(), getHandle(), getCaption(), 
             getTitle(), getSequence(), new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -262,8 +267,37 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
+      // On Windows, rapid typing sometimes causes RPC messages for writeStandardInput
+      // to arrive out of sequence in the terminal; send a sequence number with each
+      // message so server can put messages back in order
+      if (BrowseCap.isWindowsDesktop())
+      {
+         if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
+         {
+            // First message sent for this client-side terminal instance, start
+            // by flushing the server-side queue to reset server's "last-sequence"
+            // back to default.
+            inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+         }
+         else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
+         {
+            // Last message has flushed server, start tracking sequences again.
+            inputSequence_ = 0;
+         }
+         else if (inputSequence_ >= Integer.MAX_VALUE - 100)
+         {
+            // Very diligent typist!  Tell server to flush its input
+            // queue, temporarily ignoring sequences.
+            inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+         }
+         else
+         {
+            inputSequence_++;
+         }
+      }
+
       consoleProcess_.writeStandardInput(
-            ShellInput.create(userInput,  true /* echo input*/), 
+            ShellInput.create(inputSequence_, userInput,  true /* echo input*/), 
             new VoidServerRequestCallback() {
 
                @Override
@@ -414,6 +448,15 @@ public class TerminalSession extends XTermWidget
       }
       terminalHandle_ = consoleProcess_.getProcessInfo().getHandle();
       return terminalHandle_;
+   }
+   
+   public int getShellType()
+   {
+      if (consoleProcess_ == null)
+      {
+         return shellType_;
+      }
+      return consoleProcess_.getProcessInfo().getShellType();
    }
 
    /**
@@ -568,10 +611,12 @@ public class TerminalSession extends XTermWidget
    private final int sequence_;
    private String terminalHandle_;
    private boolean hasChildProcs_;
+   private int shellType_;
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
    private StringBuilder inputQueue_ = new StringBuilder();
+   private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private int cols_ = ConsoleProcessInfo.DEFAULT_COLS;
    private int rows_ = ConsoleProcessInfo.DEFAULT_ROWS;;

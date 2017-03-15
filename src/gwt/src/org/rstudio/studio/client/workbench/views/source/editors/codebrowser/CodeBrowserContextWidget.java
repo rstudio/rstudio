@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -92,7 +93,7 @@ public class CodeBrowserContextWidget extends Composite
       namespaceLabel_.addClickHandler(clickHandler);
       panel.add(namespaceLabel_);
       
-      dropDownImage_ = new Image(ThemeResources.INSTANCE.mediumDropDownArrow());
+      dropDownImage_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.mediumDropDownArrow2x()));
       dropDownImage_.addStyleName(styles.menuElement());
       dropDownImage_.addStyleName(styles.dropDownImage());
       dropDownImage_.addClickHandler(clickHandler);

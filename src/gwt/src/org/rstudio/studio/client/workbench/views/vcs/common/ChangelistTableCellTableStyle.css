@@ -18,3 +18,12 @@ span.status img:first-child {
    margin-top: 0;
    margin-bottom: 0;
 }
+
+.cellTableSortableHeader img {
+   background-size: 7px 4px !important;
+   background-position: 2px 1px !important;
+}
+
+.cellTableSortableHeader > div {
+   padding-left: 13px !important;
+}

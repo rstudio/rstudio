@@ -18,6 +18,8 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
+import com.google.gwt.event.logical.shared.SelectionEvent;
+
 public class OpenFileDialog extends FileDialog
 {
    public OpenFileDialog(String title,
@@ -38,11 +40,32 @@ public class OpenFileDialog extends FileDialog
       if (canChooseDirectories_)
       {
          FileSystemItem item = browser_.getSelectedItem();
-         if (item == null || item.isDirectory())
+         String fileInput = browser_.getFilename().trim();
+         
+         // if we have no user input nor a selected item,
+         // interpret this as a request to open the active
+         // directory as an RStudio project
+         if (item == null && fileInput.isEmpty())
             return true;
+         
+         // if the user has selected a directory, and there
+         // is no user input, interpret that as a request to
+         // navigate into that directory
+         if (item != null && item.isDirectory())
+         {
+            cd(item.getPath());
+            return false;
+         }
       }
       
       return super.shouldAccept();
+   }
+   
+   @Override
+   public void onNavigated()
+   {
+      super.onNavigated();
+      browser_.setFilename("");
    }
    
    @Override
@@ -52,6 +75,20 @@ public class OpenFileDialog extends FileDialog
       if (item == null)
          item = browser_.getCurrentDirectory();
       return item;
+   }
+   
+   @Override
+   public void onSelection(SelectionEvent<FileSystemItem> event)
+   {
+      super.onSelection(event);
+      
+      // clear the active filename whenever a directory
+      // is selected -- this allows us to disambiguate
+      // 'fresh' from 'stale' user input; ie, tell whether
+      // the user is navigating in the widget or typing in
+      // the file name textbox
+      if (event.getSelectedItem().isDirectory())
+         browser_.setFilename("");
    }
    
    protected final boolean canChooseDirectories_;

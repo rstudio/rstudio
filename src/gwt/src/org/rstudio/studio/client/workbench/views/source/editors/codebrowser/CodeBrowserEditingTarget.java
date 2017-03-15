@@ -39,6 +39,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -400,7 +401,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public ImageResource getIcon()
    {
-      return FileIconResources.INSTANCE.iconSourceViewer();
+      return new ImageResource2x(FileIconResources.INSTANCE.iconSourceViewer2x());
    }
 
    @Override

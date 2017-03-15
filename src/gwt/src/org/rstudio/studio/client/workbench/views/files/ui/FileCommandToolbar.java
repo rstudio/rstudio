@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -52,7 +53,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
 
       ToolbarButton moreButton = new ToolbarButton("More",
-                                                  icons.more_actions(),
+                                                  new ImageResource2x(icons.more_actions2x()),
                                                   moreMenu);
       addLeftWidget(moreButton);
       

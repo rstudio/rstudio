@@ -40,6 +40,8 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
+#include <r/session/RSessionUtils.hpp>
+
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
@@ -101,6 +103,9 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
    
    if (objectString.find('(') != std::string::npos)
       return false;
+   
+   // avoid output leaking to console
+   r::session::utils::SuppressOutputInScope scope;
    
    // Get the object and check if it inherits from data.table
    SEXP objectSEXP;
@@ -234,6 +239,9 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       // Don't evaluate nested function calls.
       if (call.find('(') != std::string::npos)
          return R_UnboundValue;
+      
+      // avoid output leaking to console
+      r::session::utils::SuppressOutputInScope scope;
       
       Error error = r::exec::evaluateString(call, &symbolSEXP, pProtect);
       if (error)

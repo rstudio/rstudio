@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -70,7 +71,7 @@ public class GlobalToolbar extends Toolbar
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarButton newButton = new ToolbarButton("",
-                                                  icons.stock_new(),
+                                                  new ImageResource2x(icons.stock_new2x()),
                                                   newMenu_);
       addLeftWidget(newButton);
       addLeftSeparator();
@@ -181,9 +182,9 @@ public class GlobalToolbar extends Toolbar
       
          ImageResource vcsIcon = null;
          if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
-            vcsIcon = icons.git();
+            vcsIcon = new ImageResource2x(icons.git2x());
          else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
-            vcsIcon = icons.svn();
+            vcsIcon = new ImageResource2x(icons.svn2x());
          
          ToolbarButton vcsButton = new ToolbarButton(
                null,
@@ -219,7 +220,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
       
-      ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
+      ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarButton paneLayoutButton = new ToolbarButton(
             null,
             paneLayoutIcon,

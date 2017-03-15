@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
@@ -33,8 +34,8 @@ public class NewRSConnectAuthPage
    public NewRSConnectAuthPage()
    {
       super("", "", "Verifying Account", 
-            RSConnectResources.INSTANCE.localAccountIcon(), 
-            RSConnectResources.INSTANCE.localAccountIconLarge());
+            new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), 
+            new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconLarge2x()));
 
       // listen for window close events (this page needs to know when the user
       // closes the auth dialog
@@ -294,6 +295,10 @@ public class NewRSConnectAuthPage
                @Override
                public void execute(NewRSConnectAccountResult input)
                {
+                  // do nothing if no result returned
+                  if (input == null)
+                     return;
+                  
                   // save intermediate result
                   result_ = input;
 

@@ -11,6 +11,10 @@
    margin-right: 3px;
 }
 
+.findReplaceBar .gwt-CheckBox input {
+   margin-top: 0 !important;
+}
+
 .findReplaceBar .gwt-CheckBox {
    margin-top: 1px;
    font-size: 9px;

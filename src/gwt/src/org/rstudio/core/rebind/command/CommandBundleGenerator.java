@@ -114,6 +114,7 @@ class CommandBundleGeneratorHelper
          factory.addImport("org.rstudio.core.client.command.AppCommand");
          factory.addImport("org.rstudio.core.client.command.MenuCallback");
          factory.addImport("org.rstudio.core.client.command.ShortcutManager");
+         factory.addImport("org.rstudio.core.client.resources.ImageResource2x");
          SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
          emitConstructor(writer, images);
@@ -332,8 +333,11 @@ class CommandBundleGeneratorHelper
       
       if (images.hasImage(name))
       {
-         writer.println(name + "_.setImageResource("
-                                             + images.getImageRef(name) + ");");
+        String resourceName = images.getImageRef(name);
+        if (images.hasImage(name + "2x"))
+          resourceName = "new ImageResource2x(" + images.getImageRef(name + "2x") + ")";
+
+        writer.println(name + "_.setImageResource(" + resourceName + ");");
       }
 
       writer.println("addCommand(\"" + Generator.escape(name) + "\", " + name + "_);");
@@ -420,11 +424,19 @@ class CommandBundleGeneratorHelper
       {
          String commandId = method.getName();
 
-         String key = packageName_.replace('.', '/') + "/" + commandId + ".png";
-         if (resourceNames.contains(key))
+         String key = packageName_.replace('.', '/') + "/" + commandId;
+
+         if (resourceNames.contains(key + ".png"))
          {
             writer.println("ImageResource " + commandId + "();");
             iri.addImage(commandId);
+         }
+
+         if (resourceNames.contains(key + "_2x.png"))
+         {
+            writer.println("@Source(\"" + commandId + "_2x.png\")");
+            writer.println("ImageResource " + commandId + "2x();");
+            iri.addImage(commandId + "2x");
          }
       }
       writer.println("public static final " + className + " INSTANCE = " +

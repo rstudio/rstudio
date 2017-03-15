@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -877,49 +878,49 @@ public class CompletionRequester
       private ImageResource getIcon()
       {
          if (RCompletionType.isFunctionType(type))
-            return ICONS.function();
+            return new ImageResource2x(ICONS.function2x());
          
          switch(type)
          {
          case RCompletionType.UNKNOWN:
-            return ICONS.variable();
+            return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.VECTOR:
-            return ICONS.variable();
+            return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARGUMENT:
-            return ICONS.variable();
+            return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:
-            return ICONS.dataFrame();
+            return new ImageResource2x(ICONS.dataFrame2x());
          case RCompletionType.LIST:
-            return ICONS.clazz();
+            return new ImageResource2x(ICONS.clazz2x());
          case RCompletionType.ENVIRONMENT:
-            return ICONS.environment();
+            return new ImageResource2x(ICONS.environment2x());
          case RCompletionType.S4_CLASS:
          case RCompletionType.S4_OBJECT:
          case RCompletionType.R5_CLASS:
          case RCompletionType.R5_OBJECT:
-            return ICONS.clazz();
+            return new ImageResource2x(ICONS.clazz2x());
          case RCompletionType.FILE:
             return getIconForFilename(name);
          case RCompletionType.DIRECTORY:
-            return ICONS.folder();
+            return new ImageResource2x(ICONS.folder2x());
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
-            return ICONS.keyword();
+            return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.HELP:
-            return ICONS.help();
+            return new ImageResource2x(ICONS.help2x());
          case RCompletionType.STRING:
-            return ICONS.variable();
+            return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.PACKAGE:
-            return ICONS.rPackage();
+            return new ImageResource2x(ICONS.rPackage2x());
          case RCompletionType.KEYWORD:
-            return ICONS.keyword();
+            return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.CONTEXT:
-            return ICONS.context();
+            return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
-            return ICONS.snippet();
+            return new ImageResource2x(ICONS.snippet2x());
          default:
-            return ICONS.variable();
+            return new ImageResource2x(ICONS.variable2x());
          }
       }
       

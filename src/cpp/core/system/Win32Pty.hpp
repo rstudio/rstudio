@@ -42,22 +42,19 @@ public:
 
    virtual ~WinPty();
 
-   void init(const std::string& exe,
-             const std::vector<std::string> args,
-             const ProcessOptions& options);
+   // Start the process specified by exe; it will do I/O via the returned
+   // handles. On success, caller is responsible for closing
+   // returned handles. On failure, handles will contain NULL.
+   Error start(const std::string& exe,
+               const std::vector<std::string> args,
+               const ProcessOptions& options,
+               HANDLE* pStdInWrite,
+               HANDLE* pStdOutRead,
+               HANDLE* pStdErrRead,
+               HANDLE* pProcess);
 
-   // Start the pty and return HANDLEs. On success, caller is responsible for
-   // closing returned HANDLEs; on failure, all returned HANDLEs will
-   // contain NULL.
-   Error startPty(HANDLE* pStdInWrite,
-                  HANDLE* pStdOutRead,
-                  HANDLE* pStdErrRead = NULL /*OPTIONAL*/);
+
    bool ptyRunning() const;
-
-   // Start the process specified by init(); it will do I/O via the handles
-   // returned by startPty. On success, caller is responsible for closing
-   // returned HANDLE. On failure, pProcess will contain NULL.
-   Error runProcess(HANDLE* pProcess = NULL /*OPTIONAL*/);
 
    // Change the size of the pseudoterminal
    Error setSize(int cols, int rows);
@@ -69,6 +66,8 @@ public:
    static Error readFromPty(HANDLE hPipe, std::string* pOutput);
 
 private:
+   Error startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead);
+   Error runProcess(HANDLE* pProcess);
    void stopPty();
 
 private:

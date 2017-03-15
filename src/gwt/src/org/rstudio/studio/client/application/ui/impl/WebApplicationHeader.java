@@ -37,6 +37,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -94,12 +95,12 @@ public class WebApplicationHeader extends Composite
       outerPanel_.getElement().getStyle().setPosition(Position.RELATIVE);
       
       // large logo
-      logoLarge_ = new Image(ThemeResources.INSTANCE.rstudio());
+      logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
       logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
       
       // small logo
-      logoSmall_ = new Image(ThemeResources.INSTANCE.rstudio_small());
+      logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
       logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
@@ -191,8 +192,8 @@ public class WebApplicationHeader extends Composite
                logoAnchor_.setHref(logoTargetUrl_);
                logoAnchor_.setTitle("RStudio Server Home");
 
-               logoLarge_.setResource(ThemeResources.INSTANCE.rstudio_home());
-               logoSmall_.setResource(ThemeResources.INSTANCE.rstudio_home_small());
+               logoLarge_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home2x()));
+               logoSmall_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home_small2x()));
             }
             else
             {
@@ -393,7 +394,7 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
         
-         ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),
+         ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
               new ClickHandler() {
             public void onClick(ClickEvent event)
             {
@@ -510,7 +511,8 @@ public class WebApplicationHeader extends Composite
    
    interface Resources extends ClientBundle
    {
-      ImageResource signOut();
+      @Source("signOut_2x.png")
+      ImageResource signOut2x();
    }
    
    private static final Resources RESOURCES =  
