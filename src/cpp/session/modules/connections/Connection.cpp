@@ -21,9 +21,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// max icon size is 5k; this prevents packages that haven't saved/scaled
+// max icon size is 20k; this prevents packages that haven't saved/scaled
 // their icons properly from causing performance trouble downstream
-#define kMaxIconSize 5 * 1048
+#define kMaxIconSize 20 * 1048
 
 using namespace rstudio::core;
 

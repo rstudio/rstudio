@@ -24,10 +24,10 @@ public class ConnectionPathEntry extends JavaScriptObject
    }
 
    public final native static ConnectionPathEntry create(
-         String type, String name) /*-{
+         String name, String type) /*-{
       return {
-         "type": type,
-         "name": name
+         "name": name,
+         "type": type
       }
    }-*/;
    

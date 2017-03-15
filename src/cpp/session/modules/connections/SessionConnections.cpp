@@ -56,12 +56,12 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
    // read params -- note that these attributes are already guaranteed to
    // exist as we validate the S3 object on the R side
-   std::string type, host, connectCode, displayName, icon;
+   std::string type, host, connectCode, displayName, connectIcon;
    r::sexp::getNamedListElement(connectionSEXP, "type", &type);
    r::sexp::getNamedListElement(connectionSEXP, "host", &host);
    r::sexp::getNamedListElement(connectionSEXP, "connectCode", &connectCode);
    r::sexp::getNamedListElement(connectionSEXP, "displayName", &displayName);
-   r::sexp::getNamedListElement(connectionSEXP, "icon", &icon);
+   r::sexp::getNamedListElement(connectionSEXP, "icon", &connectIcon);
 
    // extract actions -- marshal R list (presuming we have one, as some
    // connections won't) into internal representation
@@ -154,7 +154,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    }
    // create connection object
    Connection connection(ConnectionId(type, host), connectCode, displayName,
-                         icon, actions, objectTypes,
+                         connectIcon, actions, objectTypes,
                          date_time::millisecondsSinceEpoch());
 
    // update connection history
@@ -192,7 +192,7 @@ void addObjectSpecifiers(const json::Array& specifiers,
       }
 
       // add as a named argument to the function
-      pFunction->addParam(name, type);
+      pFunction->addParam(type, name);
    }
 }
 

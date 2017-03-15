@@ -428,7 +428,7 @@ public class ConnectionsPresenter extends BasePresenter
       if (prompt)
       {
          StringBuilder builder = new StringBuilder();
-         builder.append("Are you sure you want to disconnect from Spark?");
+         builder.append("Are you sure you want to disconnect?");
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
                "Disconnect",
