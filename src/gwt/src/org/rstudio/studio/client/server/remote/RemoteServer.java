@@ -4951,7 +4951,7 @@ public class RemoteServer implements Server
    public void connectionDisconnect(ConnectionId connectionId, 
                                     ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connectionId, callback);
+      sendRequest(RPC_SCOPE, CONNECTION_DISCONNECT, connectionId, callback);
    }
    
    @Override
@@ -5437,7 +5437,7 @@ public class RemoteServer implements Server
    private static final String PROFILE_SOURCES = "profile_sources";
    
    private static final String REMOVE_CONNECTION = "remove_connection";
-   private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
+   private static final String CONNECTION_DISCONNECT = "connection_disconnect";
    private static final String CONNECTION_EXECUTE_ACTION = "connection_execute_action";
    private static final String CONNECTION_LIST_OBJECTS = "connection_list_objects";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";

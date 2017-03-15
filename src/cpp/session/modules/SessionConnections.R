@@ -43,19 +43,28 @@ assign(".rs.activeConnections",
        value = new.env(parent = emptyenv()), 
        envir = .rs.toolsEnv())
 
-# given a connection type and host, find a matching active connection, or NULL
-# if no connection was found
-.rs.addFunction("findActiveConnection", function(type, host) {
+# given a connection type and host, find a matching active connection name, or
+# NULL if no connection was found
+.rs.addFunction("findConnectionName", function(type, host) {
    connections <- ls(.rs.activeConnections)
    for (name in connections) {
       connection <- get(name, envir = .rs.activeConnections)
       if (identical(connection$type, type) && 
           identical(connection$host, host)) {
-         return(connection)
+         return(name)
       }
    }
    # indicates no connection was found
    NULL
+})
+
+# given a connection type and host, find an active connection object, or NULL if
+# no connection was found
+.rs.addFunction("findActiveConnection", function(type, host) {
+   name <- .rs.findConnectionName(type, host)
+   if (is.null(name))
+      return(NULL)
+   return(get(name, envir = .rs.activeConnections))
 })
 
 options(connectionObserver = list(
@@ -129,6 +138,12 @@ options(connectionObserver = list(
    },
    connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
+
+      # clean up reference in environment
+      name <- .rs.findConnectionName(type, host)
+      if (!is.null(name))
+         rm(list = name, envir = .rs.activeConnections)
+
       invisible(.Call("rs_connectionClosed", type, host))
    },
    connectionUpdated = function(type, host, hint, ...) {
