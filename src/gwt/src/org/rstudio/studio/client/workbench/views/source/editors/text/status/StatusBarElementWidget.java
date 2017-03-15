@@ -32,12 +32,15 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
+
 public class StatusBarElementWidget extends FlowPanel
       implements StatusBarElement, HasSelectionHandlers<String>
 {
    interface Resources extends ClientBundle
    {
-      ImageResource upDownArrow();
+      @Source("upDownArrow_2x.png")
+      ImageResource upDownArrow2x();
    }
 
    public StatusBarElementWidget()
@@ -111,7 +114,7 @@ public class StatusBarElementWidget extends FlowPanel
          if (showArrows)
          {
             Resources res = GWT.create(Resources.class);
-            arrows_ = new Image(res.upDownArrow());
+            arrows_ = new Image(new ImageResource2x(res.upDownArrow2x()));
             add(arrows_);
          }
          else
