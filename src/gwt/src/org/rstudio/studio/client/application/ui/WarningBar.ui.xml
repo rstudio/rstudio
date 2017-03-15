@@ -16,7 +16,7 @@
          </td>
          <td class="{res.styles.center}" align="right">
             <g:Image ui:field="dismiss_"
-                     resource="{themeRes.closeTab}"
+                     resource="{themeRes.closeTab2x}"
                      styleName="{res.styles.dismiss}"
                      title="Dismiss"/>
          </td>

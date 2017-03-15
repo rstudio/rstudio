@@ -36,7 +36,7 @@
       </g:center>
       <g:east size="13">
           <g:Image ui:field="dismiss_"
-                   resource="{themeRes.closeTab}"
+                   resource="{themeRes.closeTab2x}"
                    styleName="{style.dismiss}"
                    title="Dismiss"/>
       </g:east>

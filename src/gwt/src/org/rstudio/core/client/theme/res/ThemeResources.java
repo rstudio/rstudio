@@ -126,8 +126,9 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource menuBevel();
 
-   @Source("closeTabSelected.png")
-   ImageResource closeTab();
+   @Source("closeTabSelected_2x.png")
+   ImageResource closeTab2x();
+
    @Source("busyTab.gif")
    ImageResource busyTab();
 
@@ -186,11 +187,11 @@ public interface ThemeResources extends ClientBundle
    @Source("viewFunctionCode_2x.png")
    ImageResource viewFunctionCode2x();
 
-   @Source("inlineEditIcon.png")
-   DataResource inlineEditIcon();
+   @Source("inlineEditIcon_2x.png")
+   DataResource inlineEditIcon2x();
 
-   @Source("inlineDeleteIcon.png")
-   DataResource inlineDeleteIcon();
+   @Source("inlineDeleteIcon_2x.png")
+   DataResource inlineDeleteIcon2x();
 
    @Source("paneLayoutIcon_2x.png")
    ImageResource paneLayoutIcon2x();
