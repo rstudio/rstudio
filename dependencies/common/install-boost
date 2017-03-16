@@ -90,7 +90,7 @@ then
      then
         CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable -stdlib=libstdc++\" linkflags=\"-stdlib=libstdc++\""
      else
-        CXX_STDLIB_FLAGS="-Wno-unused-variable"
+        CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable\""
      fi
 
      sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
