@@ -69,8 +69,10 @@ if [ "$1" != "--exclude-qt-sdk" ]
 then
    # ubuntu server doesn't include gstreamer by default so ensure that these
    # libs are always available for desktop builds (required by QtWebKit 2.2)
-   sudo apt-get -y install libgstreamer0.10-0
-   sudo apt-get -y install libgstreamer-plugins-base0.10-0
+   #sudo apt-get -y install libgstreamer0.10-0
+   #sudo apt-get -y install libgstreamer-plugins-base0.10-0
+   sudo apt-get -y install libgstreamer1.0-0
+   sudo apt-get -y install libgstreamer-plugins-base1.0-0
 
    # Ubuntu 12.04 doesn't include libjpeg62 (and it's required by Qt 4.8)
    sudo apt-get -y install libjpeg62
