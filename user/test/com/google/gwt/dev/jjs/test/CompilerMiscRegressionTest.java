@@ -30,11 +30,13 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javaemul.internal.annotations.DoNotInline;
+import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -368,5 +370,35 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
   public void testNativeJsMethodDispatch_unreferencedSupertypeMethod() {
     final AbstractNativeType o = createAbstractNativeType("Hello");
     assertEquals("Hello", o.getTextContent());
+  }
+
+  @JsMethod
+  private static List<String> singletonFrom(int i, String... arguments) {
+    // Make the second parameter varargs and pass it as a whole to trigger the arguments copying
+    // preamble.
+    return Arrays.asList(arguments).subList(i,i + 1);
+  }
+
+  @JsMethod
+  private static List<String> argumentsParameterClasher(int arguments, String... others) {
+    // Make the second parameter varargs and pass it as a whole to trigger the arguments copying
+    // preamble.
+    return Arrays.asList(others).subList(0, arguments);
+  }
+
+  @JsMethod
+  private static List<String> argumentsVariableClasher(int i, String... others) {
+    // Make the second parameter varargs and pass it as a whole to trigger the arguments copying
+    // preamble.
+    {
+      int arguments = 3;
+    }
+    return Arrays.asList(others).subList(0, i);
+  }
+
+ public void testVarargsNamedArguments() {
+    assertEquals("GoodBye", singletonFrom(1, "Hello", "GoodBye").get(0));
+    assertEquals("Hello", argumentsParameterClasher(1, "Hello", "GoodBye").get(0));
+    assertEquals("Hello", argumentsVariableClasher(1, "Hello", "GoodBye").get(0));
   }
 }

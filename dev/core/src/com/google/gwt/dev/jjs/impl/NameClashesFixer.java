@@ -18,11 +18,16 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -222,8 +227,42 @@ public class NameClashesFixer {
   }
 
   public static void exec(JProgram program) {
+    // Rename variables that should not be shadowed.
+    new JModVisitor() {
+      @Override
+      public boolean visit(JMethod method, Context ctx) {
+        return !method.isJsniMethod() && method.isJsMethodVarargs();
+      }
+
+      @Override
+      public void endVisit(JLocal variable, Context ctx) {
+        maybeRename(variable);
+      }
+
+      @Override
+      public void endVisit(JParameter parameter, Context ctx) {
+        maybeRename(parameter);
+      }
+    }.accept(program);
+
+    // Resolve clashes.
     new FixNameClashesVisitor().accept(program);
   }
+
+  private static Set<String> unshadowableNames = ImmutableSet.of("arguments");
+
+  private static void maybeRename(JVariable variable) {
+    // In normal scenarios local variables from our Java programs will shadow existing JavaScript
+    // variables. The only exception is the implicit "arguments" variable which should not be
+    // shadowed.
+    // There is no need to care about collisions here as the JVariable object is what defines a
+    // variable, not its name; FixNameClashesVisitor, run immediately after, will ensure that names
+    // do not clash.
+    if (unshadowableNames.contains(variable.getName())) {
+      variable.setName("_" + variable.getName());
+    }
+  }
+
   private NameClashesFixer() {
   }
 }
