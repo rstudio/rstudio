@@ -100,7 +100,7 @@ then
 
    # rename libraries in the boost install dir
    cd $BOOST_DIR/lib
-   for file in *; do
+   for file in librstudio*; do
       sudo mv $file ${file/rstudio_/}
    done
 
