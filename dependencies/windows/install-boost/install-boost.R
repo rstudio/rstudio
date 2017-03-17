@@ -6,9 +6,9 @@ PATH$prepend("../tools")
 
 boost_url <- "https://sourceforge.net/projects/boost/files/boost/1.63.0/boost_1_63_0.7z"
 output_file <- "boost-1.63-win-rtools33-gcc493.zip"
-toolchain_bin   <- normalizePath("C:/Rtools/bin", mustWork = TRUE)
-toolchain_32bit <- normalizePath("C:/Rtools/mingw_32/bin", mustWork = TRUE)
-toolchain_64bit <- normalizePath("C:/Rtools/mingw_64/bin", mustWork = TRUE)
+toolchain_bin   <- normalizePath("../Rtools33/bin", mustWork = TRUE)
+toolchain_32bit <- normalizePath("../Rtools33/mingw_32/bin", mustWork = TRUE)
+toolchain_64bit <- normalizePath("../Rtools33/mingw_64/bin", mustWork = TRUE)
 
 # validate paths
 if (!file.exists(toolchain_32bit))
@@ -139,4 +139,12 @@ zip(output_file, files = c("boost32", "boost64"), extras = "-q")
 if (file.exists(output_file))
    progress("Archive created at '%s'.", output_file)
 file.rename(output_file, file.path("..", output_file))
+
+# Copy directory to 'windows' folder
+setwd("../..")
+output_dir <- tools::file_path_sans_ext(output_file)
+dir.create(output_dir)
+paths <- file.path("install-boost", boost_dirname, sprintf("boost%s", c("32", "64")))
+file.copy(paths, output_dir, recursive = TRUE)
+
 Sys.sleep(5)
