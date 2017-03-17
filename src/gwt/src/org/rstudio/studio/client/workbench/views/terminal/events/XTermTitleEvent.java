@@ -62,7 +62,7 @@ public class XTermTitleEvent extends GwtEvent<Handler>
    {
       handler.onXTermTitle(this);
    }
-  
+ 
    public String getTitle()
    {
       return title_;

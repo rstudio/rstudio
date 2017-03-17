@@ -41,7 +41,6 @@ public class ResizeTerminalEvent extends GwtEvent<Handler>
    
    /**
     * Create a new terminal resize event 
-    * @param uniqueId terminal instance identifier
     * @param cols new number of columns
     * @param rows new number of rows
     */
@@ -62,7 +61,8 @@ public class ResizeTerminalEvent extends GwtEvent<Handler>
    {
       handler.onResizeTerminal(this);
    } 
-   
+
+
    /**
     * @return number of rows in resized terminal
     */

@@ -134,7 +134,7 @@ public class TerminalSession extends XTermWidget
                disconnect();
                return;
             } 
-            
+
             addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
             addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
@@ -602,7 +602,7 @@ public class TerminalSession extends XTermWidget
    {
       newTerminal_ = isNew;
    }
-   
+
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private HandlerRegistration terminalInputHandler_;
    private ConsoleProcess consoleProcess_;
