@@ -37,8 +37,9 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
       HandlerRegistration addTerminalDataInputHandler(Handler handler);
    }
    
-   public TerminalDataInputEvent(String data)
+   public TerminalDataInputEvent(String uniqueId, String data)
    {
+      uniqueId_ = uniqueId;
       data_ = data;
    }
 
@@ -54,12 +55,18 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
       handler.onTerminalDataInput(this);
    }
    
+   public String getUniqueId()
+   {
+      return uniqueId_;
+   }
+   
    public String getData()
    {
       return data_;
    }
   
-   private String data_;
+   private final String uniqueId_;
+   private final String data_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

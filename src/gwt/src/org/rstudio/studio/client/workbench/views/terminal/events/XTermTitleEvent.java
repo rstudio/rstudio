@@ -46,8 +46,9 @@ public class XTermTitleEvent extends GwtEvent<Handler>
       HandlerRegistration addXTermTitleHandler(Handler handler);
    }
    
-   public XTermTitleEvent(String title)
+   public XTermTitleEvent(String uniqueId, String title)
    {
+      uniqueId_ = uniqueId;
       title_ = title;
    }
 
@@ -63,12 +64,18 @@ public class XTermTitleEvent extends GwtEvent<Handler>
       handler.onXTermTitle(this);
    }
    
+   public String getUniqueId()
+   {
+      return uniqueId_;
+   }
+   
    public String getTitle()
    {
       return title_;
    }
   
-   private String title_;
+   private final String uniqueId_; 
+   private final String title_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -134,6 +134,8 @@ public class TerminalSession extends XTermWidget
                disconnect();
                return;
             } 
+            
+            setUniqueId(consoleProcess_.getProcessInfo().getHandle());
 
             addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
             addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
@@ -209,6 +211,9 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onResizeTerminal(ResizeTerminalEvent event)
    {
+      if (!eventForThisTerminal(event.getUniqueId()))
+         return;
+      
       cols_ = event.getCols();
       rows_ = event.getRows();
       consoleProcess_.resizeTerminal(
@@ -226,6 +231,9 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
+      if (!eventForThisTerminal(event.getUniqueId()))
+         return;
+      
       if (event.getData() != null)
       {
          inputQueue_.append(event.getData());
@@ -317,6 +325,9 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onXTermTitle(XTermTitleEvent event)
    {
+      if (!eventForThisTerminal(event.getUniqueId()))
+         return;
+      
       setTitle(event.getTitle());
       eventBus_.fireEvent(new TerminalTitleEvent(this));
    }
@@ -601,6 +612,19 @@ public class TerminalSession extends XTermWidget
    private void setNewTerminal(boolean isNew)
    {
       newTerminal_ = isNew;
+   }
+   
+   /**
+    * Check if an event's uniqueId matches our handle, being careful of nulls.
+    * @param uniqueId a uniqueId from an event fired by XTermWidget.
+    * @return true if an exact match for our handle
+    */
+   private boolean eventForThisTerminal(String uniqueId)
+   {
+      if (StringUtil.isNullOrEmpty(uniqueId) || StringUtil.isNullOrEmpty(getHandle()))
+         return false;
+         
+      return uniqueId.equals(getHandle());
    }
 
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
