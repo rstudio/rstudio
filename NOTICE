@@ -33,6 +33,7 @@ used by these components are included below):
 - xterm.js
 - winpty
 - websocketpp
+- gwt-websockets
 
 RStudio also includes a binary copy of libclang. This component is
 licensed to you under the University of Illinois/NCSA Open Source
