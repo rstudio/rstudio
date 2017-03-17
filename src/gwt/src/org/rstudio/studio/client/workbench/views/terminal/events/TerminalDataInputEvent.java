@@ -59,7 +59,7 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
       return data_;
    }
   
-   private String data_;
+   private final String data_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
