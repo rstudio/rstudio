@@ -49,18 +49,3 @@ void safeLaunchThread(boost::function<void()> threadMain,
 } // namespace core
 } // namespace thread
 } // namespace rstudio
-
-
-// dummy function to satisfy boost linking requirement (fixed in 1.45)
-// see: https://svn.boost.org/trac/boost/ticket/4258
-#if defined(__GNUC__) && defined(_WIN64)
-
-namespace boost {
-
-void tss_cleanup_implemented()
-{
-}
-
-} // namespace boost
-
-#endif
