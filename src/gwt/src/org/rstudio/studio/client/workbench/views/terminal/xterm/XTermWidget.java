@@ -48,7 +48,9 @@ import com.google.gwt.user.client.ui.Widget;
  * Xterm-compatible terminal emulator widget. This widget does no network
  * communication.
  * 
- * To receive input (user typing), subscribe to TerminalDataInputEvent.
+ * To receive input (user typing), subscribe to TerminalDataInputEvent, or
+ * use addDataEventHandler, which stops TerminalDataInputEvent from being 
+ * fired and makes a direct callback.
  * 
  * To send output to the terminal, use write() or writeln().
  * 

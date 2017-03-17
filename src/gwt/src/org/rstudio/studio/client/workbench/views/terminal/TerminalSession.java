@@ -24,7 +24,6 @@ import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -36,7 +35,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
@@ -52,10 +50,9 @@ import com.google.inject.Inject;
  * A connected Terminal session.
  */
 public class TerminalSession extends XTermWidget
-                             implements ConsoleOutputEvent.Handler, 
+                             implements TerminalSessionSocket.Session,
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
-                                        TerminalDataInputEvent.Handler,
                                         XTermTitleEvent.Handler,
                                         SessionSerializationHandler
 {
@@ -85,6 +82,7 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = hasChildProcs;
       shellType_ = shellType;
       setTitle(title);
+      socket_ = new TerminalSessionSocket(this, this);
 
       if (StringUtil.isNullOrEmpty(caption))
          caption_ = "Terminal " + sequence_;
@@ -103,7 +101,13 @@ public class TerminalSession extends XTermWidget
    } 
 
    /**
-    * Create a terminal process and connect to it.
+    * Create a terminal process and connect to it. Multiple async stages:
+    * 
+    * (1) get a ConsoleProcess from the server; this tracks the terminal
+    *     session and process on the server
+    * (2) get a TerminalSessionSocket which supplies input/output channel
+    *     to the remote terminal (RPC or WebSocket)
+    * (3) start (or reconnect to) the server-side process for the terminal
     */
    public void connect()
    {
@@ -135,33 +139,43 @@ public class TerminalSession extends XTermWidget
                return;
             } 
 
-            addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
             addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
-
-            // We keep this handler connected after a terminal disconnect so
-            // user input can wake up a suspended session
-            if (terminalInputHandler_ == null)
-               terminalInputHandler_ = addTerminalDataInputHandler(TerminalSession.this);
-
-            consoleProcess.start(new ServerRequestCallback<Void>()
+            
+            socket_.connect(consoleProcess_, new ServerRequestCallback<Boolean>()
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(Boolean isWebSocket)
                {
-                  connected_ = true;
-                  connecting_ = false;
-                  sendUserInput();
-                  eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
+                  consoleProcess_.start(new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        connected_ = true;
+                        connecting_ = false;
+                        sendUserInput();
+                        eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        disconnect();
+                        writeError(error.getUserMessage());
+                     }
+                  });
+
                }
 
                @Override
                public void onError(ServerError error)
                {
-                  disconnect();
                   writeError(error.getUserMessage());
+                  disconnect();
+                  return;
                }
             });
          }
@@ -182,16 +196,11 @@ public class TerminalSession extends XTermWidget
    private void disconnect()
    {
       inputQueue_.setLength(0);
+      socket_.disconnect();
       registrations_.removeHandler();
       consoleProcess_ = null;
       connected_ = false;
       connecting_ = false;
-   }
-
-   @Override
-   public void onConsoleOutput(ConsoleOutputEvent event)
-   {
-      write(event.getOutput());
    }
 
    @Override
@@ -218,17 +227,23 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onError(ServerError error)
                {
-                  writeln(error.getUserMessage());
+                  writeError(error.getUserMessage());
                }
             });
    }
 
    @Override
-   public void onTerminalDataInput(TerminalDataInputEvent event)
+   public void receivedOutput(String output)
    {
-      if (event.getData() != null)
+      socket_.dispatchOutput(output);
+   }
+
+   @Override
+   public void receivedInput(String input)
+   {
+      if (input != null)
       {
-         inputQueue_.append(event.getData());
+         inputQueue_.append(input);
       }
 
       if (!connected_)
@@ -295,9 +310,8 @@ public class TerminalSession extends XTermWidget
             inputSequence_++;
          }
       }
-
-      consoleProcess_.writeStandardInput(
-            ShellInput.create(inputSequence_, userInput,  true /* echo input*/), 
+      
+      socket_.dispatchInput(inputSequence_, userInput,
             new VoidServerRequestCallback() {
 
                @Override
@@ -309,7 +323,7 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onError(ServerError error)
                {
-                  writeln(error.getUserMessage());
+                  writeError(error.getUserMessage());
                }
             });
    }
@@ -383,16 +397,13 @@ public class TerminalSession extends XTermWidget
    protected void unregisterHandlers()
    {
       registrations_.removeHandler();
-      if (terminalInputHandler_ != null)
-      {
-         terminalInputHandler_.removeHandler();
-         terminalInputHandler_ = null;
-      }
+      socket_.unregisterHandlers();
    }
 
    protected void writeError(String msg)
    {
-      write(AnsiCode.ForeColor.RED + "Error: " + msg + AnsiCode.DEFAULTCOLORS);
+      socket_.dispatchOutput(AnsiCode.ForeColor.RED + "Error: " + 
+            msg + AnsiCode.DEFAULTCOLORS);
    }
 
    @Override
@@ -604,7 +615,7 @@ public class TerminalSession extends XTermWidget
    }
 
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private HandlerRegistration terminalInputHandler_;
+   private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
    private String caption_;
    private String title_;
