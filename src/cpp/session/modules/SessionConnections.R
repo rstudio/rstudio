@@ -107,7 +107,7 @@ options(connectionObserver = list(
       objectTree <- listObjectTypes()
       objectTypes <- lapply(names(objectTree), function(name) {
          promote(name, objectTree[[name]])
-      })
+      })[[1]]
       
       # manufacture and validate object representing this connection
       connection <- list(

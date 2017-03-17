@@ -153,6 +153,7 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
+import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
@@ -4969,7 +4970,7 @@ public class RemoteServer implements Server
    public void connectionListObjects(
                               ConnectionId connectionId,
                               ConnectionObjectSpecifier container,
-                              ServerRequestCallback<JsArrayString> callback)
+                              ServerRequestCallback<JsArray<DatabaseObject>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connectionId));

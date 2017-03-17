@@ -21,7 +21,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public interface ConnectionsServerOperations extends CryptoServerOperations
 {
@@ -36,7 +35,7 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    
    void connectionListObjects(ConnectionId connectionId,
                               ConnectionObjectSpecifier object,
-                              ServerRequestCallback<JsArrayString> callback);
+                              ServerRequestCallback<JsArray<DatabaseObject>> callback);
    
    void connectionListFields(ConnectionId connectionId,
                              ConnectionObjectSpecifier object,

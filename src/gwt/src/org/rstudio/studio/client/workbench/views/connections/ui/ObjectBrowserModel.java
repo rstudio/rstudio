@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ViewConnecti
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -129,7 +130,7 @@ public class ObjectBrowserModel implements TreeViewModel
    {
       public void clear()
       {
-         prefetchedTableList_ = null;
+         prefetchedObjectList_ = null;
          fieldProviders_.clear();
          clearData();
       }
@@ -139,13 +140,13 @@ public class ObjectBrowserModel implements TreeViewModel
          if (connection_ == null)
             return;
         
-         // prefetch the tables so there is no gap between clearing the
+         // prefetch the objects so there is no gap between clearing the
          // table and redrawing the nodes
-         listTables(new CommandWithArg<JsArrayString>() {
+         listObjects(new CommandWithArg<JsArray<DatabaseObject>>() {
             @Override
-            public void execute(JsArrayString tables)
+            public void execute(JsArray<DatabaseObject> objects)
             {
-               prefetchedTableList_ = tables;
+               prefetchedObjectList_ = objects;
                fieldProviders_.clear();
                for (HasData<String> display : getDataDisplays())
                {
@@ -163,19 +164,19 @@ public class ObjectBrowserModel implements TreeViewModel
         {
            clearData();
         }
-        else if (prefetchedTableList_ != null)
+        else if (prefetchedObjectList_ != null)
         {
-           JsArrayString tables = prefetchedTableList_;
-           prefetchedTableList_ = null;
+           JsArray<DatabaseObject> tables = prefetchedObjectList_;
+           prefetchedObjectList_ = null;
            updateData(tables);
         }
         else
         {
-           listTables(new CommandWithArg<JsArrayString>() {
+           listObjects(new CommandWithArg<JsArray<DatabaseObject>>() {
                @Override
-               public void execute(JsArrayString tables)
+               public void execute(JsArray<DatabaseObject> objects)
                {
-                  updateData(tables);
+                  updateData(objects);
                }
            });
         }
@@ -188,26 +189,26 @@ public class ObjectBrowserModel implements TreeViewModel
          fireUpdateCompleted();
       }
       
-      private void updateData(JsArrayString tables)
+      private void updateData(JsArray<DatabaseObject> objects)
       {
-         updateRowCount(tables.length(), true);
+         updateRowCount(objects.length(), true);
          ArrayList<String> data = new ArrayList<String>();
-         for (int i=0; i<tables.length(); i++)
-            data.add(tables.get(i));
+         for (int i=0; i<objects.length(); i++)
+            data.add(objects.get(i).getName());
          updateRowData(0, data);
          fireUpdateCompleted();
       }
       
-      private void listTables(final CommandWithArg<JsArrayString> onCompleted)
+      private void listObjects(final CommandWithArg<JsArray<DatabaseObject>> onCompleted)
       {
          server_.connectionListObjects(
             connection_.getId(), 
             new ConnectionObjectSpecifier(),
-            new SimpleRequestCallback<JsArrayString>() {
+            new SimpleRequestCallback<JsArray<DatabaseObject>>() {
                @Override
-               public void onResponseReceived(JsArrayString tables)
+               public void onResponseReceived(JsArray<DatabaseObject> objects)
                {
-                  onCompleted.execute(tables);
+                  onCompleted.execute(objects);
                }    
                
                @Override
@@ -372,7 +373,7 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private Connection connection_;
    
-   private JsArrayString prefetchedTableList_ = null;
+   private JsArray<DatabaseObject> prefetchedObjectList_ = null;
    
    private Set<String> expandedNodeRefreshQueue_ = null;
    private Command onTableUpdateCompleted_ = null;

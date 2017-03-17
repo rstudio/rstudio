@@ -107,7 +107,7 @@ json::Object connectionJson(const Connection& connection)
    json::Array objectTypes;
    BOOST_FOREACH(const ConnectionObjectType& type, connection.objectTypes)
    {
-      actions.push_back(connectionObjectTypeJson(type));
+      objectTypes.push_back(connectionObjectTypeJson(type));
    }
 
    json::Object connectionJson;
@@ -116,6 +116,7 @@ json::Object connectionJson(const Connection& connection)
    connectionJson["display_name"] = connection.displayName;
    connectionJson["last_used"]    = connection.lastUsed;
    connectionJson["actions"]      = actions;
+   connectionJson["object_types"] = objectTypes;
    connectionJson["icon_path"]    = connection.icon;
    connectionJson["icon_data"]    = base64IconData(connection.icon);
 

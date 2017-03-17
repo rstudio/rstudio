@@ -74,7 +74,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    if (!r::sexp::isNull(actionList))
    {
       std::vector<std::string> actionNames;
-      error = r::sexp::getNames(actionList, &actionNames);
+      r::sexp::getNames(actionList, &actionNames);
       if (error)
          LOG_ERROR(error);
       else
@@ -111,45 +111,28 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    if (error)
       LOG_ERROR(error);
    std::vector<ConnectionObjectType> objectTypes;
-   if (!r::sexp::isNull(actionList))
+   if (!r::sexp::isNull(objectTypeList))
    {
-      std::vector<std::string> objectTypeNames;
-      error = r::sexp::getNames(actionList, &objectTypeNames);
-      if (error)
-         LOG_ERROR(error);
-      else
+      int n = r::sexp::length(objectTypeList);
+      for (int i = 0; i < n; i++)
       {
-         BOOST_FOREACH(const std::string& objectTypeName, objectTypeNames)
+         std::string name;
+         std::string icon;
+         std::string contains;
+         SEXP objectType = VECTOR_ELT(objectTypeList, i);
+
+         error = r::sexp::getNamedListElement(objectType, "name", &name);
+         if (error)
          {
-            std::string icon;
-            std::string contains;
-            SEXP objectType;
-
-            error = r::sexp::getNamedListSEXP(objectTypeList, 
-                  objectTypeName, &objectType);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            error = r::sexp::getNamedListElement(objectType, "contains",
-                  &contains);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            error = r::sexp::getNamedListElement(objectType, "icon", &icon);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-            objectTypes.push_back(ConnectionObjectType(objectTypeName, contains, 
-                     icon));
+            LOG_ERROR(error);
+            continue;
          }
+
+         // these fields are optional
+         r::sexp::getNamedListElement(objectType, "contains", &contains);
+         r::sexp::getNamedListElement(objectType, "icon", &icon);
+
+         objectTypes.push_back(ConnectionObjectType(name, contains, icon));
       }
    }
    // create connection object
@@ -378,21 +361,31 @@ void connectionListObjects(const json::JsonRpcRequest& request,
    // response
    json::JsonRpcResponse response;
 
-   // get the list of tables
-   std::vector<std::string> tables;
+   // get the list of objects
+   SEXP objects;
+   r::sexp::Protect protect;
    r::exec::RFunction listObjects(".rs.connectionListObjects",
                                  connectionId.type,
                                  connectionId.host);
    addObjectSpecifiers(objectSpecifier, &listObjects);
-   error = listObjects.call(&tables);
+   error = listObjects.call(&objects, &protect);
    if (error)
    {
       continuation(error, &response);
    }
    else
    {
-      response.setResult(json::toJsonArray((tables)));
-      continuation(Success(), &response);
+      json::Value result;
+      error = r::json::jsonValueFromObject(objects, &result);
+      if (error)
+      {
+         continuation(error, &response);
+      }
+      else
+      {
+         response.setResult(result);
+         continuation(Success(), &response);
+      }
    }
 }
 
