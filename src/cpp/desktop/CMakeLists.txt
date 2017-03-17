@@ -252,7 +252,7 @@ if(WIN32)
       set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
       add_custom_command(
          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         COMMAND windres.exe
+         COMMAND "${WINDRES}"
             -I "."
             -i "rstudio.rc"
             -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
