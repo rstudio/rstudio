@@ -1112,7 +1112,7 @@ std::vector<FilePath> getLibPaths()
    if (error)
       LOG_ERROR(error);
 
-   std::vector<FilePath> libPaths(libPathsString.size());
+   std::vector<FilePath> libPaths;
    BOOST_FOREACH(const std::string& path, libPathsString)
    {
       libPaths.push_back(module_context::resolveAliasedPath(path));
