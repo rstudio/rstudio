@@ -221,6 +221,9 @@ endif()
 # core library
 add_subdirectory(core)
 
+# external libraries
+add_subdirectory(ext)
+
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
 if(RSTUDIO_CONFIG_CORE_DEV)
