@@ -59,7 +59,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       disconnectedUI_.add(label);
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       
-      // table browser panel
+      // object browser panel
       objectBrowser_ = new ObjectBrowser();
       
       // container panel to enable switching between connected/disconnected

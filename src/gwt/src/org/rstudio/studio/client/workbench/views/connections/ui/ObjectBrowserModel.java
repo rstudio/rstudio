@@ -1,7 +1,7 @@
 /*
- * TableBrowserModel.java
+ * ObjectBrowserModel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,9 +46,9 @@ import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.inject.Inject;
 
-public class TableBrowserModel implements TreeViewModel
+public class ObjectBrowserModel implements TreeViewModel
 {
-   public TableBrowserModel()
+   public ObjectBrowserModel()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -86,7 +86,7 @@ public class TableBrowserModel implements TreeViewModel
       // return the list of tables for the root node
       if (value == null)
       {
-         tableProvider_ = new TableProvider();
+         tableProvider_ = new ObjectProvider();
          fieldProviders_.clear();
          return new DefaultNodeInfo<String>(tableProvider_, 
                                     new TableCell(),
@@ -125,7 +125,7 @@ public class TableBrowserModel implements TreeViewModel
          fieldProviders_.get(table).refresh();
    }
 
-   private class TableProvider extends AsyncDataProvider<String>
+   private class ObjectProvider extends AsyncDataProvider<String>
    {
       public void clear()
       {
@@ -136,24 +136,24 @@ public class TableBrowserModel implements TreeViewModel
       
       public void refresh()
       {  
-         if (connection_ != null)
-         {
-            // prefetch the tables so there is no gap between clearing the
-            // table and redrawing the nodes
-            listTables(new CommandWithArg<JsArrayString>() {
-               @Override
-               public void execute(JsArrayString tables)
+         if (connection_ == null)
+            return;
+        
+         // prefetch the tables so there is no gap between clearing the
+         // table and redrawing the nodes
+         listTables(new CommandWithArg<JsArrayString>() {
+            @Override
+            public void execute(JsArrayString tables)
+            {
+               prefetchedTableList_ = tables;
+               fieldProviders_.clear();
+               for (HasData<String> display : getDataDisplays())
                {
-                  prefetchedTableList_ = tables;
-                  fieldProviders_.clear();
-                  for (HasData<String> display : getDataDisplays())
-                  {
-                    display.setVisibleRangeAndClearData(display.getVisibleRange(), 
-                                                        true);
-                  }
+                 display.setVisibleRangeAndClearData(display.getVisibleRange(), 
+                                                     true);
                }
-            });
-         }
+            }
+         });
       }
       
       @Override
@@ -366,7 +366,7 @@ public class TableBrowserModel implements TreeViewModel
       }
    }
    
-   private TableProvider tableProvider_;
+   private ObjectProvider tableProvider_;
    private HashMap<String,FieldProvider> fieldProviders_ 
                               = new HashMap<String,FieldProvider>();
    

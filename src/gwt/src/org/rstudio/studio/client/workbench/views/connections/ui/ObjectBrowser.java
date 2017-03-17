@@ -40,7 +40,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    public ObjectBrowser()
    {  
       // create tables model and widget
-      tablesModel_ = new TableBrowserModel();
+      tablesModel_ = new ObjectBrowserModel();
       
       tables_ = new CellTree(tablesModel_, null, RES, MESSAGES);
       tables_.setDefaultNodeSize(Integer.MAX_VALUE);
@@ -175,6 +175,6 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    private final ScrollPanel scrollPanel_;
    private final CellTree tables_;
-   private final TableBrowserModel tablesModel_;
+   private final ObjectBrowserModel tablesModel_;
   
 }
