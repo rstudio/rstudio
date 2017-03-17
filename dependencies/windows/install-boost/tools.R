@@ -1,5 +1,3 @@
-# Progress Reporting ----
-
 print_progress <- function(fmt, ..., prefix) {
    cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
 }
@@ -9,7 +7,7 @@ progress <- function(fmt, ...) print_progress(fmt, ..., prefix = "-> ")
 
 fatal <- function(fmt, ...) {
    if (interactive()) {
-      stop("FATAL: ", sprintf(fmt, ...), "\n", call. = FALSE)
+      stop(sprintf(fmt, ...), "\n", call. = FALSE)
    } else {
       message("FATAL: ", sprintf(fmt, ...))
       quit(save = "no", status = 1, runLast = TRUE)
@@ -22,7 +20,6 @@ path_program <- function(name) {
       fatal("Failed to find '%s' on PATH", name)
    prog
 }
-
 
 download <- function(url, destfile, ...) {
    progress("Downloading file:\n- '%s' => '%s'", url, destfile)
@@ -68,17 +65,51 @@ PATH <- (function() {
    
 })()
 
-exec <- function(..., args = NULL) {
+exec <- function(command,
+                 ...,
+                 output = NULL,
+                 dir = getOption("log.dir", default = getwd()))
+{
+   # construct path to logfile
+   if (is.null(output)) {
+      prefix <- sprintf("%s-output-", basename(command))
+      output <- paste(tempfile(prefix, dir), "txt", sep = ".")
+   }
    
-   args <- if (is.null(args))
-      list(...)
-   else
-      args
+   # construct command line arguments
+   dots <- list(...)
+   splat <- unlist(rapply(dots, function(dot) {
+      unlist(strsplit(dot, "[[:space:]]+"))
+   }))
    
-   cmd <- paste(lapply(args, paste, collapse = " "), collapse = " ")
+   # print command to console
+   print_progress(
+      paste(command, paste(splat, collapse = " ")),
+      prefix = "> "
+   )
    
-   print_progress(cmd, prefix = "> ")
-   system(cmd)
+   # run command
+   status <- suppressWarnings(
+      system2(command, splat, stdout = output, stderr = output)
+   )
+   
+   # report status
+   if (status) {
+      msg <- sprintf("Command exited with status %i.", as.integer(status))
+      if (is.character(output) && file.exists(output)) {
+         logmsg <- sprintf("Logs written to %s.", output)
+         msg <- paste(msg, logmsg, sep = "\n")
+      }
+      fatal(msg)
+   }
+   
+   invisible(TRUE)
+}
+
+enter <- function(dir) {
+   progress("Entering directory '%s'", dir)
+   ensure_dir(dir)
+   setwd(dir)
 }
 
 ensure_dir <- function(...) {
@@ -89,7 +120,3 @@ ensure_dir <- function(...) {
    }))
 }
 
-enter <- function(dir) {
-   ensure_dir(dir)
-   setwd(dir)
-}
