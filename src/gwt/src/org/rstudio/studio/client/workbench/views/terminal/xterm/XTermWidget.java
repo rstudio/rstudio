@@ -56,10 +56,6 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * For title changes (via escape sequences sent to terminal), subscribe to
  * XTermTitleEvent.
- * 
- * If multiple instances of the widget are potentially active, supply a
- * unique id via setUniqueId(), and it will be included with all events.
- * 
  */
 public class XTermWidget extends Widget implements RequiresResize,
                                                    ResizeTerminalEvent.HasHandlers,
@@ -91,7 +87,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       {
          public void execute(String data)
          {
-            fireEvent(new TerminalDataInputEvent(uniqueId_, data));
+            fireEvent(new TerminalDataInputEvent(data));
          }
       });
       
@@ -100,7 +96,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       {
          public void execute(String title)
          {
-            fireEvent(new XTermTitleEvent(uniqueId_, title));
+            fireEvent(new XTermTitleEvent(title));
          }
       });
    }
@@ -246,7 +242,7 @@ public class XTermWidget extends Widget implements RequiresResize,
          previousCols_ = cols;
          previousRows_ = rows;
          
-         fireEvent(new ResizeTerminalEvent(uniqueId_, cols, rows)); 
+         fireEvent(new ResizeTerminalEvent(cols, rows)); 
       }
    };
    
@@ -282,16 +278,6 @@ public class XTermWidget extends Widget implements RequiresResize,
          el = el.getParentElement();
       }
       return false;
-   }
-   
-   /**
-    * Set unique id for this terminal instance. Will be included with all
-    * events to allow distinguishing between multiple XTermWidget instances.
-    * @param uniqueId
-    */
-   public void setUniqueId(String uniqueId)
-   {
-      uniqueId_ = uniqueId;
    }
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
@@ -357,7 +343,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
-   private String uniqueId_;
 
    private int previousRows_ = -1;
    private int previousCols_ = -1;
