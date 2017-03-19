@@ -6,7 +6,7 @@
    
    <inherits name='com.google.gwt.widgetideas.SliderBar'/>
     
-   <inherits name='com.sksamuel.gwt.GwtWebSockets'/>
+   <inherits name='com.sksamuel.gwt.GwtWebsockets'/>
 
    <!-- Gin module dependencies                                    -->
    <inherits name="com.google.gwt.inject.Inject"/>
