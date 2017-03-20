@@ -41,6 +41,13 @@ namespace {
 const char * const kLockTypeAdvisory  = "advisory";
 const char * const kLockTypeLinkBased = "linkbased";
 
+// use advisory locks on Windows by default; link-based elsewhere
+#ifdef _WIN32
+# define kLockTypeDefault kLockTypeAdvisory
+#else
+# define kLockTypeDefault kLockTypeLinkBased
+#endif 
+
 const char * const kLocksConfPath    = "/etc/rstudio/file-locks";
 const double kDefaultRefreshRate     = 20.0;
 const double kDefaultTimeoutInterval = 30.0;
@@ -124,15 +131,7 @@ void FileLock::initialize(FilePath locksConfPath)
 void FileLock::initialize(const Settings& settings)
 {
    // default lock type
-   FileLock::s_defaultType = stringToLockType(settings.get("lock-type",
-#ifdef _WIN32
-      // default lock type to advisory on Windows (link-based locks are not
-      // supported on Windows)
-      kLockTypeAdvisory
-#else
-      kLockTypeLinkBased
-#endif
-   ));
+   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeDefault));
 
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
@@ -146,18 +145,68 @@ void FileLock::initialize(const Settings& settings)
    bool loggingEnabled = settings.getBool("enable-logging", false);
    FileLock::s_loggingEnabled = loggingEnabled;
    
+   // logfile
+   std::string logFile = settings.get("log-file");
+   FileLock::s_logFile = FilePath(logFile);
+   
+   // report when logging is enabled
    if (loggingEnabled)
    {
       std::stringstream ss;
-      ss << "(PID " << ::getpid() << "): initialized file locks ("
+      ss << "(PID " << ::getpid() << "): Initialized file locks ("
          << "lock-type=" << lockTypeToString(FileLock::s_defaultType) << ", "
          << "timeout-interval=" << FileLock::s_timeoutInterval.total_seconds() << "s, "
-         << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s)"
+         << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s, "
+         << "log-file=" << logFile << ")"
          << std::endl;
-      LOG_INFO_MESSAGE(ss.str());
+      FileLock::log(ss.str());
    }
    
    s_isInitialized = true;
+}
+
+void FileLock::log(const std::string& message)
+{
+   if (!isLoggingEnabled())
+      return;
+   
+   if (s_logFile.empty())
+   {
+      // if we were constructed without a path, log to stderr
+      std::cerr << message;
+   }
+   else
+   {
+      // avoid logging too many errors (e.g. if the user has specified
+      // a file that does not exist)
+      static int counter = 0;
+      static int max = 5;
+      
+      if (counter < max)
+      {
+         // append to logfile
+         Error error = core::writeStringToFile(
+                  s_logFile,
+                  message,
+                  string_utils::LineEndingPosix,
+                  false);
+
+         if (error)
+         {
+            LOG_ERROR(error);
+            ++counter;
+         }
+      }
+      else if (counter == max)
+      {
+         LOG_ERROR_MESSAGE("failed to write lockfile logs");
+         ++counter;
+      }
+      else
+      {
+         // do nothing
+      }
+   }
 }
 
 // default values for static members
@@ -165,6 +214,7 @@ FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
 boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 bool FileLock::s_loggingEnabled(false);
+FilePath FileLock::s_logFile;
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {

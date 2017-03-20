@@ -27,14 +27,14 @@
 
 #include <core/BoostErrors.hpp>
 
-#define DEBUG(__X__)                                                           \
+#define LOG(__X__)                                                             \
    do                                                                          \
    {                                                                           \
       if (::rstudio::core::FileLock::isLoggingEnabled())                       \
       {                                                                        \
          std::stringstream ss;                                                 \
-         ss << "(PID " << ::getpid() << "): " << __X__;                        \
-         LOG_DEBUG_MESSAGE(ss.str());                                          \
+         ss << "(PID " << ::getpid() << "): " << __X__ << std::endl;           \
+         ::rstudio::core::FileLock::log(ss.str());                             \
       }                                                                        \
    } while (0)
 
@@ -118,7 +118,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
       if (lock.try_lock())
       {
-         DEBUG("Acquired lock: " << lockFilePath.absolutePath());
+         LOG("Acquired lock: " << lockFilePath.absolutePath());
          // set members
          pImpl_->lockFilePath = lockFilePath;
          pImpl_->lock.swap(lock);
@@ -127,7 +127,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       }
       else
       {
-         DEBUG("Failed to acquire lock: " << lockFilePath.absolutePath());
+         LOG("Failed to acquire lock: " << lockFilePath.absolutePath());
          return systemError(boost::system::errc::no_lock_available,
                             ERROR_LOCATION);
       }
@@ -168,7 +168,7 @@ Error AdvisoryFileLock::release()
    {
       pImpl_->lock.unlock();
       pImpl_->lock = BoostFileLock();
-      DEBUG("Released lock: " << pImpl_->lockFilePath.absolutePath());
+      LOG("Released lock: " << pImpl_->lockFilePath.absolutePath());
       pImpl_->lockFilePath = FilePath();
       return Success();
    }
