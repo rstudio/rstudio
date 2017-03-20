@@ -109,7 +109,6 @@ b2_build_args <- function(bitness) {
    unlink(prefix, recursive = TRUE)
    
    paste(
-      "-q",
       "toolset=gcc",
       sprintf("address-model=%s", bitness),
       sprintf("--prefix=%s", prefix),
