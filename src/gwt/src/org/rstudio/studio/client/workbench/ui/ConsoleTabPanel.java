@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
