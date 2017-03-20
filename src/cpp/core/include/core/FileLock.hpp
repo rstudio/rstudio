@@ -82,6 +82,8 @@ public:
    virtual ~FileLock() {}
    
 public:
+   static void log(const std::string& message);
+   
    // getters only: set through 'initialize' method
    static LockType getDefaultType() { return s_defaultType; }
    static boost::posix_time::seconds getTimeoutInterval() { return s_timeoutInterval; }
@@ -97,6 +99,7 @@ protected:
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
    static bool s_loggingEnabled;
+   static FilePath s_logFile;
 };
 
 class AdvisoryFileLock : public FileLock
