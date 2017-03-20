@@ -219,17 +219,35 @@ Error writeLockFile(const FilePath& lockFilePath)
             proxyPath.absolutePathNative().c_str(),
             lockFilePath.absolutePathNative().c_str());
    
-   // Log errors (remove this if it is too noisy on NFS)
+   // log errors (remove this if it is too noisy on NFS)
    if (status == -1)
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   {
+      int errorNumber = errno;
+      
+      // verbose logging
+      LOG("ERROR: ::link() failed (errno " << errorNumber << ")" << std::endl <<
+          "Attempted to link:" << std::endl << " - " <<
+          "'" << proxyPath.absolutePathNative() << "'" <<
+          " => " <<
+          "'" << lockFilePath.absolutePathNative() << "'");
+      
+      LOG_ERROR(systemError(errorNumber, ERROR_LOCATION));
+   }
 
    struct stat info;
    int errc = ::stat(proxyPath.absolutePathNative().c_str(), &info);
    if (errc)
    {
+      int errorNumber = errno;
+      
+      // verbose logging
+      LOG("ERROR: ::stat() failed (errno " << errorNumber << ")" << std::endl <<
+          "Attempted to stat:" << std::endl << " - " <<
+          "'" << proxyPath.absolutePathNative() << "'");
+      
       // log the error since it isn't expected and could get swallowed
       // upstream by a caller ignoring lock_not_available errors
-      Error error = systemError(errno, ERROR_LOCATION);
+      Error error = systemError(errorNumber, ERROR_LOCATION);
       LOG_ERROR(error);
       return error;
    }
@@ -237,7 +255,10 @@ Error writeLockFile(const FilePath& lockFilePath)
    // assume that a failure here is the result of someone else
    // acquiring the lock before we could
    if (info.st_nlink != 2)
+   {
+      LOG("WARNING: Failed to acquire lock (info.st_nlink == " << info.st_nlink << ")");
       return fileExistsError(ERROR_LOCATION);
+   }
    
    return Success();
    
