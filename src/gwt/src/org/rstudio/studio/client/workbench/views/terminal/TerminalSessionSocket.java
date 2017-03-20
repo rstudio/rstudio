@@ -15,16 +15,22 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.LinkedList;
+
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.Stopwatch;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.inject.Inject;
 
 /**
  * Manages input and output for the terminal session.
@@ -50,6 +56,77 @@ public class TerminalSessionSocket
       void receivedOutput(String output);
    }
    
+  
+   // Monitor and report input/display lag to console
+   class InputEchoTimeMonitor
+   {
+      class InputDatapoint
+      {
+         InputDatapoint(String input)
+         {
+            input_ = input;
+            stopWatch_.reset();
+         }
+
+         boolean matches(String input, long runningAverage)
+         {
+            if (input != null && input_.equals(input))
+            {
+               duration_ = stopWatch_.mark("Average " + runningAverage + 
+                     " [" + input + "]");
+               return true;
+            }
+            return false;
+         }
+         
+         long duration()
+         {
+            return duration_;
+         }
+         
+         private String input_;
+         private Stopwatch stopWatch_ = new Stopwatch();
+         private long duration_;
+      }
+      
+      public InputEchoTimeMonitor()
+      {
+         pending_ = new LinkedList<InputDatapoint>();
+      }
+      
+      public void inputReceived(String input)
+      {
+         pending_.add(new InputDatapoint(input));
+      }
+      
+      public void outputReceived(String output)
+      {
+         InputDatapoint item = pending_.poll();
+         if (item == null)
+            return;
+         
+         long average = 0;
+         if (accumulatedPoints_ > 0)
+         {
+            average = accumulatedTime_ / accumulatedPoints_;
+         }
+         if (!item.matches(output, average))
+         {
+            // output not what we expected, reset the whole list
+            pending_.clear();
+         }
+         else
+         {
+            accumulatedPoints_++;
+            accumulatedTime_ += item.duration();
+         }
+      }
+      
+      private LinkedList<InputDatapoint> pending_;
+      private long accumulatedPoints_;
+      private long accumulatedTime_;
+   }
+   
    /**
     * Constructor
     * @param session Session to callback with user input and server output.
@@ -58,8 +135,26 @@ public class TerminalSessionSocket
    public TerminalSessionSocket(Session session,
                                 XTermWidget xterm)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+
       session_ = session;
       xterm_ = xterm;
+
+      // Show delay between receiving a keystroke and sending it to the 
+      // terminal emulator; for diagnostics on laggy typing. Intended for
+      // brief use from a command-prompt. Time between input/display shown
+      // in console.
+      reportTypingLag_ = uiPrefs_.enableReportTerminalLag().getValue();
+      if (reportTypingLag_)
+      {
+         inputEchoTiming_ = new InputEchoTimeMonitor();
+      }
+   }
+
+   @Inject
+   private void initialize(UIPrefs uiPrefs)
+   {
+      uiPrefs_ = uiPrefs;
    }
    
    /**
@@ -116,12 +211,16 @@ public class TerminalSessionSocket
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
+      if (reportTypingLag_)
+         inputEchoTiming_.inputReceived(event.getData());
       session_.receivedInput(event.getData());
    }
 
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
+      if (reportTypingLag_)
+         inputEchoTiming_.outputReceived(event.getOutput());
       session_.receivedOutput(event.getOutput());
    }
 
@@ -151,4 +250,9 @@ public class TerminalSessionSocket
    private final XTermWidget xterm_;
    private ConsoleProcess consoleProcess_;
    private HandlerRegistration terminalInputHandler_;
+   private boolean reportTypingLag_;
+   private InputEchoTimeMonitor inputEchoTiming_;
+   
+   // Injected ---- 
+   private UIPrefs uiPrefs_;
 }
