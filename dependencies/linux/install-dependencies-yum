@@ -18,37 +18,37 @@
 set -e
 
 # build/development tools
-sudo yum install -y make
-sudo yum install -y gcc
-sudo yum install -y gcc-c++
-sudo yum install -y cmake
-sudo yum install -y rpmdevtools
-sudo yum install -y wget
+yum install -y make
+yum install -y gcc
+yum install -y gcc-c++
+yum install -y cmake
+yum install -y rpmdevtools
+yum install -y wget
 
 # core system libraries
-sudo yum install -y libuuid-devel
-sudo yum install -y openssl-devel
-sudo yum install -y bzip2-devel
-sudo yum install -y zlib-devel
-sudo yum install -y pam-devel
+yum install -y libuuid-devel
+yum install -y openssl-devel
+yum install -y bzip2-devel
+yum install -y zlib-devel
+yum install -y pam-devel
 
 # needed by Qt WebKit >= 5
-sudo yum install -y gstreamer-devel
-sudo yum install -y gstreamer-plugins-base-devel
+yum install -y gstreamer-devel
+yum install -y gstreamer-plugins-base-devel
 
 # pandoc depenencies
-sudo yum install -y libffi
+yum install -y libffi
 
 # boost
-sudo yum install -y boost-devel
+yum install -y boost-devel
 
 # pango cairo
-sudo yum install -y pango-devel
+yum install -y pango-devel
 
 # gwt prereqs
-sudo yum install -y java-1.6.0-openjdk 
-sudo yum install -y ant
-sudo yum install -y xml-commons-apis
+yum install -y java-1.6.0-openjdk 
+yum install -y ant
+yum install -y xml-commons-apis
 
 # overlay
 if [ -e install-overlay-yum ]
