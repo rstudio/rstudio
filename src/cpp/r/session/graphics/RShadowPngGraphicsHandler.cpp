@@ -282,6 +282,7 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->canGenMouseMove = FALSE;
    pDev->canGenMouseUp = FALSE;
    pDev->canGenKeybd = FALSE;
+   pDev->canGenIdle = FALSE;
    pDev->gettingEvent = FALSE;
 }
 
