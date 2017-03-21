@@ -345,6 +345,103 @@ struct DevDescVersion8
    char reserved[64];
 };
 
+struct DevDescVersion9
+{
+   double left;
+   double right;
+   double bottom;
+   double top;
+   double clipLeft;
+   double clipRight;
+   double clipBottom;
+   double clipTop;
+   double xCharOffset;
+   double yCharOffset;
+   double yLineBias;
+   double ipr[2];
+   double cra[2];
+   double gamma;
+   Rboolean canClip;
+   Rboolean canChangeGamma;
+   int canHAdj;
+   double startps;
+   int startcol;
+   int startfill;
+   int startlty;
+   int startfont;
+   double startgamma;
+   void *deviceSpecific;
+   Rboolean displayListOn;
+   Rboolean canGenMouseDown;
+   Rboolean canGenMouseMove;
+   Rboolean canGenMouseUp;
+   Rboolean canGenKeybd;
+   Rboolean gettingEvent;
+
+   void (*activate)(const pDevDesc );
+   void (*circle)(double x, double y, double r, const pGEcontext gc, pDevDesc dd);
+   void (*clip)(double x0, double x1, double y0, double y1, pDevDesc dd);
+   void (*close)(pDevDesc dd);
+   void (*deactivate)(pDevDesc );
+   Rboolean (*locator)(double *x, double *y, pDevDesc dd);
+   void (*line)(double x1, double y1, double x2, double y2,
+       const pGEcontext gc, pDevDesc dd);
+   void (*metricInfo)(int c, const pGEcontext gc,
+             double* ascent, double* descent, double* width,
+             pDevDesc dd);
+   void (*mode)(int mode, pDevDesc dd);
+   void (*newPage)(const pGEcontext gc, pDevDesc dd);
+   void (*polygon)(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
+   void (*polyline)(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
+   void (*rect)(double x0, double y0, double x1, double y1,
+       const pGEcontext gc, pDevDesc dd);
+
+
+   // dev_Path added in version 8
+   void (*path)(double *x, double *y,
+                  int npoly, int *nper,
+                  Rboolean winding,
+                  const pGEcontext gc, pDevDesc dd);
+
+   // dev_Raster and dev_Cap added in version 6
+   void (*raster)(unsigned int *raster, int w, int h,
+                double x, double y,
+                double width, double height,
+                double rot,
+                Rboolean interpolate,
+                const pGEcontext gc, pDevDesc dd);
+   SEXP (*cap)(pDevDesc dd);
+
+   void (*size)(double *left, double *right, double *bottom, double *top,
+    pDevDesc dd);
+   double (*strWidth)(const char *str, const pGEcontext gc, pDevDesc dd);
+   void (*text)(double x, double y, const char *str, double rot,
+    double hadj, const pGEcontext gc, pDevDesc dd);
+   void (*onExit)(pDevDesc dd);
+   SEXP (*getEvent)(SEXP, const char *);
+   Rboolean (*newFrameConfirm)(pDevDesc dd);
+
+   Rboolean hasTextUTF8; /* and strWidthUTF8 */
+   void (*textUTF8)(double x, double y, const char *str, double rot,
+        double hadj, const pGEcontext gc, pDevDesc dd);
+   double (*strWidthUTF8)(const char *str, const pGEcontext gc, pDevDesc dd);
+   Rboolean wantSymbolUTF8;
+   Rboolean useRotatedTextInContour;
+
+   // eventEnv and eventHelper added in version 7
+   SEXP eventEnv;
+   void (*eventHelper)(pDevDesc dd, int code);
+
+   // holdFlush and have* added in version 9 (R 2.14)
+   int (*holdflush)(pDevDesc dd, int level);
+   int haveTransparency;
+   int haveTransparentBg;
+   int haveRaster;
+   int haveCapture, haveLocator;
+
+   char reserved[64];
+};
+
 } // extern C
 
 namespace rstudio {
@@ -357,7 +454,7 @@ namespace dev_desc {
 namespace {
 
 template <typename T>
-void copyCommonMembers(const DevDescVersion9& sourceDevDesc,
+void copyCommonMembers(const DevDescVersion12& sourceDevDesc,
                           T* pTargetDevDesc)
 {
    pTargetDevDesc->left = sourceDevDesc.left;
@@ -422,16 +519,16 @@ void copyCommonMembers(const DevDescVersion9& sourceDevDesc,
 }
 
 template <typename T>
-T* allocAndInitCommonMembers(const DevDescVersion9& devDescVersion9)
+T* allocAndInitCommonMembers(const DevDescVersion12& devDescVersion12)
 {
    T* pDevDesc = (T*) std::calloc(1, sizeof(T));
-   copyCommonMembers(devDescVersion9, pDevDesc);
+   copyCommonMembers(devDescVersion12, pDevDesc);
    return pDevDesc;
 }
 
 } // anonymous namespace
 
-pDevDesc allocate(const DevDescVersion9& devDescVersion9)
+pDevDesc allocate(const DevDescVersion12& devDescVersion12)
 {
    int engineVersion = ::R_GE_getVersion();
    switch(engineVersion)
@@ -439,17 +536,17 @@ pDevDesc allocate(const DevDescVersion9& devDescVersion9)
    case 5:
    {
       DevDescVersion5* pDD = allocAndInitCommonMembers<DevDescVersion5>(
-                                                          devDescVersion9);
+                                                          devDescVersion12);
       return (pDevDesc)pDD;
    }
 
    case 6:
    {
       DevDescVersion6* pDD = allocAndInitCommonMembers<DevDescVersion6>(
-                                                            devDescVersion9);
+                                                            devDescVersion12);
 
-      pDD->raster = devDescVersion9.raster;
-      pDD->cap = devDescVersion9.cap;
+      pDD->raster = devDescVersion12.raster;
+      pDD->cap = devDescVersion12.cap;
 
       return (pDevDesc)pDD;
    }
@@ -457,12 +554,12 @@ pDevDesc allocate(const DevDescVersion9& devDescVersion9)
    case 7:
    {
       DevDescVersion7* pDD = allocAndInitCommonMembers<DevDescVersion7>(
-                                                            devDescVersion9);
+                                                            devDescVersion12);
 
-      pDD->raster = devDescVersion9.raster;
-      pDD->cap = devDescVersion9.cap;
-      pDD->eventEnv = devDescVersion9.eventEnv;
-      pDD->eventHelper = devDescVersion9.eventHelper;
+      pDD->raster = devDescVersion12.raster;
+      pDD->cap = devDescVersion12.cap;
+      pDD->eventEnv = devDescVersion12.eventEnv;
+      pDD->eventHelper = devDescVersion12.eventHelper;
 
       return (pDevDesc)pDD;
    }
@@ -471,26 +568,39 @@ pDevDesc allocate(const DevDescVersion9& devDescVersion9)
    case 8:
    {
       DevDescVersion8* pDD = allocAndInitCommonMembers<DevDescVersion8>(
-                                                            devDescVersion9);
+                                                            devDescVersion12);
 
-      pDD->path = devDescVersion9.path;
-      pDD->raster = devDescVersion9.raster;
-      pDD->cap = devDescVersion9.cap;
-      pDD->eventEnv = devDescVersion9.eventEnv;
-      pDD->eventHelper = devDescVersion9.eventHelper;
+      pDD->path = devDescVersion12.path;
+      pDD->raster = devDescVersion12.raster;
+      pDD->cap = devDescVersion12.cap;
+      pDD->eventEnv = devDescVersion12.eventEnv;
+      pDD->eventHelper = devDescVersion12.eventHelper;
 
       return (pDevDesc)pDD;
    }
 
-   // NOTE: graphics device won't be initialized unless we confirm
-   // that the current graphics engine version is v9 compatible
    case 9:
+   {
+      DevDescVersion9* pDD = allocAndInitCommonMembers<DevDescVersion9>(
+                                                            devDescVersion12);
+
+      pDD->path = devDescVersion12.path;
+      pDD->raster = devDescVersion12.raster;
+      pDD->cap = devDescVersion12.cap;
+      pDD->eventEnv = devDescVersion12.eventEnv;
+      pDD->eventHelper = devDescVersion12.eventHelper;
+
+      return (pDevDesc)pDD;
+   }
+      
+   // NOTE: graphics device won't be initialized unless we confirm
+   // that the current graphics engine version is v12 compatible
+   case 12:
    default:
    {
-      DevDescVersion9* pDD = (DevDescVersion9*) std::calloc(
-                                             1, sizeof(DevDescVersion9));
-      *pDD = devDescVersion9;
-
+      DevDescVersion12* pDD =
+            (DevDescVersion12*) std::calloc(1, sizeof(DevDescVersion12));
+      *pDD = devDescVersion12;
       return (pDevDesc)pDD;
    }
 
@@ -517,8 +627,11 @@ void setSize(pDevDesc pDD)
       pSizeFn = ((DevDescVersion8*)pDD)->size;
       break;
    case 9:
-   default:
       pSizeFn = ((DevDescVersion9*)pDD)->size;
+      break;
+   case 12:
+   default:
+      pSizeFn = ((DevDescVersion12*)pDD)->size;
       break;
    }
 
@@ -556,8 +669,11 @@ void path(double *x,
       pPathFn = ((DevDescVersion8*)dd)->path;
       break;
    case 9:
-   default:
       pPathFn = ((DevDescVersion9*)dd)->path;
+      break;
+   case 12:
+   default:
+      pPathFn = ((DevDescVersion12*)dd)->path;
       break;
    }
 
@@ -593,8 +709,11 @@ void raster(unsigned int *raster,
       pRasterFn = ((DevDescVersion8*)dd)->raster;
       break;
    case 9:
-   default:
       pRasterFn = ((DevDescVersion9*)dd)->raster;
+      break;
+   case 12:
+   default:
+      pRasterFn = ((DevDescVersion12*)dd)->raster;
       break;
    }
 
@@ -622,8 +741,11 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
       pStrWidthFn = ((DevDescVersion8*)dev)->strWidth;
       break;
    case 9:
-   default:
       pStrWidthFn = ((DevDescVersion9*)dev)->strWidth;
+      break;
+   case 12:
+   default:
+      pStrWidthFn = ((DevDescVersion12*)dev)->strWidth;
       break;
    }
 
@@ -658,8 +780,11 @@ void text(double x,
       pTextFn = ((DevDescVersion8*)dev)->text;
       break;
    case 9:
-   default:
       pTextFn = ((DevDescVersion9*)dev)->text;
+      break;
+   case 12:
+   default:
+      pTextFn = ((DevDescVersion12*)dev)->text;
       break;
    }
 
