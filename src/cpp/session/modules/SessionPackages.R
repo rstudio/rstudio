@@ -431,6 +431,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       cranRep <- c(CRAN = repos[[1]])
    cranRepLen <- nchar(cranRep)
    isFromCRAN <- cranRep == substr(updates$Repository, 1, cranRepLen)
+   hasNEWS    <- file.exists(vapply(updates$Package, function(x) system.file("NEWS", package = x), character(1L)))
    newsURL <- character(nrow(updates))
    if (substr(cranRep, cranRepLen, cranRepLen) != "/")
       cranRep <- paste(cranRep, "/", sep="")
@@ -438,7 +439,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    newsURL[isFromCRAN] <- paste(cranRep,
                                 "web/packages/",
                                 updates$Package,
-                                "/NEWS", sep = "")[isFromCRAN]
+                                ifelse(hasNEWS, "/NEWS", "/news.html"),
+                                sep = "")[isFromCRAN]
    
    updates <- data.frame(packageName = updates$Package,
                          libPath = updates$LibPath,
