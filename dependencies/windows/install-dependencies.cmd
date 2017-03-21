@@ -8,7 +8,7 @@ set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_GCC493_FILE=boost-1.50-win-rtools33-gcc493.zip
+set BOOST_GCC493_FILE=boost-1.63-win-rtools33-gcc493.zip
 set RTOOLS_FILE=Rtools33.exe
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.7.0.zip
@@ -45,10 +45,10 @@ if not exist %RTOOLS_DIR% (
   )
 )
 
-if not exist boost-1.50-win-rtools33-gcc493 (
+if not exist boost-1.63-win-rtools33-gcc493 (
   wget %WGET_ARGS% "%BASEURL%%BOOST_GCC493_FILE%"
   echo Unzipping %BOOST_GCC493_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_GCC493_FILE%" -d boost-1.50-win-rtools33-gcc493
+  unzip %UNZIP_ARGS% "%BOOST_GCC493_FILE%" -d boost-1.63-win-rtools33-gcc493
   del "%BOOST_GCC493_FILE%"
 )
 

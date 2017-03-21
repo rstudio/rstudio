@@ -24,22 +24,29 @@ INSTALL_DIR=`pwd`
 PLATFORM=`uname`
 
 # vars
-BOOST_VERSION_NUMBER=1.50.0
-BOOST_VERSION=boost_1_50_0
+BOOST_VERSION_NUMBER=1.63.0
+BOOST_VERSION=boost_1_63_0
 BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
+BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
+   date_time filesystem foreach format function interprocess iostreams
+   lambda lexical_cast optional program_options random range ref
+   regex scope_exit signals smart_ptr spirit string_algo system
+   test thread tokenizer type_traits typeof unordered utility variant"
 
 # install if we aren't already installed
 if ! test -e $BOOST_DIR
 then
    # download boost
    BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
-   if [ "$PLATFORM" == "Darwin" ]
-   then
-      curl -L $BOOST_URL > $BOOST_TAR
-   else
-      wget -c $BOOST_URL -O $BOOST_TAR
+   if [ ! -f "$BOOST_TAR" ]; then
+      if [ "$PLATFORM" == "Darwin" ]
+      then
+         curl -L $BOOST_URL > $BOOST_TAR
+      else
+         wget -c $BOOST_URL -O $BOOST_TAR
+      fi
    fi
    
    # remove existing boost installation
@@ -56,6 +63,22 @@ then
 
    # bootstrap boost
    sudo ./bootstrap.sh  
+
+   # build bcp helper
+   sudo ./b2 tools/bcp
+
+   # copy back to root
+   sudo cp dist/bin/bcp bcp
+
+   # use bcp to copy to rstudio folder (use custom namespace)
+   sudo mkdir -p rstudio
+   sudo ./bcp --namespace=rstudio_boost --namespace-alias $BOOST_MODULES config build rstudio
+
+   # move to rstudio folder
+   cd rstudio
+
+   # bootstrap again
+   sudo ./bootstrap.sh
    
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
@@ -65,9 +88,9 @@ then
      SYS_MAJOR_VER=`uname -r | cut -d "." -f -1`
      if [ "$SYS_MAJOR_VER" -gt "12" ]
      then
-        CXX_STDLIB_FLAGS=cxxflags="-stdlib=libstdc++"
+        CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable -stdlib=libstdc++\" linkflags=\"-stdlib=libstdc++\""
      else
-        CXX_STDLIB_FLAGS=""
+        CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable\""
      fi
 
      sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
@@ -75,9 +98,14 @@ then
      sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR variant=release install
    fi
 
+   # rename libraries in the boost install dir
+   cd $BOOST_DIR/lib
+   for file in librstudio*; do
+      sudo mv $file ${file/rstudio_/}
+   done
+
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
-   sudo rm -rf $BOOST_TAR
    sudo rm -rf $BOOST_BUILD_DIR
 
 else

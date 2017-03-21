@@ -39,7 +39,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
 set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
 add_custom_command(
    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-   COMMAND windres.exe
+   COMMAND "${WINDRES}"
       -I "."
       -i "urlopener.rc"
       -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"

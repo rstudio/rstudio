@@ -8,7 +8,7 @@ systems. Specific version requirements for various components include:
 
 - R 2.11.1
 - CMake 2.8
-- Boost 1.50
+- Boost 1.63
 - Qt 4.8 [Required only for Desktop]
 
 
@@ -51,7 +51,7 @@ SDK be sure to specify the --exclude-qt-sdk flag as described above).
    ./install-dependencies-yum
    ./install-dependencies-zypper
    
-Note that this script will install Boost 1.50 in the /opt/rstudio-tools/boost
+Note that this script will install Boost 1.63 in the /opt/rstudio-tools/boost
 directory (the /opt/rstudio-tools directory is used to insure that this 
 installation of boost doesn't conflict with other versions of boost installed
 on the system). This part of the installation will take a few minutes since
@@ -69,7 +69,7 @@ do the following to make sure you have fulfilled all dependencies:
 ensure that all of the referenced libraries are available on your system.
 
 2) Run the install-common script (which will install Google Web Toolkit,
-Hunspell dictionaries, MathJax, and Boost 1.50):
+Hunspell dictionaries, MathJax, and Boost 1.63):
 
    dependencies
       common

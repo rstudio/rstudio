@@ -5965,7 +5965,7 @@ namespace Catch {
         void operator=( Version const& );
     };
 
-    extern Version libraryVersion;
+    inline Version libraryVersion();
 }
 
 #include <fstream>
@@ -6077,7 +6077,7 @@ namespace Catch {
         }
 
         void showHelp( std::string const& processName ) {
-            Catch::cout() << "\nCatch v" << libraryVersion << "\n";
+            Catch::cout() << "\nCatch v" << libraryVersion() << "\n";
 
             m_cli.usage( Catch::cout(), processName );
             Catch::cout() << "For more detail usage please see the project docs\n" << std::endl;
@@ -7270,7 +7270,10 @@ namespace Catch {
         return os;
     }
 
-    Version libraryVersion( 1, 3, 3, "", 0 );
+    inline Version libraryVersion()
+    {
+        return Version(1, 3, 3, "", 0);
+    }
 
 }
 
@@ -9473,7 +9476,7 @@ namespace Catch {
             stream  << "\n" << getLineOfChars<'~'>() << "\n";
             Colour colour( Colour::SecondaryText );
             stream  << currentTestRunInfo->name
-                    << " is a Catch v"  << libraryVersion << " host application.\n"
+                    << " is a Catch v"  << libraryVersion() << " host application.\n"
                     << "Run with -? for options\n\n";
 
             if( m_config->rngSeed() != 0 )

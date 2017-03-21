@@ -332,7 +332,7 @@ if(WIN32)
 
    add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      COMMAND windres.exe
+      COMMAND "${WINDRES}"
          -I "."
          -i "rsession.rc"
          -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
