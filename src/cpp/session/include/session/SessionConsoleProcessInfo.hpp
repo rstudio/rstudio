@@ -39,6 +39,13 @@ enum InteractionMode
    InteractionAlways = 2
 };
 
+enum ChannelMode
+{
+   Rpc = 0,
+   Websocket = 1,
+   NamedPipe = 2,
+};
+
 extern const int kDefaultMaxOutputLines;
 extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
@@ -61,9 +68,9 @@ public:
          const std::string& title,
          const std::string& handle,
          int terminalSequence,
-         bool allowRestart,
-         InteractionMode mode,
          TerminalShell::TerminalShellType shellType,
+         ChannelMode channelMode,
+         const std::string& channelId,
          int maxOutputLines = kDefaultMaxOutputLines);
 
    // constructor for non-terminals
@@ -127,6 +134,18 @@ public:
       return shellType_;
    }
 
+   // Type of channel for communicating input/output with client
+   ChannelMode getChannelMode() const { return channelMode_; }
+
+   // Mode-dependent identifier for channel
+   std::string getChannelId() const { return channelId_; }
+
+   void setChannelMode(ChannelMode mode, const std::string& channelId)
+   {
+      channelMode_ = mode;
+      channelId_ = channelId;
+   }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -148,6 +167,8 @@ private:
    bool childProcs_;
    bool altBufferActive_;
    TerminalShell::TerminalShellType shellType_;
+   ChannelMode channelMode_;
+   std::string channelId_;
 };
 
 } // namespace console_process

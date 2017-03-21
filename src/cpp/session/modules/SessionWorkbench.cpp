@@ -955,8 +955,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence, true /*allowRestart*/,
-            InteractionAlways, shellType, console_process::kDefaultTerminalMaxOutputLines);
+            termCaption, termTitle, termHandle, termSequence,  shellType,
+            console_process::Rpc, "" /*channelId*/,
+            console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
