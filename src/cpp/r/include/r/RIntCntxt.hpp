@@ -64,7 +64,7 @@ public:
       else
          return RCntxt(pCntxt_->nextcontext);
    }
-
+   
    bool isNull() const
    {
       return false;

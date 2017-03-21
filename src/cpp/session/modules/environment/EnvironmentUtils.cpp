@@ -15,6 +15,8 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include <r/RCntxt.hpp>
+#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <core/FileSerializer.hpp>
@@ -227,7 +229,9 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (srcref == NULL || r::sexp::isNull(srcref))
+   if (srcref == NULL ||
+       r::sexp::isNull(srcref) ||
+       r::context::isByteCodeSrcRef(srcref))
    {
       (*pObject)["line_number"] = 0;
       (*pObject)["end_line_number"] = 0;
