@@ -125,15 +125,13 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    public void updateTableBrowser()
    {
-      updateTableBrowser("");
+      updateObjectBrowser("");
    }
    
-   public void updateTableBrowser(String hint)
+   public void updateObjectBrowser(String hint)
    {   
       objectBrowser_.update(connection_, hint);
    }
-   
- 
   
    @Override
    public void onResize()

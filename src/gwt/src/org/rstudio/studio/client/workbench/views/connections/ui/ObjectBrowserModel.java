@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -84,18 +85,20 @@ public class ObjectBrowserModel implements TreeViewModel
    @Override
    public <T> NodeInfo<?> getNodeInfo(T value)
    {
-      // return the list of tables for the root node
-      if (value == null)
+      // return the list of objects for the root node
+      if (value == null || 
+          connection_.getObjectTypes().get(0).getContains() == "data")
       {
          tableProvider_ = new ObjectProvider();
          fieldProviders_.clear();
-         return new DefaultNodeInfo<String>(tableProvider_, 
-                                    new TableCell(),
-                                    noTableSelectionModel_,
+         return new DefaultNodeInfo<DatabaseObject>(tableProvider_,
+                                    new DataCell(),
+                                    noObjectSelectionModel_,
                                     null);
       }
-      else if (value instanceof String)
+      else if (value instanceof DatabaseObject)
       {
+         DatabaseObject val = (DatabaseObject)value;
          FieldProvider fieldProvider = new FieldProvider((String)value);
          fieldProviders_.put((String)value, fieldProvider);
          return new DefaultNodeInfo<Field>(fieldProvider, 
@@ -126,7 +129,7 @@ public class ObjectBrowserModel implements TreeViewModel
          fieldProviders_.get(table).refresh();
    }
 
-   private class ObjectProvider extends AsyncDataProvider<String>
+   private class ObjectProvider extends AsyncDataProvider<DatabaseObject>
    {
       public void clear()
       {
@@ -158,7 +161,7 @@ public class ObjectBrowserModel implements TreeViewModel
       }
       
       @Override
-      protected void onRangeChanged(final HasData<String> display)
+      protected void onRangeChanged(final HasData<DatabaseObject> display)
       {
         if (connection_ == null)
         {
@@ -185,16 +188,14 @@ public class ObjectBrowserModel implements TreeViewModel
       private void clearData()
       {
          updateRowCount(0, true);
-         updateRowData(0, new ArrayList<String>());
+         updateRowData(0, new ArrayList<DatabaseObject>());
          fireUpdateCompleted();
       }
       
       private void updateData(JsArray<DatabaseObject> objects)
       {
          updateRowCount(objects.length(), true);
-         ArrayList<String> data = new ArrayList<String>();
-         for (int i=0; i<objects.length(); i++)
-            data.add(objects.get(i).getName());
+         ArrayList<DatabaseObject> data = JsArrayUtil.toArrayList(objects);
          updateRowData(0, data);
          fireUpdateCompleted();
       }
@@ -319,17 +320,43 @@ public class ObjectBrowserModel implements TreeViewModel
       private String table_;
    }
    
-   private class TableCell extends AbstractCell<String> 
+   private class ContainerCell extends AbstractCell<DatabaseObject>
    {
-      public TableCell()
+      public ContainerCell()
       {
          super("click");
       }
       
       @Override
-      public void render(Cell.Context context, String table, SafeHtmlBuilder sb)
+      public void render(Cell.Context context, DatabaseObject container, 
+            SafeHtmlBuilder sb)
       {
-         SafeHtmlUtil.appendSpan(sb, "", table);
+         SafeHtmlUtil.appendSpan(sb, "", container.getName());
+      }
+      
+      @Override
+      public void onBrowserEvent(Cell.Context context,
+              Element parent, DatabaseObject value, NativeEvent event,
+              ValueUpdater<DatabaseObject> valueUpdater) {
+          if ("click".equals(event.getType()))
+          {
+             // TODO: fire navigation event & push onto specifier stack
+             // eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+          }
+      }
+   }
+   
+   private class DataCell extends AbstractCell<DatabaseObject> 
+   {
+      public DataCell()
+      {
+         super("click");
+      }
+      
+      @Override
+      public void render(Cell.Context context, DatabaseObject table, SafeHtmlBuilder sb)
+      {
+         SafeHtmlUtil.appendSpan(sb, "", table.getName());
          
          sb.append(SafeHtmlUtil.createOpenTag("span", 
                "class", RES.cellTreeStyle().tableViewDataset(),
@@ -339,7 +366,7 @@ public class ObjectBrowserModel implements TreeViewModel
       
       @Override
       public void onBrowserEvent(Cell.Context context,
-              Element parent, String value, NativeEvent event,
+              Element parent, DatabaseObject value, NativeEvent event,
               ValueUpdater<String> valueUpdater) {
           if ("click".equals(event.getType()))
           {
@@ -347,7 +374,7 @@ public class ObjectBrowserModel implements TreeViewModel
              if (eventTarget.getAttribute("class").equals(
                                RES.cellTreeStyle().tableViewDataset()))
              {
-                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value.getName()));
              }
           }
       }
@@ -382,8 +409,8 @@ public class ObjectBrowserModel implements TreeViewModel
    private ConnectionsServerOperations server_;
    private EventBus eventBus_;
    
-   private static NoSelectionModel<String> noTableSelectionModel_ = 
-         new NoSelectionModel<String>();
+   private static NoSelectionModel<DatabaseObject> noObjectSelectionModel_ = 
+         new NoSelectionModel<DatabaseObject>();
    private static NoSelectionModel<Field> noFieldSelectionModel_ =
          new NoSelectionModel<Field>();
    

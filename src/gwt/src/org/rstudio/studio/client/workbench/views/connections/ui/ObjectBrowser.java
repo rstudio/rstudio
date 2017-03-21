@@ -15,7 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -38,24 +41,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class ObjectBrowser extends Composite implements RequiresResize
 {
    public ObjectBrowser()
-   {  
-      // create tables model and widget
-      tablesModel_ = new ObjectBrowserModel();
-      
-      tables_ = new CellTree(tablesModel_, null, RES, MESSAGES);
-      tables_.setDefaultNodeSize(Integer.MAX_VALUE);
-      tables_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      tables_.setWidth("100%");
-      
-      // wrap in vertical panel to get correct scrollbar behavior
-      VerticalPanel verticalWrapper = new VerticalPanel();
-      verticalWrapper.setWidth("100%");
-      verticalWrapper.add(tables_);
-      
+   {
       // create scroll panel and set the vertical wrapper as it's widget
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
-      scrollPanel_.setWidget(verticalWrapper);
        
       // init widget
       initWidget(scrollPanel_);
@@ -63,11 +52,30 @@ public class ObjectBrowser extends Composite implements RequiresResize
   
    public void clear()
    {
-      tablesModel_.clear();
+      objectsModel_.clear();
    }
    
    public void update(Connection connection, String hint)
    { 
+      // create tables model and widget
+      objectsModel_ = new ObjectBrowserModel();
+      
+      objects_ = new ArrayList<CellTree>();
+      
+      // create the top level list of objects
+      CellTree top = new CellTree(objectsModel_, null, RES, MESSAGES);
+      top.setDefaultNodeSize(Integer.MAX_VALUE);
+      top.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      top.setWidth("100%");
+      
+      // wrap in vertical panel to get correct scrollbar behavior
+      VerticalPanel verticalWrapper = new VerticalPanel();
+      verticalWrapper.setWidth("100%");
+      verticalWrapper.add(top);
+      
+      objects_.add(top);
+      scrollPanel_.setWidget(verticalWrapper);
+      
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
       
@@ -84,7 +92,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       }
       
       // update the table then restore expanded nodes
-      tablesModel_.update(
+      objectsModel_.update(
          connection,      // connection 
          expandedNodes,    // track nodes to expand
          new Command() {   // table update completed, expand nodes
@@ -174,7 +182,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
                               = GWT.create(TableBrowserMessages.class);
    
    private final ScrollPanel scrollPanel_;
-   private final CellTree tables_;
-   private final ObjectBrowserModel tablesModel_;
+   private final ArrayList<CellTree> objects_;
+   private final ObjectBrowserModel objectsModel_;
   
 }
