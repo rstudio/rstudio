@@ -88,12 +88,11 @@ then
      SYS_MAJOR_VER=`uname -r | cut -d "." -f -1`
      if [ "$SYS_MAJOR_VER" -gt "12" ]
      then
-        CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable -stdlib=libstdc++\" linkflags=\"-stdlib=libstdc++\""
-     else
-        CXX_STDLIB_FLAGS="cxxflags=\"-Wno-unused-variable\""
+        BJAM_CXXFLAGS="cxxflags=-stdlib=libstdc++"
+        BJAM_LDFLAGS="linkflags=-stdlib=libstdc++"
      fi
 
-     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
+     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang ${BJAM_CXXFLAGS} ${BJAM_LDFLAGS} variant=release threading=multi link=static install
    else
      sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR variant=release install
    fi
