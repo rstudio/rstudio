@@ -36,6 +36,8 @@ const int sequence = 1;
 const bool allowRestart = true;
 const InteractionMode mode = InteractionAlways;
 const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+const ChannelMode channelMode = Rpc;
+const std::string channelId("some channel Id");
 
 const size_t maxLines = 1000;
 
@@ -57,7 +59,9 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getShowOnOutput() == second.getShowOnOutput() &&
            first.getExitCode()  == second.getExitCode() &&
            first.getHasChildProcs() == second.getHasChildProcs() &&
-           first.getShellType() == second.getShellType());
+           first.getShellType() == second.getShellType() &&
+           first.getChannelMode() == second.getChannelMode() &&
+           !first.getChannelId().compare(second.getChannelId()));
 }
 
 } // anonymous namespace
@@ -68,20 +72,22 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+                             shellType, channelMode, channelId, maxLines);
 
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
       CHECK_FALSE(handle1.compare(cpi.getHandle()));
       CHECK(cpi.getTerminalSequence() == sequence);
-      CHECK(cpi.getAllowRestart() == allowRestart);
-      CHECK(cpi.getInteractionMode() == mode);
+      CHECK(cpi.getAllowRestart() == true);
+      CHECK(cpi.getInteractionMode() == InteractionAlways);
       CHECK(cpi.getMaxOutputLines() == maxLines);
 
       CHECK_FALSE(cpi.getShowOnOutput());
       CHECK_FALSE(cpi.getExitCode());
       CHECK(cpi.getHasChildProcs());
       CHECK(cpi.getShellType() == shellType);
+      CHECK(cpi.getChannelMode() == channelMode);
+      CHECK(cpi.getChannelId() == channelId);
    }
 
    SECTION("Generate a handle")
@@ -97,8 +103,8 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Change properties")
    {
-      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, maxLines);
 
       std::string altCaption("other caption");
       CHECK(altCaption.compare(caption));
@@ -114,7 +120,7 @@ TEST_CASE("ConsoleProcessInfo")
       cpi.setTerminalSequence(altSequence);
       CHECK(altSequence == cpi.getTerminalSequence());
 
-      bool altAllowRestart = !allowRestart;
+      bool altAllowRestart = false;
       cpi.setAllowRestart(altAllowRestart);
       CHECK(altAllowRestart == cpi.getAllowRestart());
 
@@ -134,12 +140,18 @@ TEST_CASE("ConsoleProcessInfo")
       bool altHasChildProcs = !cpi.getHasChildProcs();
       cpi.setHasChildProcs(altHasChildProcs);
       CHECK(altHasChildProcs == cpi.getHasChildProcs());
+
+      ChannelMode altChannelMode = Websocket;
+      std::string altChannelModeId = "Some other id";
+      cpi.setChannelMode(altChannelMode, altChannelModeId);
+      CHECK(altChannelMode == cpi.getChannelMode());
+      CHECK(!altChannelModeId.compare(cpi.getChannelId()));
    }
 
-   SECTION("Create ConsoleProcessInfo and read properties")
+   SECTION("Change exit code")
    {
-      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, maxLines);
 
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
@@ -161,10 +173,10 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Compare ConsoleProcInfos with different exit codes")
    {
-      ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence,
-                                  allowRestart, mode, shellType, maxLines);
-      ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence,
-                                   allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence, shellType,
+                                  channelMode, channelId, maxLines);
+      ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence, shellType,
+                                   channelMode, channelId, maxLines);
 
       cpiFirst.setExitCode(1);
       cpiSecond.setExitCode(12);
@@ -173,8 +185,8 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Persist and restore")
    {
-      ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence,
-                                 allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
+                                 channelMode, channelId, maxLines);
 
       core::json::Object origJson = cpiOrig.toJson();
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -185,14 +197,12 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Persist and restore for non-terminals")
    {
-      // kNoTerminal triggers the older non-terminal behavior where
-      // buffers are saved directly in this object and end up
+      // Non-terminal buffers are saved directly in this object and end up
       // persisted to the JSON. So to validate this we need to save some
       // output, persist to JSON, restore from JSON, and see that we get
       // back what we saved (trimmed based on maxLines). Be nice to abstract
       // all of this away, but bigger fish and all of that.
-      ConsoleProcessInfo cpi(caption, title, handle1, kNoTerminal,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpi(caption, mode, maxLines);
 
       // bufferedOutput is the accessor for the non-terminal buffer cache
       std::string orig = cpi.bufferedOutput();
@@ -221,8 +231,8 @@ TEST_CASE("ConsoleProcessInfo")
       // behavior where buffer are saved to an external file instead of
       // in the JSON. Same comment on the leaky abstractions here as for
       // previous non-terminal test.
-      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, maxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -257,8 +267,8 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Persist and restore terminals with multiple chunks")
    {
-      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, maxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -322,10 +332,10 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Delete unknown log files")
    {
-      ConsoleProcessInfo cpiGood(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
-      ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence,
-                             allowRestart, mode, shellType, maxLines);
+      ConsoleProcessInfo cpiGood(caption, title, handle1, sequence, shellType,
+                                 channelMode, channelId, maxLines);
+      ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence, shellType,
+                                channelMode, channelId, maxLines);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
       CHECK(orig1.length() < kOutputBufferSize);
@@ -360,8 +370,8 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore terminals with multiple chunks and trimmable buffer")
    {
       const int smallMaxLines = 5;
-      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             allowRestart, mode, shellType, smallMaxLines);
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, smallMaxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run

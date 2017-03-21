@@ -35,8 +35,8 @@ ConsoleProcessInfo::ConsoleProcessInfo()
    : terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false),
-     shellType_(TerminalShell::DefaultShell)
+     altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
+     channelMode_(Rpc)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -48,15 +48,16 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& title,
          const std::string& handle,
          const int terminalSequence,
-         bool allowRestart,
-         InteractionMode mode,
          TerminalShell::TerminalShellType shellType,
+         ChannelMode channelMode,
+         const std::string& channelId,
          int maxOutputLines)
    : caption_(caption), title_(title), handle_(handle),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     interactionMode_(mode), maxOutputLines_(maxOutputLines),
+     terminalSequence_(terminalSequence), allowRestart_(true),
+     interactionMode_(InteractionAlways), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(shellType)
+     altBufferActive_(false), shellType_(shellType),
+     channelMode_(channelMode), channelId_(channelId)
 {
 }
 
@@ -67,7 +68,8 @@ ConsoleProcessInfo::ConsoleProcessInfo(
    : caption_(caption), terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(TerminalShell::DefaultShell)
+     altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
+     channelMode_(Rpc)
 {
 }
 
@@ -179,6 +181,8 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["title"] = title_;
    result["child_procs"] = childProcs_;
    result["shell_type"] = static_cast<int>(shellType_);
+   result["channel_mode"] = static_cast<int>(channelMode_);
+   result["channel_id"] = channelId_;
 
    return result;
 }
@@ -223,6 +227,9 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    int shellTypeInt = obj["shell_type"].get_int();
    pProc->shellType_ =
       static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
+   int channelModeInt = obj["channel_mode"].get_int();
+   pProc->channelMode_ = static_cast<ChannelMode>(channelModeInt);
+   pProc->channelId_ = obj["channel_id"].get_str();
 
    return pProc;
 }
