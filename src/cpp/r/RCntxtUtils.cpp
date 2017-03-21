@@ -13,6 +13,8 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
@@ -22,7 +24,6 @@
 namespace rstudio {
 namespace r {
 namespace context {
-
 
 RCntxtVersion contextVersion()
 {
@@ -155,6 +156,45 @@ bool inDebugHiddenContext()
       }
    }
    return false;
+}
+
+bool isByteCodeContext(const RCntxt& cntxt)
+{
+   return isByteCodeSrcRef(cntxt.srcref());
+}
+
+bool isByteCodeSrcRef(SEXP srcref)
+{
+   return srcref &&
+         TYPEOF(srcref) == SYMSXP &&
+         ::strcmp(CHAR(PRINTNAME(srcref)), "<in-bc-interp>") == 0;
+}
+
+SEXP findByteCodeSrcRef(const RCntxt& cntxt)
+{
+   // get bytecode body
+   SEXP body = cntxt.bcbody();
+   if (body == NULL || body == R_NilValue)
+      return R_NilValue;
+   
+   // extract constants
+   SEXP constants = BCODE_CONSTS(body);
+   if (constants == NULL || constants == R_NilValue)
+      return R_NilValue;
+   
+   // discover srcref
+   SEXP srcref;
+   r::sexp::Protect protect;
+   core::Error error = r::exec::RFunction(".rs.findByteCodeSrcRef")
+         .addParam(constants)
+         .addParam(body)
+         .addParam(BCODE_CODE(body))
+         .call(&srcref, &protect);
+   
+   if (error)
+      LOG_ERROR(error);
+   
+   return srcref;
 }
 
 } // namespace context

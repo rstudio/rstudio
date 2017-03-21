@@ -79,6 +79,8 @@ public:
    SEXP call() const;
    SEXP srcref() const;
    SEXP cloenv() const;
+   SEXP bcbody() const;
+   void* bcpc() const;
    RCntxt nextcontext() const;
 
    // define an iterator for easy traversal of the context stack

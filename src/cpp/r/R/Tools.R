@@ -977,3 +977,17 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    # return original
    original
 })
+
+.rs.addFunction("findByteCodeSrcRef", function(constants,
+                                               body,
+                                               code)
+{
+   browser()
+   index <- Find(
+      function(x) inherits(x, "srcrefsIndex"),
+      constants
+   )
+   
+   if (is.null(index))
+      return(NULL)
+})

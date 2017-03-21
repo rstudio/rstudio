@@ -23,6 +23,8 @@ namespace rstudio {
 namespace core {
 namespace type_traits {
 
+template <int T> struct int2type { enum { value = T }; };
+
 #define RS_GENERATE_HAS_TYPE_TRAIT(__NAME__)                                   \
    template <typename T> struct has_##__NAME__##_impl                          \
    {                                                                           \
@@ -46,7 +48,7 @@ namespace type_traits {
 
 RS_GENERATE_HAS_TYPE_TRAIT(key_type);
 
-} // namespace algorithm
+} // namespace type_traits
 } // namespace core
 } // namespace rstudio
 
