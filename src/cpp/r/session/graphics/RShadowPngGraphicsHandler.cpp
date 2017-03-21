@@ -248,41 +248,7 @@ void setDeviceAttributes(pDevDesc pDev)
    if (shadowDev == NULL)
       return;
    
-   pDev->left = shadowDev->left;
-   pDev->top = shadowDev->top;
-   pDev->right = shadowDev->right;
-   pDev->bottom = shadowDev->bottom;
-   pDev->clipLeft = shadowDev->clipLeft;
-   pDev->clipTop = shadowDev->clipTop;
-   pDev->clipRight = shadowDev->clipRight;
-   pDev->clipBottom = shadowDev->clipBottom;
-   
-   pDev->cra[0] = shadowDev->cra[0];
-   pDev->cra[1] = shadowDev->cra[1];
-   pDev->startps = shadowDev->startps;
-   pDev->ipr[0] = shadowDev->ipr[0];
-   pDev->ipr[1] = shadowDev->ipr[1];
-   pDev->xCharOffset = shadowDev->xCharOffset;
-   pDev->yCharOffset = shadowDev->yCharOffset;
-   pDev->yLineBias = shadowDev->yLineBias;
-
-   pDev->canClip = shadowDev->canClip;
-   pDev->canHAdj = shadowDev->canHAdj;
-   pDev->canChangeGamma = shadowDev->canChangeGamma;
-   pDev->startcol = shadowDev->startcol;
-   pDev->startfill = shadowDev->startfill;
-   pDev->startlty = shadowDev->startlty;
-   pDev->startfont = shadowDev->startfont;
-   pDev->startps = shadowDev->startps;
-   pDev->startgamma = shadowDev->startgamma;
-   pDev->displayListOn = TRUE;
-
-   // no support for events yet
-   pDev->canGenMouseDown = FALSE;
-   pDev->canGenMouseMove = FALSE;
-   pDev->canGenMouseUp = FALSE;
-   pDev->canGenKeybd = FALSE;
-   pDev->gettingEvent = FALSE;
+   dev_desc::setDeviceAttributes(pDev, shadowDev);
 }
 
 // the shadow device is created during creation of the main RStudio
@@ -366,7 +332,7 @@ void circle(double x,
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->circle(x, y, r, gc, pngDevDesc);
+   dev_desc::circle(x, y, r, gc, pngDevDesc);
 }
 
 void line(double x1,
@@ -379,8 +345,8 @@ void line(double x1,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == NULL)
       return;
-   
-   pngDevDesc->line(x1, y1, x2, y2, gc, pngDevDesc);
+ 
+   dev_desc::line(x1, y1, x2, y2, gc, pngDevDesc);
 }
 
 void polygon(int n,
@@ -393,7 +359,7 @@ void polygon(int n,
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->polygon(n, x, y, gc, pngDevDesc);
+   dev_desc::polygon(n, x, y, gc, pngDevDesc);
 }
 
 void polyline(int n,
@@ -406,7 +372,7 @@ void polyline(int n,
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->polyline(n, x, y, gc, pngDevDesc);
+   dev_desc::polyline(n, x, y, gc, pngDevDesc);
 }
 
 void rect(double x0,
@@ -420,7 +386,7 @@ void rect(double x0,
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->rect(x0, y0, x1, y1, gc, pngDevDesc);
+   dev_desc::rect(x0, y0, x1, y1, gc, pngDevDesc);
 }
 
 void path(double *x,
@@ -432,6 +398,9 @@ void path(double *x,
           pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == NULL)
+      return;
+   
    dev_desc::path(x, y, npoly, nper, winding, gc, pngDevDesc);
 }
 
@@ -448,6 +417,9 @@ void raster(unsigned int *raster,
             pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == NULL)
+      return;
+   
    dev_desc::raster(raster,
                     w,
                     h,
@@ -463,10 +435,12 @@ void raster(unsigned int *raster,
 
 SEXP cap(pDevDesc dd)
 {
-   return R_NilValue;
-}
-
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == NULL)
+      return R_NilValue;
    
+   return dev_desc::cap(pngDevDesc);
+}
 
 void metricInfo(int c,
                 const pGEcontext gc,
@@ -479,12 +453,15 @@ void metricInfo(int c,
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->metricInfo(c, gc, ascent, descent, width, pngDevDesc);
+   dev_desc::metricInfo(c, gc, ascent, descent, width, pngDevDesc);
 }
 
 double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return ::strlen(str);
+   
    return dev_desc::strWidth(str, gc, pngDevDesc);
 }
    
@@ -497,6 +474,9 @@ void text(double x,
           pDevDesc dev)
 {   
    pDevDesc pngDevDesc = shadowDevDesc(dev);
+   if (pngDevDesc == NULL)
+      return;
+   
    dev_desc::text(x, y, str, rot, hadj, gc, pngDevDesc);
 }
    
@@ -506,7 +486,7 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->clip(x0, x1, y0, y1, pngDevDesc);
+   dev_desc::clip(x0, x1, y0, y1, pngDevDesc);
 }
    
 void newPage(const pGEcontext gc, pDevDesc dev)
@@ -515,7 +495,7 @@ void newPage(const pGEcontext gc, pDevDesc dev)
    if (pngDevDesc == NULL)
       return;
    
-   pngDevDesc->newPage(gc, pngDevDesc);
+   dev_desc::newPage(gc, pngDevDesc);
 }
 
 void mode(int mode, pDevDesc dev)
@@ -524,8 +504,7 @@ void mode(int mode, pDevDesc dev)
    if (pngDevDesc == NULL)
       return;
    
-   if (pngDevDesc->mode != NULL)
-      pngDevDesc->mode(mode, pngDevDesc);
+   dev_desc::mode(mode, pngDevDesc);
 }
 
 void onBeforeExecute(DeviceContext* pDC)
