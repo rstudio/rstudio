@@ -24,7 +24,7 @@
 
 extern "C" {
 
-struct DevDescVersion9
+struct DevDescVersion12
 {
    double left;
    double right;
@@ -55,6 +55,7 @@ struct DevDescVersion9
    Rboolean canGenMouseMove;
    Rboolean canGenMouseUp;
    Rboolean canGenKeybd;
+   Rboolean canGenIdle; // version 12
    Rboolean gettingEvent;
 
    void (*activate)(const pDevDesc );
@@ -130,40 +131,44 @@ namespace graphics {
 namespace handler {
 namespace dev_desc {
 
-pDevDesc allocate(const DevDescVersion9& devDescVersion9);
+pDevDesc allocate(const DevDescVersion12& devDescVersion12);
+void setSize(pDevDesc pDD);
+void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow);
 
-void setSize(pDevDesc pDevDesc);
-
-void path(double *x,
-          double *y,
-          int npoly,
-          int *nper,
+/* Wrapper methods for graphics engine */
+void activate(const pDevDesc dd);
+void circle(double x, double y, double r, const pGEcontext gc, pDevDesc dd);
+void clip(double x0, double x1, double y0, double y1, pDevDesc dd);
+void close(pDevDesc dd);
+void deactivate(pDevDesc dd);
+Rboolean locator(double *x, double *y, pDevDesc dd);
+void line(double x1, double y1, double x2, double y2,
+          const pGEcontext gc, pDevDesc dd);
+void metricInfo(int c, const pGEcontext gc,
+                double* ascent, double* descent, double* width,
+                pDevDesc dd);
+void mode(int mode, pDevDesc dd);
+void newPage(const pGEcontext gc, pDevDesc dd);
+void polygon(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
+void polyline(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd);
+void rect(double x0, double y0, double x1, double y1,
+          const pGEcontext gc, pDevDesc dd);
+void path(double *x, double *y, 
+          int npoly, int *nper,
           Rboolean winding,
-          const pGEcontext gc,
-          pDevDesc dd);
-
-void raster(unsigned int *raster,
-            int w,
-            int h,
-            double x,
-            double y,
-            double width,
-            double height,
-            double rot,
+          const pGEcontext gc, pDevDesc dd);
+void raster(unsigned int *raster, int w, int h,
+            double x, double y, 
+            double width, double height,
+            double rot, 
             Rboolean interpolate,
-            const pGEcontext gc,
-            pDevDesc dd);
-
-double strWidth(const char *str, const pGEcontext gc, pDevDesc dev);
-
-void text(double x,
-          double y,
-          const char *str,
-          double rot,
-          double hadj,
-          const pGEcontext gc,
-          pDevDesc dev);
-
+            const pGEcontext gc, pDevDesc dd);
+SEXP cap(pDevDesc dd);
+void size(double *left, double *right, double *bottom, double *top,
+          pDevDesc dd);
+double strWidth(const char *str, const pGEcontext gc, pDevDesc dd);
+void text(double x, double y, const char *str, double rot,
+          double hadj, const pGEcontext gc, pDevDesc dd);
 
 } // namespace dev_desc
 } // namespace handler
