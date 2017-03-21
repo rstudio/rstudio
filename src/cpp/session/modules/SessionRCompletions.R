@@ -279,7 +279,14 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- index$paths
    }
    
-   absolutePaths <- sort(union(absolutePaths, .rs.listFilesFuzzy(directory, tokenName)))
+   # Merge in completions from the current directory.
+   dirPaths <- .rs.listFilesFuzzy(directory, tokenName)
+   if (directoriesOnly)
+   {
+      dirInfo <- file.info(dirPaths)
+      dirPaths <- dirPaths[dirInfo$isdir]
+   }
+   absolutePaths <- sort(union(absolutePaths, dirPaths))
    
    ## Bail out early if we didn't get any completions.
    if (!length(absolutePaths))

@@ -154,9 +154,17 @@ public class TextEditingTargetFindReplace
       boolean multiLineSelection = selection.indexOf('\n') != -1;
       if ((selection.length()) > 0 && !multiLineSelection)
       {
-         ensureFindReplaceBar(true);
-         findReplace_.activate(selection, true, false);
-         findReplace_.findNext();
+         boolean hasFindReplaceBar = findReplaceBar_ != null;
+         if (hasFindReplaceBar)
+         {
+            findReplace_.activate(selection, true, false);
+            findReplace_.findNext();
+         }
+         else
+         {
+            ensureFindReplaceBar(true);
+            findReplace_.activate(selection, true, false);
+         }
       }
    }
    
