@@ -31,7 +31,7 @@ BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
 BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
    date_time filesystem foreach format function interprocess iostreams
-   lambda lexical_cast optional program_options random range ref
+   lambda lexical_cast optional program_options property_tree random range ref
    regex scope_exit signals smart_ptr spirit string_algo system
    test thread tokenizer type_traits typeof unordered utility variant"
 
@@ -45,7 +45,10 @@ then
       then
          curl -L $BOOST_URL > $BOOST_TAR
       else
-         wget -c $BOOST_URL -O $BOOST_TAR
+         # sourceforge uses a certificate that is not compatible with older wget
+         # (which doesn't realize that *.sourceforge.net should match 
+         # sourceforge.net)
+         wget -c --no-check-certificate $BOOST_URL -O $BOOST_TAR
       fi
    fi
    
