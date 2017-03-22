@@ -90,6 +90,9 @@ then
      then
         BJAM_CXXFLAGS="cxxflags=-stdlib=libstdc++"
         BJAM_LDFLAGS="linkflags=-stdlib=libstdc++"
+     else
+        BJAM_CXXFLAGS=""
+        BJAM_LDFLAGS=""
      fi
 
      sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang ${BJAM_CXXFLAGS} ${BJAM_LDFLAGS} variant=release threading=multi link=static install
