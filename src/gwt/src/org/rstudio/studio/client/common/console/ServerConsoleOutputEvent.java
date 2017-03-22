@@ -1,7 +1,7 @@
 /*
  * ServerConsoleOutputEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,18 +32,15 @@ public class ServerConsoleOutputEvent
 
       public native final String getHandle() /*-{ return this.handle; }-*/;
       public native final String getOutput() /*-{ return this.output; }-*/;
-      public native final boolean isError() /*-{ return this.error; }-*/;
    }
 
 
    public ServerConsoleOutputEvent(String procHandle,
-                                   String output,
-                                   boolean error)
+                                   String output)
    {
 
       procHandle_ = procHandle;
       output_ = output;
-      error_ = error;
    }
 
    public String getProcessHandle()
@@ -54,11 +51,6 @@ public class ServerConsoleOutputEvent
    public String getOutput()
    {
       return output_;
-   }
-
-   public boolean getError()
-   {
-      return error_;
    }
 
    @Override
@@ -75,7 +67,6 @@ public class ServerConsoleOutputEvent
 
    private final String procHandle_;
    private final String output_;
-   private final boolean error_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

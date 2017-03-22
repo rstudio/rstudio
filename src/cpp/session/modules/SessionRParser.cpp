@@ -43,7 +43,6 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <boost/container/flat_set.hpp>
-#include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
 
 namespace rstudio {

@@ -5017,9 +5017,11 @@ public class TextEditingTarget implements
          }
       };
       
-      // save before rendering if the document is dirty; otherwise render
-      // directly
-      Command command = dirtyState_.getValue() ? saveCommand : renderCommand;
+      // save before rendering if the document is dirty or has never been saved;
+      // otherwise render directly
+      Command command = 
+            docUpdateSentinel_.getPath() == null || dirtyState_.getValue() ? 
+                  saveCommand : renderCommand;
       
       if (isRmdNotebook())
          dependencyManager_.withRMarkdown("Creating R Notebooks", command);

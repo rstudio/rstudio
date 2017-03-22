@@ -26,6 +26,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int DEFAULT_COLS = 80;
    public static final int DEFAULT_ROWS = 25;
    
+   public static final int CHANNEL_RPC = 0;
+   public static final int CHANNEL_WEBSOCKET = 1;
+   public static final int CHANNEL_PIPE = 2;
+   
    protected ConsoleProcessInfo() {}
 
    public final native String getHandle() /*-{
@@ -76,6 +80,14 @@ public class ConsoleProcessInfo extends JavaScriptObject
    
    public final native int getShellType() /*-{
       return this.shell_type;
+   }-*/;
+   
+   public final native int getChannelMode() /*-{
+      return this.channel_mode;
+   }-*/;
+   
+   public final native String getChannelId() /*-{
+      return this.channel_id;
    }-*/;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;

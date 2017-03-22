@@ -281,8 +281,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                              ServerConsoleOutputEvent event)
                {
                   if (event.getProcessHandle().equals(procInfo.getHandle()))
-                     fireEvent(new ConsoleOutputEvent(event.getOutput(),
-                                                      event.getError()));
+                     fireEvent(new ConsoleOutputEvent(event.getOutput()));
                }
             }));
       registrations_.add(eventBus.addHandler(

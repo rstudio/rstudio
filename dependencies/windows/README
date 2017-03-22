@@ -18,20 +18,17 @@ Installing Qt
 
 RStudio currently builds against Qt 5.4.1 on Windows. You can download it here:
 
-http://download.qt.io/official_releases/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe
+http://download.qt.io/archive/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe
 
 
 Installing Rtools
 =============================================================================
 
-RStudio currently builds against the MinGW toolchains packaged with Rtools 3.3.
-You can download this at:
-
-https://cran.r-project.org/bin/windows/Rtools/Rtools33.exe
-
-Install this into the default location, at C:\Rtools, to ensure that RStudio's
-CMake configuration scripts automatically discover the associated tools.
-
+In the past, RStudio used the MinGW toolchain packaged with Qt for compilation
+of C / C++ code; however, RStudio now uses RTools 3.3 to ensure compatibility
+with versions of R built with the newer RTools toolchain. The dependency 
+script described below under "Satisfy Additional Dependencies" will download
+and install RTools.
 
 Update System Path
 =============================================================================
@@ -49,7 +46,7 @@ C:\Program Files\R\R-2.15.1\bin\i386
 Satisfy Additional Dependencies
 =============================================================================
 
-Additional dependencies (boost, GWT, and gin) can be satisfied by
+Additional dependencies (RTools, boost, GWT, and gin) can be satisfied by
 running the following script:
 
 install-dependencies.cmd

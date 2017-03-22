@@ -1,7 +1,7 @@
 /*
  * Stopwatch.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,10 +26,11 @@ public class Stopwatch
       startTime_ = System.currentTimeMillis();
    }
 
-   public void mark(String label)
+   public long mark(String label)
    {
       long stopTime = System.currentTimeMillis();
       Debug.log("[Stopwatch] " + label + ": " + (stopTime - startTime_) + " ms");
+      return stopTime - startTime_;
    }
 
    private long startTime_;

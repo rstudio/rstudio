@@ -1,7 +1,7 @@
 #
 # SessionRmdNotebook.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -104,6 +104,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
    chunkData <- lapply(chunkDirs, function(dir) {
       files <- list.files(dir, full.names = TRUE)
+
+      # exclude directories
+      fileInfo <- file.info(files)
+      files <- files[!fileInfo$isdir]
+
+      # extract the contents from each regular file
       contents <- lapply(files, function(file) {
          .rs.readFile(
             file,

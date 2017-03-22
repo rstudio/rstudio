@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,20 +31,14 @@ public class ConsoleOutputEvent extends GwtEvent<Handler>
       HandlerRegistration addConsoleOutputHandler(Handler handler);
    }
 
-   public ConsoleOutputEvent(String output, boolean error)
+   public ConsoleOutputEvent(String output)
    {
       output_ = output;
-      error_ = error;
    }
 
    public String getOutput()
    {
       return output_;
-   }
-
-   public boolean isError()
-   {
-      return error_;
    }
 
    @Override
@@ -60,7 +54,6 @@ public class ConsoleOutputEvent extends GwtEvent<Handler>
    }
 
    private final String output_;
-   private final boolean error_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

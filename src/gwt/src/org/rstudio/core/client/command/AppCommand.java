@@ -22,7 +22,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 
@@ -39,7 +38,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -644,6 +642,4 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private static final String WINDOW_MODE_BACKGROUND = "background";
    private static final String WINDOW_MODE_MAIN = "main";
    private static final String WINDOW_MODE_ANY = "any";
-   
-   private UIPrefs uiPrefs_;
 }

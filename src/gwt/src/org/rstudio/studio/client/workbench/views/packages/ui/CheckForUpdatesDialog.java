@@ -31,7 +31,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<PackageUpdate>
 {

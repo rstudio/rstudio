@@ -120,6 +120,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocket;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
@@ -220,6 +221,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewConnectionSnippetHost newConnectionSnippetHost);
    void injectMembers(NewConnectionSnippetDialog newConnectionSnippetDialog);
    void injectMembers(NewPackagePage page);
+   void injectMembers(TerminalSessionSocket socket);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -31,6 +31,7 @@ public class MultipleItemSuggestTextBox extends TextBoxBase
    {
       super(Document.get().createTextInputElement());
       setStyleName("gwt-TextBox");
+      getElement().setAttribute("spellcheck", "false");
    }
    
    public List<String> getItems()

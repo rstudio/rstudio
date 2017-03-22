@@ -1,7 +1,7 @@
 /*
  * UIPrefsAccessor.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -587,6 +587,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showTerminalTab()
    {
       return bool("show_terminal_tab", true);
+   }
+   
+   public PrefValue<Boolean> enableReportTerminalLag()
+   {
+      return bool("enable_report_terminal_lag", false);
    }
    
    public static final String KNIT_DIR_DEFAULT = "default";

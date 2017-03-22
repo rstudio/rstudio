@@ -130,13 +130,16 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# default to boost 1.50.0
-set(BOOST_VERSION 1.50.0)
+# default to boost 1.63.0
+set(BOOST_VERSION 1.63.0)
 
 # override if necessary
 if (RSTUDIO_BOOST_VERSION)
    set(BOOST_VERSION "${RSTUDIO_BOOST_VERSION}")
 endif()
+
+# disable Boost Signals deprecation warning
+add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
 
 list(APPEND BOOST_LIBS
    date_time
@@ -153,8 +156,10 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_63_0)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
+      add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
+
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
@@ -165,26 +170,31 @@ if(UNIX)
       foreach(BOOST_LIB ${BOOST_LIBS})
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
       endforeach()
+      message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
    else()
+      add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
       find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
+      message(STATUS "Using system Boost ${BOOST_VERSION}")
    endif()
 
-# WIN32 BOOST
+   # WIN32 BOOST
 else()
-     # hard-code to our own prebuilt boost libs
-     set(Boost_COMPILER "-mgw49")
-     if(RSTUDIO_SESSION_WIN64)
-        set(BOOST_ARCH "64")
-     else()
-        set(BOOST_ARCH "32")
-     endif()
-     set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-rtools33-gcc493/boost${BOOST_ARCH}")
-     set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_50")
-     find_package(Boost ${BOOST_VERSION} REQUIRED)
-     set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
-     foreach(BOOST_LIB ${BOOST_LIBS})
-        list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}${Boost_COMPILER}-mt-1_50.a")
-     endforeach()
+   # hard-code to our own prebuilt boost libs
+   add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
+   set(Boost_COMPILER "-mgw49")
+   if(RSTUDIO_SESSION_WIN64)
+      set(BOOST_ARCH "64")
+   else()
+      set(BOOST_ARCH "32")
+   endif()
+   set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.63-win-rtools33-gcc493/boost${BOOST_ARCH}")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_63")
+   find_package(Boost ${BOOST_VERSION} REQUIRED)
+   set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
+   foreach(BOOST_LIB ${BOOST_LIBS})
+      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}${Boost_COMPILER}-mt-s-1_63.a")
+   endforeach()
+   message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
 endif()
 
 
@@ -220,6 +230,9 @@ endif()
 
 # core library
 add_subdirectory(core)
+
+# external libraries
+add_subdirectory(ext)
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects

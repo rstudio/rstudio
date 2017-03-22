@@ -23,7 +23,7 @@
 #include <boost/bind.hpp>
 #include <boost/utility.hpp>
 
-namespace boost {
+namespace RSTUDIO_BOOST_NAMESPACE {
 namespace asio {
    class const_buffer ;
 }

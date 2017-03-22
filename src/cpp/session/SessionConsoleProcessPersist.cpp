@@ -40,7 +40,10 @@ namespace console_persist {
 // 2017/03/08 - console01 -> console02
 //                Added shell type property to allow Windows to track
 //                multiple terminal types (cmd, powershell, git bash, etc.)
-#define kConsoleDir "console02"
+// 2017/03/21 - console02 -> console03
+//                Added channel type and channel ID to allow distinction of
+//                using non-RPC-based communication channel back to client
+#define kConsoleDir "console03"
 
 namespace {
 

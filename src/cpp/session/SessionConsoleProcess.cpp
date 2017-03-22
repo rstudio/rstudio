@@ -271,12 +271,6 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
    return Input();
 }
 
-void ConsoleProcess::enqueOutput(const std::string& output,
-                                 bool error = false)
-{
-   enqueOutputEvent(output, error);
-}
-
 void ConsoleProcess::enquePromptEvent(const std::string& prompt)
 {
    // enque a prompt event
@@ -371,7 +365,7 @@ std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable)
    return procInfo_->getSavedBufferChunk(chunk, pMoreAvailable);
 }
 
-void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
+void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
    // copy to output buffer
    procInfo_->appendToOutputBuffer(output);
@@ -384,7 +378,6 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 
    json::Object data;
    data["handle"] = handle();
-   data["error"] = error;
    data["output"] = trimmedOutput;
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessOutput, data));
@@ -395,7 +388,7 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    if (options_.smartTerminal)
    {
-      enqueOutputEvent(output, false);
+      enqueOutputEvent(output);
       return;
    }
    
@@ -407,7 +400,7 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
    // process as normal output or detect a prompt if there is one
    if (boost::algorithm::ends_with(posixOutput, "\n"))
    {
-      enqueOutputEvent(posixOutput, false);
+      enqueOutputEvent(posixOutput);
    }
    else
    {
@@ -416,7 +409,7 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
       std::size_t lastLoc = posixOutput.find_last_of("\n\f");
       if (lastLoc != std::string::npos)
       {
-         enqueOutputEvent(posixOutput.substr(0, lastLoc), false);
+         enqueOutputEvent(posixOutput.substr(0, lastLoc));
          maybeConsolePrompt(ops, posixOutput.substr(lastLoc + 1));
       }
       else
@@ -433,11 +426,11 @@ void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
 
    // treat special control characters as output rather than a prompt
    if (boost::regex_search(output, smatch, controlCharsPattern_))
-      enqueOutputEvent(output, false);
+      enqueOutputEvent(output);
 
    // make sure the output matches our prompt pattern
    if (!boost::regex_match(output, smatch, promptPattern_))
-      enqueOutputEvent(output, false);
+      enqueOutputEvent(output);
 
    // it is a prompt
    else

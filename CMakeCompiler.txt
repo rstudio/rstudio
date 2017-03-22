@@ -31,7 +31,12 @@ if(WIN32 AND NOT DEFINED RSTUDIO_PACKAGE_BUILD)
   set(RTOOLS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows/Rtools33")
   string(REGEX REPLACE "/" "\\\\" RTOOLS_TOOLCHAIN_32BIT_PATH "${RTOOLS_PATH}/mingw_32/bin")
   set(ENV{PATH} "${RTOOLS_TOOLCHAIN_32BIT_PATH}")
+  set(WINDRES "${RTOOLS_TOOLCHAIN_32BIT_PATH}\\windres.exe")
   message(STATUS "The PATH is $ENV{PATH}")
+endif()
+
+if(NOT DEFINED WINDRES)
+  set(WINDRES windres.exe)
 endif()
 
 # avoid colored output (seems unreliable in cmd.exe terminal)

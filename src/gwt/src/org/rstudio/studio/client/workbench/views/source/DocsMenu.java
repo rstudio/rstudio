@@ -19,9 +19,11 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.core.client.command.DisabledMenuItem;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedEvent;
@@ -29,6 +31,8 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedHan
 import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DocsMenu extends AppMenuBar
 {
@@ -64,6 +68,9 @@ public class DocsMenu extends AppMenuBar
       clearItems();
       names_.clear();
       menuItems_.clear();
+      
+      // de-duplicate names
+      names = deduplicate(names, paths);
 
       assert icons.length == names.length && names.length == paths.length;
 
@@ -107,6 +114,55 @@ public class DocsMenu extends AppMenuBar
       if (filterCriteria == null)
          return true;
       return value.toLowerCase().startsWith(filterCriteria.toLowerCase());
+   }
+   
+   private String[] deduplicate(String[] names, String[] paths)
+   {
+      Map<String, Integer> counts = new HashMap<String, Integer>();
+      
+      // initialize map with zeroes
+      int n = names.length;
+      for (int i = 0; i < n; i++)
+         counts.put(names[i], 0);
+      
+      // generate counts
+      for (int i = 0; i < n; i++)
+         counts.put(names[i], counts.get(names[i]) + 1);
+      
+      // de-duplicate names based on path components
+      String[] deduped = new String[names.length];
+      for (int i = 0; i < n; i++)
+      {
+         if (counts.get(names[i]) >= 2)
+         {
+            FileSystemItem item = FileSystemItem.createFile(paths[i]);
+            deduped[i] = names[i] + " \u2014 " + item.getParentPath().getName();
+         }
+         else
+         {
+            deduped[i] = names[i];
+         }
+      }
+      
+      // count duplicates once more
+      counts.clear();
+      for (int i = 0; i < n; i++)
+         counts.put(deduped[i], 0);
+      
+      for (int i = 0; i < n; i++)
+         counts.put(deduped[i], counts.get(deduped[i]) + 1);
+      
+      // for items that are still duplicated, just print the full parent path
+      for (int i = 0; i < n; i++)
+      {
+         if (counts.get(deduped[i]) >= 2)
+         {
+            FileSystemItem item = FileSystemItem.createFile(paths[i]);
+            deduped[i] = names[i] + " \u2014 " + item.getParentPath().getPath();
+         }
+      }
+      
+      return deduped;
    }
 
    private ArrayList<String> names_ = new ArrayList<String>();

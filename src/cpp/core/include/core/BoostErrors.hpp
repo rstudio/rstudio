@@ -19,7 +19,7 @@
 #include <boost/system/error_code.hpp>
 
 // bridges for boost libraries without support for system::error_code
-namespace boost {
+namespace RSTUDIO_BOOST_NAMESPACE {
 
 namespace interprocess {
 

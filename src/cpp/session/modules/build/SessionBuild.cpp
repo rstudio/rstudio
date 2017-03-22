@@ -567,11 +567,14 @@ private:
       core::system::ProcessOptions pkgOptions(options);
       core::system::Options childEnv;
       core::system::environment(&childEnv);
-
+      
       // allow child process to inherit our R_LIBS
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      
+      // record the library paths used when this build was kicked off
+      libPaths_ = module_context::getLibPaths();
 
       // prevent spurious cygwin warnings on windows
 #ifdef _WIN32
@@ -1347,6 +1350,15 @@ private:
 #endif
          }
 
+         // if this is a package build then try to clean up a left
+         // behind 00LOCK directory
+         if (!pkgInfo_.empty() && !libPaths_.empty())
+         {
+            FilePath libPath = libPaths_[0];
+            FilePath lockPath = libPath.childPath("00LOCK-" + pkgInfo_.name());
+            lockPath.removeIfExists();
+         }
+         
          // never restart R after a failed build
          restartR_ = false;
 
@@ -1514,6 +1526,7 @@ private:
    json::Array errorsJson_;
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
+   std::vector<FilePath> libPaths_;
    std::string successMessage_;
    std::string buildToolsWarning_;
    boost::function<void()> successFunction_;

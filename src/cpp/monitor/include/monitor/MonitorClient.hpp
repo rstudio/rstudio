@@ -29,7 +29,7 @@
 
 // forward declaration; boost/asio/io_service may cause errors if included more
 // than once (Boost 1.50 on Win x64 only)
-namespace boost {
+namespace RSTUDIO_BOOST_NAMESPACE {
 namespace asio {
    class io_service;
 }

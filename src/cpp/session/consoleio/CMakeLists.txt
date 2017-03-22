@@ -38,7 +38,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.exe.manifest
 
 add_custom_command(
    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-   COMMAND windres.exe
+   COMMAND "${WINDRES}"
       -I "."
       -i "consoleio.rc"
       -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"

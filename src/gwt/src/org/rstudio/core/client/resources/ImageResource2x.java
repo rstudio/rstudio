@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.resources;
 
-import org.rstudio.studio.client.RStudioGinjector;
-
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -74,6 +72,7 @@ public class ImageResource2x implements ImageResource
       return getResource().getTop();
    }
 
+   @SuppressWarnings("deprecation")
    @Override
    public String getURL()
    {

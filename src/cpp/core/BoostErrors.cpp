@@ -29,7 +29,7 @@
 
 using namespace boost::system ;
 
-namespace boost {
+namespace RSTUDIO_BOOST_NAMESPACE {
 namespace interprocess {
 
 class interprocess_error_category : public error_category
