@@ -133,6 +133,7 @@ public:
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
+   void setNotBusy() { procInfo_->setHasChildProcs(false); }
 
    // Get the given (0-based) chunk of the saved buffer; if more is available
    // after the requested chunk, *pMoreAvailable will be set to true
