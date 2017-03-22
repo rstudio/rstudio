@@ -72,7 +72,7 @@ namespace lib {
     using boost::system::error_category;
     using boost::system::error_condition;
     using boost::system::system_error;
-    #define _WEBSOCKETPP_ERROR_CODE_ENUM_NS_START_ namespace boost { namespace system {
+    #define _WEBSOCKETPP_ERROR_CODE_ENUM_NS_START_ namespace RSTUDIO_BOOST_NAMESPACE { namespace system {
     #define _WEBSOCKETPP_ERROR_CODE_ENUM_NS_END_ }}
 #endif
 
