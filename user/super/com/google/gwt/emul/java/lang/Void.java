@@ -28,4 +28,8 @@ public final class Void {
   private Void() {
   }
 
+  // CHECKSTYLE_OFF: Utility Methods for unboxed Void.
+  protected static Void $create() {
+    throw new AssertionError();
+  }
 }
