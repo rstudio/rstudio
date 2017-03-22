@@ -125,7 +125,6 @@ public:
    core::Error start();
    void enqueInput(const Input& input);
    Input dequeInput();
-   void enqueOutput(const std::string& output, bool error);
    void enquePrompt(const std::string& prompt);
    void interrupt();
    void resize(int cols, int rows);
@@ -153,7 +152,7 @@ private:
    void onHasSubprocs(bool hasSubProcs);
 
    std::string bufferedOutput() const;
-   void enqueOutputEvent(const std::string& output, bool error);
+   void enqueOutputEvent(const std::string& output);
    void enquePromptEvent(const std::string& prompt);
    void handleConsolePrompt(core::system::ProcessOperations& ops,
                             const std::string& prompt);
