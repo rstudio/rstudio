@@ -955,6 +955,16 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    {
       boost::shared_ptr<ConsoleProcess> proc =
                                     ConsoleProcess::fromJson(it->get_obj());
+
+      // Deserializing consoleprocs list only happens during session
+      // initialization, therefore they do not represent an actual running
+      // async process, therefore are not busy. Mark as such, otherwise we
+      // can get false "busy" indications on the client after a restart, for
+      // example if a session was closed with busy terminal(s), then
+      // restarted. This is not hit if reconnecting to a still-running
+      // session.
+      proc->setNotBusy();
+
       s_procs[proc->handle()] = proc;
    }
 }
