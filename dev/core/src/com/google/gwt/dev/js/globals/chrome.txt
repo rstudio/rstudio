@@ -301,6 +301,7 @@ PasswordCredential
 Path2D
 Performance
 PerformanceEntry
+PerformanceLongTaskTiming
 PerformanceMark
 PerformanceMeasure
 PerformanceNavigation
@@ -336,6 +337,7 @@ RTCDataChannel
 RTCIceCandidate
 RTCPeerConnection
 RTCSessionDescription
+RTCStatsReport
 RadioNodeList
 Range
 RangeError
@@ -523,6 +525,7 @@ SubtleCrypto
 Symbol
 SyncManager
 SyntaxError
+TaskAttributionTiming
 Text
 TextDecoder
 TextEncoder
