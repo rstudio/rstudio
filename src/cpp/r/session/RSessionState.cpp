@@ -23,6 +23,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
+#include <core/Version.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
@@ -55,6 +56,7 @@ namespace {
 const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
+const char * const kRVersion = "rversion";
 const char * const kEnvironmentVars = "environment_vars";
 const char * const kLibPathsFile = "libpaths";
 const char * const kHistoryFile = "history";
@@ -92,6 +94,30 @@ bool isRLocationVariable(const std::string& name)
          name == "R_DOC_DIR" ||
          name == "R_INCLUDE_DIR" ||
          name == "R_SHARE_DIR";
+}
+
+Error saveRVersion(const FilePath& filePath)
+{
+   Error error;
+   
+   // remove pre-existing file
+   error = filePath.removeIfExists();
+   if (error)
+      return error;
+   
+   // ask R for the current version
+   std::string version;
+   error = RFunction(".rs.rVersionString").call(&version);
+   if (error)
+      return error;
+   
+   // write to file
+   error = core::writeStringToFile(filePath, version);
+   if (error)
+      return error;
+   
+   // success!
+   return Success();
 }
 
 Error saveEnvironmentVars(const FilePath& envFile)
@@ -302,9 +328,17 @@ bool save(const FilePath& statePath,
 
    // set r profile on restore (always run the .Rprofile in packrat mode)
    settings.set(kRProfileOnRestore, !excludePackages || packratModeOn);
+   
+   // save r version
+   Error error = saveRVersion(statePath.complete(kRVersion));
+   if (error)
+   {
+      reportError(kSaving, kRVersion, error, ERROR_LOCATION);
+      saved = false;
+   }
 
    // save environment variables
-   Error error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
@@ -481,18 +515,81 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
          return Success();
    }
 }
+
+namespace {
+
+Error validateRestoredRVersion(const FilePath& filePath)
+{
+   Error error;
+   
+   // assume we're okay if no file exists
+   if (!filePath.exists())
+      return Success();
+   
+   // read version from file
+   std::string savedRVersion;
+   error = core::readStringFromFile(
+            filePath,
+            &savedRVersion);
+   if (error)
+      return error;
+   
+   // read active R version
+   std::string activeRVersion;
+   error = RFunction(".rs.rVersionString").call(&activeRVersion);
+   if (error)
+      return error;
+   
+   core::Version vSaved(savedRVersion);
+   core::Version vRestore(activeRVersion);
+   
+   // if both major and minor versions are equal, we're okay
+   if (vSaved.versionMajor() == vRestore.versionMajor() &&
+       vSaved.versionMinor() == vRestore.versionMinor())
+   {
+      return Success();
+   }
+   
+   // incompatible versions; report error
+   error = systemError(
+            boost::system::errc::protocol_error,
+            ERROR_LOCATION);
+   
+   std::stringstream ss;
+   ss << "incompatible R versions (current="
+      << activeRVersion
+      << "; saved="
+      << savedRVersion
+      << ")";
+   
+   error.addProperty("reason", ss.str());
+   return error;
+}
+
+} // end anonymous namespace
    
 bool restore(const FilePath& statePath,
              bool serverMode,
              boost::function<Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages)
 {
+   Error error;
+   
    // setup error buffer
    ErrorRecorder er(pErrorMessages);
    
+   // bail early if incompatible r version (otherwise the session could
+   // crash on startup when attempting to restore incompatible libraries)
+   error = validateRestoredRVersion(statePath.complete(kRVersion));
+   if (error)
+   {
+      reportError(kRestoring, kRVersion, error, ERROR_LOCATION, er);
+      return false;
+   }
+   
    // init session settings (used below)
    Settings settings ;
-   Error error = settings.initialize(statePath.complete(kSettingsFile));
+   error = settings.initialize(statePath.complete(kSettingsFile));
    if (error)
       reportError(kRestoring, kSettingsFile, error, ERROR_LOCATION, er);
    
