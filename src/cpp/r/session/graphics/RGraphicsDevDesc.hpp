@@ -24,7 +24,7 @@
 
 extern "C" {
 
-struct DevDescVersion12
+struct DevDescVersion9
 {
    double left;
    double right;
@@ -55,7 +55,6 @@ struct DevDescVersion12
    Rboolean canGenMouseMove;
    Rboolean canGenMouseUp;
    Rboolean canGenKeybd;
-   Rboolean canGenIdle; // version 12
    Rboolean gettingEvent;
 
    void (*activate)(const pDevDesc );
@@ -131,7 +130,7 @@ namespace graphics {
 namespace handler {
 namespace dev_desc {
 
-pDevDesc allocate(const DevDescVersion12& devDescVersion12);
+pDevDesc allocate(const DevDescVersion9& devDescVersion9);
 
 void setSize(pDevDesc pDevDesc);
 

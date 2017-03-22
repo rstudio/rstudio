@@ -282,9 +282,6 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->canGenMouseMove = FALSE;
    pDev->canGenMouseUp = FALSE;
    pDev->canGenKeybd = FALSE;
-#if R_GE_version == 12
-   pDev->canGenIdle = FALSE;
-#endif
    pDev->gettingEvent = FALSE;
 }
 
