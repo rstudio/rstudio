@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectType;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
@@ -37,7 +39,6 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -70,41 +71,66 @@ public class ObjectBrowserModel implements TreeViewModel
                       Command onNodeExpansionCompleted)
    {
       connection_ = connection;
-      expandedNodeRefreshQueue_ = expandedNodes;
+      expandedNodeRefreshQueue_ = new HashSet<DatabaseObject>();
       onTableUpdateCompleted_ = onTableUpdateCompleted;
       onNodeExpansionCompleted_ = onNodeExpansionCompleted;
+      objectProvider_ = new ObjectProvider();
       refresh();
    }
    
    public void clear()
    {
       connection_ = null;
-      tableProvider_.clear();
+      if (objectProvider_ != null)
+         objectProvider_.clear();
    }
    
    @Override
    public <T> NodeInfo<?> getNodeInfo(T value)
    {
+      // no connection info yet
+      if (connection_ == null)
+         return null;
+
       // return the list of objects for the root node
-      if (value == null || 
-          connection_.getObjectTypes().get(0).getContains() == "data")
+      ConnectionObjectType rootType = null;
+      boolean rootData = true;
+      if (connection_.getObjectTypes() != null)
+         rootType = connection_.getObjectTypes().get(0);
+      if (rootType != null)
+         rootData = rootType.getContains() == "data";
+      if (value == null || rootData)
       {
-         tableProvider_ = new ObjectProvider();
-         fieldProviders_.clear();
-         return new DefaultNodeInfo<DatabaseObject>(tableProvider_,
-                                    new DataCell(),
+         return new DefaultNodeInfo<DatabaseObject>(objectProvider_,
+                                    rootData ? new DataCell() : 
+                                               new ContainerCell(),
                                     noObjectSelectionModel_,
                                     null);
       }
       else if (value instanceof DatabaseObject)
       {
          DatabaseObject val = (DatabaseObject)value;
-         FieldProvider fieldProvider = new FieldProvider((String)value);
-         fieldProviders_.put((String)value, fieldProvider);
-         return new DefaultNodeInfo<Field>(fieldProvider, 
-                                           new FieldCell(),
-                                           noFieldSelectionModel_,
-                                           null);
+
+         // ascertain whether this object contains data 
+         JsArray<ConnectionObjectType> types = connection_.getObjectTypes();
+         for (int i = 0; i < types.length(); i++)
+         {
+            if (types.get(i).getName() == val.getType() && 
+                types.get(i).getContains() == "data")
+            {
+               FieldProvider fieldProvider = new FieldProvider((DatabaseObject)value);
+               fieldProviders_.put((DatabaseObject)value, fieldProvider);
+               return new DefaultNodeInfo<Field>(fieldProvider, 
+                                                 new FieldCell(),
+                                                 noFieldSelectionModel_,
+                                                 null);
+            }
+         }
+         
+         // does not contain data, so draw as a container cell
+         return new DefaultNodeInfo<DatabaseObject>(objectProvider_,
+               new ContainerCell(),
+               noObjectSelectionModel_, null);
       }
       
       // Unhandled type.
@@ -120,7 +146,8 @@ public class ObjectBrowserModel implements TreeViewModel
    
    public void refresh()
    {
-      tableProvider_.refresh();
+      if (objectProvider_ != null)
+         objectProvider_.refresh();
    }
    
    public void refreshTable(String table)
@@ -143,15 +170,15 @@ public class ObjectBrowserModel implements TreeViewModel
          if (connection_ == null)
             return;
         
-         // prefetch the objects so there is no gap between clearing the
-         // table and redrawing the nodes
+         // prefetch the objects so there is no gap between clearing the table
+         // and redrawing the nodes
          listObjects(new CommandWithArg<JsArray<DatabaseObject>>() {
             @Override
             public void execute(JsArray<DatabaseObject> objects)
             {
                prefetchedObjectList_ = objects;
                fieldProviders_.clear();
-               for (HasData<String> display : getDataDisplays())
+               for (HasData<DatabaseObject> display : getDataDisplays())
                {
                  display.setVisibleRangeAndClearData(display.getVisibleRange(), 
                                                      true);
@@ -169,9 +196,9 @@ public class ObjectBrowserModel implements TreeViewModel
         }
         else if (prefetchedObjectList_ != null)
         {
-           JsArray<DatabaseObject> tables = prefetchedObjectList_;
+           JsArray<DatabaseObject> objects = prefetchedObjectList_;
            prefetchedObjectList_ = null;
-           updateData(tables);
+           updateData(objects);
         }
         else
         {
@@ -210,7 +237,7 @@ public class ObjectBrowserModel implements TreeViewModel
                public void onResponseReceived(JsArray<DatabaseObject> objects)
                {
                   onCompleted.execute(objects);
-               }    
+               }
                
                @Override
                public void onError(ServerError error)
@@ -246,7 +273,7 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private class FieldProvider extends AsyncDataProvider<Field>
    {
-      public FieldProvider(String table)
+      public FieldProvider(DatabaseObject table)
       {
          table_ = table;
       }
@@ -268,7 +295,7 @@ public class ObjectBrowserModel implements TreeViewModel
 
          server_.connectionListFields(
                connection_.getId(),
-               new ConnectionObjectSpecifier(table_, "table"),
+               new ConnectionObjectSpecifier(table_.getName(), table_.getType()),
                new SimpleRequestCallback<JsArray<Field>>() {
                   @Override
                   public void onResponseReceived(JsArray<Field> fields)
@@ -317,7 +344,7 @@ public class ObjectBrowserModel implements TreeViewModel
          }
       }
       
-      private String table_;
+      private DatabaseObject table_;
    }
    
    private class ContainerCell extends AbstractCell<DatabaseObject>
@@ -367,7 +394,7 @@ public class ObjectBrowserModel implements TreeViewModel
       @Override
       public void onBrowserEvent(Cell.Context context,
               Element parent, DatabaseObject value, NativeEvent event,
-              ValueUpdater<String> valueUpdater) {
+              ValueUpdater<DatabaseObject> valueUpdater) {
           if ("click".equals(event.getType()))
           {
              Element eventTarget = event.getEventTarget().cast();
@@ -394,15 +421,15 @@ public class ObjectBrowserModel implements TreeViewModel
       }
    }
    
-   private ObjectProvider tableProvider_;
-   private HashMap<String,FieldProvider> fieldProviders_ 
-                              = new HashMap<String,FieldProvider>();
+   private ObjectProvider objectProvider_;
+   private HashMap<DatabaseObject,FieldProvider> fieldProviders_ 
+                              = new HashMap<DatabaseObject,FieldProvider>();
    
    private Connection connection_;
    
    private JsArray<DatabaseObject> prefetchedObjectList_ = null;
    
-   private Set<String> expandedNodeRefreshQueue_ = null;
+   private Set<DatabaseObject> expandedNodeRefreshQueue_ = null;
    private Command onTableUpdateCompleted_ = null;
    private Command onNodeExpansionCompleted_ = null;
    

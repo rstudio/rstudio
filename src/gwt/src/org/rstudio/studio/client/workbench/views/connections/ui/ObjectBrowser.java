@@ -52,7 +52,8 @@ public class ObjectBrowser extends Composite implements RequiresResize
   
    public void clear()
    {
-      objectsModel_.clear();
+      if (objectsModel_ != null)
+         objectsModel_.clear();
    }
    
    public void update(Connection connection, String hint)
@@ -62,6 +63,59 @@ public class ObjectBrowser extends Composite implements RequiresResize
       
       objects_ = new ArrayList<CellTree>();
       
+      
+      // TODO: capture expanded nodes
+      // final Set<String> expandedNodes = new HashSet<String>();
+      // TreeNode rootNode = objects_.get(0).getRootTreeNode();
+      // for (int i = 0; i < rootNode.getChildCount(); i++)
+      // {
+      //    if (rootNode.isChildOpen(i))
+      //    {
+      //       String node = (String)rootNode.getChildValue(i);
+      //       expandedNodes.add(node);
+      //    }
+      // }
+
+      
+      // capture scroll position
+      // final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
+      // update the table then restore expanded nodes
+      objectsModel_.update(
+         connection,      // connection 
+         new HashSet<String>(),    // TODO: track nodes to expand
+         new Command() {   // table update completed, expand nodes
+            @Override
+            public void execute()
+            {
+               // TODO: restore expanded notes
+               // TreeNode rootNode = objects_.get(0).getRootTreeNode();
+               // for (int i = 0; i < rootNode.getChildCount(); i++)
+               // {
+               //    final String nodeName = (String)(rootNode.getChildValue(i));
+               //    if (expandedNodes.contains(nodeName))
+               //       rootNode.setChildOpen(i, true, false);
+               // }
+            }
+         },
+         new Command() {   // node expansion completed, restore scroll position
+            @Override
+            public void execute()
+            {
+               // delay 100ms to allow expand animation to complete
+               new Timer() {
+
+                  @Override
+                  public void run()
+                  {
+                     // TODO: update scroll pos
+                     // scrollPanel_.setVerticalScrollPosition(scrollPosition); 
+                  }
+                  
+               }.schedule(100);
+              
+            }
+         });
+
       // create the top level list of objects
       CellTree top = new CellTree(objectsModel_, null, RES, MESSAGES);
       top.setDefaultNodeSize(Integer.MAX_VALUE);
@@ -75,59 +129,8 @@ public class ObjectBrowser extends Composite implements RequiresResize
       
       objects_.add(top);
       scrollPanel_.setWidget(verticalWrapper);
-      
-      // capture scroll position
-      final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
-      
-      // capture expanded nodes
-      final Set<String> expandedNodes = new HashSet<String>();
-      TreeNode rootNode = tables_.getRootTreeNode();
-      for (int i = 0; i < rootNode.getChildCount(); i++)
-      {
-         if (rootNode.isChildOpen(i))
-         {
-            String node = (String)rootNode.getChildValue(i);
-            expandedNodes.add(node);
-         }
-      }
-      
-      // update the table then restore expanded nodes
-      objectsModel_.update(
-         connection,      // connection 
-         expandedNodes,    // track nodes to expand
-         new Command() {   // table update completed, expand nodes
-            @Override
-            public void execute()
-            {
-               TreeNode rootNode = tables_.getRootTreeNode();
-               for (int i = 0; i < rootNode.getChildCount(); i++)
-               {
-                  final String nodeName = (String)(rootNode.getChildValue(i));
-                  if (expandedNodes.contains(nodeName))
-                     rootNode.setChildOpen(i, true, false);
-               }
-            }
-         },                      
-         new Command() {   // node expansion completed, restore scroll position
-            @Override
-            public void execute()
-            {
-               // delay 100ms to allow expand animation to complete
-               new Timer() {
-
-                  @Override
-                  public void run()
-                  {
-                     scrollPanel_.setVerticalScrollPosition(scrollPosition); 
-                  }
-                  
-               }.schedule(100);
-              
-            }
-         });  
    }
    
- 
    @Override
    public void onResize()
    {
@@ -182,7 +185,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
                               = GWT.create(TableBrowserMessages.class);
    
    private final ScrollPanel scrollPanel_;
-   private final ArrayList<CellTree> objects_;
-   private final ObjectBrowserModel objectsModel_;
+   private ArrayList<CellTree> objects_;
+   private ObjectBrowserModel objectsModel_;
   
 }

@@ -304,7 +304,7 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    public void updateExploredConnection(String hint)
    {
-      connectionExplorer_.updateTableBrowser(hint);
+      connectionExplorer_.updateObjectBrowser(hint);
    }
    
    @Override

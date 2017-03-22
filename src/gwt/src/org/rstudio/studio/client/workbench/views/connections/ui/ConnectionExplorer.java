@@ -81,7 +81,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
             if (!event.isBusy() && containerPanel_.isProgressShowing())
             {
                showActivePanel();
-               updateTableBrowser();
+               updateObjectBrowser();
             }
          }
       });
@@ -102,7 +102,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       connection_ = connection;
       codePanel_.setCode(connection.getConnectCode(), connectVia);
-      updateTableBrowser();
+      updateObjectBrowser();
    }
    
    public void setConnected(boolean connected)
@@ -123,7 +123,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       return codePanel_.getConnectVia();
    }
    
-   public void updateTableBrowser()
+   public void updateObjectBrowser()
    {
       updateObjectBrowser("");
    }
