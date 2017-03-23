@@ -1541,6 +1541,58 @@ public class TextEditingTarget implements
          }
       });
       
+      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         Timer timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               HashMap<String, String> properties = new HashMap<String, String>();
+               
+               properties.put(
+                     PROPERTY_CURSOR_POSITION,
+                     Position.serialize(docDisplay_.getCursorPosition()));
+               
+               properties.put(
+                     PROPERTY_SCROLL_LINE,
+                     String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
+               
+               docUpdateSentinel_.modifyProperties(properties);
+            }
+         };
+         
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            timer_.schedule(1000);
+         }
+      });
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            String cursorPosition = docUpdateSentinel_.getProperty(
+                  PROPERTY_CURSOR_POSITION,
+                  "");
+            
+            if (StringUtil.isNullOrEmpty(cursorPosition))
+               return;
+            
+            
+            int scrollLine = StringUtil.parseInt(
+                  docUpdateSentinel_.getProperty(PROPERTY_SCROLL_LINE, "0"),
+                  0);
+            
+            Position position = Position.deserialize(cursorPosition);
+            docDisplay_.setCursorPosition(position);
+            docDisplay_.scrollToLine(scrollLine, false);
+            docDisplay_.setScrollLeft(0);
+         }
+      });
+      
       syncPublishPath(document.getPath());
       initStatusBar();
    }
@@ -1675,7 +1727,7 @@ public class TextEditingTarget implements
             updateStatusBarPosition();
             if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
                updateCurrentScope();
-               
+            
          }
       });
       updateStatusBarPosition();
@@ -6534,4 +6586,7 @@ public class TextEditingTarget implements
 
       abstract void doExtract(final JsArrayString response);
    }
+   
+   private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }
