@@ -123,6 +123,10 @@ public class EditSession extends JavaScriptObject
       return this.getScreenLength();
    }-*/;
    
+   public native final void setScrollLeft(int left) /*-{
+      this.setScrollLeft(left);
+   }-*/;
+   
    public native final void setScrollTop(int top) /*-{
       this.setScrollTop(top);
    }-*/;

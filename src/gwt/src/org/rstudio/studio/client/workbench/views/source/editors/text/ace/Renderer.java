@@ -191,4 +191,8 @@ public class Renderer extends JavaScriptObject
       return !!this.$scrollPastEnd;
    }-*/;
    
+   public final native int getFirstFullyVisibleRow() /*-{
+      return this.getFirstFullyVisibleRow();
+   }-*/;
+   
 }

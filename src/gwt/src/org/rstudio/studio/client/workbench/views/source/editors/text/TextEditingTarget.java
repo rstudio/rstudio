@@ -1541,6 +1541,60 @@ public class TextEditingTarget implements
          }
       });
       
+      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         Timer timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               HashMap<String, String> properties = new HashMap<String, String>();
+               
+               properties.put(
+                     "cursorPosition",
+                     Position.serialize(docDisplay_.getCursorPosition()));
+               
+               properties.put(
+                     "scrollLine",
+                     String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
+               
+               docUpdateSentinel_.modifyProperties(properties);
+            }
+         };
+         
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            timer_.schedule(1000);
+         }
+      });
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            String cursorPosition = docUpdateSentinel_.getProperty("cursorPosition", "");
+            if (StringUtil.isNullOrEmpty(cursorPosition))
+               return;
+            
+            Integer scrollLine = 0;
+            try
+            {
+               scrollLine = Integer.parseInt(docUpdateSentinel_.getProperty("scrollLine", "0"));
+            }
+            catch (Exception e)
+            {
+               Debug.logException(e);
+            }
+            
+            Position position = Position.deserialize(cursorPosition);
+            docDisplay_.setCursorPosition(position);
+            docDisplay_.scrollToLine(scrollLine, false);
+            docDisplay_.setScrollLeft(0);
+         }
+      });
+      
       syncPublishPath(document.getPath());
       initStatusBar();
    }
@@ -1675,7 +1729,7 @@ public class TextEditingTarget implements
             updateStatusBarPosition();
             if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
                updateCurrentScope();
-               
+            
          }
       });
       updateStatusBarPosition();
