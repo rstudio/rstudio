@@ -1,4 +1,4 @@
-FROM centos:6
+FROM centos:7
 
 RUN set -x \
     && yum install epel-release -y
@@ -8,6 +8,7 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     cmake \
+    fakeroot \
     gcc \
     gcc-c++ \
     git \
@@ -27,6 +28,9 @@ RUN yum install -y \
     xml-commons-apis \
     zlib-devel
 
+# sudo defaults to requiretty on centos7
+RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
+
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
 COPY dependencies/common/install-boost /tmp/
@@ -35,3 +39,13 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# remove users/groups with colliding jenkins ids
+RUN userdel systemd-bus-proxy && userdel systemd-network && groupdel input
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+ARG JENKINS_GID=999
+ARG JENKINS_UID=999
+RUN groupadd -g $JENKINS_GID jenkins && \
+    useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

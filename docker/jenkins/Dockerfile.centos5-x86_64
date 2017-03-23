@@ -47,7 +47,7 @@ RUN wget http://ftp.gnu.org/gnu/wget/wget-1.16.tar.gz \
     && ./configure --with-ssl=openssl --with-libssl-prefix=/usr/lib64/openssl --prefix=/usr \
     && make && make install
 
-# sudo defaults to requiretty on centos5? 
+# sudo defaults to requiretty on centos5?
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
@@ -58,3 +58,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+ARG JENKINS_GID=999
+ARG JENKINS_UID=999
+RUN groupadd -g $JENKINS_GID jenkins && \
+    useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

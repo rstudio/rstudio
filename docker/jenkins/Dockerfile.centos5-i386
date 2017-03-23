@@ -1,0 +1,128 @@
+FROM stevenolen/centos5-i386
+
+RUN set -x \
+    && linux32 yum clean all && linux32 yum -y update \
+    && yum install epel-release -y
+
+RUN linux32 yum install -y \
+    ant \
+    boost-devel \
+    bzip2-devel \
+    cmake \
+    gcc \
+    gcc-c++ \
+    git \
+    gstreamer-devel \
+    gstreamer-plugins-base-devel \
+    java-1.6.0-openjdk  \
+    libffi \
+    libuuid-devel \
+    make \
+    openssl-devel \
+    pam-devel \
+    pango-devel \
+    rpmdevtools \
+    sudo \
+    tar \
+    wget \
+    xml-commons-apis \
+    yum-utils \
+    zlib-devel
+
+# need to run a recent openssl to get SAN support for when we compile wget
+RUN wget http://www.openssl.org/source/openssl-1.0.2j.tar.gz \
+    && tar xvf openssl-1.0.2j.tar.gz \
+    && cd openssl-1.0.2j \
+    && make clean \
+    && linux32 ./config shared --prefix=/usr --openssldir=/usr/local/openssl \
+    && linux32 make && linux32 make install
+
+# update the root ca bundle. no-check-certificate so ugly.
+RUN wget --no-check-certificate -O /usr/local/openssl/certs/ca-bundle.crt http://curl.haxx.se/ca/cacert.pem \
+  && ln -s /usr/local/openssl/certs/ca-bundle.crt /usr/local/openssl/cert.pem
+
+# centos5 wget is comically old and doesn't work with wildcard certs
+RUN wget http://ftp.gnu.org/gnu/wget/wget-1.16.tar.gz \
+    && yum -y remove wget \
+    && tar -xzvf wget-1.16.tar.gz \
+    && cd wget-1.16 \
+    && ./configure --with-ssl=openssl --with-libssl-prefix=/usr/lib/openssl --prefix=/usr \
+    && make && make install
+
+# sudo defaults to requiretty on centos5?
+RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
+
+## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
+## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
+COPY dependencies/common/install-boost /tmp/
+RUN bash /tmp/install-boost || bash /tmp/install-boost
+
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN bash /tmp/install-dependencies
+
+##### R i686 from epel does not appear to handle latin1 -> ascii conversion with iconv. #####
+##### because of this, we're going to install R from source. because c'mon. why not?    #####
+
+# download a bunch of deps we need to get R from source. don't worry, we'll end up just using other versions anyway
+RUN yum-builddep -y R
+
+RUN wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz \
+    && tar xvf libiconv-1.14.tar.gz \
+    && cd libiconv-1.14 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make && linux32 make install \
+    && cd ..
+
+RUN wget http://zlib.net/fossils/zlib-1.2.8.tar.gz \
+    && tar xvf zlib-1.2.8.tar.gz \
+    && cd zlib-1.2.8 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make && linux32 make install \
+    && cd ..
+
+RUN wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz \
+    && tar xvf bzip2-1.0.6.tar.gz \
+    && cd bzip2-1.0.6 \
+    && linux32 make -f Makefile-libbz2_so \
+    && linux32 make clean \
+    && linux32 make \
+    && linux32 make install \
+    && cd ..
+
+RUN wget http://tukaani.org/xz/xz-5.2.2.tar.gz \
+    && tar xvf xz-5.2.2.tar.gz \
+    && cd xz-5.2.2 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make -j3 \
+    && linux32 make install \
+    && cd ..
+
+RUN wget http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.38.tar.gz \
+    && tar xvf pcre-8.38.tar.gz \
+    && cd pcre-8.38 \
+    && linux32 ./configure --prefix=/usr/local/ --enable-utf8 \
+    && linux32 make && linux32 make install \
+    && cd ..
+
+RUN wget https://curl.haxx.se/download/curl-7.47.1.tar.gz \
+    && tar xvf curl-7.47.1.tar.gz \
+    && cd curl-7.47.1 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make -j3 \
+    && linux32 make install \
+    && cd ..
+
+RUN wget https://cran.rstudio.com/src/base/R-3/R-3.3.2.tar.gz \
+    && tar xvf R-3.3.2.tar.gz \
+    && cd R-3.3.2 \
+    && linux32 ./configure --prefix=/opt/R/3.3.2 --enable-R-shlib \
+    && linux32 make && linux32 make install \
+    && ln -s /opt/R/3.3.2/bin/R /usr/local/bin/R
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+ARG JENKINS_GID=999
+ARG JENKINS_UID=999
+RUN groupadd -g $JENKINS_GID jenkins && \
+    useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
