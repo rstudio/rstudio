@@ -268,6 +268,7 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("{a <- 1\n~ x + 1}\n");
       
       EXPECT_NO_ERRORS("(~ map())");
+      EXPECT_NO_ERRORS("quote(1)\n~ apple");
    }
    
    lintRStudioRFiles();

@@ -1266,7 +1266,12 @@ public:
    
    bool isInParentheticalScope() const
    {
-      switch (currentState())
+      return isInParentheticalScope(currentState());
+   }
+   
+   bool isInParentheticalScope(ParseState state) const
+   {
+      switch (state)
       {
       case ParseStateForCondition:
       case ParseStateWhileCondition:
