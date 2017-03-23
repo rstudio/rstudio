@@ -78,7 +78,14 @@ typedef struct RCNTXT_34 {
     SEXP handlerstack;
     SEXP restartstack;
     struct RPRSTACK *prstack;
-    SEXP *nodestack;
+    struct {
+       int tag;
+       union {
+          int ival;
+          double dval;
+          SEXP sxpval;
+       } u;
+    } *nodestack;
 #ifdef BC_INT_STACK
     IStackval *intstack;
 #endif

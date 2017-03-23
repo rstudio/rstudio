@@ -158,7 +158,9 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
       // always want to take the first one as it's the most current/specific.
-      if (isValidSrcref(context->srcref()) && !context->nextcontext().isNull())
+      if (!r::context::isByteCodeContext(*context) &&
+          isValidSrcref(context->srcref()) &&
+          !context->nextcontext().isNull())
       {
          SEXP env = context->nextcontext().cloenv();
          if (envSrcrefCtx.find(env) == envSrcrefCtx.end())

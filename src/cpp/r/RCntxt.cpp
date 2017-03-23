@@ -111,12 +111,24 @@ SEXP RCntxt::originalFunctionCall() const
 
 Error RCntxt::fileName(std::string* pFileName) const
 {
-   if (srcref() && TYPEOF(srcref()) != NILSXP)
+   // skip over bytecode srcrefs
+   RCntxt context = *this;
+   SEXP ref = context.srcref();
+   while (ref && isByteCodeSrcRef(ref))
+   {
+      context = context.nextcontext();
+      if (context.isNull())
+         break;
+      ref = context.srcref();
+   }
+   
+   if (ref && TYPEOF(ref) != NILSXP)
    {
       r::sexp::Protect protect;
       SEXP fileName;
-      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref())
-                    .call(&fileName, &protect);
+      Error error = r::exec::RFunction(".rs.sourceFileFromRef")
+            .addParam(ref)
+            .call(&fileName, &protect);
       if (error)
           return error;
 

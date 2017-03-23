@@ -48,6 +48,9 @@ RCntxt getFunctionContext(const int depth,
                           int* pFoundDepth = NULL,
                           SEXP* pEnvironment = NULL);
 
+bool isByteCodeContext(const RCntxt& cntxt);
+bool isByteCodeSrcRef(SEXP srcref);
+
 } // namespace context
 } // namespace r
 } // namespace rstudio

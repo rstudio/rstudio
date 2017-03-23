@@ -46,7 +46,7 @@ namespace type_traits {
 
 RS_GENERATE_HAS_TYPE_TRAIT(key_type);
 
-} // namespace algorithm
+} // namespace type_traits
 } // namespace core
 } // namespace rstudio
 
