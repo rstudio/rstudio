@@ -1946,22 +1946,6 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().retokenizeDocument();
    }
    
-   public void setScrollLeft(int x)
-   {
-      getSession().setScrollLeft(x);
-   }
-   
-   public void setScrollTop(int y)
-   {
-      getSession().setScrollTop(y);
-   }
-   
-   public void scrollTo(int x, int y)
-   {
-      getSession().setScrollLeft(x);
-      getSession().setScrollTop(y);
-   }
-   
    private native final void _setHighlightRFunctionCallsImpl(boolean highlight)
    /*-{
       var Mode = $wnd.require("mode/r_highlight_rules");
@@ -2458,12 +2442,6 @@ public class AceEditor implements DocDisplay,
    public void splitIntoLines()
    {
       widget_.getEditor().splitIntoLines();
-   }
-   
-   @Override
-   public int getFirstFullyVisibleRow()
-   {
-      return widget_.getEditor().getRenderer().getFirstFullyVisibleRow();
    }
 
    @Override

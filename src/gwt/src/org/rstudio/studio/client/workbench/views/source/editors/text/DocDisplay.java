@@ -183,10 +183,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
    
-   void setScrollLeft(int x);
-   void setScrollTop(int y);
-   void scrollTo(int x, int y);
-   
    void enableSearchHighlight();
    void disableSearchHighlight();
    
@@ -388,8 +384,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void blockOutdent();
    void splitIntoLines();
-   
-   int getFirstFullyVisibleRow();
    
    Rectangle getPositionBounds(Position position);
    Rectangle getRangeBounds(Range range);
