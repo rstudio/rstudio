@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class Position extends JavaScriptObject
@@ -91,6 +93,31 @@ public class Position extends JavaScriptObject
    public final String asString()
    {
       return "[" + getRow() + ", " + getColumn() + "]";
+   }
+   
+   public static final native String serialize(Position position) /*-{
+      return position.row + "," + position.column;
+   }-*/;
+   
+   public static final Position deserialize(String serialized)
+   {
+      String[] parts = serialized.split(",");
+      if (parts.length < 2)
+         return Position.create(0, 0);
+      
+      int row = 0;
+      int col = 0;
+      try
+      {
+         row = Integer.parseInt(parts[0]);
+         col = Integer.parseInt(parts[1]);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+      
+      return Position.create(row, col);
    }
       
 }
