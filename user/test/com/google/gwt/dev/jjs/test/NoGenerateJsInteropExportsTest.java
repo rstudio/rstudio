@@ -37,13 +37,14 @@ public class NoGenerateJsInteropExportsTest extends GWTTestCase {
   @JsType
   static class A {
     @JsMethod(name = "method")
-    public void m() {
+    public int m() {
+      return 1;
     }
   }
 
   @JsType(isNative = true)
   interface ObjectWithMethod {
-    void method();
+    int method();
   }
 
   public void testJsMethodNameNotHonored() {
@@ -55,5 +56,15 @@ public class NoGenerateJsInteropExportsTest extends GWTTestCase {
       fail("Should have failed");
     } catch (JavaScriptException expected) {
     }
+  }
+
+  public void testHonorJsMethodNameInOverrides() {
+    assertEquals(3,
+        ((ObjectWithMethod) new ObjectWithMethod() {
+          @Override
+          public int method() {
+            return 3;
+          }
+        }).method());
   }
 }

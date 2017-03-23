@@ -83,7 +83,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
       return false;
     }
     for (JMethod method : getOverriddenMethodsIncludingSelf()) {
-      if (method.exported || method.isJsFunctionMethod()) {
+      if (method.exported || method.isJsFunctionMethod() || method.isJsNative()) {
         return true;
       }
     }
@@ -199,13 +199,13 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
    * an existing non-JsMember inside a class.
    */
   public boolean exposesNonJsMember() {
-    if (isInterfaceMethod() || enclosingType.isJsNative() || !JjsUtils.exposesJsName(this)) {
+    if (isInterfaceMethod() || enclosingType.isJsNative() || !JjsUtils.requiresJsName(this)) {
       return false;
     }
 
     boolean hasNonJsMemberParent = false;
     for (JMethod overriddenMethod : overriddenMethods) {
-      if (!JjsUtils.exposesJsName(overriddenMethod)) {
+      if (!JjsUtils.requiresJsName(overriddenMethod)) {
         hasNonJsMemberParent = true;
       }
       if (overriddenMethod.exposesNonJsMember()) {

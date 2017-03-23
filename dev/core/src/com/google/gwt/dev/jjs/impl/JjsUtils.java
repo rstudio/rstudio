@@ -672,10 +672,10 @@ public class JjsUtils {
   /**
    * Whether or not to use the JsName when implementing this member.
    *
-   * <p>A member should only expose a JsName when a JsName has been assigned and the compilation
+   * <p>A member should only require a JsName when a JsName has been assigned and the compilation
    * has been configured to honor those names.
    * */
-  public static boolean exposesJsName(JMember member) {
+  public static boolean requiresJsName(JMember member) {
     // JsFunction interfaces and  implementations do not have JsNames but canBeReferencedExternally
     // or canBeImplementedExternally.
     return member.getJsMemberType() != JsMemberType.NONE
