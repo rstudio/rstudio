@@ -1551,11 +1551,11 @@ public class TextEditingTarget implements
                HashMap<String, String> properties = new HashMap<String, String>();
                
                properties.put(
-                     "cursorPosition",
+                     PROPERTY_CURSOR_POSITION,
                      Position.serialize(docDisplay_.getCursorPosition()));
                
                properties.put(
-                     "scrollLine",
+                     PROPERTY_SCROLL_LINE,
                      String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
                
                docUpdateSentinel_.modifyProperties(properties);
@@ -1574,19 +1574,17 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            String cursorPosition = docUpdateSentinel_.getProperty("cursorPosition", "");
+            String cursorPosition = docUpdateSentinel_.getProperty(
+                  PROPERTY_CURSOR_POSITION,
+                  "");
+            
             if (StringUtil.isNullOrEmpty(cursorPosition))
                return;
             
-            Integer scrollLine = 0;
-            try
-            {
-               scrollLine = Integer.parseInt(docUpdateSentinel_.getProperty("scrollLine", "0"));
-            }
-            catch (Exception e)
-            {
-               Debug.logException(e);
-            }
+            
+            int scrollLine = StringUtil.parseInt(
+                  docUpdateSentinel_.getProperty(PROPERTY_SCROLL_LINE, "0"),
+                  0);
             
             Position position = Position.deserialize(cursorPosition);
             docDisplay_.setCursorPosition(position);
@@ -6588,4 +6586,7 @@ public class TextEditingTarget implements
 
       abstract void doExtract(final JsArrayString response);
    }
+   
+   private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }
