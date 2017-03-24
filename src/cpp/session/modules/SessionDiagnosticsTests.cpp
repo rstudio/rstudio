@@ -269,6 +269,9 @@ context("Diagnostics")
       
       EXPECT_NO_ERRORS("(~ map())");
       EXPECT_NO_ERRORS("quote(1)\n~ apple");
+      
+      EXPECT_NO_LINT("foo(!! abc)");
+      EXPECT_NO_LINT("foo(!!! abc)");
    }
    
    lintRStudioRFiles();
