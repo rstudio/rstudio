@@ -81,7 +81,7 @@ invisible(lapply(docs, function(doc) {
 # bootstrap the boost build directory
 PATH$prepend(toolchain_32bit)
 section("Bootstrapping boost...")
-exec("cmd.exe", "/C call bootstrap.bat gcc")
+exec("cmd.exe", "/C call bootstrap.bat gcc --without-libraries=python")
 
 # create bcp executable (so we can create Boost
 # using a private namespace)
@@ -97,7 +97,7 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat gcc")
+exec("cmd.exe", "/C call bootstrap.bat gcc --without-libraries=python")
 PATH$remove(toolchain_32bit)
 
 # construct common arguments for 32bit, 64bit boost builds
@@ -112,15 +112,7 @@ b2_build_args <- function(bitness) {
       "toolset=gcc",
       sprintf("address-model=%s", bitness),
       sprintf("--prefix=%s", prefix),
-      "--with-chrono",
-      "--with-date_time",
-      "--with-filesystem",
-      "--with-iostreams",
-      "--with-program_options",
-      "--with-regex",
-      "--with-signals",
-      "--with-system",
-      "--with-thread",
+      "--without-python",
       "variant=release",
       "link=static",
       "runtime-link=static",
