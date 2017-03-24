@@ -94,7 +94,13 @@ java_library(
         ] + JSINTEROP_SRCS,
     ),
     compatible_with = ["//buildenv/target:appengine"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
+    javacopts = [
+        "-Xep:MissingCasesInEnumSwitch:OFF",
+        "-Xep:SelfComparison:OFF",
+        "-Xep:SelfEquals:OFF",
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
+    ],
     plugins = [
         "//java/com/google/devtools/build/buildjar/plugin/gwt",
     ],
@@ -133,7 +139,13 @@ java_library(
         "src/com/google/gwt/user/server/Base64Utils.java",
     ],
     compatible_with = ["//buildenv/target:appengine"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
+    javacopts = [
+        "-Xep:MissingCasesInEnumSwitch:OFF",
+        "-Xep:SelfComparison:OFF",
+        "-Xep:SelfEquals:OFF",
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
+   ],
     deps = [
         "//third_party/java_src/gwt/svn/trunk/dev:requestfactory-apt-deps",
     ],
@@ -532,6 +544,9 @@ AugmentedJar(
         "-Xep:IdentityBinaryExpression:OFF",
         "-Xep:LoopConditionChecker:OFF",
         "-Xep:CollectionIncompatibleType:OFF",
+        "-Xep:MissingCasesInEnumSwitch:OFF",
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",

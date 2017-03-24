@@ -128,7 +128,11 @@ java_library(
     name = "gwt-dev-bare",
     srcs = glob(["core/src/**/*.java"]),
     compatible_with = ["//buildenv/target:appengine"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
+    javacopts = [
+        "-Xep:MissingCasesInEnumSwitch:OFF",
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
+    ],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -199,7 +203,11 @@ java_library(
         ],
     ),
     compatible_with = ["//buildenv/target:appengine"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
+    javacopts = [
+        "-Xep:MissingCasesInEnumSwitch:OFF",
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
+    ],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -295,7 +303,9 @@ java_library(
         "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:SelfComparison:OFF",
         "-Xep:SelfEquals:OFF",
-    ],
+        "-Xep:FallThrough:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
+   ],
     deps = [
         ":compiler.standalone.super",
         ":gwt-dev-bare",
