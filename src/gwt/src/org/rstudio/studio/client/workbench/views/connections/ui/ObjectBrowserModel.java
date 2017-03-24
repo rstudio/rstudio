@@ -23,6 +23,7 @@ import java.util.Set;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -99,13 +101,15 @@ public class ObjectBrowserModel implements TreeViewModel
          rootType = connection_.getObjectTypes().get(0);
       if (rootType != null)
          rootData = rootType.getContains() == "data";
+
       if (value == null || rootData)
       {
-         return new DefaultNodeInfo<DatabaseObject>(objectProvider_,
-                                    rootData ? new DataCell() : 
-                                               new ContainerCell(),
-                                    noObjectSelectionModel_,
-                                    null);
+         return new DefaultNodeInfo<DatabaseObject>(
+                  objectProvider_,
+                  rootData ? new DataCell() : 
+                             new ContainerCell(),
+                  noObjectSelectionModel_,
+                  null);
       }
       else if (value instanceof DatabaseObject)
       {
@@ -128,7 +132,10 @@ public class ObjectBrowserModel implements TreeViewModel
          }
          
          // does not contain data, so draw as a container cell
-         return new DefaultNodeInfo<DatabaseObject>(objectProvider_,
+         return new DefaultNodeInfo<DatabaseObject>(
+               new ObjectProvider(
+                     new ConnectionObjectSpecifier(
+                           val.getName(), val.getType())),
                new ContainerCell(),
                noObjectSelectionModel_, null);
       }
@@ -141,7 +148,19 @@ public class ObjectBrowserModel implements TreeViewModel
    @Override
    public boolean isLeaf(Object value)
    {
-      return value instanceof Field;
+      if (value == null)
+         return false;
+      
+      // extract the type of the object; if it's a known type, it's not a leaf
+      JsObject jso = JsObject.fromJavaScriptObject((JavaScriptObject)value);
+      String type = jso.getString("type");
+      JsArray<ConnectionObjectType> types = connection_.getObjectTypes();
+      for (int i = 0; i < types.length(); i++)
+      {
+         if (types.get(i).getName() == type)
+            return false;
+      }
+      return true;
    }
    
    public void refresh()
@@ -158,6 +177,16 @@ public class ObjectBrowserModel implements TreeViewModel
 
    private class ObjectProvider extends AsyncDataProvider<DatabaseObject>
    {
+      public ObjectProvider()
+      {
+         this(new ConnectionObjectSpecifier());
+      }
+
+      public ObjectProvider(ConnectionObjectSpecifier parent)
+      {
+         specifier_ = parent;
+      }
+
       public void clear()
       {
          prefetchedObjectList_ = null;
@@ -231,7 +260,7 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          server_.connectionListObjects(
             connection_.getId(), 
-            new ConnectionObjectSpecifier(),
+            specifier_,
             new SimpleRequestCallback<JsArray<DatabaseObject>>() {
                @Override
                public void onResponseReceived(JsArray<DatabaseObject> objects)
@@ -269,6 +298,9 @@ public class ObjectBrowserModel implements TreeViewModel
             }
          }
       }
+      
+      private final ConnectionObjectSpecifier specifier_;
+      private JsArray<DatabaseObject> prefetchedObjectList_ = null;
    }
    
    private class FieldProvider extends AsyncDataProvider<Field>
@@ -427,7 +459,6 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private Connection connection_;
    
-   private JsArray<DatabaseObject> prefetchedObjectList_ = null;
    
    private Set<DatabaseObject> expandedNodeRefreshQueue_ = null;
    private Command onTableUpdateCompleted_ = null;
