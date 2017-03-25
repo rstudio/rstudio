@@ -26,7 +26,8 @@ public class DatabaseObject extends JavaScriptObject
    public static native final DatabaseObject create(String name, String type) /*-{ 
       return {
          name: name,
-         type: type
+         type: type,
+         parent: null
       }; 
    }-*/;
    
@@ -37,4 +38,20 @@ public class DatabaseObject extends JavaScriptObject
    public final native String getType() /*-{
       return this.type;
    }-*/;
+   
+   public final native DatabaseObject getParent() /*-{
+      return this.parent;
+   }-*/;
+   
+   public final native void setParent(DatabaseObject parent) /*-{
+      this.parent = parent;
+   }-*/;
+   
+   public final ConnectionObjectSpecifier createSpecifier()
+   {
+      final ConnectionObjectSpecifier parent = getParent() == null ?
+            new ConnectionObjectSpecifier() : getParent().createSpecifier();
+      parent.addPathEntry(getName(), getType());
+      return parent;
+   }
 }

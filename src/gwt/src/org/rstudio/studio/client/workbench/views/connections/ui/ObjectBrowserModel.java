@@ -127,9 +127,7 @@ public class ObjectBrowserModel implements TreeViewModel
          
          // does not contain data, so draw as a container cell
          return new DefaultNodeInfo<DatabaseObject>(
-               new ObjectProvider(
-                     new ConnectionObjectSpecifier(
-                           val.getName(), val.getType())),
+               new ObjectProvider(val),
                new ContainerCell(val),
                noObjectSelectionModel_, null);
       }
@@ -173,12 +171,12 @@ public class ObjectBrowserModel implements TreeViewModel
    {
       public ObjectProvider()
       {
-         this(new ConnectionObjectSpecifier());
+         this(null);
       }
 
-      public ObjectProvider(ConnectionObjectSpecifier parent)
+      public ObjectProvider(DatabaseObject parent)
       {
-         specifier_ = parent;
+         parent_ = parent;
       }
 
       public void clear()
@@ -252,13 +250,21 @@ public class ObjectBrowserModel implements TreeViewModel
       
       private void listObjects(final CommandWithArg<JsArray<DatabaseObject>> onCompleted)
       {
+         ConnectionObjectSpecifier specifier = null;
+         if (parent_ == null)
+            specifier = new ConnectionObjectSpecifier();
+         else
+            specifier = parent_.createSpecifier();
+         
          server_.connectionListObjects(
             connection_.getId(), 
-            specifier_,
+            specifier,
             new SimpleRequestCallback<JsArray<DatabaseObject>>() {
                @Override
                public void onResponseReceived(JsArray<DatabaseObject> objects)
                {
+                  for (int i = 0; i < objects.length(); i++)
+                     objects.get(i).setParent(parent_);
                   onCompleted.execute(objects);
                }
                
@@ -293,7 +299,7 @@ public class ObjectBrowserModel implements TreeViewModel
          }
       }
       
-      private final ConnectionObjectSpecifier specifier_;
+      private final DatabaseObject parent_;
       private JsArray<DatabaseObject> prefetchedObjectList_ = null;
    }
    
