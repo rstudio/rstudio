@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javaemul.internal.ArrayHelper;
+import javaemul.internal.DoubleCompareHolder;
 import javaemul.internal.LongCompareHolder;
 
 /**
@@ -1261,57 +1262,57 @@ public class Arrays {
   }
 
   public static void sort(byte[] array) {
-    nativeNumberSort(array);
+    nativeIntegerSort(array);
   }
 
   public static void sort(byte[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static void sort(char[] array) {
-    nativeNumberSort(array);
+    nativeIntegerSort(array);
   }
 
   public static void sort(char[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static void sort(double[] array) {
-    nativeNumberSort(array);
+    nativeSort(array, DoubleCompareHolder.getDoubleComparator());
   }
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeSort(array, fromIndex, toIndex, DoubleCompareHolder.getDoubleComparator());
   }
 
   public static void sort(float[] array) {
-    nativeNumberSort(array);
+    nativeSort(array, DoubleCompareHolder.getDoubleComparator());
   }
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeSort(array, fromIndex, toIndex, DoubleCompareHolder.getDoubleComparator());
   }
 
   public static void sort(int[] array) {
-    nativeNumberSort(array);
+    nativeIntegerSort(array);
   }
 
   public static void sort(int[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static void sort(long[] array) {
-    nativeLongSort(array, LongCompareHolder.getLongComparator());
+    nativeSort(array, LongCompareHolder.getLongComparator());
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeLongSort(array, fromIndex, toIndex);
+    nativeSort(array, fromIndex, toIndex, LongCompareHolder.getLongComparator());
   }
 
   public static void sort(Object[] array) {
@@ -1323,12 +1324,12 @@ public class Arrays {
   }
 
   public static void sort(short[] array) {
-    nativeNumberSort(array);
+    nativeIntegerSort(array);
   }
 
   public static void sort(short[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static <T> void sort(T[] x, Comparator<? super T> c) {
@@ -1734,36 +1735,36 @@ public class Arrays {
   }
 
   /**
-   * Sort an entire array of number primitives.
+   * Sort an entire array using the given comparator
    */
-  private static native void nativeLongSort(Object array, Object compareFunction) /*-{
+  private static native void nativeSort(Object array, Object compareFunction) /*-{
     array.sort(compareFunction);
   }-*/;
 
   /**
-   * Sort a subset of an array of number primitives.
+   * Sort a subset of an array using the given comparator
    */
-  private static void nativeLongSort(Object array, int fromIndex, int toIndex) {
+  private static void nativeSort(Object array, int fromIndex, int toIndex, Object compareFunction) {
     Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
-    nativeLongSort(temp, LongCompareHolder.getLongComparator());
+    nativeSort(temp, compareFunction);
     ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
   }
 
   /**
-   * Sort an entire array of number primitives.
+   * Sort an entire array of number primitives of integral type.
    */
-  private static native void nativeNumberSort(Object array) /*-{
+  private static native void nativeIntegerSort(Object array) /*-{
     array.sort(function(a, b) {
       return a - b;
     });
   }-*/;
 
   /**
-   * Sort a subset of an array of number primitives.
+   * Sort a subset of an array of primitives of integral type.
    */
-  private static void nativeNumberSort(Object array, int fromIndex, int toIndex) {
+  private static void nativeIntegerSort(Object array, int fromIndex, int toIndex) {
     Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
-    nativeNumberSort(temp);
+    nativeIntegerSort(temp);
     ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
   }
 

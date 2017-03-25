@@ -1321,6 +1321,56 @@ public class ArraysTest extends EmulTestBase {
   }
 
   /**
+   * Tests sorting of doubles
+   */
+  public void testDoubleSort() {
+    double[] array = new double[] {
+      41.5, Double.NaN, Double.NaN, 3, 932535, 1, Double.NaN,
+      -3, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN};
+    Arrays.sort(array);
+
+    // Test the array element-by-element
+    // as GWT's Arrays.equal() does not consider NaNs "equal"
+    assertEquals(Double.NEGATIVE_INFINITY, array[0]);
+    assertEquals(-3.0, array[1]);
+    assertEquals(1.0, array[2]);
+    assertEquals(3.0, array[3]);
+    assertEquals(41.5, array[4]);
+    assertEquals(932535.0, array[5]);
+    assertEquals(Double.POSITIVE_INFINITY, array[6]);
+    assertTrue(Double.isNaN(array[7]));
+    assertTrue(Double.isNaN(array[8]));
+    assertTrue(Double.isNaN(array[9]));
+    assertTrue(Double.isNaN(array[10]));
+  }
+
+  /**
+   * Tests sorting of floats
+   */
+  public void testFloatSort() {
+    float[] array = new float[] {
+      41.5f, Float.NaN, Float.NaN, 3, 932535, 1, Float.NaN,
+      -3, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NaN};
+    Arrays.sort(array);
+
+    // Test the array element-by-element
+    // as GWT's Arrays.equal() does not consider NaNs "equal"
+    assertEquals(Float.NEGATIVE_INFINITY, array[0]);
+    assertEquals(-3.0f, array[1]);
+    assertEquals(1.0f, array[2]);
+    assertEquals(3.0f, array[3]);
+    assertEquals(41.5f, array[4]);
+    assertEquals(932535.0f, array[5]);
+    assertEquals(Float.POSITIVE_INFINITY, array[6]);
+    assertTrue(Float.isNaN(array[7]));
+    assertTrue(Float.isNaN(array[8]));
+    assertTrue(Float.isNaN(array[9]));
+    assertTrue(Float.isNaN(array[10]));
+  }
+
+
+
+  /**
    * Tests sorting a subrange of a primitive array.
    */
   public void testPrimitiveSubrangeSort() {
