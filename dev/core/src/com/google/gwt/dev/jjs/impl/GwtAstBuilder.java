@@ -125,7 +125,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.util.regexfilter.WhitelistRegexFilter;
 
-import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -379,7 +378,7 @@ public class GwtAstBuilder {
     public void endVisit(AllocationExpression x, BlockScope scope) {
       try {
         SourceInfo info = makeSourceInfo(x);
-        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
+        List<JExpression> arguments = popCallArguments(info, x.arguments, x.binding);
         pushNewExpression(info, x, null, arguments, scope);
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -405,7 +404,7 @@ public class GwtAstBuilder {
         if (x.initializer != null) {
           // handled by ArrayInitializer.
         } else {
-          List<JExpression> dims = pop(x.dimensions);
+          List<JExpression> dims = performBoxUnboxConversions(pop(x.dimensions), x.dimensions);
           push(JNewArray.createArrayWithDimensionExpressions(info, type, dims));
         }
       } catch (Throwable e) {
@@ -418,7 +417,8 @@ public class GwtAstBuilder {
       try {
         SourceInfo info = makeSourceInfo(x);
         JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
-        List<JExpression> expressions = pop(x.expressions);
+        List<JExpression> expressions =
+            performBoxUnboxConversions(pop(x.expressions), x.expressions);
         push(JNewArray.createArrayWithInitializers(info, type, expressions));
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -773,7 +773,7 @@ public class GwtAstBuilder {
         JConstructor ctor = (JConstructor) typeMap.get(x.binding);
         JExpression trueQualifier = makeThisRef(info);
         JMethodCall call = new JMethodCall(info, trueQualifier, ctor);
-        List<JExpression> callArgs = popCallArgs(info, x.arguments, x.binding);
+        List<JExpression> callArgs = popCallArguments(info, x.arguments, x.binding);
 
         if (curClass.classType.isEnumOrSubclass() != null) {
           // Enums: wire up synthetic name/ordinal params to the super method.
@@ -1367,7 +1367,7 @@ public class GwtAstBuilder {
       // Deal with any boxing/unboxing needed
       JNode node = pop();
       if (node instanceof JExpression) {
-        node = simplify((JExpression) node, (Expression) x.body);
+        node = maybeBoxOrUnbox((JExpression) node, (Expression) x.body);
       }
 
       JMethodBody body = (JMethodBody) curMethod.method.getBody();
@@ -1525,7 +1525,7 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JMethod method = typeMap.get(x.binding);
 
-        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
+        List<JExpression> arguments = popCallArguments(info, x.arguments, x.binding);
         JExpression receiver = pop(x.receiver);
         if (x.receiver instanceof ThisReference) {
           if (method.isStatic()) {
@@ -1560,7 +1560,7 @@ public class GwtAstBuilder {
         if (x.valueCast != null) {
           JType[] targetTypes = processCastType(x.valueCast);
           push(isUncheckedGenericMethodCall(x)
-              ? maybeInsertUnsafeTypeCoersion(targetTypes[0], methodCall)
+              ? maybeInsertUnsafeTypeCoercion(targetTypes[0], methodCall)
               : maybeCast(targetTypes, methodCall));
         } else {
           push(methodCall);
@@ -1649,7 +1649,7 @@ public class GwtAstBuilder {
     public void endVisit(QualifiedAllocationExpression x, BlockScope scope) {
       try {
         SourceInfo info = makeSourceInfo(x);
-        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
+        List<JExpression> arguments = popCallArguments(info, x.arguments, x.binding);
         pushNewExpression(info, x, x.enclosingInstance(), arguments, scope);
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -1939,7 +1939,7 @@ public class GwtAstBuilder {
       if (samMethod.getType() != JPrimitiveType.VOID) {
         JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
             declarationSamBinding.returnType);
-        samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
+        samMethodBody.getBlock().addStmt(maybeBoxOrUnbox(samExpression, x).makeReturnStatement());
       } else {
         samMethodBody.getBlock().addStmt(samCall.makeStatement());
       }
@@ -1985,15 +1985,11 @@ public class GwtAstBuilder {
       }
 
       if (fromType.isBaseType() && !toType.isBaseType()) {
-        int implicitConversion = (fromType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
-        implicitConversion = implicitConversion | TypeIds.BOXING;
-        return box(expr, implicitConversion);
+        return box(expr, JdtUtil.getBaseTypeBinding(curClass.scope, fromType.id));
       }
 
       if (!fromType.isBaseType() && toType.isBaseType()) {
-        int implicitConversion = (toType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
-        implicitConversion = implicitConversion | TypeIds.UNBOXING;
-        return unbox(expr, implicitConversion);
+        return unbox(expr, JdtUtil.getBaseTypeBinding(curClass.scope, toType.id));
       }
 
       TypeBinding castToType = fromType.genericCast(toType);
@@ -2585,23 +2581,26 @@ public class GwtAstBuilder {
         assert x instanceof NameReference;
         return null;
       }
-      result = simplify(result, x);
+      result = maybeBoxOrUnbox(result, x);
+      return result;
+    }
+
+    protected <T extends JExpression> List<T> performBoxUnboxConversions(
+        List<T> result, Expression[] expressions) {
+      for (int i = 0; i < result.size(); i++) {
+        result.set(i, (T) maybeBoxOrUnbox(result.get(i), expressions[i]));
+      }
       return result;
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends JExpression> List<T> pop(Expression[] expressions) {
+    protected List<JExpression> pop(Expression[] expressions) {
       if (expressions == null) {
         return Collections.emptyList();
       }
 
-      List<T> result = (List<T>) popList(Collections2.filter(Arrays.asList(expressions),
+      return  (List<JExpression>) popList(Collections2.filter(Arrays.asList(expressions),
           Predicates.notNull()).size());
-
-      for (int i = 0; i < result.size(); i++) {
-        result.set(i, (T) simplify(result.get(i), expressions[i]));
-      }
-      return result;
     }
 
     protected JDeclarationStatement pop(LocalDeclaration decl) {
@@ -2611,7 +2610,7 @@ public class GwtAstBuilder {
     protected JStatement pop(Statement x) {
       JNode pop = (x == null) ? null : pop();
       if (x instanceof Expression) {
-        return simplify((JExpression) pop, (Expression) x).makeStatement();
+        return maybeBoxOrUnbox((JExpression) pop, (Expression) x).makeStatement();
       }
       return (JStatement) pop;
     }
@@ -2628,7 +2627,8 @@ public class GwtAstBuilder {
         if (element == null) {
           it.remove();
         } else if (element instanceof JExpression) {
-          it.set((T) simplify((JExpression) element, (Expression) statements[i]).makeStatement());
+          it.set((T)
+              maybeBoxOrUnbox((JExpression) element, (Expression) statements[i]).makeStatement());
         }
       }
       return result;
@@ -2756,25 +2756,47 @@ public class GwtAstBuilder {
           new JBinaryOperation(info, lhs.getType(), JBinaryOperator.ASG, lhs, param.makeRef(info));
     }
 
-    private JExpression box(JExpression original, int implicitConversion) {
-      int typeId = (implicitConversion & TypeIds.IMPLICIT_CONVERSION_MASK) >> 4;
-      ClassScope scope = curClass.scope;
-      BaseTypeBinding primitiveType = (BaseTypeBinding) TypeBinding.wellKnownType(scope, typeId);
-      ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
-      MethodBinding valueOfMethod = boxType.getExactMethod(VALUE_OF_,
-          new TypeBinding[]{primitiveType}, scope.compilationUnitScope());
-      assert valueOfMethod != null;
+    private JExpression box(JExpression original, BaseTypeBinding primitiveType) {
+      return box(original, primitiveType, false);
+    }
 
+    private JExpression box(
+        JExpression original, BaseTypeBinding primitiveType, boolean doNotAutobox) {
       // Add a cast to the correct primitive type if needed.
       JType targetPrimitiveType = typeMap.get(primitiveType);
       if (original.getType() != targetPrimitiveType) {
         original = new JCastOperation(original.getSourceInfo(), targetPrimitiveType, original);
       }
 
-      JMethod boxMethod = typeMap.get(valueOfMethod);
-      JMethodCall call = new JMethodCall(original.getSourceInfo(), null, boxMethod);
-      call.addArg(original);
-      return call;
+      if (doNotAutobox) {
+        // Protect the primitive @DoNotAutobox values from optimizations, etc but encapsulating
+        // them in an opaque unsafe coercion to Object.
+        return new JUnsafeTypeCoercion(original.getSourceInfo(), javaLangObject, original);
+      }
+
+      ClassScope scope = curClass.scope;
+      JMethod boxingMethod = typeMap.get(JdtUtil.getBoxingMethodBinding(scope, primitiveType));
+      return new JMethodCall(original.getSourceInfo(), null, boxingMethod, original);
+    }
+
+    private JExpression unbox(JExpression original, BaseTypeBinding primitiveType) {
+      return unbox(original, primitiveType, true);
+    }
+
+    private JExpression unbox(
+        JExpression original, BaseTypeBinding primitiveType, boolean needsExplicitCast) {
+
+      ClassScope scope = curClass.scope;
+      if (needsExplicitCast) {
+        // Direct cast from non-boxed-type reference type to a primitive type,
+        // wrap with a cast operation of the (boxed) expected type.
+        JReferenceType boxedType =
+            (JReferenceType) typeMap.get(JdtUtil.getBoxedTypeBinding(scope, primitiveType));
+        original =
+            new JCastOperation(original.getSourceInfo(), boxedType, original);
+      }
+      JMethod unboxingMethod = typeMap.get(JdtUtil.getUnboxingMethodBinding(scope, primitiveType));
+      return new JMethodCall(original.getSourceInfo(), original, unboxingMethod);
     }
 
     private void createBridgeMethod(SyntheticMethodBinding jdtBridgeMethod) {
@@ -3063,12 +3085,18 @@ public class GwtAstBuilder {
     }
 
     private JExpression maybeBoxOrUnbox(JExpression original, int implicitConversion) {
-      if (implicitConversion != -1) {
-        if ((implicitConversion & TypeIds.BOXING) != 0) {
-          return box(original, implicitConversion);
-        } else if ((implicitConversion & TypeIds.UNBOXING) != 0) {
-          return unbox(original, implicitConversion);
-        }
+      return maybeBoxOrUnbox(original, implicitConversion, false);
+    }
+
+    private JExpression maybeBoxOrUnbox(
+        JExpression original, int implicitConversion, boolean doNotAutobox) {
+      if (JdtUtil.requiresBoxing(implicitConversion)) {
+        return box(original, JdtUtil.getBoxingPrimitiveType(curClass.scope, implicitConversion),
+            doNotAutobox);
+      }
+      if (JdtUtil.requiresUnboxing(implicitConversion)) {
+        return unbox(original, JdtUtil.getUnboxingPrimitiveType(curClass.scope, implicitConversion),
+            JdtUtil.needsCastBeforeUnbox(curClass.scope, implicitConversion));
       }
       return original;
     }
@@ -3088,7 +3116,7 @@ public class GwtAstBuilder {
       return expression;
     }
 
-      private JExpression maybeInsertUnsafeTypeCoersion(JType expected, JExpression expression) {
+      private JExpression maybeInsertUnsafeTypeCoercion(JType expected, JExpression expression) {
       if (expected != expression.getType()) {
         // A generic call marked as @UncheckedCast.
         return new JUnsafeTypeCoercion(expression.getSourceInfo(), expected, expression);
@@ -3101,25 +3129,33 @@ public class GwtAstBuilder {
       return nodeStack.remove(nodeStack.size() - 1);
     }
 
-    private List<JExpression> popCallArgs(SourceInfo info, Expression[] jdtArgs,
-        MethodBinding binding) {
-      List<JExpression> args = pop(jdtArgs);
-      if (!binding.isVarargs()) {
+    private List<JExpression> popCallArguments(SourceInfo info, Expression[] arguments,
+        MethodBinding methodBinding) {
+      List<JExpression> args = pop(arguments);
+      for (int i = 0; i < args.size(); i++) {
+        // Account for varargs parameter.
+        int parameterIndex = Math.min(i, methodBinding.parameters.length - 1);
+        args.set(i, maybeBoxOrUnbox(
+            args.get(i),
+            arguments[i].implicitConversion,
+            isDoNotAutoBoxParameter(methodBinding, parameterIndex)));
+      }
+      if (!methodBinding.isVarargs()) {
         return args;
       }
 
       // Handle the odd var-arg case.
-      if (jdtArgs == null) {
+      if (arguments == null) {
         // Get writable collection (args is currently Collections.emptyList()).
         args = Lists.newArrayListWithCapacity(1);
       }
 
-      TypeBinding[] params = binding.parameters;
+      TypeBinding[] params = methodBinding.parameters;
       int varArg = params.length - 1;
 
       // See if there's a single varArg which is already an array.
       if (args.size() == params.length) {
-        if (jdtArgs[varArg].resolvedType.isCompatibleWith(params[varArg])) {
+        if (arguments[varArg].resolvedType.isCompatibleWith(params[varArg])) {
           // Already the correct array type.
           return args;
         }
@@ -3133,6 +3169,15 @@ public class GwtAstBuilder {
       JNewArray newArray = JNewArray.createArrayWithInitializers(info, lastParamType, initializers);
       args.add(newArray);
       return args;
+    }
+
+    private boolean isDoNotAutoBoxParameter(MethodBinding methodBinding, int parameterIndex) {
+      AnnotationBinding[][] parameterAnnotations = methodBinding.getParameterAnnotations();
+      return parameterAnnotations != null
+          && parameterAnnotations.length > parameterIndex
+          && parameterAnnotations[parameterIndex] != null
+          && JdtUtil.getAnnotationByName(parameterAnnotations[parameterIndex],
+          "javaemul.internal.annotations.DoNotAutobox") != null;
     }
 
     private List<? extends JNode> popList(int count) {
@@ -3455,7 +3500,7 @@ public class GwtAstBuilder {
       return result;
     }
 
-    private JExpression simplify(JExpression result, Expression x) {
+    private JExpression maybeBoxOrUnbox(JExpression result, Expression x) {
       return maybeBoxOrUnbox(result, x.implicitConversion);
     }
 
@@ -3465,34 +3510,6 @@ public class GwtAstBuilder {
       MethodBinding ordinal = javaLangEnum.getMethods(ORDINAL_)[0];
       expression = new JMethodCall(info, expression, typeMap.get(ordinal));
       return expression;
-    }
-
-    private JExpression unbox(JExpression original, int implicitConversion) {
-      int compileTypeId = implicitConversion & TypeIds.COMPILE_TYPE_MASK;
-      ClassScope scope = curClass.scope;
-      TypeBinding targetBinding = TypeBinding.wellKnownType(scope, compileTypeId);
-      if (!(targetBinding instanceof BaseTypeBinding)) {
-        // Direct cast from non-boxed-type reference type to a primitive type,
-        // wrap with a cast operation of the (boxed) expected type.
-        int runtimeTypeId = (implicitConversion & TypeIds.IMPLICIT_CONVERSION_MASK) >> 4;
-        TypeBinding runtimeTypeBinding = TypeBinding.wellKnownType(scope, runtimeTypeId);
-        ReferenceBinding boxType = (ReferenceBinding) scope.boxing(runtimeTypeBinding);
-        original =
-            new JCastOperation(original.getSourceInfo(), typeMap.get(boxType), original);
-        targetBinding = runtimeTypeBinding;
-        assert (targetBinding instanceof BaseTypeBinding);
-      }
-
-      BaseTypeBinding primitiveType = (BaseTypeBinding) targetBinding;
-
-      ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
-      char[] selector = CharOperation.concat(primitiveType.simpleName, VALUE_SUFFIX_);
-      MethodBinding valueMethod =
-          boxType.getExactMethod(selector, NO_TYPES, scope.compilationUnitScope());
-      assert valueMethod != null;
-      JMethod unboxMethod = typeMap.get(valueMethod);
-      JMethodCall call = new JMethodCall(original.getSourceInfo(), original, unboxMethod);
-      return call;
     }
 
     private void writeEnumValueOfMethod(JEnumType type, JMethod method, JMethod valuesMethod) {
@@ -3732,10 +3749,8 @@ public class GwtAstBuilder {
 
   private static final String CREATE_VALUE_OF_MAP_METHOD_NAME = "createValueOfMap";
   private static final String LENGTH_FIELD_NAME = "length";
-  private static final String VALUE_SUFFIX = "Value";
 
   private static final char[] CREATE_VALUE_OF_MAP_ = CREATE_VALUE_OF_MAP_METHOD_NAME.toCharArray();
-  private static final char[] VALUE_SUFFIX_ = VALUE_SUFFIX.toCharArray();
   private static final char[] VALUE_OF_ = VALUE_OF_METHOD_NAME.toCharArray();
   private static final char[] VALUES_ = VALUES_METHOD_NAME.toCharArray();
   private static final char[] ORDINAL_ = ORDINAL_METHOD_NAME.toCharArray();

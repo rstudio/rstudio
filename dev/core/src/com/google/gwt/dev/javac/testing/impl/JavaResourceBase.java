@@ -368,12 +368,18 @@ public class JavaResourceBase {
   public static final MockJavaResource SPECIALIZE_METHOD =
       createMockJavaResource("javaemul.internal.annotations.SpecializeMethod",
           "package javaemul.internal.annotations;",
-          "public @interface SpecializeMethod {\n",
-          "  Class<?>[] params();\n" +
-          "  String target();\n",
+          "public @interface SpecializeMethod {",
+          "  Class<?>[] params();",
+          "  String target();",
           "}"
       );
 
+  public static final MockJavaResource DO_NOT_AUTOBOX =
+      createMockJavaResource("javaemul.internal.annotations.DoNotAutobox",
+          "package javaemul.internal.annotations;",
+          "public @interface DoNotAutobox {\n",
+          "}"
+      );
   // TODO: move JS* annotations to intrinsic mock resource base
   public static final MockJavaResource JSTYPE =
       createMockJavaResource("jsinterop.annotations.JsType",
@@ -438,8 +444,8 @@ public class JavaResourceBase {
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
-        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSCONSTRUCTOR, JSPACKAGE, JSPROPERTY, JSMETHOD,
-        JSIGNORE, JSFUNCTION, JSOVERLAY, JSOPTIONAL};
+        THROWABLE, SPECIALIZE_METHOD, DO_NOT_AUTOBOX, JSTYPE, JSCONSTRUCTOR, JSPACKAGE, JSPROPERTY,
+        JSMETHOD, JSIGNORE, JSFUNCTION, JSOVERLAY, JSOPTIONAL};
   }
 
   /**

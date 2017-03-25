@@ -31,6 +31,8 @@ import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.impl.BooleanConstant;
 import org.eclipse.jdt.internal.compiler.impl.StringConstant;
 import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
+import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.ElementValuePair;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
@@ -40,6 +42,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -444,5 +447,75 @@ public final class JdtUtil {
         return methodBinding.isDefaultMethod();
       }
     });
+  }
+
+  /*
+   * Implicit conversion helpers.
+   */
+
+  public static boolean requiresBoxing(int implicitConversion) {
+    return implicitConversion != -1
+        && (implicitConversion & TypeIds.BOXING) != 0;
+  }
+
+  public static boolean requiresUnboxing(int implicitConversion) {
+    return implicitConversion != -1
+        && (implicitConversion & TypeIds.UNBOXING) != 0;
+  }
+
+  public static BaseTypeBinding getBoxingPrimitiveType(ClassScope scope, int implicitConversion) {
+    int typeId = (implicitConversion & TypeIds.IMPLICIT_CONVERSION_MASK) >> 4;
+    return getBaseTypeBinding(scope, typeId);
+  }
+
+  public static BaseTypeBinding getUnboxingPrimitiveType(
+      ClassScope scope, int implicitConversion) {
+    if (needsCastBeforeUnbox(scope, implicitConversion)) {
+      int typeId = (implicitConversion & TypeIds.IMPLICIT_CONVERSION_MASK) >> 4;
+      return getBaseTypeBinding(scope, typeId);
+    }
+    int compileTypeId = implicitConversion & TypeIds.COMPILE_TYPE_MASK;
+    return getBaseTypeBinding(scope, compileTypeId);
+  }
+
+  public static BaseTypeBinding getBaseTypeBinding(ClassScope scope, int typeId) {
+    return  (BaseTypeBinding) TypeBinding.wellKnownType(scope, typeId);
+  }
+
+  public static ReferenceBinding getBoxedTypeBinding(
+      ClassScope scope, BaseTypeBinding primitiveType) {
+    return (ReferenceBinding) scope.boxing(primitiveType);
+  }
+
+  public static boolean needsCastBeforeUnbox(ClassScope scope, int implicitConversion) {
+    // values of specific types like j.l.Object need casting before auto unboxing.
+    int compileTypeId = implicitConversion & TypeIds.COMPILE_TYPE_MASK;
+    return !(TypeBinding.wellKnownType(scope, compileTypeId) instanceof BaseTypeBinding);
+  }
+
+  private static final String VALUE_SUFFIX = "Value";
+  private static final String VALUE_OF_METHOD_NAME = "valueOf";
+
+  private static final char[] VALUE_SUFFIX_ = VALUE_SUFFIX.toCharArray();
+  private static final char[] VALUE_OF_ = VALUE_OF_METHOD_NAME.toCharArray();
+
+  public static MethodBinding getBoxingMethodBinding(
+      ClassScope scope, BaseTypeBinding primitiveType) {
+    ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
+    MethodBinding valueOfMethod = boxType.getExactMethod(VALUE_OF_,
+        new TypeBinding[]{primitiveType}, scope.compilationUnitScope());
+    assert valueOfMethod != null;
+    return valueOfMethod;
+  }
+
+  public static MethodBinding getUnboxingMethodBinding(
+      ClassScope scope, BaseTypeBinding primitiveType) {
+    ReferenceBinding boxType = (ReferenceBinding) scope.boxing(primitiveType);
+    char[] selector = CharOperation.concat(primitiveType.simpleName, VALUE_SUFFIX_);
+
+    MethodBinding valueMethod =
+        boxType.getExactMethod(selector, new TypeBinding[0], scope.compilationUnitScope());
+    assert valueMethod != null;
+    return valueMethod;
   }
 }
