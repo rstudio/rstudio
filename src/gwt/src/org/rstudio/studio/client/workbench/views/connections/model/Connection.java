@@ -1,7 +1,7 @@
 /*
  * Connection.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 package org.rstudio.studio.client.workbench.views.connections.model;
+
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -55,4 +57,23 @@ public class Connection extends JavaScriptObject
    public final native String getIconData() /*-{
       return this.icon_data;
    }-*/;
+   
+   public final boolean isDataType(String dataType) 
+   {
+      if (dataType == null)
+         return false;
+      
+      JsArray<ConnectionObjectType> types = getObjectTypes();
+      for (int i = 0; i < types.length(); i++)
+      {
+         if (types.get(i).getName() == dataType.toLowerCase() && 
+             (StringUtil.isNullOrEmpty(types.get(i).getContains()) ||
+              types.get(i).getContains() == "data"))
+         {
+            return true;
+         }
+      }
+      
+      return false;
+   }
 }

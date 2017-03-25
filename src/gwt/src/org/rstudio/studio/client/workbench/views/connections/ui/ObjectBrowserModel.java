@@ -106,8 +106,7 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          return new DefaultNodeInfo<DatabaseObject>(
                   objectProvider_,
-                  rootData ? new DataCell() : 
-                             new ContainerCell(),
+                   new ContainerCell(null),
                   noObjectSelectionModel_,
                   null);
       }
@@ -116,19 +115,14 @@ public class ObjectBrowserModel implements TreeViewModel
          DatabaseObject val = (DatabaseObject)value;
 
          // ascertain whether this object contains data 
-         JsArray<ConnectionObjectType> types = connection_.getObjectTypes();
-         for (int i = 0; i < types.length(); i++)
+         if (connection_.isDataType(val.getType()))
          {
-            if (types.get(i).getName() == val.getType() && 
-                types.get(i).getContains() == "data")
-            {
-               FieldProvider fieldProvider = new FieldProvider((DatabaseObject)value);
-               fieldProviders_.put((DatabaseObject)value, fieldProvider);
-               return new DefaultNodeInfo<Field>(fieldProvider, 
-                                                 new FieldCell(),
-                                                 noFieldSelectionModel_,
-                                                 null);
-            }
+            FieldProvider fieldProvider = new FieldProvider((DatabaseObject)value);
+            fieldProviders_.put((DatabaseObject)value, fieldProvider);
+            return new DefaultNodeInfo<Field>(fieldProvider, 
+                                              new FieldCell(),
+                                              noFieldSelectionModel_,
+                                              null);
          }
          
          // does not contain data, so draw as a container cell
@@ -136,7 +130,7 @@ public class ObjectBrowserModel implements TreeViewModel
                new ObjectProvider(
                      new ConnectionObjectSpecifier(
                            val.getName(), val.getType())),
-               new ContainerCell(),
+               new ContainerCell(val),
                noObjectSelectionModel_, null);
       }
       
@@ -153,7 +147,7 @@ public class ObjectBrowserModel implements TreeViewModel
       
       // extract the type of the object; if it's a known type, it's not a leaf
       JsObject jso = JsObject.fromJavaScriptObject((JavaScriptObject)value);
-      String type = jso.getString("type");
+      String type = jso.getString("type").toLowerCase();
       JsArray<ConnectionObjectType> types = connection_.getObjectTypes();
       for (int i = 0; i < types.length(); i++)
       {
@@ -381,9 +375,10 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private class ContainerCell extends AbstractCell<DatabaseObject>
    {
-      public ContainerCell()
+      public ContainerCell(DatabaseObject object)
       {
          super("click");
+         obj_ = object;
       }
       
       @Override
@@ -391,36 +386,14 @@ public class ObjectBrowserModel implements TreeViewModel
             SafeHtmlBuilder sb)
       {
          SafeHtmlUtil.appendSpan(sb, "", container.getName());
-      }
-      
-      @Override
-      public void onBrowserEvent(Cell.Context context,
-              Element parent, DatabaseObject value, NativeEvent event,
-              ValueUpdater<DatabaseObject> valueUpdater) {
-          if ("click".equals(event.getType()))
-          {
-             // TODO: fire navigation event & push onto specifier stack
-             // eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
-          }
-      }
-   }
-   
-   private class DataCell extends AbstractCell<DatabaseObject> 
-   {
-      public DataCell()
-      {
-         super("click");
-      }
-      
-      @Override
-      public void render(Cell.Context context, DatabaseObject table, SafeHtmlBuilder sb)
-      {
-         SafeHtmlUtil.appendSpan(sb, "", table.getName());
          
-         sb.append(SafeHtmlUtil.createOpenTag("span", 
-               "class", RES.cellTreeStyle().tableViewDataset(),
-               "title", "View table (up to 1,000 records"));
-         sb.appendHtmlConstant("</span>");   
+         if (connection_.isDataType(container.getType()))
+         {
+            sb.append(SafeHtmlUtil.createOpenTag("span", 
+                  "class", RES.cellTreeStyle().tableViewDataset(),
+                  "title", "View table (up to 1,000 records"));
+            sb.appendHtmlConstant("</span>");   
+         }
       }
       
       @Override
@@ -437,6 +410,8 @@ public class ObjectBrowserModel implements TreeViewModel
              }
           }
       }
+      
+      final DatabaseObject obj_;
    }
    
    private static class FieldCell extends AbstractCell<Field> 
