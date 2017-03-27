@@ -68,14 +68,14 @@ def get_type_from_os(os) {
 
 def limit_builds(containers) {
   // '' (empty string) as regex matches all
-  def filtered_containers = []
+  def limited_containers = []
   for (int i = 0; i < containers.size(); i++) {
     def it = containers[i]
-    if (!it.os.contains(OS_FILTER) || !it.arch.contains(ARCH_FILTER) || !it.flavor.contains(FLAVOR_FILTER)) {
-      filtered_containers << it
+    // negate-fest. String.contains() can't work in the positive with empty strings
+    if (!(!it.os.contains(OS_FILTER) || !it.arch.contains(ARCH_FILTER) || !it.flavor.contains(FLAVOR_FILTER))) {
+      limited_containers << it
     }
   }
-  def limited_containers = containers - filtered_containers // this requires a script approval.
   return limited_containers ?: containers // if we limit all, limit none
 }
 
