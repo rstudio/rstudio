@@ -40,15 +40,21 @@
   margin-top: 0;
   padding: 2px 0px 2px 6px !important;
 }
-.cellTreeTopItemImage {
+
+.cellTreeTopItemImage,
+.cellTreeItemImage {
   width: 14px !important;
   height: 14px !important;
 }
-.cellTreeTopItemImageValue {
+
+.cellTreeTopItemImageValue,
+.cellTreeItemImageValue {
   padding-left: 14px !important;
   border-bottom: none;
 }
-.cellTreeTopItemImage > img{
+
+.cellTreeTopItemImage > img, 
+.cellTreeItemImage > img {
   width: 14px !important;
   height: 14px !important;
   background-size: 14px 14px !important;
