@@ -20,6 +20,7 @@
 #include <core/Base64.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 
 // max icon size is 20k; this prevents packages that haven't saved/scaled
 // their icons properly from causing performance trouble downstream
@@ -34,13 +35,25 @@ namespace connections {
 
 namespace {
 
-// given a path to an icon on disk, return the icon's contents as a
-// base64-encoded image if an eligible image exists at the path
-std::string base64IconData(const std::string& iconPath)
+// determines the icon data; this could be either a path on disk (if we have
+// a suitable icon locally), base64-encoded icon data (if the icon is embedded
+// in an R package), or nothing (if we cannot determine an icon at all)
+std::string iconData(const std::string& iconGroup, 
+      const std::string& iconName,
+      const std::string& iconPath)
 {
-   // shortcut to empty string if no icon path specified
    if (iconPath.empty())
+   {
+      // the package did not supply an icon; see if there's one baked in
+      FilePath path = options().rResourcesPath().childPath("connections")
+         .childPath(iconGroup).childPath(iconName + ".png");
+      if (path.exists())
+         return std::string("connections/") + iconGroup + "/" + iconName +
+            ".png";
+
+      // didn't find anything
       return std::string();
+   }
 
    // expand the path 
    FilePath icon = module_context::resolveAliasedPath(iconPath);
@@ -80,7 +93,7 @@ json::Object connectionActionJson(const ConnectionAction& action)
    json::Object actionJson;
    actionJson["name"]      = action.name;
    actionJson["icon_path"] = action.icon;
-   actionJson["icon_data"] = base64IconData(action.icon);
+   actionJson["icon_data"] = iconData("actions", action.name, action.icon);
    return actionJson;
 }
 
@@ -90,7 +103,7 @@ json::Object connectionObjectTypeJson(const ConnectionObjectType& type)
    objectTypeJson["name"]      = type.name;
    objectTypeJson["contains"]  = type.contains;
    objectTypeJson["icon_path"] = type.icon;
-   objectTypeJson["icon_data"] = base64IconData(type.icon);
+   objectTypeJson["icon_data"] = iconData("objects", type.name, type.icon);
    return objectTypeJson;
 }
 
@@ -118,7 +131,8 @@ json::Object connectionJson(const Connection& connection)
    connectionJson["actions"]      = actions;
    connectionJson["object_types"] = objectTypes;
    connectionJson["icon_path"]    = connection.icon;
-   connectionJson["icon_data"]    = base64IconData(connection.icon);
+   connectionJson["icon_data"]    = iconData("drivers", connection.id.type,
+         connection.icon);
 
    return connectionJson;
 }

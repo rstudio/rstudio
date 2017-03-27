@@ -41,6 +41,8 @@
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"
 
+#define kConnectionsPath "connections"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -588,6 +590,16 @@ void initEnvironment()
 }
 
 
+Error handleConnectionsResourceRequest(const http::Request& request,
+                               http::Response* pResponse)
+{
+   std::string path(kConnectionsPath "/");
+   path.append(http::util::pathAfterPrefix(request, kConnectionsPath));
+   core::FilePath res = options().rResourcesPath().childPath(path);
+   pResponse->setCacheableFile(res, request);
+}
+
+
 } // anonymous namespace
 
 
@@ -655,6 +667,8 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(registerRpcMethod, "install_spark", installSpark))
+      (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
+            handleConnectionsResourceRequest));
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();
