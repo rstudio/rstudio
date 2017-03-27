@@ -59,7 +59,6 @@ import org.rstudio.studio.client.workbench.views.connections.events.PerformConne
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -375,7 +374,7 @@ public class ConnectionsPresenter extends BasePresenter
       
       server_.connectionPreviewObject(
          exploredConnection_.getId(), 
-         new ConnectionObjectSpecifier(event.getDataset(), "table"),
+         event.getDataset().createSpecifier(),
          new VoidServerRequestCallback(progress.getIndicator())); 
    }
    

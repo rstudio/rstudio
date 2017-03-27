@@ -23,6 +23,7 @@ import java.util.Set;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -106,7 +107,7 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          return new DefaultNodeInfo<DatabaseObject>(
                   objectProvider_,
-                   new ContainerCell(null),
+                   new ContainerCell(),
                   noObjectSelectionModel_,
                   null);
       }
@@ -128,7 +129,7 @@ public class ObjectBrowserModel implements TreeViewModel
          // does not contain data, so draw as a container cell
          return new DefaultNodeInfo<DatabaseObject>(
                new ObjectProvider(val),
-               new ContainerCell(val),
+               new ContainerCell(),
                noObjectSelectionModel_, null);
       }
       
@@ -381,10 +382,9 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private class ContainerCell extends AbstractCell<DatabaseObject>
    {
-      public ContainerCell(DatabaseObject object)
+      public ContainerCell()
       {
          super("click");
-         obj_ = object;
       }
       
       @Override
@@ -393,12 +393,17 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          SafeHtmlUtil.appendSpan(sb, "", container.getName());
          
-         if (connection_.isDataType(container.getType()))
+         ConnectionObjectType type = connection_.getObjectType(
+               container.getType());
+         if (type != null && !StringUtil.isNullOrEmpty(type.getIconData()))
          {
-            sb.append(SafeHtmlUtil.createOpenTag("span", 
-                  "class", RES.cellTreeStyle().tableViewDataset(),
-                  "title", "View table (up to 1,000 records"));
-            sb.appendHtmlConstant("</span>");   
+            sb.appendHtmlConstant("<img src=\"" + type.getIconData() + "\" " + 
+                 (type.isDataType() ? 
+                     "class=\"" + RES.cellTreeStyle().tableViewDataset() + "\" " +
+                     "title=\"View table (up to 1,000 records)\"" 
+                     : 
+                     "class=\"" + RES.cellTreeStyle().containerIcon() + "\" ") +
+                 "/ >");
          }
       }
       
@@ -412,12 +417,10 @@ public class ObjectBrowserModel implements TreeViewModel
              if (eventTarget.getAttribute("class").equals(
                                RES.cellTreeStyle().tableViewDataset()))
              {
-                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value.getName()));
+                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
              }
           }
       }
-      
-      final DatabaseObject obj_;
    }
    
    private static class FieldCell extends AbstractCell<Field> 

@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.connections.model;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ConnectionObjectType extends JavaScriptObject
@@ -34,4 +36,10 @@ public class ConnectionObjectType extends JavaScriptObject
    public final native String getIconData() /*-{
       return this.icon_data;
    }-*/;
+   
+   public final boolean isDataType()
+   {
+      return StringUtil.isNullOrEmpty(getContains()) ||
+             getContains() == "data";
+   }
 }

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.events;
 
+import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,12 +26,12 @@ public class ViewConnectionDatasetEvent extends GwtEvent<ViewConnectionDatasetEv
       void onViewConnectionDataset(ViewConnectionDatasetEvent event);
    }
    
-   public ViewConnectionDatasetEvent(String dataset)
+   public ViewConnectionDatasetEvent(DatabaseObject dataset)
    {
       dataset_ = dataset;
    }
    
-   public String getDataset()
+   public DatabaseObject getDataset()
    {
       return dataset_;
    }
@@ -46,7 +48,7 @@ public class ViewConnectionDatasetEvent extends GwtEvent<ViewConnectionDatasetEv
       handler.onViewConnectionDataset(this);
    }
    
-   private final String dataset_;
+   private final DatabaseObject dataset_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

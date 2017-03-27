@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.model;
 
-import org.rstudio.core.client.StringUtil;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -62,18 +60,21 @@ public class Connection extends JavaScriptObject
    {
       if (dataType == null)
          return false;
+      ConnectionObjectType type = getObjectType(dataType);
+      if (type == null)
+         return false;
       
+      return type.isDataType();
+   }
+   
+   public final ConnectionObjectType getObjectType(String objectType)
+   {
       JsArray<ConnectionObjectType> types = getObjectTypes();
       for (int i = 0; i < types.length(); i++)
       {
-         if (types.get(i).getName() == dataType.toLowerCase() && 
-             (StringUtil.isNullOrEmpty(types.get(i).getContains()) ||
-              types.get(i).getContains() == "data"))
-         {
-            return true;
-         }
+         if (types.get(i).getName() == objectType)
+            return types.get(i);
       }
-      
-      return false;
+      return null;
    }
 }

@@ -160,6 +160,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
          String fieldName();
          String fieldType();
          String tableViewDataset();
+         String containerIcon();
       }
    }
    

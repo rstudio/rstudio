@@ -593,10 +593,12 @@ void initEnvironment()
 Error handleConnectionsResourceRequest(const http::Request& request,
                                http::Response* pResponse)
 {
-   std::string path(kConnectionsPath "/");
-   path.append(http::util::pathAfterPrefix(request, kConnectionsPath));
-   core::FilePath res = options().rResourcesPath().childPath(path);
+   std::string path = http::util::pathAfterPrefix(
+         request, "/" kConnectionsPath "/");
+   core::FilePath res = options().rResourcesPath().complete(kConnectionsPath)
+      .childPath(path);
    pResponse->setCacheableFile(res, request);
+   return Success();
 }
 
 
@@ -668,7 +670,7 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
-            handleConnectionsResourceRequest));
+            handleConnectionsResourceRequest))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();
