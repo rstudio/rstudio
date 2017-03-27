@@ -430,6 +430,14 @@ public class ConnectionsPane extends WorkbenchPane
    {
       secondaryToolbar_ = new SecondaryToolbar();
       secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
+      connectionIcon_ = new Image();
+      connectionIcon_.setWidth("16px");
+      connectionIcon_.setHeight("16px");
+      connectionType_ = new ToolbarLabel();
+      connectionType_.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      connectionType_.getElement().getStyle().setMarginRight(10, Unit.PX);
+      secondaryToolbar_.addRightWidget(connectionIcon_);
+      secondaryToolbar_.addRightWidget(connectionType_);
       
       return secondaryToolbar_;
    }
@@ -602,6 +610,8 @@ public class ConnectionsPane extends WorkbenchPane
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
       connectionName_.setText(connection.getDisplayName());
+      connectionIcon_.setUrl(connection.getIconData());
+      connectionType_.setText(connection.getId().getType());
       setSecondaryToolbarVisible(true);
    }
    
@@ -650,6 +660,8 @@ public class ConnectionsPane extends WorkbenchPane
    
    private SecondaryToolbar secondaryToolbar_;
    private ToolbarLabel connectionName_;
+   private Image connectionIcon_;
+   private ToolbarLabel connectionType_;
    
    private final Commands commands_;
    private final EventBus eventBus_;
