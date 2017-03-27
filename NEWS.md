@@ -35,9 +35,11 @@
 
 ### Miscellaneous
 
-* Added support for custom, user-provided project templates
+* New high-DPI icons throughout
+* Add support for custom, user-provided project templates
 * Add support for creating new Git branches and adding remotes
-* Implement support for changing editor tabs with the mouse wheel
+* Document cursor position is now saved and restored between RStudio sessions
+* Add support for changing editor tabs with the mouse wheel
 * Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
 * Cmd/Ctrl+Enter in Help pane now sends selected example code to console

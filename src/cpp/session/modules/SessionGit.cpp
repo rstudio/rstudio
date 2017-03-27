@@ -410,16 +410,13 @@ public:
       // build shell arguments
       ShellArgs arguments;
       
-#ifdef _WIN32
-      // by default on Windows, git will return paths which contain characters
+      // on some platforms, git will return paths which contain characters
       // not in the ASCII set with a so-called 'quoted octal encoding'.
       // this is controlled by the 'core.quotepath' configuration option;
       // by setting this to off we ensure that git will return us a
       // plain UTF-8 encoded path which requires no further processing
-      arguments << "-c" << "core.quotepath=off";
-#endif
-      
-      arguments << "status" << "--porcelain" << "--" << dir;
+      arguments << "-c" << "core.quotepath=off"
+                << "status" << "--porcelain" << "--" << dir;
       
       std::string output;
       Error error = runGit(arguments, &output);

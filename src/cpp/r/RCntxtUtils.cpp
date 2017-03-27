@@ -13,6 +13,8 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
@@ -22,7 +24,6 @@
 namespace rstudio {
 namespace r {
 namespace context {
-
 
 RCntxtVersion contextVersion()
 {
@@ -155,6 +156,18 @@ bool inDebugHiddenContext()
       }
    }
    return false;
+}
+
+bool isByteCodeContext(const RCntxt& cntxt)
+{
+   return isByteCodeSrcRef(cntxt.srcref());
+}
+
+bool isByteCodeSrcRef(SEXP srcref)
+{
+   return srcref &&
+         TYPEOF(srcref) == SYMSXP &&
+         ::strcmp(CHAR(PRINTNAME(srcref)), "<in-bc-interp>") == 0;
 }
 
 } // namespace context

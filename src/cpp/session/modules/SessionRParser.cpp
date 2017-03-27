@@ -1756,9 +1756,15 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
       if (isLeftBracket(cursor))
          if (!cursor.fwdToMatchingToken())
             return false;
+      
+      // If the cursor is lying upon a right parenthesis, then implicitly
+      // pop that state (examine the parent state).
+      ParseStatus::ParseState state = cursor.isType(RToken::RPAREN)
+            ? status.peekState(1)
+            : status.peekState(0);
 
       // Check for end of statement
-      if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
+      if (cursor.isAtEndOfStatement(status.isInParentheticalScope(state)))
          break;
 
       // Expecting a symbol or right bracket
@@ -2012,6 +2018,7 @@ START:
       }
       
       DEBUG("Start: " << cursor);
+      
       // Move over unary operators -- any sequence is valid,
       // but certain tokens are not accepted following
       // unary operators.
@@ -2019,7 +2026,23 @@ START:
       while (isValidAsUnaryOperator(cursor))
       {
          startedWithUnaryOperator = true;
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+         
+         // Explicitly consume a '!!' or '!!!', to avoid warnings
+         // about whitespace used with unquote and unquote-splice
+         // operators.
+         if (cursor.contentEquals(L"!") &&
+             cursor.nextSignificantToken().contentEquals(L"!"))
+         {
+            do
+            {
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            }
+            while (cursor.contentEquals(L"!"));
+         }
+         else
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+         }
       }
       
       // Check for keywords.

@@ -56,7 +56,7 @@ RUN wget http://ftp.gnu.org/gnu/wget/wget-1.16.tar.gz \
     && make && make install \
     && cd ..
 
-RUN wget http://zlib.net/zlib-1.2.8.tar.gz \
+RUN wget http://zlib.net/fossils/zlib-1.2.8.tar.gz \
     && tar xvf zlib-1.2.8.tar.gz \
     && cd zlib-1.2.8 \
     && linux32 ./configure --prefix=/usr/local/ \
@@ -80,7 +80,7 @@ RUN wget http://tukaani.org/xz/xz-5.2.2.tar.gz \
     && linux32 make install \
     && cd ..
 
-RUN wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.38.tar.gz \
+RUN wget http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.38.tar.gz \
     && tar xvf pcre-8.38.tar.gz \
     && cd pcre-8.38 \
     && linux32 ./configure --prefix=/usr/local/ --enable-utf8 \
@@ -107,3 +107,13 @@ RUN wget http://dl.fedoraproject.org/pub/epel/7/SRPMS/f/fakeroot-1.18.4-2.el7.sr
     && linux32 rpmbuild --rebuild fakeroot-1.18.4-2.el7.src.rpm \
     && rpm -ivh /root/rpmbuild/RPMS/i686/fakeroot-libs-1.18.4-2.el7.centos.i686.rpm \
     && rpm -ivh /root/rpmbuild/RPMS/i686/fakeroot-1.18.4-2.el7.centos.i686.rpm
+
+# remove users/groups with colliding jenkins ids
+RUN userdel systemd-bus-proxy && userdel systemd-network && groupdel input
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+ARG JENKINS_GID=999
+ARG JENKINS_UID=999
+RUN groupadd -g $JENKINS_GID jenkins && \
+    useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

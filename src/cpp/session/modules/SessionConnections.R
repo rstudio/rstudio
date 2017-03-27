@@ -296,8 +296,10 @@ options(connectionObserver = list(
        exists("list_drivers", envir = asNamespace("odbc"))) {
       listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
 
-      driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, listDrivers()$name)
+      drivers <- listDrivers()
+      uniqueDrivers <- drivers[drivers$attribute == "Driver", ]
 
+      driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, uniqueDrivers$name)
 
       connectionList <- c(connectionList, lapply(driversNoSnippet, function(driver) {
          snippet <- paste(
