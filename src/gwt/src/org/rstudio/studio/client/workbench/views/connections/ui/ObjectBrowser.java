@@ -16,10 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
@@ -29,7 +26,6 @@ import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTree;
-import com.google.gwt.user.cellview.client.TreeNode;
 import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;

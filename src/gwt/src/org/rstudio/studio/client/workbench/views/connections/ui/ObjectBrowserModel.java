@@ -327,7 +327,7 @@ public class ObjectBrowserModel implements TreeViewModel
 
          server_.connectionListFields(
                connection_.getId(),
-               new ConnectionObjectSpecifier(table_.getName(), table_.getType()),
+               table_.createSpecifier(),
                new SimpleRequestCallback<JsArray<Field>>() {
                   @Override
                   public void onResponseReceived(JsArray<Field> fields)
