@@ -32,6 +32,7 @@
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 
 #include <boost/foreach.hpp>
@@ -93,10 +94,67 @@ bool isLockFileStale(const FilePath& lockFilePath)
    return LinkBasedFileLock::isLockFileStale(lockFilePath);
 }
 
+bool isLockFileOrphaned(const FilePath& lockFilePath)
+{
+#ifndef _WIN32
+   
+   Error error;
+   
+   // attempt to read pid from lockfile
+   std::string pid;
+   error = core::readStringFromFile(lockFilePath, &pid);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   pid = string_utils::trimWhitespace(pid);
+   
+#ifdef __linux__
+   
+   // on linux, we can check the proc filesystem for an associated
+   // process -- if there is no such directory, then we assume that
+   // this lockfile has been orphaned
+   FilePath procPath("/proc/" + pid);
+   if (!procPath.exists())
+      return true;
+   
+#endif
+   
+   // call 'ps' to attempt to see if a process associated
+   // with this process id exists (and get information about it)
+   using namespace core::system;
+   std::string command = "ps -p " + pid;
+   ProcessOptions options;
+   ProcessResult result;
+   error = core::system::runCommand(command, options, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   // ps will return a non-zero exit status if no process with
+   // the requested id is available -- if there is no process,
+   // then this lockfile has been orphaned
+   if (result.exitStatus != EXIT_SUCCESS)
+      return true;
+   
+#endif /* _WIN32 */
+   
+   // assume the process is not orphaned if all previous checks failed
+   return false;
+   
+}
+
 } // end anonymous namespace
 
 bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
 {
+   // check for orphaned lockfile
+   if (isLockFileOrphaned(lockFilePath))
+      return true;
+   
    double seconds = s_timeoutInterval.total_seconds();
    double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
    return diff >= seconds;
@@ -203,7 +261,7 @@ Error writeLockFile(const FilePath& lockFilePath)
    
    // ensure the proxy file is created, and remove it when we're done
    RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
-   error = proxyPath.ensureFile();
+   error = core::writeStringToFile(proxyPath, pidString());
    if (error)
    {
       // log the error since it isn't expected and could get swallowed
