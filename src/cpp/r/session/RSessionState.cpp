@@ -613,17 +613,17 @@ bool restore(const FilePath& statePath,
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    
+   // restore options
+   FilePath optionsPath = statePath.complete(kOptionsFile);
+   if (optionsPath.exists())
+   {
+      error = r::options::restoreOptions(optionsPath);
+      if (error)
+         reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
+   }
+      
    if (s_isCompatibleSessionState)
    {
-      // restore options
-      FilePath optionsPath = statePath.complete(kOptionsFile);
-      if (optionsPath.exists())
-      {
-         error = r::options::restoreOptions(optionsPath);
-         if (error)
-            reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
-      }
-
       // restore libpaths -- but only if packrat mode is off
       bool packratModeOn = settings.getBool(kPackratModeOn, false);
       if (!packratModeOn)
