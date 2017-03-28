@@ -13,7 +13,7 @@
  *
  */
 
-#include "RSessionState.hpp"
+#include <r/session/RSessionState.hpp>
 
 #include <algorithm>
 
@@ -507,8 +507,6 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    // report incompatible R version
    if (!s_isCompatibleSessionState)
    {
-      s_isCompatibleSessionState = true;
-      
       if (!s_activeRVersion.empty() &&
           !s_suspendedRVersion.empty())
       {
@@ -679,9 +677,15 @@ bool destroy(const FilePath& statePath)
       return true;
    }
 }
-   
-   
-      
+
+SessionStateInfo getSessionStateInfo()
+{
+   SessionStateInfo info;
+   info.suspendedRVersion = core::Version(s_suspendedRVersion);
+   info.activeRVersion = core::Version(s_activeRVersion);
+   return info;
+}
+
 } // namespace state
 } // namespace session   
 } // namespace r

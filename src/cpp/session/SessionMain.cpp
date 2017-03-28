@@ -74,6 +74,7 @@
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
 #include <r/session/RSession.hpp>
+#include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -557,6 +558,28 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    return Success();
 }
 
+void notifyIfRVersionChanged()
+{
+   using namespace rstudio::r::session::state;
+   
+   SessionStateInfo info = getSessionStateInfo();
+   
+   if (info.activeRVersion != info.suspendedRVersion)
+   {
+      const char* fmt =
+            "Detected R version change [%1% -> %2%]: "
+            "not restoring all session state\n";
+      
+      boost::format formatter(fmt);
+      formatter
+            % std::string(info.suspendedRVersion)
+            % std::string(info.activeRVersion);
+      
+      std::string msg = formatter.str();
+      ::REprintf(msg.c_str());
+   }
+}
+
 void rSessionInitHook(bool newSession)
 {
    // allow any packages listening to complete initialization
@@ -564,6 +587,9 @@ void rSessionInitHook(bool newSession)
 
    // finish off initialization
    module_context::events().afterSessionInitHook(newSession);
+   
+   // notify the user if the R version has changed
+   notifyIfRVersionChanged();
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted);

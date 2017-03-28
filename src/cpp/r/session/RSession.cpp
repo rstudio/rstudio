@@ -41,6 +41,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RInterface.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/session/RSessionState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RClientState.hpp>
@@ -48,7 +49,6 @@
 #include <r/session/RDiscovery.hpp>
 
 #include "RClientMetrics.hpp"
-#include "RSessionState.hpp"
 #include "RRestartContext.hpp"
 #include "REmbedded.hpp"
 

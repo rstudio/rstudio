@@ -21,6 +21,7 @@
 #include <boost/function.hpp>
 
 #include <core/Error.hpp>
+#include <core/Version.hpp>
 
 namespace rstudio {
 namespace core {
@@ -32,7 +33,13 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace state {
-        
+
+struct SessionStateInfo
+{
+   core::Version suspendedRVersion;
+   core::Version activeRVersion;
+};
+
 bool save(const core::FilePath& statePath,
           bool serverMode,
           bool excludePackages,
@@ -52,6 +59,8 @@ bool restore(const core::FilePath& statePath,
              std::string* pErrorMessages); 
    
 bool destroy(const core::FilePath& statePath);
+
+SessionStateInfo getSessionStateInfo();
      
 } // namespace state
 } // namespace session

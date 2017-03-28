@@ -20,6 +20,7 @@
 
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
@@ -31,6 +32,11 @@ class Version
 {
    
 public:
+   
+   Version()
+   {
+   }
+
    Version(std::string version)
    {
       try
@@ -85,6 +91,22 @@ public:
       return compare(*this, other);
    }
    
+   operator std::string() const
+   {
+      if (pieces_.empty())
+         return std::string();
+      
+      std::stringstream ss;
+      ss << boost::lexical_cast<std::string>(pieces_[0]);
+      for (std::size_t i = 1, n = pieces_.size(); i < n; ++i)
+      {
+         ss << ".";
+         ss << boost::lexical_cast<std::string>(pieces_[i]);
+      }
+      
+      return ss.str();
+   }
+   
 private:
    
    int compare(Version lhs, Version rhs) const
@@ -109,32 +131,32 @@ private:
    std::vector<int> pieces_;
 };
 
-bool operator <(const Version& lhs, const Version& rhs)
+inline bool operator  <(const Version& lhs, const Version& rhs)
 {
-   return lhs.compare(rhs) == -1;
+   return lhs.compare(rhs) < 0;
 }
 
-bool operator <=(const Version& lhs, const Version& rhs)
+inline bool operator <=(const Version& lhs, const Version& rhs)
 {
    return lhs.compare(rhs) <= 0;
 }
 
-bool operator ==(const Version& lhs, const Version& rhs)
+inline bool operator ==(const Version& lhs, const Version& rhs)
 {
    return lhs.compare(rhs) == 0;
 }
 
-bool operator !=(const Version& lhs, const Version& rhs)
+inline bool operator !=(const Version& lhs, const Version& rhs)
 {
    return lhs.compare(rhs) != 0;
 }
 
-bool operator >=(const Version& lhs, const Version& rhs)
+inline bool operator >=(const Version& lhs, const Version& rhs)
 {
    return lhs.compare(rhs) >= 0;
 }
 
-bool operator >(const Version& lhs, const Version& rhs)
+inline bool operator  >(const Version& lhs, const Version& rhs)
 {
    return lhs.compare(rhs) > 0;
 }

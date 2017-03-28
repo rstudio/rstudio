@@ -23,7 +23,7 @@
 #include <core/FileUtils.hpp>
 #include <core/system/System.hpp>
 
-#include "RSessionState.hpp"
+#include <r/session/RSessionState.hpp>
 
 using namespace rstudio::core ;
 
