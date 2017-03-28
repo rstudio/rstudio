@@ -96,6 +96,8 @@ bool isLockFileStale(const FilePath& lockFilePath)
 
 bool isLockFileOrphaned(const FilePath& lockFilePath)
 {
+#ifndef _WIN32
+   
    Error error;
    
    // attempt to read pid from lockfile
@@ -137,6 +139,8 @@ bool isLockFileOrphaned(const FilePath& lockFilePath)
    // then this lockfile has been orphaned
    if (result.exitStatus != EXIT_SUCCESS)
       return true;
+   
+#endif /* _WIN32 */
    
    // assume the process is not orphaned if all previous checks failed
    return false;
