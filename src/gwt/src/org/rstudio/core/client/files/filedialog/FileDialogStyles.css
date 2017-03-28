@@ -4,7 +4,7 @@
 @external breadcrumb, breadcrumb-filepane;
 
 @url DIRSEPARATOR dirseparator;
-@url HOME home;
+@url HOME home2x;
 
 .contents, .filename {
    background-color: white;
@@ -118,6 +118,7 @@
 .breadcrumb table.path .home {
    padding-left: 28px;
    background: HOME 0 1px no-repeat;
+   background-size: 24px 18px;
 }
 
 .project {

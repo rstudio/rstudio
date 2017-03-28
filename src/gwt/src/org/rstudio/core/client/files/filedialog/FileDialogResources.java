@@ -30,8 +30,8 @@ public interface FileDialogResources extends ClientBundle
    @Source("dirseparator.png")
    DataResource dirseparator();
 
-   @Source("home.png")
-   DataResource home();
+   @Source("home_2x.png")
+   DataResource home2x();
    
    @Source("project_2x.png")
    DataResource project2x();
