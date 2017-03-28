@@ -26,6 +26,7 @@
 #  define test_that SECTION
 #  define expect_true(x) CHECK((x))
 #  define expect_false(x) CHECK_FALSE((x))
+#  define expect_equal(lhs, rhs) CHECK(lhs == rhs)
 
 # endif
 
@@ -37,6 +38,7 @@
 #  define test_that(__X__) if (false)
 #  define expect_true(__X__)
 #  define expect_false(__X__)
+#  define expect_equal(lhs, rhs)
 
 # endif
 

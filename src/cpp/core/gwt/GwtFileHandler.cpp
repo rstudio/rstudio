@@ -94,14 +94,14 @@ void handleFileRequest(const std::string& wwwLocalPath,
    }
    
    // case: files designated to be cached "forever"
-   if (regex_match(uri, boost::regex(".*\\.cache\\..*")))
+   if (uri.find(".cache.") != std::string::npos)
    {
       pResponse->setCacheForeverHeaders();
       pResponse->setFile(filePath, request);
    }
    
    // case: files designated to never be cached 
-   else if (regex_match(uri, boost::regex(".*\\.nocache\\..*")))
+   else if (uri.find(".nocache.") != std::string::npos)
    {
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

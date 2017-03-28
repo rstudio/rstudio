@@ -21,8 +21,10 @@
 
 #include <core/Algorithm.hpp>
 #include <core/collection/Position.hpp>
+#include <core/RegexUtils.hpp>
 
 namespace rstudio {
+namespace core {
 namespace unit_tests {
 
 using namespace core::collection;
@@ -55,5 +57,24 @@ context("Splitting")
    }
 }
 
+context("Regular Expressions")
+{
+   test_that("regex_replace() successfully escapes special characters")
+   {
+      expect_equal(
+               regex_utils::regexEscape("A.B"),
+               "A\\.B");
+      
+      expect_equal(
+               regex_utils::regexEscape("X[1]"),
+               "X\\[1\\]");
+      
+      expect_equal(
+               regex_utils::regexEscape(".+?"),
+               "\\.\\+\\?");
+   }
+}
+
 } // namespace unit_tests
+} // namespace core
 } // namespace rstudio

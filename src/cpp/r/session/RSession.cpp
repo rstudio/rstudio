@@ -647,9 +647,7 @@ bool consoleInputHook(const std::string& prompt,
       return true;
 
    // check for user quit invocation
-    boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
-    boost::smatch match;
-    if (boost::regex_match(input, match, re))
+   if (input.find("q(") == 0 || input.find("quit(") == 0)
    {
       if (!s_callbacks.handleUnsavedChanges())
       {

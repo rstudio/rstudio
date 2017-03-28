@@ -68,7 +68,9 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    // (note see below for another approach involving setting the locale
    // of the regex directly -- this assumes that the matching issue is
    // somehow related to locales)
-   boost::regex re(name + "_([^_]+)_([^\\.]+)\\.tar\\.gz");
+   boost::regex re(
+            regex_utils::regexEscape(name) +
+            "_([^_]+)_([^\\.]+)\\.tar\\.gz");
 
    /* another approach (which we didn't try) based on setting the regex locale
    boost::regex re;

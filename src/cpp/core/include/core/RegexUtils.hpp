@@ -72,6 +72,8 @@ bool search(const boost::regex& rePattern,
    return boost::regex_search(string, *pMatch, rePattern);
 }
 
+std::string regexEscape(const std::string& entry);
+
 } // namespace regex_utils
 } // namespace core 
 } // namespace rstudio

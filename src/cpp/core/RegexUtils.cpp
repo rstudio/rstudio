@@ -120,6 +120,18 @@ Error filterString(const std::string& input,
    return filterString(input, filters, pOutput);
 }
 
+std::string regexEscape(const std::string& entry)
+{
+   static const boost::regex reSpecial("[.^$|()\\[\\]{}*+?\\\\]");
+   static const boost::regex reReplace("\\\\$0");
+   
+   std::string result = boost::regex_replace(
+            entry,
+            reSpecial,
+            reReplace);
+   
+   return result;
+}
 
 } // namespace regex_utils
 } // namespace core 

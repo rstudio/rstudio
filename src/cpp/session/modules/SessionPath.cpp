@@ -28,6 +28,7 @@
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -68,7 +69,12 @@ void safeReadPathsFromFile(const FilePath& filePath,
 
 void addToPathIfNecessary(const std::string& entry, std::string* pPath)
 {
-   if (!regex_search(*pPath, boost::regex("(^|:)" + entry + "/?($|:)")))
+   boost::regex rePath(
+            "(?:^|:)" +
+            regex_utils::regexEscape(entry) +
+            "/?(?:$|:)");
+   
+   if (!boost::regex_search(*pPath, rePath))
    {
       if (!pPath->empty())
          pPath->push_back(':');
