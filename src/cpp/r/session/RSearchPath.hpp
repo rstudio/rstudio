@@ -30,7 +30,7 @@ namespace search_path {
 
 core::Error save(const core::FilePath& statePath);
 core::Error saveGlobalEnvironment(const core::FilePath& statePath);
-core::Error restore(const core::FilePath& statePath);
+core::Error restore(const core::FilePath& statePath, bool isCompatibleSessionState = true);
    
 } // namespace search_path
 } // namespace session

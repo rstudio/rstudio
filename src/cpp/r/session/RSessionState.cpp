@@ -13,7 +13,7 @@
  *
  */
 
-#include "RSessionState.hpp"
+#include <r/session/RSessionState.hpp>
 
 #include <algorithm>
 
@@ -23,6 +23,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
+#include <core/Version.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
@@ -55,6 +56,7 @@ namespace {
 const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
+const char * const kRVersion = "rversion";
 const char * const kEnvironmentVars = "environment_vars";
 const char * const kLibPathsFile = "libpaths";
 const char * const kHistoryFile = "history";
@@ -69,6 +71,10 @@ const char * const kDevModeOn = "dev_mode_on";
 const char * const kPackratModeOn = "packrat_mode_on";
 const char * const kRProfileOnRestore = "r_profile_on_restore";
 
+// is the suspended session state compatible with the active R version?
+std::string s_activeRVersion;
+std::string s_suspendedRVersion;
+bool s_isCompatibleSessionState = true;
 
 Error saveLibPaths(const FilePath& libPathsFile)
 {
@@ -92,6 +98,30 @@ bool isRLocationVariable(const std::string& name)
          name == "R_DOC_DIR" ||
          name == "R_INCLUDE_DIR" ||
          name == "R_SHARE_DIR";
+}
+
+Error saveRVersion(const FilePath& filePath)
+{
+   Error error;
+   
+   // remove pre-existing file
+   error = filePath.removeIfExists();
+   if (error)
+      return error;
+   
+   // ask R for the current version
+   std::string version;
+   error = RFunction(".rs.rVersionString").call(&version);
+   if (error)
+      return error;
+   
+   // write to file
+   error = core::writeStringToFile(filePath, version);
+   if (error)
+      return error;
+   
+   // success!
+   return Success();
 }
 
 Error saveEnvironmentVars(const FilePath& envFile)
@@ -302,9 +332,17 @@ bool save(const FilePath& statePath,
 
    // set r profile on restore (always run the .Rprofile in packrat mode)
    settings.set(kRProfileOnRestore, !excludePackages || packratModeOn);
+   
+   // save r version
+   Error error = saveRVersion(statePath.complete(kRVersion));
+   if (error)
+   {
+      reportError(kSaving, kRVersion, error, ERROR_LOCATION);
+      saved = false;
+   }
 
    // save environment variables
-   Error error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
@@ -462,10 +500,10 @@ bool packratModeEnabled(const core::FilePath& statePath)
 Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    // search path
-   Error error = search_path::restore(statePath);
+   Error error = search_path::restore(statePath, s_isCompatibleSessionState);
    if (error)
       return error;
-
+   
    // if we are in server mode we just need to read the plots state
    // file (because the location of the graphics directory is stable)
    if (serverMode)
@@ -481,18 +519,64 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
          return Success();
    }
 }
+
+namespace {
+
+bool validateRestoredRVersion(const FilePath& filePath)
+{
+   Error error;
+   
+   // assume we're okay if no file exists
+   if (!filePath.exists())
+      return Success();
+   
+   // read version from file
+   std::string suspendedRVersion;
+   error = core::readStringFromFile(
+            filePath,
+            &suspendedRVersion);
+   if (error)
+      return error;
+   suspendedRVersion = core::string_utils::trimWhitespace(suspendedRVersion);
+   s_suspendedRVersion = suspendedRVersion;
+   
+   // read active R version
+   std::string activeRVersion;
+   error = RFunction(".rs.rVersionString").call(&activeRVersion);
+   if (error)
+      return error;
+   activeRVersion = core::string_utils::trimWhitespace(activeRVersion);
+   s_activeRVersion = activeRVersion;
+   
+   // construct and compare versions
+   core::Version suspended(suspendedRVersion);
+   core::Version active(activeRVersion);
+   
+   // if both major and minor versions are equal, we're okay
+   return
+         suspended.versionMajor() == active.versionMajor() &&
+         suspended.versionMinor() == active.versionMinor();
+}
+
+} // end anonymous namespace
    
 bool restore(const FilePath& statePath,
              bool serverMode,
              boost::function<Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages)
 {
+   Error error;
+   
    // setup error buffer
    ErrorRecorder er(pErrorMessages);
    
+   // detect incompatible r version (don't restore some parts of session state
+   // in this case as it could cause a crash on startup)
+   s_isCompatibleSessionState = validateRestoredRVersion(statePath.complete(kRVersion));
+   
    // init session settings (used below)
    Settings settings ;
-   Error error = settings.initialize(statePath.complete(kSettingsFile));
+   error = settings.initialize(statePath.complete(kSettingsFile));
    if (error)
       reportError(kRestoring, kSettingsFile, error, ERROR_LOCATION, er);
    
@@ -517,21 +601,24 @@ bool restore(const FilePath& statePath,
       if (error)
          reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    }
-
-   // restore libpaths -- but only if packrat mode is off
-   bool packratModeOn = settings.getBool(kPackratModeOn, false);
-   if (!packratModeOn)
+      
+   if (s_isCompatibleSessionState)
    {
-      error = restoreLibPaths(statePath.complete(kLibPathsFile));
-      if (error)
-         reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
-   }
+      // restore libpaths -- but only if packrat mode is off
+      bool packratModeOn = settings.getBool(kPackratModeOn, false);
+      if (!packratModeOn)
+      {
+         error = restoreLibPaths(statePath.complete(kLibPathsFile));
+         if (error)
+            reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
+      }
 
-   // restore devmode
-   if (settings.getBool(kDevModeOn, false))
-   {
-      // ignore error -- will occur if devtools isn't installed
-      error = r::exec::RFunction("devtools:::dev_mode", true).call();
+      // restore devmode
+      if (settings.getBool(kDevModeOn, false))
+      {
+         // ignore error -- will occur if devtools isn't installed
+         error = r::exec::RFunction("devtools:::dev_mode", true).call();
+      }
    }
 
    // restore client_metrics (must execute after restore of options for
@@ -553,8 +640,7 @@ bool restore(const FilePath& statePath,
    // process that are potentially highly latent. this allows clients
    // to bring their UI up and then receive an event indicating that the
    // latent deserialization actions are taking place
-   *pDeferredRestoreAction = boost::bind(deferredRestore,
-                                             statePath, serverMode);
+   *pDeferredRestoreAction = boost::bind(deferredRestore, statePath, serverMode);
    
    // return true if there were no error messages
    return pErrorMessages->empty();
@@ -573,9 +659,15 @@ bool destroy(const FilePath& statePath)
       return true;
    }
 }
-   
-   
-      
+
+SessionStateInfo getSessionStateInfo()
+{
+   SessionStateInfo info;
+   info.suspendedRVersion = core::Version(s_suspendedRVersion);
+   info.activeRVersion = core::Version(s_activeRVersion);
+   return info;
+}
+
 } // namespace state
 } // namespace session   
 } // namespace r

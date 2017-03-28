@@ -326,13 +326,9 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
-Error restore(const FilePath& statePath)
+Error restoreSearchPath(const FilePath& statePath)
 {
-   // restore global environment
-   FilePath environmentFile = statePath.complete(kEnvironmentFile);
-   Error error = restoreGlobalEnvironment(environmentFile);
-   if (error)
-      return error;
+   Error error;
    
    // attempt to restore the search path if one has been saved
    FilePath searchPathDir = statePath.complete(kSearchPathDir);
@@ -402,7 +398,27 @@ Error restore(const FilePath& statePath)
    
    return Success();
 }
+
+Error restore(const FilePath& statePath, bool isCompatibleSessionState)
+{
+   // restore global environment
+   FilePath environmentFile = statePath.complete(kEnvironmentFile);
+   Error error = restoreGlobalEnvironment(environmentFile);
+   if (error)
+      return error;
    
+   // only restore the search path if we have a compatible R version
+   // (guard against attempts to attach incompatible packages to this
+   // R session)
+   if (isCompatibleSessionState)
+   {
+      Error error = restoreSearchPath(statePath);
+      if (error)
+         return error;
+   }
+   
+   return Success();
+}
    
 } // namespace search_path
 } // namespace session
