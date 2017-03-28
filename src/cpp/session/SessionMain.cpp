@@ -567,8 +567,8 @@ void notifyIfRVersionChanged()
    if (info.activeRVersion != info.suspendedRVersion)
    {
       const char* fmt =
-            "Detected R version change [%1% -> %2%]: "
-            "not restoring all session state\n";
+            "R version change [%1% -> %2%] detected when restoring session; "
+            "search path not restored\n";
       
       boost::format formatter(fmt);
       formatter

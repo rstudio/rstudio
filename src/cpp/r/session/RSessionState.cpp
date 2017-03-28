@@ -504,24 +504,6 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    if (error)
       return error;
    
-   // report incompatible R version
-   if (!s_isCompatibleSessionState)
-   {
-      if (!s_activeRVersion.empty() &&
-          !s_suspendedRVersion.empty())
-      {
-         std::stringstream ss;
-         ss << "Failed to restore R session state ("
-            << "R version mismatch "
-            << "[active=" << s_activeRVersion << "; "
-            << "suspended=" << s_suspendedRVersion << "])";
-         
-         std::string message = ss.str();
-         LOG_ERROR_MESSAGE(message);
-         REprintf((message + "\n").c_str());
-      }
-   }
-
    // if we are in server mode we just need to read the plots state
    // file (because the location of the graphics directory is stable)
    if (serverMode)
