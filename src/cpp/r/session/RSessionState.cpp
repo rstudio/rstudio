@@ -500,12 +500,9 @@ bool packratModeEnabled(const core::FilePath& statePath)
 Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    // search path
-   if (s_isCompatibleSessionState)
-   {
-      Error error = search_path::restore(statePath);
-      if (error)
-         return error;
-   }
+   Error error = search_path::restore(statePath, s_isCompatibleSessionState);
+   if (error)
+      return error;
    
    // report incompatible R version
    if (!s_isCompatibleSessionState)
