@@ -247,11 +247,21 @@ options(connectionObserver = list(
       driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, uniqueDrivers$name)
 
       connectionList <- c(connectionList, lapply(driversNoSnippet, function(driver) {
-         snippet <- paste(
-            "library(DBI)\n",
-            "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-            "Driver={", driver, "};${1:Parameters}\")",
-            sep = "")
+
+         currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
+
+         basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
+         snippetsFile <- file.path(basePath, tolower(driver), "snippets", paste(driver, ".R", sep = ""))
+         if (file.exists(snippetsFile)) {
+            snippet <- paste(readLines(snippetsFile), collapse = "\n")
+         }
+         else {
+            snippet <- paste(
+               "library(DBI)\n",
+               "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+               "Driver={", driver, "};${1:Parameters}\")",
+               sep = "")
+         }
 
          list(
             package = .rs.scalar(NULL),

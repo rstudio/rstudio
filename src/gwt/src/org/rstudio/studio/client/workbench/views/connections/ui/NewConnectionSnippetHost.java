@@ -387,5 +387,5 @@ public class NewConnectionSnippetHost extends Composite
    ArrayList<NewConnectionSnippetParts> snippetParts_;
    HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
 
-   static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
+   static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]*))?(:([^}]+))?\\}";
 }
