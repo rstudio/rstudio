@@ -133,7 +133,7 @@ public class DocsMenu extends AppMenuBar
       String[] deduped = new String[names.length];
       for (int i = 0; i < n; i++)
       {
-         if (counts.get(names[i]) >= 2)
+         if (counts.get(names[i]) >= 2 && paths[i] != null)
          {
             FileSystemItem item = FileSystemItem.createFile(paths[i]);
             deduped[i] = names[i] + " \u2014 " + item.getParentPath().getName();
@@ -155,7 +155,7 @@ public class DocsMenu extends AppMenuBar
       // for items that are still duplicated, just print the full parent path
       for (int i = 0; i < n; i++)
       {
-         if (counts.get(deduped[i]) >= 2)
+         if (counts.get(deduped[i]) >= 2 && paths[i] != null)
          {
             FileSystemItem item = FileSystemItem.createFile(paths[i]);
             deduped[i] = names[i] + " \u2014 " + item.getParentPath().getPath();
