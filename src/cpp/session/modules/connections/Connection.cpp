@@ -18,6 +18,7 @@
 #include <boost/foreach.hpp>
 
 #include <core/Base64.hpp>
+#include <core/StringUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -48,7 +49,8 @@ std::string iconData(const std::string& iconGroup,
       FilePath path = options().rResourcesPath().childPath("connections")
          .childPath(iconGroup).childPath(iconName + ".png");
       if (path.exists())
-         return std::string("connections/") + iconGroup + "/" + iconName +
+         return std::string("connections/") + iconGroup + "/" + 
+            string_utils::toLower(iconName) +
             ".png";
 
       // didn't find anything
