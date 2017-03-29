@@ -1,3 +1,10 @@
 .wizardPageSelector {
    top: -1px !important;
 }
+
+.wizardPageConnectionSelectorItemLeftIcon {
+   max-width: 16px;
+   max-height: 16px;
+   margin-left: 10px;
+   margin-top: 10px;
+}

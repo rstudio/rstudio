@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -32,6 +33,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -153,9 +155,10 @@ public class NewConnectionNavigationPage
             panel.addWest(new Label(""), 28);
          }
          else
-         {
+         {  
             Image icon = new Image(page.getImage());
-            icon.addStyleName(styles.wizardPageSelectorItemLeftIcon());
+            icon.addStyleName(RES.styles().wizardPageConnectionSelectorItemLeftIcon());
+            
             panel.addWest(icon, 28);
          }
          
@@ -173,6 +176,7 @@ public class NewConnectionNavigationPage
    public interface Styles extends CssResource
    {
       String wizardPageSelector();
+      String wizardPageConnectionSelectorItemLeftIcon();
    }
    
    public interface Resources extends ClientBundle
