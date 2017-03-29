@@ -3,7 +3,7 @@
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
 
-@url DIRSEPARATOR dirseparator;
+@url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
 
 .contents, .filename {
@@ -108,6 +108,7 @@
    padding: 3px 6px 0 11px;
    height: 18px;
    background: DIRSEPARATOR center left no-repeat;
+   background-size: 6px 9px;
 }
 
 .breadcrumb table.path a
