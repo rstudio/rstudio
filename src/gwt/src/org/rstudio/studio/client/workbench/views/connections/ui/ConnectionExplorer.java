@@ -1,7 +1,7 @@
 /*
  * ConnectionExplorer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // code/connecti panel
+      // code/connection panel
       int codePanelHeight = 80;
       disconnectedUI_ = new VerticalPanel();
       disconnectedUI_.setWidth("100%");
@@ -59,9 +59,8 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       disconnectedUI_.add(label);
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       
-  
-      // table browser panel
-      tableBrowser_ = new TableBrowser();
+      // object browser panel
+      objectBrowser_ = new ObjectBrowser();
       
       // container panel to enable switching between connected/disconnected
       ProgressSpinner spin = new ProgressSpinner(ProgressSpinner.COLOR_BLACK);
@@ -82,7 +81,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
             if (!event.isBusy() && containerPanel_.isProgressShowing())
             {
                showActivePanel();
-               updateTableBrowser();
+               updateObjectBrowser();
             }
          }
       });
@@ -103,15 +102,15 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       connection_ = connection;
       codePanel_.setCode(connection.getConnectCode(), connectVia);
-      updateTableBrowser();
+      updateObjectBrowser();
    }
    
    public void setConnected(boolean connected)
    {
-      activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
+      activePanel_ = connected ? objectBrowser_ : disconnectedUI_;
       showActivePanel();
       if (!connected)
-         tableBrowser_.clear();
+         objectBrowser_.clear();
    }
    
    public String getConnectCode()
@@ -124,17 +123,15 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       return codePanel_.getConnectVia();
    }
    
-   public void updateTableBrowser()
+   public void updateObjectBrowser()
    {
-      updateTableBrowser("");
+      updateObjectBrowser("");
    }
    
-   public void updateTableBrowser(String hint)
+   public void updateObjectBrowser(String hint)
    {   
-      tableBrowser_.update(connection_, hint);
+      objectBrowser_.update(connection_, hint);
    }
-   
- 
   
    @Override
    public void onResize()
@@ -153,7 +150,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private final ConnectionCodePanel codePanel_;
    
    private final VerticalPanel disconnectedUI_;
-   private final TableBrowser tableBrowser_;
+   private final ObjectBrowser objectBrowser_;
   
    private Widget activePanel_;
    

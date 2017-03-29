@@ -39,7 +39,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -373,9 +372,9 @@ public class ConnectionsPresenter extends BasePresenter
       GlobalProgressDelayer progress = new GlobalProgressDelayer(
                               globalDisplay_, 100, "Previewing table...");
       
-      server_.connectionPreviewTable(
+      server_.connectionPreviewObject(
          exploredConnection_.getId(), 
-         event.getDataset(),
+         event.getDataset().createSpecifier(),
          new VoidServerRequestCallback(progress.getIndicator())); 
    }
    
@@ -420,21 +419,15 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.getDisconnectCode(exploredConnection_.getId(), 
-                  new SimpleRequestCallback<String>() {
-               @Override
-               public void onResponseReceived(String disconnectCode)
-               {
-                  eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-               }
-          });  
+            server_.connectionDisconnect(exploredConnection_.getId(), 
+                  new VoidServerRequestCallback());
          }  
       };
       
       if (prompt)
       {
          StringBuilder builder = new StringBuilder();
-         builder.append("Are you sure you want to disconnect from Spark?");
+         builder.append("Are you sure you want to disconnect?");
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
                "Disconnect",

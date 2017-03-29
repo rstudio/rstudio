@@ -21,29 +21,29 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
  
-   void getDisconnectCode(ConnectionId connectionId, 
-                          ServerRequestCallback<String> callback);
+   void connectionDisconnect(ConnectionId connectionId, 
+                             ServerRequestCallback<Void> callback);
    
    void connectionExecuteAction(ConnectionId connectionId, 
                                 String action,
                                 ServerRequestCallback<Void> callback);
    
-   void connectionListTables(ConnectionId connectionId,
-                             ServerRequestCallback<JsArrayString> callback);
+   void connectionListObjects(ConnectionId connectionId,
+                              ConnectionObjectSpecifier object,
+                              ServerRequestCallback<JsArray<DatabaseObject>> callback);
    
    void connectionListFields(ConnectionId connectionId,
-                             String table,
+                             ConnectionObjectSpecifier object,
                              ServerRequestCallback<JsArray<Field>> callback);
    
-   void connectionPreviewTable(ConnectionId connectionId,
-                               String table,
-                               ServerRequestCallback<Void> callback);
+   void connectionPreviewObject(ConnectionId connectionId,
+                                ConnectionObjectSpecifier object,
+                                ServerRequestCallback<Void> callback);
    
    void getNewConnectionContext(
             ServerRequestCallback<NewConnectionContext> callback);

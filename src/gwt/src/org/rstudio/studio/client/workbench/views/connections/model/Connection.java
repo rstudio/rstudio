@@ -1,7 +1,7 @@
 /*
  * Connection.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,10 @@ public class Connection extends JavaScriptObject
       return this.connect_code;
    }-*/;
    
+   public final native JsArray<ConnectionObjectType> getObjectTypes() /*-{
+      return this.object_types;
+   }-*/;
+   
    public final native JsArray<ConnectionAction> getActions() /*-{
       return this.actions;
    }-*/;
@@ -51,4 +55,26 @@ public class Connection extends JavaScriptObject
    public final native String getIconData() /*-{
       return this.icon_data;
    }-*/;
+   
+   public final boolean isDataType(String dataType) 
+   {
+      if (dataType == null)
+         return false;
+      ConnectionObjectType type = getObjectType(dataType);
+      if (type == null)
+         return false;
+      
+      return type.isDataType();
+   }
+   
+   public final ConnectionObjectType getObjectType(String objectType)
+   {
+      JsArray<ConnectionObjectType> types = getObjectTypes();
+      for (int i = 0; i < types.length(); i++)
+      {
+         if (types.get(i).getName() == objectType)
+            return types.get(i);
+      }
+      return null;
+   }
 }

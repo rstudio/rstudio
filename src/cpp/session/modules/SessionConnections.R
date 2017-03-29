@@ -1,7 +1,7 @@
 #
 # SessionConnections.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@
        "character")
    .rs.validateParams(connection, "icon", "character", optional = TRUE)
    .rs.validateParams(connection, 
-       c("disconnectCode", "listTables", "listColumns", "previewTable"),
+       c("disconnect", "listObjects", "listColumns", "previewObject"),
        "function")
 })
 
@@ -43,38 +43,86 @@ assign(".rs.activeConnections",
        value = new.env(parent = emptyenv()), 
        envir = .rs.toolsEnv())
 
-# given a connection type and host, find a matching active connection, or NULL
-# if no connection was found
-.rs.addFunction("findActiveConnection", function(type, host) {
+# given a connection type and host, find a matching active connection name, or
+# NULL if no connection was found
+.rs.addFunction("findConnectionName", function(type, host) {
    connections <- ls(.rs.activeConnections)
    for (name in connections) {
       connection <- get(name, envir = .rs.activeConnections)
       if (identical(connection$type, type) && 
           identical(connection$host, host)) {
-         return(connection)
+         return(name)
       }
    }
    # indicates no connection was found
    NULL
 })
 
+# given a connection type and host, find an active connection object, or NULL if
+# no connection was found
+.rs.addFunction("findActiveConnection", function(type, host) {
+   name <- .rs.findConnectionName(type, host)
+   if (is.null(name))
+      return(NULL)
+   return(get(name, envir = .rs.activeConnections))
+})
+
 options(connectionObserver = list(
    connectionOpened = function(type, host, displayName, icon = NULL, 
-                               connectCode, disconnectCode, listTables, 
-                               listColumns, previewTable, actions = NULL) {
+                               connectCode, disconnect, listObjectTypes,
+                               listObjects, listColumns, previewObject, 
+                               connectionObject, actions = NULL) {
 
+      # execute the object types function once to get the list of known 
+      # object types; this is presumed to be static over the lifetime of the
+      # connection
+      if (!inherits(listObjectTypes, "function")) {
+         stop("listObjectTypes must be a function returning a list of object types", 
+              call. = FALSE)
+      }
+
+      # function to flatten the tree of object types for more convenient storage
+      promote <- function(name, l) {
+        if (length(l) == 0)
+          return(list())
+        if (is.null(l$contains)) {
+          # plain data
+          return(list(list(name = name,
+                      icon = l$icon,
+                      contains = "data")))
+        } else {
+          # subtypes
+          return(unlist(append(list(list(list(
+            name = name, 
+            icon = l$icon, 
+            contains = names(l$contains)))),
+            lapply(names(l$contains), function(name) {
+              promote(name, l$contains[[name]])
+            })), recursive = FALSE))
+        }
+        return(list())
+      }
+      
+      # apply tree flattener to provided object tree
+      objectTree <- listObjectTypes()
+      objectTypes <- lapply(names(objectTree), function(name) {
+         promote(name, objectTree[[name]])
+      })[[1]]
+      
       # manufacture and validate object representing this connection
       connection <- list(
-         type           = type,
-         host           = host,
-         displayName    = displayName,
-         icon           = icon,
-         connectCode    = connectCode,
-         disconnectCode = disconnectCode,
-         listTables     = listTables,
-         listColumns    = listColumns,
-         previewTable   = previewTable,
-         actions        = actions
+         type             = type,            # the type of the connection
+         host             = host,            # the host being connected to
+         displayName      = displayName,     # the name to display 
+         icon             = icon,            # an icon representing the connection
+         connectCode      = connectCode,     # code to (re)establish connection
+         disconnect       = disconnect,      # function that disconnects
+         objectTypes      = objectTypes,     # list of object types known 
+         listObjects      = listObjects,     # list objects (all or in container)
+         listColumns      = listColumns,     # list columns of a data object
+         previewObject    = previewObject,   # preview an object
+         actions          = actions,         # list of actions possible on conn
+         connectionObject = connectionObject # raw connection object
       )
       class(connection) <- "rstudioConnection"
       .rs.validateConnection(connection)
@@ -90,6 +138,12 @@ options(connectionObserver = list(
    },
    connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
+
+      # clean up reference in environment
+      name <- .rs.findConnectionName(type, host)
+      if (!is.null(name))
+         rm(list = name, envir = .rs.activeConnections)
+
       invisible(.Call("rs_connectionClosed", type, host))
    },
    connectionUpdated = function(type, host, hint, ...) {
@@ -109,41 +163,42 @@ options(connectionObserver = list(
    get(name, envir = globalenv())
 })
 
-.rs.addFunction("getDisconnectCode", function(type, host) {
+.rs.addFunction("connectionDisconnect", function(type, host) {
    connection <- .rs.findActiveConnection(type, host)
    if (!is.null(connection))
-      connection$disconnectCode()
-   else
-      ""
+      connection$disconnect()
 })
 
-.rs.addFunction("connectionListTables", function(type, host) {
+.rs.addFunction("connectionListObjects", function(type, host, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) 
-      connection$listTables()
+      connection$listObjects(...)
    else
       character()
 })
 
-.rs.addFunction("connectionListColumns", function(type, host, table) {
+.rs.addFunction("connectionListColumns", function(type, host, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection))
-      listColumnsCode <- connection$listColumns(table)
+      listColumnsCode <- connection$listColumns(...)
    else
       NULL
 })
 
-.rs.addFunction("connectionPreviewTable", function(type, host, table, limit) {
+.rs.addFunction("connectionPreviewObject", function(type, host, limit, ...) {
 
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) {
-      df <- connection$previewTable(table, limit)
-      .rs.viewDataFrame(df, table, TRUE)
+      df <- connection$previewObject(limit, ...)
+
+      # use the last element of the specifier to caption the frame
+      args <- list(...)
+      .rs.viewDataFrame(df, args[[length(args)]], TRUE)
    }
 
    NULL
