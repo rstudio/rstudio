@@ -172,6 +172,23 @@ public class ObjectBrowserModel implements TreeViewModel
          objectProviders_.get(object).refresh();
    }
 
+   private void dequeNodeExpansion(DatabaseObject object)
+   {
+      if (expandedNodeRefreshQueue_ != null)
+      {
+         expandedNodeRefreshQueue_.remove(object);
+         if (expandedNodeRefreshQueue_.size() == 0)
+         {
+            expandedNodeRefreshQueue_ = null;
+            if (onNodeExpansionCompleted_ != null)
+            {
+               onNodeExpansionCompleted_.execute();
+               onNodeExpansionCompleted_ = null;
+            }
+         }
+      }
+   }
+   
    private class ObjectProvider extends AsyncDataProvider<DatabaseObject>
    {
       public ObjectProvider()
@@ -270,6 +287,7 @@ public class ObjectBrowserModel implements TreeViewModel
                   for (int i = 0; i < objects.length(); i++)
                      objects.get(i).setParent(parent_);
                   onCompleted.execute(objects);
+                  dequeNodeExpansion(parent_);
                }
                
                @Override
@@ -344,7 +362,7 @@ public class ObjectBrowserModel implements TreeViewModel
                      }
                      updateRowCount(data.size(), true);
                      updateRowData(0, data);
-                     dequeNodeExpansion();
+                     dequeNodeExpansion(table_);
                   }
                   
                   @Override
@@ -360,24 +378,7 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          updateRowCount(0, true);
          updateRowData(0, new ArrayList<Field>());
-         dequeNodeExpansion();
-      }
-      
-      private void dequeNodeExpansion()
-      {
-         if (expandedNodeRefreshQueue_ != null)
-         {
-            expandedNodeRefreshQueue_.remove(table_);
-            if (expandedNodeRefreshQueue_.size() == 0)
-            {
-               expandedNodeRefreshQueue_ = null;
-               if (onNodeExpansionCompleted_ != null)
-               {
-                  onNodeExpansionCompleted_.execute();
-                  onNodeExpansionCompleted_ = null;
-               }
-            }
-         }
+         dequeNodeExpansion(table_);
       }
       
       private DatabaseObject table_;
