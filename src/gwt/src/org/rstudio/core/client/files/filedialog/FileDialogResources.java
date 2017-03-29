@@ -44,5 +44,6 @@ public interface FileDialogResources extends ClientBundle
 
    ImageResource fade();   
 
-   ImageResource browse();
+   @Source("browse_2x.png")
+   ImageResource browse2x();
 }
