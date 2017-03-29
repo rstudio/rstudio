@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
@@ -52,27 +53,29 @@ public class PublishMultiplePage
       if (input.isShiny() || !input.hasDocOutput())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
-               RSConnectResources.INSTANCE.publishSingleRmd(), 
+               new ImageResource2x(RSConnectResources.INSTANCE.publishSingleRmd2x()), 
                input, false, false));
          pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
-               RSConnectResources.INSTANCE.publishMultipleRmd(), 
+               new ImageResource2x(RSConnectResources.INSTANCE.publishMultipleRmd2x()), 
                input, true, false));
       }
       else if (input.isStaticDocInput())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
-               RSConnectResources.INSTANCE.publishSingleRmd(), 
+               new ImageResource2x(RSConnectResources.INSTANCE.publishSingleRmd2x()), 
                input, false, true));
          pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
-               RSConnectResources.INSTANCE.publishMultipleRmd(), 
+               new ImageResource2x(RSConnectResources.INSTANCE.publishMultipleRmd2x()), 
                input, true, true));
       }
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
-               RSConnectResources.INSTANCE.publishSingleRmd(), input, false));
+               new ImageResource2x(
+                  RSConnectResources.INSTANCE.publishSingleRmd2x()), input, false));
          pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
-               RSConnectResources.INSTANCE.publishMultipleRmd(), input, true));
+               new ImageResource2x(
+                  RSConnectResources.INSTANCE.publishMultipleRmd2x()), input, true));
       }
       return pages;
    }

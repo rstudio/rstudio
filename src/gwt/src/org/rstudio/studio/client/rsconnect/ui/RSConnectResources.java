@@ -53,17 +53,17 @@ public interface RSConnectResources extends ClientBundle
    @Source("rpubsPublishLarge_2x.png")
    ImageResource rpubsPublishLarge2x();
    
-   @Source("publishSingleRmd.png")
-   ImageResource publishSingleRmd();
+   @Source("publishSingleRmd_2x.png")
+   ImageResource publishSingleRmd2x();
 
-   @Source("publishMultipleRmd.png")
-   ImageResource publishMultipleRmd();
+   @Source("publishMultipleRmd_2x.png")
+   ImageResource publishMultipleRmd2x();
    
-   @Source("publishDocWithSource.png")
-   ImageResource publishDocWithSource();
+   @Source("publishDocWithSource_2x.png")
+   ImageResource publishDocWithSource2x();
    
-   @Source("publishDocWithoutSource.png")
-   ImageResource publishDocWithoutSource();
+   @Source("publishDocWithoutSource_2x.png")
+   ImageResource publishDocWithoutSource2x();
    
    @Source("previewDoc_2x.png")
    ImageResource previewDoc2x();

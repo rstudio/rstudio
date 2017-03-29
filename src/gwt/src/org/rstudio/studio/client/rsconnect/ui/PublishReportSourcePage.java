@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
@@ -58,13 +59,13 @@ public class PublishReportSourcePage
             "Choose this option if you want to create " + 
             (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
             "rebuild your " + descriptor + " on the server.", 
-            RSConnectResources.INSTANCE.publishDocWithSource(), 
+            new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithSource2x()), 
             input, asMultiple, false));
       String staticTitle = "Publish finished " + descriptor + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
       pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
-            RSConnectResources.INSTANCE.publishDocWithoutSource(), 
+            new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithoutSource2x()), 
             input, asMultiple, true));
       return pages;
    }
