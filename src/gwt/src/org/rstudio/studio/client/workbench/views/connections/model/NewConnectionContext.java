@@ -51,6 +51,10 @@ public class NewConnectionContext extends JavaScriptObject
       public final native String getSnippet() /*-{
          return this["snippet"];
       }-*/;
+
+      public final native String iconData() /*-{
+         return this["iconData"];
+      }-*/;
    }
 
    public final native int getConnectionsLength() /*-{

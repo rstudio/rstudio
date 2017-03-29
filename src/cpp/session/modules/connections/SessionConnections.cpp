@@ -40,6 +40,7 @@
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"
+#include "Connection.hpp"
 
 #define kConnectionsPath "connections"
 
@@ -253,6 +254,15 @@ SEXP rs_availableConnections()
    return r::sexp::create(data, &rProtect);
 }
 
+SEXP rs_connectionIcon(SEXP iconNameSEXP)
+{
+   std::string iconName = r::sexp::safeAsString(iconNameSEXP);
+
+   std::string data = iconData("drivers", iconName, "");
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(data, &rProtect);
+}
 
 Error removeConnection(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
@@ -633,6 +643,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
    RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
+   RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
 
    // initialize environment
    initEnvironment();
