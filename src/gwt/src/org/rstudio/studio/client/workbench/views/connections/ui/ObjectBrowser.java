@@ -15,10 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -27,6 +28,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
+import com.google.gwt.user.cellview.client.TreeNode;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
@@ -41,6 +43,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       // create scroll panel and set the vertical wrapper as it's widget
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
+      connection_ = null;
        
       // init widget
       initWidget(scrollPanel_);
@@ -50,47 +53,60 @@ public class ObjectBrowser extends Composite implements RequiresResize
    {
       if (objectsModel_ != null)
          objectsModel_.clear();
+      connection_ = null;
+      objectsModel_ = null;
    }
    
    public void update(Connection connection, String hint)
    { 
+      final Set<DatabaseObject> expandedNodes = new HashSet<DatabaseObject>();
+      
+      // if this update is for the currently visible connection in the model,
+      // cache the set of expanded nodes for replay
+      if (objects_ != null && connection == connection_)
+      {
+         TreeNode rootNode = objects_.getRootTreeNode();
+         if (!objects_.getRootTreeNode().isDestroyed())
+         {
+            for (int i = 0; i < rootNode.getChildCount(); i++)
+            {
+               if (rootNode.isChildOpen(i))
+               {
+                  DatabaseObject node = (DatabaseObject)rootNode.getChildValue(i);
+                  expandedNodes.add(node);
+               }
+            }
+         }
+      }
+      
       // create tables model and widget
       objectsModel_ = new ObjectBrowserModel();
       
-      objects_ = new ArrayList<CellTree>();
-      
-      
-      // TODO: capture expanded nodes
-      // final Set<String> expandedNodes = new HashSet<String>();
-      // TreeNode rootNode = objects_.get(0).getRootTreeNode();
-      // for (int i = 0; i < rootNode.getChildCount(); i++)
-      // {
-      //    if (rootNode.isChildOpen(i))
-      //    {
-      //       String node = (String)rootNode.getChildValue(i);
-      //       expandedNodes.add(node);
-      //    }
-      // }
-
-      
       // capture scroll position
-      // final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
+      final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
+
       // update the table then restore expanded nodes
       objectsModel_.update(
          connection,      // connection 
-         new HashSet<String>(),    // TODO: track nodes to expand
+         expandedNodes,
          new Command() {   // table update completed, expand nodes
             @Override
             public void execute()
             {
-               // TODO: restore expanded notes
-               // TreeNode rootNode = objects_.get(0).getRootTreeNode();
-               // for (int i = 0; i < rootNode.getChildCount(); i++)
-               // {
-               //    final String nodeName = (String)(rootNode.getChildValue(i));
-               //    if (expandedNodes.contains(nodeName))
-               //       rootNode.setChildOpen(i, true, false);
-               // }
+               TreeNode rootNode = objects_.getRootTreeNode();
+               if (!rootNode.isDestroyed())
+               {
+                  for (int i = 0; i < rootNode.getChildCount(); i++)
+                  {
+                     final DatabaseObject nodeVal = 
+                           (DatabaseObject)(rootNode.getChildValue(i));
+                     for (DatabaseObject expanded: expandedNodes)
+                     {
+                        if (expanded.isEqualTo(nodeVal))
+                           rootNode.setChildOpen(i, true, false);
+                     }
+                  }
+               }
             }
          },
          new Command() {   // node expansion completed, restore scroll position
@@ -103,8 +119,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
                   @Override
                   public void run()
                   {
-                     // TODO: update scroll pos
-                     // scrollPanel_.setVerticalScrollPosition(scrollPosition); 
+                     scrollPanel_.setVerticalScrollPosition(scrollPosition); 
                   }
                   
                }.schedule(100);
@@ -112,19 +127,23 @@ public class ObjectBrowser extends Composite implements RequiresResize
             }
          });
 
+      // create new widget
+      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES);
+      
       // create the top level list of objects
-      CellTree top = new CellTree(objectsModel_, null, RES, MESSAGES);
-      top.setDefaultNodeSize(Integer.MAX_VALUE);
-      top.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      top.setWidth("100%");
+      objects_.setDefaultNodeSize(Integer.MAX_VALUE);
+      objects_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
       VerticalPanel verticalWrapper = new VerticalPanel();
       verticalWrapper.setWidth("100%");
-      verticalWrapper.add(top);
+      verticalWrapper.add(objects_);
       
-      objects_.add(top);
       scrollPanel_.setWidget(verticalWrapper);
+      
+      // cache connection
+      connection_ = connection;
    }
    
    @Override
@@ -182,7 +201,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
                               = GWT.create(TableBrowserMessages.class);
    
    private final ScrollPanel scrollPanel_;
-   private ArrayList<CellTree> objects_;
+   private CellTree objects_;
    private ObjectBrowserModel objectsModel_;
-  
+   private Connection connection_;
 }

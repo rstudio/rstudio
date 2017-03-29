@@ -47,6 +47,13 @@ public class DatabaseObject extends JavaScriptObject
       this.parent = parent;
    }-*/;
    
+   public final boolean isEqualTo(DatabaseObject other) 
+   {
+      return getName()   == other.getName() &&
+             getType()   == other.getType() &&
+             getParent() == other.getParent();
+   }
+   
    public final ConnectionObjectSpecifier createSpecifier()
    {
       final ConnectionObjectSpecifier parent = getParent() == null ?

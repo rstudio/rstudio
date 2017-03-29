@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -69,12 +68,12 @@ public class ObjectBrowserModel implements TreeViewModel
   
    
    public void update(Connection connection,
-                      Set<String> expandedNodes,
+                      Set<DatabaseObject> expandedNodes,
                       Command onTableUpdateCompleted,
                       Command onNodeExpansionCompleted)
    {
       connection_ = connection;
-      expandedNodeRefreshQueue_ = new HashSet<DatabaseObject>();
+      expandedNodeRefreshQueue_ = expandedNodes;
       onTableUpdateCompleted_ = onTableUpdateCompleted;
       onNodeExpansionCompleted_ = onNodeExpansionCompleted;
       objectProvider_ = new ObjectProvider();
@@ -119,16 +118,19 @@ public class ObjectBrowserModel implements TreeViewModel
          if (connection_.isDataType(val.getType()))
          {
             FieldProvider fieldProvider = new FieldProvider((DatabaseObject)value);
-            fieldProviders_.put((DatabaseObject)value, fieldProvider);
+            fieldProviders_.put(val, fieldProvider);
             return new DefaultNodeInfo<Field>(fieldProvider, 
                                               new FieldCell(),
                                               noFieldSelectionModel_,
                                               null);
          }
          
+         ObjectProvider objectProvider = new ObjectProvider(val);
+         objectProviders_.put(val, objectProvider);
+         
          // does not contain data, so draw as a container cell
          return new DefaultNodeInfo<DatabaseObject>(
-               new ObjectProvider(val),
+               objectProvider,
                new ContainerCell(),
                noObjectSelectionModel_, null);
       }
@@ -162,10 +164,12 @@ public class ObjectBrowserModel implements TreeViewModel
          objectProvider_.refresh();
    }
    
-   public void refreshTable(String table)
+   public void refreshObject(DatabaseObject object)
    {
-      if (fieldProviders_.containsKey(table))
-         fieldProviders_.get(table).refresh();
+      if (fieldProviders_.containsKey(object))
+         fieldProviders_.get(object).refresh();
+      else if (objectProviders_.containsKey(object))
+         objectProviders_.get(object).refresh();
    }
 
    private class ObjectProvider extends AsyncDataProvider<DatabaseObject>
@@ -199,7 +203,6 @@ public class ObjectBrowserModel implements TreeViewModel
             public void execute(JsArray<DatabaseObject> objects)
             {
                prefetchedObjectList_ = objects;
-               fieldProviders_.clear();
                for (HasData<DatabaseObject> display : getDataDisplays())
                {
                  display.setVisibleRangeAndClearData(display.getVisibleRange(), 
@@ -440,6 +443,8 @@ public class ObjectBrowserModel implements TreeViewModel
    private ObjectProvider objectProvider_;
    private HashMap<DatabaseObject,FieldProvider> fieldProviders_ 
                               = new HashMap<DatabaseObject,FieldProvider>();
+   private HashMap<DatabaseObject,ObjectProvider> objectProviders_ 
+                              = new HashMap<DatabaseObject,ObjectProvider>();
    
    private Connection connection_;
    
