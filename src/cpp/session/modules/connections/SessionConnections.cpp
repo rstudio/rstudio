@@ -77,32 +77,27 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    {
       std::vector<std::string> actionNames;
       r::sexp::getNames(actionList, &actionNames);
-      if (error)
-         LOG_ERROR(error);
-      else
+      BOOST_FOREACH(const std::string& actionName, actionNames)
       {
-         BOOST_FOREACH(const std::string& actionName, actionNames)
+         std::string icon;
+         SEXP action;
+
+         // extract the action object from the list
+         error = r::sexp::getNamedListSEXP(actionList, actionName, &action);
+         if (error)
          {
-            std::string icon;
-            SEXP action;
-
-            // extract the action object from the list
-            error = r::sexp::getNamedListSEXP(actionList, actionName, &action);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            // extract the icon
-            error = r::sexp::getNamedListElement(action, "icon", &icon);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-            actions.push_back(ConnectionAction(actionName, icon));
+            LOG_ERROR(error);
+            continue;
          }
+
+         // extract the icon
+         error = r::sexp::getNamedListElement(action, "icon", &icon);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         actions.push_back(ConnectionAction(actionName, icon));
       }
    }
 
