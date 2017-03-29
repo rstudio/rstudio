@@ -35,8 +35,8 @@ public interface RSConnectResources extends ClientBundle
    @Source("cloudAccountIconSmall_2x.png")
    ImageResource cloudAccountIconSmall2x();
 
-   @Source("cloudAccountIcon.png")
-   ImageResource cloudAccountIcon();
+   @Source("cloudAccountIcon_2x.png")
+   ImageResource cloudAccountIcon2x();
 
    @Source("cloudAccountIconLarge_2x.png")
    ImageResource cloudAccountIconLarge2x();
