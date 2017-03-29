@@ -28,6 +28,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/Hash.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <core/FileSerializer.hpp>
 
@@ -206,7 +207,7 @@ void Response::setRangeableFile(const std::string& contents,
    std::string range = request.headerValue("Range");
    boost::regex re("bytes=(\\d*)\\-(\\d*)");
    boost::smatch match;
-   if (boost::regex_match(range, match, re))
+   if (regex_utils::match(range, match, re))
    {
       // specify partial content
       setStatusCode(http::status::PartialContent);

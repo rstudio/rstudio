@@ -14,6 +14,7 @@
  */
 
 #include <core/Backtrace.hpp>
+#include <core/RegexUtils.hpp>
 
 #ifndef _WIN32
 # include <core/Algorithm.hpp>
@@ -82,7 +83,7 @@ void printBacktrace(std::ostream& os)
    for (std::size_t i = 0; i < stackDepth; ++i)
    {
       std::string readyForPrinting = stackStrings[i];
-      if (boost::regex_match(stackStrings[i], match, reBacktrace))
+      if (regex_utils::match(stackStrings[i], match, reBacktrace))
       {
          std::size_t n = match.length();
          if (n >= 8)

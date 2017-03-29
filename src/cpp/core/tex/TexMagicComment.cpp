@@ -18,6 +18,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -47,7 +48,7 @@ Error parseMagicComments(const FilePath& texFile,
       else if (boost::algorithm::starts_with(line, "%"))
       {
          boost::smatch match;
-         if (regex_match(line, match, mcRegex))
+         if (regex_utils::match(line, match, mcRegex))
          {
             pComments->push_back(
                         TexMagicComment(match[1], match[2], match[3]));

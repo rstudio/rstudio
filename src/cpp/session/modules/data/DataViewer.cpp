@@ -166,8 +166,8 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
       // check the components for range inclusion
       boost::regex numFilter("(-?\\d+\\.?\\d*)_(-?\\d+\\.?\\d*)");
       boost::smatch innerMatch, outerMatch;
-      if (boost::regex_search(innerValue, innerMatch, numFilter) &&
-          boost::regex_search(outerValue, outerMatch, numFilter))
+      if (regex_utils::search(innerValue, innerMatch, numFilter) &&
+          regex_utils::search(outerValue, outerMatch, numFilter))
       {
          // for numeric filters, the inner is a subset if its lower bound (1)
          // is larger than the outer lower bound, and the upper bound (2) is

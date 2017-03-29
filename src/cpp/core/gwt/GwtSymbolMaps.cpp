@@ -27,6 +27,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Thread.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -274,7 +275,7 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
       {
          boost::regex re("@?([^:]+)::([^(]+)(\\((.*)\\))?");
          boost::smatch match;
-         if (boost::regex_search(parts[0], match, re))
+         if (regex_utils::search(parts[0], match, re))
          {
             declaringClass = match[1];
             methodName = match[2];
@@ -327,7 +328,7 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
       // fragment identifier encoded in filename
       boost::regex re(".*(\\d+)\\.js");
       boost::smatch match;
-      if (boost::regex_search(steFilename, match, re))
+      if (regex_utils::search(steFilename, match, re))
       {
          fragmentId = safe_convert::stringTo<int>(match[1], fragmentId);
       }

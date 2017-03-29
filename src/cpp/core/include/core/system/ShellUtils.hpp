@@ -22,6 +22,7 @@
 #include <boost/regex.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
@@ -64,7 +65,7 @@ public:
       : escapeMode_(EscapeAll)
    {
       boost::regex simpleCommand("^[a-zA-Z]+$");
-      if (boost::regex_match(program, simpleCommand))
+      if (regex_utils::match(program, simpleCommand))
          output_ = program;
       else
          output_ = escape(program);

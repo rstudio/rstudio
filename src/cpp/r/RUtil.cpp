@@ -90,7 +90,7 @@ std::string rconsole2utf8(const std::string& encoded)
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
-   while (pos != encoded.end() && boost::regex_search(pos, encoded.end(), m, utf8))
+   while (pos != encoded.end() && regex_utils::search(pos, encoded.end(), m, utf8))
    {
       if (pos < m[0].first)
          output.append(string_utils::systemToUtf8(std::string(pos, m[0].first), codepage));

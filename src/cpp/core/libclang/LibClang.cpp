@@ -23,6 +23,7 @@
 
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 
 #include <core/system/LibraryLoader.hpp>
@@ -512,7 +513,7 @@ LibraryVersion LibClang::version() const
    BOOST_FOREACH(boost::regex re, patterns)
    {
       boost::smatch match;
-      if (boost::regex_search(versionString, match, re))
+      if (regex_utils::search(versionString, match, re))
       {
          // default patch version if necessary
          std::string match3 = match[3];

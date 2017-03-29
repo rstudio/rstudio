@@ -31,6 +31,7 @@
 #include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/http/Util.hpp>
 
 #include <r/RExec.hpp>
@@ -649,7 +650,7 @@ bool consoleInputHook(const std::string& prompt,
    // check for user quit invocation
     boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
     boost::smatch match;
-    if (boost::regex_match(input, match, re))
+    if (regex_utils::match(input, match, re))
    {
       if (!s_callbacks.handleUnsavedChanges())
       {

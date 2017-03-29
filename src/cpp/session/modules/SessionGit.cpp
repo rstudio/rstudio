@@ -626,7 +626,7 @@ public:
       BOOST_FOREACH(const std::string& line, splat)
       {
          boost::smatch match;
-         if (!boost::regex_search(line, match, reSpaces))
+         if (!regex_utils::search(line, match, reSpaces))
             continue;
          
          std::string remote = std::string(line.begin(), match[0].first);
@@ -986,7 +986,7 @@ public:
    {
       static boost::regex commitRegex("^([a-z0-9]+)(\\s+\\((.*)\\))?");
       boost::smatch smatch;
-      if (boost::regex_match(value, smatch, commitRegex))
+      if (regex_utils::match(value, smatch, commitRegex))
       {
          pCommitInfo->id = smatch[1];
          std::vector<std::string> refs;
@@ -1155,7 +1155,7 @@ public:
            it++)
       {
          boost::smatch smatch;
-         if (boost::regex_search(*it, smatch, kvregex))
+         if (regex_utils::search(*it, smatch, kvregex))
          {
             std::string key = smatch[1];
             std::string value = smatch[2];
@@ -1181,7 +1181,7 @@ public:
             else if (key == "author" || key == "committer")
             {
                boost::smatch authTimeMatch;
-               if (boost::regex_search(value, authTimeMatch, authTimeRegex))
+               if (regex_utils::search(value, authTimeMatch, authTimeRegex))
                {
                   std::string author = authTimeMatch[1];
                   std::string time = authTimeMatch[2];
@@ -2354,22 +2354,26 @@ bool ensureSSHAgentIsRunning()
    // In addition to dumping the ssh-agent output, we also need to parse
    // it so we can modify rsession's environment to use the new ssh-agent
    // as well.
-   boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
-                             boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
-   boost::sregex_iterator end;
-   for (; it != end; it++)
+   try
    {
-      std::string name = (*it).str(1);
-      std::string value = (*it).str(2);
-      core::system::setenv(name, value);
-
-      if (name == "SSH_AGENT_PID")
+      boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
+                                boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
+      boost::sregex_iterator end;
+      for (; it != end; it++)
       {
-         int pid = safe_convert::stringTo<int>(value, 0);
-         if (pid)
-            s_pidsToTerminate_.push_back(pid);
+         std::string name = (*it).str(1);
+         std::string value = (*it).str(2);
+         core::system::setenv(name, value);
+
+         if (name == "SSH_AGENT_PID")
+         {
+            int pid = safe_convert::stringTo<int>(value, 0);
+            if (pid)
+               s_pidsToTerminate_.push_back(pid);
+         }
       }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    return true;
 }
@@ -2408,7 +2412,7 @@ std::string transformKeyPath(const std::string& path)
 {
 #ifdef _WIN32
    boost::smatch match;
-   if (boost::regex_match(path, match, boost::regex("/([a-zA-Z])/.*")))
+   if (regex_utils::match(path, match, boost::regex("/([a-zA-Z])/.*")))
    {
       return match[1] + std::string(":") + path.substr(2);
    }
@@ -2428,13 +2432,13 @@ void postbackSSHAskPass(const std::string& prompt,
    FilePath keyFile;
 
    // This is what the prompt looks like on OpenSSH_4.6p1 (Windows)
-   if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for key '(.+)': ")))
+   if (regex_utils::match(prompt, match, boost::regex("Enter passphrase for key '(.+)': ")))
    {
       promptToRemember = true;
       keyFile = FilePath(transformKeyPath(match[1]));
    }
    // This is what the prompt looks like on OpenSSH_5.8p1 Debian-7ubuntu1 (Ubuntu 11.10)
-   else if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for (.+): ")))
+   else if (regex_utils::match(prompt, match, boost::regex("Enter passphrase for (.+): ")))
    {
       promptToRemember = true;
       keyFile = FilePath(transformKeyPath(match[1]));
@@ -2821,7 +2825,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       if (error)
          return error;
 
-      if (boost::regex_search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
+      if (regex_utils::search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
          return Success();
 
       bool addExtraNewline = strIgnore.size() > 0
@@ -3012,7 +3016,7 @@ bool initGitBin()
       if (result.exitStatus == 0)
       {
          boost::smatch matches;
-         if (boost::regex_search(result.stdOut,
+         if (regex_utils::search(result.stdOut,
                                  matches,
                                  boost::regex("\\d+(\\.\\d+)+")))
          {

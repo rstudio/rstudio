@@ -20,12 +20,33 @@
 #include <iostream>
 
 #include <core/Algorithm.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/collection/Position.hpp>
 
 namespace rstudio {
 namespace unit_tests {
 
 using namespace core::collection;
+
+class SuppressOutputScope
+{
+public:
+   SuppressOutputScope()
+   {
+      pCoutBuf_ = std::cout.rdbuf(NULL);
+      pCerrBuf_ = std::cerr.rdbuf(NULL);
+   }
+   
+   ~SuppressOutputScope()
+   {
+      std::cout.rdbuf(pCoutBuf_);
+      std::cerr.rdbuf(pCerrBuf_);
+   }
+   
+private:
+   std::streambuf* pCoutBuf_;
+   std::streambuf* pCerrBuf_;
+};
 
 context("Position")
 {
@@ -52,6 +73,61 @@ context("Splitting")
          expect_true(splat[1] == "bar");
          expect_true(splat[2] == "baz");
       }
+   }
+}
+
+context("Regular Expressions")
+{
+   test_that("Exceptions caused by regular expression complexity are caught")
+   {
+      boost::regex pattern("(\\w*|\\w*)*@");
+      std::string haystack =
+            "abcdefghijklmnopqrstuvwxyz"
+            "abcdefghijklmnopqrstuvwxyz"
+            "|@";
+      
+      // boost-level APIs will throw an exception
+      {
+         REQUIRE_THROWS(
+                  boost::regex_match(
+                     haystack.begin(),
+                     haystack.end(),
+                     pattern));
+      }
+      
+      {
+         REQUIRE_THROWS(
+                  boost::regex_search(
+                     haystack.begin(),
+                     haystack.end(),
+                     pattern));
+      }
+      
+      // our wrappers catch and report exception, and return false
+      {
+         SuppressOutputScope scope;
+         bool result = core::regex_utils::match(
+                  haystack.begin(),
+                  haystack.end(),
+                  pattern);
+
+         // although in theory the above regular expression matches
+         // we should instead see a report regarding complexity overload
+         expect_false(result);
+      }
+      
+      {
+         SuppressOutputScope scope;
+         bool result = core::regex_utils::search(
+                  haystack.begin(),
+                  haystack.end(),
+                  pattern);
+
+         // although in theory the above regular expression matches
+         // we should instead see a report regarding complexity overload
+         expect_false(result);
+      }
+      
    }
 }
 

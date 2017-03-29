@@ -151,7 +151,7 @@ std::vector<AtCommand> Slide::atCommands() const
    BOOST_FOREACH(const std::string& atField, atFields)
    {
       boost::smatch match;
-      if (boost::regex_match(atField, match, re))
+      if (regex_utils::match(atField, match, re))
       {
          std::string cmd = match[3];
          if (isAtCommandField(cmd))
@@ -396,7 +396,7 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
    for (std::size_t i = 0; i<lines.size(); i++)
    {
       boost::smatch m;
-      if (boost::regex_match(lines[i], m, re))
+      if (regex_utils::match(lines[i], m, re))
          headerLines.push_back(i);
    }
 
@@ -441,7 +441,7 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
       {
          if (inFields)
          {
-            if (boost::regex_match(lines[l], dcfFieldRegex))
+            if (regex_utils::match(lines[l], dcfFieldRegex))
             {
                fields += lines[l] + "\n";
             }

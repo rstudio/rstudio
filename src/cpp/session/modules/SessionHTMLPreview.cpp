@@ -710,7 +710,7 @@ Error createNotebook(const json::JsonRpcRequest& request,
 bool requiresHighlighting(const std::string& htmlOutput)
 {
    boost::regex hlRegex("<pre><code class=\"(r|cpp)\"");
-   return boost::regex_search(htmlOutput, hlRegex);
+   return regex_utils::search(htmlOutput, hlRegex);
 }
 
 

@@ -22,6 +22,9 @@
 #include <boost/regex.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
+#include <core/regex/RegexMatch.hpp>
+#include <core/regex/RegexSearch.hpp>
+
 namespace rstudio {
 namespace core {
 
@@ -61,7 +64,7 @@ bool match(const boost::regex& rePattern,
            const StringType& string,
            MatchType* pMatch)
 {
-   return boost::regex_match(string, *pMatch, rePattern);
+   return regex_utils::match(string, *pMatch, rePattern);
 }
 
 template <typename StringType, typename MatchType>
@@ -69,7 +72,7 @@ bool search(const boost::regex& rePattern,
             const StringType& string,
             MatchType* pMatch)
 {
-   return boost::regex_search(string, *pMatch, rePattern);
+   return regex_utils::search(string, *pMatch, rePattern);
 }
 
 } // namespace regex_utils

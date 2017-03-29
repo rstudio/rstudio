@@ -23,6 +23,7 @@
 
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/http/Util.hpp>
@@ -45,7 +46,7 @@ std::string defaultTitle(const std::string& htmlContent)
 {
    boost::regex re("<[Hh]([1-6]).*?>(.*?)</[Hh]\\1>");
    boost::smatch match;
-   if (boost::regex_search(htmlContent, match, re))
+   if (regex_utils::search(htmlContent, match, re))
       return match[2];
    else
       return "";
@@ -160,14 +161,14 @@ void HtmlPreserver::preserve(std::string* pInput)
    {
       // look for begin marker
       boost::smatch m;
-      if (boost::regex_search(pos, inputEnd, m, beginPreserve))
+      if (regex_utils::search(pos, inputEnd, m, beginPreserve))
       {
          // set begin iterator
          std::string::const_iterator begin = m[0].first;
          std::string::const_iterator end = m[0].second;
 
          // look for end marker
-         if (boost::regex_search(end, inputEnd, m, endPreserve))
+         if (regex_utils::search(end, inputEnd, m, endPreserve))
          {
             // update end to be the end of the match
             end = m[0].second;

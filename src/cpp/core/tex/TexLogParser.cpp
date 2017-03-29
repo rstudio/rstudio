@@ -23,6 +23,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
@@ -183,10 +184,10 @@ void unwrapLines(std::vector<std::string>* pLines,
          if (beginsWith(*nextPos, "LaTeX Warning:", "LaTeX Info:", "LaTeX2e <"))
             break;
 
-         if (boost::regex_search(*nextPos, regexAssignment))
+         if (regex_utils::search(*nextPos, regexAssignment))
             break;
 
-         if (boost::regex_search(*nextPos, regexLine))
+         if (regex_utils::search(*nextPos, regexLine))
             break;
 
          bool breakAfterAppend = nextPos->length() != 79;
@@ -364,7 +365,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
          // Parse lines, if present
          boost::smatch overUnderfullLinesMatch;
-         if (boost::regex_search(line,
+         if (regex_utils::search(line,
                                  overUnderfullLinesMatch,
                                  regexOverUnderfullLines))
          {
@@ -421,7 +422,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          boost::smatch match;
          for (it++; it != lines.end(); it++)
          {
-            if (boost::regex_search(*it, match, regexLnn))
+            if (regex_utils::search(*it, match, regexLnn))
             {
                lineNum = safe_convert::stringTo<int>(match[1], -1);
                break;
@@ -447,7 +448,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
       }
 
       boost::smatch warningMatch;
-      if (boost::regex_search(line, warningMatch, regexWarning))
+      if (regex_utils::search(line, warningMatch, regexWarning))
       {
          std::string warningMsg = warningMatch[1];
          int lineNum = -1;
@@ -456,7 +457,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
             if (boost::algorithm::ends_with(warningMsg, "."))
             {
                boost::smatch warningEndMatch;
-               if (boost::regex_search(*it, warningEndMatch, regexWarningEnd))
+               if (regex_utils::search(*it, warningEndMatch, regexWarningEnd))
                {
                   lineNum = safe_convert::stringTo<int>(warningEndMatch[1], -1);
                }
@@ -487,7 +488,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
       }
 
       boost::smatch cStyleErrorMatch;
-      if (boost::regex_search(line, cStyleErrorMatch, regexCStyleError))
+      if (regex_utils::search(line, cStyleErrorMatch, regexCStyleError))
       {
          FilePath cstyleFile = resolveFilename(rootDir, cStyleErrorMatch[1]);
          if (cstyleFile.exists())
@@ -523,7 +524,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
         it++)
    {
       boost::smatch match;
-      if (regex_match(*it, match, re))
+      if (regex_utils::match(*it, match, re))
       {
          pLogEntries->push_back(
                LogEntry(

@@ -31,6 +31,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -169,7 +170,7 @@ void parseMultipartForm(const std::string& contentType,
          // parse values out of content disposition
          std::string nameRegex("form-data; name=\"(.*)\"");
          boost::smatch nameMatch;
-         if (regex_match(cDisp, nameMatch, boost::regex(nameRegex)))
+         if (regex_utils::match(cDisp, nameMatch, boost::regex(nameRegex)))
          {
             // read the rest of the stream
             std::ostringstream valueStream ;
@@ -180,7 +181,7 @@ void parseMultipartForm(const std::string& contentType,
             // check for filename
             std::string filenameRegex(nameRegex + "; filename=\"(.*)\"");
             boost::smatch fileMatch;
-            if (regex_match(cDisp, fileMatch, boost::regex(filenameRegex)))
+            if (regex_utils::match(cDisp, fileMatch, boost::regex(filenameRegex)))
             {
                std::string name(fileMatch[1]);
                

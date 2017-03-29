@@ -47,7 +47,7 @@ namespace {
 bool isValidRPackageName(const std::string& pkgName)
 {
    static const boost::regex rePkgName("[a-zA-Z][a-zA-Z0-9._]*");
-   return boost::regex_match(pkgName, rePkgName);
+   return regex_utils::match(pkgName, rePkgName);
 }
 
 std::wstring removeQuoteDelims(const std::wstring& input)

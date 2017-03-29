@@ -105,7 +105,7 @@ Error Concordance::parse(const FilePath& sourceFile,
    // extract concordance structure
    boost::regex re("\\\\Sconcordance\\{([^\\}]+)\\}");
    boost::smatch match;
-   if (!boost::regex_match(concordance, match, re))
+   if (!regex_utils::match(concordance, match, re))
       return badFormatError(sourceFile, "body", ERROR_LOCATION);
 
    // split into sections
@@ -128,7 +128,7 @@ Error Concordance::parse(const FilePath& sourceFile,
    {
       boost::regex re("^ofs ([0-9]+)");
       boost::smatch match;
-      if (!boost::regex_match(sections[3], match, re))
+      if (!regex_utils::match(sections[3], match, re))
          return badFormatError(sourceFile, "offset", ERROR_LOCATION);
 
       offset_ = safe_convert::stringTo<std::size_t>(match[1], 0);

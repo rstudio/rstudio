@@ -28,6 +28,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/ConfigUtils.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
@@ -775,7 +776,7 @@ Error rVersion(const FilePath& rHomePath,
       std::string versionInfo = boost::algorithm::trim_copy(result.stdOut);
       boost::regex re("^([\\d\\.]+)$");
       boost::smatch match;
-      if (boost::regex_search(versionInfo, match, re))
+      if (regex_utils::search(versionInfo, match, re))
       {
          *pVersion = match[1];
          return Success();

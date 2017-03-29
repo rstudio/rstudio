@@ -29,6 +29,7 @@
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/HtmlUtils.hpp>
+#include <core/RegexUtils.hpp>
 
 #include "MathJax.hpp"
 
@@ -223,7 +224,7 @@ void stripMetadata(std::string* pInput)
       {
          continue;
       }
-      else if (boost::regex_search(line, frontMatterDelimiterRegex))
+      else if (regex_utils::search(line, frontMatterDelimiterRegex))
       {
          hasFrontMatter = true;
          break;
@@ -249,7 +250,7 @@ void stripMetadata(std::string* pInput)
          {
             continue;
          }
-         else if (boost::regex_search(line, frontMatterDelimiterRegex))
+         else if (regex_utils::search(line, frontMatterDelimiterRegex))
          {
             if (!inFrontMatter)
             {
@@ -261,8 +262,8 @@ void stripMetadata(std::string* pInput)
                break;
             }
          }
-         else if (!boost::regex_search(line, frontMatterFieldRegex) &&
-                  !boost::regex_search(line,frontMatterContinuationRegex))
+         else if (!regex_utils::search(line, frontMatterFieldRegex) &&
+                  !regex_utils::search(line,frontMatterContinuationRegex))
          {
             break;
          }
@@ -282,11 +283,11 @@ void stripMetadata(std::string* pInput)
          {
             continue;
          }
-         else if (boost::regex_search(line, titleBlockPercentRegex))
+         else if (regex_utils::search(line, titleBlockPercentRegex))
          {
             inTitleBlock = true;
          }
-         else if (boost::regex_search(line, titleBlockContinuationRegex) &&
+         else if (regex_utils::search(line, titleBlockContinuationRegex) &&
                   inTitleBlock)
          {
             continue;

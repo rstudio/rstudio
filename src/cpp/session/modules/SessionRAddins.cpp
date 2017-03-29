@@ -209,14 +209,18 @@ public:
          return;
       }
 
-      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-      boost::sregex_token_iterator end;
-
-      for (; it != end; ++it)
+      try
       {
-         std::map<std::string, std::string> fields = parseAddinDcf(*it);
-         add(pkgName, fields);
+         boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+         boost::sregex_token_iterator end;
+
+         for (; it != end; ++it)
+         {
+            std::map<std::string, std::string> fields = parseAddinDcf(*it);
+            add(pkgName, fields);
+         }
       }
+      CATCH_UNEXPECTED_EXCEPTION;
    }
    
    bool contains(const std::string& package, const std::string& name)

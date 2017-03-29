@@ -1781,7 +1781,7 @@ public:
    {
       boost::regex pattern("^([^{]+)\\{([^}]+)\\}$");
       boost::smatch match;
-      if (boost::regex_search(name_, match, pattern))
+      if (regex_utils::search(name_, match, pattern))
       {
          // read method name
          methodName_ = match[1];
@@ -2088,7 +2088,7 @@ Error guessFunctionToken(const std::string& line,
    // see if it has a namespace qualifier
    boost::regex pattern("^([^:]+):{2,3}([^:]+)$");
    boost::smatch match;
-   if (boost::regex_search(token, match, pattern))
+   if (regex_utils::search(token, match, pattern))
    {
       pToken->package = match[1];
       pToken->name = match[2];

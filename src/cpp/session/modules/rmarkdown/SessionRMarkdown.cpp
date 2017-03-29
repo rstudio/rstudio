@@ -477,7 +477,7 @@ private:
          {
             const boost::regex shinyListening("^Listening on (http.*)$");
             boost::smatch matches;
-            if (boost::regex_match(outputLine, matches, shinyListening))
+            if (regex_utils::match(outputLine, matches, shinyListening))
             {
                json::Object startedJson;
                startedJson["target_file"] =
@@ -641,7 +641,7 @@ private:
          const boost::regex knitrErr(
                   "^Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
          boost::smatch matches;
-         if (boost::regex_match(output, matches, knitrErr))
+         if (regex_utils::match(output, matches, knitrErr))
          {
             // looks like a knitr error; compose a compile error object and
             // emit it to the client when the render is complete

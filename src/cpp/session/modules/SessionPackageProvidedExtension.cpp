@@ -46,24 +46,28 @@ Error parseDcfResourceFile(
       return error;
 
    // attempt to parse as DCF -- multiple newlines used to separate records
-   boost::regex reSeparator("\\n{2,}");
-   boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-   boost::sregex_token_iterator end;
-
-   for (; it != end; ++it)
+   try
    {
-      // invoke parser on current record
-      std::map<std::string, std::string> fields;
-      std::string errorMessage;
-      error = text::parseDcfFile(*it, true, &fields, &errorMessage);
-      if (error)
-         return error;
-      
-      // invoke callback on parsed dcf fields
-      error = callback(fields);
-      if (error)
-         return error;
+      boost::regex reSeparator("\\n{2,}");
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+      boost::sregex_token_iterator end;
+
+      for (; it != end; ++it)
+      {
+         // invoke parser on current record
+         std::map<std::string, std::string> fields;
+         std::string errorMessage;
+         error = text::parseDcfFile(*it, true, &fields, &errorMessage);
+         if (error)
+            return error;
+
+         // invoke callback on parsed dcf fields
+         error = callback(fields);
+         if (error)
+            return error;
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
    
    return Success();
 }

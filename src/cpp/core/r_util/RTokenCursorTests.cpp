@@ -17,6 +17,7 @@
 #include <core/r_util/RTokenCursor.hpp>
 
 namespace rstudio {
+namespace core {
 namespace unit_tests {
 
 using namespace core::r_util::token_cursor;
@@ -24,7 +25,7 @@ using namespace core::r_util::token_cursor;
 bool isPipeOperator(const std::wstring& string)
 {
    static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
-   return boost::regex_match(string.begin(), string.end(), rePipe);
+   return regex_utils::match(string.begin(), string.end(), rePipe);
 }
 
 context("RTokenCursor")
@@ -117,4 +118,5 @@ context("RTokenCursor")
 }
 
 } // namespace unit_tests
+} // namespace core
 } // namespace rstudio

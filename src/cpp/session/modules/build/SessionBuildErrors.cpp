@@ -102,42 +102,46 @@ std::vector<module_context::SourceMarker> parseRErrors(
 
    boost::regex re("^Error in parse\\(outFile\\) : ([0-9]+?):([0-9]+?): (.+?)\\n"
                    "([0-9]+?): (.*?)\\n([0-9]+?): (.+?)$");
-   boost::sregex_iterator iter(output.begin(), output.end(), re,
-                               boost::regex_constants::match_not_dot_newline);
-   boost::sregex_iterator end;
-   for (; iter != end; iter++)
+   try
    {
-      boost::smatch match = *iter;
-      BOOST_ASSERT(match.size() == 8);
-
-      // first part is straightforward
-      std::string line = match[1];
-      std::string column = match[2];
-      std::string message = match[3];
-
-      // we need to guess the file based on the contextual information
-      // provided in the error message
-      int diagLine = core::safe_convert::stringTo<int>(match[4], -1);
-      if (diagLine != -1)
+      boost::sregex_iterator iter(output.begin(), output.end(), re,
+                                  boost::regex_constants::match_not_dot_newline);
+      boost::sregex_iterator end;
+      for (; iter != end; iter++)
       {
-         FilePath rSrcFile = scanForRSourceFile(basePath,
-                                                diagLine,
-                                                match[5],
-                                                match[7]);
-         if (!rSrcFile.empty())
-         {
-            // create error and add it
-            SourceMarker err(SourceMarker::Error,
-                             rSrcFile,
-                             core::safe_convert::stringTo<int>(line, 1),
-                             core::safe_convert::stringTo<int>(column, 1),
-                             core::html_utils::HTML(message),
-                             false);
-            errors.push_back(err);
-         }
-      }
+         boost::smatch match = *iter;
+         BOOST_ASSERT(match.size() == 8);
 
+         // first part is straightforward
+         std::string line = match[1];
+         std::string column = match[2];
+         std::string message = match[3];
+
+         // we need to guess the file based on the contextual information
+         // provided in the error message
+         int diagLine = core::safe_convert::stringTo<int>(match[4], -1);
+         if (diagLine != -1)
+         {
+            FilePath rSrcFile = scanForRSourceFile(basePath,
+                                                   diagLine,
+                                                   match[5],
+                  match[7]);
+            if (!rSrcFile.empty())
+            {
+               // create error and add it
+               SourceMarker err(SourceMarker::Error,
+                                rSrcFile,
+                                core::safe_convert::stringTo<int>(line, 1),
+                                core::safe_convert::stringTo<int>(column, 1),
+                                core::html_utils::HTML(message),
+                                false);
+               errors.push_back(err);
+            }
+         }
+
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    return errors;
 
@@ -164,86 +168,90 @@ std::vector<module_context::SourceMarker> parseGccErrors(
    // prefixed errors and substitute the from file for the error/warning file
    boost::regex re("(?:from (.+?):([0-9]+?).+?\\n)?"
                    "^(.+?):([0-9]+?):(?:([0-9]+?):)? (error|warning): (.+)$");
-   boost::sregex_iterator iter(output.begin(), output.end(), re,
-                               boost::regex_constants::match_not_dot_newline);
-   boost::sregex_iterator end;
-   for (; iter != end; iter++)
+   try
    {
-      boost::smatch match = *iter;
-      BOOST_ASSERT(match.size() == 8);
-
-      std::string file, line, column, type, message;
-      std::string match1 = match[1];
-      if (!match1.empty() && FilePath::isRootPath(match[1]))
+      boost::sregex_iterator iter(output.begin(), output.end(), re,
+                                  boost::regex_constants::match_not_dot_newline);
+      boost::sregex_iterator end;
+      for (; iter != end; iter++)
       {
-         file = match[1];
-         line = match[2];
-         column = "1";
-      }
-      else
-      {
-         file = match[3];
-         line = match[4];
-         column = match[5];
-         if (column.empty())
-            column = "1";
-      }
-      type = match[6];
-      message = match[7];
+         boost::smatch match = *iter;
+         BOOST_ASSERT(match.size() == 8);
 
-      // resolve file path
-      FilePath filePath;
-      if (FilePath::isRootPath(file))
-         filePath = FilePath(file);
-      else
-         filePath = basePath.childPath(file);
-
-      // skip if the file doesn't exist
-      if (!filePath.exists())
-         continue;
-
-      FilePath realPath;
-      Error error = core::system::realPath(filePath, &realPath);
-      if (error)
-         LOG_ERROR(error);
-      else
-         filePath = realPath;
-
-      // if we are in a package and the file where the error occurred
-      // has /<package-name>/include/ in it then it might be a template
-      // instantiation error. in that case re-map it to the appropriate
-      // source file within the package
-      if (!pkgInclude.empty())
-      {
-         std::string path = filePath.absolutePath();
-         size_t pos = path.find(pkgInclude);
-         if (pos != std::string::npos)
+         std::string file, line, column, type, message;
+         std::string match1 = match[1];
+         if (!match1.empty() && FilePath::isRootPath(match[1]))
          {
-            // advance to end and calculate relative path
-            pos += pkgInclude.length();
-            std::string relativePath = path.substr(pos);
-
-            // does this file exist? if so substitute it
-            FilePath includePath = projectContext().buildTargetPath()
-                             .childPath("inst/include/" + relativePath);
-            if (includePath.exists())
-               filePath = includePath;
+            file = match[1];
+            line = match[2];
+            column = "1";
          }
+         else
+         {
+            file = match[3];
+            line = match[4];
+            column = match[5];
+            if (column.empty())
+               column = "1";
+         }
+         type = match[6];
+         message = match[7];
+
+         // resolve file path
+         FilePath filePath;
+         if (FilePath::isRootPath(file))
+            filePath = FilePath(file);
+         else
+            filePath = basePath.childPath(file);
+
+         // skip if the file doesn't exist
+         if (!filePath.exists())
+            continue;
+
+         FilePath realPath;
+         Error error = core::system::realPath(filePath, &realPath);
+         if (error)
+            LOG_ERROR(error);
+         else
+            filePath = realPath;
+
+         // if we are in a package and the file where the error occurred
+         // has /<package-name>/include/ in it then it might be a template
+         // instantiation error. in that case re-map it to the appropriate
+         // source file within the package
+         if (!pkgInclude.empty())
+         {
+            std::string path = filePath.absolutePath();
+            size_t pos = path.find(pkgInclude);
+            if (pos != std::string::npos)
+            {
+               // advance to end and calculate relative path
+               pos += pkgInclude.length();
+               std::string relativePath = path.substr(pos);
+
+               // does this file exist? if so substitute it
+               FilePath includePath = projectContext().buildTargetPath()
+                     .childPath("inst/include/" + relativePath);
+               if (includePath.exists())
+                  filePath = includePath;
+            }
+         }
+
+         // don't show warnings from Makeconf
+         if (filePath.filename() == "Makeconf")
+            continue;
+
+         // create marker and add it
+         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+                          filePath,
+                          core::safe_convert::stringTo<int>(line, 1),
+                          core::safe_convert::stringTo<int>(column, 1),
+                          core::html_utils::HTML(message),
+                          true);
+         errors.push_back(err);
       }
-
-      // don't show warnings from Makeconf
-      if (filePath.filename() == "Makeconf")
-         continue;
-
-      // create marker and add it
-      SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                       filePath,
-                       core::safe_convert::stringTo<int>(line, 1),
-                       core::safe_convert::stringTo<int>(column, 1),
-                       core::html_utils::HTML(message),
-                       true);
-      errors.push_back(err);
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    return errors;
 }

@@ -301,7 +301,7 @@ void addRcppExportedSymbols(const FilePath& filePath,
    for (std::size_t i = 0; i < n - 1; ++i)
    {
       const std::string& line = contents[i];
-      if (boost::regex_match(line, reRcppExport))
+      if (regex_utils::match(line, reRcppExport))
       {
          const std::string& next = contents[i + 1];
          std::size_t leftParenIndex = next.find('(');
@@ -546,7 +546,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
    using namespace core::text;
    
    boost::regex reGlobals("^\\s*suppress\\s*=");
-   if (boost::regex_search(text, reGlobals))
+   if (regex_utils::search(text, reGlobals))
       return parseLintOptionGlobals(text, pOptions);
    
    ParsedCSVLine line = parseCsvLine(text.begin(), text.end(), true);
@@ -613,7 +613,7 @@ void setFileLocalParseOptions(const std::wstring& rCode,
    
    std::wstring::const_iterator start = rCode.begin();
    std::wstring::const_iterator end = rCode.end();
-   while (boost::regex_search(start, end, match, reLintComments))
+   while (regex_utils::search(start, end, match, reLintComments))
    {
       std::wstring::const_iterator matchBegin = match[0].second;
       std::wstring::const_iterator matchEnd   = std::find(matchBegin, end, L'\n');
