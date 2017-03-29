@@ -277,7 +277,7 @@ options(connectionObserver = list(
          newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(con$help),
-         iconData = .Call("rs_connectionIcon", con$name)
+         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name))
       )
    })
 
@@ -290,7 +290,7 @@ options(connectionObserver = list(
          type = .rs.scalar("Snippet"),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(NULL),
-         iconData = .Call("rs_connectionIcon", snippetName)
+         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName))
       )
    }))
 
@@ -326,7 +326,7 @@ options(connectionObserver = list(
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .Call("rs_connectionIcon", driver)
+            iconData = .rs.scalar(.Call("rs_connectionIcon", driver))
          )
       }))
    }
