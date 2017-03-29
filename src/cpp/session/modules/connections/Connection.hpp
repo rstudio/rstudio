@@ -118,6 +118,9 @@ core::Error connectionIdFromJson(const core::json::Object& connectionIdJson,
 bool hasConnectionId(const ConnectionId& id,
                      const core::json::Object& connectionJson);
 
+std::string iconData(const std::string& iconGroup,
+                     const std::string& iconName,
+                     const std::string& iconPath);
                        
 } // namespace connections
 } // namespace modules

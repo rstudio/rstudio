@@ -40,6 +40,7 @@
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"
+#include "Connection.hpp"
 
 #define kConnectionsPath "connections"
 
@@ -257,10 +258,10 @@ SEXP rs_connectionIcon(SEXP iconNameSEXP)
 {
    std::string iconName = r::sexp::safeAsString(iconNameSEXP);
 
-   std::string iconData = iconData("drivers", iconName, "");
+   std::string data = iconData("drivers", iconName, "");
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(iconData, &rProtect);
+   return r::sexp::create(data, &rProtect);
 }
 
 Error removeConnection(const json::JsonRpcRequest& request,

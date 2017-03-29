@@ -34,8 +34,6 @@ namespace session {
 namespace modules { 
 namespace connections {
 
-namespace {
-
 // determines the icon data; this could be either a path on disk (if we have
 // a suitable icon locally), base64-encoded icon data (if the icon is embedded
 // in an R package), or nothing (if we cannot determine an icon at all)
@@ -79,8 +77,6 @@ std::string iconData(const std::string& iconGroup,
    }
    return iconData;
 }
-
-} // anonymous namespace
 
 json::Object connectionIdJson(const ConnectionId& id)
 {
