@@ -31,7 +31,8 @@ public interface StandardIcons extends ClientBundle
    @Source("go_up_2x.png")
    ImageResource go_up2x();
 
-   ImageResource right_arrow();
+   @Source("right_arrow_2x.png")
+   ImageResource right_arrow2x();
 
    @Source("click_feedback_2x.png")
    ImageResource click_feedback2x();
