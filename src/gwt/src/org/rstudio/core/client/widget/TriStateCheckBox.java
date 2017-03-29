@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -79,7 +80,8 @@ public class TriStateCheckBox extends Composite
    public void setState(State state)
    {
       if (state == STATE_INDETERMINATE)
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxTri());
+         checkboxInner_.setResource(new ImageResource2x(
+            ThemeResources.INSTANCE.checkboxTri2x()));
       else if (state == STATE_OFF)
          checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
       else if (state == STATE_ON)

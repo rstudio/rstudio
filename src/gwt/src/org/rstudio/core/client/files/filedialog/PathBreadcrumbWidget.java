@@ -103,7 +103,7 @@ public class PathBreadcrumbWidget
       frame_ = new DockLayoutPanel(Unit.PX);
       eastFrame_ = new FlowPanel();
 
-      Image browse = new Image(RES.browse());
+      Image browse = new Image(new ImageResource2x(RES.browse2x()));
       browse.setStyleName(STYLES.browse());
       browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       browse.addClickHandler(new ClickHandler()

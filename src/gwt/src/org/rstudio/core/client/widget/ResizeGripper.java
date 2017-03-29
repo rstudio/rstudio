@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 
+import org.rstudio.core.client.resources.ImageResource2x;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -36,7 +38,7 @@ public class ResizeGripper extends Composite
    public ResizeGripper(Observer observer)
    {   
       observer_ = observer;
-      gripperImageResource_ = RESOURCES.resizeGripper();
+      gripperImageResource_ = new ImageResource2x(RESOURCES.resizeGripper2x());
       Image image = new Image(gripperImageResource_);
       initWidget(image);
       setStylePrimaryName(RESOURCES.styles().resizeGripper());
@@ -149,7 +151,8 @@ public class ResizeGripper extends Composite
       @Source("ResizeGripper.css")
       Styles styles();
 
-      ImageResource resizeGripper();
+      @Source("resizeGripper_2x.png")
+      ImageResource resizeGripper2x();
    }
    
    static Resources RESOURCES = (Resources)GWT.create(Resources.class);

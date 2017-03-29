@@ -268,8 +268,8 @@ public interface ThemeResources extends ClientBundle
    @Source("macCheck_2x.png")
    DataResource macCheck2x();
 
-   @Source("radioButtonOn.png")
-   DataResource radioButtonOn();
+   @Source("radioButtonOn_2x.png")
+   DataResource radioButtonOn2x();
 
    @Source("handCursor_2x.png")
    DataResource handCursor2x();
@@ -279,7 +279,9 @@ public interface ThemeResources extends ClientBundle
    
    ImageResource checkboxOff();
    ImageResource checkboxOn();
-   ImageResource checkboxTri();
+
+   @Source("checkboxTri_2x.png")
+   ImageResource checkboxTri2x();
    
    @Source("menuCheck_2x.png")
    ImageResource menuCheck2x();

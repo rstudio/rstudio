@@ -27,8 +27,8 @@ public interface FileDialogResources extends ClientBundle
    @Source("FileDialogStyles.css")
    FileDialogStyles styles();
 
-   @Source("dirseparator.png")
-   DataResource dirseparator();
+   @Source("dirseparator_2x.png")
+   DataResource dirseparator2x();
 
    @Source("home_2x.png")
    DataResource home2x();
@@ -44,5 +44,6 @@ public interface FileDialogResources extends ClientBundle
 
    ImageResource fade();   
 
-   ImageResource browse();
+   @Source("browse_2x.png")
+   ImageResource browse2x();
 }

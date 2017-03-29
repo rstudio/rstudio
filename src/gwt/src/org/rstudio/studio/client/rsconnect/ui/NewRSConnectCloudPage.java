@@ -32,7 +32,7 @@ public class NewRSConnectCloudPage
             "A cloud service run by RStudio. Publish Shiny applications " +
             "and interactive documents to the Internet.",
             "Connect ShinyApps.io Account",
-            RSConnectResources.INSTANCE.cloudAccountIcon(), 
+            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconLarge2x()));
    }
 

@@ -121,7 +121,7 @@
 @url HANDCURSOR handCursor2x;
 
 @url MACCHECK macCheck2x;
-@url RADIOBUTTONON radioButtonOn;
+@url RADIOBUTTONON radioButtonOn2x;
 
 body.windows, body.macintosh, body.linux {}
 
@@ -1364,6 +1364,7 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-RadioButton input[type="radio"]:checked:before,
 .windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before {
   background: RADIOBUTTONON;
+  background-size: 9px 9px;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,

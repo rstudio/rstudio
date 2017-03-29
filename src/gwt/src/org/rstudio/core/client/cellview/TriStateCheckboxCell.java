@@ -29,6 +29,8 @@ import com.google.gwt.view.client.SelectionModel;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.resources.ImageResource2x;
+
 /**
  * WARNING: If you use this, take a look at ChangelistTable.NotEditingTextCell,
  * which was necessary to get the table out of a state where cellIsEditing is
@@ -38,9 +40,14 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
 {
    interface Resources extends ClientBundle
    {
-      ImageResource checkboxIndeterminate();
-      ImageResource checkboxOn();
-      ImageResource checkboxOff();
+      @Source("checkboxIndeterminate_2x.png")
+      ImageResource checkboxIndeterminate2x();
+
+      @Source("checkboxOn_2x.png")
+      ImageResource checkboxOn2x();
+
+      @Source("checkboxOff_2x.png")
+      ImageResource checkboxOff2x();
    }
 
    public TriStateCheckboxCell(SelectionModel<TKey> selectionModel)
@@ -114,11 +121,11 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    {
       ImageResource img;
       if (value == null)
-         img = RES.checkboxIndeterminate();
+         img = new ImageResource2x(RES.checkboxIndeterminate2x());
       else if (value)
-         img = RES.checkboxOn();
+         img = new ImageResource2x(RES.checkboxOn2x());
       else
-         img = RES.checkboxOff();
+         img = new ImageResource2x(RES.checkboxOff2x());
 
       sb.append(SafeHtmlUtils.fromTrustedString(
             AbstractImagePrototype.create(img).getHTML()));
