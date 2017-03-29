@@ -43,7 +43,9 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
       @Source("findReplace_2x.png")
       ImageResource findReplace2x();
-      ImageResource findReplaceLatched();
+
+      @Source("findReplaceLatched_2x.png")
+      ImageResource findReplaceLatched2x();
    }
 
    interface Styles extends CssResource
@@ -325,7 +327,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    
    public static ImageResource getFindLatchedIcon()
    {
-      return RES.findReplaceLatched();
+      return new ImageResource2x(RES.findReplaceLatched2x());
    }
    
    @Override
