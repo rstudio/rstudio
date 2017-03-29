@@ -731,7 +731,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
    case 12:
    default:
       setCommonDeviceAttributes((DevDescVersion12*) pDev, (DevDescVersion12*) pShadow);
-      pDev->canGenIdle = pShadow->canGenIdle;
+      ((DevDescVersion12*)pDev)->canGenIdle = ((DevDescVersion12*)pShadow)->canGenIdle;
       break;
    }
 }
