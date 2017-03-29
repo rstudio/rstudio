@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
@@ -23,14 +24,32 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewConnectionSnippetPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionSnippetPage(NewConnectionInfo info)
+   public NewConnectionSnippetPage(final NewConnectionInfo info)
    {
-      super(info.getName(), "", info.getName() + " Connection", null, null);
+      super(
+         info.getName(),
+         "",
+         info.getName() + " Connection",
+         StringUtil.isNullOrEmpty(info.iconData()) ? null : new ImageResourceUrl(
+            new SafeUri()
+            {
+               @Override
+               public String asString()
+               {
+                  return info.iconData();
+               }
+            },
+            16,
+            16
+         ),
+         null);
+      
       info_ = info;
    }
 
