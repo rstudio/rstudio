@@ -204,10 +204,52 @@ std::string gitBin()
 }
 #endif
 
+bool waitForIndexLock(const FilePath& workingDir)
+{
+   using namespace boost::posix_time;
+   
+   // count the number of retries (avoid getting stuck in wait loops when
+   // an index.lock file exists and is never cleaned up)
+   static int retryCount = 0;
+   
+   FilePath lockPath = workingDir.childPath(".git/index.lock");
+   
+   // wait 1 second for an 'index.lock' file to be removed
+   for (std::size_t i = 0; i < 10; ++i)
+   {
+      // if there's no lockfile, we can proceed
+      if (!lockPath.exists())
+      {
+         retryCount = 0;
+         return true;
+      }
+      
+      // if we've tried too many times, just bail out (avoid stalling the
+      // process on what seems to be a stale index.lock)
+      if (retryCount > 100)
+         break;
+
+      // sleep for 100ms and then retry
+      boost::this_thread::sleep(milliseconds(100));
+      ++retryCount;
+   }
+   
+   return false;
+}
+
 Error gitExec(const ShellArgs& args,
               const core::FilePath& workingDir,
               core::system::ProcessResult* pResult)
 {
+   // if we see an 'index.lock' file within the associated
+   // git repository, try timing out a bit until it's removed
+   if (!waitForIndexLock(workingDir))
+   {
+      return systemError(
+               boost::system::errc::no_lock_available,
+               ERROR_LOCATION);
+   }
+   
    core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
    // Important to ensure SSH_ASKPASS works
