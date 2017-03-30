@@ -36,6 +36,7 @@ namespace console_process {
 namespace {
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
+   ConsoleProcessSocket s_terminalSocket;
 } // anonymous namespace
 
 void saveConsoleProcesses();
@@ -50,7 +51,7 @@ ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    // dummy \n so we can tell the first line is a complete line.
    procInfo_->appendToOutputBuffer('\n');
 }
-   
+
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
@@ -60,7 +61,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
 {
    commonInit();
 }
-   
+
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
@@ -303,6 +304,35 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    if (interrupt_)
       return false;
 
+
+   if (procInfo_->getChannelMode() == Rpc)
+   {
+      processQueuedInput(ops);
+   }
+   else
+   {
+      // capture weak reference to the callbacks so websocket callback
+      // can use them
+      LOCK_MUTEX(mutex_)
+      {
+         pOps_ = ops.weak_from_this();
+      }
+      END_LOCK_MUTEX
+   }
+
+   if (newCols_ != -1 && newRows_ != -1)
+   {
+      ops.ptySetSize(newCols_, newRows_);
+      newCols_ = -1;
+      newRows_ = -1;
+   }
+   
+   // continue
+   return true;
+}
+
+void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
+{
    // process input queue
    Input input = dequeInput();
    while (!input.empty())
@@ -343,16 +373,6 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
       input = dequeInput();
    }
-
-   if (newCols_ != -1 && newRows_ != -1)
-   {
-      ops.ptySetSize(newCols_, newRows_);
-      newCols_ = -1;
-      newRows_ = -1;
-   }
-   
-   // continue
-   return true;
 }
 
 void ConsoleProcess::deleteLogFile() const
@@ -376,6 +396,13 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output)
    std::string trimmedOutput = output;
    string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
 
+   if (procInfo_->getChannelMode() == Websocket)
+   {
+      s_terminalSocket.sendText(procInfo_->getHandle(), output);
+      return;
+   }
+
+   // Rpc
    json::Object data;
    data["handle"] = handle();
    data["output"] = trimmedOutput;
@@ -491,6 +518,12 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
             ClientEvent(client_events::kTerminalSubprocs, subProcs));
       childProcsSent_ = true;
    }
+}
+
+void ConsoleProcess::setRpcMode()
+{
+   s_terminalSocket.stopListening(handle());
+   procInfo_->setChannelMode(Rpc, "");
 }
 
 core::json::Object ConsoleProcess::toJson() const
@@ -733,6 +766,25 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error procUseRpc(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Used to downgrade to Rpc after client was unable to connect to Websocket
+   pos->second->setRpcMode();
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -764,8 +816,36 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
 // previously used handle
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
-      boost::shared_ptr<ConsoleProcessInfo> procInfo)
+      boost::shared_ptr<ConsoleProcessInfo> procInfo,
+      bool enableWebsockets)
 {
+   boost::shared_ptr<ConsoleProcess> cp;
+
+   // Use websocket as preferred communication channel; it can fail
+   // here if unable to establish the server-side of things, in which case
+   // fallback to using Rpc.
+   //
+   // It can also fail later when client tries to connect; fallback for that
+   // happens from the client-side via RPC call procUseRpc.
+   if (enableWebsockets)
+   {
+      Error error = s_terminalSocket.ensureServerRunning();
+      if (error)
+      {
+         procInfo->setChannelMode(Rpc, "");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         std::string port = safe_convert::numberToString(s_terminalSocket.port());
+         procInfo->setChannelMode(Websocket, port);
+      }
+   }
+   else
+   {
+      procInfo->setChannelMode(Rpc, "");
+   }
+
    std::string command;
    if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
@@ -777,21 +857,67 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
          // to refresh itself; this does rely on the host performing a second
          // resize to the actual available size. Clumsy, but so far this is
          // the best I've come up with.
-         pos->second->resize(25, 5);
-         return pos->second;
+         cp = pos->second;
+         cp->resize(25, 5);
       }
-      
-      // Create new process with previously used handle
-      options.terminateChildren = true;
-      boost::shared_ptr<ConsoleProcess> ptrProc(
-            new ConsoleProcess(command, options, procInfo));
-      s_procs[ptrProc->handle()] = ptrProc;
-      saveConsoleProcesses();
-      return ptrProc;
+      else
+      {
+         // Create new process with previously used handle
+         options.terminateChildren = true;
+         cp.reset(new ConsoleProcess(command, options, procInfo));
+         s_procs[cp->handle()] = cp;
+         saveConsoleProcesses();
+      }
    }
-   
-   // otherwise create a new one
-   return create(command, options, procInfo);
+   else
+   {
+      // otherwise create a new one
+      cp =  create(command, options, procInfo);
+   }
+
+   if (cp->procInfo_->getChannelMode() == Websocket)
+   {
+      // start watching for websocket callbacks
+      s_terminalSocket.listen(cp->procInfo_->getHandle(),
+                              cp->createConsoleProcessSocketConnectionCallbacks());
+   }
+   return cp;
+}
+
+ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSocketConnectionCallbacks()
+{
+   ConsoleProcessSocketConnectionCallbacks cb;
+   cb.onReceivedInput = boost::bind(&ConsoleProcess::onReceivedInput, ConsoleProcess::shared_from_this(), _1);
+   cb.onConnectionOpened = boost::bind(&ConsoleProcess::onConnectionOpened, ConsoleProcess::shared_from_this());
+   cb.onConnectionClosed = boost::bind(&ConsoleProcess::onConnectionClosed, ConsoleProcess::shared_from_this());
+   return cb;
+}
+
+// received input from websocket (e.g. user typing on client); called on
+// different thread
+void ConsoleProcess::onReceivedInput(const std::string& input)
+{
+   LOCK_MUTEX(mutex_)
+   {
+      enqueInput(Input(input));
+      boost::shared_ptr<core::system::ProcessOperations> ops = pOps_.lock();
+      if (ops)
+      {
+         processQueuedInput(*ops);
+      }
+   }
+   END_LOCK_MUTEX
+}
+
+// websocket connection closed; called on different thread
+void ConsoleProcess::onConnectionClosed()
+{
+   s_terminalSocket.stopListening(handle());
+}
+
+// websocket connection opened; called on different thread
+void ConsoleProcess::onConnectionOpened()
+{
 }
 
 void PasswordManager::attach(
@@ -1026,7 +1152,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_set_caption", procSetCaption))
       (bind(registerRpcMethod, "process_set_title", procSetTitle))
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
-      (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk));
+      (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
+      (bind(registerRpcMethod, "process_use_rpc", procUseRpc));
 
    return initBlock.execute();
 }

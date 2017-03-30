@@ -320,7 +320,15 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       return procInfo_;
    }
-
+   
+   public int getChannelMode()
+   {
+      if (forceRpc_)
+         return ConsoleProcessInfo.CHANNEL_RPC;
+      
+      return procInfo_.getChannelMode(); 
+   }
+   
    public void start(ServerRequestCallback<Void> requestCallback)
    {
       server_.processStart(procInfo_.getHandle(), requestCallback);
@@ -340,6 +348,12 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    public void getTerminalBufferChunk(int chunk, ServerRequestCallback<ProcessBufferChunk> requestCallback)
    {
       server_.processGetBufferChunk(procInfo_.getHandle(), chunk, requestCallback);
+   }
+   
+   public void useRpcMode(ServerRequestCallback<Void> requestCallback)
+   {
+      forceRpc_ = true;
+      server_.processUseRpc(procInfo_.getHandle(), requestCallback);
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -383,4 +397,5 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ConsoleServerOperations server_;
    private final ConsoleProcessInfo procInfo_;
+   private boolean forceRpc_;
 }

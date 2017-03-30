@@ -144,10 +144,10 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             
-            socket_.connect(consoleProcess_, new ServerRequestCallback<Boolean>()
+            socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
-               public void onResponseReceived(Boolean isWebSocket)
+               public void onConnected()
                {
                   consoleProcess_.start(new ServerRequestCallback<Void>()
                   {
@@ -171,9 +171,9 @@ public class TerminalSession extends XTermWidget
                }
 
                @Override
-               public void onError(ServerError error)
+               public void onError(String errorMsg)
                {
-                  writeError(error.getUserMessage());
+                  writeError(errorMsg);
                   disconnect();
                   return;
                }

@@ -17,25 +17,32 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
+import com.sksamuel.gwt.websockets.CloseEvent;
+import com.sksamuel.gwt.websockets.Websocket;
+import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
 /**
  * Manages input and output for the terminal session.
- * TODO Use a websocket to communicate with the server, falling back to RPC 
- * if unable to establish a websocket connection.
  */
 public class TerminalSessionSocket
    implements ConsoleOutputEvent.Handler, 
@@ -56,7 +63,12 @@ public class TerminalSessionSocket
       void receivedOutput(String output);
    }
    
-  
+   public interface ConnectCallback
+   {
+      void onConnected();
+      void onError(String message);
+   }
+   
    // Monitor and report input/display lag to console
    class InputEchoTimeMonitor
    {
@@ -70,10 +82,11 @@ public class TerminalSessionSocket
 
          boolean matches(String input, long runningAverage)
          {
-            if (input != null && input_.equals(input))
+            // startsWith allows better chance of matching on Windows, where 
+            // winpty often follows each typed character with an escape sequence
+            if (input != null && input.startsWith(input_))
             {
-               duration_ = stopWatch_.mark("Average " + runningAverage + 
-                     " [" + input + "]");
+               duration_ = stopWatch_.mark("Average " + runningAverage);
                return true;
             }
             return false;
@@ -162,24 +175,109 @@ public class TerminalSessionSocket
     * an rsession has already been started via RPC and the consoleProcess
     * received.
     * @param consoleProcess 
-    * @param callback returns true if using websockets, false for RPC
+    * @param callback result of connect attempt
     */
    public void connect(ConsoleProcess consoleProcess, 
-                       ServerRequestCallback<Boolean> callback)
+                       final ConnectCallback callback)
    {
       consoleProcess_ = consoleProcess;
-      
+
       // We keep this handler connected after a disconnect so
       // user input sent via RPC can wake up a suspended session
       if (terminalInputHandler_ == null)
          terminalInputHandler_ = xterm_.addTerminalDataInputHandler(this);
 
       addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(this));
-      
-      // TODO (gary) attempt websocket connection here
-      boolean haveWebsocket = false;
-      
-      callback.onResponseReceived(haveWebsocket);
+
+      switch (consoleProcess_.getChannelMode())
+      {
+      case ConsoleProcessInfo.CHANNEL_RPC:
+         callback.onConnected();
+         break;
+         
+      case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
+              
+         // For desktop IDE, talk directly to the websocket, anything else, go 
+         // through the server via the /p proxy.
+         String urlSuffix = consoleProcess_.getProcessInfo().getChannelId() + "/terminal/" + 
+               consoleProcess_.getProcessInfo().getHandle() + "/";
+         String url;
+         if (Desktop.isDesktop())
+         {
+            url = "ws://127.0.0.1:" + urlSuffix;
+         }
+         else
+         {
+            url = GWT.getHostPageBaseURL();
+            if (url.startsWith("https:"))
+            {
+               url = "wss:" + url.substring(6) + "p/" + urlSuffix;
+            } 
+            else if (url.startsWith("http:"))
+            {
+               url = "ws:" + url.substring(5) + "p/" + urlSuffix;
+            }
+            else
+            {
+               callback.onError("Unable to discover websocket protocol");
+               return;
+            }
+         }
+
+         socket_ = new Websocket(url);
+         socket_.addListener(new WebsocketListenerExt() 
+         {
+            @Override
+            public void onClose(CloseEvent event)
+            {
+               socket_ = null;
+            }
+
+            @Override
+            public void onMessage(String msg)
+            {
+               onConsoleOutput(new ConsoleOutputEvent(msg));
+            }
+
+            @Override
+            public void onOpen()
+            {
+               callback.onConnected();
+            }
+
+            @Override
+            public void onError()
+            {
+               socket_ = null;
+               
+               // Unable to connect client to server via websocket; let server
+               // know we'll be using rpc, instead
+               consoleProcess_.useRpcMode(new ServerRequestCallback<Void>()
+               {
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     callback.onConnected();
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     callback.onError("Unable to switch back to Rpc mode");
+                  }
+               });
+               return;
+            }
+         });
+         
+         socket_.open();
+         break;
+         
+      case ConsoleProcessInfo.CHANNEL_PIPE:
+      default:
+         callback.onError("Channel type not implemented");
+         break;
+      }
    }
    
    /**
@@ -192,11 +290,22 @@ public class TerminalSessionSocket
                              String input,
                              VoidServerRequestCallback requestCallback)
    {
-      // TODO (gary) write to websocket here
+      switch (consoleProcess_.getChannelMode())
+      {
+      case ConsoleProcessInfo.CHANNEL_RPC:
+         consoleProcess_.writeStandardInput(
+               ShellInput.create(inputSequence, input,  true /*echo input*/), 
+               requestCallback);
+         break;
+      case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
+         socket_.send(input);
+         requestCallback.onResponseReceived(null);
+         break;
+      case ConsoleProcessInfo.CHANNEL_PIPE:
+      default:
+         break;
+      }
       
-      consoleProcess_.writeStandardInput(
-            ShellInput.create(inputSequence, input,  true /*echo input*/), 
-            requestCallback);
    }
    
    /**
@@ -241,7 +350,8 @@ public class TerminalSessionSocket
 
    public void disconnect()
    {
-      consoleProcess_ = null;
+      socket_.close();
+      socket_ = null;
       registrations_.removeHandler();
    }
  
@@ -252,6 +362,7 @@ public class TerminalSessionSocket
    private HandlerRegistration terminalInputHandler_;
    private boolean reportTypingLag_;
    private InputEchoTimeMonitor inputEchoTiming_;
+   private Websocket socket_;
    
    // Injected ---- 
    private UIPrefs uiPrefs_;

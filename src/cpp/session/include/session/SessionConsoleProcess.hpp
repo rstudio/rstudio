@@ -26,6 +26,8 @@
 
 #include <core/system/Process.hpp>
 
+#include <session/SessionConsoleProcessSocket.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -106,7 +108,8 @@ public:
 
    static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
          core::system::ProcessOptions options,
-         boost::shared_ptr<ConsoleProcessInfo> procInfo);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo,
+         bool enableWebsockets = true);
    
    virtual ~ConsoleProcess() {}
 
@@ -135,6 +138,9 @@ public:
    void deleteLogFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
 
+   // Used to downgrade to RPC mode after failed attempt to connect websocket
+   void setRpcMode();
+
    // Get the given (0-based) chunk of the saved buffer; if more is available
    // after the requested chunk, *pMoreAvailable will be set to true
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
@@ -151,6 +157,7 @@ private:
                  const std::string& output);
    void onExit(int exitCode);
    void onHasSubprocs(bool hasSubProcs);
+   void processQueuedInput(core::system::ProcessOperations& ops);
 
    std::string bufferedOutput() const;
    void enqueOutputEvent(const std::string& output);
@@ -159,6 +166,11 @@ private:
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
+
+   ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks();
+   void onReceivedInput(const std::string& input);
+   void onConnectionOpened();
+   void onConnectionClosed();
 
 private:
    // Command and options that will be used when start() is called
@@ -191,6 +203,10 @@ private:
 
    // is the underlying process started?
    bool started_;
+
+   // cached point to process options, for use in websocket thread callbacks
+   boost::weak_ptr<core::system::ProcessOperations> pOps_;
+   boost::mutex mutex_;
 };
 
 

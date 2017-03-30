@@ -66,6 +66,7 @@ set (SESSION_SOURCE_FILES
    SessionConsoleProcess.cpp
    SessionConsoleProcessInfo.cpp
    SessionConsoleProcessPersist.cpp
+   SessionConsoleProcessSocket.cpp
    SessionContentUrls.cpp
    SessionDirs.cpp
    SessionRpc.cpp
@@ -312,6 +313,7 @@ include_directories(
    include
    ${LIBR_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${EXT_SOURCE_DIR}
    ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}

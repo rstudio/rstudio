@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
@@ -235,7 +236,7 @@ Error runCommand(const std::string& command,
 //
 
 // Operations that can be performed from within ProcessCallbacks
-class ProcessOperations
+class ProcessOperations : public boost::enable_shared_from_this<ProcessOperations>
 {
 public:
    virtual ~ProcessOperations() {}
@@ -250,6 +251,11 @@ public:
 
    // Terminate the process (SIGTERM)
    virtual Error terminate() = 0;
+
+   boost::weak_ptr<ProcessOperations> getWeakPtr()
+   {
+      return weak_from_this();
+   }
 };
 
 // Callbacks for reporting various states and streaming output (note that
