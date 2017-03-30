@@ -36,7 +36,6 @@
    .rs.validateParams(connection, 
        c("disconnect", "listObjects", "listColumns", "previewObject"),
        "function")
-   .rs.validateOdbcConnection(connection)
 })
 
 # create an environment which will host the known active connections
@@ -216,18 +215,6 @@ options(connectionObserver = list(
    NULL
 })
 
-.rs.addFunction("validateOdbcConnection", function(connection) {
-   con <- .rs.findActiveConnection(connection$type, connection$host)
-   if (!is.null(con) && identical(class(con), "OdbcConnection")) {
-      if (.rs.isPackageInstalled("odbc") && exists("dbGetInfo", envir = asNamespace("odbc"))) {
-         dbGetInfo <- get("dbGetInfo", envir = asNamespace("odbc"))
-         info <- dbGetInfo(con)
-
-         if (grepl("Simba", info$drivername)) stop("This connection is not ssupported for this version of RStudio.")
-      }
-   }
-})
-
 .rs.addFunction("connectionReadSnippets", function() {
    snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
    snippetsFiles <- list()
@@ -290,7 +277,8 @@ options(connectionObserver = list(
          newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(con$help),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name))
+         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name)),
+         licensed = FALSE
       )
    })
 
@@ -303,7 +291,8 @@ options(connectionObserver = list(
          type = .rs.scalar("Snippet"),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(NULL),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName))
+         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+         licensed = FALSE
       )
    }))
 
@@ -333,13 +322,16 @@ options(connectionObserver = list(
                sep = "")
          }
 
+         licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+
          list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", driver))
+            iconData = .rs.scalar(.Call("rs_connectionIcon", driver)),
+            licensed = .rs.scalar(file.exists(licenseFile))
          )
       }))
    }

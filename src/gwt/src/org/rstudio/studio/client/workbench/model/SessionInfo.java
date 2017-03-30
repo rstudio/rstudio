@@ -490,4 +490,8 @@ public class SessionInfo extends JavaScriptObject
    public final native PackageProvidedExtensions.Data getPackageProvidedExtensions() /*-{
       return this.package_provided_extensions;
    }-*/;
+
+   public final native boolean getSupportDriverLicensing() /*-{
+      return this.drivers_support_licensing;
+   }-*/;
 }

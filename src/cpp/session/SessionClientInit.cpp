@@ -380,6 +380,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["session_id"] = module_context::activeSession().id();
 
+   sessionInfo["drivers_support_licensing"] = false;
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client
