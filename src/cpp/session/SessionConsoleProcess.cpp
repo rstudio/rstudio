@@ -837,7 +837,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       }
       else
       {
-         std::string port = boost::lexical_cast<std::string>(s_terminalSocket.port());
+         std::string port = safe_convert::numberToString(s_terminalSocket.port());
          procInfo->setChannelMode(Websocket, port);
       }
    }

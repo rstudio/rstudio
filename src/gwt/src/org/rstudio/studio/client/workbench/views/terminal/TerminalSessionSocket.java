@@ -192,7 +192,6 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         Debug.devlog("Using RPC");
          callback.onConnected();
          break;
          
@@ -225,15 +224,12 @@ public class TerminalSessionSocket
             }
          }
 
-         Debug.devlog("Connecting to " + url);
          socket_ = new Websocket(url);
          socket_.addListener(new WebsocketListenerExt() 
          {
             @Override
             public void onClose(CloseEvent event)
             {
-               Debug.devlog("Disconnected websocket for " + 
-                     consoleProcess_.getProcessInfo().getHandle());
                socket_ = null;
             }
 
@@ -252,7 +248,6 @@ public class TerminalSessionSocket
             @Override
             public void onError()
             {
-               Debug.devlog("Unable to connect websocket, switching back to rpc");
                socket_ = null;
                
                // Unable to connect client to server via websocket; let server

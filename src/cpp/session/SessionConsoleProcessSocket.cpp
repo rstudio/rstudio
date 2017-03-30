@@ -49,9 +49,7 @@ ConsoleProcessSocket::~ConsoleProcessSocket()
    {
       stopServer();
    }
-   catch (...)
-   {
-   }
+   CATCH_UNEXPECTED_EXCEPTION
 }
 
 Error ConsoleProcessSocket::ensureServerRunning()
@@ -93,15 +91,17 @@ Error ConsoleProcessSocket::ensureServerRunning()
       {
          try
          {
+            // TODO (gary) can we just try ipv6 without sniffing, then do
+            // ipv4 if ipv6 fails?
+#if !defined(_WIN32) && !defined(__APPLE__)
             if (core::FilePath("/proc/net/if_inet6").exists())
             {
                // listen will fail without ipv6 support on the machine so we
                // only use it for machines with a ipv6 stack
-               // TODO (gary) need a cross-platform way to do this? does it
-               // matter on Mac/Windows clients?
                pwsServer_->listen(port);
             }
             else
+#endif
             {
                // no ipv6 support, fall back to ipv4
                pwsServer_->listen(boost::asio::ip::tcp::v4(), port);
@@ -148,12 +148,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
       return systemError(boost::system::errc::invalid_argument,
                             e.what(), ERROR_LOCATION);
    }
-   catch (...)
-   {
-      LOG_ERROR_MESSAGE("Unknown exception starting up terminal websocket");
-      return systemError(boost::system::errc::invalid_argument,
-                         "Unknown exception", ERROR_LOCATION);
-   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return Success();
 }
 
@@ -176,10 +172,7 @@ void ConsoleProcessSocket::stopServer()
    {
       LOG_ERROR_MESSAGE(e.what());
    }
-   catch (...)
-   {
-      LOG_ERROR_MESSAGE("Unknown exception stopping terminal websocket server");
-   }
+   CATCH_UNEXPECTED_EXCEPTION
 }
 
 Error ConsoleProcessSocket::listen(
