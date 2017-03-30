@@ -425,11 +425,11 @@ void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
    boost::smatch smatch;
 
    // treat special control characters as output rather than a prompt
-   if (boost::regex_search(output, smatch, controlCharsPattern_))
+   if (regex_utils::search(output, smatch, controlCharsPattern_))
       enqueOutputEvent(output);
 
    // make sure the output matches our prompt pattern
-   if (!boost::regex_match(output, smatch, promptPattern_))
+   if (!regex_utils::match(output, smatch, promptPattern_))
       enqueOutputEvent(output);
 
    // it is a prompt
@@ -818,7 +818,7 @@ bool PasswordManager::handlePrompt(const std::string& cpHandle,
 {
    // is this a password prompt?
    boost::smatch match;
-   if (boost::regex_match(prompt, match, promptPattern_))
+   if (regex_utils::match(prompt, match, promptPattern_))
    {
       // see if it matches any of our existing cached passwords
       std::vector<CachedPassword>::const_iterator it =

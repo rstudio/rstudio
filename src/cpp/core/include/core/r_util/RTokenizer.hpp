@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/collection/Position.hpp>
 
@@ -585,7 +586,7 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
 inline bool isPipeOperator(const RToken& rToken)
 {
    static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
-   return boost::regex_match(rToken.begin(), rToken.end(), rePipe);
+   return regex_utils::match(rToken.begin(), rToken.end(), rePipe);
 }
 
 namespace {

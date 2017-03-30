@@ -1419,7 +1419,7 @@ bool ensureUtf8Charset()
    std::string name = ctypeEnvName();
    std::string ctype = core::system::getenv(name);
 
-   if (boost::regex_search(ctype, boost::regex("UTF-8$")))
+   if (regex_utils::search(ctype, boost::regex("UTF-8$")))
       return true;
 
 #if __APPLE__
@@ -1438,7 +1438,7 @@ bool ensureUtf8Charset()
       using namespace boost;
 
       smatch match;
-      if (regex_match(ctype, match, regex("(\\w+_\\w+)(\\.[^@]+)?(@.+)?")))
+      if (regex_utils::match(ctype, match, regex("(\\w+_\\w+)(\\.[^@]+)?(@.+)?")))
       {
          // Try to replace the charset while keeping everything else the same.
          newCType = match[1] + ".UTF-8" + match[3];

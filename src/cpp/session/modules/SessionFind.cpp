@@ -272,7 +272,7 @@ private:
       const char* end = inputPos + pContent->size();
       
       boost::cmatch match;
-      while (boost::regex_search(inputPos, match, boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
+      while (regex_utils::search(inputPos, match, boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -336,7 +336,7 @@ private:
          nextLineStart = pos + 1;
 
          boost::smatch match;
-         if (boost::regex_match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
+         if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));

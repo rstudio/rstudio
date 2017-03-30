@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 #include "Options.hpp"
 
@@ -304,11 +305,13 @@ std::string jsEscape(std::string str)
 
 - (void) checkWebkitVersion: (NSString*) userAgent
 {
+   using namespace rstudio::core;
+   
    // parse version info out of user agent string
    boost::regex re("^.*?AppleWebKit/(\\d+).*$");
    boost::smatch match;
    std::string userAgentStr([userAgent UTF8String]);
-   if (boost::regex_match(userAgentStr, match, re))
+   if (regex_utils::match(userAgentStr, match, re))
    {
       int version = core::safe_convert::stringTo<int>(match[1], 0);
       if (version < 534)

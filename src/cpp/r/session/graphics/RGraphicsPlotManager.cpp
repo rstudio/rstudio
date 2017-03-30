@@ -26,6 +26,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
@@ -630,7 +631,7 @@ Error PlotManager::restorePlotsState()
       // extract the id, width, and height
       plotInfo = plots[i];
       boost::cmatch matches ;
-      if (boost::regex_match(plotInfo.c_str(), matches, plotInfoRegex_) &&
+      if (regex_utils::match(plotInfo.c_str(), matches, plotInfoRegex_) &&
           (matches.size() > 3) )
       {
          plotStorageId = matches[1];

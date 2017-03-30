@@ -18,9 +18,10 @@
 #include <boost/regex.hpp>
 
 #include <core/Error.hpp>
-#include <core/Log.hpp>
-
 #include <core/FileSerializer.hpp>
+#include <core/Log.hpp>
+#include <core/RegexUtils.hpp>
+
 
 namespace rstudio {
 namespace core {
@@ -28,7 +29,7 @@ namespace yaml {
 
 namespace {
 
-boost::regex& reYaml()
+const boost::regex& reYaml()
 {
    static boost::regex instance("^[\\s\\n]*---\\s*(.*?)---\\s*(?:$|\\n)");
    return instance;
@@ -48,7 +49,7 @@ bool hasYamlHeader(const FilePath& filePath)
 
 bool hasYamlHeader(const std::string& content)
 {
-   return boost::regex_search(content.begin(), content.end(), reYaml());
+   return regex_utils::search(content.begin(), content.end(), reYaml());
 }
 
 std::string extractYamlHeader(const FilePath& filePath)
@@ -66,7 +67,7 @@ std::string extractYamlHeader(const std::string& content)
    std::string result;
    boost::smatch match;
    
-   if (boost::regex_search(content.begin(), content.end(), match, reYaml()))
+   if (regex_utils::search(content.begin(), content.end(), match, reYaml()))
       if (match.size() >= 1)
          result = match[1];
    

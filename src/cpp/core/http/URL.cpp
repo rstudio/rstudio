@@ -14,6 +14,7 @@
  */
 
 #include <core/http/URL.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <iostream>
 
@@ -29,7 +30,7 @@ URL::URL(const std::string& absoluteURL)
    std::string protocol, host, path;
    boost::regex re("(http|https)://([^/#?]+)(.*)", boost::regex::icase);
    boost::cmatch matches ;
-   if (boost::regex_match(absoluteURL.c_str(), matches, re))
+   if (regex_utils::match(absoluteURL.c_str(), matches, re))
    {
       protocol = matches[1];
       host = matches[2];

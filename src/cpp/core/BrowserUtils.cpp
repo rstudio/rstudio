@@ -13,10 +13,10 @@
  *
  */
 
-#include <core/BrowserUtils.hpp>
-
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/BrowserUtils.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 
 using namespace boost::algorithm;
@@ -33,7 +33,7 @@ bool hasRequiredBrowserVersion(const std::string& userAgent,
 {
    double detectedVersion = requiredVersion;
    boost::smatch match;
-   if (boost::regex_search(userAgent, match, versionRegEx))
+   if (regex_utils::search(userAgent, match, versionRegEx))
    {
       std::string versionString = match[1];
       detectedVersion = safe_convert::stringTo<double>(versionString,

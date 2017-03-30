@@ -238,7 +238,7 @@ void parseSessionUrl(const std::string& url,
    static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/");
 
    boost::smatch match;
-   if (boost::regex_search(url, match, re))
+   if (regex_utils::search(url, match, re))
    {
       if (pScope)
       {

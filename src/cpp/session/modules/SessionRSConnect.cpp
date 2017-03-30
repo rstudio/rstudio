@@ -200,7 +200,7 @@ private:
       // check for HTTP errors
       boost::regex re("Error: HTTP (\\d{3})\\s+\\w+\\s+(\\S+)");
       boost::smatch match;
-      if (boost::regex_search(output, match, re)) 
+      if (regex_utils::search(output, match, re)) 
       {
          json::Object failure;
          failure["http_status"] = (int)safe_convert::stringTo(match[1], 0);

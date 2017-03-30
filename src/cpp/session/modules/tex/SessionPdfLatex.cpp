@@ -210,7 +210,7 @@ FilePath programPath(const std::string& name, const std::string& envOverride)
 bool lineIncludes(const std::string& line, const boost::regex& regex)
 {
     boost::smatch match;
-    return boost::regex_search(line, match, regex);
+    return regex_utils::search(line, match, regex);
 }
 
 int countCitationMisses(const FilePath& logFilePath)

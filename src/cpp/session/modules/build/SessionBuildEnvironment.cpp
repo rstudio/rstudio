@@ -81,7 +81,7 @@ r_util::RToolsInfo scanPathForRTools()
    boost::algorithm::trim(contents);
    boost::regex pattern("Rtools version (\\d\\.\\d\\d)[\\d\\.]+$");
    boost::smatch match;
-   if (boost::regex_search(contents, match, pattern))
+   if (regex_utils::search(contents, match, pattern))
       return r_util::RToolsInfo(match[1],
                                 installPath,
                                 module_context::usingMingwGcc49());

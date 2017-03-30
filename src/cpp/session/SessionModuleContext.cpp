@@ -1840,7 +1840,7 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
    // extract the port
    boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1):([0-9]+)(/.*)?");
    boost::smatch match;
-   if (boost::regex_search(url, match, re))
+   if (regex_utils::search(url, match, re))
    {
       // calculate the path
       std::string path = match[2];

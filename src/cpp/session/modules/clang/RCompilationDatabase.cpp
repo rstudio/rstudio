@@ -84,21 +84,25 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
 
    // check for rcpp 11
    boost::regex reRcpp11("#include\\s+<Rcpp11");
-   bool isRcpp11 = boost::regex_search(contents, reRcpp11);
+   bool isRcpp11 = regex_utils::search(contents, reRcpp11);
    info.rcppPkg = isRcpp11 ? "Rcpp11" : "Rcpp";
    info.hash.append(info.rcppPkg);
 
    // find dependency attributes
    boost::regex re(
-     "^\\s*//\\s*\\[\\[Rcpp::(\\w+)(\\(.*?\\))?\\]\\]\\s*$");
-   boost::sregex_token_iterator it(contents.begin(), contents.end(), re, 0);
-   boost::sregex_token_iterator end;
-   for ( ; it != end; ++it)
+            "^\\s*//\\s*\\[\\[Rcpp::(\\w+)(\\(.*?\\))?\\]\\]\\s*$");
+   try
    {
-      std::string attrib = *it;
-      boost::algorithm::trim_all(attrib);
-      info.hash.append(attrib);
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), re, 0);
+      boost::sregex_token_iterator end;
+      for ( ; it != end; ++it)
+      {
+         std::string attrib = *it;
+         boost::algorithm::trim_all(attrib);
+         info.hash.append(attrib);
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
@@ -114,17 +118,21 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
-   boost::regex re("[ \\t]-(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
-   boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
-   boost::sregex_token_iterator end;
-   for ( ; it != end; ++it)
+   try
    {
-      // remove quotes and add it to the compile args
-      std::string arg = *it;
-      boost::algorithm::trim_all(arg);
-      boost::algorithm::replace_all(arg, "\"", "");
-      compileArgs.push_back(arg);
+      boost::regex re("[ \\t]-(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
+      boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
+      boost::sregex_token_iterator end;
+      for ( ; it != end; ++it)
+      {
+         // remove quotes and add it to the compile args
+         std::string arg = *it;
+         boost::algorithm::trim_all(arg);
+         boost::algorithm::replace_all(arg, "\"", "");
+         compileArgs.push_back(arg);
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    return compileArgs;
 }
@@ -183,7 +191,7 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
    boost::regex re("-c [^\\.]+\\.c\\w* -o");
    BOOST_FOREACH(const std::string& line, lines)
    {
-      if (boost::regex_search(line, re))
+      if (regex_utils::search(line, re))
       {
          std::vector<std::string> args = extractCompileArgs(line);
          std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));

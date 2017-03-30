@@ -35,6 +35,7 @@
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/WaitUtils.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketProxy.hpp>
@@ -739,7 +740,7 @@ void proxyLocalhostRequest(
    // extract the port
    boost::regex re("/p/(\\d+)/");
    boost::smatch match;
-   if (!boost::regex_search(request.uri(), match, re))
+   if (!regex_utils::search(request.uri(), match, re))
    {
       ptrConnection->response().setNotFoundError(request.uri());
       return;

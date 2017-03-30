@@ -94,7 +94,7 @@ std::string mediaClass(const std::string& html)
      "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*/>\\s*</p>\\s*");
 
    boost::smatch match;
-   if (boost::regex_search(html, match, imageRegex))
+   if (regex_utils::search(html, match, imageRegex))
    {
       std::string::const_iterator begin = match[0].first;
       std::string::const_iterator end = match[0].second;
@@ -221,9 +221,9 @@ void computeColumnWidths(const Slide& slide,
 
    std::string slideLeft = slide.left();
    std::string slideRight = slide.right();
-   if (boost::regex_match(slideLeft, match, re))
+   if (regex_utils::match(slideLeft, match, re))
       computeColumnWidths(match[1], pLeftWidth, pRightWidth);
-   else if (boost::regex_match(slideRight, match, re))
+   else if (regex_utils::match(slideRight, match, re))
       computeColumnWidths(match[1], pRightWidth, pLeftWidth);
 }
 

@@ -266,7 +266,7 @@ void onConsoleInput(const std::string& input)
    // names or attempt to balance quote styles, evaluate expressions, etc.
    // (it will primarily detect the output of getShinyRunCmd but we also want
    // to catch most user-entered source() expressions)
-   if (boost::regex_search(input, match,
+   if (regex_utils::search(input, match,
                  boost::regex("source\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)")))
    {
       // source commands can result in the execution of Shiny app objects, 

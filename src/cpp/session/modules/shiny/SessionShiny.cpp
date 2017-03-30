@@ -393,7 +393,7 @@ ShinyFileType getShinyFileType(const FilePath& filePath,
    
    // Check for 'runtime: shiny' in a YAML header.
    std::string yamlHeader = yaml::extractYamlHeader(contents);
-   if (boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
+   if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
       return ShinyDocument;
    
    std::string filename = filePath.filename();
@@ -446,7 +446,7 @@ bool isShinyRMarkdownDocument(const FilePath& filePath)
    static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
    
    std::string yamlHeader = yaml::extractYamlHeader(contents);
-   return boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny);
+   return regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny);
 }
 
 ShinyFileType getShinyFileType(const FilePath& filePath)

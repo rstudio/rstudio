@@ -200,7 +200,7 @@ bool handleRShowDocFile(const core::FilePath& filePath)
    std::string absPath = filePath.absolutePath();
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
-   if (regex_match(absPath, match, manualRegx))
+   if (regex_utils::match(absPath, match, manualRegx))
    {
       ClientEvent helpEvent(client_events::kShowHelp, match[1]);
       module_context::enqueClientEvent(helpEvent);
@@ -790,7 +790,7 @@ SEXP lookupCustomHandler(const std::string& uri)
    // pick name of handler out of uri
    boost::regex customRegx(".*/custom/([A-Za-z0-9_\\-]*).*");
    boost::smatch match;
-   if (regex_match(uri, match, customRegx))
+   if (regex_utils::match(uri, match, customRegx))
    {
       std::string handler = match[1];
 

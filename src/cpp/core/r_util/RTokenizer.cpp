@@ -407,7 +407,7 @@ std::size_t RTokenizer::tokenLength(const boost::wregex& regex)
    boost::wsmatch match;
    std::wstring::const_iterator end = data_.end();
    boost::match_flag_type flg = boost::match_default | boost::match_continuous;
-   if (boost::regex_search(pos_, end, match, regex, flg))
+   if (regex_utils::search(pos_, end, match, regex, flg))
       return match.length();
    else
       return 0;
@@ -417,7 +417,7 @@ void RTokenizer::eatUntil(const boost::wregex& regex)
 {
    boost::wsmatch match;
    std::wstring::const_iterator end = data_.end();
-   if (boost::regex_search(pos_, end, match, regex))
+   if (regex_utils::search(pos_, end, match, regex))
    {
       pos_ = match[0].first;
    }

@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -59,7 +60,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
       BOOST_FOREACH(const html_utils::ExcludePattern& pattern, excludePatterns)
       {
          boost::smatch m;
-         if (boost::regex_search(pos, inputEnd, m, pattern.begin))
+         if (regex_utils::search(pos, inputEnd, m, pattern.begin))
          {
             // set begin and end (may change if there is an end pattern)
             std::string::const_iterator begin = m[0].first;
@@ -68,7 +69,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
             // check for a second match
             if (!pattern.end.empty())
             {
-               if (boost::regex_search(end, inputEnd, m, pattern.end))
+               if (regex_utils::search(end, inputEnd, m, pattern.end))
                {
                   // update end to be the end of the match
                   end = m[0].second;
@@ -226,15 +227,15 @@ void MathJaxFilter::restore(
 bool requiresMathjax(const std::string& htmlOutput)
 {
    boost::regex inlineMathRegex("\\\\\\(([\\s\\S]+?)\\\\\\)");
-   if (boost::regex_search(htmlOutput, inlineMathRegex))
+   if (regex_utils::search(htmlOutput, inlineMathRegex))
       return true;
 
    boost::regex displayMathRegex("\\\\\\[([\\s\\S]+?)\\\\\\]");
-   if (boost::regex_search(htmlOutput, displayMathRegex))
+   if (regex_utils::search(htmlOutput, displayMathRegex))
       return true;
 
    boost::regex mathmlRegex("<math[>\\s](?s).*?</math>");
-   if (boost::regex_search(htmlOutput, mathmlRegex))
+   if (regex_utils::search(htmlOutput, mathmlRegex))
       return true;
 
    return false;

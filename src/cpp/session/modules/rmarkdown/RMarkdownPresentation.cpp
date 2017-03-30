@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 
 using namespace rstudio::core;
 
@@ -101,7 +102,7 @@ void ammendResults(const std::string& formatName,
       const std::string& line = lines.at(i);
 
       // toggle code state
-      if (boost::regex_search(line, reCode))
+      if (regex_utils::search(line, reCode))
          inCode = !inCode;
 
       // bail if we are in code
@@ -111,7 +112,7 @@ void ammendResults(const std::string& formatName,
       // look for a title if we don't have one
       if (!haveTitle || inYaml)
       {
-         if (boost::regex_search(line, reYaml))
+         if (regex_utils::search(line, reYaml))
          {
             if (!inYaml)
             {
@@ -135,7 +136,7 @@ void ammendResults(const std::string& formatName,
          if (inYaml)
          {
             boost::smatch match;
-            if (boost::regex_search(line, match, reTitle))
+            if (regex_utils::search(line, match, reTitle))
             {
                std::string title = match[1];
                boost::algorithm::trim(title);
@@ -153,7 +154,7 @@ void ammendResults(const std::string& formatName,
       {
          // titled slides
          boost::smatch match;
-         if (boost::regex_search(line, match, reTitledSlide))
+         if (regex_utils::search(line, match, reTitledSlide))
          {
             std::string title = match[2];
             boost::algorithm::trim(title);
@@ -165,7 +166,7 @@ void ammendResults(const std::string& formatName,
             slideNavigationItems.push_back(item);
          }
          // untitled slides
-         else if (boost::regex_search(line, reUntitledSlide))
+         else if (regex_utils::search(line, reUntitledSlide))
          {
             SlideNavigationItem item("Untitled Slide", 1, totalSlides++, i+1);
             slideNavigationItems.push_back(item);

@@ -138,14 +138,14 @@ public:
       std::vector<int> chunkLineNumbers;
       for (std::size_t i=0; i<lines.size(); i++)
       {
-         if (boost::regex_match(lines[i], match, re))
+         if (regex_utils::match(lines[i], match, re))
             chunkLineNumbers.push_back(i+1);
       }
 
       // determine chunk number and error message
       boost::regex cre(
          "[\\w]+:[\\s]+chunk[\\s]+(\\d+)[^\n]+\n[^:]+:[\\s]*[\n]?([^\n]+)\n");
-      if (boost::regex_search(output, match, cre))
+      if (regex_utils::search(output, match, cre))
       {
          std::string match1(match[1]);
          std::string match2(match[2]);
@@ -295,7 +295,7 @@ public:
                             "\\((.*?)\\)\\s*\\n(.*?)\\n");
 
       boost::smatch match;
-      if (boost::regex_search(output, match, errRe))
+      if (regex_utils::search(output, match, errRe))
       {
          // extract error info
          int lineBegin = safe_convert::stringTo<int>(match[1], -1);
@@ -304,7 +304,7 @@ public:
          // check to see if there is a parse error which provides more
          // precise pinpointing of the line
          boost::regex parseRe("^\\s*<text>:([0-9]+):[0-9]+: (.+)$");
-         if (boost::regex_match(message, match, parseRe))
+         if (regex_utils::match(message, match, parseRe))
          {
             lineBegin += safe_convert::stringTo<int>(match[1], -1);
             message = match[2];
@@ -319,7 +319,7 @@ public:
          pLogEntries->push_back(logEntry);
       }
 
-      else if (boost::regex_search(output, match, newErrRe))
+      else if (regex_utils::search(output, match, newErrRe))
       {
          // extract error info
          int lineBegin = safe_convert::stringTo<int>(match[1], -1);

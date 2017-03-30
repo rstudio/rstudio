@@ -26,12 +26,12 @@
 #include <boost/function.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
-
 #include <boost/regex.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
 
 
 namespace rstudio {
@@ -90,7 +90,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
 
        // look for a key-value pair line
       boost::smatch keyValueMatch, continuationMatch;
-      if (regex_match(*it, keyValueMatch, keyValueRegx))
+      if (regex_utils::match(*it, keyValueMatch, keyValueRegx))
       {
          // if we have a pending key & value then resolve it
          if (!currentKey.empty())
@@ -111,7 +111,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
 
       // look for a continuation
       else if (!currentKey.empty() &&
-               regex_match(*it, continuationMatch, continuationRegex))
+               regex_utils::match(*it, continuationMatch, continuationRegex))
       {
          currentValue.append("\n");
          currentValue.append(continuationMatch[1]);

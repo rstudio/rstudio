@@ -1828,7 +1828,7 @@ Error augmentSvnIgnore()
    else
    {
       // If svn:ignore exists, add .Rproj.user unless it's already there
-      if (boost::regex_search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
+      if (regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
          return Success();
 
       bool addExtraNewline = svnIgnore.size() > 0

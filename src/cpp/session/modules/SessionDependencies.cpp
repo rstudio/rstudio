@@ -80,7 +80,7 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    {
       boost::smatch match;
       std::string filename = child.filename();
-      if (boost::regex_match(filename, match, re))
+      if (regex_utils::match(filename, match, re))
       {
          EmbeddedPackage pkg;
          pkg.name = name;

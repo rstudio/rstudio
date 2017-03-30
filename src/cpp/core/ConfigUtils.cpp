@@ -52,10 +52,14 @@ void extractToMap(const std::string& keyAndValue,
 void extractVariables(const std::string& vars, Variables* pVariables)
 {
    // scan for variables via regex iterator
-   boost::regex var("^([A-Za-z0-9_]+=[^\n]+)$");
-   boost::sregex_token_iterator it(vars.begin(), vars.end(), var, 0);
-   boost::sregex_token_iterator end;
-   std::for_each(it, end, boost::bind(extractToMap, _1, pVariables));
+   try
+   {
+      boost::regex var("^([A-Za-z0-9_]+=[^\n]+)$");
+      boost::sregex_token_iterator it(vars.begin(), vars.end(), var, 0);
+      boost::sregex_token_iterator end;
+      std::for_each(it, end, boost::bind(extractToMap, _1, pVariables));
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
 }
 
 Error extractVariables(const FilePath& file, Variables* pVariables)

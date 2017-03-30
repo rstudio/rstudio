@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
@@ -94,14 +95,14 @@ void handleFileRequest(const std::string& wwwLocalPath,
    }
    
    // case: files designated to be cached "forever"
-   if (regex_match(uri, boost::regex(".*\\.cache\\..*")))
+   if (regex_utils::match(uri, boost::regex(".*\\.cache\\..*")))
    {
       pResponse->setCacheForeverHeaders();
       pResponse->setFile(filePath, request);
    }
    
    // case: files designated to never be cached 
-   else if (regex_match(uri, boost::regex(".*\\.nocache\\..*")))
+   else if (regex_utils::match(uri, boost::regex(".*\\.nocache\\..*")))
    {
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

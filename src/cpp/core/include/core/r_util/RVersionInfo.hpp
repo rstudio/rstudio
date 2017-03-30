@@ -21,6 +21,7 @@
 
 #include <boost/regex.hpp>
 
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 
 #define kRVersionDefault   "Default"
@@ -57,7 +58,7 @@ public:
                                      boost::match_continuous;
 
       RVersionNumber ver;
-      if (boost::regex_search(number, match, re, flags))
+      if (regex_utils::search(number, match, re, flags))
       {
          ver.versionMajor_ = safe_convert::stringTo<int>(match[1], 0);
          ver.versionMinor_ = safe_convert::stringTo<int>(match[2], 0);

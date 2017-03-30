@@ -76,7 +76,7 @@ void splitMessage(const std::string message,
                   std::string* pDescription)
 {
    boost::smatch match;
-   if (!boost::regex_match(message,
+   if (!regex_utils::match(message,
                            match,
                            boost::regex("(.*?)(\r?\n)+(.*)")))
    {
@@ -141,56 +141,60 @@ std::string convertDiff(const std::string& diff,
 
    std::string::const_iterator lastMatchEnd = diff.begin();
 
-   boost::regex contentLine("^(?:[+\\- ]|(?:@@[+\\-,\\d ]+@@))(.+?)$");
-   boost::sregex_iterator iter(diff.begin(), diff.end(), contentLine,
-                               boost::regex_constants::match_not_dot_newline);
-   boost::sregex_iterator end;
-   for (; iter != end; iter++)
+   try
    {
-      const boost::smatch m = *iter;
-
-      // Copy any lines we skipped over in getting here
-      std::copy(m.prefix().first, m.prefix().second,
-                std::back_inserter(result));
-
-      std::string line = std::string(m[0].first, m[0].second);
-      if (boost::algorithm::starts_with(line, "+++ ") ||
-          boost::algorithm::starts_with(line, "--- "))
+      boost::regex contentLine("^(?:[+\\- ]|(?:@@[+\\-,\\d ]+@@))(.+?)$");
+      boost::sregex_iterator iter(diff.begin(), diff.end(), contentLine,
+                                  boost::regex_constants::match_not_dot_newline);
+      boost::sregex_iterator end;
+      for (; iter != end; iter++)
       {
-         // This is a +++ or --- line, leave it alone
-         std::copy(m[0].first, m[0].second, std::back_inserter(result));
-      }
-      else
-      {
-         // This is a content line, replace it!
+         const boost::smatch m = *iter;
 
-         // Copy the leading part of the match verbatim
-         std::copy(m[0].first, m[1].first, std::back_inserter(result));
-
-         transcoded.clear();
-         error = r::util::iconvstr(std::string(m[1].first, m[1].second),
-                                   fromEncoding,
-                                   toEncoding,
-                                   allowSubst,
-                                   &transcoded);
-         if (error)
-            return diff;
-
-         // Don't allow transcoding to break diff semantics, which would happen if
-         // new lines were introduced
-         if (transcoded.find('\n') != std::string::npos)
-            return diff;
-
-         std::copy(transcoded.begin(), transcoded.end(),
+         // Copy any lines we skipped over in getting here
+         std::copy(m.prefix().first, m.prefix().second,
                    std::back_inserter(result));
 
-         // This should never copy any characters with the regex as it is
-         // written today, but keeping it for symmetry.
-         std::copy(m[1].second, m[0].second, std::back_inserter(result));
-      }
+         std::string line = std::string(m[0].first, m[0].second);
+         if (boost::algorithm::starts_with(line, "+++ ") ||
+             boost::algorithm::starts_with(line, "--- "))
+         {
+            // This is a +++ or --- line, leave it alone
+            std::copy(m[0].first, m[0].second, std::back_inserter(result));
+         }
+         else
+         {
+            // This is a content line, replace it!
 
-      lastMatchEnd = m[0].second;
+            // Copy the leading part of the match verbatim
+            std::copy(m[0].first, m[1].first, std::back_inserter(result));
+
+            transcoded.clear();
+            error = r::util::iconvstr(std::string(m[1].first, m[1].second),
+                  fromEncoding,
+                  toEncoding,
+                  allowSubst,
+                  &transcoded);
+            if (error)
+               return diff;
+
+            // Don't allow transcoding to break diff semantics, which would happen if
+            // new lines were introduced
+            if (transcoded.find('\n') != std::string::npos)
+               return diff;
+
+            std::copy(transcoded.begin(), transcoded.end(),
+                      std::back_inserter(result));
+
+            // This should never copy any characters with the regex as it is
+            // written today, but keeping it for symmetry.
+            std::copy(m[1].second, m[0].second, std::back_inserter(result));
+         }
+
+         lastMatchEnd = m[0].second;
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 
    // Copy the last set of lines we skipped over (or if there were no matches,
    // then we're actually copying the entire diff)

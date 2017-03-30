@@ -26,6 +26,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
@@ -269,7 +270,7 @@ bool interpretRVersionValue(const std::string& value,
    RVersionInfo version = rVersionFromString(value);
 
    if (version.number != kRVersionDefault &&
-       !boost::regex_match(version.number, boost::regex("[\\d\\.]+")))
+       !regex_utils::match(version.number, boost::regex("[\\d\\.]+")))
    {
       return false;
    }
@@ -982,7 +983,7 @@ bool isWebsiteDirectory(const FilePath& projectDir)
       {
          static const boost::regex reSite("^site:.*$");
          std::string yaml = yaml::extractYamlHeader(indexFile);
-         return boost::regex_search(yaml.begin(), yaml.end(), reSite);
+         return regex_utils::search(yaml.begin(), yaml.end(), reSite);
       }
    }
    else
