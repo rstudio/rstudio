@@ -35,7 +35,7 @@ context("queue and fetch input")
             TerminalShell::DefaultShell, console_process::Rpc, "");
 
    boost::shared_ptr<ConsoleProcess> pCP =
-         ConsoleProcess::createTerminalProcess(procOptions, pCPI);
+         ConsoleProcess::createTerminalProcess(procOptions, pCPI, false /*enableWebsockets*/);
 
    test_that("empty queue returns nothing")
    {
