@@ -41,7 +41,7 @@ fi
 cd ace
 cd build
 git checkout -- .
-cd .. 
+cd ..
 
 git fetch origin
 git fetch upstream
@@ -104,6 +104,8 @@ git merge \
     origin/patch/isearch-cursor-position \
     origin/patch/line-widget-shift-click-exception \
     origin/patch/line-widget-performance \
+    origin/patch/emacs-click-position \
+    origin/patch/accent-input \
     -m "merge once more"
 
 ## git merge \
