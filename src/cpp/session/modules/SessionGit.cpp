@@ -22,6 +22,11 @@
 #include <shlwapi.h>
 #endif
 
+#ifndef _WIN32
+# include <sys/stat.h>
+# include <core/system/PosixNfs.hpp>
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -217,6 +222,15 @@ bool waitForIndexLock(const FilePath& workingDir)
    // wait 1 second for an 'index.lock' file to be removed
    for (std::size_t i = 0; i < 10; ++i)
    {
+#ifndef _WIN32
+      // attempt to clear nfs cache -- don't log errors as this is done
+      // just to ensure that we have a 'fresh' view of the index.lock file
+      // in the later codepaths
+      struct stat info;
+      bool cleared;
+      core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
+#endif
+      
       // if there's no lockfile, we can proceed
       if (!lockPath.exists())
       {
@@ -242,13 +256,8 @@ Error gitExec(const ShellArgs& args,
               core::system::ProcessResult* pResult)
 {
    // if we see an 'index.lock' file within the associated
-   // git repository, try timing out a bit until it's removed
-   if (!waitForIndexLock(workingDir))
-   {
-      return systemError(
-               boost::system::errc::no_lock_available,
-               ERROR_LOCATION);
-   }
+   // git repository, try waiting a bit until it's removed
+   waitForIndexLock(workingDir);
    
    core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
