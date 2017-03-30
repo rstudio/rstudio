@@ -126,9 +126,9 @@ Error RCntxt::fileName(std::string* pFileName) const
    {
       r::sexp::Protect protect;
       SEXP fileName;
-      Error error = r::exec::RFunction(".rs.sourceFileFromRef")
-            .addParam(ref)
-            .call(&fileName, &protect);
+      r::exec::RFunction sourceFile(".rs.sourceFileFromRef");
+      sourceFile.addParam(ref);
+      Error error = sourceFile.call(&fileName, &protect);
       if (error)
           return error;
 
