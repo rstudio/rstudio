@@ -17,11 +17,11 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardResources;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
@@ -33,7 +33,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -76,11 +75,16 @@ public class NewConnectionNavigationPage
                                                     ConnectionOptions>>();
 
       for(NewConnectionInfo connectionInfo: context.getConnectionsList()) {
-         if (connectionInfo.getType() == "Shiny") {
-            pages.add(new NewConnectionShinyPage(connectionInfo));
-         }
-         else if (connectionInfo.getType() == "Snippet") {
-            pages.add(new NewConnectionSnippetPage(connectionInfo));
+         if (!connectionInfo.getLicensed() || 
+             RStudioGinjector.INSTANCE.getSession().getSessionInfo().getSupportDriverLicensing()) {
+
+            if (connectionInfo.getType() == "Shiny") {
+               pages.add(new NewConnectionShinyPage(connectionInfo));
+            }
+            else if (connectionInfo.getType() == "Snippet") {
+               pages.add(new NewConnectionSnippetPage(connectionInfo));
+            }
+
          }
       }
 

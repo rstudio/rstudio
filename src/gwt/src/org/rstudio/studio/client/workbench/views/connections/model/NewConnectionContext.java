@@ -55,6 +55,10 @@ public class NewConnectionContext extends JavaScriptObject
       public final native String iconData() /*-{
          return this["iconData"];
       }-*/;
+
+      public final native boolean getLicensed() /*-{
+         return this["licensed"];
+      }-*/;
    }
 
    public final native int getConnectionsLength() /*-{
