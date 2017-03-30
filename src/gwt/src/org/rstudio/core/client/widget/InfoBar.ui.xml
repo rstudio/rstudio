@@ -23,6 +23,8 @@
       .dismiss {
          margin-top: 4px;
          margin-right: 4px;
+         width: 9px;
+         height: 9px;
    }
    </ui:style>
 
