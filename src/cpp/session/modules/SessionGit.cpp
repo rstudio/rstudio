@@ -15,11 +15,16 @@
 #include "SessionGit.hpp"
 
 #include <signal.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#endif
+
+#ifndef _WIN32
+# include <core/system/PosixNfs.hpp>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -204,10 +209,80 @@ std::string gitBin()
 }
 #endif
 
+bool waitForIndexLock(const FilePath& workingDir)
+{
+   using namespace boost::posix_time;
+   
+   // count the number of retries (avoid getting stuck in wait loops when
+   // an index.lock file exists and is never cleaned up)
+   static int retryCount = 0;
+   
+   FilePath lockPath = workingDir.childPath(".git/index.lock");
+   
+   // first stab attempt to see if the lockfile exists
+   if (!lockPath.exists())
+   {
+      retryCount = 0;
+      return true;
+   }
+
+#ifndef _WIN32
+   // attempt to clear nfs cache -- don't log errors as this is done
+   // just to ensure that we have a 'fresh' view of the index.lock file
+   // in the later codepaths
+   struct stat info;
+   bool cleared;
+   core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
+#endif
+   
+   // otherwise, retry for 1s
+   for (std::size_t i = 0; i < 5; ++i)
+   {
+      // if there's no lockfile, we can proceed
+      if (!lockPath.exists())
+      {
+         retryCount = 0;
+         return true;
+      }
+      
+      // if there is a stale lockfile, then try cleaning it up
+      // if we're able to remove a stale lockfile, then we can
+      // escape early
+      else
+      {
+         double diff = ::difftime(::time(NULL), lockPath.lastWriteTime());
+         if (diff > 600)
+         {
+            Error error = lockPath.remove();
+            if (!error)
+            {
+               retryCount = 0;
+               return true;
+            }
+         }
+      }
+      
+      // if we've tried too many times, just bail out (avoid stalling the
+      // process on what seems to be a stale index.lock)
+      if (retryCount > 100)
+         break;
+
+      // sleep for a bit, then retry
+      boost::this_thread::sleep(milliseconds(200));
+      ++retryCount;
+   }
+   
+   return false;
+}
+
 Error gitExec(const ShellArgs& args,
               const core::FilePath& workingDir,
               core::system::ProcessResult* pResult)
 {
+   // if we see an 'index.lock' file within the associated
+   // git repository, try waiting a bit until it's removed
+   waitForIndexLock(workingDir);
+   
    core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
    // Important to ensure SSH_ASKPASS works
