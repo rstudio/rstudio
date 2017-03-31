@@ -1,5 +1,12 @@
 ## v1.1 - Release Notes
 
+### Connections
+
+* New Connections tab for working with a wide variety of data sources
+* Connections to data sources are saved and can be easily reconnected and reused
+* Objects inside data sources can be browsed and contents viewed inside RStudio
+* Works with ODBC data sources and Spark, and can integrate with other R packages
+
 ### Data Import
 
 * Add support for all file encodings supported by R
@@ -56,6 +63,9 @@
 * Add Clear Console button to top of Console pane
 * Add option to wrap around when navigating to previous or next editor tab
 * Allow opening directories as projects (Server and macOS only)
+* Show disambiguation in overflow list when two editor tabs have the same filename
+* Respect control characters in error output; makes e.g. curl output correct
+* Add new cheat sheet links to Help: Data Import, Interfacing Spark
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -77,5 +87,9 @@
 * Invoke R without --vanilla when building R Markdown websites
 * Fixed an issue in which R Markdown documents could get stuck in notebook mode
 * Fixed an issue preventing plain .md files from being published if not rendered
+* Fixed runtime crashes in R packages that use Boost libraries
+* Fixed startup crashes associated with Boost regular expressions
+* Improve stability of crashed session recovery system
+* Fixed issues arising from restoring a session suspended with a different R version
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 
