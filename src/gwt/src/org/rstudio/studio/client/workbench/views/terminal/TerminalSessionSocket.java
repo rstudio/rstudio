@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -192,6 +191,7 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
+         diagnostic("Connect with RPC");
          callback.onConnected();
          break;
          
@@ -224,6 +224,7 @@ public class TerminalSessionSocket
             }
          }
 
+         diagnostic("Try to connect to " + url);
          socket_ = new Websocket(url);
          socket_.addListener(new WebsocketListenerExt() 
          {
@@ -242,12 +243,15 @@ public class TerminalSessionSocket
             @Override
             public void onOpen()
             {
+               diagnostic("Websocket connected: " +
+                     consoleProcess_.getProcessInfo().getHandle());
                callback.onConnected();
             }
 
             @Override
             public void onError()
             {
+               diagnostic("Websocket connect error, switching to rpc");
                socket_ = null;
                
                // Unable to connect client to server via websocket; let server
@@ -353,6 +357,12 @@ public class TerminalSessionSocket
       socket_.close();
       socket_ = null;
       registrations_.removeHandler();
+   }
+   
+   private void diagnostic(String msg)
+   {
+      if (reportTypingLag_)
+         xterm_.writeln(msg);
    }
  
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
