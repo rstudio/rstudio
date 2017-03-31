@@ -225,14 +225,14 @@ bool waitForIndexLock(const FilePath& workingDir)
       retryCount = 0;
       return true;
    }
-      
+
 #ifndef _WIN32
-      // attempt to clear nfs cache -- don't log errors as this is done
-      // just to ensure that we have a 'fresh' view of the index.lock file
-      // in the later codepaths
-      struct stat info;
-      bool cleared;
-      core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
+   // attempt to clear nfs cache -- don't log errors as this is done
+   // just to ensure that we have a 'fresh' view of the index.lock file
+   // in the later codepaths
+   struct stat info;
+   bool cleared;
+   core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
 #endif
    
    // otherwise, retry for 1s
