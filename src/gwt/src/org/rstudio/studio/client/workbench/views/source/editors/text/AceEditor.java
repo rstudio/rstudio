@@ -299,6 +299,7 @@ public class AceEditor implements DocDisplay,
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
+      bgChunkHighlighter_ = new AceBackgroundHighlighter(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -3862,6 +3863,7 @@ public class AceEditor implements DocDisplay,
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
+   private final AceBackgroundHighlighter bgChunkHighlighter_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;

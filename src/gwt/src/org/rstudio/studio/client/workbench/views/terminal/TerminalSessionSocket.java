@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.studio.client.RStudioGinjector;
