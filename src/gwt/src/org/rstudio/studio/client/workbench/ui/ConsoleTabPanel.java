@@ -311,17 +311,17 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
-            owner_.setContextButton(consoleInterrupt_,
-                                    consoleInterrupt_.getWidth(),
-                                    consoleInterrupt_.getHeight(),
-                                    0);
-            owner_.setContextButton(consoleInterruptProfiler_,
-                  consoleInterruptProfiler_.getWidth(),
-                  consoleInterruptProfiler_.getHeight(),
-                  1);
             owner_.setContextButton(consoleClearButton_,
                                     consoleClearButton_.getWidth(),
                                     consoleClearButton_.getHeight(),
+                                    0);
+            owner_.setContextButton(consoleInterrupt_,
+                                    consoleInterrupt_.getWidth(),
+                                    consoleInterrupt_.getHeight(),
+                                    1);
+            owner_.setContextButton(consoleInterruptProfiler_,
+                                    consoleInterruptProfiler_.getWidth(),
+                                    consoleInterruptProfiler_.getHeight(),
                                     2);
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();

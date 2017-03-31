@@ -80,16 +80,10 @@ public class Console
             if (event.isBusy())
             {
                interruptFadeInHelper_.beginShow();
-               clearFadeInHelper_.hide();
             }
-            else
-               clearFadeInHelper_.beginShow();
          }
       });
       
-      clearFadeInHelper_ = new DelayFadeInHelper(
-            view_.getConsoleClearButton().asWidget());
-
       profilerFadeInHelper_ = new DelayFadeInHelper(
             view_.getProfilerInterruptButton().asWidget());
       events.addHandler(RprofEvent.TYPE, new RprofEvent.Handler()
@@ -192,7 +186,6 @@ public class Console
    }
 
    private final DelayFadeInHelper interruptFadeInHelper_;
-   private final DelayFadeInHelper clearFadeInHelper_;
    private final DelayFadeInHelper profilerFadeInHelper_;
    private final EventBus events_;
    private final Display view_;
