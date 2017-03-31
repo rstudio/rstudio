@@ -277,7 +277,8 @@ options(connectionObserver = list(
          newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(con$help),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name))
+         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name)),
+         licensed = FALSE
       )
    })
 
@@ -290,7 +291,8 @@ options(connectionObserver = list(
          type = .rs.scalar("Snippet"),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(NULL),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName))
+         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+         licensed = FALSE
       )
    }))
 
@@ -320,13 +322,16 @@ options(connectionObserver = list(
                sep = "")
          }
 
+         licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+
          list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", driver))
+            iconData = .rs.scalar(.Call("rs_connectionIcon", driver)),
+            licensed = .rs.scalar(file.exists(licenseFile))
          )
       }))
    }
