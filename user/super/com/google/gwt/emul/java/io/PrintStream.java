@@ -81,4 +81,6 @@ public class PrintStream extends FilterOutputStream {
   public void println(String s) {
   }
 
+  public void flush() {
+  }
 }
