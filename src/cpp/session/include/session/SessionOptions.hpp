@@ -356,6 +356,11 @@ public:
       return allowOverlay() || allowPublish_;
    }
 
+   bool supportsDriversLicensing() const
+   {
+      return !allowOverlay();
+   }
+
    bool allowPresentationCommands() const
    {
       return allowPresentationCommands_;

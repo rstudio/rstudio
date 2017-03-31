@@ -380,7 +380,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["session_id"] = module_context::activeSession().id();
 
-   sessionInfo["drivers_support_licensing"] = false;
+   sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
    module_context::events().onSessionInfo(&sessionInfo);
 
