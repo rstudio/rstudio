@@ -236,6 +236,7 @@ Error completeEmbeddedRInitialization(bool useInternet2)
    using namespace r::function_hook ;
    ExecBlock block ;
    block.addFunctions()
+      (bind(registerUnsupported, "bringToTop", "grDevices"))
       (bind(registerUnsupported, "winMenuAdd", "utils"))
       (bind(registerUnsupported, "winMenuAddItem", "utils"))
       (bind(registerUnsupported, "winMenuDel", "utils"))
