@@ -20,19 +20,15 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
 public class ConsoleClearButton extends Composite
 {
    @Inject
    public ConsoleClearButton(final EventBus events, Commands commands)
    {
-      fadeInHelper_ = new DelayFadeInHelper(this);
-
       // The SimplePanel wrapper is necessary for the toolbar button's "pushed"
       // effect to work.
       SimplePanel panel = new SimplePanel();
@@ -46,19 +42,7 @@ public class ConsoleClearButton extends Composite
       panel.setWidget(button);
 
       initWidget(panel);
-      setVisible(false);
-
-      events.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
-      {
-         @Override
-         public void onConsoleBusy(ConsoleBusyEvent event)
-         {
-            if (!event.isBusy())
-               fadeInHelper_.beginShow();
-            else
-               fadeInHelper_.hide();
-         }
-      });
+      setVisible(true);
    }
 
    public int getWidth()
@@ -71,7 +55,6 @@ public class ConsoleClearButton extends Composite
       return height_;
    }
    
-   private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;
    private final Commands commands_;

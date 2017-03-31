@@ -106,7 +106,7 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       consoleClearButton_ = commands_.consoleClear().createToolbarButton();
-      consoleClearButton_.setVisible(false);
+      consoleClearButton_.setVisible(true);
       
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
