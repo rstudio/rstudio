@@ -15,6 +15,7 @@
 #include "SessionGit.hpp"
 
 #include <signal.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -23,7 +24,6 @@
 #endif
 
 #ifndef _WIN32
-# include <sys/stat.h>
 # include <core/system/PosixNfs.hpp>
 #endif
 
@@ -219,9 +219,13 @@ bool waitForIndexLock(const FilePath& workingDir)
    
    FilePath lockPath = workingDir.childPath(".git/index.lock");
    
-   // wait 1 second for an 'index.lock' file to be removed
-   for (std::size_t i = 0; i < 10; ++i)
+   // first stab attempt to see if the lockfile exists
+   if (!lockPath.exists())
    {
+      retryCount = 0;
+      return true;
+   }
+      
 #ifndef _WIN32
       // attempt to clear nfs cache -- don't log errors as this is done
       // just to ensure that we have a 'fresh' view of the index.lock file
@@ -230,7 +234,10 @@ bool waitForIndexLock(const FilePath& workingDir)
       bool cleared;
       core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
 #endif
-      
+   
+   // otherwise, retry for 1s
+   for (std::size_t i = 0; i < 5; ++i)
+   {
       // if there's no lockfile, we can proceed
       if (!lockPath.exists())
       {
@@ -238,13 +245,30 @@ bool waitForIndexLock(const FilePath& workingDir)
          return true;
       }
       
+      // if there is a stale lockfile, then try cleaning it up
+      // if we're able to remove a stale lockfile, then we can
+      // escape early
+      else
+      {
+         double diff = ::difftime(::time(NULL), lockPath.lastWriteTime());
+         if (diff > 600)
+         {
+            Error error = lockPath.remove();
+            if (!error)
+            {
+               retryCount = 0;
+               return true;
+            }
+         }
+      }
+      
       // if we've tried too many times, just bail out (avoid stalling the
       // process on what seems to be a stale index.lock)
       if (retryCount > 100)
          break;
 
-      // sleep for 100ms and then retry
-      boost::this_thread::sleep(milliseconds(100));
+      // sleep for a bit, then retry
+      boost::this_thread::sleep(milliseconds(200));
       ++retryCount;
    }
    
