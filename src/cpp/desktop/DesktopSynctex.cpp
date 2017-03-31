@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/Error.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/system/Process.hpp>
 
