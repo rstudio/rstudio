@@ -54,7 +54,7 @@
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
-* Debugger support for R 3.3.3 and above
+* Debugger support for R 3.4.0 and above
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
 * Improve performance of autocompletion for installed packages
@@ -91,5 +91,6 @@
 * Fixed startup crashes associated with Boost regular expressions
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
+* Wait for index.lock file to clear before performing git operations (with recovery)
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 
