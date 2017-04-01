@@ -132,6 +132,7 @@ java_library(
         "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
+        "-Xep:EqualsIncompatibleType:OFF",
     ],
     deps = [
         ":compiler.standalone.super",
@@ -207,6 +208,7 @@ java_library(
         "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
+        "-Xep:EqualsIncompatibleType:OFF",
     ],
     deps = [
         ":compiler.standalone.super",
@@ -305,7 +307,8 @@ java_library(
         "-Xep:SelfEquals:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
-   ],
+        "-Xep:EqualsIncompatibleType:OFF",
+    ],
     deps = [
         ":compiler.standalone.super",
         ":gwt-dev-bare",

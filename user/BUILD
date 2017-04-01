@@ -100,6 +100,7 @@ java_library(
         "-Xep:SelfEquals:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
+        "-Xep:EqualsIncompatibleType:OFF",
     ],
     plugins = [
         "//java/com/google/devtools/build/buildjar/plugin/gwt",
@@ -145,7 +146,8 @@ java_library(
         "-Xep:SelfEquals:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
-   ],
+        "-Xep:EqualsIncompatibleType:OFF",
+    ],
     deps = [
         "//third_party/java_src/gwt/svn/trunk/dev:requestfactory-apt-deps",
     ],
@@ -547,6 +549,7 @@ AugmentedJar(
         "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
+        "-Xep:EqualsIncompatibleType:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",
