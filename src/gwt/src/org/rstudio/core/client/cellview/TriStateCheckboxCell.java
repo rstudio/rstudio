@@ -119,7 +119,7 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    @Override
    public void render(Context context, Boolean value, SafeHtmlBuilder sb)
    {
-      ImageResource img;
+      ImageResource2x img;
       if (value == null)
          img = new ImageResource2x(RES.checkboxIndeterminate2x());
       else if (value)
@@ -127,8 +127,7 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
       else
          img = new ImageResource2x(RES.checkboxOff2x());
 
-      sb.append(SafeHtmlUtils.fromTrustedString(
-            AbstractImagePrototype.create(img).getHTML()));
+      sb.append(img.getSafeHtml());
    }
 
    @Override
