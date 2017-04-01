@@ -1380,6 +1380,20 @@ SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
       return r::sexp::create(output, &protect);
 }
 
+SEXP rs_base64encodeFile(SEXP pathSEXP)
+{
+   std::string path = r::sexp::asString(pathSEXP); 
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   std::string output;
+   Error error = base64::encode(filePath, &output);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect protect;
+   return r::sexp::create(output, &protect);
+}
+
 SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
 {
    bool binary = r::sexp::asLogical(binarySEXP);
@@ -2404,6 +2418,7 @@ Error initialize()
             0);
 
    RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
+   RS_REGISTER_CALL_METHOD(rs_base64encodeFile, 1);
    RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
 
    // initialize monitored scratch dir

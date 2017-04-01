@@ -1789,6 +1789,11 @@
    .Call("rs_base64encode", data, binary)
 })
 
+.rs.addFunction("base64encodeFile", function(path)
+{
+   .Call("rs_base64encodeFile", path)
+})
+
 .rs.addFunction("base64decode", function(data, binary = FALSE)
 {
    .Call("rs_base64decode", data, binary)

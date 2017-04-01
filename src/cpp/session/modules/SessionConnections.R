@@ -270,6 +270,16 @@ options(connectionObserver = list(
          }
       }
 
+      iconData <- if (nchar(con$icon) > 0) {
+         iconPath <- system.file(con$icon, package = con$package)
+         if (file.exists(iconPath)) {
+            paste0("data:image/png;base64,", .rs.base64encodeFile(iconPath));
+         }
+      }
+      else {
+         .Call("rs_connectionIcon", con$name)
+      }
+
       list(
          package = .rs.scalar(con$package),
          name = .rs.scalar(con$name),
@@ -277,8 +287,8 @@ options(connectionObserver = list(
          newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(con$help),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", con$name)),
-         licensed = FALSE
+         iconData = .rs.scalar(iconData),
+         licensed = .rs.scalar(FALSE)
       )
    })
 
@@ -292,7 +302,7 @@ options(connectionObserver = list(
          snippet = .rs.scalar(snippet),
          help = .rs.scalar(NULL),
          iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
-         licensed = FALSE
+         licensed = .rs.scalar(FALSE)
       )
    }))
 
@@ -324,13 +334,17 @@ options(connectionObserver = list(
 
          licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
 
+         iconData <- .Call("rs_connectionIcon", driver)
+         if (nchar(iconData) == 0)
+            iconData <- .Call("rs_connectionIcon", "ODBC")
+
          list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", driver)),
+            iconData = .rs.scalar(iconData),
             licensed = .rs.scalar(file.exists(licenseFile))
          )
       }))
