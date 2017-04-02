@@ -3172,7 +3172,8 @@ public class GwtAstBuilder {
     }
 
     private boolean isDoNotAutoBoxParameter(MethodBinding methodBinding, int parameterIndex) {
-      AnnotationBinding[][] parameterAnnotations = methodBinding.getParameterAnnotations();
+      AnnotationBinding[][] parameterAnnotations =
+          methodBinding.original().getParameterAnnotations();
       return parameterAnnotations != null
           && parameterAnnotations.length > parameterIndex
           && parameterAnnotations[parameterIndex] != null
