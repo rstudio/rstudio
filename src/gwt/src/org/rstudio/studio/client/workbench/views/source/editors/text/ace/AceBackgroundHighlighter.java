@@ -57,7 +57,7 @@ public class AceBackgroundHighlighter
       {
          int n = editor_.getRowCount();
          int startRow = row_;
-         int endRow = Math.min(startRow + 200, editor_.getRowCount());
+         int endRow = Math.min(startRow + DELTA, editor_.getRowCount());
          
          for (int row = startRow; row < endRow; row++)
          {
@@ -108,7 +108,9 @@ public class AceBackgroundHighlighter
       }
       
       private int row_;
-      private static final int DELAY_MS = 20;
+      
+      private static final int DELAY_MS = 5;
+      private static final int DELTA = 200;
    }
    
    public AceBackgroundHighlighter(AceEditor editor)
