@@ -1,3 +1,5 @@
+@external rstudio-themes-flat;
+
 .panel {
    width: 100%;
    padding: 0 7px 0 7px;
@@ -9,10 +11,25 @@
    gwt-image: 'headerPanelLeft';
 }
 
+.rstudio-themes-flat .left {
+   display: none;
+}
+
 @sprite .center {
    gwt-image: 'headerPanelTile';
 }
 
+.rstudio-themes-flat .center {
+   background: #f3f4f7;
+   height: 48px;
+   border: solid 1px #d6dadc;
+   border-radius: 5px;
+}
+
 @sprite .right {
    gwt-image: 'headerPanelRight';
+}
+
+.rstudio-themes-flat .right {
+   display: none;
 }

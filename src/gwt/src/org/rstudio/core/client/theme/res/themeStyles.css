@@ -508,8 +508,13 @@ pre {
    padding: 0 0 4px 32px;
    font-size: 11px;
 }
+
 .header * {
    white-space: nowrap;
+}
+
+.rstudio-themes-flat table.header > tbody > tr > td {
+   border-bottom: solid 1px #d6dadc;
 }
 
 .mainMenu {
