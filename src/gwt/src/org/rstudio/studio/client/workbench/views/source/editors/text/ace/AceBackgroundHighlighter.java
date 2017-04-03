@@ -139,6 +139,7 @@ public class AceBackgroundHighlighter
    public void onEditorModeChanged(EditorModeChangedEvent event)
    {
       clearMarkers();
+      clearRowState();
       refreshHighlighters();
       synchronizeFrom(0);
    }
@@ -314,6 +315,12 @@ public class AceBackgroundHighlighter
       {
          highlightPatterns_.addAll(HIGHLIGHT_PATTERN_REGISTRY.get(modeId));
       }
+   }
+   
+   private void clearRowState()
+   {
+      rowStates_.fill(0);
+      rowPatterns_.fill((HighlightPattern) null);
    }
    
    private void clearMarkers()
