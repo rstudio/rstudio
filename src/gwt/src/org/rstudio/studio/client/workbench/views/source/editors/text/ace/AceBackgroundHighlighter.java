@@ -20,15 +20,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Timer;
 
@@ -122,8 +123,9 @@ public class AceBackgroundHighlighter
             editor.addAttachHandler(this));
       
       int n = editor.getRowCount();
-      rowStates_ = JsVectorInteger.createArray(n).cast();
-      markerIds_ = JsVectorInteger.createArray(n).cast();
+      rowStates_ = JavaScriptObject.createArray(n).cast();
+      rowPatterns_ = JavaScriptObject.createArray(n).cast();
+      markerIds_ = JavaScriptObject.createArray(n).cast();
       
       updateTimer_ = new UpdateTimer();
       
@@ -145,7 +147,6 @@ public class AceBackgroundHighlighter
       AceDocumentChangeEventNative nativeEvent = event.getEvent();
       
       String action = nativeEvent.getAction();
-      String text = nativeEvent.getText();
       
       Range range = nativeEvent.getRange();
       int startRow = range.getStart().getRow();
@@ -154,17 +155,24 @@ public class AceBackgroundHighlighter
       // NOTE: this will need to change with the next version of Ace,
       // as the layout of document changed events will have changed there
       rowStates_.set(startRow, STATE_UNKNOWN);
+      rowPatterns_.set(startRow, null);
       if (action.startsWith("insert"))
       {
          int newlineCount = endRow - startRow;
          for (int i = 0; i < newlineCount; i++)
+         {
             rowStates_.insert(startRow, STATE_UNKNOWN);
+            rowPatterns_.insert(startRow, (HighlightPattern) null);
+         }
       }
       else if (action.startsWith("remove"))
       {
          int newlineCount = endRow - startRow;
          if (newlineCount > 0)
+         {
             rowStates_.remove(startRow, newlineCount);
+            rowPatterns_.remove(startRow,newlineCount);
+         }
       }
       
       synchronizeFrom(startRow);
@@ -183,12 +191,8 @@ public class AceBackgroundHighlighter
    HighlightPattern selectBeginPattern(String line)
    {
       for (HighlightPattern pattern : highlightPatterns_)
-      {
-         Pattern begin = pattern.begin;
-         Match match = begin.match(line, 0);
-         if (match != null)
+         if (pattern.begin.test(line))
             return pattern;
-      }
       
       return null;
    }
@@ -197,6 +201,12 @@ public class AceBackgroundHighlighter
    {
       for (int row = startRow; row >= 0; row--)
       {
+         // check for a cached highlight pattern
+         HighlightPattern pattern = rowPatterns_.get(row);
+         if (pattern != null)
+            return pattern;
+         
+         // no pattern available; re-compute based on current state
          int state = rowStates_.get(row);
          switch (state)
          {
@@ -220,9 +230,7 @@ public class AceBackgroundHighlighter
    private int computeState(int row)
    {
       String line = editor_.getLine(row);
-      int state = (row > 0)
-            ? rowStates_.get(row - 1)
-            : STATE_TEXT;
+      int state = (row > 0) ? rowStates_.get(row - 1) : STATE_TEXT;
             
       switch (state)
       {
@@ -245,8 +253,7 @@ public class AceBackgroundHighlighter
          assert activeHighlightPattern_ != null
                : "Unexpected null highlight pattern";
          
-         Match match = activeHighlightPattern_.end.match(line, 0);
-         if (match != null)
+         if (activeHighlightPattern_.end.test(line))
          {
             activeHighlightPattern_ = null;
             return STATE_CHUNK_END;
@@ -277,11 +284,16 @@ public class AceBackgroundHighlighter
          int state = computeState(row);
          
          // if there is no change in state, then exit early
-         if (state == rowStates_.get(row))
+         boolean isChanged =
+               state != rowStates_.get(row) ||
+               activeHighlightPattern_ != rowPatterns_.get(row);
+         
+         if (!isChanged)
             break;
          
          // update state for this row
          rowStates_.set(row, state);
+         rowPatterns_.set(row, activeHighlightPattern_);
       }
       
       // start the worker that will update ace
@@ -320,7 +332,7 @@ public class AceBackgroundHighlighter
             new HighlightPattern(
                   "^\\s*[/][*}{3,}\\s*[Rr]\\s*$",
                   "^\\s*[*]+[/]")
-            );
+      );
    }
    
    private static List<HighlightPattern> htmlStyleHighlightPatterns()
@@ -329,7 +341,7 @@ public class AceBackgroundHighlighter
             new HighlightPattern(
                   "^<!--\\s*begin[.]rcode\\s*(?:.*)",
                   "^\\s*end[.]rcode\\s*-->")
-            );
+      );
    }
    
    private static List<HighlightPattern> sweaveHighlightPatterns()
@@ -338,7 +350,7 @@ public class AceBackgroundHighlighter
             new HighlightPattern(
                   "<<(.*?)>>",
                   "^\\s*@\\s*$")
-            );
+      );
    }
    
    private static final List<HighlightPattern> rMarkdownHighlightPatterns()
@@ -347,7 +359,7 @@ public class AceBackgroundHighlighter
             
             // code chunks
             new HighlightPattern(
-                  "^(?:[ ]{4})?`{3,}\\s*\\{(?:.*)\\}\\s*$",
+                  "^(?:[ ]{4})?`{3,}\\s*\\{.*\\}\\s*$",
                   "^(?:[ ]{4})?`{3,}\\s*$"),
             
             // latex blocks
@@ -355,7 +367,7 @@ public class AceBackgroundHighlighter
                   "^[$][$]\\s*$",
                   "^[$][$]\\s*$")
             
-            );
+      );
             
    }
    
@@ -367,6 +379,8 @@ public class AceBackgroundHighlighter
    
    private final JsVectorInteger rowStates_;
    private final JsVectorInteger markerIds_;
+   private final JsVector<HighlightPattern> rowPatterns_;
+   
    private final UpdateTimer updateTimer_;
    
    private static final String MARKER_CLASS = "ace_foreign_line background_highlight";
