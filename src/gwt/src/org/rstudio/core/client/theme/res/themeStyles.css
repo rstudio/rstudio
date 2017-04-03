@@ -929,8 +929,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbarButton[disabled]:active {
    top: 0px;
 }
+
 .toolbarSeparator {
    margin-right: 5px;
+}
+
+.rstudio-themes-flat .toolbarSeparator {
+   max-height: 19px;
 }
 
 .toolbarFileLabel {
