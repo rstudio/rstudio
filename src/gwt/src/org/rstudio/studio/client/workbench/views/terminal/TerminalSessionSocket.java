@@ -288,12 +288,29 @@ public class TerminalSessionSocket
     * Send user input to the server.
     * @param inputSequence used to fix out-of-order RPC calls
     * @param input text to send
+    * @param localEcho echo input locally
     * @param requestCallback callback
     */
    public void dispatchInput(int inputSequence,
                              String input,
+                             boolean localEcho,
                              VoidServerRequestCallback requestCallback)
    {
+      if (localEcho)
+      {
+         // input longer than one character is likely a control sequence, or
+         // pasted text; only local-echo and sync with single-character input
+         if (input.length() == 1) 
+         {
+            int ch = input.charAt(0);
+            if (ch >= 32 /*space*/ && ch <= 126 /*tilda*/)
+            {
+               localEcho_.add(input);
+               xterm_.write(input);
+            }
+         }
+      }
+
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
@@ -309,15 +326,42 @@ public class TerminalSessionSocket
       default:
          break;
       }
-      
    }
    
    /**
     * Send output to the terminal emulator.
     * @param output text to send to the terminal
+    * @param detectLocalEcho local-echo detection
     */
-   public void dispatchOutput(String output)
+   public void dispatchOutput(String output, boolean detectLocalEcho)
    {
+      if (detectLocalEcho && !localEcho_.isEmpty())
+      {
+         String lastOutput = "";
+         while (!localEcho_.isEmpty() && lastOutput.length() < output.length())
+         {
+            lastOutput += localEcho_.poll();
+         }
+        
+         if (lastOutput.equals(output))
+         {
+            // server echoed back what we have already echoed locally
+            return; 
+         }
+         
+         // special case when xterm.js does a line-wrap
+         lastOutput += " \r";
+         if (lastOutput.equals(output))
+         {
+            // server echoed back what we have already echoed locally
+            return; 
+         }
+         
+         // what we got back didn't match previously echoed text; delete
+         // queue so we don't get too far out of sync
+         localEcho_.clear();
+      }
+      
       xterm_.write(output);
    }
 
@@ -373,6 +417,7 @@ public class TerminalSessionSocket
    private boolean reportTypingLag_;
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
+   private LinkedList<String> localEcho_ = new LinkedList<String>();
    
    // Injected ---- 
    private UIPrefs uiPrefs_;

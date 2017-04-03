@@ -235,7 +235,7 @@ public class TerminalSession extends XTermWidget
    @Override
    public void receivedOutput(String output)
    {
-      socket_.dispatchOutput(output);
+      socket_.dispatchOutput(output, true /*detectLocalEcho*/);
    }
 
    @Override
@@ -285,7 +285,8 @@ public class TerminalSession extends XTermWidget
       // On Windows, rapid typing sometimes causes RPC messages for writeStandardInput
       // to arrive out of sequence in the terminal; send a sequence number with each
       // message so server can put messages back in order
-      if (BrowseCap.isWindowsDesktop())
+      if (BrowseCap.isWindowsDesktop() && 
+            consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
       {
          if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
          {
@@ -311,7 +312,13 @@ public class TerminalSession extends XTermWidget
          }
       }
       
-      socket_.dispatchInput(inputSequence_, userInput,
+      // Don't do local-echo for Win32; its pty implementation returns 
+      // escape sequences even when doing simple single-character input at a 
+      // command-prompt. Also don't do local-echo when something is running,
+      // indicating we are likely not at a command-prompt.
+      boolean localEcho = !BrowseCap.isWindowsDesktop() && !hasChildProcs_;
+      
+      socket_.dispatchInput(inputSequence_, userInput, localEcho,
             new VoidServerRequestCallback() {
 
                @Override
@@ -403,7 +410,7 @@ public class TerminalSession extends XTermWidget
    protected void writeError(String msg)
    {
       socket_.dispatchOutput(AnsiCode.ForeColor.RED + "Error: " + 
-            msg + AnsiCode.DEFAULTCOLORS);
+            msg + AnsiCode.DEFAULTCOLORS, false /*detectLocalEcho*/);
    }
 
    @Override
