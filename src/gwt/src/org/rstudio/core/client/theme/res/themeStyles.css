@@ -32,6 +32,7 @@
 
 @external windows, windows-highdpi, macintosh, linux;
 @external ubuntu_mono;
+@external rstudio-themes-flat;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -874,6 +875,16 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    width: 100%;
    height: 23px;
    background: TOOLBARBACKGROUND repeat-x top;
+   padding: 0 0 0 6px;
+   white-space: nowrap;
+}
+
+.rstudio-themes-flat .toolbar {
+   font-size: 11px;
+   width: 100%;
+   height: 22px;
+   background: #f3f4f7;
+   border-bottom: 1px solid #d6dadc;
    padding: 0 0 0 6px;
    white-space: nowrap;
 }
