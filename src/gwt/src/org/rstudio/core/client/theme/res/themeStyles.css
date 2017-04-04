@@ -1045,10 +1045,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    }
  }
 
-
 .webGlobalToolbar {
    margin-top: -3px;
    background: none;
+}
+
+.rstudio-themes-flat .webGlobalToolbar {
+   border-bottom: 0;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
