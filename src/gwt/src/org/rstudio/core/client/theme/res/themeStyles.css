@@ -130,6 +130,10 @@ body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
 }
 
+body.rstudio-themes-flat {
+   background: rgb(247, 247, 247);
+}
+
 body {
    font-family: proportionalFont;
    font-size: 12px;
