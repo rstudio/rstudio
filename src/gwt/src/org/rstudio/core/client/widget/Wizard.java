@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.common.HelpLink;
 
@@ -184,7 +185,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       kCaptionHeight, Unit.PX);
       
       // second page back button
-      ImageResource bkImg = res.wizardBackButton();
+      ImageResource2x bkImg = new ImageResource2x(res.wizardBackButton2x());
       backButton_ = new Label("Back");
       backButton_.addStyleName(styles.wizardBackButton());
       backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());

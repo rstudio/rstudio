@@ -47,9 +47,11 @@ public interface WizardResources extends ClientBundle
    @Source("Wizard.css")
    Styles styles(); 
    
-   ImageResource wizardBackButton();
-   ImageResource wizardDisclosureArrow();
-   
+   @Source("wizardBackButton_2x.png")
+   ImageResource wizardBackButton2x();
+
+   @Source("wizardDisclosureArrow_2x.png")
+   ImageResource wizardDisclosureArrow2x();
    
    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
    ImageResource wizardPageSelectorBackground();
