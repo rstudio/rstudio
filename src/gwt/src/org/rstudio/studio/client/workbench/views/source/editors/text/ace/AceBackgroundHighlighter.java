@@ -71,6 +71,8 @@ public class AceBackgroundHighlighter
          int startRow = row_;
          int endRow = Math.min(startRow + CHUNK_SIZE, editor_.getRowCount());
          
+         activeHighlightPattern_ = findActiveHighlightPattern(startRow);
+         
          // first, update local background state for each row
          for (int row = startRow; row < endRow; row++)
          {
@@ -311,9 +313,6 @@ public class AceBackgroundHighlighter
       // back until we find a row with cached state
       while (startRow > 0 && !rowStates_.isSet(startRow - 1))
          startRow--;
-      
-      // figure out what highlighter is active for this particular row
-      activeHighlightPattern_ = findActiveHighlightPattern(startRow);
       
       // start the worker that will update ace
       worker_.start(startRow);
