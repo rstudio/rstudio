@@ -59,14 +59,14 @@ public class JsVectorString extends JavaScriptObject
       this.fill(value);
    }-*/;
    
-   public final native String get(int index)
-   /*-{
-      return this[index];
-   }-*/;
+   public final String get(int index)
+   {
+      return get(index, defaultValue());
+   }
    
-   public final native String get(int index, String valueIfUnset)
+   public final native String get(int index, String defaultValue)
    /*-{
-      return this[index] || valueIfUnset;
+      return this[index] || defaultValue;
    }-*/;
    
    public final native int indexOf(String value)
@@ -109,14 +109,24 @@ public class JsVectorString extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
-   public final native String peek()
+   public final String peek()
+   {
+      return peek(defaultValue());
+   }
+   
+   private native final String peek(String defaultValue)
    /*-{
-      return this[this.length - 1];
+      return this[this.length - 1] || defaultValue;
    }-*/;
    
-   public final native String pop()
+   public final String pop()
+   {
+      return pop(defaultValue());
+   }
+   
+   private final native String pop(String defaultValue)
    /*-{
-      return this.pop();
+      return this.pop() || defaultValue;
    }-*/;
    
    public final native void push(String object)
@@ -144,14 +154,19 @@ public class JsVectorString extends JavaScriptObject
       this.reverse();
    }-*/;
    
-   public final native String shift()
+   public final String shift()
+   {
+      return shift(defaultValue());
+   }
+   
+   private final native String shift(String defaultValue)
    /*-{
-      return this.shift();
+      return this.shift() || defaultValue;
    }-*/;
    
-   public final native void splice(int start, int end, JsVectorString vector)
+   public final native void splice(int start, int deleteCount, JsVectorString vector)
    /*-{
-      this.splice(start, end, vector);
+      this.splice(start, deleteCount, vector);
    }-*/;
    
    public final native void set(int index, String value)
@@ -173,5 +188,9 @@ public class JsVectorString extends JavaScriptObject
    /*-{
       return [].unshift.apply(this, vector);
    }-*/;
-
+   
+   private final native String defaultValue()
+   /*-{
+      return null;
+   }-*/;
 }

@@ -203,7 +203,7 @@ public class AceBackgroundHighlighter
          int newlineCount = endRow - startRow;
          for (int i = 0; i < newlineCount; i++)
          {
-            rowStates_.insert(startRow, null);
+            rowStates_.insert(startRow, -1);
             rowPatterns_.insert(startRow, (HighlightPattern) null);
          }
       }

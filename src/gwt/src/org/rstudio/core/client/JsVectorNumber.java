@@ -59,14 +59,14 @@ public class JsVectorNumber extends JavaScriptObject
       this.fill(value);
    }-*/;
    
-   public final native double get(int index)
-   /*-{
-      return this[index];
-   }-*/;
+   public final double get(int index)
+   {
+      return get(index, defaultValue());
+   }
    
-   public final native double get(int index, double valueIfUnset)
+   public final native double get(int index, double defaultValue)
    /*-{
-      return this[index] || valueIfUnset;
+      return this[index] || defaultValue;
    }-*/;
    
    public final native int indexOf(double value)
@@ -109,14 +109,24 @@ public class JsVectorNumber extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
-   public final native double peek()
+   public final double peek()
+   {
+      return peek(defaultValue());
+   }
+   
+   private native final double peek(double defaultValue)
    /*-{
-      return this[this.length - 1];
+      return this[this.length - 1] || defaultValue;
    }-*/;
    
-   public final native double pop()
+   public final double pop()
+   {
+      return pop(defaultValue());
+   }
+   
+   private final native double pop(double defaultValue)
    /*-{
-      return this.pop();
+      return this.pop() || defaultValue;
    }-*/;
    
    public final native void push(double object)
@@ -144,14 +154,19 @@ public class JsVectorNumber extends JavaScriptObject
       this.reverse();
    }-*/;
    
-   public final native double shift()
+   public final double shift()
+   {
+      return shift(defaultValue());
+   }
+   
+   private final native double shift(double defaultValue)
    /*-{
-      return this.shift();
+      return this.shift() || defaultValue;
    }-*/;
    
-   public final native void splice(int start, int end, JsVectorNumber vector)
+   public final native void splice(int start, int deleteCount, JsVectorNumber vector)
    /*-{
-      this.splice(start, end, vector);
+      this.splice(start, deleteCount, vector);
    }-*/;
    
    public final native void set(int index, double value)
@@ -173,5 +188,9 @@ public class JsVectorNumber extends JavaScriptObject
    /*-{
       return [].unshift.apply(this, vector);
    }-*/;
-
+   
+   private final native double defaultValue()
+   /*-{
+      return 0;
+   }-*/;
 }

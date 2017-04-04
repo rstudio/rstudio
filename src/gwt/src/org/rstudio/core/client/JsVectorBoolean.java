@@ -59,14 +59,14 @@ public class JsVectorBoolean extends JavaScriptObject
       this.fill(value);
    }-*/;
    
-   public final native boolean get(int index)
-   /*-{
-      return this[index];
-   }-*/;
+   public final boolean get(int index)
+   {
+      return get(index, defaultValue());
+   }
    
-   public final native boolean get(int index, boolean valueIfUnset)
+   public final native boolean get(int index, boolean defaultValue)
    /*-{
-      return this[index] || valueIfUnset;
+      return this[index] || defaultValue;
    }-*/;
    
    public final native int indexOf(boolean value)
@@ -109,14 +109,24 @@ public class JsVectorBoolean extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
-   public final native boolean peek()
+   public final boolean peek()
+   {
+      return peek(defaultValue());
+   }
+   
+   private native final boolean peek(boolean defaultValue)
    /*-{
-      return this[this.length - 1];
+      return this[this.length - 1] || defaultValue;
    }-*/;
    
-   public final native boolean pop()
+   public final boolean pop()
+   {
+      return pop(defaultValue());
+   }
+   
+   private final native boolean pop(boolean defaultValue)
    /*-{
-      return this.pop();
+      return this.pop() || defaultValue;
    }-*/;
    
    public final native void push(boolean object)
@@ -144,14 +154,19 @@ public class JsVectorBoolean extends JavaScriptObject
       this.reverse();
    }-*/;
    
-   public final native boolean shift()
+   public final boolean shift()
+   {
+      return shift(defaultValue());
+   }
+   
+   private final native boolean shift(boolean defaultValue)
    /*-{
-      return this.shift();
+      return this.shift() || defaultValue;
    }-*/;
    
-   public final native void splice(int start, int end, JsVectorBoolean vector)
+   public final native void splice(int start, int deleteCount, JsVectorBoolean vector)
    /*-{
-      this.splice(start, end, vector);
+      this.splice(start, deleteCount, vector);
    }-*/;
    
    public final native void set(int index, boolean value)
@@ -173,5 +188,9 @@ public class JsVectorBoolean extends JavaScriptObject
    /*-{
       return [].unshift.apply(this, vector);
    }-*/;
-
+   
+   private final native boolean defaultValue()
+   /*-{
+      return false;
+   }-*/;
 }

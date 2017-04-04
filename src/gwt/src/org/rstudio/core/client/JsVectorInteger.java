@@ -59,14 +59,14 @@ public class JsVectorInteger extends JavaScriptObject
       this.fill(value);
    }-*/;
    
-   public final native int get(int index)
-   /*-{
-      return this[index];
-   }-*/;
+   public final int get(int index)
+   {
+      return get(index, defaultValue());
+   }
    
-   public final native int get(int index, int valueIfUnset)
+   public final native int get(int index, int defaultValue)
    /*-{
-      return this[index] || valueIfUnset;
+      return this[index] || defaultValue;
    }-*/;
    
    public final native int indexOf(int value)
@@ -109,14 +109,24 @@ public class JsVectorInteger extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
-   public final native int peek()
+   public final int peek()
+   {
+      return peek(defaultValue());
+   }
+   
+   private native final int peek(int defaultValue)
    /*-{
-      return this[this.length - 1];
+      return this[this.length - 1] || defaultValue;
    }-*/;
    
-   public final native int pop()
+   public final int pop()
+   {
+      return pop(defaultValue());
+   }
+   
+   private final native int pop(int defaultValue)
    /*-{
-      return this.pop();
+      return this.pop() || defaultValue;
    }-*/;
    
    public final native void push(int object)
@@ -144,14 +154,19 @@ public class JsVectorInteger extends JavaScriptObject
       this.reverse();
    }-*/;
    
-   public final native int shift()
+   public final int shift()
+   {
+      return shift(defaultValue());
+   }
+   
+   private final native int shift(int defaultValue)
    /*-{
-      return this.shift();
+      return this.shift() || defaultValue;
    }-*/;
    
-   public final native void splice(int start, int end, JsVectorInteger vector)
+   public final native void splice(int start, int deleteCount, JsVectorInteger vector)
    /*-{
-      this.splice(start, end, vector);
+      this.splice(start, deleteCount, vector);
    }-*/;
    
    public final native void set(int index, int value)
@@ -173,5 +188,9 @@ public class JsVectorInteger extends JavaScriptObject
    /*-{
       return [].unshift.apply(this, vector);
    }-*/;
-
+   
+   private final native int defaultValue()
+   /*-{
+      return 0;
+   }-*/;
 }
