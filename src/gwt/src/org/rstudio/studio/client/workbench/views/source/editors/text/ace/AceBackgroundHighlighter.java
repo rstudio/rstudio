@@ -77,6 +77,16 @@ public class AceBackgroundHighlighter
             // determine what state this row is in
             int state = computeState(row);
             
+            // if there's been no change, bail
+            boolean isConsistentState =
+                  rowStates_.isSet(row) &&
+                  rowPatterns_.isSet(row) &&
+                  (rowStates_.get(row) == state) &&
+                  (rowPatterns_.get(row) == activeHighlightPattern_);
+            
+            if (isConsistentState)
+               break;
+            
             // update state for this row
             rowStates_.set(row, state);
             rowPatterns_.set(row, activeHighlightPattern_);
