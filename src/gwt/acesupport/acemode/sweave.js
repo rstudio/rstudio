@@ -23,7 +23,6 @@ var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
-var BackgroundHighlighter = require("mode/background_highlighter").BackgroundHighlighter;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
@@ -51,13 +50,6 @@ var Mode = function(suppressHighlighting, session) {
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
 
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(session, [
-      {
-         // sweave code chunks
-         begin : /^\s*<<.*>>=.*$/,
-         end   : /^\s*@(?:\s.*)?$/
-      }
-   ]);
 };
 oop.inherits(Mode, TextMode);
 
