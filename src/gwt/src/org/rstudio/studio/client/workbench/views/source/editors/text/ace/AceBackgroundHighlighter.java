@@ -50,11 +50,23 @@ public class AceBackgroundHighlighter
       public Pattern end;
    }
    
-   private class UpdateTimer extends Timer
+   private class Worker
    {
-      @Override
-      public void run()
+      public Worker()
       {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               work();
+            }
+         };
+      }
+      
+      private void work()
+      {
+         // determine range to update
          int n = editor_.getRowCount();
          int startRow = row_;
          int endRow = Math.min(startRow + DELTA, editor_.getRowCount());
@@ -64,14 +76,6 @@ public class AceBackgroundHighlighter
          {
             // determine what state this row is in
             int state = computeState(row);
-
-            // if there is no change in state, then exit early
-            boolean isChanged =
-                  state != rowStates_.get(row) ||
-                  activeHighlightPattern_ != rowPatterns_.get(row);
-
-            if (!isChanged)
-               break;
 
             // update state for this row
             rowStates_.set(row, state);
@@ -118,15 +122,16 @@ public class AceBackgroundHighlighter
          // more work to be done
          row_ = endRow;
          if (endRow != n)
-            schedule(DELAY_MS);
+            timer_.schedule(DELAY_MS);
       }
       
       public void start(int row)
       {
-         row_ = row;
-         run();
+         row_ = Math.min(row, row_);
+         timer_.schedule(0);
       }
       
+      private final Timer timer_;
       private int row_;
       
       private static final int DELAY_MS = 5;
@@ -148,8 +153,7 @@ public class AceBackgroundHighlighter
       rowStates_ = JavaScriptObject.createArray(n).cast();
       rowPatterns_ = JavaScriptObject.createArray(n).cast();
       markerIds_ = JavaScriptObject.createArray(n).cast();
-      
-      updateTimer_ = new UpdateTimer();
+      worker_ = new Worker();
       
       refreshHighlighters();
    }
@@ -300,7 +304,7 @@ public class AceBackgroundHighlighter
       activeHighlightPattern_ = findActiveHighlightPattern(startRow);
       
       // start the worker that will update ace
-      updateTimer_.start(startRow);
+      worker_.start(startRow);
    }
    
    private void refreshHighlighters()
@@ -390,7 +394,7 @@ public class AceBackgroundHighlighter
    private final JsVectorInteger markerIds_;
    private final JsVector<HighlightPattern> rowPatterns_;
    
-   private final UpdateTimer updateTimer_;
+   private final Worker worker_;
    
    private static final String MARKER_CLASS = "ace_foreign_line background_highlight";
    private static final String MARKER_TYPE = "fullLine";
