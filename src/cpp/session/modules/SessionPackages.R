@@ -298,12 +298,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    # build up vector of package versions
    instPkgs <- as.data.frame(installed.packages(), stringsAsFactors=F)
-   pkgs.version <- character(length=length(pkgs.name))
-   for (i in 1:length(pkgs.name)) {
-      pkgs.version[[i]] <- .rs.packageVersion(pkgs.name[[i]],
-                                              pkgs.library[[i]],
-                                              instPkgs)
-   }
+   pkgs.version <- sapply(seq_along(pkgs.name), function(i){
+     .rs.packageVersion(pkgs.name[[i]], pkgs.library[[i]], instPkgs)
+   })
    
    # alias library paths for the client
    pkgs.library <- .rs.createAliasedPath(pkgs.library)
