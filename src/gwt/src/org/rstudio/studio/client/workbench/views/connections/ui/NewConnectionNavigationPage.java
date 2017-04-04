@@ -84,7 +84,9 @@ public class NewConnectionNavigationPage
             else if (connectionInfo.getType() == "Snippet") {
                pages.add(new NewConnectionSnippetPage(connectionInfo));
             }
-
+            else if (connectionInfo.getType() == "Install") {
+               pages.add(new NewConnectionInstallPackagePage(connectionInfo));
+            }
          }
       }
 

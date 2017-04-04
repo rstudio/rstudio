@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
@@ -59,7 +60,7 @@ public class NewConnectionSnippetPage
    }
 
    @Override
-   public void onBeforeActivate(Operation operation)
+   public void onBeforeActivate(Operation operation, ModalDialogBase wizard)
    {
       contents_.onBeforeActivate(operation, info_);
    }

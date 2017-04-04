@@ -36,6 +36,10 @@ public class NewConnectionContext extends JavaScriptObject
          return this["package"];
       }-*/;
 
+      public final native String getVersion() /*-{
+         return this["version"];
+      }-*/;
+
       public final native String getName() /*-{
          return this["name"];
       }-*/;

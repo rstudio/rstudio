@@ -612,7 +612,7 @@ Error handleConnectionsResourceRequest(const http::Request& request,
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("sparklyr", "0.2.5");
+   return true;
 }
 
 bool activateConnections()

@@ -451,7 +451,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                }
             });
          }
-      });
+      }, this);
    }
    
   

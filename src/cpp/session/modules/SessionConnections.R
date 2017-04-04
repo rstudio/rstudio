@@ -239,116 +239,172 @@ options(connectionObserver = list(
    snippets
 })
 
+.rs.addFunction("connectionSupportedPackages", function() {
+   list(
+      list(
+         name = "ODBC",
+         package = "odbc",
+         version = "1.0.1.9000"
+      ),
+      list(
+         name = "Spark",
+         package = "sparklyr",
+         version = "0.5.3-9004"
+      )
+   )
+})
+
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
 
    snippets <- .rs.connectionReadSnippets()
 
    connectionList <- lapply(rawConnections, function(con) {
-      ns <- asNamespace(con$package)
+      tryCatch({
+         ns <- asNamespace(con$package)
 
-      connectionType <- if (nchar(con$shinyapp) == 0) "Snippet" else "Shiny"
-      snippetFile <- file.path("rstudio", "connections", paste(con$name, ".R", sep = ""))
-      snippet <- ""
+         connectionType <- if (nchar(con$shinyapp) == 0) "Snippet" else "Shiny"
+         snippetFile <- file.path("rstudio", "connections", paste(con$name, ".R", sep = ""))
+         snippet <- ""
 
-      if (nchar(con$shinyapp) == 0) {
-         snippetPath <- system.file(snippetFile, package = con$package)
-         if (!file.exists(snippetPath)) {
-            warning(
-               "The file \"", con$name, ".R\" does not exist under \"rstudio/connections\" for ",
-               "package \"", con$package , "\".")
+         if (nchar(con$shinyapp) == 0) {
+            snippetPath <- system.file(snippetFile, package = con$package)
+            if (!file.exists(snippetPath)) {
+               warning(
+                  "The file \"", con$name, ".R\" does not exist under \"rstudio/connections\" for ",
+                  "package \"", con$package , "\".")
+            }
+            else {
+               snippet <- paste(readLines(snippetPath), collapse = "\n")
+            }
          }
          else {
-            snippet <- paste(readLines(snippetPath), collapse = "\n")
+            if (!exists(con$shinyapp, envir = ns, mode="function")) {
+               warning(
+                  "The function \"", con$shinyapp, "\" does not exist. ",
+                  "Check the ShinyApp DCF field in the ", con$package, " package.")
+            }
          }
-      }
-      else {
-         if (!exists(con$shinyapp, envir = ns, mode="function")) {
-            warning(
-               "The function \"", con$shinyapp, "\" does not exist. ",
-               "Check the ShinyApp DCF field in the ", con$package, " package.")
-         }
-      }
 
-      iconData <- if (nchar(con$icon) > 0) {
-         iconPath <- system.file(con$icon, package = con$package)
-         if (file.exists(iconPath)) {
-            paste0("data:image/png;base64,", .rs.base64encodeFile(iconPath));
+         iconData <- if (nchar(con$icon) > 0) {
+            iconPath <- system.file(con$icon, package = con$package)
+            if (file.exists(iconPath)) {
+               paste0("data:image/png;base64,", .rs.base64encodeFile(iconPath));
+            }
          }
-      }
-      else {
-         .Call("rs_connectionIcon", con$name)
-      }
+         else {
+            .Call("rs_connectionIcon", con$name)
+         }
 
-      list(
-         package = .rs.scalar(con$package),
-         name = .rs.scalar(con$name),
-         type = .rs.scalar(connectionType),
-         newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
-         snippet = .rs.scalar(snippet),
-         help = .rs.scalar(con$help),
-         iconData = .rs.scalar(iconData),
-         licensed = .rs.scalar(FALSE)
-      )
+         list(
+            package = .rs.scalar(con$package),
+            version = .rs.scalar(NULL),
+            name = .rs.scalar(con$name),
+            type = .rs.scalar(connectionType),
+            newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
+            snippet = .rs.scalar(snippet),
+            help = .rs.scalar(con$help),
+            iconData = .rs.scalar(iconData),
+            licensed = .rs.scalar(FALSE)
+         )
+      }, error = function(e) {
+         warning(e$message)
+         NULL
+      })
    })
 
    connectionList <- c(connectionList, lapply(names(snippets), function(snippetName) {
-      snippet <- snippets[[snippetName]]
+      tryCatch({
+         snippet <- snippets[[snippetName]]
 
-      list(
-         package = .rs.scalar(NULL),
-         name = .rs.scalar(snippetName),
-         type = .rs.scalar("Snippet"),
-         snippet = .rs.scalar(snippet),
-         help = .rs.scalar(NULL),
-         iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
-         licensed = .rs.scalar(FALSE)
-      )
+         list(
+            package = .rs.scalar(NULL),
+            version = .rs.scalar(NULL),
+            name = .rs.scalar(snippetName),
+            type = .rs.scalar("Snippet"),
+            snippet = .rs.scalar(snippet),
+            help = .rs.scalar(NULL),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+            licensed = .rs.scalar(FALSE)
+         )
+      }, error = function(e) {
+         warning(e$message)
+         NULL
+      })
    }))
 
    if (.rs.isPackageInstalled("odbc") &&
        exists("list_drivers", envir = asNamespace("odbc"))) {
       listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
 
-      drivers <- listDrivers()
+      drivers <- data.frame()
+      tryCatch({
+         drivers <- listDrivers()
+      }, error = function(e) NULL)
+
       uniqueDrivers <- drivers[drivers$attribute == "Driver", ]
 
       driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, uniqueDrivers$name)
 
       connectionList <- c(connectionList, lapply(driversNoSnippet, function(driver) {
+         tryCatch({
+            currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
 
-         currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
+            basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
+            snippetsFile <- file.path(basePath, tolower(driver), "snippets", paste(driver, ".R", sep = ""))
+            if (file.exists(snippetsFile)) {
+               snippet <- paste(readLines(snippetsFile), collapse = "\n")
+            }
+            else {
+               snippet <- paste(
+                  "library(DBI)\n",
+                  "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+                  "Driver={", driver, "};${1:Parameters}\")",
+                  sep = "")
+            }
 
-         basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-         snippetsFile <- file.path(basePath, tolower(driver), "snippets", paste(driver, ".R", sep = ""))
-         if (file.exists(snippetsFile)) {
-            snippet <- paste(readLines(snippetsFile), collapse = "\n")
-         }
-         else {
-            snippet <- paste(
-               "library(DBI)\n",
-               "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-               "Driver={", driver, "};${1:Parameters}\")",
-               sep = "")
-         }
+            licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
 
-         licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+            iconData <- .Call("rs_connectionIcon", driver)
+            if (nchar(iconData) == 0)
+               iconData <- .Call("rs_connectionIcon", "ODBC")
 
-         iconData <- .Call("rs_connectionIcon", driver)
-         if (nchar(iconData) == 0)
-            iconData <- .Call("rs_connectionIcon", "ODBC")
-
-         list(
-            package = .rs.scalar(NULL),
-            name = .rs.scalar(driver),
-            type = .rs.scalar("Snippet"),
-            snippet = .rs.scalar(snippet),
-            help = .rs.scalar(NULL),
-            iconData = .rs.scalar(iconData),
-            licensed = .rs.scalar(file.exists(licenseFile))
-         )
+            list(
+               package = .rs.scalar(NULL),
+               version = .rs.scalar(NULL),
+               name = .rs.scalar(driver),
+               type = .rs.scalar("Snippet"),
+               snippet = .rs.scalar(snippet),
+               help = .rs.scalar(NULL),
+               iconData = .rs.scalar(iconData),
+               licensed = .rs.scalar(file.exists(licenseFile))
+            )
+         }, error = function(e) {
+            warning(e$message)
+            NULL
+         })
       }))
    }
+
+   connectionNames <- sapply(connectionList, function(e) e$name)
+   supportedNotInstsalled <- Filter(function(e) {
+      !e$name %in% connectionNames
+   }, .rs.connectionSupportedPackages())
+
+   connectionList <- c(connectionList, lapply(supportedNotInstsalled, function(supportedPackage) {
+      iconData <- .Call("rs_connectionIcon", supportedPackage$name)
+      list(
+         package = .rs.scalar(supportedPackage$package),
+         version = .rs.scalar(supportedPackage$version),
+         name = .rs.scalar(supportedPackage$name),
+         type = .rs.scalar("Install"),
+         newConnection = .rs.scalar(NULL),
+         snippet = .rs.scalar(NULL),
+         help = .rs.scalar(NULL),
+         iconData = .rs.scalar(iconData),
+         licensed = .rs.scalar(FALSE)
+      )
+   }))
 
    context <- list(
       connectionsList = unname(connectionList)
