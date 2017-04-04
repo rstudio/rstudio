@@ -1052,6 +1052,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .webGlobalToolbar {
    border-bottom: 0;
+   height: 24px;
+   padding-top: 2px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
