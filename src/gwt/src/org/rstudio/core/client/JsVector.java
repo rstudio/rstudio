@@ -64,6 +64,11 @@ public class JsVector<T> extends JavaScriptObject
       return this[index];
    }-*/;
    
+   public final native T get(int index, T valueIfUnset)
+   /*-{
+      return this[index] || valueIfUnset;
+   }-*/;
+   
    public final native int indexOf(T value)
    /*-{
       return this.indexOf(value);
@@ -152,6 +157,11 @@ public class JsVector<T> extends JavaScriptObject
    public final native void set(int index, T value)
    /*-{
       this[index] = value;
+   }-*/;
+   
+   public final native void unset(int index)
+   /*-{
+      this[index] = undefined;
    }-*/;
    
    public final native int unshift(T object)

@@ -64,6 +64,11 @@ public class JsVectorBoolean extends JavaScriptObject
       return this[index];
    }-*/;
    
+   public final native boolean get(int index, boolean valueIfUnset)
+   /*-{
+      return this[index] || valueIfUnset;
+   }-*/;
+   
    public final native int indexOf(boolean value)
    /*-{
       return this.indexOf(value);
@@ -152,6 +157,11 @@ public class JsVectorBoolean extends JavaScriptObject
    public final native void set(int index, boolean value)
    /*-{
       this[index] = value;
+   }-*/;
+   
+   public final native void unset(int index)
+   /*-{
+      this[index] = undefined;
    }-*/;
    
    public final native int unshift(boolean object)

@@ -59,6 +59,26 @@ public class AceBackgroundHighlighter
          int startRow = row_;
          int endRow = Math.min(startRow + DELTA, editor_.getRowCount());
          
+         // first, update local background state for each row
+         for (int row = startRow; row < endRow; row++)
+         {
+            // determine what state this row is in
+            int state = computeState(row);
+
+            // if there is no change in state, then exit early
+            boolean isChanged =
+                  state != rowStates_.get(row) ||
+                  activeHighlightPattern_ != rowPatterns_.get(row);
+
+            if (!isChanged)
+               break;
+
+            // update state for this row
+            rowStates_.set(row, state);
+            rowPatterns_.set(row, activeHighlightPattern_);
+         }
+         
+         // then, notify Ace and perform actual rendering of markers
          for (int row = startRow; row < endRow; row++)
          {
             int state = rowStates_.get(row);
@@ -157,14 +177,14 @@ public class AceBackgroundHighlighter
       
       // NOTE: this will need to change with the next version of Ace,
       // as the layout of document changed events will have changed there
-      rowStates_.set(startRow, STATE_UNKNOWN);
-      rowPatterns_.set(startRow, null);
+      rowStates_.unset(startRow);
+      rowPatterns_.unset(startRow);
       if (action.startsWith("insert"))
       {
          int newlineCount = endRow - startRow;
          for (int i = 0; i < newlineCount; i++)
          {
-            rowStates_.insert(startRow, STATE_UNKNOWN);
+            rowStates_.insert(startRow, null);
             rowPatterns_.insert(startRow, (HighlightPattern) null);
          }
       }
@@ -215,15 +235,13 @@ public class AceBackgroundHighlighter
          {
          case STATE_TEXT:
             break;
-            
-         case STATE_CHUNK_BODY:
-         case STATE_CHUNK_END:
-         case STATE_UNKNOWN:
-            continue;
-            
          case STATE_CHUNK_START:
             String line = editor_.getLine(row);
             return selectBeginPattern(line);
+         case STATE_CHUNK_BODY:
+         case STATE_CHUNK_END:
+         default:
+            continue;
          }
       }
       
@@ -233,11 +251,12 @@ public class AceBackgroundHighlighter
    private int computeState(int row)
    {
       String line = editor_.getLine(row);
-      int state = (row > 0) ? rowStates_.get(row - 1) : STATE_TEXT;
+      int state = (row > 0)
+            ? rowStates_.get(row - 1, STATE_TEXT)
+            : STATE_TEXT;
             
       switch (state)
       {
-      case STATE_UNKNOWN:
       case STATE_TEXT:
       case STATE_CHUNK_END:
       {
@@ -264,40 +283,21 @@ public class AceBackgroundHighlighter
          
          return STATE_CHUNK_BODY;
       }
-      default:
-         return STATE_UNKNOWN;
       }
+      
+      // shouldn't be reached
+      return STATE_TEXT;
    }
    
    private void synchronizeFrom(int startRow)
    {
       // if this row has no state, then we need to look
       // back until we find a row with cached state
-      while (startRow > 0 && rowStates_.get(startRow - 1) == STATE_UNKNOWN)
+      while (startRow > 0 && !rowStates_.isSet(startRow - 1))
          startRow--;
       
       // figure out what highlighter is active for this particular row
       activeHighlightPattern_ = findActiveHighlightPattern(startRow);
-      
-      // iterate over rows in the document and update highlight state
-      int endRow = editor_.getRowCount();
-      for (int row = startRow; row < endRow; row++)
-      {
-         // determine what state this row is in
-         int state = computeState(row);
-         
-         // if there is no change in state, then exit early
-         boolean isChanged =
-               state != rowStates_.get(row) ||
-               activeHighlightPattern_ != rowPatterns_.get(row);
-         
-         if (!isChanged)
-            break;
-         
-         // update state for this row
-         rowStates_.set(row, state);
-         rowPatterns_.set(row, activeHighlightPattern_);
-      }
       
       // start the worker that will update ace
       updateTimer_.start(startRow);
@@ -404,9 +404,8 @@ public class AceBackgroundHighlighter
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/rhtml", htmlStyleHighlightPatterns());
    }
    
-   private static final int STATE_UNKNOWN      = 0;
-   private static final int STATE_TEXT         = 1;
-   private static final int STATE_CHUNK_START  = 2;
-   private static final int STATE_CHUNK_BODY   = 3;
-   private static final int STATE_CHUNK_END    = 4;
+   private static final int STATE_TEXT         = 0;
+   private static final int STATE_CHUNK_START  = 1;
+   private static final int STATE_CHUNK_BODY   = 2;
+   private static final int STATE_CHUNK_END    = 3;
 }

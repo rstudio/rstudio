@@ -64,6 +64,11 @@ public class JsVectorString extends JavaScriptObject
       return this[index];
    }-*/;
    
+   public final native String get(int index, String valueIfUnset)
+   /*-{
+      return this[index] || valueIfUnset;
+   }-*/;
+   
    public final native int indexOf(String value)
    /*-{
       return this.indexOf(value);
@@ -152,6 +157,11 @@ public class JsVectorString extends JavaScriptObject
    public final native void set(int index, String value)
    /*-{
       this[index] = value;
+   }-*/;
+   
+   public final native void unset(int index)
+   /*-{
+      this[index] = undefined;
    }-*/;
    
    public final native int unshift(String object)

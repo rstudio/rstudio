@@ -64,6 +64,11 @@ public class JsVectorNumber extends JavaScriptObject
       return this[index];
    }-*/;
    
+   public final native double get(int index, double valueIfUnset)
+   /*-{
+      return this[index] || valueIfUnset;
+   }-*/;
+   
    public final native int indexOf(double value)
    /*-{
       return this.indexOf(value);
@@ -152,6 +157,11 @@ public class JsVectorNumber extends JavaScriptObject
    public final native void set(int index, double value)
    /*-{
       this[index] = value;
+   }-*/;
+   
+   public final native void unset(int index)
+   /*-{
+      this[index] = undefined;
    }-*/;
    
    public final native int unshift(double object)
