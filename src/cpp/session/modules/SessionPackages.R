@@ -312,7 +312,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                          desc=pkgs.desc,
                          url=pkgs.url,
                          loaded=pkgs.loaded,
-                         check.rows = FALSE,
+                         check.rows = TRUE,
                          stringsAsFactors = FALSE)
 
    # sort and return
