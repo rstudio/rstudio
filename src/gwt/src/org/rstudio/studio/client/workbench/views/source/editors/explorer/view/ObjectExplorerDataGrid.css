@@ -1,0 +1,35 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+/* DataGrid styling / overrides */
+/* Avoid GWT's inset styling for selected cells */
+.dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
+.dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
+	border-top: 1px solid #FFF !important;
+	border-left: 1px solid #FFF !important;
+	border-right: 1px solid #FFF !important;
+}
+
+.dataGridKeyboardSelectedRowCell:first-child {
+	border-left: 2px solid #0AF !important;
+}
+
+.dataGridEvenRowCell:first-child, .dataGridOddRowCell:first-child {
+	border-left: 2px solid #FFF;
+}
+
+.dataGridWidget > div {
+	min-height: 18px !important;
+}
+
+.dataGridWidget td > div {
+	float: left;
+}
+
+.dataGridCell {
+	font-family: inherit;
+	border-bottom: 1px solid #ddd !important;
+}
+
+.dataGridHeader:active, .dataGridHeader:focus {
+	outline: 0;
+}

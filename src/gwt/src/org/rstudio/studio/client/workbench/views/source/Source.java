@@ -123,6 +123,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -179,6 +182,7 @@ public class Source implements InsertSourceHandler,
                              PopoutDocInitiatedEvent.Handler,
                              DebugModeChangedEvent.Handler,
                              OpenProfileEvent.Handler,
+                             OpenObjectExplorerEvent.Handler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
                              GetEditorContextEvent.Handler
@@ -390,6 +394,7 @@ public class Source implements InsertSourceHandler,
 
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
+      events.addHandler(OpenObjectExplorerEvent.TYPE, this);
 
       events.addHandler(ViewDataEvent.TYPE, new ViewDataHandler()
       {
@@ -970,7 +975,46 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
+   
+   @Override
+   public void onOpenObjectExplorerEvent(OpenObjectExplorerEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+    
+      Debug.logToRConsole("Opening object explorer");
+      ObjectExplorerHandle handle = event.getHandle();
+      
+      // attempt to open pre-existing tab
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String path = editors_.get(i).getPath();
+         if (path != null && path.equals(handle.getPath()))
+         {
+            ((ObjectExplorerEditingTarget)editors_.get(i)).update(handle);
+            ensureVisible(false);
+            view_.selectTab(i);
+            return;
+         }
+      }
 
+      ensureVisible(true);
+      server_.newDocument(
+            FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
+            null,
+            (JsObject) handle.cast(),
+            new SimpleRequestCallback<SourceDocument>("Show Object Explorer")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument response)
+               {
+                  addTab(response, OPEN_INTERACTIVE);
+               }
+            });
+   }
+
+   @Override
    public void onShowData(ShowDataEvent event)
    {
       // ignore if we're a satellite
@@ -3785,7 +3829,8 @@ public class Source implements InsertSourceHandler,
       
       // check for file path navigation
       else if ((navigation.getPath() != null) && 
-               !navigation.getPath().startsWith(DataItem.URI_PREFIX))
+               !navigation.getPath().startsWith(DataItem.URI_PREFIX) &&
+               !navigation.getPath().startsWith(ObjectExplorerHandle.URI_PREFIX))
       {
          FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);

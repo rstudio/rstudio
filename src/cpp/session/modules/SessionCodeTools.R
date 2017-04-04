@@ -1741,11 +1741,21 @@
    return(result)
 })
 
-.rs.addFunction("enumerate", function(list, f, ...)
+.rs.addFunction("enumerate", function(X, FUN, ...)
 {
-   lapply(seq_along(list), function(i) {
-      f(names(list)[[i]], list[[i]], ...)
+   keys <- if (is.environment(X)) {
+      sort(ls(envir = X))
+   } else {
+      names(X)
+   }
+   
+   result <- lapply(keys, function(key) {
+      FUN(key, X[[key]], ...)
    })
+   
+   names(result) <- keys
+   
+   result
 })
 
 .rs.addFunction("cutpoints", function(data)

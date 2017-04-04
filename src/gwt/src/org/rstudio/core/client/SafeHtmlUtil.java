@@ -105,5 +105,21 @@ public class SafeHtmlUtil
       }
       return SafeHtmlUtils.fromTrustedString(builder.toString());
    }
+   
+   public static SafeHtml createStyle(String... strings)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0, n = strings.length; i < n; i += 2)
+      {
+         String key = strings[i];
+         String value = strings[i + 1];
+         
+         builder.append(SafeHtmlUtils.htmlEscape(key))
+                .append(": ")
+                .append(SafeHtmlUtils.htmlEscape(value))
+                .append("; ");
+      }
+      return SafeHtmlUtils.fromTrustedString(builder.toString());
+   }
 }
 

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 
@@ -52,7 +53,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 BuildServerOperations,
                                                 PresentationServerOperations,
                                                 LintServerOperations,
-                                                RSConnectServerOperations
+                                                RSConnectServerOperations,
+                                                ObjectExplorerServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and

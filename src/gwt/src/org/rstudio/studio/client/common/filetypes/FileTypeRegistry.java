@@ -267,6 +267,7 @@ public class FileTypeRegistry
    public static final UrlContentType URLCONTENT = new UrlContentType();
    public static final CodeBrowserType CODEBROWSER = new CodeBrowserType();
    public static final ProfilerType PROFILER = new ProfilerType();
+   public static final ObjectExplorerFileType OBJECT_EXPLORER = new ObjectExplorerFileType();
 
    public static final BrowserType BROWSER = new BrowserType();
 
