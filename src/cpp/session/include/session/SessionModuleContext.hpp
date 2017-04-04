@@ -670,9 +670,9 @@ public:
       : shellCmd_(buildRCmd(rBinDir))
    {
 #ifdef _WIN32
-      cmdString_ = "Rcmd.exe";
+      cmdString_ = "R.exe --vanilla CMD";
 #else
-      cmdString_ = "R CMD";
+      cmdString_ = "R --vanilla CMD";
 #endif
 
       // set escape mode to files-only. this is so that when we
