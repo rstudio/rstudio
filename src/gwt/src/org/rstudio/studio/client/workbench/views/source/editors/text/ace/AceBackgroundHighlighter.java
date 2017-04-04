@@ -69,14 +69,14 @@ public class AceBackgroundHighlighter
          // determine range to update
          int n = editor_.getRowCount();
          int startRow = row_;
-         int endRow = Math.min(startRow + DELTA, editor_.getRowCount());
+         int endRow = Math.min(startRow + CHUNK_SIZE, editor_.getRowCount());
          
          // first, update local background state for each row
          for (int row = startRow; row < endRow; row++)
          {
             // determine what state this row is in
             int state = computeState(row);
-
+            
             // update state for this row
             rowStates_.set(row, state);
             rowPatterns_.set(row, activeHighlightPattern_);
@@ -87,30 +87,35 @@ public class AceBackgroundHighlighter
          {
             int state = rowStates_.get(row);
             
-            // clear a pre-existing marker if necessary
-            int marker = markerIds_.get(row);
-            if (marker != 0)
-            {
-               session_.removeMarker(marker);
-               markerIds_.set(row, 0);
-            }
-            
             // don't show background highlighting if this
             // chunk lies within a fold
             AceFold fold = session_.getFoldAt(row, 0);
             if (fold != null)
                continue;
             
+            int marker = markerIds_.get(row, 0);
+            
+            // bail early if no action is necessary
+            boolean isConsistentState =
+                  (state == STATE_TEXT && marker == 0) ||
+                  (state != STATE_TEXT && marker != 0);
+            
+            if (isConsistentState)
+               continue;
+            
+            // clear a pre-existing marker if necessary
+            if (marker != 0)
+            {
+               session_.removeMarker(marker);
+               markerIds_.set(row, 0);
+            }
+            
             // if this is a non-text state, then draw a marker
             if (state != STATE_TEXT)
             {
-               String className = (state == STATE_CHUNK_START)
-                     ? MARKER_CLASS + " rstudio_chunk_start"
-                     : MARKER_CLASS;
-               
                int markerId = session_.addMarker(
                      Range.create(row, 0, row, Integer.MAX_VALUE),
-                     className,
+                     MARKER_CLASS,
                      MARKER_TYPE,
                      false);
                
@@ -135,7 +140,7 @@ public class AceBackgroundHighlighter
       private int row_;
       
       private static final int DELAY_MS = 5;
-      private static final int DELTA = 200;
+      private static final int CHUNK_SIZE = 200;
    }
    
    public AceBackgroundHighlighter(AceEditor editor)
