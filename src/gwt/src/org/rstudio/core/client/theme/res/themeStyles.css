@@ -32,6 +32,7 @@
 
 @external windows, windows-highdpi, macintosh, linux;
 @external ubuntu_mono;
+
 @external rstudio-themes-flat;
 
 @external dialogTopLeft, dialogTopLeftInner,
@@ -593,6 +594,11 @@ pre {
 
 .windowframe {
    -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.rstudio-themes-flat .windowframe > div:last-child {
+   border: solid 1px #d6dadc;
+   border-radius: 3px;
 }
 
 .macintosh #rstudio_console_input {
