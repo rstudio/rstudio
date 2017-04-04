@@ -41,18 +41,23 @@ public class JsVectorInteger extends JavaScriptObject
    
    public final native JsVectorInteger concat(JsVectorInteger other)
    /*-{
-      return [].concat.apply(this, other);
+      return [].concat.call(this, other);
    }-*/;
+   
+   public final boolean contains(int value)
+   {
+      return indexOf(value) != -1;
+   }
    
    public final native void fill(int value, int start, int end)
    /*-{
       this.fill(value, start, end);
    }-*/;
    
-   public final void fill(int value)
-   {
-      fill(value, 0, length());
-   }
+   public final native void fill(int value)
+   /*-{
+      this.fill(value);
+   }-*/;
    
    public final native int get(int index)
    /*-{
@@ -62,6 +67,16 @@ public class JsVectorInteger extends JavaScriptObject
    public final native int indexOf(int value)
    /*-{
       return this.indexOf(value);
+   }-*/;
+   
+   public final native boolean isEmpty()
+   /*-{
+      return this.length == 0;
+   }-*/;
+   
+   public final native boolean isSet(int index)
+   /*-{
+      return typeof this[index] !== "undefined";
    }-*/;
    
    public final native void insert(int index, JsVectorInteger values)
@@ -89,6 +104,16 @@ public class JsVectorInteger extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
+   public final native int peek()
+   /*-{
+      return this[this.length - 1];
+   }-*/;
+   
+   public final native int pop()
+   /*-{
+      return this.pop();
+   }-*/;
+   
    public final native void push(int object)
    /*-{
       this.push(object);
@@ -97,11 +122,6 @@ public class JsVectorInteger extends JavaScriptObject
    public final native void push(JsVectorInteger object)
    /*-{
       [].push.apply(this, object);
-   }-*/;
-   
-   public final native int pop()
-   /*-{
-      return this.pop();
    }-*/;
    
    public final native void remove(int index, int count)

@@ -41,18 +41,23 @@ public class JsVector<T> extends JavaScriptObject
    
    public final native JsVector<T> concat(JsVector<T> other)
    /*-{
-      return [].concat.apply(this, other);
+      return [].concat.call(this, other);
    }-*/;
+   
+   public final boolean contains(T value)
+   {
+      return indexOf(value) != -1;
+   }
    
    public final native void fill(T value, int start, int end)
    /*-{
       this.fill(value, start, end);
    }-*/;
    
-   public final void fill(T value)
-   {
-      fill(value, 0, length());
-   }
+   public final native void fill(T value)
+   /*-{
+      this.fill(value);
+   }-*/;
    
    public final native T get(int index)
    /*-{
@@ -62,6 +67,16 @@ public class JsVector<T> extends JavaScriptObject
    public final native int indexOf(T value)
    /*-{
       return this.indexOf(value);
+   }-*/;
+   
+   public final native boolean isEmpty()
+   /*-{
+      return this.length == 0;
+   }-*/;
+   
+   public final native boolean isSet(int index)
+   /*-{
+      return typeof this[index] !== "undefined";
    }-*/;
    
    public final native void insert(int index, JsVector<T> values)
@@ -89,6 +104,16 @@ public class JsVector<T> extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
+   public final native T peek()
+   /*-{
+      return this[this.length - 1];
+   }-*/;
+   
+   public final native T pop()
+   /*-{
+      return this.pop();
+   }-*/;
+   
    public final native void push(T object)
    /*-{
       this.push(object);
@@ -97,11 +122,6 @@ public class JsVector<T> extends JavaScriptObject
    public final native void push(JsVector<T> object)
    /*-{
       [].push.apply(this, object);
-   }-*/;
-   
-   public final native T pop()
-   /*-{
-      return this.pop();
    }-*/;
    
    public final native void remove(int index, int count)

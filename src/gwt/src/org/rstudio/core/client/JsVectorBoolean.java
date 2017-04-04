@@ -41,18 +41,23 @@ public class JsVectorBoolean extends JavaScriptObject
    
    public final native JsVectorBoolean concat(JsVectorBoolean other)
    /*-{
-      return [].concat.apply(this, other);
+      return [].concat.call(this, other);
    }-*/;
+   
+   public final boolean contains(boolean value)
+   {
+      return indexOf(value) != -1;
+   }
    
    public final native void fill(boolean value, int start, int end)
    /*-{
       this.fill(value, start, end);
    }-*/;
    
-   public final void fill(boolean value)
-   {
-      fill(value, 0, length());
-   }
+   public final native void fill(boolean value)
+   /*-{
+      this.fill(value);
+   }-*/;
    
    public final native boolean get(int index)
    /*-{
@@ -62,6 +67,16 @@ public class JsVectorBoolean extends JavaScriptObject
    public final native int indexOf(boolean value)
    /*-{
       return this.indexOf(value);
+   }-*/;
+   
+   public final native boolean isEmpty()
+   /*-{
+      return this.length == 0;
+   }-*/;
+   
+   public final native boolean isSet(int index)
+   /*-{
+      return typeof this[index] !== "undefined";
    }-*/;
    
    public final native void insert(int index, JsVectorBoolean values)
@@ -89,6 +104,16 @@ public class JsVectorBoolean extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
+   public final native boolean peek()
+   /*-{
+      return this[this.length - 1];
+   }-*/;
+   
+   public final native boolean pop()
+   /*-{
+      return this.pop();
+   }-*/;
+   
    public final native void push(boolean object)
    /*-{
       this.push(object);
@@ -97,11 +122,6 @@ public class JsVectorBoolean extends JavaScriptObject
    public final native void push(JsVectorBoolean object)
    /*-{
       [].push.apply(this, object);
-   }-*/;
-   
-   public final native boolean pop()
-   /*-{
-      return this.pop();
    }-*/;
    
    public final native void remove(int index, int count)

@@ -41,18 +41,23 @@ public class JsVectorNumber extends JavaScriptObject
    
    public final native JsVectorNumber concat(JsVectorNumber other)
    /*-{
-      return [].concat.apply(this, other);
+      return [].concat.call(this, other);
    }-*/;
+   
+   public final boolean contains(double value)
+   {
+      return indexOf(value) != -1;
+   }
    
    public final native void fill(double value, int start, int end)
    /*-{
       this.fill(value, start, end);
    }-*/;
    
-   public final void fill(double value)
-   {
-      fill(value, 0, length());
-   }
+   public final native void fill(double value)
+   /*-{
+      this.fill(value);
+   }-*/;
    
    public final native double get(int index)
    /*-{
@@ -62,6 +67,16 @@ public class JsVectorNumber extends JavaScriptObject
    public final native int indexOf(double value)
    /*-{
       return this.indexOf(value);
+   }-*/;
+   
+   public final native boolean isEmpty()
+   /*-{
+      return this.length == 0;
+   }-*/;
+   
+   public final native boolean isSet(int index)
+   /*-{
+      return typeof this[index] !== "undefined";
    }-*/;
    
    public final native void insert(int index, JsVectorNumber values)
@@ -89,6 +104,16 @@ public class JsVectorNumber extends JavaScriptObject
       return this.length || 0;
    }-*/;
    
+   public final native double peek()
+   /*-{
+      return this[this.length - 1];
+   }-*/;
+   
+   public final native double pop()
+   /*-{
+      return this.pop();
+   }-*/;
+   
    public final native void push(double object)
    /*-{
       this.push(object);
@@ -97,11 +122,6 @@ public class JsVectorNumber extends JavaScriptObject
    public final native void push(JsVectorNumber object)
    /*-{
       [].push.apply(this, object);
-   }-*/;
-   
-   public final native double pop()
-   /*-{
-      return this.pop();
    }-*/;
    
    public final native void remove(int index, int count)
