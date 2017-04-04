@@ -873,7 +873,10 @@ void AsyncChildProcess::poll()
       else
       {
          if (!err.empty() && callbacks_.onStderr)
+         {
+            pAsyncImpl_->hasRecentOutput_ = true;
             callbacks_.onStderr(*this, err);
+         }
 
          if (eof)
            pAsyncImpl_->finishedStderr_ = true;
