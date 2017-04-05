@@ -349,12 +349,12 @@ public class TerminalSessionSocket
             return; 
          }
          
-         // special case when xterm.js does a line-wrap
-         lastOutput += " \r";
-         if (lastOutput.equals(output))
+         // Is output a superset of what was already echoed?
+         if (output.startsWith(lastOutput))
          {
-            // server echoed back what we have already echoed locally
-            return; 
+            // Write the extra non-echoed output
+            xterm_.write(output.substring(lastOutput.length()));
+            return;
          }
          
          // what we got back didn't match previously echoed text; delete
