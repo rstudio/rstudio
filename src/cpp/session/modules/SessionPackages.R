@@ -280,7 +280,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    # get packages
    x <- suppressWarnings(library(lib.loc=uniqueLibPaths))
-   x <- x$results[x$results[, 1] != "base", drop=FALSE]
+   x <- x$results[x$results[, 1] != "base", ]
    
    # extract/compute required fields 
    pkgs.name <- x[, 1]
