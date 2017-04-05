@@ -179,7 +179,7 @@ public class NewConnectionSnippetHost extends Composite
          
          final TextBoxBase textboxBase;
 
-         if (key.toLowerCase() == "parameters") {
+         if (visibleRows == 1) {
             TextArea textarea = new TextArea();
             textarea.setVisibleLines(7);
             textarea.addStyleName(RES.styles().textarea());

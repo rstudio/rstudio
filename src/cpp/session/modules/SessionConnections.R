@@ -301,7 +301,7 @@ options(connectionObserver = list(
             version = .rs.scalar(NULL),
             name = .rs.scalar(con$name),
             type = .rs.scalar(connectionType),
-            newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
+            newConnection = .rs.scalar(paste(con$package, "::", con$shinyapp, "()", sep = "")),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(con$help),
             iconData = .rs.scalar(iconData),
@@ -363,7 +363,7 @@ options(connectionObserver = list(
                snippet <- paste(
                   "library(DBI)\n",
                   "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-                  "Driver={", driver, "};${1:Parameters}\")",
+                  "Driver={", driver, "};${1:Connection String}\")",
                   sep = "")
             }
 
