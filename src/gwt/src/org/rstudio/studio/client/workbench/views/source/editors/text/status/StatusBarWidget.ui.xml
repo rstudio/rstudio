@@ -58,7 +58,7 @@
          background-image: none;
       }
       .rstudio-themes-flat .statusBar .element.last {
-         background-image: none;
+         border-right: none;
       }
    </ui:style>
 
