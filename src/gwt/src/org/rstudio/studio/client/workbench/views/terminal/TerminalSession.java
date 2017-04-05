@@ -33,6 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -94,10 +95,12 @@ public class TerminalSession extends XTermWidget
 
    @Inject
    private void initialize(WorkbenchServerOperations server,
-                           EventBus events)
+                           EventBus events,
+                           UIPrefs uiPrefs)
    {
       server_ = server;
       eventBus_ = events; 
+      uiPrefs_ = uiPrefs;
    } 
 
    /**
@@ -235,7 +238,7 @@ public class TerminalSession extends XTermWidget
    @Override
    public void receivedOutput(String output)
    {
-      socket_.dispatchOutput(output, true /*detectLocalEcho*/);
+      socket_.dispatchOutput(output, uiPrefs_.terminalLocalEcho().getValue()); 
    }
 
    @Override
@@ -316,7 +319,8 @@ public class TerminalSession extends XTermWidget
       // escape sequences even when doing simple single-character input at a 
       // command-prompt. Also don't do local-echo when something is running,
       // indicating we are likely not at a command-prompt.
-      boolean localEcho = !BrowseCap.isWindowsDesktop() && !hasChildProcs_;
+      boolean localEcho = !BrowseCap.isWindowsDesktop() && !hasChildProcs_ &&
+            uiPrefs_.terminalLocalEcho().getValue();
       
       socket_.dispatchInput(inputSequence_, userInput, localEcho,
             new VoidServerRequestCallback() {
@@ -642,4 +646,5 @@ public class TerminalSession extends XTermWidget
    // Injected ---- 
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
+   private UIPrefs uiPrefs_;
 }
