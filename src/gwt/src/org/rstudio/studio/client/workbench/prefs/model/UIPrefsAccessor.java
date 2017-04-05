@@ -594,6 +594,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_report_terminal_lag", false);
    }
    
+   public PrefValue<Boolean> terminalLocalEcho()
+   {
+      return bool("terminal_local_echo", true);
+   }
+   
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

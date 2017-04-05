@@ -203,35 +203,43 @@ public class GeneralPreferencesPane extends PreferencesPane
          add(checkboxPref(
                "Use debug error handler only when my code contains errors", 
                prefs_.handleErrorsInUserCodeOnly()));
-         CheckBox chkTracebacks = checkboxPref(
+         add(spaced(checkboxPref(
                "Automatically expand tracebacks in error inspector", 
-               prefs_.autoExpandErrorTracebacks());
-         chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
-         add(chkTracebacks);
+               prefs_.autoExpandErrorTracebacks(),
+               false /*defaultSpaced*/)));
       }
       
-      CheckBox chkTabNavigation = checkboxPref(
+      add(spaced(checkboxPref(
             "Wrap around when navigating to previous/next tab",
-            prefs_.wrapTabNavigation());
-      spaced(chkTabNavigation);
-      add(chkTabNavigation);
+            prefs_.wrapTabNavigation(),
+            false /*defaultSpaced*/)));
       
       // provide check for updates option in desktop mode when not
       // already globally disabled
       if (Desktop.isDesktop() && 
           !session.getSessionInfo().getDisableCheckForUpdates())
       {
-         add(checkboxPref("Automatically notify me of updates to RStudio",
-                          prefs_.checkForUpdates()));
+         add(spaced(checkboxPref("Automatically notify me of updates to RStudio",
+                          prefs_.checkForUpdates(),
+                          false /*defaultSpaced*/)));
       }
-      
-      if (session.getSessionInfo().getAllowShell() && haveTerminalShellPref())
+
+      if (session.getSessionInfo().getAllowShell())
       {
-         terminalShell_ = new SelectWidget("Default terminal shell:");
-         spaced(terminalShell_);
-         add(terminalShell_);
-         terminalShell_.setEnabled(false);
+         if (haveTerminalShellPref())
+         {
+            terminalShell_ = new SelectWidget("Default terminal shell:");
+            lessSpaced(terminalShell_);
+            add(terminalShell_);
+            terminalShell_.setEnabled(false);
+         }
+         CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
+               prefs_.terminalLocalEcho(), 
+               "Local echo is more responsive but may get out of sync with some line-editing modes.");
+         spaced(chkTerminalLocalEcho);
+         add(chkTerminalLocalEcho);
       }
+
       
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
