@@ -23,13 +23,7 @@ namespace r {
 namespace routines {
  
 namespace { 
-   std::vector<R_CMethodDef> s_cMethods;
    std::vector<R_CallMethodDef> s_callMethods; 
-}
-   
-void addCMethod(const R_CMethodDef method)
-{
-   s_cMethods.push_back(method);
 }
    
 void addCallMethod(const R_CallMethodDef method)
@@ -50,20 +44,6 @@ void registerCallMethod(const char* name,
 
 void registerAll()
 {
-   // c methods
-   R_CMethodDef* pCMethods = NULL;
-   if (s_cMethods.size() > 0)
-   {
-      R_CMethodDef nullMethodDef ;
-      nullMethodDef.name = NULL ;
-      nullMethodDef.fun = NULL ;
-      nullMethodDef.numArgs = 0 ;
-      nullMethodDef.types = NULL;
-      nullMethodDef.styles = NULL;
-      s_cMethods.push_back(nullMethodDef);
-      pCMethods = &s_cMethods[0];
-   }
-   
    // call methods
    R_CallMethodDef* pCallMethods = NULL;
    if (s_callMethods.size() > 0)
@@ -77,7 +57,7 @@ void registerAll()
    }
    
    DllInfo *info = R_getEmbeddingDllInfo() ;
-   R_registerRoutines(info, pCMethods, pCallMethods, NULL, NULL);
+   R_registerRoutines(info, NULL, pCallMethods, NULL, NULL);
 }
    
    
