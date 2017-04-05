@@ -24,12 +24,8 @@ namespace rstudio {
 namespace r {
 namespace routines {
 
-void addCMethod(const R_CMethodDef method);
 void addCallMethod(const R_CallMethodDef method);
-void registerCallMethod(const char* name,
-                        DL_FUNC fun,
-                        int numArgs);
-
+void registerCallMethod(const char* name, DL_FUNC fun, int numArgs);
 void registerAll();
 
 #define RS_REGISTER_CALL_METHOD(__NAME__, __NUM_ARGS__)                        \
