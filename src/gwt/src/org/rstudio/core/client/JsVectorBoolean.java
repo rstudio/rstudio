@@ -51,13 +51,17 @@ public class JsVectorBoolean extends JavaScriptObject
    
    public final native void fill(boolean value, int start, int end)
    /*-{
-      this.fill(value, start, end);
+      var i = start;
+      while (i < end) {
+         this[i] = value;
+         i++;
+      }
    }-*/;
    
-   public final native void fill(boolean value)
-   /*-{
-      this.fill(value);
-   }-*/;
+   public final void fill(boolean value)
+   {
+      fill(value, 0, length());
+   }
    
    public final boolean get(int index)
    {
@@ -157,6 +161,11 @@ public class JsVectorBoolean extends JavaScriptObject
    public final boolean shift()
    {
       return shift(defaultValue());
+   }
+   
+   public final int size()
+   {
+      return length();
    }
    
    private final native boolean shift(boolean defaultValue)

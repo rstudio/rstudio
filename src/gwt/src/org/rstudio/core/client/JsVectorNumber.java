@@ -51,13 +51,17 @@ public class JsVectorNumber extends JavaScriptObject
    
    public final native void fill(double value, int start, int end)
    /*-{
-      this.fill(value, start, end);
+      var i = start;
+      while (i < end) {
+         this[i] = value;
+         i++;
+      }
    }-*/;
    
-   public final native void fill(double value)
-   /*-{
-      this.fill(value);
-   }-*/;
+   public final void fill(double value)
+   {
+      fill(value, 0, length());
+   }
    
    public final double get(int index)
    {
@@ -157,6 +161,11 @@ public class JsVectorNumber extends JavaScriptObject
    public final double shift()
    {
       return shift(defaultValue());
+   }
+   
+   public final int size()
+   {
+      return length();
    }
    
    private final native double shift(double defaultValue)
