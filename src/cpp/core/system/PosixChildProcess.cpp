@@ -376,6 +376,12 @@ bool ChildProcess::hasSubprocess() const
    return true;
 }
 
+bool ChildProcess::hasRecentOutput() const
+{
+   // base class doesn't support output tracking; override to implement
+   return true;
+}
+
 Error ChildProcess::run()
 {  
    // declarations
@@ -691,7 +697,8 @@ struct AsyncChildProcess::AsyncImpl
         finishedStderr_(false),
         exited_(false),
         checkSubProc_(boost::posix_time::not_a_date_time),
-        hasSubprocess_(true)
+        hasSubprocess_(true),
+        hasRecentOutput_(true)
    {
    }
    bool calledOnStarted_;
@@ -704,6 +711,9 @@ struct AsyncChildProcess::AsyncImpl
 
    // result of last subprocess check
    bool hasSubprocess_;
+
+   // has there been output recently?
+   bool hasRecentOutput_;
 
    void initTimers(bool reportHasSubprocs)
    {
@@ -790,6 +800,11 @@ bool AsyncChildProcess::hasSubprocess() const
    return pAsyncImpl_->hasSubprocess_;
 }
 
+bool AsyncChildProcess::hasRecentOutput() const
+{
+   return pAsyncImpl_->hasRecentOutput_;
+}
+
 void AsyncChildProcess::poll()
 {
    // call onStarted if we haven't yet
@@ -834,7 +849,10 @@ void AsyncChildProcess::poll()
       else
       {
          if (!out.empty() && callbacks_.onStdout)
+         {
+            pAsyncImpl_->hasRecentOutput_ = true;
             callbacks_.onStdout(*this, out);
+         }
 
          if (eof)
            pAsyncImpl_->finishedStdout_ = true;
@@ -855,7 +873,10 @@ void AsyncChildProcess::poll()
       else
       {
          if (!err.empty() && callbacks_.onStderr)
+         {
+            pAsyncImpl_->hasRecentOutput_ = true;
             callbacks_.onStderr(*this, err);
+         }
 
          if (eof)
            pAsyncImpl_->finishedStderr_ = true;
@@ -906,6 +927,7 @@ void AsyncChildProcess::poll()
    pAsyncImpl_->initTimers(options().reportHasSubprocs);
    if (pAsyncImpl_->checkChildCount())
    {
+      pAsyncImpl_->hasRecentOutput_ = false;
       pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
       if (callbacks_.onHasSubprocs)
       {

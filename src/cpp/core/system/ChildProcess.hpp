@@ -69,6 +69,9 @@ public:
    // isn't configured to check for subprocesses.
    virtual bool hasSubprocess() const;
 
+   // Has this process generated any recent output?
+   virtual bool hasRecentOutput() const;
+
 protected:
    Error run();
 
@@ -209,6 +212,7 @@ public:
    virtual Error terminate();
 
    virtual bool hasSubprocess() const;
+   virtual bool hasRecentOutput() const;
 
 private:
 

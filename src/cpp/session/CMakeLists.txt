@@ -446,6 +446,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-26"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
+   # icons for database connections
+   install(DIRECTORY "resources/connections"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install pandoc
    if(RSTUDIO_PACKAGE_BUILD_SLES)
       # when producing a SUSE Linux Enterpise build, we want to install the 
