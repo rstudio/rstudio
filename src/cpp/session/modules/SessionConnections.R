@@ -333,14 +333,18 @@ options(connectionObserver = list(
       })
    }))
 
-   if (.rs.isPackageInstalled("odbc") &&
-       exists("list_drivers", envir = asNamespace("odbc"))) {
-      listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
-
+   if (.rs.isPackageInstalled("odbc")) {
       drivers <- data.frame()
+
       tryCatch({
+         if (exists("list_drivers", envir = asNamespace("odbc"))) {
+            listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
+         }
+         else {
+            listDrivers <- get("odbcListDrivers", envir = asNamespace("odbc"))
+         }
          drivers <- listDrivers()
-      }, error = function(e) NULL)
+      }, error = function(e) warning(e$message))
 
       uniqueDrivers <- drivers[drivers$attribute == "Driver", ]
 
