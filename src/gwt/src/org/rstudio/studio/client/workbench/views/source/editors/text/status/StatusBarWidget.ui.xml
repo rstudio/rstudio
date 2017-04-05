@@ -46,11 +46,18 @@
          background-position: right 0;
          background-repeat: no-repeat;
       }
+      .rstudio-themes-flat .statusBar .element {
+         background-image: none;
+         border-right: solid 1px #d6dadc;
+      }
       .statusBar .element.pos {
          min-width: 45px;
          text-align: center;
       }
       .statusBar .element.last {
+         background-image: none;
+      }
+      .rstudio-themes-flat .statusBar .element.last {
          background-image: none;
       }
    </ui:style>
