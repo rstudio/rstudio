@@ -516,7 +516,10 @@ json::Object commonEnvironmentStateData(
             inFunctionEnvironment = true;
          }
 
-         if (functionName != "eval")
+         // The eval and evalq functions receive special treatment since they
+         // evaluate code from elsewhere (they don't have meaningful bodies we
+         // can test here)
+         if (functionName != "eval" && functionName != "evalq")
          {
             // see if the function to be debugged is out of sync with its saved
             // sources (if available).

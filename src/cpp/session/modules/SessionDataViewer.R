@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2009-15 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -49,7 +49,7 @@
    vals
 })
 
-.rs.addFunction("describeCols", function(x, maxCols, maxFactors) 
+.rs.addFunction("describeCols", function(x, maxFactors) 
 {
   colNames <- names(x)
 
@@ -77,9 +77,6 @@
   if (length(colNames) == 0) {
     return(rowNameCol)
   }
-
-  # truncate to maximum displayed number of columns
-  colNames <- colNames[1:min(length(colNames), maxCols)]
 
   # get the attributes for each column
   colAttrs <- lapply(seq_along(colNames), function(idx) {

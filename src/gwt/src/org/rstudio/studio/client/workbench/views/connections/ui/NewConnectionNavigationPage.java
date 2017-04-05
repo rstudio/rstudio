@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -84,7 +85,9 @@ public class NewConnectionNavigationPage
             else if (connectionInfo.getType() == "Snippet") {
                pages.add(new NewConnectionSnippetPage(connectionInfo));
             }
-
+            else if (connectionInfo.getType() == "Install") {
+               pages.add(new NewConnectionInstallPackagePage(connectionInfo));
+            }
          }
       }
 
@@ -150,7 +153,7 @@ public class NewConnectionNavigationPage
          panel.addStyleName(styles.wizardPageSelectorItem());
          panel.addStyleName(styles.wizardPageSelectorItemSize());
          
-         Image rightArrow = new Image(WizardResources.INSTANCE.wizardDisclosureArrow());
+         Image rightArrow = new Image(new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
          rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
          

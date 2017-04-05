@@ -17,6 +17,10 @@
 
 #include <string>
 
+#ifdef _WIN32
+# include <winsock2.h>
+#endif
+
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>

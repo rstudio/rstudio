@@ -204,7 +204,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "default directory for new projects")
       ("show-help-home",
        value<bool>(&showHelpHome_)->default_value(false),
-         "show help home page at startup");
+         "show help home page at startup")
+      ("session-use-terminal-websockets",
+          value<bool>(&useTerminalWebsockets_)->default_value(true),
+          "try to communicate with terminal using websockets");
 
    // allow options
    options_description allow("allow");

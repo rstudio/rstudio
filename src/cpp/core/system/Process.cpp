@@ -284,16 +284,16 @@ bool ProcessSupervisor::hasRunningChildren()
 
 namespace {
 
-bool has_childProcess(const boost::shared_ptr<AsyncChildProcess>& childProc)
+bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return childProc->hasSubprocess();
+   return childProc->hasSubprocess() || childProc->hasRecentOutput();
 }
 
 } // anonymous namespace
 
 bool ProcessSupervisor::hasActiveChildren()
 {
-   return boost::algorithm::any_of(pImpl_->children, has_childProcess);
+   return boost::algorithm::any_of(pImpl_->children, has_activity);
 }
 
 bool ProcessSupervisor::poll()

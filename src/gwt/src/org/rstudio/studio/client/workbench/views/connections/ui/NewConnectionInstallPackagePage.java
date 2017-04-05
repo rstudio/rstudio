@@ -1,7 +1,7 @@
 /*
- * NewConnectionShinyPage.java
+ * NewConnectionInstallPackagePage.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,23 +19,26 @@ import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
-public class NewConnectionShinyPage 
-   extends WizardPage<NewConnectionContext, ConnectionOptions>
+public class NewConnectionInstallPackagePage
+      extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionShinyPage(final NewConnectionInfo info)
+   public NewConnectionInstallPackagePage(final NewConnectionInfo info)
    {
-      super(info.getName(),
-            "",
-            info.getName() + " Connection",
+      super(info.getName(), "", info.getName() + " Connection",
             StringUtil.isNullOrEmpty(info.iconData()) ? null
                   : new ImageResourceUrl(new SafeUri()
                   {
@@ -46,37 +49,42 @@ public class NewConnectionShinyPage
                      }
                   }, 16, 16),
             null);
+
       info_ = info;
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   @Inject
+   private void initialize(DependencyManager dependencyManager,
+                           ConnectionsPresenter connectionsPresenter)
+   {
+      dependencyManager_ = dependencyManager;
+      connectionsPresenter_ = connectionsPresenter;
    }
 
    @Override
-   public void focus()
+   public void onBeforeActivate(Operation operation, final ModalDialogBase wizard)
    {
+      dependencyManager_.withConnectionPackage(
+            info_.getName(), 
+            info_.getPackage(), 
+            info_.getVersion(), 
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  wizard.closeDialog();
+                  connectionsPresenter_.onNewConnection();
+               }
+            }
+      );
    }
 
-   @Override
-   public void onBeforeActivate(Operation operation, ModalDialogBase wizard)
-   {
-      contents_.onBeforeActivate(operation, info_);
-   }
-   
    @Override
    public void onActivate(ProgressIndicator indicator)
    {
-   }
-
-   @Override
-   public void onDeactivate(Operation operation)
-   {
-      contents_.onDeactivate(operation);
-   }
-   
-   @Override
-   protected Widget createWidget()
-   {
-      contents_ = new NewConnectionShinyHost();
-
-      return contents_;
    }
 
    @Override
@@ -85,30 +93,32 @@ public class NewConnectionShinyPage
    }
 
    @Override
-   public HelpLink getHelpLink()
+   protected boolean acceptNavigation()
    {
-      if (StringUtil.isNullOrEmpty(info_.getHelp()))
-         return null;
+      return true;
+   }
 
-      return new HelpLink(
-         "Using " + info_.getName(),
-         info_.getHelp(),
-         false,
-         false);
+   @Override
+   public void focus()
+   {
+   }
+
+   @Override
+   protected Widget createWidget()
+   {
+      Widget widget = new VerticalPanel(); 
+      return widget;
    }
 
    @Override
    protected ConnectionOptions collectInput()
    {
-      return contents_.collectInput();
+      return null;
    }
 
-   @Override
-   protected String getWizardPageBackgroundStyle()
-   {
-      return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
-   }
-   
-   private NewConnectionShinyHost contents_;
+   private NewConnectionSnippetHost contents_;
    private NewConnectionInfo info_;
+   private DependencyManager dependencyManager_;
+   private NewConnectionWizard wizard_;
+   private ConnectionsPresenter connectionsPresenter_;
 }

@@ -1,7 +1,7 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,8 @@ public class EditingPreferencesPane extends PreferencesPane
       
       VerticalPanel editingPanel = new VerticalPanel();
       editingPanel.add(headerLabel("General"));
-      editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
+      editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(), 
+            false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));   
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
@@ -184,14 +185,16 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
-      displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
+      displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", 
+            prefs.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
       displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls())));
+      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", 
+            prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
        
       foldMode_ = new SelectWidget(
             "Fold Style:",
@@ -374,10 +377,10 @@ public class EditingPreferencesPane extends PreferencesPane
       
       final VerticalPanel rOptionsPanel = new VerticalPanel();
       rOptionsPanel.add(checkboxPref("Enable diagnostics within R function calls", prefs.diagnosticsInRFunctionCalls()));
-      rOptionsPanel.add(spaced(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls())));
-      rOptionsPanel.add(spaced(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope())));
-      rOptionsPanel.add(spaced(checkboxPref("Warn if variable is defined but not used", prefs.warnIfVariableDefinedButNotUsed())));
-      rOptionsPanel.add(spaced(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics())));
+      rOptionsPanel.add(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope()));
+      rOptionsPanel.add(checkboxPref("Warn if variable is defined but not used", prefs.warnIfVariableDefinedButNotUsed()));
+      rOptionsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics()));
       rOptionsPanel.setVisible(prefs.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -398,7 +401,8 @@ public class EditingPreferencesPane extends PreferencesPane
       Label diagShowLabel = headerLabel("Show Diagnostics");
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
       diagnosticsPanel.add(checkboxPref("Show diagnostics whenever source files are saved", prefs.diagnosticsOnSave()));
-      diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", prefs.enableBackgroundDiagnostics())));
+      diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", 
+            prefs.enableBackgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
             numericPref("Keyboard idle time (ms):", prefs.backgroundDiagnosticsDelayMs())));
       

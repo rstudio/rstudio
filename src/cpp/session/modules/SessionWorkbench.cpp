@@ -960,8 +960,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
             console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
+   bool useWebsockets = session::options().useTerminalWebsockets();
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
+               ConsoleProcess::createTerminalProcess(options, ptrProcInfo, useWebsockets);
 
    ptrProc->onExit().connect(boost::bind(
                               &source_control::enqueueRefreshEvent));

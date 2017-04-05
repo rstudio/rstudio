@@ -164,6 +164,8 @@ public:
 
    bool showUserHomePage() const { return showUserHomePage_; }
    
+   bool useTerminalWebsockets() const { return useTerminalWebsockets_; }
+
    core::FilePath coreRSourcePath() const 
    { 
       return core::FilePath(coreRSourcePath_.c_str());
@@ -541,6 +543,7 @@ private:
    bool createProfile_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
+   bool useTerminalWebsockets_;
    int saveActionDefault_;
    bool standalone_;
    std::string authRequiredUserGroup_;

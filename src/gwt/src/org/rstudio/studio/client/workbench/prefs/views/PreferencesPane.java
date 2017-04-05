@@ -1,7 +1,7 @@
 /*
  * PreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,18 +36,64 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
       return false;
    }
    
+   /**
+    * Create a checkbox bound to a user preference with `lessSpaced` margin style.
+    * @param label checkbox label
+    * @param prefValue boolean preference to bind to
+    * @return CheckBox
+    */
    protected CheckBox checkboxPref(String label,
          final PrefValue<Boolean> prefValue)
    {
-      return checkboxPref(label, prefValue, null);
+      return checkboxPref(label, prefValue, null /*title*/, true /*defaultSpaced*/);
    }
-   
+
+   /**
+    * Create a checkbox bound to a user preference.
+    * @param label checkbox label
+    * @param prefValue bound boolean preference
+    * @param defaultSpaced if true apply `lessSpaced style`, otherwise no spacing
+    * style will be applied
+    * @return CheckBox
+    */
+   protected CheckBox checkboxPref(String label,
+                                   final PrefValue<Boolean> prefValue,
+                                   boolean defaultSpaced)
+   {
+      return checkboxPref(label, prefValue, null /*title*/, defaultSpaced);
+   }
+    
+   /**
+    * Create a checkbox bound to a user preference with `lessSpaced` margin style.
+    * @param label checkbox label
+    * @param prefValue bound boolean preference
+    * @param title checkbox title; typically shown via tooltip
+    * @return CheckBox
+    */
    protected CheckBox checkboxPref(String label,
                                    final PrefValue<Boolean> prefValue,
                                    String title)
    {
+      return checkboxPref(label, prefValue, title, true /*defaultSpaced*/);
+   }
+  
+   /**
+    * Create a checkbox bound to a user preference.
+    * @param label checkbox label
+    * @param prefValue bound boolean preference
+    * @param title checkbox title; typically shown via tooltip
+    * @param defaultSpaced if true apply `lessSpaced` style, otherwise no spacing
+    * style will be applied
+    * @return CheckBox
+    */
+   protected CheckBox checkboxPref(String label,
+                                   final PrefValue<Boolean> prefValue,
+                                   String title,
+                                   boolean defaultSpaced)
+   {
       final CheckBox checkBox = new CheckBox(label, false);
-      lessSpaced(checkBox);
+      if (defaultSpaced)
+         lessSpaced(checkBox);
       checkBox.setValue(prefValue.getGlobalValue());
       if (title != null)
          checkBox.setTitle(title);
@@ -60,7 +106,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
       });
       return checkBox;
    }
-  
+
    protected NumericValueWidget numericPref(String label,
                                             final PrefValue<Integer> prefValue)
    {

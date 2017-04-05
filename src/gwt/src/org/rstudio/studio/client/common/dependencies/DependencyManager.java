@@ -620,6 +620,37 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         }
      );
    }
+
+   public void withConnectionPackage(String connectionName,
+                                     String packageName,
+                                     String packageVersion,
+                                     final Operation operation)
+   {
+     withDependencies(
+        "Preparing Connection",
+        connectionName, 
+        connectionPackageDependenciesArray(packageName, packageVersion), 
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 operation.execute();
+           }
+        }
+     );
+   }
+   
+   private Dependency[] connectionPackageDependenciesArray(String packageName,
+                                                           String packageVersion)
+   {
+    ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage(packageName, packageVersion));
+
+      return deps.toArray(new Dependency[deps.size()]);
+   }
    
    private void withDependencies(String progressCaption,
                                  final String userAction,

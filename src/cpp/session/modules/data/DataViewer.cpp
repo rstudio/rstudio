@@ -57,9 +57,6 @@
 // separates filter type from contents (e.g. "numeric|12-25")
 #define kFilterSeparator "|"
 
-// the largest number of columns we're willing to display
-#define MAX_COLS 100  
-
 // the largest number of factor values we're willing to display (after this
 // point the column's text is searched as though it were a character column)
 #define MAX_FACTORS 64
@@ -442,8 +439,7 @@ json::Value getCols(SEXP dataSEXP)
    SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
-   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_COLS, 
-         MAX_FACTORS)
+   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_FACTORS)
       .call(&colsSEXP, &protect);
    if (error || colsSEXP == R_NilValue) 
    {
@@ -494,7 +490,6 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
    int filteredNRow = 0;
-   ncol = std::min(ncol, MAX_COLS);
 
    // extract filters
    std::vector<std::string> filters;
