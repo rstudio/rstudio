@@ -363,7 +363,7 @@ options(connectionObserver = list(
                snippet <- paste(
                   "library(DBI)\n",
                   "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-                  "Driver={", driver, "};${1:Connection String}\")",
+                  "Driver={", driver, "};${1:Parameters}\")",
                   sep = "")
             }
 
