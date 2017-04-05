@@ -496,23 +496,26 @@ public class RSConnectDeploy extends Composite
          return;
       }
       
-      // no need to validate names for updates
       if (isUpdate())
       {
+         // no need to validate names for updates
          onComplete.execute(true);
       }
-      
-      checkForExistingApp(getSelectedAccount(), appName_.getName(), 
-            new OperationWithInput<Boolean>()
-            {
-               @Override
-               public void execute(Boolean valid)
+      else
+      {
+         // see if there's an app with this name before running the deploy
+         checkForExistingApp(getSelectedAccount(), appName_.getName(), 
+               new OperationWithInput<Boolean>()
                {
-                  onComplete.execute(valid);
-                  if (!valid)
-                     focus();
-               }
-            });
+                  @Override
+                  public void execute(Boolean valid)
+                  {
+                     onComplete.execute(valid);
+                     if (!valid)
+                        focus();
+                  }
+               });
+      }
    }
    
    public void setUnsanitizedAppName(String name)
