@@ -131,7 +131,7 @@ public abstract class WizardPage<I,T> extends Composite
    {
    }
 
-   public void onBeforeActivate(Operation operation)
+   public void onBeforeActivate(Operation operation, ModalDialogBase wizard)
    {
       operation.execute();
    }

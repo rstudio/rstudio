@@ -17,12 +17,14 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -56,6 +58,12 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
          createFirstPage(context),
          operation
       );
+
+      updateHelpLink(new HelpLink(
+         "Using RStudio Connections",
+         "rstudio_connections",
+         false,
+         true));
 
       RStudioGinjector.INSTANCE.injectMembers(this); 
    }

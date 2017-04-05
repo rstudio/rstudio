@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.resources.ImageResource2x;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -117,7 +119,7 @@ public class WizardPageSelector<I,T> extends Composite
                                         55, Unit.PX);
          
          
-         Image arrowImage = new Image(res.wizardDisclosureArrow());
+         Image arrowImage = new Image(new ImageResource2x(res.wizardDisclosureArrow2x()));
          layoutPanel.add(arrowImage);
          layoutPanel.setWidgetRightWidth(arrowImage, 
                                          20, Unit.PX, 
