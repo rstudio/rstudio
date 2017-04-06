@@ -896,6 +896,7 @@ public class RemoteServer implements Server
          boolean excludeArgsFromObject,
          String filePath,
          String documentId,
+         String line,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -910,6 +911,7 @@ public class RemoteServer implements Server
       params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
       params.set(9, new JSONString(filePath));
       params.set(10, new JSONString(documentId));
+      params.set(11, new JSONString(line));
       
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,
