@@ -33,6 +33,9 @@
 @external windows, windows-highdpi, macintosh, linux;
 @external ubuntu_mono;
 
+@external rstudio-themes-flat;
+@external gwt-TabLayoutPanel;
+
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
       dialogTopRight, dialogTopRightInner,
@@ -127,6 +130,10 @@ body.windows, body.macintosh, body.linux {}
 
 body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
+}
+
+body.rstudio-themes-flat {
+   background: rgb(247, 247, 247);
 }
 
 body {
@@ -507,14 +514,28 @@ pre {
    padding: 0 0 4px 32px;
    font-size: 11px;
 }
+
 .header * {
    white-space: nowrap;
+}
+
+.rstudio-themes-flat table.header {
+   padding: 0 0 4px 0px;
+}
+
+.rstudio-themes-flat table.header > tbody > tr > td {
+   border-bottom: solid 1px #d6dadc;
 }
 
 .mainMenu {
    font-size: 11px;
    font-weight: bold;
    color: #494949;
+   margin-left: 18px;
+}
+
+.rstudio-themes-flat .mainMenu {
+   margin-left: 58px;
 }
 
 .mainMenu .gwt-MenuItem {
@@ -577,6 +598,11 @@ pre {
    -webkit-font-smoothing: subpixel-antialiased;
 }
 
+.rstudio-themes-flat .windowframe > div:last-child {
+   border: solid 1px #d6dadc;
+   border-radius: 3px;
+}
+
 .macintosh #rstudio_console_input {
    margin-left: -1px;
 }
@@ -605,6 +631,15 @@ pre {
 .W  { background-image: PODLEFT; }
 .NW { background-image: PODTOPLEFT; }
 
+.rstudio-themes-flat .C  { display: none; }
+.rstudio-themes-flat .N  { display: none; }
+.rstudio-themes-flat .NE { display: none; }
+.rstudio-themes-flat .E  { display: none; }
+.rstudio-themes-flat .SE { display: none; }
+.rstudio-themes-flat .S  { display: none; }
+.rstudio-themes-flat .SW { display: none; }
+.rstudio-themes-flat .W  { display: none; }
+.rstudio-themes-flat .NW { display: none; }
 
 .minimizedWindow .left {
    width: 8px;
@@ -878,6 +913,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+.rstudio-themes-flat .toolbar {
+   height: 22px;
+   background: #f3f4f7;
+   border-bottom: 1px solid #d6dadc;
+}
+
 .toolbar * {
    margin-top: 0px;
 }
@@ -918,8 +959,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbarButton[disabled]:active {
    top: 0px;
 }
+
 .toolbarSeparator {
    margin-right: 5px;
+}
+
+.rstudio-themes-flat .toolbarSeparator {
+   max-height: 19px;
 }
 
 .toolbarFileLabel {
@@ -1028,10 +1074,15 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    }
  }
 
-
 .webGlobalToolbar {
    margin-top: -3px;
    background: none;
+}
+
+.rstudio-themes-flat .webGlobalToolbar {
+   border-bottom: 0;
+   height: 24px;
+   padding-top: 2px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1515,3 +1566,35 @@ body.ubuntu_mono .searchBox {
 	display: none !important;
 }
 
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs {
+   background-image: none;
+   background: #e7e8ea;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs {
+   top: -1px;
+   border-bottom: solid 1px #d6dadc;
+   height: 23px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanel > div:last-child {
+   top: 23px !important;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter {
+   background-image: none;
+   background: #f3f4f7;
+   border-right: solid 1px #d6dadc;
+   border-radius: 0px 3px 0px 0px;
+   border-top: solid 1px #d6dadc;
+   padding-left: 9px;
+   padding-right: 9px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight {
+   display: none;
+}

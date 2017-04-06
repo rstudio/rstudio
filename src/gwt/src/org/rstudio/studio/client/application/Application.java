@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.dom.client.InputElement;
@@ -703,6 +704,10 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
+      if (uiPrefs_.get().getUseFlatThemes().getGlobalValue()) {
+        Document.get().getBody().addClassName("rstudio-themes-flat");
+      }
+
       pAceThemes_.get();
 
       // subscribe to ClientDisconnected event (wait to do this until here
