@@ -360,7 +360,7 @@ public class AceBackgroundHighlighter
    {
       return ListUtil.create(
             new HighlightPattern(
-                  "^\\s*[/][*}{3,}\\s*[Rr]\\s*$",
+                  "^\\s*[/][*]{3,}\\s*[Rr]\\s*$",
                   "^\\s*[*]+[/]")
       );
    }
