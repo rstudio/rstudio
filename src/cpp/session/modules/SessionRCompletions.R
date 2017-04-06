@@ -1772,8 +1772,16 @@ assign(x = ".rs.acCompletionTypes",
    # If custom completions have been set through
    # 'rc.options("custom.completions")',
    # then use the internal R completions instead.
-   if (.rs.isCustomCompletionsEnabled())
-      return(.rs.getCustomRCompletions(line))
+   if (.rs.isCustomCompletionsEnabled()) {
+      
+      completions <- tryCatch(
+         .rs.getCustomRCompletions(line),
+         error = identity
+      )
+      
+      if (!inherits(completions, "error"))
+         return(completions)
+   }
    
    # Get the currently active frame
    envir <- .rs.getActiveFrame()
