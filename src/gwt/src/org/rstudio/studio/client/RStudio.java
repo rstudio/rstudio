@@ -104,7 +104,6 @@ public class RStudio implements EntryPoint
    public void onModuleLoad() 
    {
       Debug.injectDebug();
-      Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
       Command dismissProgressAnimation = showProgress();
       delayLoadApplication(dismissProgressAnimation);
    }

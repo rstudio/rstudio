@@ -8,12 +8,16 @@
    <ui:style>
       @url SEPARATOR statusBarSeparator;
       @external gwt-Label;
+      @external rstudio-themes-flat;
 
       @sprite .statusBar {
          gwt-image: 'statusBarTile';
          width: 100%;
          font-size: 11px;
          color: #3c474d;
+      }
+      .rstudio-themes-flat .statusBar {
+         background-image: none;
       }
       .statusBar div {
          display: inline;
@@ -42,12 +46,19 @@
          background-position: right 0;
          background-repeat: no-repeat;
       }
+      .rstudio-themes-flat .statusBar .element {
+         background-image: none;
+         border-right: solid 1px #d6dadc;
+      }
       .statusBar .element.pos {
          min-width: 45px;
          text-align: center;
       }
       .statusBar .element.last {
          background-image: none;
+      }
+      .rstudio-themes-flat .statusBar .element.last {
+         border-right: none;
       }
    </ui:style>
 
