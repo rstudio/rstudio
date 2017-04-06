@@ -159,17 +159,19 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
-      iconsResolution_ = new CheckBox("Use High Resolution", false);
-      iconsResolution_.setValue(uiPrefs_.getUse2xResolution().getGlobalValue());
+      flatTheme_ = new CheckBox("Flat Themes", false);
+      flatTheme_.setValue(uiPrefs_.getUseFlatThemes().getGlobalValue());
 
-      iconsResolution_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      flatTheme_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
-            uiPrefs_.getUse2xResolution().setGlobalValue(iconsResolution_.getValue());
+            uiPrefs_.getUseFlatThemes().setGlobalValue(flatTheme_.getValue());
          }
       });
+
+      leftPanel.add(flatTheme_);
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
@@ -257,7 +259,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
-   private CheckBox iconsResolution_;
+   private CheckBox flatTheme_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

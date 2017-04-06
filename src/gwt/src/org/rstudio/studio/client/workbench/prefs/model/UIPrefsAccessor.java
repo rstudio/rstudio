@@ -631,9 +631,9 @@ public class UIPrefsAccessor extends Prefs
       return bool("wrap_tab_navigation", false);
    }
    
-   public PrefValue<Boolean> getUse2xResolution()
+   public PrefValue<Boolean> getUseFlatThemes()
    {
-      return bool("use_2x_resolution", false);
+      return bool("use_flat_themes", false);
    }
    
    private String getDefaultPdfPreview()

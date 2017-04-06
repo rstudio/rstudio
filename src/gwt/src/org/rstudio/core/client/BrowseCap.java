@@ -229,7 +229,5 @@ public class BrowseCap
          if (isFirefox())
             Document.get().getBody().addClassName("ubuntu_mono_firefox");
       }
-
-      Document.get().getBody().addClassName("rstudio-themes-flat");
    }
 }
