@@ -1615,3 +1615,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight {
    display: none;
 }
+
+.rstudio-themes-flat .logoAnchor {
+   top: 3px !important;
+}
