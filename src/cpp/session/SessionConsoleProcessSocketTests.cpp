@@ -314,7 +314,8 @@ context("websocket for interactive terminals")
 {
    const std::string handle1 = "abcd";
    const std::string handle2 = "defg";
-   const std::string msgString = "Hello World Howya Doing?";
+   const std::string msgString1 = "Hello World Howya Doing?";
+   const std::string msgString2 = "Here's another message I sent.";
    using boost::make_shared;
    using boost::shared_ptr;
 
@@ -394,11 +395,11 @@ context("websocket for interactive terminals")
       expect_true(client.gotOpened());
       expect_false(client.gotFailed());
 
-      expect_true(client.sendText(msgString));
+      expect_true(client.sendText(msgString1));
 
       blockingwait(100);
 
-      expect_true(pConnection->getReceived().compare(msgString) == 0);
+      expect_true(pConnection->getReceived().compare(msgString1) == 0);
 
       expect_true(client.disconnectFromServer());
       expect_true(pSocket->stopServer());
@@ -421,13 +422,63 @@ context("websocket for interactive terminals")
       expect_true(client.gotOpened());
       expect_false(client.gotFailed());
 
-      expect_true(pConnection->sendMessage(msgString));
+      expect_true(pConnection->sendMessage(msgString1));
 
       blockingwait(100);
 
-      expect_true(client.getInput().compare(msgString) == 0);
+      expect_true(client.getInput().compare(msgString1) == 0);
 
       expect_true(client.disconnectFromServer());
+      expect_true(pSocket->stopServer());
+   }
+
+   test_that("client can make multiple connections to server")
+   {
+      // ---- one socket on server ----
+      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
+      expect_true(pSocket->ensureServerRunning());
+
+      // ---- first connection ----
+      shared_ptr<SocketConnection> pConnection1 =
+            make_shared<SocketConnection>(handle1, pSocket);
+
+      SocketClient client1(handle1, pSocket->port());
+      expect_true(pConnection1->listen());
+      expect_true(client1.connectToServer());
+
+      while (!client1.gotOpened() && !client1.gotFailed())
+      {
+      }
+      expect_true(client1.gotOpened());
+      expect_false(client1.gotFailed());
+
+      // ---- second connection ----
+      shared_ptr<SocketConnection> pConnection2 =
+            make_shared<SocketConnection>(handle2, pSocket);
+
+      SocketClient client2(handle2, pSocket->port());
+      expect_true(pConnection2->listen());
+      expect_true(client2.connectToServer());
+
+      while (!client2.gotOpened() && !client2.gotFailed())
+      {
+      }
+      expect_true(client2.gotOpened());
+      expect_false(client2.gotFailed());
+
+      // ---- send message to first connection ----
+      expect_true(pConnection1->sendMessage(msgString1));
+      blockingwait(100);
+      expect_true(client1.getInput().compare(msgString1) == 0);
+
+      // ---- send message to second connection ----
+      expect_true(pConnection2->sendMessage(msgString2));
+      blockingwait(100);
+      expect_true(client2.getInput().compare(msgString2) == 0);
+
+      // ---- cleanup ----
+      expect_true(client1.disconnectFromServer());
+      expect_true(client2.disconnectFromServer());
       expect_true(pSocket->stopServer());
    }
 }
