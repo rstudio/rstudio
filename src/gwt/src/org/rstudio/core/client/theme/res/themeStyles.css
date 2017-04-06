@@ -1577,6 +1577,10 @@ body.ubuntu_mono .searchBox {
    height: 23px;
 }
 
+.rstudio-themes-flat .gwt-TabLayoutPanel > div:last-child {
+   top: 23px !important;
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft {
    display: none;
 }
