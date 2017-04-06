@@ -819,6 +819,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    gwt-image: 'activeDocTabRight';
 }
 */
+
 .dirtyTab {
    color: #a00;
 }
@@ -1593,6 +1594,22 @@ body.ubuntu_mono .searchBox {
    border-top: solid 1px #d6dadc;
    padding-left: 9px;
    padding-right: 9px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
+   vertical-align: top !important;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.docTabIcon {
+   padding-top: 1px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter div.docTabLabel {
+   padding-top: 4px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.closeTabButton {
+   padding-top: 3px;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight {
