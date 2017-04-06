@@ -168,9 +168,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetClassDecl(
         "@JsType",
-        "public interface Buggy {",
-        "  @JsProperty(name = \"x\") int x();",
-        "  @JsProperty(name = \"x\") void x(int x);",
+        "public static abstract class Buggy {",
+        "  @JsProperty(name = \"x\") abstract int x();",
+        "  @JsProperty(name = \"x\") abstract void x(int x);",
+        "  @JsProperty(name = \"debugger\") static native void debugger();",
         "}");
 
     assertBuggySucceeds();

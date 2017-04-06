@@ -144,10 +144,17 @@ public final class JsInteropUtil {
   private static JsMemberType getJsPropertyAccessorType(JMethod method) {
     if (method.getParams().size() == 1 && method.getType() == JPrimitiveType.VOID) {
       return JsMemberType.SETTER;
-    } else if (method.getParams().isEmpty() && method.getType() != JPrimitiveType.VOID) {
+    } else if (method.getParams().isEmpty()
+        && (method.getType() != JPrimitiveType.VOID || isDebugger(method))) {
       return JsMemberType.GETTER;
     }
     return JsMemberType.UNDEFINED_ACCESSOR;
+  }
+
+  private static boolean isDebugger(JMethod method) {
+    return method.isStatic()
+        && method.getName().equals("debugger")
+        && (method.isJsNative() || method.isAbstract());
   }
 
   private static AnnotationBinding getInteropAnnotation(Annotation[] annotations, String name) {
