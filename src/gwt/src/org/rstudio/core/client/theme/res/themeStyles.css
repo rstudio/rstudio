@@ -34,6 +34,7 @@
 @external ubuntu_mono;
 
 @external rstudio-themes-flat;
+@external gwt-TabLayoutPanel;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -600,13 +601,6 @@ pre {
 .rstudio-themes-flat .windowframe > div:last-child {
    border: solid 1px #d6dadc;
    border-radius: 3px;
-}
-
-.rstudio-themes-flat .windowframe .moduleTabPanel {
-   top: -1px !important;
-   left: -1px !important;
-   right: -1px !important;
-   bottom: -1px !important;
 }
 
 .macintosh #rstudio_console_input {
@@ -1570,6 +1564,17 @@ body.ubuntu_mono .searchBox {
 
 .displayNone {
 	display: none !important;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs {
+   background-image: none;
+   background: #e7e8ea;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs {
+   top: -1px;
+   border-bottom: solid 1px #d6dadc;
+   height: 23px;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft {
