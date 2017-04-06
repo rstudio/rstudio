@@ -429,6 +429,9 @@ java_library(
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
         "//third_party/java_src/gwt/svn/trunk/dev:servlet-deps",
     ],
+    javacopts = [
+        "-Xep:EqualsIncompatibleType:OFF",
+    ]
 )
 
 # The minimum requirements for GWT-RPC serializable object definition.
@@ -549,6 +552,7 @@ AugmentedJar(
         "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:FallThrough:OFF",
         "-Xep:ReturnValueIgnored:OFF",
+        "-Xep:JUnit3TestNotRun:OFF",
         "-Xep:EqualsIncompatibleType:OFF",
     ],
     deps = [
