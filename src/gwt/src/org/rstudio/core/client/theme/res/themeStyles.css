@@ -35,6 +35,7 @@
 
 @external rstudio-themes-flat;
 @external gwt-TabLayoutPanel;
+@external gwt-TabLayoutPanelTabInner;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -819,6 +820,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    gwt-image: 'activeDocTabRight';
 }
 */
+
 .dirtyTab {
    color: #a00;
 }
@@ -984,6 +986,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
   border-bottom: 1px solid rgb(169,169,169);
 }
 
+.rstudio-themes-flat .secondaryToolbar {
+   background: #eeeff1;
+   border-bottom: solid 1px #d6dadc;
+}
+
 .toolbarButtonRightImage {
    display: none;
 }
@@ -1079,10 +1086,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: none;
 }
 
+.rstudio-themes-flat .globalToolbar {
+   padding-top: 2px;
+}
+
 .rstudio-themes-flat .webGlobalToolbar {
    border-bottom: 0;
    height: 24px;
-   padding-top: 2px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1581,7 +1591,15 @@ body.ubuntu_mono .searchBox {
    top: 23px !important;
 }
 
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:first-child {
+   display: none;
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:last-child {
    display: none;
 }
 
@@ -1595,6 +1613,30 @@ body.ubuntu_mono .searchBox {
    padding-right: 9px;
 }
 
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
+   vertical-align: top !important;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.docTabIcon {
+   padding-top: 1px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter div.docTabLabel {
+   padding-top: 4px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.closeTabButton {
+   padding-top: 3px;
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight {
    display: none;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanel {
+   background: #FFF;
+}
+
+.rstudio-themes-flat .logoAnchor {
+   top: 3px !important;
 }

@@ -29,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.Files;
 
 public class FilePathToolbar extends Composite
@@ -66,8 +67,12 @@ public class FilePathToolbar extends Composite
 
    public FilePathToolbar(Files.Display.NavigationObserver navigationObserver)
    {
+      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      
       LayoutPanel layout = new LayoutPanel();
-      layout.setSize("100%", "21px");
+      String layoutPanelHeight = uiPrefs.getUseFlatThemes().getValue() ? "20px" : "21px";
+      layout.setSize("100%", layoutPanelHeight);
+
       initWidget(layout);
       setStyleName(ThemeStyles.INSTANCE.secondaryToolbar());
 

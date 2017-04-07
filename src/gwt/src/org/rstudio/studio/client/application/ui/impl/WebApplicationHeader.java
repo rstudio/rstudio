@@ -113,6 +113,8 @@ public class WebApplicationHeader extends Composite
       style.setTextDecoration(TextDecoration.NONE);
       style.setOutlineWidth(0, Unit.PX);
 
+      logoAnchor_.setStylePrimaryName(themeResources.themeStyles().logoAnchor());
+
       // header container
       headerBarPanel_ = new HorizontalPanel() ;
       headerBarPanel_.setStylePrimaryName(themeResources.themeStyles().header());

@@ -1,5 +1,6 @@
-@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+@external rstudio-themes-flat;
 
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @def selectionBorderWidth 1px;
 
@@ -46,6 +47,11 @@
   background-color: #eeeff1;
   overflow: hidden;
   cursor: default;
+}
+
+.rstudio-themes-flat .dataGridHeader {
+  border-top: 0px;
+  border-left: 0px;
 }
 
 .dataGridCell {

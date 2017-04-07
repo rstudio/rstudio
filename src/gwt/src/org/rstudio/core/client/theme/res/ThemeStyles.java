@@ -175,4 +175,5 @@ public interface ThemeStyles extends CssResource
    String toolbarInfoLabel();
    
    String displayNone();
+   String logoAnchor();
 }
