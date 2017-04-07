@@ -172,6 +172,7 @@ public class AceBackgroundHighlighter
       markerIds_ = JavaScriptObject.createArray(n).cast();
       worker_ = new Worker();
       
+      activeModeId_ = editor.getSession().getMode().getId();
       refreshHighlighters();
    }
    
@@ -179,6 +180,11 @@ public class AceBackgroundHighlighter
    @Override
    public void onEditorModeChanged(EditorModeChangedEvent event)
    {
+      // nothing to do if mode did not change
+      if (event.getMode().equals(activeModeId_))
+         return;
+      
+      activeModeId_ = event.getMode();
       clearMarkers();
       clearRowState();
       refreshHighlighters();
@@ -354,7 +360,7 @@ public class AceBackgroundHighlighter
    {
       return ListUtil.create(
             new HighlightPattern(
-                  "^\\s*[/][*}{3,}\\s*[Rr]\\s*$",
+                  "^\\s*[/][*]{3,}\\s*[Rr]\\s*$",
                   "^\\s*[*]+[/]")
       );
    }
@@ -398,6 +404,7 @@ public class AceBackgroundHighlighter
    private final AceEditor editor_;
    private final EditSession session_;
    private HighlightPattern activeHighlightPattern_;
+   private String activeModeId_;
    private final List<HighlightPattern> highlightPatterns_;
    private final HandlerRegistrations handlers_;
    
@@ -419,8 +426,8 @@ public class AceBackgroundHighlighter
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/rhtml", htmlStyleHighlightPatterns());
    }
    
-   private static final int STATE_TEXT         = 0;
-   private static final int STATE_CHUNK_START  = 1;
-   private static final int STATE_CHUNK_BODY   = 2;
-   private static final int STATE_CHUNK_END    = 3;
+   private static final int STATE_TEXT         = 1;
+   private static final int STATE_CHUNK_START  = 2;
+   private static final int STATE_CHUNK_BODY   = 3;
+   private static final int STATE_CHUNK_END    = 4;
 }

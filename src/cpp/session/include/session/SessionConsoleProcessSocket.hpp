@@ -85,6 +85,9 @@ public:
    // start the websocket servicing thread
    core::Error ensureServerRunning();
 
+   // stop the websocket servicing thread
+   void stopServer();
+
    // start receiving callbacks for given connection; client should call
    // before making the connection to ensure all callbacks are received
    core::Error listen(const std::string& terminalHandle,
@@ -103,7 +106,6 @@ public:
 private:
    void watchSocket();
 
-   void stopServer();
    void releaseAllConnections();
    std::string getHandle(terminalServer* s, websocketpp::connection_hdl hdl);
    void onMessage(terminalServer* s, websocketpp::connection_hdl hdl,

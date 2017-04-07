@@ -204,7 +204,7 @@ private:
    // is the underlying process started?
    bool started_;
 
-   // cached point to process options, for use in websocket thread callbacks
+   // cached pointer to process options, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
    boost::mutex mutex_;
 };
