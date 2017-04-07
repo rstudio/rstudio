@@ -1633,6 +1633,10 @@ body.ubuntu_mono .searchBox {
    display: none;
 }
 
+.rstudio-themes-flat .gwt-TabLayoutPanel {
+   background: #FFF;
+}
+
 .rstudio-themes-flat .logoAnchor {
    top: 3px !important;
 }
