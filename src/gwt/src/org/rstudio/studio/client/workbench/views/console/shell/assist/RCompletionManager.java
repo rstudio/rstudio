@@ -1241,6 +1241,9 @@ public class RCompletionManager implements CompletionManager
       String filePath = getSourceDocumentPath();
       String docId = getSourceDocumentId();
       
+      // Provide 'line' for R custom completers
+      String line = docDisplay_.getCurrentLineUpToCursor();
+      
       requester_.getCompletions(
             context.getToken(),
             context.getAssocData(),
@@ -1253,6 +1256,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getExcludeArgsFromObject(),
             filePath,
             docId,
+            line,
             implicit,
             context_);
 

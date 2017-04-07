@@ -1750,7 +1750,8 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgs,
                                                   excludeArgsFromObject,
                                                   filePath,
-                                                  documentId)
+                                                  documentId,
+                                                  line)
 {
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
@@ -1767,6 +1768,20 @@ assign(x = ".rs.acCompletionTypes",
    # parameterized R Markdown documents
    if (.rs.injectKnitrParamsObject(documentId))
       on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
+
+   # If custom completions have been set through
+   # 'rc.options("custom.completions")',
+   # then use the internal R completions instead.
+   if (.rs.isCustomCompletionsEnabled()) {
+      
+      completions <- tryCatch(
+         .rs.getCustomRCompletions(line),
+         error = identity
+      )
+      
+      if (!inherits(completions, "error"))
+         return(completions)
+   }
    
    # Get the currently active frame
    envir <- .rs.getActiveFrame()
@@ -3238,4 +3253,36 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    .rs.scalar(newSnippet)
+})
+
+.rs.addFunction("isCustomCompletionsEnabled", function()
+{
+   completer <- utils::rc.getOption("custom.completer")
+   is.function(completer)
+})
+
+.rs.addFunction("getCustomRCompletions", function(line)
+{
+   utils:::.assignLinebuffer(line)
+   utils:::.assignEnd(nchar(line))
+   token <- utils:::.guessTokenFromLine()
+   utils:::.completeToken()
+   results <- utils:::.retrieveCompletions()
+   
+   packages <- sub('^package:', '', .rs.which(results))
+   
+   # ensure spaces around =
+   results <- sub("=$", " = ", results)
+   
+   choose = packages == '.GlobalEnv'
+   results.sorted = c(results[choose], results[!choose])
+   packages.sorted = c(packages[choose], packages[!choose])
+   
+   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
+   
+   .rs.makeCompletions(
+      token = token,
+      results = results.sorted,
+      packages = packages.sorted
+   )
 })
