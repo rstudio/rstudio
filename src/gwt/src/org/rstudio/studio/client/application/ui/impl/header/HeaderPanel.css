@@ -7,6 +7,11 @@
    overflow: visible;
 }
 
+.rstudio-themes-flat .panel {
+   padding: 0 9px 0 9px;
+   margin-top: 8px;
+}
+
 @sprite .left {
    gwt-image: 'headerPanelLeft';
 }
