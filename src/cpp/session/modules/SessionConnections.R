@@ -259,7 +259,31 @@ options(connectionObserver = list(
 
    snippets <- .rs.connectionReadSnippets()
 
-   connectionList <- lapply(rawConnections, function(con) {
+   connectionList <- list()
+
+   # add snippets to connections list
+   connectionList <- c(connectionList, lapply(names(snippets), function(snippetName) {
+      tryCatch({
+         snippet <- snippets[[snippetName]]
+
+         list(
+            package = .rs.scalar(NULL),
+            version = .rs.scalar(NULL),
+            name = .rs.scalar(snippetName),
+            type = .rs.scalar("Snippet"),
+            snippet = .rs.scalar(snippet),
+            help = .rs.scalar(NULL),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+            licensed = .rs.scalar(FALSE)
+         )
+      }, error = function(e) {
+         warning(e$message)
+         NULL
+      })
+   }))
+
+   # add packages to connections list
+   connectionList <- c(connectionList, lapply(rawConnections, function(con) {
       tryCatch({
          ns <- asNamespace(con$package)
 
@@ -311,28 +335,58 @@ options(connectionObserver = list(
          warning(e$message)
          NULL
       })
-   })
-
-   connectionList <- c(connectionList, lapply(names(snippets), function(snippetName) {
-      tryCatch({
-         snippet <- snippets[[snippetName]]
-
-         list(
-            package = .rs.scalar(NULL),
-            version = .rs.scalar(NULL),
-            name = .rs.scalar(snippetName),
-            type = .rs.scalar("Snippet"),
-            snippet = .rs.scalar(snippet),
-            help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
-            licensed = .rs.scalar(FALSE)
-         )
-      }, error = function(e) {
-         warning(e$message)
-         NULL
-      })
    }))
 
+   # add ODBC DSNs to connections list
+   if (.rs.isPackageInstalled("odbc")) {
+      dataSources <- data.frame()
+
+      tryCatch({
+         if (exists("list_data_sources", envir = asNamespace("odbc"))) {
+            listSources <- get("list_data_sources", envir = asNamespace("odbc"))
+         }
+         else {
+            listSources <- get("odbcListDataSources", envir = asNamespace("odbc"))
+         }
+         dataSources <- listSources()
+      }, error = function(e) warning(e$message))
+
+      dataSourcesNoSnippet <- unique(Filter(function(e) { !(e %in% names(snippets)) }, dataSources$name))
+
+      connectionList <- c(connectionList, lapply(dataSourcesNoSnippet, function(dataSourceName) {
+         tryCatch({
+
+            dataSource <- dataSources[dataSources$name == dataSourceName, ]
+
+            snippet <- paste(
+               "library(DBI)\n",
+               "con <- dbConnect(odbc::odbc(), \"${1:Data Source Name=", 
+               dataSource$name,
+               "}\")",
+               sep = "")
+
+            iconData <- .Call("rs_connectionIcon", dataSource$name)
+            if (nchar(iconData) == 0)
+               iconData <- .Call("rs_connectionIcon", "ODBC")
+
+            list(
+               package = .rs.scalar(NULL),
+               version = .rs.scalar(NULL),
+               name = .rs.scalar(dataSource$name),
+               type = .rs.scalar("Snippet"),
+               snippet = .rs.scalar(snippet),
+               help = .rs.scalar(NULL),
+               iconData = .rs.scalar(iconData),
+               licensed = .rs.scalar(FALSE)
+            )
+         }, error = function(e) {
+            warning(e$message)
+            NULL
+         })
+      }))
+   }
+
+   # add ODBC drivers to connections list
    if (.rs.isPackageInstalled("odbc")) {
       drivers <- data.frame()
 
