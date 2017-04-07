@@ -1,4 +1,4 @@
-<project name="common">
+<project name="common" xmlns:if="ant:if">
   <!-- it's okay for this not to exist, but it gives a place to store
        personal property settings, if any, persistently.  For example, you
        might use it to set gwt.junit.testcase.includes to a narrower subset
@@ -64,6 +64,12 @@
   <property name="javac.source" value="1.7"/>
   <property name="javac.target" value="1.7"/>
   <property name="javac.nowarn" value="true"/>
+  <condition property="javac.fork" value="true" else="false">
+    <isfalse value="${isJava8}"/>
+  </condition>
+  <condition property="javac.compiler" value="modern" else="com.google.errorprone.ErrorProneAntCompilerAdapter">
+    <isfalse value="${isJava8}"/>
+  </condition>
   <property name="junit.out" location="${project.build}/test"/>
   <property name="emma.dir" value="${gwt.tools.redist}/emma"/>
   <property name="emma.filter.exclude" value=""/>
@@ -103,15 +109,6 @@
     <isset property="build.host.iswindows"/>
   </condition>
   <fail unless="build.host.platform" message="Building on ${os.name} is not supported"/>
-
-  <!-- JVM -->
-  <condition property="build.jvm.is15">
-    <equals arg1="${ant.java.version}" arg2="1.5"/>
-  </condition>
-
-  <condition property="build.jvm.is16">
-    <equals arg1="${ant.java.version}" arg2="1.6"/>
-  </condition>
 
   <!-- JUnit support -->
   <property name="gwt.junit.port" value="8888"/>
@@ -157,8 +154,12 @@
   <presetdef name="gwt.javac">
     <javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}"
            debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}"
-           nowarn="${javac.nowarn}" encoding="${javac.encoding}" fork="true"
-           memoryMaximumSize="1024m" includeantruntime="false"/>
+           nowarn="${javac.nowarn}" encoding="${javac.encoding}"
+           includeantruntime="false" fork="${javac.fork}" compiler="${javac.compiler}">
+      <compilerclasspath if:true="${isJava8}">
+        <pathelement location="${gwt.tools.lib}/errorprone/error_prone_ant-2.0.19.jar"/>
+      </compilerclasspath>
+    </javac>
   </presetdef>
 
   <macrodef name="gwt.jar">

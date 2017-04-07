@@ -26,6 +26,12 @@
     <gwt.javac srcdir="" destdir="${javac.junit.out}">
       <src path="core/src"/>
       <src path="core/test"/>
+      <compilerarg value="-Xep:MissingCasesInEnumSwitch:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:FallThrough:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:ReturnValueIgnored:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:EqualsIncompatibleType:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:SelfComparison:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:SelfEquals:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${alldeps.jar}"/>
@@ -36,6 +42,10 @@
                excludes="**/EmulatedCharset.java,**/HashCodes.java,**/ConsoleLogger.java,**/SuperDevModeLogger.java">
       <src path="${gwt.root}/user/src" />
       <src path="${gwt.root}/user/super/com/google/gwt/emul/javaemul/internal"/>
+      <compilerarg value="-Xep:MissingCasesInEnumSwitch:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:FallThrough:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:ReturnValueIgnored:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:EqualsIncompatibleType:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/gss/2015-11-04/closure-stylesheets-library-20151104-rebased.jar"/>
@@ -201,6 +211,10 @@
       <include name="com/google/gwt/soyc/**"/>
       <include name="com/google/gwt/util/**"/>
       <include name="org/eclipse/jdt/**"/>
+      <compilerarg value="-Xep:MissingCasesInEnumSwitch:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:FallThrough:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:ReturnValueIgnored:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:EqualsIncompatibleType:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
       <classpath>
         <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar"/>
         <pathelement location="${gwt.tools.lib}/colt/colt-1.2.jar"/>
@@ -227,6 +241,10 @@
           description="Compiles this project">
     <gwt.javac srcdir="" excludes="${filter.pattern}">
       <src path="core/src"/>
+      <compilerarg value="-Xep:MissingCasesInEnumSwitch:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:FallThrough:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:ReturnValueIgnored:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
+      <compilerarg value="-Xep:EqualsIncompatibleType:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
       <classpath>
         <pathelement location="${alldeps.jar}"/>
       </classpath>

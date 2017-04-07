@@ -45,13 +45,9 @@
 
   <target name="compile" description="Compile java source">
     <mkdir dir="${javac.out}" />
-    <javac srcdir="src" destdir="${javac.out}"
-        debug="${javac.debug}" debuglevel="${javac.debuglevel}"
-        source="${javac.source}" target="${javac.target}"
-        nowarn="${javac.nowarn}" encoding="${javac.encoding}"
-        includeantruntime="false">
+    <gwt.javac>
       <classpath refid="project.class.path"/>
-    </javac>
+    </gwt.javac>
     <copy todir="${javac.out}">
       <fileset dir="src" excludes="**/*.java"/>
     </copy>
@@ -59,16 +55,13 @@
 
   <target name="compile.tests" description="Compile java source">
     <mkdir dir="${javac.junit.out}" />
-    <javac srcdir="test" destdir="${javac.junit.out}"
-        debug="${javac.debug}" debuglevel="${javac.debuglevel}"
-        source="${javac.source}" target="${javac.target}"
-        nowarn="${javac.nowarn}" encoding="${javac.encoding}">
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}"/>
-      <path refid="project.class.path"/>
+        <path refid="project.class.path"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
       </classpath>
-    </javac>
+    </gwt.javac>
     <copy todir="${javac.junit.out}">
       <fileset dir="src" excludes="**/*.java"/>
     </copy>
