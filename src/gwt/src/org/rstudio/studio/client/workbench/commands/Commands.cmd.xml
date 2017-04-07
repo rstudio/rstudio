@@ -288,7 +288,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          
          <cmd refid="activateSource"/>
-         <cmd refid="activateConsole"/>
+         <cmd refid="activateConsolePane"/>
          <cmd refid="activateTerminal"/>
          <cmd refid="activateHelp"/>
          <separator/>
@@ -1109,8 +1109,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Move Focus to Sou_rce"/>
         
    <cmd id="activateConsolePane"
-        label="Move Focus to Console Pane"
-        menuLabel="Move Focus to Console Pane"
+        label="Move Focus to Console"
+        menuLabel="Move Focus to _Console"
         windowMode="main"/>
         
    <cmd id="activateConsole"

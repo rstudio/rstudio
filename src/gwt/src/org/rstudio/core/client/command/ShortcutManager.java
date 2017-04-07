@@ -247,7 +247,11 @@ public class ShortcutManager implements NativePreviewHandler,
          // Setting the shortcut on the command just registers this binding as the
          // default shortcut for the command. This allows UI (e.g. menu items) to easily
          // look up and display an active shortcut, without displaying _all_ active shortcuts.
-         command.setShortcut(shortcut);
+         //
+         // Only show shortcuts that are enabled by default.
+         int disableFlags = shortcut.getDisableModes();
+         if ((disableFlags & KeyboardShortcut.MODE_DEFAULT) == 0)
+            command.setShortcut(shortcut);
          
          // Add the command into the keymap, ensuring it can be executed on the associated
          // keypress.
