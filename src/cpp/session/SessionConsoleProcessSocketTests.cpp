@@ -34,6 +34,13 @@ using namespace console_process;
 
 namespace {
 
+void blockingwait(int ms)
+{
+   boost::asio::io_service io;
+   boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
+   timer.wait();
+}
+
 // Wrapper for ConsoleProcessSocket, the class we're testing. Primarily
 // converts Error codes into true/false, and accumulates input.
 class SocketHarness : public boost::enable_shared_from_this<SocketHarness>
@@ -50,6 +57,7 @@ public:
 
    bool stopServer()
    {
+      blockingwait(50);
       socket_.stopServer();
       return true;
    }
@@ -89,7 +97,10 @@ public:
                     boost::shared_ptr<SocketHarness> pServerSocket)
       :
         handle_(handle),
-        pServerSocket_(pServerSocket)
+        pServerSocket_(pServerSocket),
+        didClose_(false),
+        didOpen_(false)
+
    {}
 
    void onReceivedInput(const std::string& input)
@@ -99,10 +110,12 @@ public:
 
    void onConnectionOpened()
    {
+      didOpen_ = true;
    }
 
    void onConnectionClosed()
    {
+      didClose_ = true;
    }
 
    ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks()
@@ -140,13 +153,19 @@ public:
 
    std::string getReceived() const
    {
+      blockingwait(50);
       return received_;
    }
+
+   bool didClose() const { return didClose_; }
+   bool didOpen() const { return didOpen_; }
 
 private:
    std::string handle_;
    std::string received_;
    boost::shared_ptr<SocketHarness> pServerSocket_;
+   bool didClose_;
+   bool didOpen_;
 };
 
 typedef websocketpp::client<websocketpp::config::asio_client> client;
@@ -154,7 +173,7 @@ typedef client::message_ptr message_ptr;
 
 // Client-side websocket connection test class; used to verify a client
 // can connect to the websocket and send/receive data over the socket
-class SocketClient
+class SocketClient : public boost::enable_shared_from_this<SocketClient>
 {
 public:
    SocketClient(const std::string& handle, int port)
@@ -215,18 +234,23 @@ public:
                boost::lexical_cast<std::string>(port_) +
                "/terminal/" + handle_ + "/";
 
-         // Replace "none" with "all" to get more details on console
+         // don't clutter up unit test runs with warnings
          client_.set_access_channels(websocketpp::log::alevel::none);
-         client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
+         client_.set_error_channels(websocketpp::log::alevel::none);
 
          // Initialize ASIO
          client_.init_asio();
 
          // Register our message handler
-         client_.set_message_handler(bind(&SocketClient::on_message, this,
+         client_.set_message_handler(bind(&SocketClient::on_message,
+                                          SocketClient::shared_from_this(),
                                           &client_, ::_1, ::_2));
-         client_.set_open_handler(bind(&SocketClient::on_open, this, &client_, ::_1));
-         client_.set_fail_handler(bind(&SocketClient::on_fail, this, &client_, ::_1));
+         client_.set_open_handler(bind(&SocketClient::on_open,
+                                       SocketClient::shared_from_this(),
+                                       &client_, ::_1));
+         client_.set_fail_handler(bind(&SocketClient::on_fail,
+                                       SocketClient::shared_from_this(),
+                                       &client_, ::_1));
 
          websocketpp::lib::error_code ec;
          client::connection_ptr con = client_.get_connection(uri, ec);
@@ -275,7 +299,7 @@ public:
       return true;
    }
 
-   std::string getInput() { return input_; }
+   std::string getInput() { blockingwait(50); return input_; }
    bool gotOpened() { return gotOpened_; }
    bool gotClosed() { return gotClosed_; }
    bool gotFailed() { return gotFailed_; }
@@ -300,13 +324,6 @@ private:
    bool clientRunning_;
    websocketpp::connection_hdl hdl_;
 };
-
-void blockingwait(int ms)
-{
-   boost::asio::io_service io;
-   boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
-   timer.wait();
-}
 
 } // anonymous namespace
 
@@ -337,8 +354,6 @@ context("websocket for interactive terminals")
       expect_true(pSocket->ensureServerRunning());
       expect_true(pSocket->port() > 0);
 
-      blockingwait(100);
-
       expect_true(pSocket->stopServer());
    }
 
@@ -351,8 +366,6 @@ context("websocket for interactive terminals")
             make_shared<SocketConnection>(handle1, pSocket);
       expect_true(pConnection->listen());
 
-      blockingwait(100);
-
       expect_true(pConnection->stopListening());
       expect_true(pSocket->stopServer());
    }
@@ -363,18 +376,18 @@ context("websocket for interactive terminals")
       expect_true(pSocket->ensureServerRunning());
 
       shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      SocketClient client(handle1, pSocket->port());
+      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
-      expect_true(client.connectToServer());
+      expect_true(pClient->connectToServer());
 
-      while (!client.gotOpened() && !client.gotFailed())
+      while (!pClient->gotOpened() && !pClient->gotFailed())
       {
       }
 
-      expect_true(client.gotOpened());
-      expect_false(client.gotFailed());
+      expect_true(pClient->gotOpened());
+      expect_false(pClient->gotFailed());
 
-      expect_true(client.disconnectFromServer());
+      expect_true(pClient->disconnectFromServer());
       expect_true(pSocket->stopServer());
    }
 
@@ -384,24 +397,21 @@ context("websocket for interactive terminals")
       expect_true(pSocket->ensureServerRunning());
 
       shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      SocketClient client(handle1, pSocket->port());
+      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
-      expect_true(client.connectToServer());
+      expect_true(pClient->connectToServer());
 
-      while (!client.gotOpened() && !client.gotFailed())
+      while (!pClient->gotOpened() && !pClient->gotFailed())
       {
       }
 
-      expect_true(client.gotOpened());
-      expect_false(client.gotFailed());
+      expect_true(pClient->gotOpened());
+      expect_false(pClient->gotFailed());
 
-      expect_true(client.sendText(msgString1));
-
-      blockingwait(100);
-
+      expect_true(pClient->sendText(msgString1));
       expect_true(pConnection->getReceived().compare(msgString1) == 0);
 
-      expect_true(client.disconnectFromServer());
+      expect_true(pClient->disconnectFromServer());
       expect_true(pSocket->stopServer());
    }
 
@@ -411,24 +421,21 @@ context("websocket for interactive terminals")
       expect_true(pSocket->ensureServerRunning());
 
       shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      SocketClient client(handle1, pSocket->port());
+      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
-      expect_true(client.connectToServer());
+      expect_true(pClient->connectToServer());
 
-      while (!client.gotOpened() && !client.gotFailed())
+      while (!pClient->gotOpened() && !pClient->gotFailed())
       {
       }
 
-      expect_true(client.gotOpened());
-      expect_false(client.gotFailed());
+      expect_true(pClient->gotOpened());
+      expect_false(pClient->gotFailed());
 
       expect_true(pConnection->sendMessage(msgString1));
+      expect_true(pClient->getInput().compare(msgString1) == 0);
 
-      blockingwait(100);
-
-      expect_true(client.getInput().compare(msgString1) == 0);
-
-      expect_true(client.disconnectFromServer());
+      expect_true(pClient->disconnectFromServer());
       expect_true(pSocket->stopServer());
    }
 
@@ -442,43 +449,41 @@ context("websocket for interactive terminals")
       shared_ptr<SocketConnection> pConnection1 =
             make_shared<SocketConnection>(handle1, pSocket);
 
-      SocketClient client1(handle1, pSocket->port());
+      shared_ptr<SocketClient> pClient1 = make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection1->listen());
-      expect_true(client1.connectToServer());
+      expect_true(pClient1->connectToServer());
 
-      while (!client1.gotOpened() && !client1.gotFailed())
+      while (!pClient1->gotOpened() && !pClient1->gotFailed())
       {
       }
-      expect_true(client1.gotOpened());
-      expect_false(client1.gotFailed());
+      expect_true(pClient1->gotOpened());
+      expect_false(pClient1->gotFailed());
 
       // ---- second connection ----
       shared_ptr<SocketConnection> pConnection2 =
             make_shared<SocketConnection>(handle2, pSocket);
 
-      SocketClient client2(handle2, pSocket->port());
+      shared_ptr<SocketClient> pClient2 = make_shared<SocketClient>(handle2, pSocket->port());
       expect_true(pConnection2->listen());
-      expect_true(client2.connectToServer());
+      expect_true(pClient2->connectToServer());
 
-      while (!client2.gotOpened() && !client2.gotFailed())
+      while (!pClient2->gotOpened() && !pClient2->gotFailed())
       {
       }
-      expect_true(client2.gotOpened());
-      expect_false(client2.gotFailed());
+      expect_true(pClient2->gotOpened());
+      expect_false(pClient2->gotFailed());
 
       // ---- send message to first connection ----
       expect_true(pConnection1->sendMessage(msgString1));
-      blockingwait(100);
-      expect_true(client1.getInput().compare(msgString1) == 0);
+      expect_true(pClient1->getInput().compare(msgString1) == 0);
 
       // ---- send message to second connection ----
       expect_true(pConnection2->sendMessage(msgString2));
-      blockingwait(100);
-      expect_true(client2.getInput().compare(msgString2) == 0);
+      expect_true(pClient2->getInput().compare(msgString2) == 0);
 
       // ---- cleanup ----
-      expect_true(client1.disconnectFromServer());
-      expect_true(client2.disconnectFromServer());
+      expect_true(pClient1->disconnectFromServer());
+      expect_true(pClient2->disconnectFromServer());
       expect_true(pSocket->stopServer());
    }
 }
