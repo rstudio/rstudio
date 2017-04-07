@@ -84,6 +84,14 @@
    white-space: nowrap;
 }
 
+.fileList .gwt-CheckBox img
+{
+   background-size: 100% auto !important;
+   vertical-align: middle;
+   margin-left: 2px;
+   margin-right: 4px;
+}
+
 .deployLabel
 {
    font-weight: bold;

@@ -567,7 +567,7 @@ public class RSConnectDeploy extends Composite
    private void setFileList(ArrayList<String> files,
          ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles)
    {
-      fileChecks_ = new ArrayList<CheckBox>();
+      fileChecks_ = new ArrayList<DirEntryCheckBox>();
       
       // clear existing file list
       fileListPanel_.clear(); 
@@ -869,7 +869,7 @@ public class RSConnectDeploy extends Composite
 
    private void addFile(String path, boolean checked)
    {
-      CheckBox fileCheck = new CheckBox(path);
+      DirEntryCheckBox fileCheck = new DirEntryCheckBox(path);
       fileCheck.setValue(checked);
       fileListPanel_.add(fileCheck);
       fileChecks_.add(fileCheck);
@@ -884,7 +884,7 @@ public class RSConnectDeploy extends Composite
       {
          if (fileChecks_.get(i).getValue() == checked)
          {
-            files.add(fileChecks_.get(i).getText());
+            files.add(fileChecks_.get(i).getPath());
          }
       }
       return files;
@@ -945,8 +945,8 @@ public class RSConnectDeploy extends Composite
 
       for (int i = 0; i < fileChecks_.size(); i++)
       {
-         CheckBox fileCheck = fileChecks_.get(i);
-         if (fileCheck.getText().equals(path))
+         DirEntryCheckBox fileCheck = fileChecks_.get(i);
+         if (fileCheck.getPath().equals(path))
          {
             // don't allow the user to unselect the primary file
             fileCheck.setEnabled(false);
@@ -1127,10 +1127,10 @@ public class RSConnectDeploy extends Composite
    private void checkUncheckAll()
    {
       allChecked_ = !allChecked_;
-      for (CheckBox box: fileChecks_)
+      for (DirEntryCheckBox box: fileChecks_)
       {
          // don't toggle state for disabled boxes, or common Shiny .R filenames
-         String file = box.getText().toLowerCase();
+         String file = box.getPath().toLowerCase();
          if (box.isEnabled() &&
              file != "ui.r" &&
              file != "server.r" &&
@@ -1169,7 +1169,7 @@ public class RSConnectDeploy extends Composite
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField(provided=true) AppNameTextbox appName_;
    
-   private ArrayList<CheckBox> fileChecks_;
+   private ArrayList<DirEntryCheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = 
          new ArrayList<String>();
    

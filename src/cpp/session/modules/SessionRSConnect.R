@@ -1,7 +1,7 @@
 #
 # SessionRSConnect.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -297,16 +297,64 @@
      rsconnect::listBundleFiles(target)
 })
 
+
+# Given a list of files of the form:
+# 
+# file2.ext
+# dir/file1.ext
+# dir/file2.ext
+# dir/file3.ext
+# dir/subdir/file4.ext
+# dir2/file2.ext
+# 
+# and a threshold, collapses all directories that contain more than the threshold
+# number of files. For instance, if threshold = 2, the result from the above
+# would be:
+# 
+# file2.ext
+# dir2/file2.ext
+# dir/
+
+.rs.addFunction("summarizeDir", function(files, threshold) {
+  # extract the subdir using a regex
+  prefixes <- regexec("^([^/])+/", files)
+
+  # extract the matching text to form a list of top-level subdirs; skip files
+  # with no prefix
+  prefixes <- lapply(regmatches(x = files, m = prefixes), `[`, 1)
+  prefixes[is.na(prefixes)] <- ""
+
+  # get a list of top-level directories
+  toplevel <- sort(unlist(prefixes))
+
+  # get a count of the number of files in each top-level dir
+  counts <- rle(toplevel)
+
+  # for those dirs which have more than the threshold, hide all of the contents
+  rollups <- which(counts$lengths > threshold)
+  include <- rep_len(TRUE, length(files))
+  for (rollup in rollups) {
+    if (nzchar(counts$values[rollup]))
+       include <- include & prefixes != counts$values[rollup]
+  }
+
+  # combine the files to be included with the top-level directories that were
+  # rolled up
+  toplevel <- counts$values[rollups]
+  c(files[include], toplevel[nzchar(toplevel)])
+})
+
 .rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc) {
   max_size <- getOption("rsconnect.max.bundle.size", 1048576000)
   dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, max_size)
+
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
     dir_list = if (dirlist$totalSize >= max_size)
                   NULL 
                else
-                  dirlist$contents,
+                  .rs.summarizeDir(dirlist$contents, 5),
     max_size = .rs.scalar(max_size), 
     dir_size = .rs.scalar(dirlist$totalSize))
 })
