@@ -164,8 +164,8 @@ void ConsoleProcessSocket::stopServer()
          pwsServer_->stop();
          serverRunning_ = false;
          port_ = 0;
-         pwsServer_.reset();
          websocketThread_.join();
+         pwsServer_.reset();
       }
    }
    catch (websocketpp::exception const& e)
