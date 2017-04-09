@@ -602,6 +602,10 @@ pre {
 .rstudio-themes-flat .windowframe > div:last-child {
    border: solid 1px #d6dadc;
    border-radius: 3px;
+   left: 2px !important;
+   top: 2px !important;
+   right: 2px !important;
+   bottom: 2px !important;
 }
 
 .macintosh #rstudio_console_input {
