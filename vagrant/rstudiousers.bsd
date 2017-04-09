@@ -1,0 +1,8 @@
+# This file contains the list of server users in a format consumable by
+# FreeBSD's adduser command.
+rstudiouser::::::RStudio User:/primary/home/rstudiouser:bash:rstudiouser
+rstudiouser2::::::RStudio User 2:/primary/home/rstudiouser2:bash:rstudiouser2
+rstudiouser3::::::RStudio User 3:/primary/home/rstudiouser3:bash:rstudiouser3
+rstudiouser4::::::RStudio User 4:/primary/home/rstudiouser4:bash:rstudiouser4
+rstudiouser5::::::RStudio User 5:/primary/home/rstudiouser5:bash:rstudiouser5
+

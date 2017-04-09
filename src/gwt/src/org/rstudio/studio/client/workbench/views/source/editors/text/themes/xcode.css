@@ -136,7 +136,7 @@
   font-feature-settings: "liga" 0;
   position: relative;
 }
-.terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
+.terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
    background-color: #333;
    color: #CCC;
 }
@@ -145,16 +145,6 @@
   outline-offset: -1px;
   background-color: transparent;
 }
-@keyframes xterm-cursor-blink {
-  0% {
-    background-color: #333;
-    color: #CCC;
-  }
-  50% {
-    background-color: transparent;
-    color: #333;
-  }
-}
 .terminal.xterm-cursor-style-bar .terminal-cursor::before,
 .terminal.xterm-cursor-style-underline .terminal-cursor::before {
    content: "";
@@ -162,9 +152,9 @@
    position: absolute;
    background-color: #333;
 }
-@keyframes xterm-cursor-non-bar-blink {
-   0% { background-color: #333; }
-   50% { background-color: transparent; }
+.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
+.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
+   background-color: #333;
 }
 .terminal .xterm-viewport {
   /* On OS X this is required in order for the scroll bar to appear fully opaque */

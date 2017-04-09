@@ -51,7 +51,7 @@ Vagrant.configure(2) do |config|
     end
   end
 
-  # define NFS box; can be used with or without the load balancer.
+  # define NFSv3 box; can be used with or without the load balancer.
   config.vm.define "nfs", autostart: false do |n|
     n.vm.box = "ubuntu/trusty64"
     n.vm.network "private_network", ip: "192.168.55.103"
@@ -62,6 +62,28 @@ Vagrant.configure(2) do |config|
       vb.memory = "1024"
       vb.cpus = "1"
     end
+  end
+
+  # define NFSv4 box; mutually exclusive with the NFSv3 box (pick one)
+  config.vm.define "nfs4", autostart: false do |n|
+    n.vm.box = "freebsd/FreeBSD-11.0-STABLE"
+
+    # the freeBSD base box is missing a MAC address
+    n.vm.base_mac = "080027D14C66"
+
+    n.vm.provision :shell, path: "vagrant/provision-nfs4.sh"
+
+    # just a file server
+    n.vm.provider "virtualbox" do |vb|
+      # required for FreeBSD to connect to the private network correctly
+      vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
+      vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
+
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+
+    n.vm.network "private_network", ip: "192.168.55.103"
   end
 
   # define an LDAP box; can be used with or without the load balancer, but 

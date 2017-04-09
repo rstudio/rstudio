@@ -18,6 +18,7 @@
       }
       .rstudio-themes-flat .statusBar {
          background-image: none;
+         border-top: solid 1px #d6dadc;
       }
       .statusBar div {
          display: inline;
