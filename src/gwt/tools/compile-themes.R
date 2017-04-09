@@ -216,7 +216,7 @@ create_terminal_cursor_rules <- function(isDark) {
    }
    
    sprintf(paste(sep = "\n",
-                 ".terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {",
+                 ".terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {",
                  "   background-color: %s;",
                  "   color: %s;",
                  "}",
@@ -225,16 +225,6 @@ create_terminal_cursor_rules <- function(isDark) {
                  "  outline-offset: -1px;",
                  "  background-color: transparent;",
                  "}",
-                 "@keyframes xterm-cursor-blink {",
-                 "  0%% {",
-                 "    background-color: %s;",
-                 "    color: %s;",
-                 "  }",
-                 "  50%% {",
-                 "    background-color: transparent;",
-                 "    color: %s;",
-                 "  }",
-                 "}",
                  ".terminal.xterm-cursor-style-bar .terminal-cursor::before,",
                  ".terminal.xterm-cursor-style-underline .terminal-cursor::before {",
                  "   content: \"\";",
@@ -242,9 +232,9 @@ create_terminal_cursor_rules <- function(isDark) {
                  "   position: absolute;",
                  "   background-color: %s;",
                  "}",
-                 "@keyframes xterm-cursor-non-bar-blink {",
-                 "   0%% { background-color: %s; }",
-                 "   50%% { background-color: transparent; }",
+                 ".terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,",
+                 ".terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {",
+                 "   background-color: %s;",
                  "}"),
            
            # .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor
@@ -254,16 +244,12 @@ create_terminal_cursor_rules <- function(isDark) {
            # .terminal:not(.focus) .terminal-cursor
            termCursorBgColorFirst,
            
-           # @keyframes xterm-cursor-blink
-           termCursorBgColorFirst,
-           termCursorBgColorSecond,
-           termCursorBgColorFirst,
-   
            # .terminal.xterm-cursor-style-bar .terminal-cursor::before
            # .terminal.xterm-cursor-style-underline .terminal-cursor::before
            termCursorBgColorFirst,
-           
-           # @keyframes xterm-cursor-non-bar-blink
+
+           # .terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
+           # .terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before
            termCursorBgColorFirst)
 }
 
