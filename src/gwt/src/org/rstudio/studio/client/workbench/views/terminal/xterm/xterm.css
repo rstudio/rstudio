@@ -81,10 +81,10 @@
 
 
 
-.terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar).focus.xterm-cursor-blink .terminal-cursor {
-    animation: xterm-cursor-blink 1.2s infinite step-end;
+.terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar).focus.xterm-cursor-blink-on .terminal-cursor {
+    background-color: transparent;
+    color: inherit;
 }
-
 
 .terminal.xterm-cursor-style-bar .terminal-cursor,
 .terminal.xterm-cursor-style-underline .terminal-cursor {
@@ -102,9 +102,9 @@
     right: 0;
     height: 1px;
 }
-.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
-.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
-    animation: xterm-cursor-non-bar-blink 1.2s infinite step-end;
+.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink.xterm-cursor-blink-on .terminal-cursor::before,
+.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink.xterm-cursor-blink-on .terminal-cursor::before {
+    background-color: transparent;
 }
 
 .terminal .composition-view {
