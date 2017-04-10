@@ -24,9 +24,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
@@ -330,14 +330,15 @@ public class VirtualConsole
    
    public void submit(String data, String clazz)
    {
-      if (CONTROL.match(data, 0) == null)
+      Match match = AnsiCode.ESC_CONTROL_SEQUENCE.match(data, 0);
+      if (match == null)
       {
          text(data, clazz);
          return;
       }
-
+      
+      String currentClazz  = clazz;
       int tail = 0;
-      Match match = CONTROL.match(data, 0);
       while (match != null)
       {
          int pos = match.getIndex();
@@ -345,8 +346,8 @@ public class VirtualConsole
          // If we passed over any plain text on the way to this control
          // character, add it.
          if (tail != pos)
-            text(data.substring(tail, pos), clazz);
-
+            text(data.substring(tail, pos), currentClazz);
+         
          tail = pos + 1;
 
          switch (data.charAt(pos))
@@ -363,9 +364,23 @@ public class VirtualConsole
             case '\f':
                formfeed();
                break;
+            case '\033':
+            case '\233':
+               tail = pos + match.getValue().length();
+               String newClazz = AnsiCode.classForCode(match.getValue());
+               if (newClazz == null)
+               {
+                  // reset back to initial style
+                  currentClazz = clazz;
+               }
+               else
+               {
+                  currentClazz = currentClazz + " " + newClazz;
+               }
+               break;
             default:
                assert false : "Unknown control char, please check regex";
-               text(data.charAt(pos) + "", clazz);
+               text(data.charAt(pos) + "", currentClazz);
                break;
          }
 
@@ -374,7 +389,7 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
-         text(data.substring(tail), clazz);
+         text(data.substring(tail), currentClazz);
    }
    
    private class ClassRange
@@ -444,8 +459,6 @@ public class VirtualConsole
       public SpanElement element;
    }
 
-   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
-   
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<Integer, ClassRange>();
    private final Element parent_;

@@ -1,7 +1,7 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,13 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.regex.Pattern;
+
 /**
- * Helpers for generating Ansi Escape Code strings for output to a terminal.
+ * Helpers for working with Ansi Escape Codes in terminal and console.
  */
 public class AnsiCode
+
 {
    // Ansi command constants
    public static final String CSI = "\33[";
@@ -65,4 +68,35 @@ public class AnsiCode
       public static final String LIGHTCYAN    = CSI + "1:46" + SGR;
       public static final String WHITE        = CSI + "1;47" + SGR;
    }
+   
+   /**
+    * Map an ansi escape sequence to the appropriate css style; only handles
+    * colors; other sequences such as cursor movement are ignored.
+    * @param code escape sequence
+    * @return Css class for supported escape sequence, otherwise null
+    */
+   public static String classForCode(String code)
+   {
+      int pos = 0;
+      
+      char escCh = code.charAt(pos++);
+      if (escCh != '\033' && escCh != '\233')
+         return null;
+      
+      if (code.charAt(pos++) != '[')
+         return null; 
+      
+      // TODO (gary) parse remainder of codes, return appropriate style(s)
+      return null;
+   }
+
+   // Control characters handled by R console
+   private static final String CONTROL_PATTERN = "[\r\b\f\n]";
+
+   // RegEx to match ansi escape codes copied from https://github.com/chalk/ansi-regex
+   private static final String ANSI_PATTERN = "[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]";
+
+   // Match both console control characters and ansi escape sequences
+   public static final Pattern ESC_CONTROL_SEQUENCE =
+         Pattern.create("(?:" + CONTROL_PATTERN + ")|(?:" + ANSI_PATTERN + ")");
 }

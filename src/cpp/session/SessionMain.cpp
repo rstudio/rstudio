@@ -1542,6 +1542,10 @@ int main (int argc, char * const argv[])
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
 
+      // environment variable so code can check for rstudio console
+      // color support via ansi escape sequences
+      core::system::setenv("RSTUDIO_CONSOLE_COLOR", "1");
+
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
