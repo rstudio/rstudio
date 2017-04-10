@@ -124,6 +124,72 @@ public class JsonUtilTest extends GWTTestCase {
     }
   }
 
+  public void testUnclosedString() {
+    try {
+      JsonUtil.parse("\"a");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
+  public void testUnclosedEmptyString() {
+    try {
+      JsonUtil.parse("\"");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
+  public void testUnclosedArray() {
+    try {
+      JsonUtil.parse("[1");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
+  public void testUnclosedEmptyArray() {
+    try {
+      JsonUtil.parse("[");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
+  public void testUnclosedObject() {
+    try {
+      JsonUtil.parse("{'a");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+    try {
+      JsonUtil.parse("{'a'");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+    try {
+      JsonUtil.parse("{'a':");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
+  public void testUnclosedEmptyObject() {
+    try {
+      JsonUtil.parse("{");
+      fail("Expected JsonException to be thrown");
+    } catch (JsonException je) {
+      // Expected
+    }
+  }
+
   public void testLegalParse() {
     JsonValue obj = JsonUtil.parse(
         "{ \"a\":1, \"b\":\"hello\", \"c\": true,"

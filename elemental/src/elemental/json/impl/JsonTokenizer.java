@@ -110,6 +110,8 @@ class JsonTokenizer {
         case '\r':
         case '\n':
           throw new JsonException("");
+        case INVALID_CHAR:
+          throw new JsonException("Invalid string: closing " + startChar + " is not found");
         case '\\':
           c = next();
           switch (c) {
