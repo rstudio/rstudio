@@ -183,6 +183,7 @@ public class NewConnectionSnippetHost extends Composite
             TextArea textarea = new TextArea();
             textarea.setVisibleLines(7);
             textarea.addStyleName(RES.styles().textarea());
+            textarea.setText(snippetParts.get(idxParams).getValue());
             connGrid.setWidget(idxRow, 1, textarea);
             textboxBase = textarea;
          }
