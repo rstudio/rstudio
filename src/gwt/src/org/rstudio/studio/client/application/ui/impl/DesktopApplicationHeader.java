@@ -267,7 +267,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    public int getPreferredHeight()
    {
       if (toolbar_.isVisible())
-         return pUIPrefs_.get().getUseFlatThemes().getValue() ? 29 : 32;
+         return 32;
       else
          return 5;
    }
