@@ -15,6 +15,8 @@
 package org.rstudio.core.client;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -330,7 +332,7 @@ public class VirtualConsole
    
    public void submit(String data, String clazz)
    {
-      Match match = AnsiCode.ESC_CONTROL_SEQUENCE.match(data, 0);
+      Match match = AnsiCode.ESC_CONTROL_PATTERN.match(data, 0);
       if (match == null)
       {
          text(data, clazz);
@@ -338,6 +340,8 @@ public class VirtualConsole
       }
       
       String currentClazz  = clazz;
+      
+      Set<String> ansiClazzes = new LinkedHashSet<String>();
       int tail = 0;
       while (match != null)
       {
@@ -367,15 +371,27 @@ public class VirtualConsole
             case '\033':
             case '\233':
                tail = pos + match.getValue().length();
-               String newClazz = AnsiCode.classForCode(match.getValue());
-               if (newClazz == null)
+               AnsiCode.classForCode(match.getValue(), ansiClazzes);
+               if (ansiClazzes.isEmpty())
                {
                   // reset back to initial style
                   currentClazz = clazz;
                }
                else
                {
-                  currentClazz = currentClazz + " " + newClazz;
+                  // append current ANSI classes to the original class
+                  StringBuilder buildClazzes = new StringBuilder();
+                  buildClazzes.append(clazz);
+                  Iterator<String> itr = ansiClazzes.iterator();
+                  while (itr.hasNext())
+                  {
+                     if (buildClazzes.length() > 0)
+                     {
+                        buildClazzes.append(" ");
+                     }
+                     buildClazzes.append(itr.next());
+                  }
+                  currentClazz = buildClazzes.toString();
                }
                break;
             default:
