@@ -16,7 +16,6 @@
 package java.util.stream;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -41,29 +40,9 @@ final class CollectorImpl<T, A, R> implements Collector<T, A, R> {
       Characteristics... characteristics) {
     this.supplier = supplier;
     this.accumulator = accumulator;
-    if (characteristics.length == 0) {
-      this.characteristics = Collections.emptySet();
-    } else if (characteristics.length == 1) {
-      this.characteristics = Collections.singleton(characteristics[0]);
-    } else {
-      this.characteristics =
-          Collections.unmodifiableSet(EnumSet.of(characteristics[0], characteristics));
-    }
+    this.characteristics = Collections.emptySet();
     this.combiner = combiner;
     this.finisher = finisher;
-  }
-
-  public CollectorImpl(
-      Supplier<A> supplier,
-      BiConsumer<A, T> accumulator,
-      BinaryOperator<A> combiner,
-      Function<A, R> finisher,
-      Set<Characteristics> characteristics) {
-    this.supplier = supplier;
-    this.accumulator = accumulator;
-    this.combiner = combiner;
-    this.finisher = finisher;
-    this.characteristics = characteristics;
   }
 
   @Override

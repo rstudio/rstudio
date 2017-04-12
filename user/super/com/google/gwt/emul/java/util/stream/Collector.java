@@ -17,8 +17,6 @@ package java.util.stream;
 
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -53,13 +51,7 @@ public interface Collector<T,A,R> {
     checkNotNull(combiner);
     checkNotNull(finisher);
     checkNotNull(characteristics);
-    return new CollectorImpl<>(
-        supplier,
-        accumulator,
-        combiner,
-        finisher,
-        characteristics
-    );
+    return new CollectorImpl<>(supplier, accumulator, combiner, finisher, characteristics);
   }
 
   static <T, R> Collector<T, R, R> of(
@@ -72,12 +64,7 @@ public interface Collector<T,A,R> {
     checkNotNull(combiner);
     checkNotNull(characteristics);
     return new CollectorImpl<T, R, R>(
-        supplier,
-        accumulator,
-        combiner,
-        Function.identity(),
-        Collections.unmodifiableSet(EnumSet.of(Characteristics.IDENTITY_FINISH, characteristics))
-    );
+        supplier, accumulator, combiner, Function.identity(), characteristics);
   }
 
   Supplier<A> supplier();

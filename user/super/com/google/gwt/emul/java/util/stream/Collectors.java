@@ -18,10 +18,8 @@ package java.util.stream;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IntSummaryStatistics;
@@ -68,8 +66,7 @@ public final class Collectors {
         downstream.supplier(),
         downstream.accumulator(),
         downstream.combiner(),
-        downstream.finisher().andThen(finisher),
-        removeIdentFinisher(downstream.characteristics()));
+        downstream.finisher().andThen(finisher));
   }
 
   public static <T> Collector<T,?,Long> counting() {
@@ -170,8 +167,7 @@ public final class Collectors {
               downstream.accumulator().accept(a, mapper.apply(t));
             },
         downstream.combiner(),
-        downstream.finisher(),
-        downstream.characteristics());
+        downstream.finisher());
   }
 
   public static <T> Collector<T,?,Optional<T>> maxBy(Comparator<? super T> comparator) {
@@ -359,21 +355,6 @@ public final class Collectors {
         s -> s,
         Collector.Characteristics.UNORDERED, Collector.Characteristics.IDENTITY_FINISH
     );
-  }
-
-  private static Set<Collector.Characteristics> removeIdentFinisher(
-      Set<Collector.Characteristics> characteristics) {
-    if (!characteristics.contains(Collector.Characteristics.IDENTITY_FINISH)) {
-      return characteristics;
-    }
-
-    if (characteristics.size() == 1) {
-      return Collections.emptySet();
-    }
-
-    EnumSet<Collector.Characteristics> result = EnumSet.copyOf(characteristics);
-    result.remove(Collector.Characteristics.IDENTITY_FINISH);
-    return Collections.unmodifiableSet(result);
   }
 
   private static <T, D, A> D streamAndCollect(Collector<? super T, A, D> downstream, List<T> list) {
