@@ -209,7 +209,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
           value<bool>(&useTerminalWebsockets_)->default_value(true),
           "try to communicate with terminal using websockets")
       ("session-default-console-term",
-       value<std::string>(&defaultConsoleTerm_)->default_value("vt100-256color"),
+       value<std::string>(&defaultConsoleTerm_)->default_value("xterm-256color"),
        "default TERM setting for R console")
       ("session-default-clicolor-force",
        value<bool>(&defaultCliColorForce_)->default_value(true),
