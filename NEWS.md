@@ -42,6 +42,7 @@
 
 ### Miscellaneous
 
+* ANSI escape code support in console for colored output
 * New high-DPI icons throughout
 * Add support for custom, user-provided project templates
 * Add support for creating new Git branches and adding remotes
