@@ -354,7 +354,7 @@ public class AnsiCode
          }
          else if (codeVal == HIDDEN_OFF)
          {
-            clazzes_.remove(HIDDEN_OFF);
+            clazzes_.remove(HIDDEN_STYLE);
          }
          else if (codeVal == STRIKETHROUGH)
          {
