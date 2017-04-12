@@ -448,4 +448,76 @@ public class VirtualConsoleTests extends GWTTestCase
       String expected ="<span class=\"xtermColor234 xtermInvertBgColor\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
+
+   public void testAnsiComplexSequence1()
+   {
+      int fgColor = AnsiCode.ForeColorNum.GREEN;
+      int bgColor = 230;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+         AnsiCode.CSI + fgColor + ";" + 
+         AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
+         AnsiCode.BOLD + ";" + AnsiCode.UNDERLINE + ";" + AnsiCode.BOLD_BLURRED_OFF + ";" +
+         AnsiCode.INVERSE_OFF + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"xtermColor2 xtermBgColor230 xtermUnderline\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiComplexSequence2()
+   {
+      int fgColor = AnsiCode.ForeColorNum.GREEN;
+      int bgColor = 230;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+         AnsiCode.CSI + fgColor + ";" + 
+         AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
+         AnsiCode.BOLD + ";" + AnsiCode.UNDERLINE + ";" + AnsiCode.BOLD_BLURRED_OFF + ";" +
+         AnsiCode.INVERSE_OFF + AnsiCode.SGR + "Hello World",
+         "existingStyle moreExisting");
+      String expected ="<span class=\"existingStyle moreExisting xtermColor2 xtermBgColor230 xtermUnderline\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiUnsupportedRGBExtendedColorScheme()
+   {
+      // don't currently support specifying color via RGB, which is
+      // ESC[38;2;r;g;bm or ESC[48;2;r;g;bm
+      // in those cases want to ignore the RGB sequence and carry on
+      // processing following codes
+      int red = 123;
+      int green = 231;
+      int blue = 121;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+         AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + AnsiCode.EXT_BY_RGB + ";" +
+         red + ";" + green + ";" + blue + ";" + AnsiCode.BOLD + AnsiCode.SGR + 
+         "Hello World");
+      String expected ="<span class=\"xtermBold\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiMultiUnsupportedRGBExtendedColorScheme()
+   {
+      int red = 123;
+      int green = 231;
+      int blue = 121;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+         AnsiCode.CSI + AnsiCode.BOLD + ";" + 
+         AnsiCode.FOREGROUND_EXT + ";" + AnsiCode.EXT_BY_RGB + ";" +
+         red + ";" + green + ";" + blue + ";" + 
+         AnsiCode.UNDERLINE + ";" +
+         AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_RGB + ";" +
+         red + ";" + green + ";" + blue + ";" +
+         AnsiCode.FOREGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + 255 +
+         AnsiCode.SGR + 
+         "Hello World");
+      String expected ="<span class=\"xtermBold xtermUnderline xtermColor255\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
 }
