@@ -171,6 +171,8 @@
   background-color: #323232;
   overflow-y: scroll;
 }
+.xtermInvertColor { color: #323232 }
+.xtermInvertBgColor { background-color: #ffffff }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }

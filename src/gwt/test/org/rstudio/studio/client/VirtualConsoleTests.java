@@ -15,6 +15,7 @@
 package org.rstudio.studio.client;
 
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PreElement;
@@ -124,5 +125,205 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Sample3\f");
       vc.submit("Sample4");
       Assert.assertEquals("<span>Sample4</span>", ele.getInnerHTML());
+   }
+
+   public void testMinAnsiForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_MIN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + 
+            "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMaxAnsiForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_MAX;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMinAnsiBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_MIN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "pretty");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForBgColor(color) + "\">pretty</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMaxAnsiBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_MAX;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "colors");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForBgColor(color) + "\">colors</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testResetAnsiForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_MIN + 1;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + "Hello " +
+            AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR + "World");
+      String expected =
+            "<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello </span>" + 
+            "<span>World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testResetAnsiBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_MIN + 1;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + "Sunny " +
+            AnsiCode.CSI + AnsiCode.RESET_BACKGROUND + AnsiCode.SGR + "Days");
+      String expected = "<span class=\"" + AnsiCode.clazzForBgColor(color) + 
+            "\">Sunny </span><span>Days</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiForegroundAndBgColor()
+   {
+      int color = AnsiCode.FOREGROUND_MIN + 2;
+      int bgColor = AnsiCode.BACKGROUND_MAX - 3;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + 
+            AnsiCode.CSI + bgColor + AnsiCode.SGR + "Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + " " + 
+            AnsiCode.clazzForBgColor(bgColor) + "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testResetAnsiColors()
+   {
+      int color = AnsiCode.FOREGROUND_MIN + 2;
+      int bgColor = AnsiCode.BACKGROUND_MAX - 3;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + 
+            AnsiCode.CSI + bgColor + AnsiCode.SGR + "Colorful " +
+            AnsiCode.CSI + AnsiCode.RESET + AnsiCode.SGR + "Bland");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + " " + 
+            AnsiCode.clazzForBgColor(bgColor) +
+            "\">Colorful </span><span>Bland</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMinAnsiIntenseForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_INTENSE_MIN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + 
+            "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMaxAnsiIntenseForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_INTENSE_MAX;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMinAnsiIntenseBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_INTENSE_MIN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "pretty");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForBgColor(color) + "\">pretty</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMaxAnsiIntenseBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_INTENSE_MAX;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "colors");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForBgColor(color) + "\">colors</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+   
+   public void testResetAnsiIntenseForegroundColor()
+   {
+      int color = AnsiCode.FOREGROUND_INTENSE_MIN + 1;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + "Hello " +
+            AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR + "World");
+      String expected =
+            "<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello </span>" + 
+            "<span>World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testResetAnsiIntenseBgColor()
+   {
+      int color = AnsiCode.BACKGROUND_INTENSE_MIN + 1;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + color + AnsiCode.SGR + "Sunny " +
+            AnsiCode.CSI + AnsiCode.RESET_BACKGROUND + AnsiCode.SGR + "Days");
+      String expected = "<span class=\"" + AnsiCode.clazzForBgColor(color) + 
+            "\">Sunny </span><span>Days</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+   
+   public void testAnsiInvertDefaultColors()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit( AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny Days");
+      String expected = "<span class=\"xtermInvertColor xtermInvertBgColor\"" +
+            ">Sunny Days</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiInvertRevertDefaultColors()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny " +
+            AnsiCode.CSI + AnsiCode.INVERSE_OFF + AnsiCode.SGR + "Days");
+      String expected = "<span class=\"xtermInvertColor xtermInvertBgColor\"" +
+            ">Sunny </span><span>Days</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
    }
 }

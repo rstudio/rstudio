@@ -343,6 +343,7 @@ public class VirtualConsole
       
       Set<String> ansiClazzes = new LinkedHashSet<String>();
       int tail = 0;
+      AnsiCode ansi = new AnsiCode();
       while (match != null)
       {
          int pos = match.getIndex();
@@ -371,7 +372,7 @@ public class VirtualConsole
             case '\033':
             case '\233':
                tail = pos + match.getValue().length();
-               AnsiCode.classForCode(match.getValue(), ansiClazzes);
+               ansi.classForCode(match.getValue(), ansiClazzes);
                if (ansiClazzes.isEmpty())
                {
                   // reset back to initial style
@@ -381,14 +382,13 @@ public class VirtualConsole
                {
                   // append current ANSI classes to the original class
                   StringBuilder buildClazzes = new StringBuilder();
-                  buildClazzes.append(clazz);
+                  if (clazz != null)
+                     buildClazzes.append(clazz);
                   Iterator<String> itr = ansiClazzes.iterator();
                   while (itr.hasNext())
                   {
                      if (buildClazzes.length() > 0)
-                     {
                         buildClazzes.append(" ");
-                     }
                      buildClazzes.append(itr.next());
                   }
                   currentClazz = buildClazzes.toString();

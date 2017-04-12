@@ -276,6 +276,8 @@ create_terminal_viewport_rule <- function(background) {
 
 create_xterm_color_rules <- function(background, foreground, isDark) {
    paste(sep = "\n",
+      sprintf(".xtermInvertColor { color: %s }", background),
+      sprintf(".xtermInvertBgColor { background-color: %s }", foreground),
       ".xtermBold { font-weight: bold; }",
       ".xtermUnderline { text-decoration: underline; }",
       ".xtermBlink { text-decoration: blink; }",
@@ -791,8 +793,7 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermColor254 { color: #e4e4e4; }",
       ".xtermBgColor254 { background-color: #e4e4e4; }",
       ".xtermColor255 { color: #eeeeee; }",
-      ".xtermBgColor255 { background-color: #eeeeee; }"
-    )  
+      ".xtermBgColor255 { background-color: #eeeeee; }")
 }
 
 ## Get the set of all theme .css files
