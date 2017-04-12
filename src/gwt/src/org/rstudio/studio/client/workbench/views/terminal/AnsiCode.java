@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.rstudio.core.client.StringUtil;
@@ -87,12 +89,36 @@ public class AnsiCode
    
    private static final int DEFAULT_COLOR = -1;
 
+   public static class ForeColorNum
+   {
+      public static final int BLACK = 30;
+      public static final int RED = 31;
+      public static final int GREEN = 32;
+      public static final int YELLOW = 33;
+      public static final int BLUE = 34;
+      public static final int MAGENTA = 35;
+      public static final int CYAN = 36;
+      public static final int WHITE = 37;
+   }
+
+   public static class BackColorNum
+   {
+      public static final int BLACK = 40;
+      public static final int RED = 41;
+      public static final int GREEN = 42;
+      public static final int YELLOW = 43;
+      public static final int BLUE = 44;
+      public static final int MAGENTA = 45;
+      public static final int CYAN = 46;
+      public static final int WHITE = 47;
+   }
+
    public static class ForeColor
    {
       public static final String BLACK        = CSI + RESET + ";30" + SGR;
       public static final String RED          = CSI + RESET + ";31" + SGR;
       public static final String GREEN        = CSI + RESET + ";32" + SGR;
-      public static final String BROWN        = CSI + RESET + ";33" + SGR;
+      public static final String YELLOW       = CSI + RESET + ";33" + SGR;
       public static final String BLUE         = CSI + RESET + ";34" + SGR;
       public static final String MAGENTA      = CSI + RESET + ";35" + SGR;
       public static final String CYAN         = CSI + RESET + ";36" + SGR;
@@ -110,27 +136,30 @@ public class AnsiCode
       public static final String MAGENTA      = CSI + RESET + ";45" + SGR;
       public static final String CYAN         = CSI + RESET + ";46" + SGR;
       public static final String GRAY         = CSI + RESET + ";47" + SGR;
+      public static final String DEFAULT_BACK = CSI + RESET + ";49" + SGR;
    }
    
+   public AnsiCode()
+   {
+   }
+ 
    /**
     * Map an ANSI escape sequence to the appropriate css styles; only handles
     * colors and visual appearance covered by SGR codes; other sequences 
     * such as cursor movement are ignored.
     * @param code escape sequence
-    * @clazzes list of current classes to modify
-    * @return true if classes contains modified classes, false if caller should
-    * reset all styles back to defaults
+    * @return Clazzes
     */
-   public void classForCode(String code, Set<String> clazzes)
+   public String processCode(String code, String baseClazz)
    {
       if (code == null || code.length() < 2)
-         return; // unrecognized sequence, ignore
+         return getStyle(baseClazz); // unrecognized sequence, ignore
       if (code.charAt(0) != '\033' && code.charAt(code.length() - 1) != 'm')
-         return; // unsupported sequence, ignore
+         return getStyle(baseClazz); // unsupported sequence, ignore
       if (code.length() == 2)
       {
-         clazzes.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
-         return;
+         clazzes_.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
+         return getStyle(baseClazz);
       }
 
       String[] tokens = code.substring(2, code.length() - 1).split(";");
@@ -145,108 +174,110 @@ public class AnsiCode
             inverted_ = false;
             currentColor_ = DEFAULT_COLOR;
             currentBgColor_ = DEFAULT_COLOR;
-            clazzes.clear();
+            clazzes_.clear();
          }
          else if (codeVal == BOLD)
          {
-            clazzes.add(BOLD_STYLE);
+            clazzes_.add(BOLD_STYLE);
          }
          else if (codeVal == BLURRED)
          {
-            // NYI clazzes.add(BLURRED_STYLE);
+            // NYI clazzes_.add(BLURRED_STYLE);
          }
          else if (codeVal == BOLD_BLURRED_OFF)
          {
-            clazzes.remove(BOLD_STYLE);
-            // NYI clazzes.remove(BLURRED_STYLE);
+            clazzes_.remove(BOLD_STYLE);
+            // NYI clazzes_.remove(BLURRED_STYLE);
          }
          else if (codeVal == ITALIC)
          {
-            // NYI clazzes.add(ITALIC_STYLE);
+            // NYI clazzes_.add(ITALIC_STYLE);
          }
          else if (codeVal == ITALIC_OFF)
          {
-            // NYI clazzes.remove(ITALIC_STYLE);
+            // NYI clazzes_.remove(ITALIC_STYLE);
          }
          else if (codeVal == UNDERLINE)
          {
-            clazzes.add(UNDERLINE_STYLE);
+            clazzes_.add(UNDERLINE_STYLE);
          }
          else if (codeVal == UNDERLINE_OFF)
          {
-            clazzes.remove(UNDERLINE_STYLE);
+            clazzes_.remove(UNDERLINE_STYLE);
          }
          else if (codeVal == BLINKSLOW || codeVal == BLINKFAST)
          {
-            clazzes.add(BLINK_STYLE);
+            clazzes_.add(BLINK_STYLE);
          }
          else if (codeVal == BLINK_OFF)
          {
-            clazzes.remove(BLINK_STYLE);
+            clazzes_.remove(BLINK_STYLE);
          }
          else if (codeVal == INVERSE)
          {
-            if (inverted_)
-               return;
-            resetForeground(clazzes);
-            resetBackground(clazzes);
-            int newFg = invertFgColor(currentBgColor_, clazzes, inverted_);
-            int newBg = invertBgColor(currentColor_, clazzes, inverted_);
-            currentColor_ = newFg;
-            currentBgColor_ = newBg;
-            inverted_ = true;
+            if (!inverted_)
+            {
+               resetForeground();
+               resetBackground();
+               int newFg = invertFgColor(currentBgColor_);
+               int newBg = invertBgColor(currentColor_);
+               currentColor_ = newFg;
+               currentBgColor_ = newBg;
+               inverted_ = true;
+            }
          }
          else if (codeVal == INVERSE_OFF)
          {
-            if (!inverted_)
-               return;
-            resetForeground(clazzes);
-            resetBackground(clazzes);
-            int newFg = invertFgColor(currentBgColor_, clazzes, inverted_);
-            int newBg = invertBgColor(currentColor_, clazzes, inverted_);
-            currentColor_ = newFg;
-            currentBgColor_ = newBg;
-            inverted_ = false;
+            if (inverted_)
+            {
+               resetForeground();
+               resetBackground();
+               int newFg = invertFgColor(currentBgColor_);
+               int newBg = invertBgColor(currentColor_);
+               currentColor_ = newFg;
+               currentBgColor_ = newBg;
+               inverted_ = false;
+            }
          }
          else if (codeVal == HIDDEN)
          {
-            clazzes.add(HIDDEN_STYLE);
+            clazzes_.add(HIDDEN_STYLE);
          }
          else if (codeVal == HIDDEN_OFF)
          {
-            clazzes.remove(HIDDEN_OFF);
+            clazzes_.remove(HIDDEN_OFF);
          }
          else if (codeVal == STRIKETHROUGH)
          {
-            // NYI clazzes.add(STRIKETHROUGH_STYLE);
+            // NYI clazzes_.add(STRIKETHROUGH_STYLE);
          }
          else if (codeVal == STRIKETHROUGH_OFF)
          {
-            // NYI clazzes.remove(STRIKETHROUGH_OFF);
+            // NYI clazzes_.remove(STRIKETHROUGH_OFF);
          }
          else if ((codeVal >= FOREGROUND_MIN && codeVal <= FOREGROUND_MAX) ||
                   (codeVal >= FOREGROUND_INTENSE_MIN && codeVal <= FOREGROUND_INTENSE_MAX))
          {
             currentColor_ = codeVal;
-            resetForeground(clazzes);
-            clazzes.add(clazzForColor(codeVal));
+            resetForeground();
+            clazzes_.add(clazzForColor(codeVal));
          }
          else if ((codeVal >= BACKGROUND_MIN && codeVal <= BACKGROUND_MAX) ||
                (codeVal >= BACKGROUND_INTENSE_MIN && codeVal <= BACKGROUND_INTENSE_MAX))
          {
             currentBgColor_ = codeVal;
-            resetBackground(clazzes);
-            clazzes.add(clazzForBgColor(codeVal));
+            resetBackground();
+            clazzes_.add(clazzForBgColor(codeVal));
          }
          else if (codeVal == RESET_FOREGROUND)
          {
             currentColor_ = DEFAULT_COLOR;
-            resetForeground(clazzes);
+            resetForeground();
          }
          else if (codeVal == RESET_BACKGROUND)
          {
             currentBgColor_ = DEFAULT_COLOR;
-            resetBackground(clazzes);
+            resetBackground();
          }
          else if (codeVal == FOREGROUND_EXT)
          {
@@ -261,6 +292,7 @@ public class AnsiCode
             // ignore all others
          }
       }
+      return getStyle(baseClazz);
    }
    
    public static String clazzForColor(int color)
@@ -286,33 +318,52 @@ public class AnsiCode
          return(BACKGROUND_STYLE + Integer.toString(color + 8 - BACKGROUND_INTENSE_MIN));
       }
    }
-   
+
+   private String getStyle(String baseClazz)
+   {
+      if (clazzes_.isEmpty())
+      {
+         return baseClazz;
+      }
+      
+      // append current ANSI classes to the original class
+      StringBuilder buildClazzes = new StringBuilder();
+      if (baseClazz != null)
+         buildClazzes.append(baseClazz);
+      Iterator<String> itr = clazzes_.iterator();
+      while (itr.hasNext())
+      {
+         if (buildClazzes.length() > 0)
+            buildClazzes.append(" ");
+         buildClazzes.append(itr.next());
+      }
+      return buildClazzes.toString();
+   }
+    
    /**
     * Takes a background color, calculates inverse color as foreground color,
     * applies style, and returns new foreground color.
     * @param colorToInvert Background color to invert
-    * @param clazzes clazzes to append to
-    * @param inverted true if we are undoing a previous invert
     * @return new foreground color based on the supplied background color
     */
-   public static int invertFgColor(int colorToInvert, Set<String> clazzes, boolean inverted)
+   private int invertFgColor(int colorToInvert)
    {
       if (colorToInvert == DEFAULT_COLOR)
       {
-         if (!inverted)
-            clazzes.add(INVERSE_FG_STYLE);
+         if (!inverted_)
+            clazzes_.add(INVERSE_FG_STYLE);
          return DEFAULT_COLOR;
       }
       else if (colorToInvert >= BACKGROUND_MIN && colorToInvert <= BACKGROUND_MAX)
       {
          int newFg = colorToInvert - (BACKGROUND_MIN - FOREGROUND_MIN);
-         clazzes.add(FOREGROUND_STYLE + Integer.toString(newFg - FOREGROUND_MIN));
+         clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg - FOREGROUND_MIN));
          return newFg;
       }
       else
       {
          int newFg = colorToInvert - (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
-         clazzes.add(FOREGROUND_STYLE + Integer.toString(newFg + 8 - FOREGROUND_INTENSE_MIN));
+         clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg + 8 - FOREGROUND_INTENSE_MIN));
          return newFg;
       }
    }
@@ -321,56 +372,54 @@ public class AnsiCode
     * Takes a foreground color, calculates inverse color as background color,
     * applies style, and returns new background color.
     * @param colorToInvert Foreground color to invert
-    * @param clazzes classes to append to
-    * @param inverted true if we are undoing a previous invert
     * @return new background color based on the supplied foreground color
     */
-   public static int invertBgColor(int colorToInvert, Set<String> clazzes, boolean inverted)
+   private int invertBgColor(int colorToInvert)
    {
       if (colorToInvert == DEFAULT_COLOR)
       {
-         if (!inverted)
-            clazzes.add(INVERSE_BG_STYLE);
+         if (!inverted_)
+            clazzes_.add(INVERSE_BG_STYLE);
          return DEFAULT_COLOR;
       }
       else if (colorToInvert >= FOREGROUND_MIN && colorToInvert <= FOREGROUND_MAX)
       {
          int newBg = colorToInvert + (BACKGROUND_MIN - FOREGROUND_MIN);
-         clazzes.add(BACKGROUND_STYLE + Integer.toString(newBg - BACKGROUND_MIN));
+         clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg - BACKGROUND_MIN));
          return newBg;
       }
       else
       {
          int newBg = colorToInvert + (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
-         clazzes.add(BACKGROUND_STYLE + Integer.toString(newBg + 8 - BACKGROUND_INTENSE_MIN));
+         clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg + 8 - BACKGROUND_INTENSE_MIN));
          return newBg;
       }
    }
     
-   private static void resetForeground(Set<String> clazzes)
+   private void resetForeground()
    {
       for (int i = FOREGROUND_MIN; i <= FOREGROUND_MAX; i++)
       {
-         clazzes.remove(clazzForColor(i));
+         clazzes_.remove(clazzForColor(i));
       }
       for (int i = FOREGROUND_INTENSE_MIN; i <= FOREGROUND_INTENSE_MAX; i++)
       {
-         clazzes.remove(clazzForColor(i));
+         clazzes_.remove(clazzForColor(i));
       }
-      clazzes.remove(INVERSE_FG_STYLE);
+      clazzes_.remove(INVERSE_FG_STYLE);
    }
 
-   private static void resetBackground(Set<String> clazzes)
+   private void resetBackground()
    {
       for (int i = BACKGROUND_MIN; i <= BACKGROUND_MAX; i++)
       {
-         clazzes.remove(clazzForBgColor(i));
+         clazzes_.remove(clazzForBgColor(i));
       }
       for (int i = BACKGROUND_INTENSE_MIN; i <= BACKGROUND_INTENSE_MAX; i++)
       {
-         clazzes.remove(clazzForBgColor(i));
+         clazzes_.remove(clazzForBgColor(i));
       }
-      clazzes.remove(INVERSE_BG_STYLE);
+      clazzes_.remove(INVERSE_BG_STYLE);
    }
 
    // Control characters handled by R console
@@ -384,7 +433,9 @@ public class AnsiCode
    public static final Pattern ESC_CONTROL_PATTERN =
          Pattern.create("(?:" + CONTROL_REGEX + ")|(?:" + ANSI_REGEX + ")");
 
-   int currentColor_ = DEFAULT_COLOR;
-   int currentBgColor_ = DEFAULT_COLOR;
-   boolean inverted_ = false;
+   private int currentColor_ = DEFAULT_COLOR;
+   private int currentBgColor_ = DEFAULT_COLOR;
+   private boolean inverted_ = false;
+   private Set<String> clazzes_ = new LinkedHashSet<String>();
+   
 }

@@ -174,7 +174,7 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testResetAnsiForegroundColor()
    {
-      int color = AnsiCode.FOREGROUND_MIN + 1;
+      int color = AnsiCode.ForeColorNum.RED;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit(
@@ -189,7 +189,7 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testResetAnsiBgColor()
    {
-      int color = AnsiCode.BACKGROUND_MIN + 1;
+      int color = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit(
@@ -202,8 +202,8 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testAnsiForegroundAndBgColor()
    {
-      int color = AnsiCode.FOREGROUND_MIN + 2;
-      int bgColor = AnsiCode.BACKGROUND_MAX - 3;
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      int bgColor = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit(
@@ -217,8 +217,8 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testResetAnsiColors()
    {
-      int color = AnsiCode.FOREGROUND_MIN + 2;
-      int bgColor = AnsiCode.BACKGROUND_MAX - 3;
+      int color = AnsiCode.ForeColorNum.YELLOW;
+      int bgColor = AnsiCode.BackColorNum.CYAN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit(
@@ -309,7 +309,7 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
-      vc.submit( AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny Days");
+      vc.submit(AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny Days");
       String expected = "<span class=\"xtermInvertColor xtermInvertBgColor\"" +
             ">Sunny Days</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -326,4 +326,32 @@ public class VirtualConsoleTests extends GWTTestCase
             ">Sunny </span><span>Days</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
+   
+   public void testAnsiInvertCustomBgColor()
+   {
+      int bgColor = AnsiCode.BackColorNum.GREEN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + bgColor + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny Days");
+      String expected = "<span class=\"xtermColor2 xtermInvertBgColor\"" +
+            ">Sunny Days</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+   
+   public void testAnsiInvertCustomFgColor()
+   {
+      int fgColor = AnsiCode.ForeColorNum.BLUE;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(
+            AnsiCode.CSI + fgColor + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Sunny Days");
+      String expected = "<span class=\"xtermInvertColor xtermBgColor4\"" +
+            ">Sunny Days</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+
 }
