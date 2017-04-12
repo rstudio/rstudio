@@ -775,11 +775,20 @@ void modifyOutputForPreview(std::string* pOutput)
 #endif
    }
 
-   // serve mathjax locally
+   // serve mathjax locally from this directory
    std::string previewMathjax = "mathjax-26";
+
+   // replace old mathjax CDN for compatibility with R packages that still use
+   // the deprecated URL
    boost::algorithm::replace_first(
         *pOutput,
         "https://cdn.mathjax.org/mathjax/latest",
+        previewMathjax);
+
+   // replace RStudio MathJax URL
+   boost::algorithm::replace_first(
+        *pOutput,
+        "https://mathjax.rstudio.com/latest",
         previewMathjax);
 }
 
