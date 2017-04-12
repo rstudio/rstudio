@@ -1542,6 +1542,13 @@ int main (int argc, char * const argv[])
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
 
+      // environment variables so child processes know of ANSI color
+      // escape sequence support in console
+      if (options.defaultConsoleTerm().length() > 0)
+         core::system::setenv("TERM", options.defaultConsoleTerm());
+      if (options.defaultCliColorForce())
+         core::system::setenv("CLICOLOR_FORCE", "1");
+
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
