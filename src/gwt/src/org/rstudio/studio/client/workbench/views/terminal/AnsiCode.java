@@ -195,6 +195,8 @@ public class AnsiCode
          return((background ? BACKGROUND_STYLE : FOREGROUND_STYLE) + 
                Integer.toString(index));
       }
+      
+      public boolean isExtended() { return extended_; }
        
       private boolean extended_;
       private int code_;
@@ -326,10 +328,10 @@ public class AnsiCode
             {
                resetForeground();
                resetBackground();
-               int newFg = invertFgColor();
-               int newBg = invertBgColor();
-               currentColor_.setCode(newFg);
-               currentBgColor_.setCode(newBg);
+               Color newFg = invertFgColor();
+               Color newBg = invertBgColor();
+               currentColor_ = newFg;
+               currentBgColor_ = newBg;
                inverted_ = true;
             }
          }
@@ -339,10 +341,10 @@ public class AnsiCode
             {
                resetForeground();
                resetBackground();
-               int newFg = invertFgColor();
-               int newBg = invertBgColor();
-               currentColor_.setCode(newFg);
-               currentBgColor_.setCode(newBg);
+               Color newFg = invertFgColor();
+               Color newBg = invertBgColor();
+               currentColor_ = newFg;
+               currentBgColor_ = newBg;
                inverted_ = false;
             }
          }
@@ -454,56 +456,66 @@ public class AnsiCode
    }
     
    /**
-    * Takes current background color, calculates inverse color as foreground color,
+    * Calculates inverse foreground color based on current background color,
     * applies style, and returns new foreground color.
-    * @return new foreground color based on the supplied background color
+    * @return new foreground color based on the background color
     */
-   private int invertFgColor()
+   private Color invertFgColor()
    {
       if (currentBgColor_.defaultColor())
       {
          if (!inverted_)
             clazzes_.add(INVERSE_FG_STYLE);
-         return Color.DEFAULT_COLOR;
+         return new Color();
+      }
+      else if (currentBgColor_.isExtended())
+      {
+         clazzes_.add(Color.clazzForColorIndex(currentBgColor_.code(), false /*background*/));
+         return new Color(true /*extended*/, currentBgColor_.code());
       }
       else if (currentBgColor_.code() >= BACKGROUND_MIN && currentBgColor_.code() <= BACKGROUND_MAX)
       {
          int newFg = currentBgColor_.code() - (BACKGROUND_MIN - FOREGROUND_MIN);
          clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg - FOREGROUND_MIN));
-         return newFg;
+         return new Color(false /*extended*/, newFg);
       }
       else
       {
          int newFg = currentBgColor_.code() - (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
          clazzes_.add(FOREGROUND_STYLE + Integer.toString(newFg + 8 - FOREGROUND_INTENSE_MIN));
-         return newFg;
+         return new Color(false /*extended*/, newFg);
       }
    }
 
    /**
-    * Takes foreground color, calculates inverse color as background color,
+    * Calculates inverse background color based on current foreground color,
     * applies style, and returns new background color.
-    * @return new background color based on the supplied foreground color
+    * @return new background color based on the foreground color
     */
-   private int invertBgColor()
+   private Color invertBgColor()
    {
       if (currentColor_.defaultColor())
       {
          if (!inverted_)
             clazzes_.add(INVERSE_BG_STYLE);
-         return Color.DEFAULT_COLOR;
+         return new Color();
+      }
+      else if (currentColor_.isExtended())
+      {
+         clazzes_.add(Color.clazzForColorIndex(currentColor_.code(), true /*background*/));
+         return new Color(true /*extended*/, currentColor_.code());
       }
       else if (currentColor_.code() >= FOREGROUND_MIN && currentColor_.code() <= FOREGROUND_MAX)
       {
          int newBg = currentColor_.code() + (BACKGROUND_MIN - FOREGROUND_MIN);
          clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg - BACKGROUND_MIN));
-         return newBg;
+         return new Color(false /*extended*/, newBg);
       }
       else
       {
          int newBg = currentColor_.code() + (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
          clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg + 8 - BACKGROUND_INTENSE_MIN));
-         return newBg;
+         return new Color(false /*extended*/, newBg);
       }
    }
     

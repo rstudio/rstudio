@@ -396,5 +396,56 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
 
+   public void testAnsi256Color()
+   {
+      int color = 65;
+      int bgColor = 252;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
+            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" +
+            bgColor + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"xtermColor65 xtermBgColor252\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
 
+   public void testAnsiInvert256Color()
+   {
+      int color = 61;
+      int bgColor = 129;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
+            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" +
+            bgColor + AnsiCode.SGR + 
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"xtermColor129 xtermBgColor61\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiInvert256FgColor()
+   {
+      int color = 77;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
+            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"xtermInvertColor xtermBgColor77\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiInvert256BgColor()
+   {
+      int bgColor = 234;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + 
+            AnsiCode.EXT_BY_INDEX + ";" + bgColor + AnsiCode.SGR +
+            AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Hello World");
+      String expected ="<span class=\"xtermColor234 xtermInvertBgColor\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
 }
