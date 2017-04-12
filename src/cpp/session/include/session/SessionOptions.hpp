@@ -166,6 +166,9 @@ public:
    
    bool useTerminalWebsockets() const { return useTerminalWebsockets_; }
 
+   std::string defaultConsoleTerm() const { return defaultConsoleTerm_; }
+   bool defaultCliColorForce() const { return defaultCliColorForce_; }
+
    core::FilePath coreRSourcePath() const 
    { 
       return core::FilePath(coreRSourcePath_.c_str());
@@ -552,6 +555,8 @@ private:
    std::string defaultProjectDir_;
    bool showHelpHome_;
    bool showUserHomePage_;
+   std::string defaultConsoleTerm_;
+   bool defaultCliColorForce_;
 
    // r
    std::string coreRSourcePath_;

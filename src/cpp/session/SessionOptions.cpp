@@ -207,7 +207,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "show help home page at startup")
       ("session-use-terminal-websockets",
           value<bool>(&useTerminalWebsockets_)->default_value(true),
-          "try to communicate with terminal using websockets");
+          "try to communicate with terminal using websockets")
+      ("session-default-console-term",
+       value<std::string>(&defaultConsoleTerm_)->default_value("vt100-256color"),
+       "default TERM setting for R console")
+      ("session-default-clicolor-force",
+       value<bool>(&defaultCliColorForce_)->default_value(true),
+       "default CLICOLOR_FORCE setting for R console");
 
    // allow options
    options_description allow("allow");
