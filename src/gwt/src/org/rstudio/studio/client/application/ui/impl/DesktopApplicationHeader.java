@@ -116,6 +116,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          {
             final SessionInfo sessionInfo = session.getSessionInfo();
             
+            isFlatTheme_ = pUIPrefs_.get().getUseFlatThemes().getValue(); 
             toolbar_.completeInitialization(sessionInfo);
             
             new JSObjectStateValue(
@@ -267,7 +268,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    public int getPreferredHeight()
    {
       if (toolbar_.isVisible())
-         return 32;
+         return isFlatTheme_ ? 29 : 32;
       else
          return 5;
    }
@@ -410,4 +411,5 @@ public class DesktopApplicationHeader implements ApplicationHeader
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_; 
+   private Boolean isFlatTheme_ = false;
 }
