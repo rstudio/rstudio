@@ -29,14 +29,17 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    
    public final native String        getObjectId()          /*-{ return this["id"];         }-*/;
    public final native String        getObjectAddress()     /*-{ return this["address"];    }-*/;
-   public final native String        getObjectName()        /*-{ return this["name"];       }-*/;
    public final native String        getObjectType()        /*-{ return this["type"];       }-*/;
    public final native JsArrayString getObjectClass()       /*-{ return this["class"];      }-*/;
-   public final native String        getObjectDescription() /*-{ return this["desc"];       }-*/;
-   public final native String        getObjectSize()        /*-{ return this["size"];       }-*/;
    public final native int           getObjectLength()      /*-{ return this["length"];     }-*/;
+   public final native boolean       isS4()                 /*-{ return this["s4"];         }-*/;
+   public final native String        getObjectAccess()      /*-{ return this["access"];     }-*/;
    public final native boolean       isRecursive()          /*-{ return this["recursive"];  }-*/;
    public final native boolean       isExpandable()         /*-{ return this["expandable"]; }-*/;
+   
+   public final native String        getDisplayName()       /*-{ return this["display"]["name"]; }-*/;
+   public final native String        getDisplayType()       /*-{ return this["display"]["type"]; }-*/;
+   public final native String        getDisplayDesc()       /*-{ return this["display"]["desc"]; }-*/;
    
    public final native JsArray<ObjectExplorerInspectionResult> getChildren()
    /*-{

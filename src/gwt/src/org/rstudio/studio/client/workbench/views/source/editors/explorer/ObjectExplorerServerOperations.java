@@ -22,6 +22,7 @@ public interface ObjectExplorerServerOperations
    void explorerInspectObject(
          String objectId,
          String objectName,
+         String objectAccess,
          int recursionDepth,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
 }

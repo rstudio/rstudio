@@ -1819,13 +1819,15 @@ public class RemoteServer implements Server
    
    public void explorerInspectObject(String objectId,
                                      String objectName,
+                                     String objectAccess,
                                      int recursionDepth,
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(objectId));
       params.set(1, new JSONString(objectName));
-      params.set(2, new JSONNumber(recursionDepth));
+      params.set(2, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
+      params.set(3, new JSONNumber(recursionDepth));
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
    }
    

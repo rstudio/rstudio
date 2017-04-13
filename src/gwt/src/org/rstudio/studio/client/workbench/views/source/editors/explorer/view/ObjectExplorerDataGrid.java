@@ -222,42 +222,34 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   private static String generateExtractingRCode(Data data)
+   private String generateExtractingRCode(Data data)
    {
       if (data == null)
          return null;
       
-      String code = "";
-      
-      Data parent = data.getParentData();
-      while (parent != null)
+      // extract all access strings from data + parents
+      List<String> accessors = new ArrayList<String>();
+      while (data != null && data.getObjectAccess() != null)
       {
-         String name = data.getObjectName();
-         String type = parent.getObjectType();
-         
-         String piece = "";
-         if (type.equals("environment"))
-         {
-            piece = "[[\"" + name + "\"]]";
-         }
-         else if (type.equals("list"))
-         {
-            if (name.matches("\\[\\[\\d+\\]\\]"))
-               piece = name;
-            else
-               piece = "[[\"" + name + "\"]]";
-         }
-         else if (type.equals("S4"))
-         {
-            piece = "@" + name;
-         }
-         
-         code = piece + code;
-         data = parent;
-         parent = data.getParentData();
+         accessors.add(data.getObjectAccess());
+         data = data.getParentData();
       }
       
-      code = data.getObjectName() + code;
+      // if we have no accessors, this must be the root object
+      // just return from associated handle
+      int n = accessors.size();
+      if (n == 0)
+         return handle_.getName();
+      
+      // start building up access string by repeatedly
+      // substituting in accessors
+      String code = accessors.get(0);
+      for (int i = 1; i < n; i++)
+         code = code.replaceAll("#", accessors.get(i));
+      
+      // finally, substitute in the original object
+      code = code.replaceAll("#", handle_.getName());
+      
       return code;
    }
    
@@ -349,7 +341,7 @@ public class ObjectExplorerDataGrid
       private static final void addName(SafeHtmlBuilder builder,
                                         ObjectExplorerInspectionResult result)
       {
-         String name = result.getObjectName();
+         String name = result.getDisplayName();
          if (name == null)
             name = "<unknown>";
          builder.appendEscaped(name);
@@ -403,7 +395,7 @@ public class ObjectExplorerDataGrid
          @Override
          public String getValue(Data data)
          {
-            return data.getObjectDescription();
+            return data.getDisplayDesc();
          }
       };
       addColumn(valueColumn_, new TextHeader("Value"));
@@ -734,7 +726,8 @@ public class ObjectExplorerDataGrid
       // no children; make a server RPC request and then call back
       server_.explorerInspectObject(
             data.getObjectId(),
-            data.getObjectName(),
+            data.getDisplayName(),
+            data.getObjectAccess(),
             1,
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
@@ -764,12 +757,15 @@ public class ObjectExplorerDataGrid
       server_.explorerInspectObject(
             handle_.getId(),
             handle_.getName(),
+            null,
             1,
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
                @Override
                public void onResponseReceived(ObjectExplorerInspectionResult result)
                {
+                  Debug.logObject(result);
+                  
                   root_ = result.cast();
                   root_.updateChildOwnership();
                   root_.setExpansionState(ExpansionState.OPEN);
@@ -797,7 +793,8 @@ public class ObjectExplorerDataGrid
          public boolean accept(Data data)
          {
             // skip attributes if disabled
-            if (!showAttributes_ && data.getObjectName().equals("(attributes)"))
+            // TODO: more deterministic way of determining this
+            if (!showAttributes_ && data.getDisplayName().equals("(attributes)"))
                return false;
             
             // otherwise, check whether it's currently visible
@@ -815,9 +812,9 @@ public class ObjectExplorerDataGrid
             public boolean test(Data object)
             {
                String[] fields = {
-                     object.getObjectName(),
-                     object.getObjectType(),
-                     object.getObjectDescription()
+                     object.getDisplayName(),
+                     object.getDisplayType(),
+                     object.getDisplayDesc()
                };
                
                for (String field : fields)

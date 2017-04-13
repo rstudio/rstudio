@@ -30,6 +30,7 @@ context <- .rs.explorer.createContext(recursive = 1)
 i <- .rs.explorer.inspectObject(object, context)
 .rs.explorer.viewObject(object)
 
+
 library(xml2)
 x <- read_xml("<root id='1'><child id ='a' /><child id='b' d='b'/></root>")
 .rs.explorer.viewObject(x)
