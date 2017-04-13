@@ -50,70 +50,66 @@ import com.google.gwt.emultest.java.security.MessageDigestTest;
 import com.google.gwt.emultest.java.sql.SqlDateTest;
 import com.google.gwt.emultest.java.sql.SqlTimeTest;
 import com.google.gwt.emultest.java.sql.SqlTimestampTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
-import junit.framework.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
  * Test JRE emulations.
  */
-public class EmulSuite {
+@RunWith(Suite.class)
+@SuiteClasses({
+  CoercionsTest.class,
 
-  /**
-   * Note: due to compiler error, only can use one Test Case at a time.
-   */
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java");
+  //-- java.io
+  ByteArrayInputStreamTest.class,
+  ByteArrayOutputStreamTest.class,
+  FilterInputStreamTest.class,
+  FilterOutputStreamTest.class,
+  InputStreamTest.class,
+  OutputStreamTest.class,
 
-    // $JUnit-BEGIN$
-    suite.addTestSuite(CoercionsTest.class);
-    //-- java.io
-    suite.addTestSuite(ByteArrayInputStreamTest.class);
-    suite.addTestSuite(ByteArrayOutputStreamTest.class);
-    suite.addTestSuite(FilterInputStreamTest.class);
-    suite.addTestSuite(FilterOutputStreamTest.class);
-    suite.addTestSuite(InputStreamTest.class);
-    suite.addTestSuite(OutputStreamTest.class);
-    //-- java.lang
-    suite.addTestSuite(BooleanTest.class);
-    suite.addTestSuite(ByteTest.class);
-    suite.addTestSuite(CharacterTest.class);
-    suite.addTestSuite(CompilerConstantStringTest.class);
-    suite.addTestSuite(DoubleTest.class);
-    suite.addTestSuite(FloatTest.class);
-    suite.addTestSuite(IntegerTest.class);
-    suite.addTestSuite(JsExceptionTest.class);
-    suite.addTestSuite(LongTest.class);
-    suite.addTestSuite(MathTest.class);
-    suite.addTestSuite(NullPointerExceptionTest.class);
-    suite.addTestSuite(ObjectTest.class);
-    suite.addTestSuite(ShortTest.class);
-    suite.addTestSuite(StringBufferTest.class);
-    suite.addTestSuite(StringTest.class);
-    suite.addTestSuite(SystemTest.class);
-    suite.addTestSuite(ThrowableTest.class);
-    suite.addTestSuite(ThrowableStackTraceEmulTest.class);
-    suite.addTestSuite(TypeTest.class);
-    //-- java.math
-    // BigDecimal is tested in {@link BigDecimalSuite}
-    // BigInteger is tested in {@link BigIntegerSuite}
-    suite.addTestSuite(RoundingModeTest.class);
-    suite.addTestSuite(MathContextTest.class);
-    suite.addTestSuite(MathContextWithObfuscatedEnumsTest.class);
+  //-- java.lang
+  BooleanTest.class,
+  ByteTest.class,
+  CharacterTest.class,
+  CompilerConstantStringTest.class,
+  DoubleTest.class,
+  FloatTest.class,
+  IntegerTest.class,
+  JsExceptionTest.class,
+  LongTest.class,
+  MathTest.class,
+  NullPointerExceptionTest.class,
+  ObjectTest.class,
+  ShortTest.class,
+  StringBufferTest.class,
+  StringTest.class,
+  SystemTest.class,
+  ThrowableTest.class,
+  ThrowableStackTraceEmulTest.class,
+  TypeTest.class,
 
-    //-- java.nio
-    suite.addTestSuite(CharsetTest.class);
-    suite.addTestSuite(StandardCharsetsTest.class);
+  //-- java.math
+  // BigDecimal is tested in {@link BigDecimalSuite}
+  // BigInteger is tested in {@link BigIntegerSuite}
+  RoundingModeTest.class,
+  MathContextTest.class,
 
-    //-- java.security
-    suite.addTestSuite(MessageDigestTest.class);
+  //-- java.nio
+  CharsetTest.class,
+  StandardCharsetsTest.class,
 
-    //-- java.sql
-    suite.addTestSuite(SqlDateTest.class);
-    suite.addTestSuite(SqlTimeTest.class);
-    suite.addTestSuite(SqlTimestampTest.class);
-    // $JUnit-END$
+  //-- java.security
+  MessageDigestTest.class,
 
-    return suite;
-  }
-}
+  //-- java.sql
+  SqlDateTest.class,
+  SqlTimeTest.class,
+  SqlTimestampTest.class,
+
+  // Put last to reduce number of times the test framework switches modules
+  MathContextWithObfuscatedEnumsTest.class,
+})
+public class EmulSuite { }

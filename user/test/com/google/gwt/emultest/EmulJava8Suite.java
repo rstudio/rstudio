@@ -48,59 +48,53 @@ import com.google.gwt.emultest.java8.util.stream.IntStreamTest;
 import com.google.gwt.emultest.java8.util.stream.LongStreamTest;
 import com.google.gwt.emultest.java8.util.stream.StreamSupportTest;
 import com.google.gwt.emultest.java8.util.stream.StreamTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
-import junit.framework.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-/**
- * Test Java8 JRE emulations.
- */
-public class EmulJava8Suite {
+/** Test JRE emulations. */
+@RunWith(Suite.class)
+@SuiteClasses({
+  //-- java.lang
+  DoubleTest.class,
+  FloatTest.class,
+  MathTest.class,
+  StringTest.class,
 
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java8");
+  //-- java.math
+  BigIntegerConvertTest.class,
 
-    //-- java.lang
-    suite.addTestSuite(DoubleTest.class);
-    suite.addTestSuite(FloatTest.class);
-    suite.addTestSuite(MathTest.class);
-    suite.addTestSuite(StringTest.class);
+  //-- java.util
+  ArraysTest.class,
+  ArrayListTest.class,
+  LinkedListTest.class,
+  ListTest.class,
+  VectorTest.class,
+  ComparatorTest.class,
+  MapTest.class,
+  MapEntryTest.class,
+  HashMapTest.class,
+  IdentityHashMapTest.class,
+  LinkedHashMapTest.class,
+  TreeMapTest.class,
+  OptionalTest.class,
+  OptionalIntTest.class,
+  OptionalLongTest.class,
+  OptionalDoubleTest.class,
+  PrimitiveIteratorTest.class,
+  SpliteratorsTest.class,
+  StringJoinerTest.class,
+  DoubleSummaryStatisticsTest.class,
+  IntSummaryStatisticsTest.class,
+  LongSummaryStatisticsTest.class,
 
-    //-- java.math
-    suite.addTestSuite(BigIntegerConvertTest.class);
-
-    //-- java.util
-    suite.addTestSuite(ArraysTest.class);
-    suite.addTestSuite(ArrayListTest.class);
-    suite.addTestSuite(LinkedListTest.class);
-    suite.addTestSuite(ListTest.class);
-    suite.addTestSuite(VectorTest.class);
-    suite.addTestSuite(ComparatorTest.class);
-    suite.addTestSuite(MapTest.class);
-    suite.addTestSuite(MapEntryTest.class);
-    suite.addTestSuite(HashMapTest.class);
-    suite.addTestSuite(IdentityHashMapTest.class);
-    suite.addTestSuite(LinkedHashMapTest.class);
-    suite.addTestSuite(TreeMapTest.class);
-    suite.addTestSuite(OptionalTest.class);
-    suite.addTestSuite(OptionalIntTest.class);
-    suite.addTestSuite(OptionalLongTest.class);
-    suite.addTestSuite(OptionalDoubleTest.class);
-    suite.addTestSuite(PrimitiveIteratorTest.class);
-    suite.addTestSuite(SpliteratorsTest.class);
-    suite.addTestSuite(StringJoinerTest.class);
-    suite.addTestSuite(DoubleSummaryStatisticsTest.class);
-    suite.addTestSuite(IntSummaryStatisticsTest.class);
-    suite.addTestSuite(LongSummaryStatisticsTest.class);
-
-    //-- java.util.stream
-    suite.addTestSuite(CollectorsTest.class);
-    suite.addTestSuite(DoubleStreamTest.class);
-    suite.addTestSuite(IntStreamTest.class);
-    suite.addTestSuite(LongStreamTest.class);
-    suite.addTestSuite(StreamTest.class);
-    suite.addTestSuite(StreamSupportTest.class);
-
-    return suite;
-  }
-}
+  //-- java.util.stream
+  CollectorsTest.class,
+  DoubleStreamTest.class,
+  IntStreamTest.class,
+  LongStreamTest.class,
+  StreamTest.class,
+  StreamSupportTest.class,
+})
+public class EmulJava8Suite { }

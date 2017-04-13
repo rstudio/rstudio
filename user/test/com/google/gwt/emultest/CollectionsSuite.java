@@ -35,45 +35,49 @@ import com.google.gwt.emultest.java.util.ObjectsTest;
 import com.google.gwt.emultest.java.util.PriorityQueueTest;
 import com.google.gwt.emultest.java.util.RandomTest;
 import com.google.gwt.emultest.java.util.StackTest;
+import com.google.gwt.emultest.java.util.TreeMapIntegerDoubleTest;
+import com.google.gwt.emultest.java.util.TreeMapIntegerDoubleWithComparatorTest;
+import com.google.gwt.emultest.java.util.TreeMapStringStringTest;
+import com.google.gwt.emultest.java.util.TreeMapStringStringWithComparatorTest;
+import com.google.gwt.emultest.java.util.TreeSetIntegerTest;
+import com.google.gwt.emultest.java.util.TreeSetIntegerWithComparatorTest;
 import com.google.gwt.emultest.java.util.VectorTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
-import junit.framework.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-/**
- * Test JRE Collections emulation.
- */
-public class CollectionsSuite {
+/** Test JRE Collections emulation. */
+@RunWith(Suite.class)
+@SuiteClasses({
+  ArrayDequeTest.class,
+  ArrayListTest.class,
+  ArraysTest.class,
+  BitSetTest.class,
+  CollectionsTest.class,
+  ComparatorTest.class,
+  DateTest.class,
+  EnumMapTest.class,
+  EnumSetTest.class,
+  HashMapTest.class,
+  HashSetTest.class,
+  IdentityHashMapTest.class,
+  LinkedHashMapTest.class,
+  LinkedHashSetTest.class,
+  LinkedListTest.class,
+  ObjectsTest.class,
+  PriorityQueueTest.class,
+  RandomTest.class,
+  StackTest.class,
+  VectorTest.class,
+  TreeMapStringStringTest.class,
+  TreeMapStringStringWithComparatorTest.class,
+  TreeMapIntegerDoubleTest.class,
+  TreeMapIntegerDoubleWithComparatorTest.class,
+  TreeSetIntegerTest.class,
+  TreeSetIntegerWithComparatorTest.class,
 
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Tests for emulation of Java Collections");
-
-    // $JUnit-BEGIN$
-    suite.addTestSuite(ArrayDequeTest.class);
-    suite.addTestSuite(ArrayListTest.class);
-    suite.addTestSuite(ArraysTest.class);
-    suite.addTestSuite(BitSetTest.class);
-    suite.addTestSuite(CollectionsTest.class);
-    suite.addTestSuite(ComparatorTest.class);
-    suite.addTestSuite(DateTest.class);
-    suite.addTestSuite(EnumMapTest.class);
-    suite.addTestSuite(EnumSetTest.class);
-    suite.addTestSuite(HashMapSmokeTest.class);
-    suite.addTestSuite(HashMapTest.class);
-    suite.addTestSuite(HashSetTest.class);
-    suite.addTestSuite(IdentityHashMapTest.class);
-    suite.addTestSuite(LinkedHashMapTest.class);
-    suite.addTestSuite(LinkedHashSetTest.class);
-    suite.addTestSuite(LinkedListTest.class);
-    suite.addTestSuite(ObjectsTest.class);
-    suite.addTestSuite(PriorityQueueTest.class);
-    suite.addTestSuite(RandomTest.class);
-    suite.addTestSuite(StackTest.class);
-    suite.addTestSuite(VectorTest.class);
-    suite.addTest(TreeMapSuiteSub.suite());
-    suite.addTest(TreeSetSuiteSub.suite());
-    // $JUnit-END$
-
-    return suite;
-  }
-}
+  // Put last to reduce number of times the test framework switches modules
+  HashMapSmokeTest.class,
+})
+public class CollectionsSuite { }

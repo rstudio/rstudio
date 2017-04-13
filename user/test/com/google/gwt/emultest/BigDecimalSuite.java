@@ -20,23 +20,20 @@ import com.google.gwt.emultest.java.math.BigDecimalCompareTest;
 import com.google.gwt.emultest.java.math.BigDecimalConstructorsTest;
 import com.google.gwt.emultest.java.math.BigDecimalConvertTest;
 import com.google.gwt.emultest.java.math.BigDecimalScaleOperationsTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
-import junit.framework.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
  * Test JRE emulation of BigDecimal.
  */
-public class BigDecimalSuite {
-
-  /** Note: due to compiler error, only can use one Test Case at a time. */
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Tests for BigDecimal");
-    suite.addTestSuite(BigDecimalArithmeticTest.class);
-    suite.addTestSuite(BigDecimalCompareTest.class);
-    suite.addTestSuite(BigDecimalConstructorsTest.class);
-    suite.addTestSuite(BigDecimalConvertTest.class);
-    suite.addTestSuite(BigDecimalScaleOperationsTest.class);
-    return suite;
-  }
-}
+@RunWith(Suite.class)
+@SuiteClasses({
+  BigDecimalArithmeticTest.class,
+  BigDecimalCompareTest.class,
+  BigDecimalConstructorsTest.class,
+  BigDecimalConvertTest.class,
+  BigDecimalScaleOperationsTest.class,
+})
+public class BigDecimalSuite { }

@@ -29,32 +29,29 @@ import com.google.gwt.emultest.java.math.BigIntegerOrTest;
 import com.google.gwt.emultest.java.math.BigIntegerSubtractTest;
 import com.google.gwt.emultest.java.math.BigIntegerToStringTest;
 import com.google.gwt.emultest.java.math.BigIntegerXorTest;
-import com.google.gwt.junit.tools.GWTTestSuite;
 
-import junit.framework.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
  * Test JRE emulation of BigInteger.
  */
-public class BigIntegerSuite {
-
-  /** Note: due to compiler error, only can use one Test Case at a time. */
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Tests for BigInteger");
-    suite.addTestSuite(BigIntegerAddTest.class);
-    suite.addTestSuite(BigIntegerAndTest.class);
-    suite.addTestSuite(BigIntegerCompareTest.class);
-    suite.addTestSuite(BigIntegerConstructorsTest.class);
-    suite.addTestSuite(BigIntegerDivideTest.class);
-    suite.addTestSuite(BigIntegerHashCodeTest.class);
-    suite.addTestSuite(BigIntegerModPowTest.class);
-    suite.addTestSuite(BigIntegerMultiplyTest.class);
-    suite.addTestSuite(BigIntegerNotTest.class);
-    suite.addTestSuite(BigIntegerOperateBitsTest.class);
-    suite.addTestSuite(BigIntegerOrTest.class);
-    suite.addTestSuite(BigIntegerSubtractTest.class);
-    suite.addTestSuite(BigIntegerToStringTest.class);
-    suite.addTestSuite(BigIntegerXorTest.class);
-    return suite;
-  }
-}
+@RunWith(Suite.class)
+@SuiteClasses({
+  BigIntegerAddTest.class,
+  BigIntegerAndTest.class,
+  BigIntegerCompareTest.class,
+  BigIntegerConstructorsTest.class,
+  BigIntegerDivideTest.class,
+  BigIntegerHashCodeTest.class,
+  BigIntegerModPowTest.class,
+  BigIntegerMultiplyTest.class,
+  BigIntegerNotTest.class,
+  BigIntegerOperateBitsTest.class,
+  BigIntegerOrTest.class,
+  BigIntegerSubtractTest.class,
+  BigIntegerToStringTest.class,
+  BigIntegerXorTest.class,
+})
+public class BigIntegerSuite { }
