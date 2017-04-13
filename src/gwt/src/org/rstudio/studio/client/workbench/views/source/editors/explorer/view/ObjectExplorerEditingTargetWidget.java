@@ -39,7 +39,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       
       panel_ = new DockLayoutPanel(Unit.PX);
       grid_ = new ObjectExplorerDataGrid(handle);
-      footer_ = new FlowPanel();
+      controls_ = new FlowPanel();
       
       cbAttributes_ = new CheckBox();
       filterWidget_ = new SearchWidget(new SuggestOracle()
@@ -50,7 +50,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
          }
       });
       
-      initFooter();
+      initControls();
       initPanel();
       initWidget(panel_);
    }
@@ -65,7 +65,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       // TODO
    }
    
-   private void initFooter()
+   private void initControls()
    {
       FlowPanel panel = new FlowPanel();
       
@@ -92,19 +92,19 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       filterWidget_.addStyleName(RES.styles().filter());
       panel.add(filterWidget_);
       
-      footer_.addStyleName(RES.styles().footer());
-      footer_.add(panel);
+      controls_.addStyleName(RES.styles().controls());
+      controls_.add(panel);
    }
    
    private void initPanel()
    {
       panel_.setSize("100%", "100%");
-      panel_.addSouth(footer_, 24);
+      panel_.addNorth(controls_, 24);
       panel_.add(grid_);
    }
    
    private final DockLayoutPanel panel_;
-   private final FlowPanel footer_;
+   private final FlowPanel controls_;
    private final ObjectExplorerDataGrid grid_;
    
    private final CheckBox cbAttributes_;
@@ -122,7 +122,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    
    public interface Styles extends CssResource
    {
-      String footer();
+      String controls();
       String checkbox();
       String filter();
    }

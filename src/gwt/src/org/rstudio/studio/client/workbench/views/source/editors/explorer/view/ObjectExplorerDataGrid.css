@@ -23,11 +23,16 @@
 
 .dataGridWidget td > div {
 	float: left;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	width: 100%;
+	overflow: hidden;
 }
 
 .dataGridCell {
 	font-family: inherit;
 	border-bottom: 1px solid #ddd !important;
+	max-width: 100%;
 }
 
 .dataGridHeader:active, .dataGridHeader:focus {

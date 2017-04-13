@@ -89,6 +89,11 @@ public class SafeHtmlUtil
       builder.append(">");
       return SafeHtmlUtils.fromTrustedString(builder.toString());
    }
+   
+   public static SafeHtml createDiv(String... attribs)
+   {
+      return createOpenTag("div", attribs);
+   }
 
    public static SafeHtml createEmpty()
    {

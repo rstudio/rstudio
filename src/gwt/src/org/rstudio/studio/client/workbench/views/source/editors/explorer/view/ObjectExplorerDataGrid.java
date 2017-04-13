@@ -28,6 +28,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
@@ -79,9 +80,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Event;
@@ -220,13 +222,51 @@ public class ObjectExplorerDataGrid
       }
    }
    
+   private static String generateExtractingRCode(Data data)
+   {
+      if (data == null)
+         return null;
+      
+      String code = "";
+      
+      Data parent = data.getParentData();
+      while (parent != null)
+      {
+         String name = data.getObjectName();
+         String type = parent.getObjectType();
+         
+         String piece = "";
+         if (type.equals("environment"))
+         {
+            piece = "[[\"" + name + "\"]]";
+         }
+         else if (type.equals("list"))
+         {
+            if (name.matches("\\[\\[\\d+\\]\\]"))
+               piece = name;
+            else
+               piece = "[[\"" + name + "\"]]";
+         }
+         else if (type.equals("S4"))
+         {
+            piece = "@" + name;
+         }
+         
+         code = piece + code;
+         data = parent;
+         parent = data.getParentData();
+      }
+      
+      code = data.getObjectName() + code;
+      return code;
+   }
+   
    private static interface Filter<T>
    {
       public boolean accept(T data);
    }
    
-   private static class NameCell
-         extends AbstractCell<Data>
+   private static class NameCell extends AbstractCell<Data>
    {
       @Override
       public void render(Context context,
@@ -316,6 +356,23 @@ public class ObjectExplorerDataGrid
       }
    }
    
+   private static class ButtonCell extends AbstractCell<Data>
+   {
+      @Override
+      public void render(Context context,
+                         Data data,
+                         SafeHtmlBuilder builder)
+      {
+         SafeHtml extractTag = SafeHtmlUtil.createDiv(
+               "data-action", ACTION_EXTRACT);
+         
+         // extract button
+         builder.append(extractTag);
+         builder.append(IMAGE_EXTRACT_CODE.getSafeHtml());
+         builder.appendHtmlConstant("</div>");
+      }
+   }
+   
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle)
    {
       super(1000, RES);
@@ -326,14 +383,7 @@ public class ObjectExplorerDataGrid
       setSize("100%", "100%");
       
       // add columns
-      nameColumn_ = new Column<Data, Data>(new NameCell())
-      {
-         @Override
-         public Data getValue(Data data)
-         {
-            return data;
-         }
-      };
+      nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
       setColumnWidth(nameColumn_, "200px");
       
@@ -358,9 +408,13 @@ public class ObjectExplorerDataGrid
       };
       addColumn(valueColumn_, new TextHeader("Value"));
       
+      buttonColumn_ = new IdentityColumn<Data>(new ButtonCell());
+      addColumn(buttonColumn_);
+      setColumnWidth(buttonColumn_, "30px");
+      
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
-      dataProvider_.setList(new ArrayList<Data>());;
+      dataProvider_.setList(new ArrayList<Data>());
       dataProvider_.addDataDisplay(this);
       
       // register handlers
@@ -372,9 +426,11 @@ public class ObjectExplorerDataGrid
    }
    
    @Inject
-   private void initialize(ObjectExplorerServerOperations server)
+   private void initialize(ObjectExplorerServerOperations server,
+                           EventBus events)
    {
       server_ = server;
+      events_ = events;
    }
    
    // Public methods ----
@@ -591,6 +647,10 @@ public class ObjectExplorerDataGrid
       {
          closeRow(row);
       }
+      else if (action.equals(ACTION_EXTRACT))
+      {
+         extractCode(row);
+      }
       else
       {
          assert false : "Unexpected action '" + action + "' on row " + row;
@@ -651,7 +711,13 @@ public class ObjectExplorerDataGrid
             synchronize();
          }
       });
-      
+   }
+   
+   private void extractCode(int row)
+   {
+      Data data = getData().get(row);
+      String code = generateExtractingRCode(data);
+      Debug.logToRConsole("Code: '" + code + "'");
    }
    
    private void withChildren(final Data data,
@@ -807,9 +873,10 @@ public class ObjectExplorerDataGrid
          flattenImpl(children.get(i), filter, output);
    }
    
-   private final Column<Data, Data> nameColumn_;
+   private final IdentityColumn<Data> nameColumn_;
    private final TextColumn<Data> typeColumn_;
    private final TextColumn<Data> valueColumn_;
+   private final IdentityColumn<Data> buttonColumn_;
    
    private final ListDataProvider<Data> dataProvider_;
    
@@ -821,10 +888,12 @@ public class ObjectExplorerDataGrid
    
    // Injected ----
    private ObjectExplorerServerOperations server_;
+   private EventBus events_;
    
    // Static Members ----
-   private static final String ACTION_OPEN  = "open";
-   private static final String ACTION_CLOSE = "close";
+   private static final String ACTION_OPEN    = "open";
+   private static final String ACTION_CLOSE   = "close";
+   private static final String ACTION_EXTRACT = "extract";
    
    private static final ImageResource2x IMAGE_RIGHT_ARROW =
          new ImageResource2x(ThemeResources.INSTANCE.chevron2x());
@@ -834,6 +903,9 @@ public class ObjectExplorerDataGrid
 
    private static final ImageResource2x IMAGE_TYPE_DATA =
          new ImageResource2x(ThemeResources.INSTANCE.zoomDataset2x());
+   
+   private static final ImageResource2x IMAGE_EXTRACT_CODE =
+         new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
