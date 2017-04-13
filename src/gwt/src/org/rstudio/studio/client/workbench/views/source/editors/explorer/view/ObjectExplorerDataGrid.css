@@ -38,3 +38,22 @@
 .dataGridHeader:active, .dataGridHeader:focus {
 	outline: 0;
 }
+
+/* Other non-override styling */
+
+.openRowIcon {
+	width: 20px !important;
+	text-align: center;
+	cursor: pointer;
+}
+
+.closeRowIcon {
+	width: 20px !important;
+	text-align: center;
+	cursor: pointer;
+}
+
+.objectTypeIcon {
+	width: 20px !important;
+	margin-top: 2px;
+}

@@ -1580,6 +1580,25 @@ body.ubuntu_mono .searchBox {
 	display: none !important;
 }
 
+.clickableIcon {
+	border: 1px solid white;
+	background-color: white;
+}
+
+.clickableIcon:hover {
+	border-radius: 2px;
+	background-color: #efefef;
+	border: 1px solid #dfdfdf;
+	cursor: pointer;
+}
+
+.clickableIcon:active {
+	border-radius: 2px;
+	background-color: #e6e6e6;
+	border: 1px solid #d6d6d6;
+	cursor: pointer;
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs {
    background-image: none;
    background: #e7e8ea;

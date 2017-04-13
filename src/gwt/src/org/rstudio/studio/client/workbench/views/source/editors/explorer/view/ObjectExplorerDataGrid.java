@@ -27,10 +27,13 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 
 /*
@@ -312,16 +315,14 @@ public class ObjectExplorerDataGrid
          {
          case CLOSED:
             builder.append(SafeHtmlUtil.createOpenTag("div",
-                  "class", "expandButton",
-                  "style", "width: 20px",
+                  "class", RES.dataGridStyle().openRowIcon(),
                   "data-action", ACTION_OPEN));
             builder.append(IMAGE_RIGHT_ARROW.getSafeHtml());
             builder.appendHtmlConstant("</div>");
             break;
          case OPEN:
             builder.append(SafeHtmlUtil.createOpenTag("div",
-                  "class", "expandButton",
-                  "style", "width: 20px",
+                  "class", RES.dataGridStyle().closeRowIcon(),
                   "data-action", ACTION_CLOSE));
             builder.append(IMAGE_DOWN_ARROW.getSafeHtml());
             builder.appendHtmlConstant("</div>");
@@ -333,7 +334,9 @@ public class ObjectExplorerDataGrid
                                         ObjectExplorerInspectionResult result)
       {
          // TODO: icon based on type
-         builder.append(SafeHtmlUtil.createOpenTag("div", "style", "width: 20px"));
+         SafeHtml openDiv = SafeHtmlUtil.createDiv(
+               "class", RES.dataGridStyle().objectTypeIcon());
+         builder.append(openDiv);
          builder.append(IMAGE_TYPE_DATA.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
@@ -356,6 +359,7 @@ public class ObjectExplorerDataGrid
                          SafeHtmlBuilder builder)
       {
          SafeHtml extractTag = SafeHtmlUtil.createDiv(
+               "class",       ThemeStyles.INSTANCE.clickableIcon(),
                "data-action", ACTION_EXTRACT);
          
          // extract button
@@ -453,7 +457,7 @@ public class ObjectExplorerDataGrid
          return;
       
       // determine action associated with this row
-      Element dataEl = DomUtils.findParentElement(targetEl, new DomUtils.ElementPredicate()
+      Element dataEl = DomUtils.findParentElement(targetEl, true, new DomUtils.ElementPredicate()
       {
          @Override
          public boolean test(Element el)
@@ -709,7 +713,7 @@ public class ObjectExplorerDataGrid
    {
       Data data = getData().get(row);
       String code = generateExtractingRCode(data);
-      Debug.logToRConsole("Code: '" + code + "'");
+      events_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
    private void withChildren(final Data data,
@@ -893,16 +897,16 @@ public class ObjectExplorerDataGrid
    private static final String ACTION_EXTRACT = "extract";
    
    private static final ImageResource2x IMAGE_RIGHT_ARROW =
-         new ImageResource2x(ThemeResources.INSTANCE.chevron2x());
+         new ImageResource2x(StandardIcons.INSTANCE.right_arrow2x());
 
    private static final ImageResource2x IMAGE_DOWN_ARROW =
-         new ImageResource2x(ThemeResources.INSTANCE.closeChevron2x());
+         new ImageResource2x(ThemeResources.INSTANCE.mediumDropDownArrow2x());
 
    private static final ImageResource2x IMAGE_TYPE_DATA =
          new ImageResource2x(ThemeResources.INSTANCE.zoomDataset2x());
    
    private static final ImageResource2x IMAGE_EXTRACT_CODE =
-         new ImageResource2x(ThemeResources.INSTANCE.executeChunk2x());
+         new ImageResource2x(StandardIcons.INSTANCE.run2x());
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
@@ -913,6 +917,9 @@ public class ObjectExplorerDataGrid
    
    public interface Styles extends RStudioDataGridStyle
    {
+      String openRowIcon();
+      String closeRowIcon();
+      String objectTypeIcon();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
