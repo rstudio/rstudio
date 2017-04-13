@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -337,34 +338,61 @@ public class TerminalSessionSocket
    {
       if (detectLocalEcho && !localEcho_.isEmpty())
       {
-         String lastOutput = "";
-         while (!localEcho_.isEmpty() && lastOutput.length() < output.length())
+         // Rapid typing with intermixed backspaces can cause shell
+         // to insert a Backspace + ESC[K into the already-local-echoed output.
+         // Remove that sequence from output when matching or we can easily 
+         // get out of sync and orphan deleted characters in the local buffer.
+         // This  manifests as characters you can't backspace over, but aren't
+         // seen by the shell process when you press enter.
+         String outputToMatch = output;
+         int clearPos = outputToMatch.indexOf(backspaceClear_);
+         if (clearPos > -1)
          {
-            lastOutput += localEcho_.poll();
+            outputToMatch = outputToMatch.replace(backspaceClear_, "");
          }
-        
-         if (lastOutput.equals(output))
+         if (!outputToMatch.isEmpty())
          {
-            // server echoed back what we have already echoed locally
-            return; 
+            String lastOutput = "";
+            while (!localEcho_.isEmpty() && lastOutput.length() < outputToMatch.length())
+            {
+               lastOutput += localEcho_.poll();
+            }
+
+            if (lastOutput.equals(outputToMatch))
+            {
+               // exact match
+               if (clearPos < 0)
+               {
+                  return;  // nothing left to echo
+               }
+               else
+               {
+                  output = backspaceClear_; // echo the escape sequence
+               }
+            }
+
+            // Is output a superset of what was already echoed?
+            else if (outputToMatch.startsWith(lastOutput))
+            {
+               // If we removed the escape sequence for matching, put it
+               // back in the same relative location before doing local output
+               if (clearPos < 0 || clearPos >= lastOutput.length())
+                  output = output.substring(lastOutput.length());
+               else
+                  output = backspaceClear_ + outputToMatch.substring(lastOutput.length());
+            }
+            else
+            {
+               // what we got back didn't match previously echoed text; delete
+               // queue so we don't get too far out of sync
+               Debug.log("Terminal local echo matching failed");
+               localEcho_.clear();
+            }
          }
-         
-         // Is output a superset of what was already echoed?
-         if (output.startsWith(lastOutput))
-         {
-            // Write the extra non-echoed output
-            xterm_.write(output.substring(lastOutput.length()));
-            return;
-         }
-         
-         // what we got back didn't match previously echoed text; delete
-         // queue so we don't get too far out of sync
-         localEcho_.clear();
       }
-      
       xterm_.write(output);
    }
-
+   
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
@@ -418,7 +446,8 @@ public class TerminalSessionSocket
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
    private LinkedList<String> localEcho_ = new LinkedList<String>();
-   
+   private final String backspaceClear_ = "\b\33[K";
+
    // Injected ---- 
    private UIPrefs uiPrefs_;
 }
