@@ -84,6 +84,7 @@ public class AnsiCode
    public static final int FOREGROUND_EXT = 38;
    public static final int BACKGROUND_EXT = 48;
    public static final int EXT_BY_INDEX = 5;
+   public static final int EXT_BY_RGB = 2;
 
    public static final String DEFAULTCOLORS = CSI + RESET + ";" + RESET + SGR;
 
@@ -227,6 +228,8 @@ public class AnsiCode
       
       int extendedColor = 0;
       boolean extendedMarkerSeen = false;
+      boolean extendedRGBMarkerSeen = false;
+      int extendedRGBColorsSeen = 0;
       
       String[] tokens = code.substring(2, code.length() - 1).split(";");
       for (String token : tokens)
@@ -237,16 +240,21 @@ public class AnsiCode
 
          if (extendedColor > 0)
          {
-            if (!extendedMarkerSeen)
+            if (!extendedMarkerSeen && !extendedRGBMarkerSeen)
             {
                if (codeVal == EXT_BY_INDEX)
                {
                   extendedMarkerSeen = true;
                   continue;
                }
+               else if (codeVal == EXT_BY_RGB)
+               {
+                  extendedRGBMarkerSeen = true;
+                  extendedRGBColorsSeen = 0;
+               }
                else
                {
-                  // unsupported extended color format; hard to recover so
+                  // unknown extended color format; hard to recover so
                   // just reset back to defaults and return
                   clazzes_.clear();
                   return getStyle(baseClazz);
@@ -254,28 +262,44 @@ public class AnsiCode
             }
             else
             {
-               if (extendedColor == FOREGROUND_EXT)
+               // We don't support colors specified via RGB, but parse the
+               // sequence then ignore it in case there are supported 
+               // sequences after it
+               if (extendedRGBMarkerSeen)
                {
-                  if (codeVal >= 0 && codeVal <= 255)
+                  extendedRGBColorsSeen++;
+                  if (extendedRGBColorsSeen == 3 /*red, green, blue*/)
                   {
-                     currentColor_.setExtended(codeVal);
-                     resetForeground();
-                     clazzes_.add(Color.clazzForColorIndex(codeVal, 
-                           false /*background*/));
+                     extendedColor = 0;
+                     extendedRGBMarkerSeen = false;
+                     extendedRGBColorsSeen = 0;
                   }
                }
-               else
+               else 
                {
-                  if (codeVal >= 0 && codeVal <= 255)
+                  if (extendedColor == FOREGROUND_EXT)
                   {
-                     currentBgColor_.setExtended(codeVal);
-                     resetBackground();
-                     clazzes_.add(Color.clazzForColorIndex(codeVal, 
-                           true /*background*/));
+                     if (codeVal >= 0 && codeVal <= 255)
+                     {
+                        currentColor_.setExtended(codeVal);
+                        resetForeground();
+                        clazzes_.add(Color.clazzForColorIndex(codeVal, 
+                              false /*background*/));
+                     }
                   }
+                  else
+                  {
+                     if (codeVal >= 0 && codeVal <= 255)
+                     {
+                        currentBgColor_.setExtended(codeVal);
+                        resetBackground();
+                        clazzes_.add(Color.clazzForColorIndex(codeVal, 
+                              true /*background*/));
+                     }
+                  }
+                  extendedColor = 0;
+                  extendedMarkerSeen = false;
                }
-               extendedColor = 0;
-               extendedMarkerSeen = false;
             }
          }
          else if (codeVal == RESET)
