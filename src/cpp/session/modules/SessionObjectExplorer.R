@@ -161,7 +161,10 @@
    access <- context$access
    
    s4 <- isS4(object)
-   expandable <- is.recursive(object) || s4
+   expandable <-
+      is.recursive(object) ||
+      s4 ||
+      !is.null(attributes(object))
    
    # extract attributes when relevant
    if (context$recursive &&
@@ -388,6 +391,16 @@
 
 .rs.addFunction("explorer.objectType", function(object)
 {
+   # special behavior for factors
+   if (inherits(object, "factor"))
+   {
+      type <- "factor"
+      classes <- setdiff(class(object), "factor")
+      if (length(classes))
+         type <- paste(type, sprintf("(%s)", paste(classes, collapse = ", ")))
+      return(type)
+   }
+   
    # ascertain the object type
    type <- typeof(object)
    
@@ -450,8 +463,7 @@
    
    else if (isS4(object))
    {
-      captured <- capture.output(show(object))
-      output <- captured[[1]]
+      output <- sprintf("S4 object of class %s", class(object))
       more <- FALSE
    }
    

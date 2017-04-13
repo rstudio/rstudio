@@ -22,7 +22,10 @@ object <- list(
       c2 = "c2"
    ),
    
-   m = m
+   m = m,
+   
+   f = factor(1:5),
+   o = ordered(1:5)
 )
 
 # debug(.rs.rpc.explorer_inspect_object)

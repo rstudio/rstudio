@@ -384,7 +384,7 @@ public class ObjectExplorerDataGrid
          @Override
          public String getValue(Data data)
          {
-            return data.getObjectType();
+            return data.getDisplayType();
          }
       };
       addColumn(typeColumn_, new TextHeader("Type"));
