@@ -1,5 +1,5 @@
 /*
- * TerminalSessionSocket.java
+ * TerminalLocalEcho.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
