@@ -15,9 +15,9 @@
 package org.rstudio.studio.client;
 
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.core.client.AnsiCodeTests;
 import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
-import org.rstudio.studio.client.workbench.views.terminal.AnsiCodeTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
