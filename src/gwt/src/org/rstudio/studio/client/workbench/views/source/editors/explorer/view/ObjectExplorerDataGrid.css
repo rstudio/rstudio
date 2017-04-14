@@ -45,12 +45,14 @@
 	width: 20px !important;
 	text-align: center;
 	cursor: pointer;
+	visibility: hidden;
 }
 
 .closeRowIcon {
 	width: 20px !important;
 	text-align: center;
 	cursor: pointer;
+	visibility: hidden;
 }
 
 .objectTypeIcon {

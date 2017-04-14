@@ -80,6 +80,8 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -87,24 +89,41 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.IdentityColumn;
+import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.gwt.view.client.CellPreviewEvent.Handler;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
 
 public class ObjectExplorerDataGrid
       extends DataGrid<ObjectExplorerDataGrid.Data>
       implements ClickHandler,
-      Handler<ObjectExplorerDataGrid.Data>
+                 RowHoverEvent.Handler,
+                 CellPreviewEvent.Handler<ObjectExplorerDataGrid.Data>
 {
    public static class Data extends ObjectExplorerInspectionResult
    {
       protected Data()
       {
       }
+      
+      // TODO: more direct way?
+      public final boolean isAttributes()
+      {
+         return "(attributes)".equals(getDisplayName());
+      }
+      
+      public final native void setMatched(boolean matched)
+      /*-{
+         this["matched"] = matched;
+      }-*/;
+      
+      public final native boolean isMatched()
+      /*-{
+         return !!this["matched"];
+      }-*/;
       
       public final ExpansionState getExpansionState()
       {
@@ -261,7 +280,7 @@ public class ObjectExplorerDataGrid
       public boolean accept(T data);
    }
    
-   private static class NameCell extends AbstractCell<Data>
+   private class NameCell extends AbstractCell<Data>
    {
       @Override
       public void render(Context context,
@@ -291,7 +310,7 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant("</table>");
       }
       
-      private static final void addIndent(SafeHtmlBuilder builder, Data data)
+      private final void addIndent(SafeHtmlBuilder builder, Data data)
       {
          int indentPx = data.getDepth() * 8;
          if (indentPx == 0)
@@ -301,9 +320,11 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant(html);
       }
       
-      private static final void addExpandIcon(SafeHtmlBuilder builder, Data data)
+      private final void addExpandIcon(SafeHtmlBuilder builder, Data data)
       {
-         // no icon needed for non-expandable objects
+         // TODO: detect whether we know that an expandable node actually
+         // has no children that we want to currently show -- e.g.
+         // a list with no children, or when attributes are hidden
          if (!data.isExpandable())
          {
             builder.appendHtmlConstant("<div style='width: 20px'></div>");
@@ -330,8 +351,8 @@ public class ObjectExplorerDataGrid
          }
       }
       
-      private static final void addIcon(SafeHtmlBuilder builder,
-                                        ObjectExplorerInspectionResult result)
+      private final void addIcon(SafeHtmlBuilder builder,
+                                 ObjectExplorerInspectionResult result)
       {
          // TODO: icon based on type
          SafeHtml openDiv = SafeHtmlUtil.createDiv(
@@ -341,8 +362,8 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant("</div>");
       }
       
-      private static final void addName(SafeHtmlBuilder builder,
-                                        ObjectExplorerInspectionResult result)
+      private final void addName(SafeHtmlBuilder builder,
+                                 ObjectExplorerInspectionResult result)
       {
          String name = result.getDisplayName();
          if (name == null)
@@ -360,6 +381,7 @@ public class ObjectExplorerDataGrid
       {
          SafeHtml extractTag = SafeHtmlUtil.createDiv(
                "class",       ThemeStyles.INSTANCE.clickableIcon(),
+               "style",       "visibility: hidden;",
                "data-action", ACTION_EXTRACT);
          
          // extract button
@@ -415,6 +437,7 @@ public class ObjectExplorerDataGrid
       
       // register handlers
       setKeyboardSelectionHandler(this);
+      addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
       
       // populate the view once initially
@@ -565,6 +588,26 @@ public class ObjectExplorerDataGrid
          preview.setCanceled(true);
          event.stopPropagation();
          event.preventDefault();
+      }
+   }
+   
+   @Override
+   public void onRowHover(RowHoverEvent event)
+   {
+      TableRowElement rowEl = event.getHoveringRow();
+      Element[] buttonEls = DomUtils.getElementsByClassName(rowEl, ThemeStyles.INSTANCE.clickableIcon());
+      if (buttonEls == null)
+         return;
+      
+      if (event.isUnHover())
+      {
+         for (Element el : buttonEls)
+            el.getStyle().setVisibility(Visibility.HIDDEN);
+      }
+      else
+      {
+         for (Element el : buttonEls)
+            el.getStyle().setVisibility(Visibility.VISIBLE);
       }
    }
    
@@ -787,6 +830,8 @@ public class ObjectExplorerDataGrid
    
    private void synchronize()
    {
+      final String filter = StringUtil.notNull(filter_).trim();
+      
       // only include visible data in the table
       // TODO: we should consider how to better handle
       // piecewise updates to the table, rather than
@@ -796,9 +841,29 @@ public class ObjectExplorerDataGrid
          @Override
          public boolean accept(Data data)
          {
+            // detect if this matches the current filter
+            if (!filter.isEmpty())
+            { 
+               data.setMatched(false);
+               String[] fields = {
+                     data.getDisplayName(),
+                     data.getDisplayType(),
+                     data.getDisplayDesc()
+               };
+
+               for (String field : fields)
+               {
+                  int index = field.toLowerCase().indexOf(filter.toLowerCase());
+                  if (index != -1)
+                  {
+                     data.setMatched(true);
+                     break;
+                  }
+               }
+            }
+            
             // skip attributes if disabled
-            // TODO: more deterministic way of determining this
-            if (!showAttributes_ && data.getDisplayName().equals("(attributes)"))
+            if (!showAttributes_ && data.isAttributes())
                return false;
             
             // otherwise, check whether it's currently visible
@@ -807,7 +872,6 @@ public class ObjectExplorerDataGrid
       });
       
       // remove entries that don't match filter
-      final String filter = StringUtil.notNull(filter_).trim();
       if (!filter.isEmpty())
       {
          data = ListUtil.filter(data, new FilterPredicate<Data>()
@@ -815,16 +879,11 @@ public class ObjectExplorerDataGrid
             @Override
             public boolean test(Data object)
             {
-               String[] fields = {
-                     object.getDisplayName(),
-                     object.getDisplayType(),
-                     object.getDisplayDesc()
-               };
-               
-               for (String field : fields)
+               for (Data self = object;
+                    self != null;
+                    self = self.getParentData())
                {
-                  int index = field.toLowerCase().indexOf(filter.toLowerCase());
-                  if (index != -1)
+                  if (self.isMatched())
                      return true;
                }
                
@@ -927,5 +986,4 @@ public class ObjectExplorerDataGrid
    static {
       RES.dataGridStyle().ensureInjected();
    }
-   
 }

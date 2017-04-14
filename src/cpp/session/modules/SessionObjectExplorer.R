@@ -162,8 +162,8 @@
    
    s4 <- isS4(object)
    expandable <-
-      is.recursive(object) ||
-      s4 ||
+      (is.recursive(object) && length(object) > 0) ||
+      (s4 && length(slotNames(object)) > 0) ||
       !is.null(attributes(object))
    
    # extract attributes when relevant
