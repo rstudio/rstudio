@@ -165,9 +165,10 @@ void SessionLauncher::launchNextSession(bool reload)
    // polute future sessions
    core::system::unsetenv(kRStudioInitialProject);
 
-   // build a new launch context -- re-use the same port if we aren't reloading
-   std::string port = !reload ? options().portNumber() : "";
-   std::string host, url;
+   // build a new launch context; always allocate a new port in case the session
+   // is still waiting for children to exit and hasn't released its grip on the
+   // current port
+   std::string port, host, url;
    std::vector<std::string> argList;
    buildLaunchContext(&host, &port, &argList, &url);
    
@@ -175,13 +176,9 @@ void SessionLauncher::launchNextSession(bool reload)
    Error error = launchSession(host, port, argList);
    if (!error)
    {
-      // reload if necessary
-      if (reload)
-      {
-         NSURL* nsurl = [NSURL URLWithString:
-                           [NSString stringWithUTF8String: url.c_str()]];
-         [[MainFrameController instance] loadURL: nsurl];
-      }
+      NSURL* nsurl = [NSURL URLWithString:
+                        [NSString stringWithUTF8String: url.c_str()]];
+      [[MainFrameController instance] loadURL: nsurl];
    }
    else
    {
