@@ -479,9 +479,9 @@ public class TerminalSessionSocket
    private Websocket socket_;
    private LinkedList<String> localEcho_ = new LinkedList<String>();
 
-   // Matches ANSI control sequences or backspace or DEL or BEL
+   // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
    private static final Pattern ANSI_CTRL_PATTERN =
-         Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\177\7]" + ")");
+         Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\n\r\177\7]" + ")");
 
    // Injected ---- 
    private UIPrefs uiPrefs_;
