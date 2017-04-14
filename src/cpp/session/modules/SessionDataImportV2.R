@@ -748,7 +748,11 @@
 
       columns <- list()
       if (ncol(data)) {
-         columns <- .rs.describeCols(data, maxCols, maxFactors)
+         columns <- .rs.describeCols(data, maxFactors)
+         if (ncol(data) > maxCols) {
+            columns <- head(columns, maxCols)
+            data <- data[, maxCols]
+         }
       }
       
       parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
