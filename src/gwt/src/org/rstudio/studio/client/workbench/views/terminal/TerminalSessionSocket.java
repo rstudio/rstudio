@@ -368,21 +368,14 @@ public class TerminalSessionSocket
             int matchLen = outputNonEchoed(outputToMatch);
             if (matchLen == 0)
             {
-               // didn't match previously echoed text; delete local-input
-               // queue so we don't get too far out of sync and write 
-               // remaining text as-is
-               localEcho_.clear();
-               xterm_.write(output.substring(chunkStart));
+               // didn't match previously echoed text at all; write 
+               // everything after that chunk
+               xterm_.write(output.substring(chunkEnd));
                return;
             }
-            else if (matchLen < outputToMatch.length())
-            {
-               // partial match; output is a superset of what was already
-               // locally echoed
-               xterm_.write(match.getValue());
-               return;
-            }
-            // otherwise completely matched
+            // Otherwise completely or partially matched; at this point
+            // we've echoed everything necessary up to the end of currently
+            // chunk and can move onto next one.
          }
 
          xterm_.write(match.getValue()); // write special sequence
