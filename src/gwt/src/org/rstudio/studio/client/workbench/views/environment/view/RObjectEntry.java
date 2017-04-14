@@ -71,7 +71,9 @@ public class RObjectEntry
           type.equals("data.table") ||
           type.equals("cast_df") ||
           type.equals("xts") ||
-          type.equals("DataFrame"))
+          type.equals("DataFrame") ||
+          type.equals("list") ||
+          type.equals("environment"))
       {
          return Categories.Data;
       }
@@ -98,7 +100,7 @@ public class RObjectEntry
    }
 
    public static final String NO_VALUE = "NO_VALUE";
-
+   
    RObject rObject;
    boolean expanded;
    boolean isCategoryLeader;
