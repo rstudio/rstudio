@@ -26,6 +26,7 @@ public class ObjectExplorerHandle extends JavaScriptObject
    
    public final native String getId()    /*-{ return this["id"];    }-*/;
    public final native String getName()  /*-{ return this["name"];  }-*/;
+   public final native String getTitle() /*-{ return this["title"]; }-*/;
    
    public final String getPath()
    {

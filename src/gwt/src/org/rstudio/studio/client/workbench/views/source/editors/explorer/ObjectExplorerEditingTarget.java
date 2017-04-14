@@ -111,7 +111,7 @@ public class ObjectExplorerEditingTarget
    @Override
    protected String getContentTitle()
    {
-      return getHandle().getName();
+      return getHandle().getTitle();
    }
 
    @Override

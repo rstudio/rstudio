@@ -270,7 +270,7 @@ public class ObjectExplorerDataGrid
          code = code.replaceAll("#", accessors.get(i));
       
       // finally, substitute in the original object
-      code = code.replaceAll("#", handle_.getName());
+      code = code.replaceAll("#", handle_.getTitle());
       
       return code;
    }

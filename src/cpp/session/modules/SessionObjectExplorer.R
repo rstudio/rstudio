@@ -157,18 +157,21 @@
 
 .rs.addFunction("explorer.viewObject", function(object)
 {
-   # attempt to divine name from call
+   # attempt to divine title from call
    call <- match.call()
-   name <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
+   title <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
+   
+   # provide an appropriate name for the root node
+   name <- .rs.explorer.objectName(object, title)
    
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name)
+   handle <- .rs.explorer.createHandle(object, name, title)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
 })
 
-.rs.addFunction("explorer.createHandle", function(object, name)
+.rs.addFunction("explorer.createHandle", function(object, name, title)
 {
    # save in cached data environment
    id <- .rs.explorer.cacheObject(object)
@@ -176,7 +179,8 @@
    # return a handle object
    list(
       id    = .rs.scalar(id),
-      name  = .rs.scalar(name)
+      name  = .rs.scalar(name),
+      title = .rs.scalar(title)
    )
 })
 
@@ -309,7 +313,7 @@
    # default to internal inspectors
    if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
       .rs.explorer.inspectXmlNode(object, context)
-   else if (is.list(object))
+   else if (is.list(object) || is.call(object))
       .rs.explorer.inspectList(object, context)
    else if (is.environment(object))
       .rs.explorer.inspectEnvironment(object, context)
@@ -333,7 +337,7 @@
       {
          name <- sprintf("<%s>", xmlNames[[i]])
          access <- sprintf("xml_child(#, %i)", i)
-         tags <- .rs.explorer.tags$VIRTUAL
+         tags <- character()
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          .rs.explorer.inspectObject(xmlChildren[[i]], childContext)
       })
@@ -439,6 +443,14 @@
    .rs.explorer.createInspectionResult(object, context)
 })
 
+.rs.addFunction("explorer.objectName", function(object, default)
+{
+   if (inherits(object, "xml_node"))
+      return(sprintf("<%s>", xml2::xml_name(object)))
+   
+   default
+})
+
 .rs.addFunction("explorer.objectType", function(object)
 {
    # special behavior for factors
@@ -503,6 +515,11 @@
    else if (is.symbol(object))
    {
       output <- .rs.surround(object, with = "`")
+      more <- FALSE
+   }
+   else if (is.language(object))
+   {
+      output <- format(object)
       more <- FALSE
    }
    else if (is.atomic(object))
