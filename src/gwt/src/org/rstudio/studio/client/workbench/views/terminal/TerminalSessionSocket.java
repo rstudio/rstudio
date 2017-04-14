@@ -151,6 +151,7 @@ public class TerminalSessionSocket
 
       session_ = session;
       xterm_ = xterm;
+      localEcho_ = new TerminalLocalEcho(xterm_);
 
       // Show delay between receiving a keystroke and sending it to the 
       // terminal emulator; for diagnostics on laggy typing. Intended for
@@ -297,19 +298,7 @@ public class TerminalSessionSocket
                              VoidServerRequestCallback requestCallback)
    {
       if (localEcho)
-      {
-         // input longer than one character is likely a control sequence, or
-         // pasted text; only local-echo and sync with single-character input
-         if (input.length() == 1) 
-         {
-            int ch = input.charAt(0);
-            if (ch >= 32 /*space*/ && ch <= 126 /*tilda*/)
-            {
-               localEcho_.add(input);
-               xterm_.write(input);
-            }
-         }
-      }
+         localEcho_.echo(input);
 
       switch (consoleProcess_.getChannelMode())
       {
@@ -335,36 +324,15 @@ public class TerminalSessionSocket
     */
    public void dispatchOutput(String output, boolean detectLocalEcho)
    {
-      if (detectLocalEcho && !localEcho_.isEmpty())
+      if (!detectLocalEcho || localEcho_.isEmpty())
       {
-         String lastOutput = "";
-         while (!localEcho_.isEmpty() && lastOutput.length() < output.length())
-         {
-            lastOutput += localEcho_.poll();
-         }
-        
-         if (lastOutput.equals(output))
-         {
-            // server echoed back what we have already echoed locally
-            return; 
-         }
-         
-         // Is output a superset of what was already echoed?
-         if (output.startsWith(lastOutput))
-         {
-            // Write the extra non-echoed output
-            xterm_.write(output.substring(lastOutput.length()));
-            return;
-         }
-         
-         // what we got back didn't match previously echoed text; delete
-         // queue so we don't get too far out of sync
-         localEcho_.clear();
+         xterm_.write(output);
+         return;
       }
       
-      xterm_.write(output);
+      localEcho_.write(output);
    }
-
+   
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
@@ -417,8 +385,8 @@ public class TerminalSessionSocket
    private boolean reportTypingLag_;
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
-   private LinkedList<String> localEcho_ = new LinkedList<String>();
-   
+   private TerminalLocalEcho localEcho_;
+
    // Injected ---- 
    private UIPrefs uiPrefs_;
 }
