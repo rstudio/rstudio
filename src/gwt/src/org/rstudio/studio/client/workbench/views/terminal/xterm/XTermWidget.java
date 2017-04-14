@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal.xterm;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
@@ -62,7 +63,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class XTermWidget extends Widget implements RequiresResize,
                                                    ResizeTerminalEvent.HasHandlers,
                                                    TerminalDataInputEvent.HasHandlers,
-                                                   XTermTitleEvent.HasHandlers
+                                                   XTermTitleEvent.HasHandlers,
+                                                   StringSink
 {
   /**
     *  Creates an XTermWidget.
@@ -124,6 +126,7 @@ public class XTermWidget extends Widget implements RequiresResize,
     * Write text to the terminal.
     * @param str Text to write
     */
+   @Override
    public void write(String str)
    {
       terminal_.scrollToBottom();
