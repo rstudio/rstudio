@@ -1609,12 +1609,18 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter {
    background-image: none;
-   background: #f3f4f7;
+   background: rgb(236, 237, 238);
    border-right: solid 1px #d6dadc;
-   border-radius: 0px 3px 0px 0px;
+   border-left: solid 1px #d6dadc;
+   border-radius: 3px 3px 0px 0px;
    border-top: solid 1px #d6dadc;
    padding-left: 9px;
    padding-right: 9px;
+   margin-left: -1px;
+}
+
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter {
+   background: #f3f4f7;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
