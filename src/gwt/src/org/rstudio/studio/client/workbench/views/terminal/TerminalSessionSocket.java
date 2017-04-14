@@ -17,9 +17,10 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -304,7 +305,7 @@ public class TerminalSessionSocket
          if (input.length() == 1) 
          {
             int ch = input.charAt(0);
-            if (ch >= 32 /*space*/ && ch <= 126 /*tilda*/)
+            if (ch >= 32 /*space*/ && ch <= 126 /*tilde*/)
             {
                localEcho_.add(input);
                xterm_.write(input);
@@ -336,61 +337,99 @@ public class TerminalSessionSocket
     */
    public void dispatchOutput(String output, boolean detectLocalEcho)
    {
-      if (detectLocalEcho && !localEcho_.isEmpty())
+      if (!detectLocalEcho || localEcho_.isEmpty())
       {
-         // Rapid typing with intermixed backspaces can cause shell
-         // to insert a Backspace + ESC[K into the already-local-echoed output.
-         // Remove that sequence from output when matching or we can easily 
-         // get out of sync and orphan deleted characters in the local buffer.
-         // This  manifests as characters you can't backspace over, but aren't
-         // seen by the shell process when you press enter.
-         String outputToMatch = output;
-         int clearPos = outputToMatch.indexOf(backspaceClear_);
-         if (clearPos > -1)
-         {
-            outputToMatch = outputToMatch.replace(backspaceClear_, "");
-         }
-         if (!outputToMatch.isEmpty())
-         {
-            String lastOutput = "";
-            while (!localEcho_.isEmpty() && lastOutput.length() < outputToMatch.length())
-            {
-               lastOutput += localEcho_.poll();
-            }
-
-            if (lastOutput.equals(outputToMatch))
-            {
-               // exact match
-               if (clearPos < 0)
-               {
-                  return;  // nothing left to echo
-               }
-               else
-               {
-                  output = backspaceClear_; // echo the escape sequence
-               }
-            }
-
-            // Is output a superset of what was already echoed?
-            else if (outputToMatch.startsWith(lastOutput))
-            {
-               // If we removed the escape sequence for matching, put it
-               // back in the same relative location before doing local output
-               if (clearPos < 0 || clearPos >= lastOutput.length())
-                  output = output.substring(lastOutput.length());
-               else
-                  output = backspaceClear_ + outputToMatch.substring(lastOutput.length());
-            }
-            else
-            {
-               // what we got back didn't match previously echoed text; delete
-               // queue so we don't get too far out of sync
-               Debug.log("Terminal local echo matching failed");
-               localEcho_.clear();
-            }
-         }
+         xterm_.write(output);
+         return;
       }
-      xterm_.write(output);
+
+      // Rapid typing with intermixed backspaces can cause shell
+      // to insert ^H and ESC[K into the already-local-echoed output.
+      // Also, typing and backspacing at the start of a line can cause
+      // shell to return a BEL (^G) mixed with previously echoed output.
+      // 
+      // Thus remove ANSI control sequences from output when matching or we 
+      // can easily get out of sync and orphan deleted characters in the 
+      // local buffer.
+      //
+      // This manifests as characters you can't backspace over, but aren't
+      // seen by the shell process when you press enter.
+      int chunkStart = 0;
+      int chunkEnd = output.length();
+      Match match = ANSI_CTRL_PATTERN.match(output,  0);
+      while (match != null)
+      {
+         chunkEnd = match.getIndex();
+
+         // try to match local-echoed text up to this ignored sequence
+         String outputToMatch = output.substring(chunkStart, chunkEnd);
+         if (outputToMatch.length() > 0)
+         {
+            int matchLen = outputNonEchoed(outputToMatch);
+            if (matchLen == 0)
+            {
+               // didn't match previously echoed text; delete local-input
+               // queue so we don't get too far out of sync and write 
+               // remaining text as-is
+               localEcho_.clear();
+               xterm_.write(output.substring(chunkStart));
+               return;
+            }
+            else if (matchLen < outputToMatch.length())
+            {
+               // partial match; output is a superset of what was already
+               // locally echoed
+               xterm_.write(match.getValue());
+               return;
+            }
+            // otherwise completely matched
+         }
+
+         xterm_.write(match.getValue()); // write special sequence
+         
+         chunkStart = chunkEnd + match.getValue().length();
+         chunkEnd = output.length();
+         match = match.nextMatch();
+      }
+
+      outputNonEchoed(output.substring(chunkStart, chunkEnd));
+   }
+   
+   /**
+    * Skip any previously local-echoed output, write out any trailing text
+    * that wasn't previously echoed. Only exact-match from beginning of string.
+    * @param outputToMatch text to match against previously echoed text
+    * @return length of matched sequence
+    */
+   private int outputNonEchoed(String outputToMatch)
+   {
+      String lastOutput = "";
+      while (!localEcho_.isEmpty() && lastOutput.length() < outputToMatch.length())
+      {
+         lastOutput += localEcho_.poll();
+      }
+
+      if (lastOutput.equals(outputToMatch))
+      {
+         // all matched, nothing to output
+         return outputToMatch.length();
+      }
+
+      else if (outputToMatch.startsWith(lastOutput))
+      {
+         // output is superset of what was local-echoed; write out the
+         // unmatched part
+         xterm_.write(outputToMatch.substring(lastOutput.length()));
+         return lastOutput.length();
+      }
+      else
+      {
+         // didn't match previously echoed text; delete local-input
+         // queue so we don't get too far out of sync and write text as-is
+         localEcho_.clear();
+         xterm_.write(outputToMatch);
+         return 0;
+      }
    }
    
    @Override
@@ -446,7 +485,10 @@ public class TerminalSessionSocket
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
    private LinkedList<String> localEcho_ = new LinkedList<String>();
-   private final String backspaceClear_ = "\b\33[K";
+
+   // Matches ANSI control sequences or backspace or DEL or BEL
+   private static final Pattern ANSI_CTRL_PATTERN =
+         Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\177\7]" + ")");
 
    // Injected ---- 
    private UIPrefs uiPrefs_;

@@ -562,13 +562,13 @@ public class AnsiCode
    }
 
    // Control characters handled by R console
-   private static final String CONTROL_REGEX = "[\r\b\f\n]";
+   public static final String CONTROL_REGEX = "[\r\b\f\n]";
 
    // RegEx to match ansi escape codes copied from https://github.com/chalk/ansi-regex
-   private static final String ANSI_REGEX = 
+   public static final String ANSI_REGEX = 
          "[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]";
    
-   // Match both console control characters and ansi escape sequences
+   // Match both console-supported control characters and ansi escape sequences
    public static final Pattern ESC_CONTROL_PATTERN =
          Pattern.create("(?:" + CONTROL_REGEX + ")|(?:" + ANSI_REGEX + ")");
    
