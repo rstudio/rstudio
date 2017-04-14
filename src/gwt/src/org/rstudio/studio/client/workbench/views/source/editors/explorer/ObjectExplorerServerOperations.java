@@ -17,12 +17,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 
+import com.google.gwt.core.client.JsArrayString;
+
 public interface ObjectExplorerServerOperations
 {
    void explorerInspectObject(
          String objectId,
          String objectName,
          String objectAccess,
+         JsArrayString tags,
          int recursionDepth,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
 }

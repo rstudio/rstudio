@@ -1820,6 +1820,7 @@ public class RemoteServer implements Server
    public void explorerInspectObject(String objectId,
                                      String objectName,
                                      String objectAccess,
+                                     JsArrayString tags,
                                      int recursionDepth,
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
@@ -1827,7 +1828,17 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(objectId));
       params.set(1, new JSONString(objectName));
       params.set(2, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
-      params.set(3, new JSONNumber(recursionDepth));
+      
+      JSONArray jsonTags = new JSONArray();
+      if (tags != null)
+      {
+         for (int i = 0, n = tags.length(); i < n; i++)
+         {
+            jsonTags.set(i, new JSONString(tags.get(i)));
+         }
+      }
+      params.set(3, jsonTags);
+      params.set(4, new JSONNumber(recursionDepth));
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
    }
    

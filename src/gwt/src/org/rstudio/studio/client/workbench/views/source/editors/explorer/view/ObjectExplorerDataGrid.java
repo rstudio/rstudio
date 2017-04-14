@@ -320,15 +320,32 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant(html);
       }
       
-      private final void addExpandIcon(SafeHtmlBuilder builder, Data data)
+      private final boolean onNotExpandable(SafeHtmlBuilder builder,
+                                            Data data)
       {
-         // TODO: detect whether we know that an expandable node actually
-         // has no children that we want to currently show -- e.g.
-         // a list with no children, or when attributes are hidden
+         builder.appendHtmlConstant("<div style='width: 20px'></div>");
+         return false;
+      }
+      
+      // Returns true if an icon was drawn; false if indent was drawn instead
+      private final boolean addExpandIcon(final SafeHtmlBuilder builder,
+                                          final Data data)
+      {
+         // bail if this node is not expandable
          if (!data.isExpandable())
+            return onNotExpandable(builder, data);
+         
+         // bail if we're not showing attributes, but a child attributes
+         // node is the only thing that exists
+         if (!showAttributes_)
          {
-            builder.appendHtmlConstant("<div style='width: 20px'></div>");
-            return;
+            JsArray<Data> children = data.getChildrenData();
+            if (children != null && children.length() == 1)
+            {
+               Data child = children.get(0);
+               if (child.hasTag(TAG_ATTRIBUTES))
+                  return onNotExpandable(builder, data);
+            }
          }
          
          // add expand button
@@ -349,6 +366,8 @@ public class ObjectExplorerDataGrid
             builder.appendHtmlConstant("</div>");
             break;
          }
+         
+         return true;
       }
       
       private final void addIcon(SafeHtmlBuilder builder,
@@ -365,10 +384,22 @@ public class ObjectExplorerDataGrid
       private final void addName(SafeHtmlBuilder builder,
                                  ObjectExplorerInspectionResult result)
       {
+         boolean virtual = result.hasTag(TAG_VIRTUAL);
+         if (virtual)
+         {
+            builder.appendHtmlConstant("<div style='font-style: italic'>");
+         }
+         else
+         {
+            builder.appendHtmlConstant("<div>");
+         }
+         
          String name = result.getDisplayName();
          if (name == null)
             name = "<unknown>";
          builder.appendEscaped(name);
+         
+         builder.appendHtmlConstant("</div>");
       }
    }
    
@@ -700,6 +731,7 @@ public class ObjectExplorerDataGrid
    {
       final Data data = getData().get(row);
       Debug.logToRConsole("Opening row for object:" + data.getObjectId());
+      Debug.logObject(data);
       
       // bail if we've attempted to open something non-expandable
       if (!data.isExpandable())
@@ -728,6 +760,7 @@ public class ObjectExplorerDataGrid
    {
       final Data data = getData().get(row);
       Debug.logToRConsole("Closing row for object:" + data.getObjectId());
+      Debug.logObject(data);
       
       // bail if we've attempted to close something non-expandable
       if (!data.isExpandable())
@@ -775,6 +808,7 @@ public class ObjectExplorerDataGrid
             data.getObjectId(),
             data.getDisplayName(),
             data.getObjectAccess(),
+            data.getTags(),
             1,
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
@@ -804,6 +838,7 @@ public class ObjectExplorerDataGrid
       server_.explorerInspectObject(
             handle_.getId(),
             handle_.getName(),
+            null,
             null,
             1,
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
@@ -954,6 +989,9 @@ public class ObjectExplorerDataGrid
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
    private static final String ACTION_EXTRACT = "extract";
+   
+   private static final String TAG_ATTRIBUTES = "attributes";
+   private static final String TAG_VIRTUAL    = "virtual";
    
    private static final ImageResource2x IMAGE_RIGHT_ARROW =
          new ImageResource2x(StandardIcons.INSTANCE.right_arrow2x());

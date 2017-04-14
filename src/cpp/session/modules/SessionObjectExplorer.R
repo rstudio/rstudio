@@ -20,6 +20,11 @@
    CLOSE_NODE = "close_node"
 ))
 
+.rs.setVar("explorer.tags", list(
+   ATTRIBUTES = "attributes",
+   VIRTUAL    = "virtual"
+))
+
 # this environment holds custom inspectors that might be
 # registered by client packages
 .rs.setVar("explorer.inspectorRegistry", new.env(parent = emptyenv()))
@@ -27,11 +32,18 @@
 .rs.addJsonRpcHandler("explorer_inspect_object", function(id,
                                                           name,
                                                           access,
+                                                          tags,
                                                           recursive)
 {
-   object <- .rs.explorer.getCachedObject(id)
-   context <- .rs.explorer.createContext(name, access, recursive)
-   result <- .rs.explorer.inspectObject(object, context)
+   object  <- .rs.explorer.getCachedObject(id)
+   context <- .rs.explorer.createContext(
+      name      = name,
+      access    = access,
+      tags      = tags,
+      recursive = recursive
+   )
+   
+   result  <- .rs.explorer.inspectObject(object, context)
    result
 })
 
@@ -43,6 +55,21 @@
 .rs.addFunction("objectClass", function(object)
 {
    .Call("rs_objectClass", object)
+})
+
+.rs.addFunction("explorer.hasRelevantAttributes", function(object)
+{
+   attrib <- attributes(object)
+   
+   boring <-
+      is.null(attrib) ||
+      identical(object, attrib) ||
+      identical(names(attrib), "names")
+   
+   if (boring)
+      return(FALSE)
+   
+   TRUE
 })
 
 .rs.addFunction("explorer.getCache", function(envir = .rs.CachedDataEnv)
@@ -77,25 +104,31 @@
 
 #' @param name The display name, as should be used in UI.
 #' @param access A string of R code, indicating how this object
-#'   should be accessed.
+#'   should be accessed from a parent object. The '#' character
+#'   is used as a placeholder for the name of the parent object.
+#' @param tags An optional character vector of tags, used to identify
+#'   special nodes (e.g. R attributes).
 #' @param recursive Whether children of this object should be
 #'   inspected recursively (if applicable). Can either be a boolean
 #'   argument, or a numeric argument indicating the maximum depth
 #'   of the recursion.
 .rs.addFunction("explorer.createContext", function(name = NULL,
                                                    access = NULL,
+                                                   tags = character(),
                                                    recursive = FALSE)
 {
    list(
       name      = name,
       access    = access,
+      tags      = tags,
       recursive = recursive
    )
 })
 
 .rs.addFunction("explorer.createChildContext", function(context,
                                                         name,
-                                                        access)
+                                                        access,
+                                                        tags)
 {
    childContext <- context
    
@@ -104,13 +137,10 @@
    if (is.numeric(recursive) && recursive)
       childContext$recursive <- recursive - 1
    
-   # attach name if provided
-   if (!is.null(name))
-      childContext[["name"]] <- name
-   
-   # attach access if provided
-   if (!is.null(access))
-      childContext[["access"]] <- access
+   # attach new context entries
+   childContext[["name"]] <- name
+   childContext[["access"]] <- access
+   childContext[["tags"]] <- tags
    
    # return
    childContext
@@ -159,21 +189,35 @@
    # extract pertinent values from context
    name <- context$name
    access <- context$access
+   tags <- context$tags
    
+   # determine whether this is an S4 object
    s4 <- isS4(object)
+   
+   # figure out whether this object is expandable
+   # (note that the client will still need to refine behavior
+   # depending on whether attributes are being shown)
    expandable <-
+      
+      # is this an R list / environment with children?
       (is.recursive(object) && length(object) > 0) ||
+      
+      # is this an S4 object with one or more slots?
       (s4 && length(slotNames(object)) > 0) ||
+      
+      # do we have attributes?
       !is.null(attributes(object))
    
    # extract attributes when relevant
-   if (context$recursive &&
-       !is.null(attributes(object)) &&
-       !identical(object, attributes(object)))
+   if (context$recursive && .rs.explorer.hasRelevantAttributes(object))
    {
       childName <- "(attributes)"
       childAccess <- "attributes(#)"
-      childContext <- .rs.explorer.createChildContext(context, childName, childAccess)
+      childTags <- c(.rs.explorer.tags$ATTRIBUTES, .rs.explorer.tags$VIRTUAL)
+      childContext <- .rs.explorer.createChildContext(context,
+                                                      childName,
+                                                      childAccess,
+                                                      childTags)
       childResult <- .rs.explorer.inspectObject(attributes(object), childContext)
       children[[length(children) + 1]] <- childResult
    }
@@ -192,10 +236,11 @@
       type       = .rs.scalar(typeof(object)),
       class      = class(object),
       length     = .rs.scalar(length(object)),
+      access     = .rs.scalar(access),
       recursive  = .rs.scalar(is.recursive(object)),
       expandable = .rs.scalar(expandable),
       s4         = .rs.scalar(isS4(object)),
-      access     = .rs.scalar(access),
+      tags       = as.character(tags),
       display    = display,
       children   = if (is.list(children)) children
    )
@@ -241,7 +286,7 @@
       return(NULL)
    
    # ensure we copy relevant context fields
-   special <- c("name", "access")
+   special <- c("name", "access", "tags")
    for (field in special)
       if (is.null(result[[field]]))
          result[[field]] <- context[[field]]
@@ -288,7 +333,8 @@
       {
          name <- sprintf("<%s>", xmlNames[[i]])
          access <- sprintf("xml_child(#, %i)", i)
-         childContext <- .rs.explorer.createChildContext(context, name, access)
+         tags <- .rs.explorer.tags$VIRTUAL
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          .rs.explorer.inspectObject(xmlChildren[[i]], childContext)
       })
       
@@ -296,7 +342,8 @@
       xmlAttributes <- as.list(xml2::xml_attrs(object))
       name <- "(xml attributes)"
       access <- "xml_attrs(#)"
-      childContext <- .rs.explorer.createChildContext(context, name, access)
+      tags <- .rs.explorer.tags$VIRTUAL
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
       children[[length(children) + 1]] <-
          .rs.explorer.inspectObject(xmlAttributes, childContext)
    }
@@ -330,7 +377,8 @@
             access <- sprintf("#[[\"%s\"]]", name)
          }
          
-         childContext <- .rs.explorer.createChildContext(context, name, access)
+         tags <- character()
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
    }
@@ -350,8 +398,9 @@
       {
          name <- key
          access <- sprintf("#[[\"%s\"]]", key)
+         tags <- character()
          
-         childContext <- .rs.explorer.createChildContext(context, name, access)
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          result <- .rs.explorer.inspectObject(value, childContext)
          result[order(names(result))]
       })
@@ -372,8 +421,9 @@
       children <- lapply(slots, function(slot) {
          name <- slot
          access <- sprintf("#@%s", name)
+         tags <- character()
          
-         childContext <- .rs.explorer.createChildContext(context, name, access)
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          value <- eval(call("@", object, slot))
          .rs.explorer.inspectObject(value, childContext)
       })
