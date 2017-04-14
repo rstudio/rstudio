@@ -11,8 +11,12 @@ object <- list(
    symbol  = as.name("symbol"),
    list    = list(1, 2, 3),
    environment = env(a = 1, b = 2, c = 3),
-   expression = quote(1 + 1)
+   expression = quote(1 + 1),
+   formula = y ~ x + 1,
+   factor = factor(letters),
+   ordered = ordered(letters)
 )
+
 # debug(.rs.rpc.explorer_inspect_object)
 context <- .rs.explorer.createContext(recursive = 1)
 i <- .rs.explorer.inspectObject(object, context)

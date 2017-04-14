@@ -109,10 +109,9 @@ public class ObjectExplorerDataGrid
       {
       }
       
-      // TODO: more direct way?
       public final boolean isAttributes()
       {
-         return "(attributes)".equals(getDisplayName());
+         return hasTag(TAG_ATTRIBUTES);
       }
       
       public final native void setMatched(boolean matched)
@@ -261,7 +260,7 @@ public class ObjectExplorerDataGrid
       // just return from associated handle
       int n = accessors.size();
       if (n == 0)
-         return handle_.getName();
+         return handle_.getTitle();
       
       // start building up access string by repeatedly
       // substituting in accessors

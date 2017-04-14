@@ -57,6 +57,11 @@
    .Call("rs_objectClass", object)
 })
 
+.rs.addFunction("objectAttributes", function(object)
+{
+   .Call("rs_objectAttributes", object)
+})
+
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
 {
    attrib <- attributes(object)
@@ -504,9 +509,26 @@
 {
    output <- ""
    more <- FALSE
+   comma <- FALSE
    n <- 6L
    
-   if (is.character(object))
+   if (is.factor(object))
+   {
+      fmt <- "Factor with %i levels: %s"
+      header <- head(object, n)
+      output <- sprintf(fmt, length(object), paste(.rs.surround(header, with = "\""), collapse = ", "))
+      more <- length(object) > n
+      comma <- TRUE
+   }
+   else if (is.ordered(object))
+   {
+      fmt <- "Ordered factor with %i levels: %s"
+      header <- head(object, n)
+      output <- sprintf(fmt, length(object), paste(.rs.surround(header, with = "\""), collapse = ", "))
+      more <- length(object) > n
+      comma <- TRUE
+   }
+   else if (is.character(object))
    {
       header <- head(object, n)
       output <- paste(.rs.surround(header, with = "\""), collapse = " ")
@@ -520,6 +542,16 @@
    else if (is.language(object))
    {
       output <- format(object)
+      more <- FALSE
+   }
+   else if (is.list(object))
+   {
+      output <- sprintf("List of length %i", length(object))
+      more <- FALSE
+   }
+   else if (is.environment(object))
+   {
+      output <- capture.output(base::print(unclass(object)))
       more <- FALSE
    }
    else if (is.atomic(object))
@@ -537,7 +569,7 @@
    if (more || nchar(output) > 80)
    {
       truncated <- substring(output, 1, 80)
-      output <- paste(truncated, "...")
+      output <- paste(truncated, if (comma) ", ..." else "...")
    }
    
    output
