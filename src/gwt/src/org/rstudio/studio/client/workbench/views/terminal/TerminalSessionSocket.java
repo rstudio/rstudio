@@ -299,6 +299,8 @@ public class TerminalSessionSocket
    {
       if (localEcho)
          localEcho_.echo(input);
+      else
+         localEcho_.clear();
 
       switch (consoleProcess_.getChannelMode())
       {

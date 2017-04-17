@@ -273,7 +273,67 @@ public class XTermWidget extends Widget implements RequiresResize,
       else
          terminal_.blur(); 
    }
-  
+   
+   /**
+    * @return Current cursor column
+    */
+   public int getCursorX()
+   {
+      return terminal_.cursorX();
+   }
+
+   /**
+    * @return Current cursor row
+    */
+   public int getCursorY()
+   {
+      return terminal_.cursorY();
+   }
+   
+   /**
+    * @return true if cursor at end of current line, false if not at EOL or
+    * terminal is showing alternate buffer
+    */
+   public boolean cursorAtEOL()
+   {
+      if (altBufferActive())
+      {
+         return false;
+      }
+      
+      String line = currentLine();
+      if (line == null)
+      {
+         return false;
+      }
+      
+      for (int i = getCursorX(); i < line.length(); i++)
+      {
+         if (line.charAt(i) != ' ')
+         {
+            return false;
+         }
+      }
+      return true;
+   }
+   
+   /**
+    * @return Text of current line buffer
+    */
+   public String currentLine()
+   {
+      return terminal_.currentLine();
+   }
+   
+   /**
+    * Is the terminal showing the alternate full-screen buffer?
+    * @return true if full-screen buffer is active
+    */
+   public boolean altBufferActive()
+   {
+      return terminal_.altBufferActive();
+   }
+   
    public static boolean isXTerm(Element el)
    {
       while (el != null)
