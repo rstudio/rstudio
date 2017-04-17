@@ -42,7 +42,8 @@
       dialogTopRight, dialogTopRightInner,
       dialogMiddleLeft, dialogMiddleCenter,
       dialogMiddleCenterInner, dialogMiddleRight, dialogBottomLeft,
-      dialogBottomCenter, dialogBottomRight;
+      dialogBottomCenter, dialogBottomRight,
+      dialogContent;
 
 @external popupTopLeft, popupTopLeftInner,
       popupTopCenter, popupTopCenterInner,
@@ -1664,4 +1665,65 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .dialogTabPanel > div:last-child {
    top: 14px !important;
+}
+
+.rstudio-themes-flat .gwt-DialogBox {
+   border: solid 1px #d6dadc;
+   border-radius: 5px 5px 5px 5px;
+   background: #F3F4F4;
+   overflow: hidden !important;
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogMiddleCenter {
+   background: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogTopCenter {
+   height: 24px;  
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogTopCenterInner .Caption {
+   margin-top: 1px;
+   margin-left: 9px;
+   padding-top: 0px;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogTopLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogMiddleLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogBottomLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogTopRight {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogMiddleRight {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogBottomRight {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogTopCenter {
+   background: #e1e2e5;
+   border-bottom: solid 1px #d6dadc;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogBottomPanel {
+   margin-top: 0px;
+   padding: 10px 2px 12px 4px;
+}
+
+.rstudio-themes-flat .gwt-DialogBox .dialogContent {
+   padding-left: 10px;
+   padding-right: 10px;
 }
