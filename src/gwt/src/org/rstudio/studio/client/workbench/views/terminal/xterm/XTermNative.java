@@ -103,7 +103,32 @@ public class XTermNative extends JavaScriptObject
    public final native void addClass(String classStr) /*-{
       this.element.classList.add(classStr);
    }-*/;
+   
+   public final native int cursorX() /*-{
+      return this.x;
+   }-*/;
+   
+   public final native int cursorY() /*-{
+      return this.y;
+   }-*/;
  
+   public final native boolean altBufferActive() /*-{
+      return this.normal != null;
+   }-*/;
+   
+   public final native String currentLine() /*-{
+      lineBuf = this.lines.get(this.y + this.ybase);
+      if (!lineBuf) // resize may be in progress
+         return null;
+      current = "";
+      for (i = 0; i < this.cols; i++) {
+         if (!lineBuf[i])
+            return null;
+         current += lineBuf[i][1];
+      }
+      return current;
+   }-*/;
+   
    /**
     * Install a handler for user input (typing). Only one handler at a 
     * time may be installed. Previous handler will be overwritten.

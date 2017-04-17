@@ -316,14 +316,7 @@ public class TerminalSession extends XTermWidget
          }
       }
       
-      // Don't do local-echo for Win32; its pty implementation returns 
-      // escape sequences even when doing simple single-character input at a 
-      // command-prompt. Also don't do local-echo when something is running,
-      // indicating we are likely not at a command-prompt.
-      boolean localEcho = !BrowseCap.isWindowsDesktop() && !hasChildProcs_ &&
-            uiPrefs_.terminalLocalEcho().getValue();
-      
-      socket_.dispatchInput(inputSequence_, userInput, localEcho,
+      socket_.dispatchInput(inputSequence_, userInput, doLocalEcho(),
             new VoidServerRequestCallback() {
 
                @Override
@@ -338,6 +331,43 @@ public class TerminalSession extends XTermWidget
                   writeError(error.getUserMessage());
                }
             });
+   }
+   
+   /**
+    * Should we do local-echo at this time?
+    * @return true if local-echo should be active
+    */
+   private boolean doLocalEcho()
+   {
+      // Local echo is an optimization where we directly output a typed
+      // character to the terminal without waiting for the echo back from
+      // the server. This is to improve responsiveness in the most common
+      // case of typing at a command-prompt. The code must reconcile what
+      // was local-echoed with what comes back from the server, and there
+      // are many cases it can't handle where we want to stop local-echo.
+      //
+      // There is a user-setting to totally disable local-echo.
+      //
+      // Win32's pty implementation returns escape sequences even when 
+      // doing simple single-character input at a command-prompt. 
+      //
+      // Don't do local-echo when something is running (busy),
+      // indicating we are likely not at a command-prompt.
+      //
+      // Don't do local-echo if terminal is showing full screen buffer; 
+      // indicates something like vim or tmux is running; usually caught
+      // by "busy" but there can be a lag between starting a full-screen
+      // program and it showing up as "busy".
+      //
+      // Finally, only local-echo if typing at the end of the current line to
+      // avoid issues with line-editing, such as inserting characters in the
+      // middle of a line.
+      return 
+            uiPrefs_.terminalLocalEcho().getValue() &&
+            !BrowseCap.isWindowsDesktop() && 
+            !hasChildProcs_ &&
+            !altBufferActive() &&
+            cursorAtEOL();
    }
 
    @Override
