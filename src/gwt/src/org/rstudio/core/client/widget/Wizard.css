@@ -1,3 +1,5 @@
+@external rstudio-themes-flat;
+
 .mainWidget {
    width: 510px;
    height: 300px;
@@ -14,6 +16,10 @@
    height: 42px;	
 }
 
+.rstudio-themes-flat .headerPanel {
+   margin-left: 5px;
+}
+
 .subcaptionLabel {
    font-size: 12px;
    color: #707070;
@@ -27,6 +33,11 @@
    height: 244px;
    margin-left: -10px;
    margin-right: -13px;
+}
+
+.rstudio-themes-flat .wizardBodyPanel {
+   margin-left: -10px;
+   margin-right: -10px;
 }
 
 .wizardPageSelector {
@@ -49,6 +60,10 @@
 
 @sprite .wizardPageSelectorItemFirst {
    gwt-image: 'wizardPageSelectorBackgroundFirst';
+}
+
+@sprite .rstudio-themes-flat .wizardPageSelectorItemFirst {
+   gwt-image: 'wizardPageSelectorBackground';
 }
 
 @sprite .wizardPageSelectorItemLast {
