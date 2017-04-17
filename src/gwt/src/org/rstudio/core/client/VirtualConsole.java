@@ -26,7 +26,6 @@ import java.util.TreeSet;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;

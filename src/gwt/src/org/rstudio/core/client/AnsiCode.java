@@ -13,13 +13,12 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal;
+package org.rstudio.core.client;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 
 /**

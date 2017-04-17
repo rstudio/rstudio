@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PreElement;

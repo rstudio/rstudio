@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
