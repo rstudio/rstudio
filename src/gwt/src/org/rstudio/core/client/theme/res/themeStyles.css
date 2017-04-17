@@ -1650,3 +1650,17 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .logoAnchor {
    top: 3px !important;
 }
+
+.rstudio-themes-flat .dialogTabPanel {
+   background: none;
+}
+
+.rstudio-themes-flat .dialogTabPanel > div > div.gwt-TabLayoutPanelTabs {
+   border-bottom: none;
+   height: 23px;
+   background: none;
+}
+
+.rstudio-themes-flat .dialogTabPanel > div:last-child {
+   top: 14px !important;
+}
