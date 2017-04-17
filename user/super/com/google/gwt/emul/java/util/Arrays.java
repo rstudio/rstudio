@@ -41,8 +41,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javaemul.internal.ArrayHelper;
-import javaemul.internal.DoubleCompareHolder;
-import javaemul.internal.LongCompareHolder;
+import jsinterop.annotations.JsFunction;
 
 /**
  * Utility methods related to native arrays.
@@ -1280,21 +1279,21 @@ public class Arrays {
   }
 
   public static void sort(double[] array) {
-    nativeSort(array, DoubleCompareHolder.getDoubleComparator());
+    nativeSort(array, getDoubleComparator());
   }
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeSort(array, fromIndex, toIndex, DoubleCompareHolder.getDoubleComparator());
+    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
   }
 
   public static void sort(float[] array) {
-    nativeSort(array, DoubleCompareHolder.getDoubleComparator());
+    nativeSort(array, getDoubleComparator());
   }
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeSort(array, fromIndex, toIndex, DoubleCompareHolder.getDoubleComparator());
+    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
   }
 
   public static void sort(int[] array) {
@@ -1307,12 +1306,12 @@ public class Arrays {
   }
 
   public static void sort(long[] array) {
-    nativeSort(array, LongCompareHolder.getLongComparator());
+    nativeSort(array, getLongComparator());
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeSort(array, fromIndex, toIndex, LongCompareHolder.getLongComparator());
+    nativeSort(array, fromIndex, toIndex, getLongComparator());
   }
 
   public static void sort(Object[] array) {
@@ -1753,19 +1752,42 @@ public class Arrays {
   /**
    * Sort an entire array of number primitives of integral type.
    */
-  private static native void nativeIntegerSort(Object array) /*-{
-    array.sort(function(a, b) {
-      return a - b;
-    });
-  }-*/;
+  private static void nativeIntegerSort(Object array) {
+    nativeSort(array, getIntComparator());
+  }
 
   /**
    * Sort a subset of an array of primitives of integral type.
    */
   private static void nativeIntegerSort(Object array, int fromIndex, int toIndex) {
-    Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
-    nativeIntegerSort(temp);
-    ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
+    nativeSort(array, fromIndex, toIndex, getIntComparator());
+  }
+
+  @JsFunction
+  private interface CompareDoubleFunction {
+    int compare(double d1, double d2);
+  }
+
+  private static CompareDoubleFunction getDoubleComparator() {
+    return Double::compare;
+  }
+
+  @JsFunction
+  private interface CompareLongFunction {
+    int compare(long d1, long d2);
+  }
+
+  private static CompareLongFunction getLongComparator() {
+    return Long::compare;
+  }
+
+  @JsFunction
+  private interface CompareIntFunction {
+    int compare(int d1, int d2);
+  }
+
+  private static CompareIntFunction getIntComparator() {
+    return (a, b) -> a - b;
   }
 
   private Arrays() { }
