@@ -1659,6 +1659,7 @@ body.ubuntu_mono .searchBox {
    border-bottom: none;
    height: 23px;
    background: none;
+   top: 0px;
 }
 
 .rstudio-themes-flat .dialogTabPanel > div:last-child {
