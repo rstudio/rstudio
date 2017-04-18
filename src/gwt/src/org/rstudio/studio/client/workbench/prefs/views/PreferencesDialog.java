@@ -1,7 +1,7 @@
 /*
  * PreferencesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             SourceControlPreferencesPane sourceControl,
                             SpellingPreferencesPane spelling, 
                             PublishingPreferencesPane publishing,
+                            TerminalPreferencesPane terminal,
                             UIPrefs uiPrefs)
    {
       super("Options", 
@@ -60,7 +61,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    compilePdf,
                                    spelling,
                                    sourceControl, 
-                                   publishing}); 
+                                   publishing,
+                                   terminal}); 
       session_ = session;
       server_ = server;
       
@@ -76,7 +78,10 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
          hidePane(PublishingPreferencesPane.class);
       }
       
-      
+      if (!session.getSessionInfo().getAllowShell())
+      {
+         hidePane(TerminalPreferencesPane.class);
+      }
    }
    
    @Override

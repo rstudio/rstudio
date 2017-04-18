@@ -33,6 +33,10 @@
    margin-left: 4px;
 }
 
+.nudgeDown {
+   margin-top: 2px;
+}
+
 .headerLabel {
    font-weight: bold;
    margin-bottom: 10px;

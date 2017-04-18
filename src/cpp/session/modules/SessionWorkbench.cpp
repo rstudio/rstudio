@@ -263,7 +263,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
    json::Object generalPrefs, historyPrefs, editingPrefs, packagesPrefs,
-                projectsPrefs, sourceControlPrefs, compilePdfPrefs;
+                projectsPrefs, sourceControlPrefs, compilePdfPrefs,
+                terminalPrefs;
    Error error = json::readObjectParam(request.params, 0,
                               "general_prefs", &generalPrefs,
                               "history_prefs", &historyPrefs,
@@ -271,7 +272,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                               "packages_prefs", &packagesPrefs,
                               "projects_prefs", &projectsPrefs,
                               "source_control_prefs", &sourceControlPrefs,
-                              "compile_pdf_prefs", &compilePdfPrefs);
+                              "compile_pdf_prefs", &compilePdfPrefs,
+                              "terminal_prefs", &terminalPrefs);
    if (error)
       return error;
    json::Object uiPrefs;
@@ -286,7 +288,6 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    bool reuseSessionsForProjectLinks;
    std::string initialWorkingDir, showUserHomePage;
    json::Object defaultRVersionJson;
-   int defaultTerminalShell;
    error = json::readObject(generalPrefs,
                             "show_user_home_page", &showUserHomePage,
                             "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
@@ -296,8 +297,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "initial_working_dir", &initialWorkingDir,
                             "default_r_version", &defaultRVersionJson,
                             "restore_project_r_version", &restoreProjectRVersion,
-                            "show_last_dot_value", &showLastDotValue,
-                            "default_shell", &defaultTerminalShell);
+                            "show_last_dot_value", &showLastDotValue);
    if (error)
       return error;
 
@@ -313,8 +313,6 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setShowLastDotValue(showLastDotValue);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
-   userSettings().setDefaultTerminalShellValue(
-      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
    userSettings().endUpdate();
 
    // refresh environment if lastDotValueChanged
@@ -464,6 +462,17 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setEnableLaTeXShellEscape(enableShellEscape);
    userSettings().endUpdate();
 
+   // read and update terminal prefs
+   int defaultTerminalShell;
+   error = json::readObject(terminalPrefs,
+                            "default_shell", &defaultTerminalShell);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setDefaultTerminalShellValue(
+      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
+   userSettings().endUpdate();
+
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
 
@@ -531,7 +540,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["default_r_version"] = defaultRVersionJson;
    generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
    generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
-   generalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
 
    // get history prefs
    json::Object historyPrefs;
@@ -592,6 +600,10 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
    compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
 
+   // get terminal prefs
+   json::Object terminalPrefs;
+   terminalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
@@ -603,6 +615,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["compile_pdf_prefs"] = compilePdfPrefs;
    result["spelling_prefs_context"] =
                   session::modules::spelling::spellingPrefsContextAsJson();
+   result["terminal_prefs"] = terminalPrefs;
 
    pResponse->setResult(result);
 
