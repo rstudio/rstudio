@@ -1,7 +1,7 @@
 /*
  * RPrefs.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,5 +91,13 @@ public class RPrefs extends JavaScriptObject
    
    public native final SpellingPrefsContext getSpellingPrefsContext() /*-{
       return this.spelling_prefs_context;
+   }-*/;
+
+   public native final TerminalPrefs getTerminalPrefs() /*-{
+      return this.terminal_prefs;
+   }-*/;
+
+   public native final void setTerminalPrefs(TerminalPrefs terminalPrefs) /*-{
+      this.terminal_prefs = terminalPrefs;
    }-*/;
 }

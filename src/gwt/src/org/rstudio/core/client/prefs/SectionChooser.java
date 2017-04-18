@@ -1,7 +1,7 @@
 /*
  * SectionChooser.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,10 +22,12 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
@@ -53,9 +55,14 @@ class SectionChooser extends SimplePanel implements
       img.setSize("29px", "20px");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
-      panel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
-      panel.add(img);
-      panel.add(label);
+      panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
+      final HorizontalPanel innerPanel = new HorizontalPanel();
+      innerPanel.setWidth("0px");
+      innerPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
+      innerPanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+      innerPanel.add(img);
+      innerPanel.add(nudgeRightPlus(label));
+      panel.add(innerPanel);
       panel.setStyleName(res_.styles().section());
 
       panel.addClickHandler(new ClickHandler()
@@ -95,8 +102,15 @@ class SectionChooser extends SimplePanel implements
 
    public int getDesiredWidth()
    {
-      return 102;
+      return 122;
    }
+
+   private Widget nudgeRightPlus(Widget widget)
+   {
+      widget.addStyleName(res_.styles().nudgeRightPlus());
+      return widget;
+   }
+
 
    private Integer selectedIndex_;
    private final VerticalPanel inner_ = new VerticalPanel();

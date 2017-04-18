@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -30,9 +29,6 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -41,11 +37,7 @@ import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -63,14 +55,12 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UIPrefs prefs,
                                  Session session,
                                  final GlobalDisplay globalDisplay,
-                                 final Server server,
                                  WorkbenchContext context)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       session_ = session;
-      server_ = server;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
 
@@ -224,23 +214,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                           false /*defaultSpaced*/)));
       }
 
-      if (session.getSessionInfo().getAllowShell())
-      {
-         if (haveTerminalShellPref())
-         {
-            terminalShell_ = new SelectWidget("Default terminal shell:");
-            lessSpaced(terminalShell_);
-            add(terminalShell_);
-            terminalShell_.setEnabled(false);
-         }
-         CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
-               prefs_.terminalLocalEcho(), 
-               "Local echo is more responsive but may get out of sync with some line-editing modes.");
-         spaced(chkTerminalLocalEcho);
-         add(chkTerminalLocalEcho);
-      }
-
-      
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
@@ -283,42 +256,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             break; 
       }
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<TerminalShellInfo> shells)
-               {
-                  int currentShell = generalPrefs.getDefaultTerminalShellValue();
-                  int currentShellIndex = 0;
-
-                  GeneralPreferencesPane.this.terminalShell_.getListBox().clear();
-                  
-                  for (int i = 0; i < shells.length(); i++)
-                  {
-                     TerminalShellInfo info = shells.get(i);
-                     GeneralPreferencesPane.this.terminalShell_.addChoice(
-                           info.getShellName(), Integer.toString(info.getShellType()));
-                     if (info.getShellType() == currentShell)
-                        currentShellIndex = i;
-                  }
-                  if (GeneralPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
-                  {
-                     GeneralPreferencesPane.this.terminalShell_.setEnabled((true));
-                     GeneralPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error) { }
-            });
-         }
-      });
 
       loadRData_.setValue(generalPrefs.getLoadRData());
       dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
@@ -382,14 +319,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                break; 
          }
          
-         int defaultShell = TerminalShellInfo.SHELL_DEFAULT;
-         if (terminalShell_ != null && terminalShell_.isEnabled())
-         {
-            int idx = terminalShell_.getListBox().getSelectedIndex();
-            String valStr = terminalShell_.getListBox().getValue(idx);
-            defaultShell = StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
-         }
-
          // set general prefs
          GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
                                                          reuseSessionsForProjectLinks_.getValue(),
@@ -399,8 +328,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                                          dirChooser_.getText(),
                                                          getDefaultRVersion(),
                                                          getRestoreProjectRVersion(),
-                                                         showLastDotValue_.getValue(),
-                                                         defaultShell);
+                                                         showLastDotValue_.getValue());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -443,11 +371,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
-   private boolean haveTerminalShellPref()
-   {
-      return Desktop.isDesktop() && BrowseCap.isWindows();
-   }
-
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;
@@ -463,8 +386,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
-   private SelectWidget terminalShell_;
    private final UIPrefs prefs_;
    private final Session session_;
-   private final Server server_;
 }
