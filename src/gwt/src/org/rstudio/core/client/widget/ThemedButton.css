@@ -3,6 +3,8 @@
 @external gwt-Button-DialogAction, gwt-Button-DialogActionLeft,
           gwt-Button-DefaultDialogAction;
 
+@external rstudio-themes-flat;
+
 @url BUTTONLEFTFOCUSENABLED buttonLeftFocusEnabled;
 @url BUTTONLEFTFOCUSSELECTED buttonLeftFocusSelected;
 @url BUTTONLEFTFOCUSPRESSED buttonLeftFocusPressed;
@@ -33,6 +35,55 @@
    border: none;
    background: transparent;
    outline: none;
+}
+
+.rstudio-themes-flat button.gwt-Button-DialogAction, .rstudio-themes-flat button.themedButton {
+
+}
+
+.rstudio-themes-flat button.gwt-Button-DialogAction > table:first-child,
+.rstudio-themes-flat button.themedButton > table:first-child {
+   border: solid 1px #d2d2d2;
+   border-radius: 7px;
+   background: #f6f5f7;
+   box-shadow: 0px 1px #ececec;
+}
+
+.rstudio-themes-flat button.gwt-Button-DefaultDialogAction > table:first-child {
+   border: solid 1px #bfbfbf;
+   background: #f9f9f9
+}
+
+.rstudio-themes-flat button.gwt-Button-DialogAction:active > table:first-child,
+.rstudio-themes-flat button.themedButton:active > table:first-child {
+   background: #eaeaea;
+   border: solid 1px #909090;
+}
+
+.rstudio-themes-flat .gwt-Button-DialogAction .buttonLeft,
+.rstudio-themes-flat button.themedButton .buttonLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .gwt-Button-DialogAction .buttonCenter,
+.rstudio-themes-flat button.themedButton .buttonCenter{
+   background: none;
+   height: 18px;
+   padding: 3px 8px 3px 8px;
+}
+
+.rstudio-themes-flat button.gwt-Button-DialogAction:active .buttonCenter,
+.rstudio-themes-flat button.gwt-Button-DialogAction:hover .buttonCenter,
+.rstudio-themes-flat button.gwt-Button-DialogAction:focus .buttonCenter,
+.rstudio-themes-flat button.themedButton:active .buttonCenter,
+.rstudio-themes-flat button.themedButton:hover .buttonCenter,
+.rstudio-themes-flat button.themedButton:focus .buttonCenter {
+   background: none;
+}
+
+.rstudio-themes-flat button.gwt-Button-DialogAction .buttonRight,
+.rstudio-themes-flat button.themedButton .buttonRight {
+   display: none;
 }
 
 .gwt-Button-DialogActionLeft, .left {
