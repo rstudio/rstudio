@@ -31,6 +31,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class TerminalPreferencesPane extends PreferencesPane
@@ -58,6 +59,10 @@ public class TerminalPreferencesPane extends PreferencesPane
                "Local echo is more responsive but may get out of sync with some line-editing modes.");
          spaced(chkTerminalLocalEcho);
          add(chkTerminalLocalEcho);
+      }
+      else
+      {
+         add(new Label("This feature has been disabled by your administrator."));
       }
    }
 
