@@ -506,6 +506,6 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

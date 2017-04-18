@@ -32,7 +32,7 @@ core::Error initializeTutorial();
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_TUTORIAL_HPP

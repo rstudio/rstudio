@@ -42,7 +42,7 @@ core::Error renderSlides(const SlideDeck& slideDeck,
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_RENDERER_HPP

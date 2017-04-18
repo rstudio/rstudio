@@ -215,6 +215,6 @@ void HistoryArchive::migrateRhistoryIfNecessary()
 
 } // namespace history
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

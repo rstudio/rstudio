@@ -410,6 +410,6 @@ Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
 } // namespace rnw_concordance
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

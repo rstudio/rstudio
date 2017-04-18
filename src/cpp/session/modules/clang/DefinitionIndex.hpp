@@ -89,7 +89,7 @@ core::Error initializeDefinitionIndex();
 
 } // namespace clang
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_DEFINITION_INDEX_HPP

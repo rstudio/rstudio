@@ -60,7 +60,7 @@ core::Error initialize();
                        
 } // namespace shiny
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SHINY_HPP

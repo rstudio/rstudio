@@ -44,7 +44,7 @@ core::Error findUsages(const core::json::JsonRpcRequest& request,
    
 } // namespace clang
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_FIND_REFERENCES_HPP

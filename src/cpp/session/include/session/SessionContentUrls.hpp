@@ -38,7 +38,7 @@ std::string provision(const std::string& title,
 core::Error initialize();
    
 } // namespace content_urls
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_CONTENT_URLS_HPP

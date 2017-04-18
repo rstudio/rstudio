@@ -83,6 +83,6 @@ std::vector<std::string> collectFirstRunDocs(const FilePath& projectFile)
 }
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

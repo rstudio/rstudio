@@ -185,7 +185,7 @@ private:
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_PARSER_HPP

@@ -35,7 +35,7 @@ core::Error initialize();
    
 } // namespace clang
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_HPP

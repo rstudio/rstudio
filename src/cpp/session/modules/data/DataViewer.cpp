@@ -1042,6 +1042,6 @@ Error initialize()
 } // namespace viewer
 } // namespace data
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

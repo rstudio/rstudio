@@ -43,7 +43,7 @@ core::Error initialize();
                        
 } // namespace authoring
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_AUTHORING_HPP

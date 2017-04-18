@@ -35,7 +35,7 @@ core::Error initialize();
                        
 } // namespace spelling
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SPELLING_HPP

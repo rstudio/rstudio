@@ -638,7 +638,7 @@ Error initialize()
 
 } // namepsace breakpoints
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 

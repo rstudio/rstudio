@@ -181,6 +181,6 @@ void installTutorial(const FilePath& tutorialPath,
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

@@ -91,7 +91,7 @@ private:
    
 } // namespace files
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_FILES_LISTING_MONITOR_HPP

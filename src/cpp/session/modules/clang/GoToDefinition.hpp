@@ -30,7 +30,7 @@ core::Error goToCppDefinition(const core::json::JsonRpcRequest& request,
    
 } // namespace clang
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_GO_TO_DEFINITION_HPP

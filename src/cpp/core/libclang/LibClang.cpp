@@ -548,7 +548,7 @@ LibClang& clang()
    return instance;
 }
 
-} // namesapce libclang
+} // namespace libclang
 } // namespace core
 } // namespace rstudio
 

@@ -35,7 +35,7 @@ core::Error initialize();
    
 } // namespace environment
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_ENVIRONMENT_HPP

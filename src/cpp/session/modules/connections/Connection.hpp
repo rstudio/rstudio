@@ -124,7 +124,7 @@ std::string iconData(const std::string& iconGroup,
                        
 } // namespace connections
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_CONNECTIONS_CONNECTION_HPP

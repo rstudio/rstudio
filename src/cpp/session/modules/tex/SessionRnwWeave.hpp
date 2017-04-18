@@ -93,7 +93,7 @@ void runWeave(const core::FilePath& filePath,
 } // namespace rnw_weave
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_RNW_WEAVE_HPP

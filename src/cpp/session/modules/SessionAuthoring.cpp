@@ -237,6 +237,6 @@ Error initialize()
 
 } // namespace authoring
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

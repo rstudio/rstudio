@@ -39,7 +39,7 @@ core::Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
    
 } // namespace clang
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_DIAGNOSTICS_HPP

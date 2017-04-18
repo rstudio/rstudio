@@ -43,7 +43,7 @@ core::json::Value errorStateAsJson();
 
 } // namespace errors
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSIONERRORS_HPP

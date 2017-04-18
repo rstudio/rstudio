@@ -30,7 +30,7 @@ core::Error initialize();
 
 } // namespace find
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_FIND_HPP

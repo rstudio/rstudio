@@ -35,7 +35,7 @@ namespace projects {
 
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PROJECTS_SHARING_HPP

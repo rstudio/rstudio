@@ -650,6 +650,6 @@ Error initializeDefinitionIndex()
 
 } // namespace clang
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

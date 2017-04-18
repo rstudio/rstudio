@@ -38,7 +38,7 @@ core::Error computeScratchPaths(const core::FilePath& projectFile,
                                 core::FilePath* pSharedScratchPath);
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECTS_INTERNAL_HPP

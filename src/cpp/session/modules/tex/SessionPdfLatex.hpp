@@ -87,7 +87,7 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
 } // namespace pdflatex
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_PDFLATEX_HPP

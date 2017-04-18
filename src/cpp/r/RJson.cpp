@@ -414,6 +414,6 @@ Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue)
 } 
    
 } // namespace json
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 

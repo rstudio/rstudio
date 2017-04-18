@@ -89,6 +89,6 @@ void ActiveConnections::broadcastToClient()
 
 } // namespace connections
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

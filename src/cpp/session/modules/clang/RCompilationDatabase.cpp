@@ -1103,6 +1103,6 @@ core::libclang::CompilationDatabase rCompilationDatabase()
 
 } // namespace clang
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

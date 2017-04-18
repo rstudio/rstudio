@@ -172,6 +172,6 @@ Error initialize()
    
 } // namespace content_urls
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

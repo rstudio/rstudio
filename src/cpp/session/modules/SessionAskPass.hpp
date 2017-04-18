@@ -49,7 +49,7 @@ core::Error initialize();
    
 } // namespace ask_pass
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_ASK_PASS_HPP

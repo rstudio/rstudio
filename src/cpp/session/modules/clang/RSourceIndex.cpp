@@ -89,6 +89,6 @@ bool isIndexableFile(const FileInfo& fileInfo,
 
 } // namespace clang
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

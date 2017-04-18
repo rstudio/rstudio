@@ -60,7 +60,7 @@ core::Error initialize();
 
 } // namespace source_control
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_VCS_HPP

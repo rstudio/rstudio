@@ -36,7 +36,7 @@ namespace json {
 core::Error getRpcMethods(core::json::JsonRpcMethods* pMethods);
    
 } // namespace json
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 
 #endif // R_R_JSON_RPC_HPP

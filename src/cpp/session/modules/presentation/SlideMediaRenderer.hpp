@@ -46,7 +46,7 @@ void renderMedia(const std::string& type,
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_MEDIA_RENDERER_HPP

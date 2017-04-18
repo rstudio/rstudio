@@ -221,6 +221,6 @@ void logAndReportError(const Error& error, const ErrorLocation& location)
 
 } // namespace graphics
 } // namespace session
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 

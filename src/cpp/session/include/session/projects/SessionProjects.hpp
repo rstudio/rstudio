@@ -230,7 +230,7 @@ ProjectContext& projectContext();
 core::json::Array websiteOutputFormatsJson();
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECTS_HPP
