@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -293,20 +294,28 @@ public class NewConnectionSnippetHost extends Composite
       HorizontalPanel buttonsPanel = new HorizontalPanel();
       buttonsPanel.addStyleName(RES.styles().buttonsPanel());
 
-      ThemedButton testButton = new ThemedButton("Test", new ClickHandler() {
+      final ThemedButton testButton = new ThemedButton("Test");
+      testButton.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event) {
+            testButton.setEnabled(false);
             server_.connectionTest(
                codePanel_.getCode(),
                new DelayedProgressRequestCallback<String>("Testing Connection...") {
                   @Override
                   protected void onSuccess(String error)
                   {
+                     testButton.setEnabled(true);
                      if (StringUtil.isNullOrEmpty(error)) {
                         showSuccess();
                      }
                      else {
                         showFailure(error);
                      }
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error) {
+                     testButton.setEnabled(true);
                   }
                });
          }
