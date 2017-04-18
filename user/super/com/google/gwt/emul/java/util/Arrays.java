@@ -1774,6 +1774,7 @@ public class Arrays {
 
   @JsFunction
   private interface CompareLongFunction {
+    @SuppressWarnings("unusable-by-js")
     int compare(long d1, long d2);
   }
 
