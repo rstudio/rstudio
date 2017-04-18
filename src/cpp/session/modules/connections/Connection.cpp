@@ -45,7 +45,8 @@ std::string iconData(const std::string& iconGroup,
    {
       // the package did not supply an icon; see if there's one baked in
       FilePath path = options().rResourcesPath().childPath("connections")
-         .childPath(iconGroup).childPath(iconName + ".png");
+         .childPath(iconGroup)
+         .childPath(string_utils::toLower(iconName) + ".png");
       if (path.exists())
          return std::string("connections/") + iconGroup + "/" + 
             string_utils::toLower(iconName) +
