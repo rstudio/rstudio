@@ -67,7 +67,8 @@ public class TerminalPreferencesPane extends PreferencesPane
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
       helpLink.addStyleName(res_.styles().newSection()); 
-      add(helpLink);
+      // TODO (gary) -- uncomment once we've published the support article
+      //add(helpLink);
    }
 
    @Override
