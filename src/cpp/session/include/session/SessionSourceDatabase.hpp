@@ -218,7 +218,7 @@ Events& events();
 core::Error initialize();
 
 } // namespace source_database
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SOURCE_DATABASE_HPP

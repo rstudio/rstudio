@@ -154,6 +154,6 @@ Error initialize()
 } // namespace compile_pdf_supervisor
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

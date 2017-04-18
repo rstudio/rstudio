@@ -72,6 +72,6 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
 
 } // namespace clang
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

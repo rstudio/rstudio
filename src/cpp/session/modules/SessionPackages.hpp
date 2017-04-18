@@ -32,7 +32,7 @@ void enquePackageStateChanged();
                        
 } // namespace packages
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PACKAGES_HPP

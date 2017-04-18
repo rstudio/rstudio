@@ -31,7 +31,7 @@ core::Error initialize();
 
 } // namespace dirty
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_DIRTY_HPP

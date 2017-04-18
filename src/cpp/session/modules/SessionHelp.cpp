@@ -947,6 +947,6 @@ Error initialize()
 
 } // namepsace help
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

@@ -241,6 +241,6 @@ void checkQuotaStatus()
 } // namespace quotas
 } // namepsace files
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

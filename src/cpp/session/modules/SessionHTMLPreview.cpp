@@ -1036,6 +1036,6 @@ Error initialize()
 
 } // namespace html_preview
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

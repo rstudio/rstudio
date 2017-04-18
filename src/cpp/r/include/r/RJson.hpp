@@ -40,7 +40,7 @@ core::Error jsonValueFromList(SEXP listSEXP, core::json::Value* pValue);
 core::Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue);
    
 } // namespace json
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 
 #endif // R_JSON_HPP

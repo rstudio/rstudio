@@ -834,6 +834,6 @@ json::Array websiteOutputFormatsJson()
 }
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

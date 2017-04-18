@@ -208,6 +208,6 @@ void ammendResults(const std::string& formatName,
 } // namespace presentation
 } // namepsace rmarkdown
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

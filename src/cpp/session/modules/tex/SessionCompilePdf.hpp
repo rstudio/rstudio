@@ -51,7 +51,7 @@ core::Error initialize();
 } // namespace compile_pdf
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_COMPILE_PDF_HPP

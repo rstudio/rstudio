@@ -180,7 +180,7 @@ core::Error readIfExists(const core::FilePath& srcFile,
 } // namespace rnw_concordance
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_RNW_CONCORDANCE_HPP

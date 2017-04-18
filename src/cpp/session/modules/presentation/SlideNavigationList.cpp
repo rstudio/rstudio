@@ -143,6 +143,6 @@ void SlideNavigationList::addSlide(const std::string& title,
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

@@ -205,6 +205,6 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 
 } // namepsace files
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

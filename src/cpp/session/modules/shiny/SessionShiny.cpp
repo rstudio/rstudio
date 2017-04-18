@@ -488,6 +488,6 @@ Error initialize()
 
 } // namespace crypto
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

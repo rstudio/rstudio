@@ -63,7 +63,7 @@ core::Error runTexCompile(
 } // namespace utils
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_UTILS_HPP

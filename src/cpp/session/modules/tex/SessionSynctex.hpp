@@ -42,7 +42,7 @@ core::Error initialize();
 } // namespace synctex
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_SYNCTEX_HPP

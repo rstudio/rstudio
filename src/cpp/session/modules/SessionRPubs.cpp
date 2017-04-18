@@ -448,6 +448,6 @@ std::string previousRpubsUploadId(const FilePath& filePath)
 
 } // namespace module_context
 
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

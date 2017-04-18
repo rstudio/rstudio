@@ -56,7 +56,7 @@ private:
 };
 
 } // end namespace r_completions
-} // end namesapce modules
+} // end namespace modules
 } // end namespace session
 } // end namespace rstudio
 

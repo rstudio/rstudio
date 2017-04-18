@@ -55,7 +55,7 @@ private:
                        
 } // namespace connections
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_CONNECTIONS_ACTIVE_CONNECTIONS_HPP

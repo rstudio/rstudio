@@ -613,6 +613,6 @@ void getTypesInstalledStatus(json::Object* pObj)
 } // namespace rnw_weave
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

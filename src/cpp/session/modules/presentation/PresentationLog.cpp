@@ -366,6 +366,6 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

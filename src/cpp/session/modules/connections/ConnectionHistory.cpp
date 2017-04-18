@@ -191,6 +191,6 @@ Error ConnectionHistory::writeConnections(const json::Array& connectionsJson)
 
 } // namespace connections
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

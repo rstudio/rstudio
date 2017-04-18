@@ -37,7 +37,7 @@ core::Error initialize();
                        
 } // namespace shiny_viewer
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SHINY_VIEWER_HPP

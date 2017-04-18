@@ -63,7 +63,7 @@ core::Error initializeOverlay();
 } // namespace state
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_STATE_HPP

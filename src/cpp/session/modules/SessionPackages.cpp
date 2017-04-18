@@ -606,6 +606,6 @@ Error initialize()
 
 } // namespace packages
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

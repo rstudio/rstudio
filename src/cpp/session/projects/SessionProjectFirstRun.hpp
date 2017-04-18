@@ -33,7 +33,7 @@ void addFirstRunDoc(const core::FilePath& projectFile, const std::string& doc);
 std::vector<std::string> collectFirstRunDocs(const core::FilePath& projectFile);
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECT_FIRST_RUN_HPP

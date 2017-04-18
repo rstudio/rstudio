@@ -955,6 +955,6 @@ Error initialize()
 }
 
 } // namespace source_database
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

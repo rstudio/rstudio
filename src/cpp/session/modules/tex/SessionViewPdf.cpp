@@ -98,6 +98,6 @@ Error initialize()
 } // namespace view_pdf
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

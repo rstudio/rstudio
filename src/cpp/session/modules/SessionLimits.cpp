@@ -70,6 +70,6 @@ Error initialize()
 
 } // namespace limits
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

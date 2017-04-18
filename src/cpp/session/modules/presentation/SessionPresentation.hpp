@@ -42,7 +42,7 @@ core::Error initialize();
                        
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_HPP

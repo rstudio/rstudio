@@ -259,6 +259,6 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry)
 
 } // namespace module_context
 
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

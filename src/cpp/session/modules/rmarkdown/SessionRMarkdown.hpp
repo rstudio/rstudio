@@ -45,7 +45,7 @@ core::Error initialize();
 
 } // namespace rmarkdown
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_RMARKDOWN_HPP

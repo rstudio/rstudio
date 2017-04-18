@@ -27,7 +27,7 @@ void renderQuiz(int slideIndex, std::string* pHead, std::string* pHTML);
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_QUIZ_RENDERER_HPP

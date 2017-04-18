@@ -1264,6 +1264,6 @@ bool savePresentationAsRpubsSource(const core::FilePath& filePath,
 
 } // namespace presentation
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

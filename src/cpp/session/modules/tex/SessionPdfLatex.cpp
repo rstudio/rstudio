@@ -446,6 +446,6 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
 } // namespace pdflatex
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

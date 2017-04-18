@@ -120,7 +120,7 @@ core::libclang::CompilationDatabase rCompilationDatabase();
 
 } // namespace clang
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_R_COMPILATION_DATABASE_HPP

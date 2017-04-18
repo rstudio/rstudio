@@ -268,6 +268,6 @@ SEXP PlotManipulator::getUserVisibleValuesList() const
 
 } // namespace graphics
 } // namespace session
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 

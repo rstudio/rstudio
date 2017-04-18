@@ -184,6 +184,6 @@ Error initialize()
 
 } // namepsace dirty
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

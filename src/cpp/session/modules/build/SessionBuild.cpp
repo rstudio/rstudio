@@ -2004,6 +2004,6 @@ bool installRBuildTools(const std::string& action)
 
 }
 
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

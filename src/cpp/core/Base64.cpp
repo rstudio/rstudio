@@ -118,7 +118,7 @@ private:
    std::vector<Byte> table_;
 };
 
-} // end anonymous namesapce
+} // end anonymous namespace
 
 Error encode(const char* pData, std::size_t n, std::string* pOutput)
 {

@@ -229,6 +229,6 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 }
 
 } // namespace console_process
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

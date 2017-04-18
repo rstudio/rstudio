@@ -445,6 +445,6 @@ Error installEmbeddedPackage(const std::string& name)
 
 } // anonymous namespace
 
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

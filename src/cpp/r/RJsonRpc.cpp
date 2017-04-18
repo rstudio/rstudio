@@ -152,6 +152,6 @@ Error getRpcMethods(core::json::JsonRpcMethods* pMethods)
 }
       
 } // namespace json
-} // namesapce r
+} // namespace r
 } // namespace rstudio
 

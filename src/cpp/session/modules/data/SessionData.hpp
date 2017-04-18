@@ -33,7 +33,7 @@ core::Error initialize();
    
 } // namespace data
 } // namepace handlers
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_DATA_HPP

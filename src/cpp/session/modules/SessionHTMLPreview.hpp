@@ -47,7 +47,7 @@ core::Error initialize();
                        
 } // namespace html_preview
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_HTML_PREVIEW_HPP

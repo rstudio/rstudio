@@ -184,6 +184,6 @@ Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
 
 } // namespace clang
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

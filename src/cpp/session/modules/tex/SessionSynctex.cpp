@@ -371,6 +371,6 @@ Error initialize()
 } // namespace synctex
 } // namespace tex
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

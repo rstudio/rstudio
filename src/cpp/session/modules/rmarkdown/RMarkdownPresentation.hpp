@@ -41,7 +41,7 @@ void ammendResults(const std::string& formatName,
 } // namespace presentation
 } // namespace rmarkdown
 } // namepace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
 #endif // SESSION_SESSION_RMARKDOWN_PRESENTATION_HPP
