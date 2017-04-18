@@ -517,4 +517,34 @@ options(connectionObserver = list(
    .rs.success()
 })
 
+.rs.addJsonRpcHandler("connection_test", function(code) {
+   error <- ""
 
+   oldConnections <- lapply(ls(.rs.activeConnections), function(name) {
+      get(name, envir = .rs.activeConnections)
+   })
+
+   .envir <- parent.frame(2)
+   tryCatch({
+      eval(parse(text = code), envir = .envir)
+   }, error = function(e) {
+      error <<- e$message
+   })
+
+   if (nchar(error) == 0) {
+      newConnections <- lapply(ls(.rs.activeConnections), function(name) {
+         get(name, envir = .rs.activeConnections)
+      })
+
+      oldConnectionIds <- lapply(oldConnections, function(x) paste(x$type, x$host, sep = "|"))
+      needDisconnect <- Filter(function(e) {
+         !paste(e$type, e$host, sep = "|") %in% oldConnectionIds
+      }, newConnections)
+
+      lapply(needDisconnect, function(e) {
+         .rs.connectionDisconnect(e$type, e$host)
+      })
+   }
+
+   .rs.scalar(error)
+})
