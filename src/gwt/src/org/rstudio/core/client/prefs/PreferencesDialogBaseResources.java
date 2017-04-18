@@ -33,6 +33,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String tight();
       String nudgeRight();
       String nudgeRightPlus();
+      String nudgeDown();
       String spaced();
       String lessSpaced();
       String extraSpaced();

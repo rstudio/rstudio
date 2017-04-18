@@ -14,9 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -47,23 +50,24 @@ public class TerminalPreferencesPane extends PreferencesPane
       res_ = res;
       server_ = server;
 
-      if (session.getSessionInfo().getAllowShell())
+      add(spaced(new Label("Use the terminal to run system commands, execute data-processing jobs, and more.")));
+      
+      if (haveTerminalShellPref())
       {
          terminalShell_ = new SelectWidget("Default terminal shell:");
          spaced(terminalShell_);
          add(terminalShell_);
          terminalShell_.setEnabled(false);
-
-         CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
-               prefs_.terminalLocalEcho(), 
-               "Local echo is more responsive but may get out of sync with some line-editing modes.");
-         spaced(chkTerminalLocalEcho);
-         add(chkTerminalLocalEcho);
       }
-      else
-      {
-         add(new Label("This feature has been disabled by your administrator."));
-      }
+      CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
+            prefs_.terminalLocalEcho(), 
+            "Local echo is more responsive but may get out of sync with some line-editing modes.");
+      add(chkTerminalLocalEcho);
+      
+      HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
+      nudgeRight(helpLink); 
+      helpLink.addStyleName(res_.styles().newSection()); 
+      add(helpLink);
    }
 
    @Override
@@ -83,41 +87,44 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       final TerminalPrefs terminalPrefs = prefs.getTerminalPrefs();
 
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      if (terminalShell_ != null)
       {
-         @Override
-         public void execute()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
+            @Override
+            public void execute()
             {
-               @Override
-               public void onResponseReceived(JsArray<TerminalShellInfo> shells)
+               server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
                {
-                  int currentShell = terminalPrefs.getDefaultTerminalShellValue();
-                  int currentShellIndex = 0;
-
-                  TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
-                  
-                  for (int i = 0; i < shells.length(); i++)
+                  @Override
+                  public void onResponseReceived(JsArray<TerminalShellInfo> shells)
                   {
-                     TerminalShellInfo info = shells.get(i);
-                     TerminalPreferencesPane.this.terminalShell_.addChoice(
-                           info.getShellName(), Integer.toString(info.getShellType()));
-                     if (info.getShellType() == currentShell)
-                        currentShellIndex = i;
-                  }
-                  if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
-                  {
-                     TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
-                     TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
-                  }
-               }
+                     int currentShell = terminalPrefs.getDefaultTerminalShellValue();
+                     int currentShellIndex = 0;
 
-               @Override
-               public void onError(ServerError error) { }
-            });
-         }
-      });
+                     TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
+
+                     for (int i = 0; i < shells.length(); i++)
+                     {
+                        TerminalShellInfo info = shells.get(i);
+                        TerminalPreferencesPane.this.terminalShell_.addChoice(
+                              info.getShellName(), Integer.toString(info.getShellType()));
+                        if (info.getShellType() == currentShell)
+                           currentShellIndex = i;
+                     }
+                     if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
+                     {
+                        TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
+                        TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error) { }
+               });
+            }
+         });
+      }
    }
 
    @Override
@@ -138,7 +145,12 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       return restartRequired;
    }
-   
+
+   private boolean haveTerminalShellPref()
+   {
+      return Desktop.isDesktop() && BrowseCap.isWindows();
+   }
+ 
    private SelectWidget terminalShell_;
 
    // Injected ----  

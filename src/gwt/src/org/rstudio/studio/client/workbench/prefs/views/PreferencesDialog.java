@@ -78,7 +78,10 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
          hidePane(PublishingPreferencesPane.class);
       }
       
-      
+      if (!session.getSessionInfo().getAllowShell())
+      {
+         hidePane(TerminalPreferencesPane.class);
+      }
    }
    
    @Override

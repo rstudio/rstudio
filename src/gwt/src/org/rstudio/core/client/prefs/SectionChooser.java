@@ -52,6 +52,7 @@ class SectionChooser extends SimplePanel implements
    public void addSection(ImageResource icon, String name)
    {
       Image img = new Image(icon.getSafeUri());
+      nudgeDown(img);
       img.setSize("29px", "20px");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
@@ -111,6 +112,11 @@ class SectionChooser extends SimplePanel implements
       return widget;
    }
 
+   private Widget nudgeDown(Widget widget)
+   {
+      widget.addStyleName(res_.styles().nudgeDown());
+      return widget;
+   }
 
    private Integer selectedIndex_;
    private final VerticalPanel inner_ = new VerticalPanel();
