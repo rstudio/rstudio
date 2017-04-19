@@ -545,9 +545,18 @@
       fmls <- formals(object)
       
       pieces <- .rs.enumerate(fmls, function(key, value) {
+         
          if (identical(value, quote(expr = )))
             return(key)
-         paste(key, format(value), sep = " = ")
+         
+         value <- if (is.call(value))
+            format(value)
+         else if (is.symbol(value))
+            as.character(value)
+         else
+            value
+         
+         paste(key, value, sep = " = ")
       })
       
       output <- sprintf(
