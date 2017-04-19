@@ -151,7 +151,7 @@ public class NewConnectionSnippetHost extends Composite
       
       verticalPanel.add(msg);
       MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
-            "Connection Test",
+            "Test Results",
             verticalPanel
             );
 
@@ -176,7 +176,7 @@ public class NewConnectionSnippetHost extends Composite
       
       verticalPanel.add(new HTML(safeHtmlBuilder.toSafeHtml()));
       MessageDialog dlg = new MessageDialog(MessageDialog.ERROR,
-            "Connection Test",
+            "Test Results",
             verticalPanel
             );
 
