@@ -324,6 +324,8 @@
       .rs.explorer.inspectEnvironment(object, context)
    else if (isS4(object))
       .rs.explorer.inspectS4(object, context)
+   else if (is.function(object))
+      .rs.explorer.inspectFunction(object, context)
    else
       .rs.explorer.inspectDefault(object, context)
 })
@@ -439,6 +441,31 @@
    }
    
    children <- unname(children)
+   .rs.explorer.createInspectionResult(object, context, children)
+})
+
+.rs.addFunction("explorer.inspectFunction", function(object,
+                                                     context = .rs.explorer.createContext())
+{
+   # construct interesting pieces of function
+   parts <- list(
+      formals = formals(object),
+      body = body(object),
+      environment = environment(object)
+   )
+   
+   children <- .rs.enumerate(parts, function(key, value) {
+      
+      # construct child context
+      name <- key
+      access <- sprintf("%s(#)", name)
+      tags <- .rs.explorer.tags$VIRTUAL
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      
+      # inspect with context
+      .rs.explorer.inspectObject(value, childContext)
+   })
+   
    .rs.explorer.createInspectionResult(object, context, children)
 })
 
