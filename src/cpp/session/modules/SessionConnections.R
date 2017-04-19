@@ -539,7 +539,7 @@ options(connectionObserver = list(
       }
    ))
 
-   .envir <- parent.frame(2)
+   .envir <- .rs.getActiveFrame()
    tryCatch({
       eval(parse(text = code), envir = .envir)
    }, error = function(e) {
