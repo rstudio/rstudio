@@ -69,7 +69,7 @@ public class XTermWidget extends Widget implements RequiresResize,
   /**
     *  Creates an XTermWidget.
     */
-   public XTermWidget()
+   public XTermWidget(boolean cursorBlink)
    {
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
@@ -82,7 +82,7 @@ public class XTermWidget extends Widget implements RequiresResize,
 
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-      terminal_ = XTermNative.createTerminal(getElement(), true);
+      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink);
       terminal_.addClass("ace_editor");
       terminal_.addClass(FontSizer.getNormalFontSizeClass());
 

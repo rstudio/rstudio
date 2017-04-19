@@ -76,8 +76,11 @@ public class TerminalSession extends XTermWidget
                           boolean hasChildProcs,
                           int cols,
                           int rows,
+                          boolean cursorBlink,
                           int shellType)
    {
+      super(cursorBlink);
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
       terminalHandle_ = handle;
