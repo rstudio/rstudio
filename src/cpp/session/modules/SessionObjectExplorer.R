@@ -551,8 +551,31 @@
    }
    else if (is.environment(object))
    {
-      output <- capture.output(base::print(unclass(object)))
-      more <- FALSE
+      if (inherits(object, "R6"))
+      {
+         fmt <- "R6 object of %s %s"
+         class <- setdiff(class(object), "R6")
+         output <- sprintf(
+            fmt,
+            if (length(class) > 1) "classes" else "class",
+            paste(class, collapse = ", ")
+         )
+         more <- FALSE
+      }
+      else
+      {
+         # NOTE: R prevents us from calling 'unclass' on environment
+         # objects, so we need to do something a bit different here.
+         # We also want to avoid 'print' dispatching to custom methods
+         # to avoid evaluating arbitrary user code here
+         oldClass <- class(object)
+         tryCatch({
+            class(object) <- "environment"
+            output <- capture.output(base::print(object))[[1]]
+            more <- FALSE
+         }, error = identity)
+         class(object) <- oldClass
+      }
    }
    else if (is.atomic(object))
    {

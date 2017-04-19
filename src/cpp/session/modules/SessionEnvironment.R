@@ -489,9 +489,10 @@
          }
       }
    }
-   list (
+   list(
       name = .rs.scalar(objName),
       type = .rs.scalar(class),
+      clazz = c(class(obj), typeof(obj)),
       is_data = .rs.scalar(is.data.frame(obj)),
       value = .rs.scalar(val),
       description = .rs.scalar(desc),

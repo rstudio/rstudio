@@ -32,6 +32,10 @@ public class RObject extends JavaScriptObject
       return this.type;
    }-*/;
    
+   public final native JsArrayString getClazz() /*-{
+      return this.clazz || [];
+   }-*/;
+   
    public final native boolean isData() /*-{
       return this.is_data;
    }-*/;
