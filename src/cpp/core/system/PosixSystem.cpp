@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,8 @@
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#include <sys/proc_info.h>
+#include <libproc.h>
 #endif
 
 #ifndef __APPLE__
@@ -719,9 +721,6 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
-// Detect subprocesses via shelling out to pgrep, kinda expensive but used
-// on Mac and any other Posix system without procfs.
-namespace {
 bool hasSubprocessesViaPgrep(PidType pid)
 {
    // pgrep -P ppid returns 0 if there are matches, non-zero
@@ -745,14 +744,27 @@ bool hasSubprocessesViaPgrep(PidType pid)
    }
    return result.exitStatus == 0;
 }
-} // anonymous namespace
 
-bool hasSubprocesses(PidType pid)
+#ifdef __APPLE__ // Mac-specific subprocess detection
+bool hasSubprocessesMac(PidType pid)
 {
-   core::FilePath procFsPath("/proc");
+   int result = proc_listchildpids(pid, NULL, 0);
+   if (result > 0)
+   {
+      // have fetch details to get accurate result
+      std::vector<int> buffer;
+      buffer.reserve(result);
+      result = proc_listchildpids(pid, &buffer[0], buffer.capacity() * sizeof(int));
+   }
+   return result > 0;
+}
+#endif
+
+bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
+{
    if (!procFsPath.exists())
    {
-      return hasSubprocessesViaPgrep(pid);
+      return true; // err on the side of assuming child processes exist
    }
 
    // We iterate all /proc/###/stat files, where ### is a process id.
@@ -841,6 +853,21 @@ bool hasSubprocesses(PidType pid)
          return true;
    }
    return false;
+}
+
+bool hasSubprocesses(PidType pid)
+{
+#ifndef __APPLE__
+   core::FilePath procFsPath("/proc");
+   if (!procFsPath.exists())
+   {
+      return hasSubprocessesViaPgrep(pid);
+   }
+   return hasSubprocessesViaProcFs(pid, procFsPath);
+
+#else
+   return hasSubprocessesMac(pid);
+#endif
 }
 
 Error daemonize()
