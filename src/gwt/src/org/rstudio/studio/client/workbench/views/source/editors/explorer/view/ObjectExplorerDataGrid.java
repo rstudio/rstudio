@@ -30,6 +30,7 @@ import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -370,15 +371,40 @@ public class ObjectExplorerDataGrid
       }
       
       private final void addIcon(SafeHtmlBuilder builder,
-                                 ObjectExplorerInspectionResult result)
+                                 Data data)
       {
-         // TODO: icon based on type
+         JsVectorString classes = data.getObjectClass().cast();
+         
+         // determine appropriate icon
+         ImageResource resource = null;
+         if (data.isS4())
+            resource = CodeIcons.INSTANCE.clazz2x();
+         else if (classes.contains("function"))
+            resource = CodeIcons.INSTANCE.function2x();
+         else if (classes.contains("data.frame") ||
+                  classes.contains("matrix") ||
+                  classes.contains("array"))
+            resource = CodeIcons.INSTANCE.dataFrame2x();
+         else if (classes.contains("list"))
+            resource = CodeIcons.INSTANCE.clazz2x();
+         else if (classes.contains("R6"))
+            resource = CodeIcons.INSTANCE.clazz2x();
+         else if (classes.contains("environment"))
+            resource = CodeIcons.INSTANCE.environment2x();
+         else
+            resource = CodeIcons.INSTANCE.variable2x();
+         
+         // add it
+         ImageResource2x res2x = new ImageResource2x(resource);
+         builder.appendHtmlConstant("<div style='width: 20px;'>");
+         builder.append(res2x.getSafeHtml());
+         builder.appendHtmlConstant("</div>");
       }
       
       private final void addName(SafeHtmlBuilder builder,
-                                 ObjectExplorerInspectionResult result)
+                                 Data data)
       {
-         boolean virtual = result.hasTag(TAG_VIRTUAL);
+         boolean virtual = data.hasTag(TAG_VIRTUAL);
          if (virtual)
          {
             builder.appendHtmlConstant("<div style='font-style: italic'>");
@@ -388,7 +414,7 @@ public class ObjectExplorerDataGrid
             builder.appendHtmlConstant("<div>");
          }
          
-         String name = result.getDisplayName();
+         String name = data.getDisplayName();
          if (name == null)
             name = "<unknown>";
          builder.appendEscaped(name);
