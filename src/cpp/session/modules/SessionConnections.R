@@ -520,9 +520,24 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("connection_test", function(code) {
    error <- ""
 
-   oldConnections <- lapply(ls(.rs.activeConnections), function(name) {
-      get(name, envir = .rs.activeConnections)
-   })
+   oldConnectionObserver <- getOption("connectionObserver")
+   on.exit(options(connectionObserver = oldConnectionObserver))
+
+   disconnectCalls <- list()
+
+   options(connectionObserver = list(
+      connectionOpened = function(type, host, displayName, icon = NULL, 
+                                  connectCode, disconnect, listObjectTypes,
+                                  listObjects, listColumns, previewObject, 
+                                  connectionObject, actions = NULL) {
+         disconnectCalls <<- c(disconnectCalls, disconnect)
+      },
+      connectionClosed = function(type, host, ...) {
+
+      },
+      connectionUpdated = function(type, host, hint, ...) {
+      }
+   ))
 
    .envir <- parent.frame(2)
    tryCatch({
@@ -531,20 +546,7 @@ options(connectionObserver = list(
       error <<- e$message
    })
 
-   if (nchar(error) == 0) {
-      newConnections <- lapply(ls(.rs.activeConnections), function(name) {
-         get(name, envir = .rs.activeConnections)
-      })
-
-      oldConnectionIds <- lapply(oldConnections, function(x) paste(x$type, x$host, sep = "|"))
-      needDisconnect <- Filter(function(e) {
-         !paste(e$type, e$host, sep = "|") %in% oldConnectionIds
-      }, newConnections)
-
-      lapply(needDisconnect, function(e) {
-         .rs.connectionDisconnect(e$type, e$host)
-      })
-   }
+   lapply(disconnectCalls, function(e) e())
 
    .rs.scalar(error)
 })
