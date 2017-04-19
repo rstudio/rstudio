@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.SafeHtmlUtil;
@@ -409,16 +410,51 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
+         addExtractIcon(data, builder);
+         
+         // for data.frames and functions, also add a 'View' icon
+         JsVectorString classes = data.getObjectClass().cast();
+         for (String viewableClass : VIEWABLE_CLASSES)
+         {
+            if (classes.contains(viewableClass))
+            {
+               addViewIcon(data, builder);
+               break;
+            }
+         }
+               
+      }
+      
+      private void addExtractIcon(Data data,
+                                  SafeHtmlBuilder builder)
+      {
          SafeHtml extractTag = SafeHtmlUtil.createDiv(
                "class",       ThemeStyles.INSTANCE.clickableIcon(),
-               "style",       "visibility: hidden;",
+               "style",       "visibility: hidden; float: left;",
                "data-action", ACTION_EXTRACT);
          
-         // extract button
          builder.append(extractTag);
          builder.append(IMAGE_EXTRACT_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
+      
+      private void addViewIcon(Data data,
+                               SafeHtmlBuilder builder)
+      {
+         SafeHtml viewTag = SafeHtmlUtil.createDiv(
+               "class",       ThemeStyles.INSTANCE.clickableIcon(),
+               "style",       "visibility: hidden; float: left;",
+               "data-action", ACTION_VIEW);
+         
+         builder.append(viewTag);
+         builder.append(IMAGE_VIEW_CODE.getSafeHtml());
+         builder.appendHtmlConstant("</div>");
+      }
+      
+      private static final String[] VIEWABLE_CLASSES = new String[] {
+            "data.frame",
+            "function"
+      };
    }
    
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle)
@@ -720,6 +756,10 @@ public class ObjectExplorerDataGrid
       {
          extractCode(row);
       }
+      else if (action.equals(ACTION_VIEW))
+      {
+         viewRow(row);
+      }
       else
       {
          assert false : "Unexpected action '" + action + "' on row " + row;
@@ -788,6 +828,14 @@ public class ObjectExplorerDataGrid
    {
       Data data = getData().get(row);
       String code = generateExtractingRCode(data);
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+   
+   private void viewRow(int row)
+   {
+      Data data = getData().get(row);
+      String code = generateExtractingRCode(data);
+      code = "View(" + code + ")";
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
@@ -988,6 +1036,7 @@ public class ObjectExplorerDataGrid
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
    private static final String ACTION_EXTRACT = "extract";
+   private static final String ACTION_VIEW    = "view";
    
    private static final String TAG_ATTRIBUTES = "attributes";
    private static final String TAG_VIRTUAL    = "virtual";
@@ -1003,6 +1052,10 @@ public class ObjectExplorerDataGrid
    
    private static final ImageResource2x IMAGE_EXTRACT_CODE =
          new ImageResource2x(StandardIcons.INSTANCE.run2x());
+   
+   private static final ImageResource2x IMAGE_VIEW_CODE =
+         new ImageResource2x(ThemeResources.INSTANCE.viewFunctionCode2x());
+   
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

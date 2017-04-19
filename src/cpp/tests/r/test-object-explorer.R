@@ -27,8 +27,8 @@ doc <- read_xml("<root id='1'><child id ='a' /><child id='b' d='b'/></root>")
 .rs.explorer.viewObject(doc)
 
 f <- function(x) {
-   a(1)
-   b(2)
+   c(1)
+   c(2)
    c(3)
 }
 

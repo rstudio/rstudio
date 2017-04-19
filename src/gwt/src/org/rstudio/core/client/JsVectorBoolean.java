@@ -75,7 +75,10 @@ public class JsVectorBoolean extends JavaScriptObject
    
    public final native int indexOf(boolean value)
    /*-{
-      return this.indexOf(value);
+      for (var i = 0, n = this.length; i < n; i++)
+         if (this[i] == value)
+           return i;
+      return -1;
    }-*/;
    
    public final native boolean isEmpty()
