@@ -28,6 +28,8 @@
    filter: literal("alpha(opacity = 50)") !important;
    opacity: 0.5; /* non-IE */
    background-size: 21px 17px;
+   width: 21px;
+   height: 17px;
 }
 
 .label {
@@ -37,4 +39,6 @@
 .dismiss {
    margin-right: 2px;
    background-size: 9px 9px;
+   width: 9px;
+   height: 9px;
 }
