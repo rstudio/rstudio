@@ -38,7 +38,7 @@
   * Command Prompt (cmd.exe), 32-bit and 64-bit depending on OS support
   * PowerShell, 32-bit and 64-bit depending on OS support
   * Bash on Windows Subsystem for Linux, if installed on 64-bit Windows 10
-* Default Windows terminal shell type set in Global Options/General
+* Default Windows terminal shell type set in new Global Options/Terminal preferences pane
 
 ### Miscellaneous
 
