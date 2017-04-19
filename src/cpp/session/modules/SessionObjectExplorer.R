@@ -539,7 +539,24 @@
    comma <- FALSE
    n <- 6L
    
-   if (is.factor(object))
+   if (is.function(object))
+   {
+      # construct argument list
+      fmls <- formals(object)
+      
+      pieces <- .rs.enumerate(fmls, function(key, value) {
+         if (identical(value, quote(expr = )))
+            return(key)
+         paste(key, format(value), sep = " = ")
+      })
+      
+      output <- sprintf(
+         "function(%s) { ... }",
+         paste(pieces, collapse = ", ")
+      )
+      more <- FALSE
+   }
+   else if (is.factor(object))
    {
       fmt <- "Factor with %i levels: %s"
       header <- head(object, n)
