@@ -251,7 +251,7 @@
       s4         = .rs.scalar(isS4(object)),
       tags       = as.character(tags),
       display    = display,
-      children   = if (is.list(children)) children
+      children   = if (is.list(children)) unname(children)
    )
 })
 
@@ -359,7 +359,6 @@
          .rs.explorer.inspectObject(xmlAttributes, childContext)
    }
    
-   children <- unname(children)
    .rs.explorer.createInspectionResult(object, context, children)
 })
 
@@ -394,7 +393,6 @@
       })
    }
    
-   children <- unname(children)
    .rs.explorer.createInspectionResult(object, context, children)
 })
 
@@ -417,7 +415,6 @@
       })
    }
    
-   children <- unname(children)
    .rs.explorer.createInspectionResult(object, context, children)
 })
 
@@ -440,7 +437,6 @@
       })
    }
    
-   children <- unname(children)
    .rs.explorer.createInspectionResult(object, context, children)
 })
 
@@ -448,23 +444,27 @@
                                                      context = .rs.explorer.createContext())
 {
    # construct interesting pieces of function
-   parts <- list(
-      formals = formals(object),
-      body = body(object),
-      environment = environment(object)
-   )
-   
-   children <- .rs.enumerate(parts, function(key, value) {
+   children <- NULL
+   if (context$recursive)
+   {
+      parts <- list(
+         formals = formals(object),
+         body = body(object),
+         environment = environment(object)
+      )
       
-      # construct child context
-      name <- key
-      access <- sprintf("%s(#)", name)
-      tags <- .rs.explorer.tags$VIRTUAL
-      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
-      
-      # inspect with context
-      .rs.explorer.inspectObject(value, childContext)
-   })
+      children <- .rs.enumerate(parts, function(key, value) {
+         
+         # construct child context
+         name <- key
+         access <- sprintf("%s(#)", name)
+         tags <- .rs.explorer.tags$VIRTUAL
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         
+         # inspect with context
+         .rs.explorer.inspectObject(value, childContext)
+      })
+   }
    
    .rs.explorer.createInspectionResult(object, context, children)
 })

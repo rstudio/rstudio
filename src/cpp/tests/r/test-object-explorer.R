@@ -26,10 +26,16 @@ library(xml2)
 doc <- read_xml("<root id='1'><child id ='a' /><child id='b' d='b'/></root>")
 .rs.explorer.viewObject(doc)
 
-f <- function(x) {}
+f <- function(x) {
+   a(1)
+   b(2)
+   c(3)
+}
+
 context <- .rs.explorer.createContext(recursive = 1)
 inspected <- .rs.explorer.inspectObject(f, context)
 str(inspected)
 .rs.explorer.viewObject(f)
 
 .rs.explorer.viewObject(rnorm)
+
