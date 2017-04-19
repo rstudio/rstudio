@@ -409,7 +409,13 @@ options(connectionObserver = list(
             currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
 
             basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-            snippetsFile <- file.path(basePath, tolower(driver), "snippets", paste(driver, ".R", sep = ""))
+            snippetsFile <- file.path(
+               basePath,
+               tolower(driver),
+               "snippets",
+               paste(tolower(driver), ".R", sep = "")
+            )
+            
             if (file.exists(snippetsFile)) {
                snippet <- paste(readLines(snippetsFile), collapse = "\n")
             }
