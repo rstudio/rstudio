@@ -27,11 +27,9 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -86,6 +84,7 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -374,11 +373,6 @@ public class ObjectExplorerDataGrid
                                  ObjectExplorerInspectionResult result)
       {
          // TODO: icon based on type
-         SafeHtml openDiv = SafeHtmlUtil.createDiv(
-               "class", RES.dataGridStyle().objectTypeIcon());
-         builder.append(openDiv);
-         builder.append(IMAGE_TYPE_DATA.getSafeHtml());
-         builder.appendHtmlConstant("</div>");
       }
       
       private final void addName(SafeHtmlBuilder builder,
@@ -403,34 +397,56 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   private static class ButtonCell extends AbstractCell<Data>
+   private static class ValueCell extends AbstractCell<Data>
    {
       @Override
       public void render(Context context,
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         addExtractIcon(data, builder);
+         builder.appendHtmlConstant("<table><tr>");
          
-         // for data.frames and functions, also add a 'View' icon
+         // add description
+         builder.appendHtmlConstant("<td style='width: 100%;'>");
+         builder.appendEscaped(data.getDisplayDesc());
+         builder.appendHtmlConstant("</td>");
+         
+         // add icons
+         builder.appendHtmlConstant("<td>");
+         
+         // i heard you like tables ...
+         builder.appendHtmlConstant("<table><tr>");
+         
+         // for data.frames and functions, add a 'View' icon
          JsVectorString classes = data.getObjectClass().cast();
          for (String viewableClass : VIEWABLE_CLASSES)
          {
             if (classes.contains(viewableClass))
             {
+               builder.appendHtmlConstant("<td>");
                addViewIcon(data, builder);
+               builder.appendHtmlConstant("</td>");
                break;
             }
          }
-               
+         
+         // add extract icon
+         builder.appendHtmlConstant("<td>");
+         addExtractIcon(data, builder);
+         builder.appendHtmlConstant("</td>");
+         
+         builder.appendHtmlConstant("</tr></table>");
+         
+         builder.appendHtmlConstant("</td>");
+         builder.appendHtmlConstant("</tr></table>");
       }
       
       private void addExtractIcon(Data data,
                                   SafeHtmlBuilder builder)
       {
          SafeHtml extractTag = SafeHtmlUtil.createDiv(
-               "class",       ThemeStyles.INSTANCE.clickableIcon(),
-               "style",       "visibility: hidden; float: left;",
+               "class",       CLASS,
+               "style",       "visibility: hidden",
                "data-action", ACTION_EXTRACT);
          
          builder.append(extractTag);
@@ -442,14 +458,19 @@ public class ObjectExplorerDataGrid
                                SafeHtmlBuilder builder)
       {
          SafeHtml viewTag = SafeHtmlUtil.createDiv(
-               "class",       ThemeStyles.INSTANCE.clickableIcon(),
-               "style",       "visibility: hidden; float: left;",
+               "class",       CLASS,
+               "style",       "visibility: hidden",
                "data-action", ACTION_VIEW);
          
          builder.append(viewTag);
          builder.append(IMAGE_VIEW_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
+      
+      private static final String CLASS = StringUtil.join(new String[] {
+            ThemeStyles.INSTANCE.clickableIcon(),
+            RES.dataGridStyle().buttonIcon()
+      }, " ");
       
       private static final String[] VIEWABLE_CLASSES = new String[] {
             "data.frame",
@@ -482,19 +503,8 @@ public class ObjectExplorerDataGrid
       addColumn(typeColumn_, new TextHeader("Type"));
       setColumnWidth(typeColumn_, "200px");
       
-      valueColumn_ = new TextColumn<Data>()
-      {
-         @Override
-         public String getValue(Data data)
-         {
-            return data.getDisplayDesc();
-         }
-      };
+      valueColumn_ = new IdentityColumn<Data>(new ValueCell());
       addColumn(valueColumn_, new TextHeader("Value"));
-      
-      buttonColumn_ = new IdentityColumn<Data>(new ButtonCell());
-      addColumn(buttonColumn_);
-      setColumnWidth(buttonColumn_, "30px");
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
@@ -1017,8 +1027,7 @@ public class ObjectExplorerDataGrid
    
    private final IdentityColumn<Data> nameColumn_;
    private final TextColumn<Data> typeColumn_;
-   private final TextColumn<Data> valueColumn_;
-   private final IdentityColumn<Data> buttonColumn_;
+   private final IdentityColumn<Data> valueColumn_;
    
    private final ListDataProvider<Data> dataProvider_;
    
@@ -1041,27 +1050,35 @@ public class ObjectExplorerDataGrid
    private static final String TAG_ATTRIBUTES = "attributes";
    private static final String TAG_VIRTUAL    = "virtual";
    
-   private static final ImageResource2x IMAGE_RIGHT_ARROW =
-         new ImageResource2x(StandardIcons.INSTANCE.right_arrow2x());
-
-   private static final ImageResource2x IMAGE_DOWN_ARROW =
-         new ImageResource2x(ThemeResources.INSTANCE.mediumDropDownArrow2x());
-
-   private static final ImageResource2x IMAGE_TYPE_DATA =
-         new ImageResource2x(ThemeResources.INSTANCE.zoomDataset2x());
-   
-   private static final ImageResource2x IMAGE_EXTRACT_CODE =
-         new ImageResource2x(StandardIcons.INSTANCE.run2x());
-   
-   private static final ImageResource2x IMAGE_VIEW_CODE =
-         new ImageResource2x(ThemeResources.INSTANCE.viewFunctionCode2x());
-   
-   
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ObjectExplorerDataGrid.css"})
       Styles dataGridStyle();
+      
+      @Source("images/downArrow.png")
+      ImageResource downArrow();
+      
+      @Source("images/downArrow_2x.png")
+      ImageResource downArrow2x();
+      
+      @Source("images/extractCode.png")
+      ImageResource extractCode();
+      
+      @Source("images/extractCode_2x.png")
+      ImageResource extractCode2x();
+      
+      @Source("images/rightArrow.png")
+      ImageResource rightArrow();
+      
+      @Source("images/rightArrow_2x.png")
+      ImageResource rightArrow2x();
+      
+      @Source("images/viewObject.png")
+      ImageResource viewObject();
+      
+      @Source("images/viewObject_2x.png")
+      ImageResource viewObject2x();
    }
    
    public interface Styles extends RStudioDataGridStyle
@@ -1069,9 +1086,26 @@ public class ObjectExplorerDataGrid
       String openRowIcon();
       String closeRowIcon();
       String objectTypeIcon();
+      String buttonIcon();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
+
+   private static final ImageResource2x IMAGE_RIGHT_ARROW = new ImageResource2x(
+         RES.rightArrow(),
+         RES.rightArrow2x());
+
+   private static final ImageResource2x IMAGE_DOWN_ARROW = new ImageResource2x(
+         RES.downArrow(),
+         RES.downArrow2x());
+
+   private static final ImageResource2x IMAGE_EXTRACT_CODE = new ImageResource2x(
+         RES.extractCode(),
+         RES.extractCode2x());
+
+   private static final ImageResource2x IMAGE_VIEW_CODE = new ImageResource2x(
+         RES.viewObject(),
+         RES.viewObject2x());
    
    static {
       RES.dataGridStyle().ensureInjected();
