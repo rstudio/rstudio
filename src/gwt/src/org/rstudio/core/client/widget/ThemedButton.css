@@ -60,6 +60,12 @@
    border: solid 1px #909090;
 }
 
+.rstudio-themes-flat button.gwt-Button-DialogAction:disabled > table:first-child,
+.rstudio-themes-flat button.themedButton:disabled > table:first-child {
+   border: solid 1px #bfbfbf;
+   background: #f9f9f9
+}
+
 .rstudio-themes-flat .gwt-Button-DialogAction .buttonLeft,
 .rstudio-themes-flat button.themedButton .buttonLeft {
    display: none;
@@ -75,10 +81,12 @@
 .rstudio-themes-flat button.gwt-Button-DialogAction:active .buttonCenter,
 .rstudio-themes-flat button.gwt-Button-DialogAction:hover .buttonCenter,
 .rstudio-themes-flat button.gwt-Button-DialogAction:focus .buttonCenter,
+.rstudio-themes-flat button.gwt-Button-DialogAction:disabled .buttonCenter,
 .rstudio-themes-flat button.themedButton:active .buttonCenter,
 .rstudio-themes-flat button.themedButton:hover .buttonCenter,
-.rstudio-themes-flat button.themedButton:focus .buttonCenter {
-   background: none;
+.rstudio-themes-flat button.themedButton:focus .buttonCenter,
+.rstudio-themes-flat button.themedButton:disabled .buttonCenter {
+   background: none !important;
 }
 
 .rstudio-themes-flat button.gwt-Button-DialogAction .buttonRight,

@@ -83,3 +83,13 @@
 .lastRow {
    text-align: right;
 }
+
+.buttonsPanel {
+   float: right;
+}
+
+.dialogMessagePanel {
+   width: 325px;
+   margin-left: 10px;
+   padding-top: 5px;
+}

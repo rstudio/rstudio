@@ -5039,6 +5039,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void connectionTest(String code,
+                              ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(code));
+      sendRequest(RPC_SCOPE, CONNECTION_TEST, params, callback);
+   }
+
+   @Override
    public void launchEmbeddedShinyConnectionUI(String packageName, 
                                                String connectionName,
                                                ServerRequestCallback<RResult<Void>> callback)
@@ -5455,6 +5464,7 @@ public class RemoteServer implements Server
    private static final String CONNECTION_LIST_OBJECTS = "connection_list_objects";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_OBJECT = "connection_preview_object";
+   private static final String CONNECTION_TEST = "connection_test";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 

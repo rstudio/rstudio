@@ -55,4 +55,7 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    void launchEmbeddedShinyConnectionUI(String packageName,
                                         String connectionName,
                                         ServerRequestCallback<RResult<Void>> serverRequestCallback);
+
+   void connectionTest(String code, 
+                       ServerRequestCallback<String> callback);
 }

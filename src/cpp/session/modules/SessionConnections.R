@@ -523,4 +523,36 @@ options(connectionObserver = list(
    .rs.success()
 })
 
+.rs.addJsonRpcHandler("connection_test", function(code) {
+   error <- ""
 
+   oldConnectionObserver <- getOption("connectionObserver")
+   on.exit(options(connectionObserver = oldConnectionObserver))
+
+   disconnectCalls <- list()
+
+   options(connectionObserver = list(
+      connectionOpened = function(type, host, displayName, icon = NULL, 
+                                  connectCode, disconnect, listObjectTypes,
+                                  listObjects, listColumns, previewObject, 
+                                  connectionObject, actions = NULL) {
+         disconnectCalls <<- c(disconnectCalls, disconnect)
+      },
+      connectionClosed = function(type, host, ...) {
+
+      },
+      connectionUpdated = function(type, host, hint, ...) {
+      }
+   ))
+
+   .envir <- .rs.getActiveFrame()
+   tryCatch({
+      eval(parse(text = code), envir = .envir)
+   }, error = function(e) {
+      error <<- e$message
+   })
+
+   lapply(disconnectCalls, function(e) e())
+
+   .rs.scalar(error)
+})
