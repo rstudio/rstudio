@@ -49,6 +49,7 @@
       }
       .rstudio-themes-flat .statusBar .element {
          background-image: none;
+         background: #F5F5F5;
          border-right: solid 1px #d6dadc;
       }
       .statusBar .element.pos {

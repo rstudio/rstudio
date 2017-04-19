@@ -37,27 +37,34 @@
    outline: none;
 }
 
+.rstudio-themes-flat .gwt-Button-DialogAction, .themedButton {
+   margin-right: 0px;
+}
+
 .rstudio-themes-flat button.gwt-Button-DialogAction, .rstudio-themes-flat button.themedButton {
 
 }
 
 .rstudio-themes-flat button.gwt-Button-DialogAction > table:first-child,
 .rstudio-themes-flat button.themedButton > table:first-child {
-   border: solid 1px #d2d2d2;
+   border: solid 1px #bbbbbb;
    border-radius: 7px;
    background: #f6f5f7;
    box-shadow: 0px 1px #ececec;
 }
 
+.rstudio-themes-flat button.gwt-Button-DefaultDialogAction {
+   font-weight: 600;
+}
+
 .rstudio-themes-flat button.gwt-Button-DefaultDialogAction > table:first-child {
-   border: solid 1px #bfbfbf;
    background: #f9f9f9
+   border: solid 1px #adabab;
 }
 
 .rstudio-themes-flat button.gwt-Button-DialogAction:active > table:first-child,
 .rstudio-themes-flat button.themedButton:active > table:first-child {
    background: #eaeaea;
-   border: solid 1px #909090;
 }
 
 .rstudio-themes-flat button.gwt-Button-DialogAction:disabled > table:first-child,
