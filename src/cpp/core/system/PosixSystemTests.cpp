@@ -15,7 +15,7 @@
 
 #ifndef _WIN32
 
-#include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <signal.h>
 
 #include <tests/TestThat.hpp>
@@ -28,7 +28,7 @@ namespace tests {
 context("PosixSystemTests")
 {
 
-   test_that("No subprocess detected correctly")
+   test_that("No subprocess detected correctly with generic method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
@@ -47,7 +47,7 @@ context("PosixSystemTests")
       }
    }
 
-   test_that("Subprocess detected correctly")
+   test_that("Subprocess detected correctly with generic method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
@@ -65,6 +65,127 @@ context("PosixSystemTests")
          kill(pid, SIGKILL);
       }
    }
+
+   test_that("No subprocess detected correctly with pgrep method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         expect_false(hasSubprocessesViaPgrep(pid));
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+   test_that("Subprocess detected correctly with pgrep method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "2", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         expect_true(hasSubprocessesViaPgrep(getpid()));
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+#ifdef __APPLE__ // Mac-specific subprocess detection
+
+   test_that("No subprocess detected correctly with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         expect_false(hasSubprocessesMac(pid));
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+   test_that("Subprocess detected correctly with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "2", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         expect_true(hasSubprocessesMac(getpid()));
+
+         kill(pid, SIGKILL);
+      }
+   }
+#else
+   test_that("No subprocess detected correctly with procfs method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+      core::FilePath procFsPath("/proc");
+      expect_true(procFsPath.exists());
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         expect_false(hasSubprocessesViaProcFs(pid, procFsPath));
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+   test_that("Subprocess detected correctly with procfs method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+      core::FilePath procFsPath("/proc");
+      expect_true(procFsPath.exists());
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "2", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         expect_true(hasSubprocessesViaProcFs(getpid(), procFsPath));
+
+         kill(pid, SIGKILL);
+      }
+   }
+#endif
 }
 
 } // end namespace tests

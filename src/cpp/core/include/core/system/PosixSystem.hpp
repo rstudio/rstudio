@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -187,12 +187,24 @@ core::Error userBelongsToGroup(const user::User& user,
 bool realUserIsRoot();
 bool effectiveUserIsRoot();
 
-// privillege management (not thread safe, call from main thread at app startup
+// privilege management (not thread safe, call from main thread at app startup
 // or just after fork() prior to exec() for new processes)
 core::Error temporarilyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error restorePriv();
 
+#ifdef __APPLE__
+// Detect subprocesses via Mac-only BSD-ish APIs
+bool hasSubprocessesMac(PidType pid);
+#endif // __APPLE__
+
+// Detect subprocesses via shelling out to pgrep, kinda expensive but used
+// as last-resort on non-Mac Posix system without procfs.
+bool hasSubprocessesViaPgrep(PidType pid);
+
+// Detect subprocesses via procfs; returns false no subprocesses, true if
+// subprocesses or unable to determine if there are subprocesses
+bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath);
 
 } // namespace system
 } // namespace core
