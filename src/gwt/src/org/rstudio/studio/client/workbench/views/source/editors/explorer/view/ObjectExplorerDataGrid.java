@@ -335,8 +335,8 @@ public class ObjectExplorerDataGrid
          // node is the only thing that exists
          if (!showAttributes_)
          {
-            // bail if the object is atomic (since it cannot have children)
-            if (data.isAtomic())
+            // bail if the object is unnamed & atomic
+            if (data.isAtomic() && !data.isNamed())
                return onNotExpandable(builder, data);
             
             JsArray<Data> children = data.getChildrenData();

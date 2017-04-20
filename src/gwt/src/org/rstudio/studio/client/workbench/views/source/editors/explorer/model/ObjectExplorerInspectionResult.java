@@ -35,6 +35,7 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    public final native boolean       isRecursive()          /*-{ return this["recursive"];  }-*/;
    public final native boolean       isExpandable()         /*-{ return this["expandable"]; }-*/;
    public final native boolean       isAtomic()             /*-{ return this["atomic"];     }-*/;
+   public final native boolean       isNamed()              /*-{ return this["named"];      }-*/;
    public final native boolean       isS4()                 /*-{ return this["s4"];         }-*/;
    
    public final native JsArrayString getTags()              /*-{ return this["tags"];       }-*/;

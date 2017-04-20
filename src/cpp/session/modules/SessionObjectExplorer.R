@@ -235,13 +235,17 @@
    # figure out whether this object is expandable
    # (note that the client will still need to refine behavior
    # depending on whether attributes are being shown)
+   n <- length(object)
    expandable <-
       
       # is this an R list / environment with children?
-      (is.recursive(object) && length(object) > 0) ||
+      (is.recursive(object) && n > 0) ||
       
       # is this an S4 object with one or more slots?
       (s4 && length(slotNames(object)) > 0) ||
+      
+      # is this a named atomic vector?
+      (is.atomic(object) && !is.null(names(object)) && n > 0)
       
       # do we have relevant attributes?
       .rs.explorer.hasRelevantAttributes(object)
@@ -277,6 +281,7 @@
       recursive  = .rs.scalar(is.recursive(object)),
       expandable = .rs.scalar(expandable),
       atomic     = .rs.scalar(is.atomic(object)),
+      named      = .rs.scalar(!is.null(names(object))),
       s4         = .rs.scalar(isS4(object)),
       tags       = as.character(tags),
       display    = display,
@@ -501,7 +506,34 @@
 .rs.addFunction("explorer.inspectDefault", function(object,
                                                     context = .rs.explorer.createContext())
 {
-   .rs.explorer.createInspectionResult(object, context, list())
+   # allow children when object is named
+   children <- NULL
+   if (context$recursive && !is.null(names(object)))
+   {
+      names <- names(object)
+      indices <- seq_along(object)
+      
+      # iterate over children and inspect
+      children <- lapply(indices, function(i)
+      {
+         if (is.null(names) || !nzchar(names[[i]]))
+         {
+            name <- sprintf("[[%i]]", i)
+            access <- sprintf("#[[%i]]", i)
+         }
+         else
+         {
+            name <- names[[i]]
+            access <- sprintf("#[[\"%s\"]]", name)
+         }
+         
+         tags <- character()
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         .rs.explorer.inspectObject(object[[i]], childContext)
+      })
+   }
+   
+   .rs.explorer.createInspectionResult(object, context, children)
 })
 
 .rs.addFunction("explorer.objectName", function(object, default)
