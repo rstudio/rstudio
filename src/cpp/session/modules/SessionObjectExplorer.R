@@ -249,7 +249,7 @@
    expandable <-
       
       # is this an R list / environment with children?
-      (is.recursive(object) && n > 0) ||
+      (is.recursive(object) && !is.primitive(object) && n > 0) ||
       
       # is this an S4 object with one or more slots?
       (s4 && length(slotNames(object)) > 0) ||
@@ -489,7 +489,11 @@
 {
    # construct interesting pieces of function
    children <- NULL
-   if (context$recursive)
+   if (is.primitive(object))
+   {
+      children <- list()
+   }
+   else if (context$recursive)
    {
       parts <- list(
          formals = formals(object),
@@ -614,7 +618,13 @@
    comma <- FALSE
    n <- 6L
    
-   if (is.function(object))
+   if (is.primitive(object))
+   {
+      output <- paste(capture.output(print(object)), collapse = " ")
+      output <- sub("function ", "function", output)
+      more <- FALSE
+   }
+   else if (is.function(object))
    {
       # construct argument list
       fmls <- formals(object)
