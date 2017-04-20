@@ -379,7 +379,7 @@
       })
       
       # examine xml attributes
-      xmlAttributes <- as.list(xml2::xml_attrs(object))
+      xmlAttributes <- xml2::xml_attrs(object)
       name <- "(xml attributes)"
       access <- "xml_attrs(#)"
       tags <- .rs.explorer.tags$VIRTUAL
@@ -405,7 +405,7 @@
       # iterate over children and inspect
       children <- lapply(indices, function(i)
       {
-         if (is.null(names[[i]]))
+         if (is.null(names) || !nzchar(names[[i]]))
          {
             name <- sprintf("[[%i]]", i)
             access <- sprintf("#[[%i]]", i)
