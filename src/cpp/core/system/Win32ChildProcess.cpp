@@ -41,7 +41,7 @@ namespace {
 const boost::posix_time::milliseconds kResetRecentDelay =
                                          boost::posix_time::milliseconds(1000);
 const boost::posix_time::milliseconds kCheckSubprocDelay =
-                                         boost::posix_time::milliseconds(250);
+                                         boost::posix_time::milliseconds(200);
 
 std::string findOnPath(const std::string& exe,
                        const std::string& appendExt = "")

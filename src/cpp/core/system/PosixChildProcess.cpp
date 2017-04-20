@@ -58,7 +58,7 @@ const std::size_t READ_ERR = -1;
 const boost::posix_time::milliseconds kResetRecentDelay =
                                          boost::posix_time::milliseconds(1000);
 const boost::posix_time::milliseconds kCheckSubprocDelay =
-                                         boost::posix_time::milliseconds(250);
+                                         boost::posix_time::milliseconds(200);
 
 int resolveExitStatus(int status)
 {
