@@ -242,7 +242,7 @@ public class TerminalSession extends XTermWidget
    @Override
    public void receivedOutput(String output)
    {
-      socket_.dispatchOutput(output, uiPrefs_.terminalLocalEcho().getValue()); 
+      socket_.dispatchOutput(output, doLocalEcho());
    }
 
    @Override
