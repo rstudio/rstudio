@@ -595,7 +595,13 @@
       is.environment(x)
    
    if (isListLike)
-      return(.rs.explorer.viewObject(x))
+   {
+      view <- .rs.explorer.viewObject(x,
+                                      title = title,
+                                      envir = env)
+      return(view)
+   }
+      
 
    # test for coercion to data frame--the goal of this expression is just to
    # raise an error early if the object can't be made into a frame; don't

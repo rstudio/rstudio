@@ -21,6 +21,67 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SafeHtmlUtil
 {
+   public static class TagBuilder
+   {
+      public TagBuilder(String tag)
+      {
+         tag_ = tag;
+         keys_ = JsVectorString.createVector();
+         values_ = JsVectorString.createVector();
+      }
+      
+      public void set(String key, String value)
+      {
+         int index = keys_.indexOf(key);
+         if (index == -1)
+         {
+            keys_.push(key);
+            values_.push(value);
+         }
+         else
+         {
+            values_.set(index, value);
+         }
+      }
+      
+      @Override
+      public String toString()
+      {
+         int n = keys_.length();
+         if (n == 0)
+            return "<" + tag_ + ">";
+         
+         JsVectorString attributes = JsVectorString.ofLength(n);
+         for (int i = 0; i < n; i++)
+         {
+            String key = keys_.get(i);
+            String value = values_.get(i);
+            
+            if (value == null)
+               attributes.set(i, key);
+            else
+               attributes.set(i, key + "=" + quoteAndEscape(value));
+         }
+         
+         return "<" + tag_ + " " + attributes.join(" ") + ">";
+      }
+      
+      public SafeHtml toSafeHtml()
+      {
+         String html = toString();
+         return SafeHtmlUtils.fromTrustedString(html);
+      }
+      
+      private static final String quoteAndEscape(String value)
+      {
+         return "\"" + SafeHtmlUtils.htmlEscape(value) + "\"";
+      }
+      
+      private final String tag_;
+      private final JsVectorString keys_;
+      private final JsVectorString values_;
+   }
+   
    public static void appendDiv(SafeHtmlBuilder sb, 
                                 String style, 
                                 String textContent)

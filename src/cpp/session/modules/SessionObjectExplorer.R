@@ -29,15 +29,17 @@
 # registered by client packages
 .rs.setVar("explorer.inspectorRegistry", new.env(parent = emptyenv()))
 
-.rs.addJsonRpcHandler("explorer_inspect_object", function(handle,
+.rs.addJsonRpcHandler("explorer_inspect_object", function(id,
                                                           extractingCode,
                                                           name,
                                                           access,
                                                           tags,
                                                           recursive)
 {
-   object  <- .rs.explorer.getCachedObject(handle, extractingCode)
+   # retrieve object from cache
+   object  <- .rs.explorer.getCachedObject(id, extractingCode)
    
+   # construct context
    context <- .rs.explorer.createContext(
       name      = name,
       access    = access,
@@ -45,6 +47,7 @@
       recursive = recursive
    )
    
+   # generate inspection result
    result  <- .rs.explorer.inspectObject(object, context)
    result
 })
@@ -88,31 +91,40 @@
    envir[["explorer"]]
 })
 
-.rs.addFunction("explorer.getCachedObject", function(handle,
+.rs.addFunction("explorer.getCachedObject", function(id,
                                                      extractingCode = NULL)
 {
    cache <- .rs.explorer.getCache()
-   object <- cache[[handle]]
+   entry <- cache[[id]]
    if (is.null(extractingCode))
-      return(object)
+      return(entry[["object"]])
    
-   envir <- new.env(parent = .GlobalEnv)
-   envir[["__OBJECT__"]] <- object
-   eval(parse(text = extractingCode), envir = envir)
+   # evaluate extracting code in environment from which handle
+   # was generated
+   # TODO: need to actually track that environment
+   envir <- new.env(parent = entry[["environment"]])
+   envir[["__OBJECT__"]] <- entry[["object"]]
+   
+   tryCatch(
+      eval(parse(text = extractingCode), envir = envir),
+      error = warning
+   )
 })
 
 .rs.addFunction("explorer.cacheObject", function(object,
+                                                 environment,
                                                  id = .rs.createUUID())
 {
    cache <- .rs.explorer.getCache()
-   cache[[id]] <- object
+   cache[[id]] <- list(object = object, environment = environment)
    id
 })
 
 .rs.addFunction("explorer.clearCache", function()
 {
    cache <- .rs.explorer.getCache()
-   rm(list = ls(envir = cache), envir = cache)
+   objects <- ls(envir = cache)
+   rm(list = objects, envir = cache)
    cache
 })
 
@@ -169,26 +181,34 @@
 })
 
 
-.rs.addFunction("explorer.viewObject", function(object)
+.rs.addFunction("explorer.viewObject", function(object,
+                                                title = NULL,
+                                                envir = .GlobalEnv)
 {
-   # attempt to divine title from call
-   call <- match.call()
-   title <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
+   # attempt to divine title from call when not supplied
+   if (is.null(title))
+   {
+      call <- match.call()
+      title <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
+   }
    
    # provide an appropriate name for the root node
    name <- .rs.explorer.objectName(object, title)
    
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name, title)
+   handle <- .rs.explorer.createHandle(object, name, title, envir)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
 })
 
-.rs.addFunction("explorer.createHandle", function(object, name, title)
+.rs.addFunction("explorer.createHandle", function(object,
+                                                  name,
+                                                  title,
+                                                  envir)
 {
    # save in cached data environment
-   id <- .rs.explorer.cacheObject(object)
+   id <- .rs.explorer.cacheObject(object, envir)
    
    # return a handle object
    list(
@@ -223,8 +243,8 @@
       # is this an S4 object with one or more slots?
       (s4 && length(slotNames(object)) > 0) ||
       
-      # do we have attributes?
-      !is.null(attributes(object))
+      # do we have relevant attributes?
+      .rs.explorer.hasRelevantAttributes(object)
    
    # extract attributes when relevant
    if (context$recursive && .rs.explorer.hasRelevantAttributes(object))
@@ -256,6 +276,7 @@
       access     = .rs.scalar(access),
       recursive  = .rs.scalar(is.recursive(object)),
       expandable = .rs.scalar(expandable),
+      atomic     = .rs.scalar(is.atomic(object)),
       s4         = .rs.scalar(isS4(object)),
       tags       = as.character(tags),
       display    = display,
@@ -595,14 +616,14 @@
       output <- paste(.rs.surround(header, with = "\""), collapse = " ")
       more <- length(object) > n
    }
+   else if (is.call(object))
+   {
+      output <- paste(format(object), collapse = " ")
+      more <- FALSE
+   }
    else if (is.symbol(object))
    {
       output <- .rs.surround(object, with = "`")
-      more <- FALSE
-   }
-   else if (is.language(object))
-   {
-      output <- format(object)
       more <- FALSE
    }
    else if (is.list(object))

@@ -67,3 +67,11 @@
 	height: 20px !important;
 }
 
+.cellInnerTable {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.virtual {
+	font-style: italic;
+}

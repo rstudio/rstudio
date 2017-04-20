@@ -22,6 +22,7 @@ import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.SafeHtmlUtil.TagBuilder;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
@@ -93,7 +94,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.RowHoverEvent;
-import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -294,24 +294,13 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         builder.appendHtmlConstant("<table>");
+         builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
-         builder.appendHtmlConstant("<td>");
          addIndent(builder, data);
-         builder.appendHtmlConstant("</td>");
-         
-         builder.appendHtmlConstant("<td>");
          addExpandIcon(builder, data);
-         builder.appendHtmlConstant("</td>");
-         
-         builder.appendHtmlConstant("<td>");
          addIcon(builder, data);
-         builder.appendHtmlConstant("</td>");
-         
-         builder.appendHtmlConstant("<td>");
          addName(builder, data);
-         builder.appendHtmlConstant("</td>");
          
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
@@ -319,18 +308,18 @@ public class ObjectExplorerDataGrid
       
       private final void addIndent(SafeHtmlBuilder builder, Data data)
       {
-         int indentPx = data.getDepth() * 8;
+         int indentPx = data.getDepth() * 6;
          if (indentPx == 0)
             return;
          
-         String html = "<div style='width: " + indentPx + "px'></div>";
+         String html = "<td style='width: " + indentPx + "px'></td>";
          builder.appendHtmlConstant(html);
       }
       
       private final boolean onNotExpandable(SafeHtmlBuilder builder,
                                             Data data)
       {
-         builder.appendHtmlConstant("<div style='width: 20px'></div>");
+         builder.appendHtmlConstant("<td style='width: 20px'></td>");
          return false;
       }
       
@@ -346,6 +335,10 @@ public class ObjectExplorerDataGrid
          // node is the only thing that exists
          if (!showAttributes_)
          {
+            // bail if the object is atomic (since it cannot have children)
+            if (data.isAtomic())
+               return onNotExpandable(builder, data);
+            
             JsArray<Data> children = data.getChildrenData();
             if (children != null && children.length() == 1)
             {
@@ -356,6 +349,7 @@ public class ObjectExplorerDataGrid
          }
          
          // add expand button
+         builder.appendHtmlConstant("<td style='width: 20px;'>");
          switch (data.getExpansionState())
          {
          case CLOSED:
@@ -373,6 +367,7 @@ public class ObjectExplorerDataGrid
             builder.appendHtmlConstant("</div>");
             break;
          }
+         builder.appendHtmlConstant("</td>");
          
          return true;
       }
@@ -403,23 +398,27 @@ public class ObjectExplorerDataGrid
          
          // add it
          ImageResource2x res2x = new ImageResource2x(resource);
-         builder.appendHtmlConstant("<div style='width: 20px;'>");
+         builder.appendHtmlConstant("<td style='width: 20px;'><div>");
          builder.append(res2x.getSafeHtml());
-         builder.appendHtmlConstant("</div>");
+         builder.appendHtmlConstant("</td></div>");
       }
       
       private final void addName(SafeHtmlBuilder builder,
                                  Data data)
       {
-         boolean virtual = data.hasTag(TAG_VIRTUAL);
-         if (virtual)
-         {
-            builder.appendHtmlConstant("<div style='font-style: italic'>");
-         }
-         else
-         {
-            builder.appendHtmlConstant("<div>");
-         }
+         builder.appendHtmlConstant("<td>");
+         
+         TagBuilder tagBuilder = new TagBuilder("div");
+         tagBuilder.set("title", data.getDisplayName());
+         
+         JsVectorString classes = JsVectorString.createVector();
+         if (data.hasTag(TAG_VIRTUAL))
+            classes.push(RES.dataGridStyle().virtual());
+         
+         if (!classes.isEmpty())
+            tagBuilder.set("class", classes.join(" "));
+         
+         builder.append(tagBuilder.toSafeHtml());
          
          String name = data.getDisplayName();
          if (name == null)
@@ -427,7 +426,24 @@ public class ObjectExplorerDataGrid
          builder.appendEscaped(name);
          
          builder.appendHtmlConstant("</div>");
+         builder.appendHtmlConstant("</td>");
+         
       }
+   }
+   
+   private static class TypeCell extends AbstractCell<Data>
+   {
+      @Override
+      public void render(Context context,
+                         Data data,
+                         SafeHtmlBuilder builder)
+      {
+         builder.append(SafeHtmlUtil.createDiv(
+               "title", data.getDisplayType()));
+         builder.appendEscaped(data.getDisplayType());
+         builder.appendHtmlConstant("</div>");
+      }
+      
    }
    
    private static class ValueCell extends AbstractCell<Data>
@@ -437,11 +453,13 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         builder.appendHtmlConstant("<table><tr>");
+         builder.append(TABLE_OPEN_TAG);
+         builder.appendHtmlConstant("<tr>");
          
          // add description
          builder.appendHtmlConstant("<td style='width: 100%;'>");
          builder.append(SafeHtmlUtil.createDiv(
+               "title", data.getDisplayDesc(),
                "class", RES.dataGridStyle().valueDesc()));
          builder.appendEscaped(data.getDisplayDesc());
          builder.appendHtmlConstant("</div>");
@@ -465,7 +483,8 @@ public class ObjectExplorerDataGrid
          addExtractIcon(data, builder);
          builder.appendHtmlConstant("</td>");
          
-         builder.appendHtmlConstant("</tr></table>");
+         builder.appendHtmlConstant("</tr>");
+         builder.appendHtmlConstant("</table>");
       }
       
       private void addExtractIcon(Data data,
@@ -519,14 +538,7 @@ public class ObjectExplorerDataGrid
       addColumn(nameColumn_, new TextHeader("Name"));
       setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
-      typeColumn_ = new TextColumn<Data>()
-      {
-         @Override
-         public String getValue(Data data)
-         {
-            return data.getDisplayType();
-         }
-      };
+      typeColumn_ = new IdentityColumn<Data>(new TypeCell());
       addColumn(typeColumn_, new TextHeader("Type"));
       setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
@@ -1118,7 +1130,7 @@ public class ObjectExplorerDataGrid
    }
    
    private final IdentityColumn<Data> nameColumn_;
-   private final TextColumn<Data> typeColumn_;
+   private final IdentityColumn<Data> typeColumn_;
    private final IdentityColumn<Data> valueColumn_;
    
    private final ListDataProvider<Data> dataProvider_;
@@ -1184,6 +1196,8 @@ public class ObjectExplorerDataGrid
       String objectTypeIcon();
       String valueDesc();
       String buttonIcon();
+      String cellInnerTable();
+      String virtual();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
@@ -1203,6 +1217,10 @@ public class ObjectExplorerDataGrid
    private static final ImageResource2x IMAGE_VIEW_CODE = new ImageResource2x(
          RES.viewObject(),
          RES.viewObject2x());
+   
+   private static final SafeHtml TABLE_OPEN_TAG = SafeHtmlUtil.createOpenTag(
+         "table",
+         "class", RES.dataGridStyle().cellInnerTable());
    
    static {
       RES.dataGridStyle().ensureInjected();
