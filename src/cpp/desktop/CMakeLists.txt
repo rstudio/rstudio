@@ -65,9 +65,17 @@ else()
    endif()
 endif()
 
+if (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+    message( SEND_ERROR "Qt qmake not found" )
+endif()
 # set the cmake prefix path based on the location of the qmake executable
 get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
-set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
+set(QT_CMAKE_MODULE_PATH "${QT_BIN_DIR}//..//lib//cmake")
+if (EXISTS ${QT_CMAKE_MODULE_PATH})
+    list(APPEND CMAKE_MODULE_PATH ${QT_CMAKE_MODULE_PATH})
+else()
+    message( WARNING "Qt Cmake modules not found" )
+endif()
 
 # find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
