@@ -23,6 +23,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
@@ -154,10 +155,12 @@ public class TerminalList implements Iterable<String>,
 
    @Inject
    private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory,
-                           EventBus events)
+                           EventBus events,
+                           UIPrefs uiPrefs)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       eventBus_ = events;
+      uiPrefs_ = uiPrefs;
    }
 
    /**
@@ -420,7 +423,8 @@ public class TerminalList implements Iterable<String>,
                              int shellType)
    {
       TerminalSession newSession = new TerminalSession(
-            sequence, terminalHandle, caption, title, hasChildProcs, cols, rows, shellType);
+            sequence, terminalHandle, caption, title, hasChildProcs, 
+            cols, rows, uiPrefs_.blinkingCursor().getValue(), shellType);
       newSession.connect();
       updateTerminalBusyStatus();
    }
@@ -459,4 +463,5 @@ public class TerminalList implements Iterable<String>,
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private EventBus eventBus_;
+   private UIPrefs uiPrefs_;
 }

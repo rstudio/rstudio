@@ -21,12 +21,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.connections.res.NewConnectionSnippetHostResources;
 
@@ -39,9 +45,12 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -53,8 +62,9 @@ import com.google.inject.Inject;
 public class NewConnectionSnippetHost extends Composite
 {
    @Inject
-   private void initialize()
+   private void initialize(ConnectionsServerOperations server)
    {
+      server_ = server;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -131,6 +141,54 @@ public class NewConnectionSnippetHost extends Composite
    }
    
    private static int maxRows_ = 4;
+
+   private void showSuccess()
+   {
+      VerticalPanel verticalPanel = new VerticalPanel();
+      verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
+      HTML msg = new HTML("<b>Success!</b> The given parameters " +
+            "can be used to connect and disconnect correctly.");
+      
+      verticalPanel.add(msg);
+      MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
+            "Test Results",
+            verticalPanel
+            );
+
+      dlg.addButton("OK", new Operation() {
+         @Override
+         public void execute()
+         {
+         }
+      }, true, false);
+
+      dlg.showModal();
+   }
+   
+   private void showFailure(String error)
+   {
+      VerticalPanel verticalPanel = new VerticalPanel();
+      verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
+      
+      SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
+      safeHtmlBuilder.appendHtmlConstant("<b>Failure.</b> ");
+      safeHtmlBuilder.appendEscaped(error);
+      
+      verticalPanel.add(new HTML(safeHtmlBuilder.toSafeHtml()));
+      MessageDialog dlg = new MessageDialog(MessageDialog.ERROR,
+            "Test Results",
+            verticalPanel
+            );
+
+      dlg.addButton("OK", new Operation() {
+         @Override
+         public void execute()
+         {
+         }
+      }, true, false);
+
+      dlg.showModal();
+   }
    
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
@@ -152,7 +210,7 @@ public class NewConnectionSnippetHost extends Composite
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
             new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 
-      final Grid connGrid = new Grid(visibleRows + (showAdvancedButton ? 1 : 0), 4);
+      final Grid connGrid = new Grid(visibleRows + 1, 4);
       connGrid.addStyleName(RES.styles().grid());
 
       connGrid.getCellFormatter().setWidth(0, 0, "150px");
@@ -233,8 +291,40 @@ public class NewConnectionSnippetHost extends Composite
          }
       }
 
+      HorizontalPanel buttonsPanel = new HorizontalPanel();
+      buttonsPanel.addStyleName(RES.styles().buttonsPanel());
+
+      final ThemedButton testButton = new ThemedButton("Test");
+      testButton.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event) {
+            testButton.setEnabled(false);
+            server_.connectionTest(
+               codePanel_.getCode(),
+               new DelayedProgressRequestCallback<String>("Testing Connection...") {
+                  @Override
+                  protected void onSuccess(String error)
+                  {
+                     testButton.setEnabled(true);
+                     if (StringUtil.isNullOrEmpty(error)) {
+                        showSuccess();
+                     }
+                     else {
+                        showFailure(error);
+                     }
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error) {
+                     testButton.setEnabled(true);
+                  }
+               });
+         }
+      });
+
+      buttonsPanel.add(testButton);
+
       if (showAdvancedButton) {
-         ThemedButton pushButton = new ThemedButton("Advanced Options...", new ClickHandler() {
+         ThemedButton optionsButton = new ThemedButton("Advanced Options...", new ClickHandler() {
             public void onClick(ClickEvent event) {
                new NewConnectionSnippetDialog(
                   new OperationWithInput<HashMap<String, String>>() {
@@ -253,10 +343,12 @@ public class NewConnectionSnippetHost extends Composite
             }
          });
 
-         connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
-         connGrid.getCellFormatter().getElement(visibleRows, 1).setAttribute("colspan", "4");
-         connGrid.setWidget(visibleRows, 1, pushButton);
+         buttonsPanel.add(optionsButton);
       }
+
+      connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
+      connGrid.getCellFormatter().getElement(visibleRows, 1).setAttribute("colspan", "4");
+      connGrid.setWidget(visibleRows, 1, buttonsPanel);
 
       return connGrid;
    }
@@ -364,6 +456,9 @@ public class NewConnectionSnippetHost extends Composite
       String settingsButton();
       
       String lastRow();
+      String buttonsPanel();
+      
+      String dialogMessagePanel();
    }
 
    public interface Resources extends ClientBundle
@@ -389,4 +484,6 @@ public class NewConnectionSnippetHost extends Composite
    HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
 
    static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]*))?(:([^}]+))?\\}";
+   
+   private ConnectionsServerOperations server_;
 }

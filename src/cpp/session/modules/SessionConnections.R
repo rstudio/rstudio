@@ -409,7 +409,13 @@ options(connectionObserver = list(
             currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
 
             basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-            snippetsFile <- file.path(basePath, tolower(driver), "snippets", paste(driver, ".R", sep = ""))
+            snippetsFile <- file.path(
+               basePath,
+               tolower(driver),
+               "snippets",
+               paste(tolower(driver), ".R", sep = "")
+            )
+            
             if (file.exists(snippetsFile)) {
                snippet <- paste(readLines(snippetsFile), collapse = "\n")
             }
@@ -517,4 +523,36 @@ options(connectionObserver = list(
    .rs.success()
 })
 
+.rs.addJsonRpcHandler("connection_test", function(code) {
+   error <- ""
 
+   oldConnectionObserver <- getOption("connectionObserver")
+   on.exit(options(connectionObserver = oldConnectionObserver))
+
+   disconnectCalls <- list()
+
+   options(connectionObserver = list(
+      connectionOpened = function(type, host, displayName, icon = NULL, 
+                                  connectCode, disconnect, listObjectTypes,
+                                  listObjects, listColumns, previewObject, 
+                                  connectionObject, actions = NULL) {
+         disconnectCalls <<- c(disconnectCalls, disconnect)
+      },
+      connectionClosed = function(type, host, ...) {
+
+      },
+      connectionUpdated = function(type, host, hint, ...) {
+      }
+   ))
+
+   .envir <- .rs.getActiveFrame()
+   tryCatch({
+      eval(parse(text = code), envir = .envir)
+   }, error = function(e) {
+      error <<- e$message
+   })
+
+   lapply(disconnectCalls, function(e) e())
+
+   .rs.scalar(error)
+})

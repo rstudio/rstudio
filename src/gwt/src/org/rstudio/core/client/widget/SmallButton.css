@@ -1,3 +1,5 @@
+@external rstudio-themes-flat;
+
 .smallButton {
    display: block;
    padding: 0;
@@ -26,4 +28,33 @@
    font-size: 9px;
    color: black;
    white-space: nowrap;
+}
+
+.rstudio-themes-flat button.smallButton {
+   padding-bottom: 2px;
+}
+
+.rstudio-themes-flat button.smallButton > table:first-child {
+   border: solid 1px #bbbbbb;
+   border-radius: 5px;
+   background: #f6f5f7;
+   box-shadow: 0 1px #ececec;
+   overflow: hidden;
+}
+
+.rstudio-themes-flat button.smallButton:active > table:first-child {
+   background: #eaeaea;
+}
+
+.rstudio-themes-flat .buttonLeft {
+   background: none;
+}
+
+.rstudio-themes-flat .buttonCenter {
+   background: none;
+   font-size: 10px;
+}
+
+.rstudio-themes-flat .buttonRight {
+   background: none;
 }

@@ -73,7 +73,10 @@ Vagrant.configure(2) do |config|
     config.vm.synced_folder ".", "/home/vagrant/rstudio"
   end
 
-  # define NFSv4 box; mutually exclusive with the NFSv3 box (pick one)
+  # define NFSv4 box; mutually exclusive with the NFSv3 box (pick one). note
+  # that for reasons too complicated to enumerate here, the NFSv4 client 
+  # configuration cannot be performed automatically, so you'll need to
+  # manually run the provision-nfs4-client.sh script on the client machine(s) 
   config.vm.define "nfs4", autostart: false do |n|
     n.vm.box = "bento/freebsd-10.3"
     n.vm.network "private_network", ip: "192.168.55.103"

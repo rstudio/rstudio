@@ -12,6 +12,7 @@ EOF
 echo 'nfs_server_enable="YES"' >> /etc/rc.conf
 echo 'nfsv4_server_enable="YES"' >> /etc/rc.conf
 echo 'nfsuserd_enable="YES"' >> /etc/rc.conf
+echo 'nfsuserd_flags="-domain rstudio.nfs4"' >> /etc/rc.conf
 echo 'rpcbind_enable="YES"' >> /etc/rc.conf
 echo 'nfs_server_flags="-u -t -n 4"' >> /etc/rc.conf
 echo 'mountd_flags="-r"' >> /etc/rc.conf
