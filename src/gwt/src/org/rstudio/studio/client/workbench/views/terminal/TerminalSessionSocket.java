@@ -326,6 +326,18 @@ public class TerminalSessionSocket
     */
    public void dispatchOutput(String output, boolean detectLocalEcho)
    {
+      if (detectLocalEcho && output.contains("Password:"))
+      {
+         // If user is changing password, temporarily stop local-echo
+         // to reduce chances of showing their password. Note that echo
+         // stops automatically once the terminal enters "busy" state, but
+         // there's a delay before that happens. Also, if the user has 
+         // already started typing before the Password: prompt is sent back
+         // by the server, those characters will local-echo. Still, between
+         // the two mechanisms this reduces the chances of most or all of
+         // their typed password characters being echoed.
+          localEcho_.pause(1000);
+      }
       if (!detectLocalEcho || localEcho_.isEmpty())
       {
          xterm_.write(output);
