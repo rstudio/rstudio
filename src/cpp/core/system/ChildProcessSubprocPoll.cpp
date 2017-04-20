@@ -55,7 +55,7 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
    boost::posix_time::ptime currentTime = now();
 
    // Update state of "hasRecentOutput". We remember that we saw output for
-   // up to "kResetRecentDelay" milliseconds.
+   // up to "resetRecentDelay_" milliseconds.
    if (hadOutput)
    {
       hasRecentOutput_ = true;
@@ -76,7 +76,7 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
       return false;
 
    // Update state of "hasSubprocesses". We do this no more often than every
-   // "kCheckSubprocDelay" milliseconds, and less often if we haven't seen any
+   // "checkSubprocDelay_" milliseconds, and less often if we haven't seen any
    // recent output. The latter is to reduce load when nothing is happening,
    // under the assumption that if all child processes are terminated, we
    // will always see output in the form of the command prompt.

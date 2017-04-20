@@ -25,13 +25,26 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-// Updates two polling-based flags for a process.
+// Maintains and updates two polling-based flags for a process.
 //
-// hasSubprocess(): does the process have any child processes?
-// hasRecentOutput(): did the process recently report receiving output
+// hasSubprocess(): does the process have any child processes? This can be
+// fairly expensive to compute so we don't do it more often than specified by
+// "checkSubProcDelay". Can be turned off completely by passing a
+// NULL "subProcCheck" function.
 //
-// Pass function to perform the actual subproc check to the constructor, or
-// NULL to not do any subprocess checking.
+// hasRecentOutput(): did the process recently report receiving output? Recent
+// is controlled by "resetRecentDelay", i.e. if we've seen output within the
+// last "resetRecentDelay" millisedconds.
+//
+// Tracking recent-output state serves two purposes:
+//
+// (1) the rsession checks this to see if there has been
+// recent activity in order to keep the rsession alive (the websocket channel
+// for terminals doesn't automatically do this like the RPC channel does)
+//
+// (2) to throttle back the subprocess checks if there hasn't been any recent
+// output, the notion being that when the final subprocess stops we expect
+// to see output in the form of the prompt.
 //
 class ChildProcessSubprocPoll : boost::noncopyable
 {
@@ -72,10 +85,7 @@ private:
    bool didThrottleSubprocCheck_;
    bool stopped_;
 
-   // How long does memory of "recent output" last? This state gets used to
-   // keep the session alive when only communicating with terminal via
-   // websockets and not RPC, and also to throttle-back subprocess checking
-   // when there isn't any noticable activity taking place.
+   // How long does memory of "recent output" last?
    boost::posix_time::milliseconds resetRecentDelay_;
 
    // what is the minimum length of time before we check for subprocesses?
