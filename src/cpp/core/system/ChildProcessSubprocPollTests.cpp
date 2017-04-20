@@ -95,9 +95,9 @@ context("ChildProcess polling support class")
       PidType pid = 12345;
       NoSubProcPollingFixture test(pid);
 
-      test.poller_.poll(true);
+      expect_false(test.poller_.poll(true));
       expect_true(test.poller_.hasRecentOutput());
-      test.poller_.poll(false);
+      expect_false(test.poller_.poll(false));
       expect_true(test.poller_.hasRecentOutput()); // timeout hasn't expired
    }
 
@@ -134,7 +134,7 @@ context("ChildProcess polling support class")
       test.poller_.poll(true);
       expect_false(test.checkCalled_); // polling timeout hasn't passed
       blockingwait(300); // longer than the timeout
-      test.poller_.poll(false); // still not longer than the recent output timeout!
+      expect_true(test.poller_.poll(false)); // still not longer than the recent output timeout!
       expect_true(test.checkCalled_);
       expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());

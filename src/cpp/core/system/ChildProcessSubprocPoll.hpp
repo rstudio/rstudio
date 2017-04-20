@@ -42,7 +42,9 @@ public:
 
    virtual ~ChildProcessSubprocPoll() {}
 
-   void poll(bool hadOutput);
+   // returns true if subprocess polling was done
+   bool poll(bool hadOutput);
+
    void stop();
 
    bool hasSubprocess() const;

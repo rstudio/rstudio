@@ -48,10 +48,10 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(PidType pid, boost::function<bo
 {
 }
 
-void ChildProcessSubprocPoll::poll(bool hadOutput)
+bool ChildProcessSubprocPoll::poll(bool hadOutput)
 {
    if (stopped_)
-      return;
+      return false;
 
    boost::posix_time::ptime currentTime = now();
 
@@ -74,7 +74,7 @@ void ChildProcessSubprocPoll::poll(bool hadOutput)
    }
 
    if (!subProcCheck_)
-      return;
+      return false;
 
    // Update state of "hasSubprocesses". We do this no more often than every
    // "kCheckSubprocDelay" milliseconds, and less if we haven't seen any
@@ -84,22 +84,23 @@ void ChildProcessSubprocPoll::poll(bool hadOutput)
    if (!hasRecentOutput())
    {
       checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
-      return;
+      return false;
    }
 
    if (checkSubProcAfter_.is_not_a_date_time())
    {
       checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
-      return;
+      return false;
    }
 
    if (currentTime <= checkSubProcAfter_)
-      return;
+      return false;
 
    // Enough time has passed, update whether "pid" has subprocesses
    // and restart the timer.
    hasSubprocess_ = subProcCheck_(pid_);
    checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
+   return true;
 }
 
 void ChildProcessSubprocPoll::stop()

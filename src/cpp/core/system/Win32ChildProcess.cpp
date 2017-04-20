@@ -14,6 +14,7 @@
  */
 
 #include "ChildProcess.hpp"
+#include "ChildProcessSubprocPoll.hpp"
 #include "Win32Pty.hpp"
 
 #include <iostream>
@@ -546,60 +547,13 @@ struct AsyncChildProcess::AsyncImpl
 {
    AsyncImpl()
       : calledOnStarted_(false),
-        exited_(false),
-        checkSubProc_(boost::posix_time::not_a_date_time),
-        hasSubprocess_(true),
-        hasRecentOutput_(true)
+        exited_(false)
    {
    }
 
    bool calledOnStarted_;
    bool exited_;
-
-   // when we next check subprocess count
-   boost::posix_time::ptime checkSubProc_;
-
-   // result of last subprocess check
-   bool hasSubprocess_;
-
-   // has there been output recently?
-   bool hasRecentOutput_;
-
-   void initTimers(bool reportHasSubprocs)
-   {
-      if (exited_)
-      {
-         checkSubProc_ = boost::posix_time::not_a_date_time;
-         return;
-      }
-
-      if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
-      {
-         checkSubProc_ = now() + boost::posix_time::seconds(1);
-      }
-   }
-
-   bool checkChildCount()
-   {
-      if (checkSubProc_.is_not_a_date_time())
-         return false;
-
-      bool fCheck = now() > checkSubProc_;
-
-      if (fCheck)
-         checkSubProc_ = boost::posix_time::not_a_date_time;
-      return fCheck;
-   }
-
-   bool computeHasSubProcess(PidType pid)
-   {
-      return core::system::hasSubprocesses(pid);
-   }
-
-   static boost::posix_time::ptime now()
-   {
-      return boost::posix_time::microsec_clock::universal_time();
-   }
+   boost::scoped_ptr<ChildProcessSubprocPoll> pSubprocPoll_;
  };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
@@ -635,12 +589,18 @@ Error AsyncChildProcess::terminate()
 
 bool AsyncChildProcess::hasSubprocess() const
 {
-   return pAsyncImpl_->hasSubprocess_;
+   if (pAsyncImpl_->pSubprocPoll_)
+      return pAsyncImpl_->pSubprocPoll_->hasSubprocess();
+   else
+      return true;
 }
 
 bool AsyncChildProcess::hasRecentOutput() const
 {
-   return pAsyncImpl_->hasRecentOutput_;
+   if (pAsyncImpl_->pSubprocPoll_)
+      return pAsyncImpl_->pSubprocPoll_->hasRecentOutput();
+   else
+      return true;
 }
 
 void AsyncChildProcess::poll()
@@ -648,6 +608,11 @@ void AsyncChildProcess::poll()
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {
+      // setup for subprocess polling
+      pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
+         pImpl_->pid,
+         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL));
+
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
       pAsyncImpl_->calledOnStarted_ = true;
@@ -664,6 +629,8 @@ void AsyncChildProcess::poll()
             LOG_ERROR(error);
       }
    }
+
+   bool hasRecentOutput = false;
 
    // check stdout
    std::string stdOut;
@@ -683,7 +650,7 @@ void AsyncChildProcess::poll()
          reportError(error);
       if (!stdErr.empty() && callbacks_.onStderr)
       {
-         pAsyncImpl_->hasRecentOutput_ = true;
+         hasRecentOutput = true;
          callbacks_.onStderr(*this, stdErr);
       }
    }
@@ -736,17 +703,15 @@ void AsyncChildProcess::poll()
       // set exited_ flag so that our exited function always
       // returns the right value
       pAsyncImpl_->exited_ = true;
+      pAsyncImpl_->pSubprocPoll_->stop();
    }
 
    // Perform optional periodic operations
-   pAsyncImpl_->initTimers(options().reportHasSubprocs);
-   if (pAsyncImpl_->checkChildCount())
+   if (pAsyncImpl_->pSubprocPoll_->poll(hasRecentOutput))
    {
-      pAsyncImpl_->hasRecentOutput_ = false;
-      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
       if (callbacks_.onHasSubprocs)
       {
-         callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);
+         callbacks_.onHasSubprocs(hasSubprocess());
       }
    }
 }
