@@ -36,9 +36,11 @@ namespace system {
 class ChildProcessSubprocPoll : boost::noncopyable
 {
 public:
-//   typedef bool (*hasSubprocCheck)(PidType);
-
-   ChildProcessSubprocPoll(PidType pid, boost::function<bool (PidType pid)> subProcCheck);
+   ChildProcessSubprocPoll(
+         PidType pid,
+         boost::posix_time::milliseconds resetRecentDelay,
+         boost::posix_time::milliseconds checkSubprocDelay,
+         boost::function<bool (PidType pid)> subProcCheck);
 
    virtual ~ChildProcessSubprocPoll() {}
 
@@ -50,13 +52,37 @@ public:
    bool hasSubprocess() const;
    bool hasRecentOutput() const;
 
+  boost::posix_time::milliseconds getResetRecentDelay() const;
+
+   boost::posix_time::milliseconds getCheckSubprocDelay() const;
+
 private:
+   // process whose subprocesses we are tracking
    PidType pid_;
+
+   // when to next perform the checks
    boost::posix_time::ptime checkSubProcAfter_;
    boost::posix_time::ptime resetRecentOutputAfter_;
+
+   // results of most recent checks
    bool hasSubprocess_;
    bool hasRecentOutput_;
+
+   // misc. state
+   bool didThrottleSubprocCheck_;
    bool stopped_;
+
+   // How long does memory of "recent output" last? This state gets used to
+   // keep the session alive when only communicating with terminal via
+   // websockets and not RPC, and also to throttle-back subprocess checking
+   // when there isn't any noticable activity taking place.
+   boost::posix_time::milliseconds resetRecentDelay_;
+
+   // what is the minimum length of time before we check for subprocesses?
+   boost::posix_time::milliseconds checkSubprocDelay_;
+
+   // function used to check for subprocesses; if NULL then subprocess
+   // checking will not be done
    boost::function<bool (PidType pid)> subProcCheck_;
 };
 

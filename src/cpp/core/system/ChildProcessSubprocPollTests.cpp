@@ -26,11 +26,18 @@ namespace system {
 namespace tests {
 
 namespace {
+using boost::posix_time::milliseconds;
 
-void blockingwait(int ms)
+const milliseconds kResetRecentDelay = milliseconds(100);
+const milliseconds kResetRecentDelayExpired = milliseconds(110);
+
+const milliseconds kCheckSubprocDelay = milliseconds(25);
+const milliseconds kCheckSubprocDelayExpired = milliseconds(35);
+
+void blockingwait(milliseconds ms)
 {
    boost::asio::io_service io;
-   boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
+   boost::asio::deadline_timer timer(io, ms);
    timer.wait();
 }
 
@@ -39,7 +46,7 @@ class NoSubProcPollingFixture
 public:
    NoSubProcPollingFixture(PidType pid)
       :
-        poller_(pid, NULL)
+        poller_(pid, kResetRecentDelay, kCheckSubprocDelay, NULL)
    {}
 
    ChildProcessSubprocPoll poller_;
@@ -50,7 +57,8 @@ class SubProcPollingFixture
 public:
    SubProcPollingFixture(PidType pid)
       :
-        poller_(pid, boost::bind(&SubProcPollingFixture::checkSubproc, this, _1)),
+        poller_(pid, kResetRecentDelay, kCheckSubprocDelay,
+                boost::bind(&SubProcPollingFixture::checkSubproc, this, _1)),
         checkReturns_(false),
         callerPid_(0),
         checkCalled_(false)
@@ -108,7 +116,7 @@ context("ChildProcess polling support class")
 
       test.poller_.poll(true);
       expect_true(test.poller_.hasRecentOutput());
-      blockingwait(1100); // longer than timeout, but hate to do this in unit test
+      blockingwait(kResetRecentDelayExpired);
       test.poller_.poll(false);
       expect_false(test.poller_.hasRecentOutput()); // now it flips to false
       test.poller_.poll(true);
@@ -133,8 +141,8 @@ context("ChildProcess polling support class")
       test.checkReturns_ = false;
       test.poller_.poll(true);
       expect_false(test.checkCalled_); // polling timeout hasn't passed
-      blockingwait(300); // longer than the timeout
-      expect_true(test.poller_.poll(false)); // still not longer than the recent output timeout!
+      blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
+      expect_true(test.poller_.poll(false)); // not longer than the recent output timeout!
       expect_true(test.checkCalled_);
       expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
@@ -149,7 +157,7 @@ context("ChildProcess polling support class")
       test.checkReturns_ = false;
       test.poller_.poll(false);
       expect_false(test.checkCalled_);
-      blockingwait(300); // long enough for childproc polling
+      blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
       test.poller_.poll(false); // not longer than the output timeout
       expect_true(test.checkCalled_);
       expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
@@ -158,7 +166,7 @@ context("ChildProcess polling support class")
 
       test.clearFlags();
       test.poller_.poll(false); // no recent output
-      blockingwait(800); // this plus earlier delay should timeout recent output
+      blockingwait(kResetRecentDelayExpired);
       test.poller_.poll(false);
       expect_false(test.checkCalled_); // because of no recent output
       expect_false(test.poller_.hasRecentOutput());

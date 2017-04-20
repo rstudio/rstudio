@@ -26,24 +26,23 @@ boost::posix_time::ptime now()
    return boost::posix_time::microsec_clock::universal_time();
 }
 
-// how long does memory of "recent output" last?
-const boost::posix_time::seconds kResetRecentDelay =
-                                          boost::posix_time::seconds(1);
-
-// what is the minimum length of time before we check for subprocesses?
-const boost::posix_time::milliseconds kCheckSubprocDelay =
-                                          boost::posix_time::milliseconds(200);
-
 } // anonymous namespace
 
-ChildProcessSubprocPoll::ChildProcessSubprocPoll(PidType pid, boost::function<bool (PidType pid)> subProcCheck)
+ChildProcessSubprocPoll::ChildProcessSubprocPoll(
+      PidType pid,
+      boost::posix_time::milliseconds resetRecentDelay,
+      boost::posix_time::milliseconds checkSubprocDelay,
+      boost::function<bool (PidType pid)> subProcCheck)
    :
      pid_(pid),
      checkSubProcAfter_(boost::posix_time::not_a_date_time),
      resetRecentOutputAfter_(boost::posix_time::not_a_date_time),
      hasSubprocess_(true),
      hasRecentOutput_(true),
+     didThrottleSubprocCheck_(false),
      stopped_(false),
+     resetRecentDelay_(resetRecentDelay),
+     checkSubprocDelay_(checkSubprocDelay),
      subProcCheck_(subProcCheck)
 {
 }
@@ -65,31 +64,32 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
 
    if (resetRecentOutputAfter_.is_not_a_date_time())
    {
-      resetRecentOutputAfter_ = currentTime + kResetRecentDelay;
+      resetRecentOutputAfter_ = currentTime + resetRecentDelay_;
    }
    else if (currentTime > resetRecentOutputAfter_)
    {
       hasRecentOutput_ = false;
-      resetRecentOutputAfter_ = currentTime + kResetRecentDelay;
+      resetRecentOutputAfter_ = currentTime + resetRecentDelay_;
    }
 
    if (!subProcCheck_)
       return false;
 
    // Update state of "hasSubprocesses". We do this no more often than every
-   // "kCheckSubprocDelay" milliseconds, and less if we haven't seen any
+   // "kCheckSubprocDelay" milliseconds, and less often if we haven't seen any
    // recent output. The latter is to reduce load when nothing is happening,
    // under the assumption that if all child processes are terminated, we
    // will always see output in the form of the command prompt.
-   if (!hasRecentOutput())
+   if (!hasRecentOutput() && !didThrottleSubprocCheck_)
    {
-      checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
+      checkSubProcAfter_ = currentTime + checkSubprocDelay_ * 4;
+      didThrottleSubprocCheck_ = true;
       return false;
    }
 
    if (checkSubProcAfter_.is_not_a_date_time())
    {
-      checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
+      checkSubProcAfter_ = currentTime + checkSubprocDelay_;
       return false;
    }
 
@@ -99,7 +99,8 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
    // Enough time has passed, update whether "pid" has subprocesses
    // and restart the timer.
    hasSubprocess_ = subProcCheck_(pid_);
-   checkSubProcAfter_ = currentTime + kCheckSubprocDelay;
+   checkSubProcAfter_ = currentTime + checkSubprocDelay_;
+   didThrottleSubprocCheck_ = false;
    return true;
 }
 

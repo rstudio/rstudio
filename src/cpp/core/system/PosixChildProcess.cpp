@@ -55,6 +55,11 @@ const int READ = 0;
 const int WRITE = 1;
 const std::size_t READ_ERR = -1;
 
+const boost::posix_time::milliseconds kResetRecentDelay =
+                                         boost::posix_time::milliseconds(1000);
+const boost::posix_time::milliseconds kCheckSubprocDelay =
+                                         boost::posix_time::milliseconds(250);
+
 int resolveExitStatus(int status)
 {
    return WIFEXITED(status) ? WEXITSTATUS(status) : status;
@@ -783,6 +788,7 @@ void AsyncChildProcess::poll()
       // setup for subprocess polling
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
+         kResetRecentDelay, kCheckSubprocDelay,
          options().reportHasSubprocs ? core::system::hasSubprocesses : NULL));
 
       if (callbacks_.onStarted)
