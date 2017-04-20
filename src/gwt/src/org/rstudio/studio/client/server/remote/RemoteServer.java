@@ -1817,7 +1817,8 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_SOURCE_DOCUMENT, params, requestCallback);
    }
    
-   public void explorerInspectObject(String objectId,
+   public void explorerInspectObject(String handleId,
+                                     String extractingCode,
                                      String objectName,
                                      String objectAccess,
                                      JsArrayString tags,
@@ -1825,9 +1826,10 @@ public class RemoteServer implements Server
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(objectId));
-      params.set(1, new JSONString(objectName));
-      params.set(2, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
+      params.set(0, new JSONString(handleId));
+      params.set(1, extractingCode == null ? JSONNull.getInstance() : new JSONString(extractingCode));
+      params.set(2, new JSONString(objectName));
+      params.set(3, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
       
       JSONArray jsonTags = new JSONArray();
       if (tags != null)
@@ -1837,8 +1839,8 @@ public class RemoteServer implements Server
             jsonTags.set(i, new JSONString(tags.get(i)));
          }
       }
-      params.set(3, jsonTags);
-      params.set(4, new JSONNumber(recursionDepth));
+      params.set(4, jsonTags);
+      params.set(5, new JSONNumber(recursionDepth));
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
    }
    

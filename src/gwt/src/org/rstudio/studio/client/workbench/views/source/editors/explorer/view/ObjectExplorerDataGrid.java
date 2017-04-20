@@ -246,7 +246,7 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   private String generateExtractingRCode(Data data)
+   private String generateExtractingRCode(Data data, String finalReplacement)
    {
       if (data == null)
          return null;
@@ -272,9 +272,14 @@ public class ObjectExplorerDataGrid
          code = code.replaceAll("#", accessors.get(i));
       
       // finally, substitute in the original object
-      code = code.replaceAll("#", handle_.getTitle());
+      code = code.replaceAll("#", finalReplacement);
       
       return code;
+   }
+   
+   private String generateExtractingRCode(Data data)
+   {
+      return generateExtractingRCode(data, handle_.getTitle());
    }
    
    private static interface Filter<T>
@@ -869,8 +874,6 @@ public class ObjectExplorerDataGrid
    private void openRow(final int row)
    {
       final Data data = getData().get(row);
-      Debug.logToRConsole("Opening row for object:" + data.getObjectId());
-      Debug.logObject(data);
       
       // bail if we've attempted to open something non-expandable
       if (!data.isExpandable())
@@ -898,8 +901,6 @@ public class ObjectExplorerDataGrid
    private void closeRow(int row)
    {
       final Data data = getData().get(row);
-      Debug.logToRConsole("Closing row for object:" + data.getObjectId());
-      Debug.logObject(data);
       
       // bail if we've attempted to close something non-expandable
       if (!data.isExpandable())
@@ -951,8 +952,10 @@ public class ObjectExplorerDataGrid
       }
       
       // no children; make a server RPC request and then call back
+      String extractingCode = generateExtractingRCode(data, "`__OBJECT__`");
       server_.explorerInspectObject(
-            data.getObjectId(),
+            handle_.getId(),
+            extractingCode,
             data.getDisplayName(),
             data.getObjectAccess(),
             data.getTags(),
@@ -984,6 +987,7 @@ public class ObjectExplorerDataGrid
    {
       server_.explorerInspectObject(
             handle_.getId(),
+            null,
             handle_.getName(),
             null,
             null,
@@ -993,8 +997,6 @@ public class ObjectExplorerDataGrid
                @Override
                public void onResponseReceived(ObjectExplorerInspectionResult result)
                {
-                  Debug.logObject(result);
-                  
                   root_ = result.cast();
                   root_.updateChildOwnership();
                   root_.setExpansionState(ExpansionState.OPEN);

@@ -22,7 +22,8 @@ import com.google.gwt.core.client.JsArrayString;
 public interface ObjectExplorerServerOperations
 {
    void explorerInspectObject(
-         String objectId,
+         String handleId,
+         String extractingCode,
          String objectName,
          String objectAccess,
          JsArrayString tags,

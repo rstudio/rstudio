@@ -27,7 +27,6 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    {
    }
    
-   public final native String        getObjectId()          /*-{ return this["id"];         }-*/;
    public final native String        getObjectAddress()     /*-{ return this["address"];    }-*/;
    public final native String        getObjectType()        /*-{ return this["type"];       }-*/;
    public final native JsArrayString getObjectClass()       /*-{ return this["class"];      }-*/;

@@ -29,13 +29,15 @@
 # registered by client packages
 .rs.setVar("explorer.inspectorRegistry", new.env(parent = emptyenv()))
 
-.rs.addJsonRpcHandler("explorer_inspect_object", function(id,
+.rs.addJsonRpcHandler("explorer_inspect_object", function(handle,
+                                                          extractingCode,
                                                           name,
                                                           access,
                                                           tags,
                                                           recursive)
 {
-   object  <- .rs.explorer.getCachedObject(id)
+   object  <- .rs.explorer.getCachedObject(handle, extractingCode)
+   
    context <- .rs.explorer.createContext(
       name      = name,
       access    = access,
@@ -86,10 +88,17 @@
    envir[["explorer"]]
 })
 
-.rs.addFunction("explorer.getCachedObject", function(id)
+.rs.addFunction("explorer.getCachedObject", function(handle,
+                                                     extractingCode = NULL)
 {
    cache <- .rs.explorer.getCache()
-   cache[[id]]
+   object <- cache[[handle]]
+   if (is.null(extractingCode))
+      return(object)
+   
+   envir <- new.env(parent = .GlobalEnv)
+   envir[["__OBJECT__"]] <- object
+   eval(parse(text = extractingCode), envir = envir)
 })
 
 .rs.addFunction("explorer.cacheObject", function(object,
@@ -240,7 +249,6 @@
    
    # create inspection result
    list(
-      id         = .rs.scalar(.rs.explorer.cacheObject(object)),
       address    = .rs.scalar(.rs.objectAddress(object)),
       type       = .rs.scalar(typeof(object)),
       class      = class(object),
