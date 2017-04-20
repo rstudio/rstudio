@@ -24,6 +24,7 @@ import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
@@ -80,6 +81,7 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -434,14 +436,11 @@ public class ObjectExplorerDataGrid
          
          // add description
          builder.appendHtmlConstant("<td style='width: 100%;'>");
+         builder.append(SafeHtmlUtil.createDiv(
+               "class", RES.dataGridStyle().valueDesc()));
          builder.appendEscaped(data.getDisplayDesc());
+         builder.appendHtmlConstant("</div>");
          builder.appendHtmlConstant("</td>");
-         
-         // add icons
-         builder.appendHtmlConstant("<td>");
-         
-         // i heard you like tables ...
-         builder.appendHtmlConstant("<table><tr>");
          
          // for data.frames and functions, add a 'View' icon
          JsVectorString classes = data.getObjectClass().cast();
@@ -461,9 +460,6 @@ public class ObjectExplorerDataGrid
          addExtractIcon(data, builder);
          builder.appendHtmlConstant("</td>");
          
-         builder.appendHtmlConstant("</tr></table>");
-         
-         builder.appendHtmlConstant("</td>");
          builder.appendHtmlConstant("</tr></table>");
       }
       
@@ -516,7 +512,7 @@ public class ObjectExplorerDataGrid
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
-      setColumnWidth(nameColumn_, "200px");
+      setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new TextColumn<Data>()
       {
@@ -527,7 +523,7 @@ public class ObjectExplorerDataGrid
          }
       };
       addColumn(typeColumn_, new TextHeader("Type"));
-      setColumnWidth(typeColumn_, "200px");
+      setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
       addColumn(valueColumn_, new TextHeader("Value"));
@@ -705,12 +701,80 @@ public class ObjectExplorerDataGrid
       {
          for (Element el : buttonEls)
             el.getStyle().setVisibility(Visibility.HIDDEN);
+         
+         // unset any element-specific maximum width that might've been set
+         // on hover (see below)
+         Element valueDescEl = DomUtils.getFirstElementWithClassName(rowEl, RES.dataGridStyle().valueDesc());
+         if (valueDescEl != null)
+            valueDescEl.getStyle().clearProperty("maxWidth");
+         
+         // unset hovered row
+         hoveredRow_ = null;
       }
       else
       {
          for (Element el : buttonEls)
             el.getStyle().setVisibility(Visibility.VISIBLE);
+         
+         // set hovered row (so that we can respond to resize events)
+        hoveredRow_ = rowEl;
+        onResize();
       }
+   }
+   
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      
+      updateHoverRowWidth();
+   }
+   
+   private void updateHoverRowWidth()
+   {
+      if (hoveredRow_ == null)
+         return;
+      
+      Element valueDescEl = DomUtils.getFirstElementWithClassName(
+            hoveredRow_,
+            RES.dataGridStyle().valueDesc());
+      
+      if (valueDescEl == null)
+         return;
+         
+      // iterate through other table cells to compute width of
+      // buttons available here
+      Element containingRowEl = DomUtils.findParentElement(valueDescEl, new ElementPredicate()
+      {
+         @Override
+         public boolean test(Element el)
+         {
+            return el.hasTagName("tr");
+         }
+      });
+      
+      if (containingRowEl == null)
+         return;
+         
+      int buttonWidth = 0;
+      for (int i = 1, n = containingRowEl.getChildCount(); i < n; i++)
+      {
+         Node node = containingRowEl.getChild(i);
+         if (node instanceof Element)
+         {
+            Element el = node.cast();
+            buttonWidth += el.getOffsetWidth();
+         }
+      }
+
+      int totalWidth = getOffsetWidth();
+      int remainingWidth =
+            totalWidth -
+            NAME_COLUMN_WIDTH -
+            TYPE_COLUMN_WIDTH -
+            buttonWidth -
+            20;
+      valueDescEl.getStyle().setPropertyPx("maxWidth", Math.max(0, remainingWidth));
    }
    
    // Private Methods ----
@@ -1060,6 +1124,7 @@ public class ObjectExplorerDataGrid
    private final ObjectExplorerHandle handle_;
    private Data root_;
    
+   private TableRowElement hoveredRow_;
    private boolean showAttributes_;
    private String filter_;
    
@@ -1068,6 +1133,9 @@ public class ObjectExplorerDataGrid
    private EventBus events_;
    
    // Static Members ----
+   private static final int NAME_COLUMN_WIDTH = 180;
+   private static final int TYPE_COLUMN_WIDTH = 180;
+   
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
    private static final String ACTION_EXTRACT = "extract";
@@ -1112,6 +1180,7 @@ public class ObjectExplorerDataGrid
       String openRowIcon();
       String closeRowIcon();
       String objectTypeIcon();
+      String valueDesc();
       String buttonIcon();
    }
    

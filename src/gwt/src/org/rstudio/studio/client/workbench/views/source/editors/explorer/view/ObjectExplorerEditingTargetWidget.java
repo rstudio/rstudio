@@ -21,6 +21,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.O
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -29,6 +31,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
 public class ObjectExplorerEditingTargetWidget extends Composite
@@ -39,6 +42,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       
       panel_ = new DockLayoutPanel(Unit.PX);
       grid_ = new ObjectExplorerDataGrid(handle);
+      resizePanel_ = new ResizeLayoutPanel();
       controls_ = new FlowPanel();
       
       cbAttributes_ = new CheckBox();
@@ -98,13 +102,24 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    
    private void initPanel()
    {
+      resizePanel_.add(grid_);
+      resizePanel_.addResizeHandler(new ResizeHandler()
+      {
+         @Override
+         public void onResize(ResizeEvent event)
+         {
+            grid_.onResize();
+         }
+      });
+      
       panel_.setSize("100%", "100%");
       panel_.addNorth(controls_, 24);
-      panel_.add(grid_);
+      panel_.add(resizePanel_);
    }
    
    private final DockLayoutPanel panel_;
    private final FlowPanel controls_;
+   private final ResizeLayoutPanel resizePanel_;
    private final ObjectExplorerDataGrid grid_;
    
    private final CheckBox cbAttributes_;
