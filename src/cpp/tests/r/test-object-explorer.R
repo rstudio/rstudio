@@ -5,7 +5,7 @@ env <- function(...) {
 }
 
 object <- list(
-   integer = 1L,
+   integer = c(a = 1L, b = 2L, c = 3L),
    double  = 1,
    string  = "string",
    symbol  = as.name("symbol"),
@@ -14,7 +14,9 @@ object <- list(
    expression = quote(1 + 1),
    formula = y ~ x + 1,
    factor = factor(letters),
-   ordered = ordered(letters)
+   ordered = ordered(letters),
+   closure = function() {},
+   primitive = c
 )
 
 # debug(.rs.rpc.explorer_inspect_object)

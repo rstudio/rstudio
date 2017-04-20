@@ -62,6 +62,16 @@
    .Call("rs_objectClass", object)
 })
 
+.rs.addFunction("objectType", function(object)
+{
+   type <- typeof(object)
+   if (type %in% "closure")
+      type <- "function"
+   else if (type %in% c("builtin", "special"))
+      type <- "function (primitive)"
+   type
+})
+
 .rs.addFunction("objectAttributes", function(object)
 {
    .Call("rs_objectAttributes", object)
@@ -546,7 +556,7 @@
 
 .rs.addFunction("explorer.objectType", function(object)
 {
-   # special behavior for factors
+   # some specialized behavior for certain objects
    if (inherits(object, "factor"))
    {
       type <- "factor"
@@ -555,13 +565,17 @@
          type <- paste(type, sprintf("(%s)", paste(classes, collapse = ", ")))
       return(type)
    }
+   else if (inherits(object, "formula"))
+   {
+      return("formula")
+   }
    
    # ascertain the object type
-   type <- typeof(object)
+   type <- .rs.objectType(object)
    
    # append class information when relevant
    class <- .rs.objectClass(object)
-   if (is.null(class))
+   if (is.null(class) || identical(type, class))
       return(type)
    
    # generate short description from classes
