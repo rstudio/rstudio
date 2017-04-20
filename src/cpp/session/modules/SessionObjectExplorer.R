@@ -501,7 +501,7 @@
 .rs.addFunction("explorer.inspectDefault", function(object,
                                                     context = .rs.explorer.createContext())
 {
-   .rs.explorer.createInspectionResult(object, context)
+   .rs.explorer.createInspectionResult(object, context, list())
 })
 
 .rs.addFunction("explorer.objectName", function(object, default)

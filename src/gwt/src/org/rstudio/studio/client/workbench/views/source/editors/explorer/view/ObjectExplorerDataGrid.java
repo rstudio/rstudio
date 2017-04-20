@@ -82,7 +82,7 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -723,7 +723,7 @@ public class ObjectExplorerDataGrid
          // on hover (see below)
          Element valueDescEl = DomUtils.getFirstElementWithClassName(rowEl, RES.dataGridStyle().valueDesc());
          if (valueDescEl != null)
-            valueDescEl.getStyle().clearProperty("maxWidth");
+            valueDescEl.getParentElement().getStyle().setWidth(100, Unit.PCT);
          
          // unset hovered row
          hoveredRow_ = null;
@@ -775,14 +775,7 @@ public class ObjectExplorerDataGrid
          
       int buttonWidth = 0;
       for (int i = 1, n = containingRowEl.getChildCount(); i < n; i++)
-      {
-         Node node = containingRowEl.getChild(i);
-         if (node instanceof Element)
-         {
-            Element el = node.cast();
-            buttonWidth += el.getOffsetWidth();
-         }
-      }
+         buttonWidth += 24;
 
       int totalWidth = getOffsetWidth();
       int remainingWidth =
@@ -791,7 +784,9 @@ public class ObjectExplorerDataGrid
             TYPE_COLUMN_WIDTH -
             buttonWidth -
             20;
-      valueDescEl.getStyle().setPropertyPx("maxWidth", Math.max(0, remainingWidth));
+      
+      Element parentEl = valueDescEl.getParentElement();
+      parentEl.getStyle().setPropertyPx("width", Math.max(0, remainingWidth));
    }
    
    // Private Methods ----
