@@ -602,7 +602,7 @@ pre {
 
 .rstudio-themes-flat .windowFrameObject > div:last-child {
    border: solid 1px #d6dadc;
-   border-radius: 3px;
+   border-radius: 3px 3px 0px 0px;
    left: 2px !important;
    top: 2px !important;
    right: 2px !important;
@@ -1754,7 +1754,7 @@ body.ubuntu_mono .searchBox {
    bottom: 0px !important;
    height: 23px;
    border: solid 1px #d6dadc;
-   border-radius: 3px;
+   border-radius: 3px 3px 0px 0px;
    padding-top: 1px;
 }
 
