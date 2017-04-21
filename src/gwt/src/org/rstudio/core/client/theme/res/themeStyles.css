@@ -1785,15 +1785,15 @@ body.ubuntu_mono .searchBox {
    background: #FFF;
 }
 
-.search .left {
+.rstudio-themes-flat .search .left {
    display: none;
 }
 
-.search .center {
+.rstudio-themes-flat .search .center {
    background: none;
 }
 
-.search .right {
+.rstudio-themes-flat .search .right {
    display: none;
 }
 
