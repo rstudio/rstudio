@@ -12,6 +12,11 @@
    suggestPopupContent;
 @external gwt-MenuBar-vertical;
 
+@external rstudio-themes-flat;
+@external menuPopupTop, menuPopupBottom, menuPopupMiddle;
+@external popupTop, popupBottom, popupMiddle;
+@external gwt-DecoratedPopupPanel;
+
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
@@ -65,4 +70,35 @@
    margin: -5px;
    margin-top: 0;
    z-index: 1000;
+}
+
+.rstudio-themes-flat .gwt-MenuBarPopup,
+.rstudio-themes-flat .gwt-DecoratedPopupPanel {
+   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.rstudio-themes-flat .menuPopupMiddleCenter,
+.rstudio-themes-flat .popupMiddleCenter {
+   border: solid 1px #a3a8b2;
+   padding: 4px;
+}
+
+.rstudio-themes-flat .menuPopupTop,
+.rstudio-themes-flat .popupTop {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleLeft,
+.rstudio-themes-flat .popupMiddle .popupMiddleLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleRight,
+.rstudio-themes-flat .popupMiddle .popupMiddleRight {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupBottom,
+.rstudio-themes-flat .popupBottom {
+   display: none;
 }
