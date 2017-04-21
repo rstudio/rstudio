@@ -154,7 +154,10 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
-      searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
+      if (!prefs_.getUseFlatThemes().getValue()) {
+         searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
+      }
+
       toolbar.addRightWidget(searchWidget);
 
       return toolbar;
