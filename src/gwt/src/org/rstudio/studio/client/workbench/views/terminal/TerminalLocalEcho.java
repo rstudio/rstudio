@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.LinkedList;
 
 import org.rstudio.core.client.AnsiCode;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -130,6 +131,12 @@ public class TerminalLocalEcho
       {
          // didn't match previously echoed text; delete local-input
          // queue so we don't get too far out of sync and write text as-is
+         
+         // TODO (gary) temporary diagnostics to help isolate some cases
+         // where local-echo is still not matching as expected 
+         Debug.log("LocalEcho Match Failure: received '" + outputToMatch + 
+               "' had: '" + lastOutput + "'");
+         
          localEcho_.clear();
          writer_.write(outputToMatch);
          return 0;
