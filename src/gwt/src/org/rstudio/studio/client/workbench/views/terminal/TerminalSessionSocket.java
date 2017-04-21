@@ -19,6 +19,7 @@ import java.util.LinkedList;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -326,6 +327,18 @@ public class TerminalSessionSocket
     */
    public void dispatchOutput(String output, boolean detectLocalEcho)
    {
+      if (detectLocalEcho && PASSWORD_PATTERN.test(output))
+      {
+         // If user is changing password, temporarily stop local-echo
+         // to reduce chances of showing their password. Note that echo
+         // stops automatically once the terminal enters "busy" state, but
+         // there's a delay before that happens. Also, if the user has 
+         // already started typing before the Password: prompt is sent back
+         // by the server, those characters will local-echo. Still, between
+         // the two mechanisms this reduces the chances of most or all of
+         // their typed password characters being echoed.
+          localEcho_.pause(1000);
+      }
       if (!detectLocalEcho || localEcho_.isEmpty())
       {
          xterm_.write(output);
@@ -389,6 +402,13 @@ public class TerminalSessionSocket
    private Websocket socket_;
    private TerminalLocalEcho localEcho_;
 
+   // RegEx to match common password prompts
+   private static final String PASSWORD_REGEX = 
+         "(?:password:)|(?:passphrase:)";
+   
+   public static final Pattern PASSWORD_PATTERN =
+         Pattern.create(PASSWORD_REGEX, "im");
+ 
    // Injected ---- 
    private UIPrefs uiPrefs_;
 }

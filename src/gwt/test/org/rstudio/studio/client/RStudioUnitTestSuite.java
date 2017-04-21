@@ -19,6 +19,7 @@ import org.rstudio.core.client.AnsiCodeTests;
 import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -35,6 +36,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
         suite.addTestSuite(DomUtilsTests.class);
         suite.addTestSuite(AnsiCodeTests.class);
         suite.addTestSuite(TerminalLocalEchoTests.class);
+        suite.addTestSuite(TerminalSessionSocketTests.class);
         return suite;
     }
 }

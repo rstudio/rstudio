@@ -109,6 +109,7 @@ set (CORE_SOURCE_FILES
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
+   system/ChildProcessSubprocPoll.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp

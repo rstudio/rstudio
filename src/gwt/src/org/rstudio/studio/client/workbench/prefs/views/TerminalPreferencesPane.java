@@ -18,7 +18,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -59,10 +58,13 @@ public class TerminalPreferencesPane extends PreferencesPane
          add(terminalShell_);
          terminalShell_.setEnabled(false);
       }
-      CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
-            prefs_.terminalLocalEcho(), 
-            "Local echo is more responsive but may get out of sync with some line-editing modes.");
-      add(chkTerminalLocalEcho);
+      if (haveLocalEchoPref())
+      {
+         CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
+               prefs_.terminalLocalEcho(), 
+               "Local echo is more responsive but may get out of sync with some line-editing modes.");
+         add(chkTerminalLocalEcho);
+      }
       
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
@@ -149,7 +151,12 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private boolean haveTerminalShellPref()
    {
-      return Desktop.isDesktop() && BrowseCap.isWindows();
+      return BrowseCap.isWindowsDesktop();
+   }
+
+   private boolean haveLocalEchoPref()
+   {
+      return !BrowseCap.isWindowsDesktop();
    }
  
    private SelectWidget terminalShell_;
