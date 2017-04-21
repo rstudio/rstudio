@@ -12,6 +12,9 @@
    suggestPopupContent;
 @external gwt-MenuBar-vertical;
 
+@external rstudio-themes-flat;
+@external menuPopupTop, menuPopupBottom, menuPopupMiddle;
+
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
@@ -65,4 +68,32 @@
    margin: -5px;
    margin-top: 0;
    z-index: 1000;
+}
+
+
+.rstudio-themes-flat .gwt-MenuBarPopup {
+   margin: 0px;
+   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.rstudio-themes-flat .menuPopupMiddleCenter {
+   margin: 0px;
+   border: solid 1px #a3a8b2;
+   padding: 4px;
+}
+
+.rstudio-themes-flat .menuPopupTop {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleLeft {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleRight {
+   display: none;
+}
+
+.rstudio-themes-flat .menuPopupBottom {
+   display: none;
 }
