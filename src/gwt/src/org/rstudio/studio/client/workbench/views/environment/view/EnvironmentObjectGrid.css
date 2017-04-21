@@ -1,3 +1,4 @@
+@external rstudio-themes-flat;
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 .objectGridColumn,
@@ -23,6 +24,16 @@ th.objectGridHeader
    text-align: left;
    border-collapse: separate;
    font-size: 11px;
+}
+
+.rstudio-themes-flat th.objectGridHeader {
+   border-top: none;
+   border-left: none;
+   height: 16px;
+}
+
+.rstudio-themes-flat th.objectGridHeader:last-child {
+   border-right: none;
 }
 
 .valueColumn
