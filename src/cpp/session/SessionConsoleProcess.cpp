@@ -117,6 +117,17 @@ void ConsoleProcess::commonInit()
       }
       else // terminal
       {
+         // undefine TERM, as it puts git-bash in a mode that winpty doesn't
+         // support; was set in SessionMain.cpp::main to support color in
+         // the R Console
+         if (!options_.environment)
+         {
+            core::system::Options childEnv;
+            core::system::environment(&childEnv);
+            options_.environment = childEnv;
+         }
+         core::system::unsetenv(&(options_.environment.get()), "TERM");
+
          // request a pseudoterminal if this is an interactive console process
          options_.pseudoterminal = core::system::Pseudoterminal(
                   session::options().winptyPath(),

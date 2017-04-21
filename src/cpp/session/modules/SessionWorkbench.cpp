@@ -914,9 +914,6 @@ Error startTerminal(const json::JsonRpcRequest& request,
    core::system::environment(&shellEnv);
 
 #ifndef _WIN32
-   // set terminal
-   core::system::setenv(&shellEnv, "TERM", core::system::kSmartTerm);
-
    // set xterm title to show current working directory after each command
    core::system::setenv(&shellEnv, "PROMPT_COMMAND",
                         "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
