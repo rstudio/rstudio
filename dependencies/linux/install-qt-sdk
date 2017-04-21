@@ -39,7 +39,7 @@ if ! test -e $QT_SDK_DIR
 then
    # download and install
    wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY
-   cd ~
+   cd `dirname $QT_SDK_DIR`
    tar xzf /tmp/$QT_SDK_BINARY
    rm /tmp/$QT_SDK_BINARY
 else
