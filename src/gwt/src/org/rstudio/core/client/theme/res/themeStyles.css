@@ -600,7 +600,7 @@ pre {
    -webkit-font-smoothing: subpixel-antialiased;
 }
 
-.rstudio-themes-flat .windowframe > div:last-child {
+.rstudio-themes-flat .windowFrameObject > div:last-child {
    border: solid 1px #d6dadc;
    border-radius: 3px;
    left: 2px !important;
@@ -1581,6 +1581,12 @@ body.ubuntu_mono .searchBox {
 	display: none !important;
 }
 
+.windowFrameObject {
+}
+
+.minimizedWindowObject {
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs {
    background-image: none;
    background: #e7e8ea;
@@ -1726,4 +1732,46 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-DialogBox .dialogContent {
    padding-left: 10px;
    padding-right: 10px;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .left {
+   background: none;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .right {
+   background: none;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .center {
+   background: none;
+   background: #e7e8ea;
+}
+
+.rstudio-themes-flat .minimizedWindowObject  > div:last-child {
+   left: 3px !important;
+   top: 2px !important;
+   right: 3px !important;
+   bottom: 0px !important;
+   height: 23px;
+   border: solid 1px #d6dadc;
+   border-radius: 3px;
+   padding-top: 1px;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .minimize {
+   padding-top: 0px;
+   margin-top: 1px;
+   width: 16px;
+   margin-right: 0px;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .maximize {
+   padding-top: 0px;
+   margin-top: 1px;
+   width: 20px;
+   margin-right: 4px;
+}
+
+.rstudio-themes-flat .minimizedWindowObject .primaryWindowFrameHeader {
+   padding-top: 1px;
 }

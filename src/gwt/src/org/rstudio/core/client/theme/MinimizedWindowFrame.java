@@ -54,6 +54,7 @@ public class MinimizedWindowFrame
 
       layout_ = new ClickDockLayoutPanel(Style.Unit.PX);
       layout_.setStylePrimaryName(themeStyles.minimizedWindow());
+      layout_.addStyleName(themeStyles.minimizedWindowObject());
 
       int leftPadding = title != null ? 8 : 4;
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);

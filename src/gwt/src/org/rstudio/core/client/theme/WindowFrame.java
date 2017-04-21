@@ -84,6 +84,7 @@ public class WindowFrame extends Composite
 
       frame_ = new LayoutPanel();
       frame_.setStylePrimaryName(styles.windowframe());
+      frame_.addStyleName(styles.windowFrameObject());
 
       frame_.add(borderPositioner_);
       frame_.setWidgetTopBottom(borderPositioner_, 0, Style.Unit.PX,
