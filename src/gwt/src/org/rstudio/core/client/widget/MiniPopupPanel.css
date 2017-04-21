@@ -1,7 +1,13 @@
+@external rstudio-themes-flat, popupPanel, popupMiddleCenter;
+
 .popupPanel {
-	background-color: rgb(239, 243, 245);
-	border: 1px solid rgb(150, 159, 167);
-	border-radius: 5px;
-	padding: 5px;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+   background-color: rgb(239, 243, 245);
+   border: 1px solid rgb(150, 159, 167);
+   border-radius: 5px;
+   padding: 5px;
+   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.rstudio-themes-flat .popupPanel .popupMiddleCenter {
+   border: none;
 }
