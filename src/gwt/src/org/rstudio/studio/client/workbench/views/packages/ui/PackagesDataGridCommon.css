@@ -1,6 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 @external ubuntu_mono;
+@external rstudio-themes-flat;
 
 /* Styles here are applied to every DataGrid involved in the Packrat/Packages
    workflow, including the Packages pane itself and the actions/conflict 
@@ -25,6 +26,16 @@
    border-collapse: separate;
    font-size: 11px;
    text-shadow: none;
+}
+
+.rstudio-themes-flat .dataGridHeader {
+   border-top: none;
+   border-left: none;
+   height: 16px;
+}
+
+.rstudio-themes-flat .dataGridHeader:last-child {
+   border-right: none;
 }
 
 .dataGridCell
