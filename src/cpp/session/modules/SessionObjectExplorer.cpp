@@ -18,11 +18,13 @@
 #include "SessionObjectExplorer.hpp"
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
@@ -36,6 +38,122 @@ namespace modules {
 namespace explorer {
 
 namespace {
+
+const char * const kExplorerCacheDir = "explorer-cache";
+
+FilePath explorerCacheDir() 
+{
+   return module_context::sessionScratchPath()
+         .childPath(kExplorerCacheDir);
+}
+
+std::string explorerCacheDirSystem()
+{
+   return string_utils::utf8ToSystem(explorerCacheDir().absolutePath());
+}
+
+void removeOrphanedCacheItems()
+{
+   Error error;
+   
+   // if we don't have a cache, nothing to do
+   if (!explorerCacheDir().exists())
+      return;
+   
+   // list source documents
+   std::vector<boost::shared_ptr<source_database::SourceDocument> > docs;
+   error = source_database::list(&docs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // list objects in explorer cache
+   std::vector<FilePath> cachedFiles;
+   error = explorerCacheDir().children(&cachedFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // remove any objects for which we don't have an associated
+   // source document available
+   BOOST_FOREACH(const FilePath& cacheFile, cachedFiles)
+   {
+      std::string filename = cacheFile.filename();
+      std::string id = filename.substr(0, filename.length() - ::strlen(".rds"));
+      
+      bool foundId = false;
+      BOOST_FOREACH(
+               boost::shared_ptr<source_database::SourceDocument> pDoc,
+               docs)
+      {
+         if (id == pDoc->getProperty("id"))
+         {
+            foundId = true;
+            break;
+         }
+      }
+      
+      if (!foundId)
+      {
+         error = cacheFile.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
+void onShutdown(bool terminatedNormally)
+{
+   if (!terminatedNormally)
+      return;
+   
+   removeOrphanedCacheItems();
+   
+   using namespace r::exec;
+   Error error = RFunction(".rs.explorer.saveCache")
+         .addParam(explorerCacheDirSystem())
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onSuspend(const r::session::RSuspendOptions&,
+               core::Settings*)
+{
+   onShutdown(true);
+}
+
+void onResume(const Settings&)
+{
+   
+}
+
+void onDeferredInit(bool)
+{
+   Error error;
+   
+   error = explorerCacheDir().ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   removeOrphanedCacheItems();
+   
+   using namespace r::exec;
+   error = RFunction(".rs.explorer.restoreCache")
+         .addParam(explorerCacheDirSystem())
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
 
 SEXP rs_objectClass(SEXP objectSEXP)
 {
@@ -73,6 +191,12 @@ SEXP rs_objectAttributes(SEXP objectSEXP)
    return ATTRIB(objectSEXP);
 }
 
+SEXP rs_explorerCacheDir()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(explorerCacheDirSystem(), &protect);
+}
+
 } // end anonymous namespace
 
 core::Error initialize()
@@ -80,9 +204,14 @@ core::Error initialize()
    using namespace module_context;
    using boost::bind;
    
+   module_context::events().onDeferredInit.connect(onDeferredInit);
+   module_context::events().onShutdown.connect(onShutdown);
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
    RS_REGISTER_CALL_METHOD(rs_objectAttributes, 1);
+   RS_REGISTER_CALL_METHOD(rs_explorerCacheDir, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

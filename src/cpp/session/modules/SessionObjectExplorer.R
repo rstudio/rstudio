@@ -25,6 +25,8 @@
    VIRTUAL    = "virtual"
 ))
 
+.rs.setVar("explorer.cache", new.env(parent = emptyenv()))
+
 # this environment holds custom inspectors that might be
 # registered by client packages
 .rs.setVar("explorer.inspectorRegistry", new.env(parent = emptyenv()))
@@ -92,28 +94,52 @@
    TRUE
 })
 
-.rs.addFunction("explorer.getCache", function(envir = .rs.CachedDataEnv)
+.rs.addFunction("explorer.saveCache", function(cacheDir)
 {
-   # TODO: tie each cache to a session id, to make it easier
-   # to clean up old inspection results
-   if (!exists("explorer", envir = envir))
-      envir[["explorer"]] <- new.env(parent = emptyenv())
-   envir[["explorer"]]
+   cache <- .rs.explorer.getCache()
+   ids <- ls(envir = cache)
+   lapply(ids, function(id) {
+      file <- file.path(cacheDir, sprintf("%s.rds", id))
+      tryCatch(
+         saveRDS(cache[[id]], file = file),
+         error = warning
+      )
+   })
+})
+
+.rs.addFunction("explorer.restoreCache", function(cacheDir)
+{
+   cache <- .rs.explorer.getCache()
+   names <- list.files(cacheDir)
+   for (name in names) {
+      tryCatch(
+         {
+            id <- substring(name, 1, nchar(name) - 4)
+            path <- file.path(cacheDir, name)
+            object <- readRDS(path)
+            cache[[id]] <- object
+         },
+         
+         error = warning
+      )
+   }
+})
+
+.rs.addFunction("explorer.getCache", function()
+{
+   .rs.explorer.cache
 })
 
 .rs.addFunction("explorer.getCachedObject", function(id,
                                                      extractingCode = NULL)
 {
    cache <- .rs.explorer.getCache()
-   entry <- cache[[id]]
+   object <- cache[[id]]
    if (is.null(extractingCode))
-      return(entry[["object"]])
+      return(object)
    
-   # evaluate extracting code in environment from which handle
-   # was generated
-   # TODO: need to actually track that environment
-   envir <- new.env(parent = entry[["environment"]])
-   envir[["__OBJECT__"]] <- entry[["object"]]
+   envir <- new.env(parent = globalenv())
+   envir[["__OBJECT__"]] <- object
    
    tryCatch(
       eval(parse(text = extractingCode), envir = envir),
@@ -122,11 +148,10 @@
 })
 
 .rs.addFunction("explorer.cacheObject", function(object,
-                                                 environment,
                                                  id = .rs.createUUID())
 {
    cache <- .rs.explorer.getCache()
-   cache[[id]] <- list(object = object, environment = environment)
+   cache[[id]] <- object
    id
 })
 
@@ -206,7 +231,7 @@
    name <- .rs.explorer.objectName(object, title)
    
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name, title, envir)
+   handle <- .rs.explorer.createHandle(object, name, title)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
@@ -214,11 +239,10 @@
 
 .rs.addFunction("explorer.createHandle", function(object,
                                                   name,
-                                                  title,
-                                                  envir)
+                                                  title)
 {
    # save in cached data environment
-   id <- .rs.explorer.cacheObject(object, envir)
+   id <- .rs.explorer.cacheObject(object)
    
    # return a handle object
    list(
