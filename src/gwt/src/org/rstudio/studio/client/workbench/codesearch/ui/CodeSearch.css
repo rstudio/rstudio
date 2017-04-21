@@ -1,8 +1,13 @@
 
 @external search;
+@external rstudio-themes-flat;
 
 .codeSearchWidget .search {
    width: 145px;
+}
+
+.rstudio-themes-flat .codeSearchWidget .search {
+   top: 0px;
 }
 
 .fileImage {

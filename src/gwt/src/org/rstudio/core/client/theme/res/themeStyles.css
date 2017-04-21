@@ -1776,3 +1776,31 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .minimizedWindowObject .primaryWindowFrameHeader {
    padding-top: 1px;
 }
+
+.rstudio-themes-flat .search {
+   top: 1px;
+   height: 16px;
+   border: solid 1px #d6dadc;
+   border-radius: 3px;
+   background: #FFF;
+}
+
+.search .left {
+   display: none;
+}
+
+.search .center {
+   background: none;
+}
+
+.search .right {
+   display: none;
+}
+
+.rstudio-themes-flat .searchMagGlass {
+   top: 2px;
+}
+
+.rstudio-themes-flat .clearSearch {
+   top: 3px;
+}
