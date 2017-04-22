@@ -62,4 +62,6 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    /*-{
       this["children"] = children;
    }-*/;
+   
+   public final native int getChildIndex() /*-{ return this["index"] || 0; }-*/;
 }

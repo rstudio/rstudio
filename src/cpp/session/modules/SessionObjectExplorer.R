@@ -25,6 +25,9 @@
    VIRTUAL    = "virtual"
 ))
 
+# this environment holds data objects currently open within
+# a viewer tab; this environment will be persisted across
+# RStudio sessions
 .rs.setVar("explorer.cache", new.env(parent = emptyenv()))
 
 # this environment holds custom inspectors that might be
@@ -304,6 +307,13 @@
       type = .rs.scalar(.rs.explorer.objectType(object)),
       desc = .rs.scalar(.rs.explorer.objectDesc(object))
    )
+   
+   # attach index to children when present (so that UI can
+   # more easily control whether particular rows are shown,
+   # for example). we use 0-based indexing here since that's
+   # what's most useful on the client side
+   for (index in seq_along(children))
+      children[[index]][["index"]] <- index - 1
    
    # create inspection result
    list(

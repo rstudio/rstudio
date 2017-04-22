@@ -91,7 +91,9 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextHeader;
@@ -117,6 +119,25 @@ public class ObjectExplorerDataGrid
          return hasTag(TAG_ATTRIBUTES);
       }
       
+      // The number of child rows that should be shown
+      // for this node.
+      public final native void setLimit(int limit)
+      /*-{
+         this["limit"] = limit;
+      }-*/;
+      
+      public final int getLimit()
+      {
+         return getLimitImpl(DEFAULT_ROW_LIMIT);
+      }
+      
+      private final native int getLimitImpl(int defaultLimit)
+      /*-{
+         return this["limit"] || defaultLimit;
+      }-*/;
+      
+      // Whether this node is matched, according to the
+      // current search query term.
       public final native void setMatched(boolean matched)
       /*-{
          this["matched"] = matched;
@@ -127,6 +148,9 @@ public class ObjectExplorerDataGrid
          return !!this["matched"];
       }-*/;
       
+      // The current expansion state of this row.
+      // Rows can either be expanded (children are visible),
+      // or not expanded (children are hidden).
       public final ExpansionState getExpansionState()
       {
          String state = getExpansionStateImpl();
@@ -148,6 +172,8 @@ public class ObjectExplorerDataGrid
          this["expansion_state"] = state;
       }-*/;
       
+      // Whether a particular row is visible (that is, whether
+      // the CellTable should draw this row).
       private final native boolean isVisible()
       /*-{
          var visible = this["visible"];
@@ -161,6 +187,7 @@ public class ObjectExplorerDataGrid
          this["visible"] = visible;
       }-*/;
       
+      // The parent data associated with a node.
       public final native Data getParentData()
       /*-{
          return this["parent"] || null;
@@ -171,6 +198,7 @@ public class ObjectExplorerDataGrid
          this["parent"] = data;
       }-*/;
       
+      // Whether this node has the parent object 'data'.
       public final native boolean hasParentData(Data data)
       /*-{
          
@@ -196,6 +224,7 @@ public class ObjectExplorerDataGrid
          this["children"] = data;
       }-*/;
       
+      // Return the node's depth, or the number of parents.
       public final int getDepth()
       {
          int depth = 0;
@@ -209,6 +238,9 @@ public class ObjectExplorerDataGrid
          return depth;
       }
       
+      // Used to update ownership of children within the tree.
+      // This is necessary as nodes received from the server
+      // side will not have marked ownership (no known parent).
       public final void updateChildOwnership()
       {
          updateChildOwnership(getChildrenData(), this);
@@ -243,6 +275,30 @@ public class ObjectExplorerDataGrid
       {
          OPEN,
          CLOSED
+      }
+   }
+   
+   public static class TableBuilder
+         extends DefaultCellTableBuilder<Data>
+   {
+      public TableBuilder(AbstractCellTable<Data> table)
+      {
+         super(table);
+      }
+      
+      @Override
+      public void buildRowImpl(Data data, int index)
+      {
+         int childIndex = data.getChildIndex();
+         int limit = getParentLimit(data);
+         
+         // bail if this is a row outside of the current
+         // drawing limit
+         if (childIndex > limit)
+            return;
+         
+         // otherwise, draw this row
+         super.buildRowImpl(data, index);
       }
    }
    
@@ -287,12 +343,31 @@ public class ObjectExplorerDataGrid
       public boolean accept(T data);
    }
    
+   private static final int getParentLimit(Data data)
+   {
+      Data parent = data.getParentData();
+      if (parent == null)
+         return DEFAULT_ROW_LIMIT;
+      return parent.getLimit();
+   }
+   
    private class NameCell extends AbstractCell<Data>
    {
       @Override
       public void render(Context context,
                          Data data,
                          SafeHtmlBuilder builder)
+      {
+         int limit = getParentLimit(data);
+         if (data.getChildIndex() < limit)
+            renderDefault(context, data, builder);
+         else
+            renderMore(context, data, builder);
+      }
+      
+      private void renderDefault(Context context,
+                                 Data data,
+                                 SafeHtmlBuilder builder)
       {
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
@@ -304,6 +379,14 @@ public class ObjectExplorerDataGrid
          
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
+      }
+      
+      private void renderMore(Context context,
+                              Data data,
+                              SafeHtmlBuilder builder)
+      {
+         // TODO: placeholder for expanding this row
+         builder.appendHtmlConstant("<div style='float: right;'>More...</div>");
       }
       
       private final void addIndent(SafeHtmlBuilder builder, Data data)
@@ -438,6 +521,11 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
+         // bail if this is a 'More...' row (ie, at limit)
+         int limit = getParentLimit(data);
+         if (data.getChildIndex() == limit)
+            return;
+         
          builder.append(SafeHtmlUtil.createDiv(
                "title", data.getDisplayType()));
          builder.appendEscaped(data.getDisplayType());
@@ -453,6 +541,11 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
+         // bail if this is a 'More...' row (ie, at limit)
+         int limit = getParentLimit(data);
+         if (data.getChildIndex() == limit)
+            return;
+         
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
@@ -552,6 +645,7 @@ public class ObjectExplorerDataGrid
       
       // register handlers
       setKeyboardSelectionHandler(this);
+      setTableBuilder(new TableBuilder(this));
       addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
       
@@ -1144,6 +1238,8 @@ public class ObjectExplorerDataGrid
    // Static Members ----
    private static final int NAME_COLUMN_WIDTH = 180;
    private static final int TYPE_COLUMN_WIDTH = 180;
+   
+   private static final int DEFAULT_ROW_LIMIT = 6;
    
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
