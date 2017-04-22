@@ -45,7 +45,7 @@ public abstract class AbstractGeneratorClassCreator extends
    * @return interface methods.
    */
   public static JMethod[] getAllInterfaceMethods(JClassType type) {
-    Map<String, JMethod> methods = new LinkedHashMap<String, JMethod>();
+    Map<String, JMethod> methods = new LinkedHashMap<>();
     getAllInterfaceMethodsAux(type, methods);
     return methods.values().toArray(new JMethod[methods.size()]);
   }

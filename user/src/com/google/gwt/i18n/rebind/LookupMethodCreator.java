@@ -21,17 +21,18 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.shared.GwtLocale;
-import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * Method creator to call the correct Map for the given Dictionary.
  */
 class LookupMethodCreator extends AbstractMethodCreator {
-  private JType returnType;
+
+  private final JType returnType;
 
   /**
    * Constructor for <code>LookupMethodCreator</code>.
@@ -39,18 +40,17 @@ class LookupMethodCreator extends AbstractMethodCreator {
    * @param classCreator parent class creator
    * @param returnType associated return type
    */
-  public LookupMethodCreator(AbstractGeneratorClassCreator classCreator,
-      JType returnType) {
+  public LookupMethodCreator(ConstantsWithLookupImplCreator classCreator, JType returnType) {
     super(classCreator);
     this.returnType = returnType;
   }
 
   @Override
-  public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, ResourceList resourceList, GwtLocale locale) {
-    createMethodFor(targetMethod);
+  public void createMethodFor(TreeLogger logger, JMethod targetMethod, String key,
+      ResourceList resourceList, GwtLocale locale) {
+    getConstantsWithLookupCreator().createMethodWithPartitionCheckFor(this, targetMethod);
   }
-
+  
   /**
    * Returns a {@code String} containing the return type name.
    */
@@ -65,7 +65,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
     return type;
   }
 
-  void createMethodFor(JMethod targetMethod) {
+  void createCacheLookupFor() {
     String template = "{0} target = ({0}) cache.get(arg0);";
     String returnTypeName = getReturnTypeName();
     String lookup = MessageFormat.format(template, new Object[] {returnTypeName});
@@ -75,25 +75,62 @@ class LookupMethodCreator extends AbstractMethodCreator {
     printReturnTarget();
     outdent();
     println("}");
-    JMethod[] methods = ((ConstantsWithLookupImplCreator) currentCreator).allInterfaceMethods;
-    JType erasedType = returnType.getErasedType();
-    for (int i = 0; i < methods.length; i++) {
-      if (methods[i].getReturnType().getErasedType().equals(erasedType)
-          && methods[i] != targetMethod) {
-        String methodName = methods[i].getName();
-        String body = "if(arg0.equals(" + wrap(methodName) + ")) {";
-        println(body);
-        indent();
-        printFound(methodName);
-        outdent();
-        println("}");
-      }
+  }
+
+  /**
+   * 
+   * @param targetMethod the method to create the lookups for
+   * @param methodsToCreate the looked up methods
+   * @param nextPartitionMethod the name of next method is called or null if end this generated
+   *          method with throwing an exception
+   */
+  void createMethodFor(JMethod targetMethod, List<JMethod> methodsToCreate,
+      String nextPartitionMethod) {
+    createMethodLookups(methodsToCreate);
+    final String result;
+    boolean isLastPartition = nextPartitionMethod == null;
+    if (isLastPartition) {
+      result = createThrowMissingResourceException();
+    } else {
+      String callPartitionMethodTemplate = "return {0}(arg0);";
+      result = MessageFormat.format(callPartitionMethodTemplate, new Object[] {
+          nextPartitionMethod});
     }
-    String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" +"
-        + "{0} + \"''; expecting a method name\", \"{1}\", {0});";
-    String result = MessageFormat.format(format, "arg0",
-        this.currentCreator.getTarget().getQualifiedSourceName());
     println(result);
+  }
+
+  void createMethodLookups(List<JMethod> methodsToCreate) {
+    for (JMethod methodToCreate : methodsToCreate) {
+      String methodName = methodToCreate.getName();
+      String body = "if (arg0.equals(" + wrap(methodName) + ")) {";
+      println(body);
+      indent();
+      printFound(methodName);
+      outdent();
+      println("}");
+    }
+  }
+
+  void createPartitionLookup(String partitionMethodName, JMethod targetMethod,
+      List<JMethod> methodsToCreate, String nextPartitionMethod) {
+    println("");
+    final String templatePartitionMethodName = "private {0} {1}({2} arg0) '{";
+    final String argument0Type = targetMethod.getParameterTypes()[0].getQualifiedSourceName();
+    String partitionMethodSignature = MessageFormat.format(templatePartitionMethodName,
+        new Object[] {getReturnTypeName(), partitionMethodName, argument0Type});
+    println(partitionMethodSignature);
+    indent();
+    createMethodFor(targetMethod, methodsToCreate, nextPartitionMethod);
+    outdent();
+    println("}");
+  }
+  
+  ConstantsWithLookupImplCreator getConstantsWithLookupCreator() {
+    return ((ConstantsWithLookupImplCreator) currentCreator);
+  }
+
+  JType getReturnType() {
+    return returnType;
   }
 
   void printFound(String methodName) {
@@ -106,5 +143,14 @@ class LookupMethodCreator extends AbstractMethodCreator {
 
   String returnTemplate() {
     return "return {0}();";
+  }
+
+  private String createThrowMissingResourceException() {
+    final String result;
+    String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" +"
+        + "{0} + \"''; expecting a method name\", \"{1}\", {0});";
+    result = MessageFormat.format(format, "arg0", this.currentCreator.getTarget()
+        .getQualifiedSourceName());
+    return result;
   }
 }
