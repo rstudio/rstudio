@@ -15,12 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -29,13 +26,9 @@ public class ObjectExplorerPresenter
       implements ObjectExplorerEvent.Handler
 {
    @Inject
-   public ObjectExplorerPresenter(Commands commands,
-                                  EventBus events,
-                                  SourceServerOperations server)
+   public ObjectExplorerPresenter(EventBus events)
    {
-      commands_ = commands;
       events_ = events;
-      server_ = server;
       
       events_.addHandler(ObjectExplorerEvent.TYPE, this);
    }

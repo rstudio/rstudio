@@ -33,13 +33,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 public class ObjectExplorerEditingTarget
       extends UrlContentEditingTarget
 {
-   enum QueuedRefreshType
-   {
-      NoRefresh,
-      DataRefresh,
-      StructureRefresh
-   }
-
    @Inject
    public ObjectExplorerEditingTarget(SourceServerOperations server,
                                       Commands commands,
@@ -49,8 +42,6 @@ public class ObjectExplorerEditingTarget
       super(server, commands, globalDisplay, events);
       events_ = events;
       isActive_ = false;
-      
-      // TODO: register event handlers
    }
    
    // Implementation ----
