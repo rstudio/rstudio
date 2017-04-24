@@ -41,8 +41,10 @@
                                                           tags,
                                                           recursive)
 {
-   # retrieve object from cache
-   object  <- .rs.explorer.getCachedObject(id, extractingCode)
+   # extract object associated with this cache entry
+   entry <- .rs.explorer.getCacheEntry(id)
+   root <- .rs.explorer.objectFromCacheEntry(entry)
+   object <- .rs.explorer.extractObject(root, extractingCode)
    
    # construct context
    context <- .rs.explorer.createContext(
@@ -61,14 +63,17 @@
                                                          name,
                                                          id)
 {
-   # retrieve object from cache
-   object <- .rs.explorer.getCachedObject(handle)
+   # retrieve cache entry
+   entry <- .rs.explorer.getCacheEntry(handle)
    
    # remove old object from cache
-   .rs.explorer.removeCachedObject(handle)
+   .rs.explorer.removeCacheEntry(handle)
    
    # re-cache object with stable (document) id
-   .rs.explorer.setCachedObject(object, id)
+   .rs.explorer.setCacheEntry(entry, id)
+   
+   # extract object from cache entry
+   object <- .rs.explorer.objectFromCacheEntry(entry)
    
    # construct context and perform a depth-one inspection
    context <- .rs.explorer.createContext(
@@ -158,11 +163,66 @@
    .rs.explorer.cache
 })
 
-.rs.addFunction("explorer.getCachedObject", function(id,
-                                                     extractingCode = NULL)
+.rs.addFunction("explorer.createCacheEntry", function(expr,
+                                                      envir)
+{
+   # attempt to serialize environment name, rather than
+   # whole environment, for special + package environments
+   name <- environmentName(envir)
+   envir <- if (identical(envir, globalenv()))
+      "globalenv()"
+   else if (isNamespace(envir))
+      sprintf("asNamespace('%s')", name)
+   else if (name %in% search())
+      sprintf("as.environment('%s')", name)
+   else
+      envir
+   
+   entry <- list(expr = expr, envir = envir)
+   list2env(entry, parent = emptyenv())
+})
+
+.rs.addFunction("explorer.getCacheEntry", function(id)
 {
    cache <- .rs.explorer.getCache()
-   object <- cache[[id]]
+   cache[[id]]
+})
+
+.rs.addFunction("explorer.setCacheEntry", function(entry,
+                                                   id = .rs.createUUID())
+{
+   cache <- .rs.explorer.getCache()
+   cache[[id]] <- entry
+   id
+})
+
+.rs.addFunction("explorer.removeCacheEntry", function(id)
+{
+   cache <- .rs.explorer.getCache()
+   if (exists(id, envir = cache))
+      rm(list = id, envir = cache)
+})
+
+.rs.addFunction("explorer.objectFromCacheEntry", function(entry)
+{
+   expr <- entry[["expr"]]
+   envir <- entry[["envir"]]
+   
+   # attempt to resolve character environment
+   if (is.character(envir))
+   {
+      envir <- tryCatch(
+         eval(parse(text = envir), envir = baseenv()),
+         error = function(e) .GlobalEnv
+      )
+   }
+   
+   eval(expr, envir = envir)
+})
+
+.rs.addFunction("explorer.extractObject", function(object,
+                                                   extractingCode = NULL)
+{
    if (is.null(extractingCode))
       return(object)
    
@@ -173,21 +233,6 @@
       eval(parse(text = extractingCode), envir = envir),
       error = warning
    )
-})
-
-.rs.addFunction("explorer.setCachedObject", function(object,
-                                                     id = .rs.createUUID())
-{
-   cache <- .rs.explorer.getCache()
-   cache[[id]] <- object
-   id
-})
-
-.rs.addFunction("explorer.removeCachedObject", function(id)
-{
-   cache <- .rs.explorer.getCache()
-   if (exists(id, envir = cache))
-      rm(list = id, envir = cache)
 })
 
 #' @param name The display name, as should be used in UI.
@@ -242,34 +287,32 @@
    ))
 })
 
-
+#' @param object The R object to be viewed.
+#' @param expr The expression used to resolve this object.
+#' @param envir The environment in which the aforementioned
+#'   expression can be evaluted to retrieve this object.
 .rs.addFunction("explorer.viewObject", function(object,
-                                                title = NULL,
-                                                envir = .GlobalEnv)
+                                                expr = substitute(object),
+                                                envir = parent.frame())
 {
-   # attempt to divine title from call when not supplied
-   if (is.null(title))
-   {
-      call <- match.call()
-      title <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
-   }
-   
-   # provide an appropriate name for the root node
-   name <- .rs.explorer.objectName(object, title)
-   
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name, title)
+   handle <- .rs.explorer.createHandle(object, expr, envir)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
 })
 
-.rs.addFunction("explorer.createHandle", function(object,
-                                                  name,
-                                                  title)
+.rs.addFunction("explorer.createHandle", function(object, expr, envir)
 {
+   # produce a title based on the expression used to view this object
+   title <- paste(deparse(expr, width.cutoff = 500L), collapse = " ")
+   
+   # provide an appropriate name for the root node
+   name <- .rs.explorer.objectName(object, title)
+   
    # save in cached data environment
-   id <- .rs.explorer.setCachedObject(object)
+   entry <- .rs.explorer.createCacheEntry(expr, envir)
+   id <- .rs.explorer.setCacheEntry(entry)
    
    # return a handle object
    list(

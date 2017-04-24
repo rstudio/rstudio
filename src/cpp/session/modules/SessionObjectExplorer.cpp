@@ -142,7 +142,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    
    // also attempt to remove from R cache
    using namespace r::exec;
-   error = RFunction(".rs.explorer.removeCachedObject")
+   error = RFunction(".rs.explorer.removeCacheEntry")
          .addParam(pDoc->id())
          .call();
    

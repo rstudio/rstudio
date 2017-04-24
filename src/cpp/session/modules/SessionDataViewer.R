@@ -531,8 +531,8 @@
       title <- paste(deparse(substitute(x))[1])
 
    name <- ""
-   env <- emptyenv()
-
+   expr <- substitute(x)
+   env <- parent.frame()
 
    if (.rs.isViewOverride()) 
    {
@@ -596,9 +596,7 @@
    
    if (isListLike)
    {
-      view <- .rs.explorer.viewObject(x,
-                                      title = title,
-                                      envir = env)
+      view <- .rs.explorer.viewObject(x, expr, env)
       return(view)
    }
       
