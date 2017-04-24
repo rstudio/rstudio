@@ -7,6 +7,24 @@
 * Objects inside data sources can be browsed and contents viewed inside RStudio
 * Works with ODBC data sources and Spark, and can integrate with other R packages
 
+### Terminal
+
+* New Terminal tab for fluid shell interaction within the IDE
+* Support for xterm emulation including color output and full-screen console apps
+* Support for multiple terminals, each with persistent scrollback buffer
+* Web links in terminal can be clicked and opened in default browser (new tab for server)
+* Windows terminal supports multiple terminal shell types
+  * Git Bash, if installed
+  * Command Prompt (cmd.exe), 32-bit and 64-bit depending on OS support
+  * PowerShell, 32-bit and 64-bit depending on OS support
+  * Bash on Windows Subsystem for Linux, if installed on 64-bit Windows 10
+* Default Windows terminal shell type set in new Global Options/Terminal preferences pane
+
+### Themes
+
+* New flat, modern UI theme
+* Retina-quality icons throughout
+
 ### Data Import
 
 * Add support for all file encodings supported by R
@@ -27,23 +45,9 @@
 * Added option to set notebook mode in the document's YAML header
 * Allow setting default chunk connection option to raw connection object
 
-### Terminal
-
-* New Terminal tab for fluid shell interaction within the IDE
-* Support for xterm emulation including color output and full-screen console apps
-* Support for multiple terminals, each with persistent scrollback buffer
-* Web links in terminal can be clicked and opened in default browser (new tab for server)
-* Windows terminal supports multiple terminal shell types
-  * Git Bash, if installed
-  * Command Prompt (cmd.exe), 32-bit and 64-bit depending on OS support
-  * PowerShell, 32-bit and 64-bit depending on OS support
-  * Bash on Windows Subsystem for Linux, if installed on 64-bit Windows 10
-* Default Windows terminal shell type set in new Global Options/Terminal preferences pane
-
 ### Miscellaneous
 
 * ANSI escape code support in console for colored output
-* New high-DPI icons throughout
 * Add support for custom, user-provided project templates
 * Add support for creating new Git branches and adding remotes
 * Document cursor position is now saved and restored between RStudio sessions
@@ -72,6 +76,7 @@
 * Server Pro: Add support for floating (lease-based) licenses
 * Server Pro: Show the size of suspended sessions
 * Server Pro: Add user-defined session labels
+* Server Pro: Upgrade to nginx 1.12.0
 
 ### Bug Fixes
 
