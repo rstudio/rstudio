@@ -364,7 +364,7 @@ public class ObjectExplorerDataGrid
       
       private final void addIndent(SafeHtmlBuilder builder, Data data)
       {
-         int indentPx = data.getDepth() * 6;
+         int indentPx = data.getDepth() * 10;
          if (indentPx == 0)
             return;
          
