@@ -113,9 +113,11 @@ public class RObjectEntry
    private static final Set<String> DATA_CLASSES = new HashSet<String>();
    static {
       DATA_CLASSES.addAll(ListUtil.create(
-            "data.frame",
             "matrix",
+            "data.frame",
+            "cast_df",
             "xts",
+            "DataFrame",
             "list",
             "environment"
       ));
