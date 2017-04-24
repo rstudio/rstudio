@@ -15,7 +15,13 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.view.client.ProvidesKey;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.rstudio.core.client.ListUtil;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 // represents an R object's entry in the environment pane view
@@ -62,16 +68,12 @@ public class RObjectEntry
    {
       return rObject.getType().equals("functionWithTrace");
    }
-
+   
    public int getCategory()
    {
       String type = rObject.getType();
-      if (rObject.isData() ||
-          type.equals("matrix") ||
-          type.equals("data.table") ||
-          type.equals("cast_df") ||
-          type.equals("xts") ||
-          type.equals("DataFrame"))
+      
+      if (rObject.isData() || rObjectHasDataClass())
       {
          return Categories.Data;
       }
@@ -96,9 +98,31 @@ public class RObjectEntry
                       rObject.getDescription().trim() :
                       val;
    }
+   
+   private boolean rObjectHasDataClass()
+   {
+      JsArrayString classes = rObject.getClazz();
+      for (int i = 0, n = classes.length(); i < n; i++)
+         if (DATA_CLASSES.contains(classes.get(i)))
+            return true;
+      return false;
+   }
 
    public static final String NO_VALUE = "NO_VALUE";
-
+   
+   private static final Set<String> DATA_CLASSES = new HashSet<String>();
+   static {
+      DATA_CLASSES.addAll(ListUtil.create(
+            "matrix",
+            "data.frame",
+            "cast_df",
+            "xts",
+            "DataFrame",
+            "list",
+            "environment"
+      ));
+   }
+   
    RObject rObject;
    boolean expanded;
    boolean isCategoryLeader;

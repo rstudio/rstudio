@@ -21,7 +21,7 @@ import java.util.HashMap;
 
 public class DataItem extends JavaScriptObject
 {
-   public static String URI_PREFIX = "data://";
+   public static final String URI_PREFIX = "data://";
    
    protected DataItem()
    {

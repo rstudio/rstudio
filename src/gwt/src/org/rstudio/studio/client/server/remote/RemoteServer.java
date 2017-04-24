@@ -176,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -1815,7 +1816,46 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(docId));
       sendRequest(RPC_SCOPE, GET_SOURCE_DOCUMENT, params, requestCallback);
    }
-
+   
+   public void explorerInspectObject(String handleId,
+                                     String extractingCode,
+                                     String objectName,
+                                     String objectAccess,
+                                     JsArrayString tags,
+                                     int recursionDepth,
+                                     ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handleId));
+      params.set(1, extractingCode == null ? JSONNull.getInstance() : new JSONString(extractingCode));
+      params.set(2, new JSONString(objectName));
+      params.set(3, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
+      
+      JSONArray jsonTags = new JSONArray();
+      if (tags != null)
+      {
+         for (int i = 0, n = tags.length(); i < n; i++)
+         {
+            jsonTags.set(i, new JSONString(tags.get(i)));
+         }
+      }
+      params.set(4, jsonTags);
+      params.set(5, new JSONNumber(recursionDepth));
+      sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
+   }
+   
+   public void explorerBeginInspect(String handleId,
+                                    String objectName,
+                                    String documentId,
+                                    ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handleId));
+      params.set(1, new JSONString(objectName));
+      params.set(2, new JSONString(documentId));
+      sendRequest(RPC_SCOPE, EXPLORER_BEGIN_INSPECT, params, requestCallback);
+   }
+   
    public void createRdShell(
                         String name,
                         String type,
@@ -5244,6 +5284,9 @@ public class RemoteServer implements Server
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
+   
+   private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";
+   private static final String EXPLORER_BEGIN_INSPECT = "explorer_begin_inspect";
    
    private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
 

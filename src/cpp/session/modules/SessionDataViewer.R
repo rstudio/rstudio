@@ -587,6 +587,21 @@
      file.edit(file.path(x$Dir, x$File))
      return(invisible(NULL))
    }
+   
+   # if this is a (non-data.frame) list or environment,
+   # delegate to object explorer
+   isListLike <-
+      (is.list(x) && !is.data.frame(x)) ||
+      is.environment(x)
+   
+   if (isListLike)
+   {
+      view <- .rs.explorer.viewObject(x,
+                                      title = title,
+                                      envir = env)
+      return(view)
+   }
+      
 
    # test for coercion to data frame--the goal of this expression is just to
    # raise an error early if the object can't be made into a frame; don't

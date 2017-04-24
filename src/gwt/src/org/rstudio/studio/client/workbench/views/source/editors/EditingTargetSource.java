@@ -21,6 +21,7 @@ import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -42,7 +43,8 @@ public interface EditingTargetSource
                   Provider<DataEditingTarget> pDataEditingTarget,
                   Provider<UrlContentEditingTarget> pUrlContentEditingTarget,
                   Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget,
-                  Provider<ProfilerEditingTarget> pProfilerEditingTarget)
+                  Provider<ProfilerEditingTarget> pProfilerEditingTarget,
+                  Provider<ObjectExplorerEditingTarget> pObjectExplorerEditingTarget)
       {
          registry_ = registry;
          pTextEditingTarget_ = pTextEditingTarget;
@@ -50,6 +52,7 @@ public interface EditingTargetSource
          pUrlContentEditingTarget_ = pUrlContentEditingTarget;
          pCodeBrowserEditingTarget_ = pCodeBrowserEditingTarget;
          pProfilerEditingTarget_ = pProfilerEditingTarget;
+         pObjectExplorerEditingTarget_ = pObjectExplorerEditingTarget;
       }
 
       public EditingTarget getEditingTarget(FileType type)
@@ -64,6 +67,8 @@ public interface EditingTargetSource
             return pCodeBrowserEditingTarget_.get();
          else if (type instanceof ProfilerType)
             return pProfilerEditingTarget_.get();
+         else if (type instanceof ObjectExplorerFileType)
+            return pObjectExplorerEditingTarget_.get();
          else
             return null;
       }
@@ -109,5 +114,6 @@ public interface EditingTargetSource
       private final Provider<UrlContentEditingTarget> pUrlContentEditingTarget_;
       private final Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget_;
       private final Provider<ProfilerEditingTarget> pProfilerEditingTarget_;
+      private final Provider<ObjectExplorerEditingTarget> pObjectExplorerEditingTarget_;
    }
 }
