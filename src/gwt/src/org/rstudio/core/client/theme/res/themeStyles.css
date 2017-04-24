@@ -1777,6 +1777,10 @@ body.ubuntu_mono .searchBox {
    padding-top: 1px;
 }
 
+.rstudio-themes-flat .minimizedWindowObject .primaryWindowFrameHeader .title {
+   text-shadow: none;
+}
+
 .rstudio-themes-flat .search {
    top: 1px;
    height: 16px;
