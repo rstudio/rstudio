@@ -1607,7 +1607,8 @@ body.ubuntu_mono .searchBox {
    display: none;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft,
+.rstudio-themes-flat .minimizedWindowObject .tabLayoutLeft {
    display: none;
 }
 
@@ -1615,7 +1616,8 @@ body.ubuntu_mono .searchBox {
    display: none;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat .minimizedWindowObject table.tabLayoutCenter {
    background-image: none;
    background: rgb(236, 237, 238);
    border-right: solid 1px #d6dadc;
@@ -1631,7 +1633,8 @@ body.ubuntu_mono .searchBox {
    background: #f3f4f7;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td,
+.rstudio-themes-flat .minimizedWindowObject .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
    vertical-align: top !important;
 }
 
@@ -1647,7 +1650,8 @@ body.ubuntu_mono .searchBox {
    padding-top: 3px;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight,
+.rstudio-themes-flat .minimizedWindowObject .tabLayoutRight  {
    display: none;
 }
 
@@ -1748,6 +1752,10 @@ body.ubuntu_mono .searchBox {
    background: #e7e8ea;
 }
 
+.rstudio-themes-flat .moduleTabPanel.minimizedWindowObject .center {
+   padding-top: 0px;
+}
+
 .rstudio-themes-flat .minimizedWindowObject  > div:last-child {
    left: 3px !important;
    top: 2px !important;
@@ -1766,11 +1774,19 @@ body.ubuntu_mono .searchBox {
    margin-right: 0px;
 }
 
+.rstudio-themes-flat .moduleTabPanel.minimizedWindowObject .minimize {
+   padding-top: 6px;
+}
+
 .rstudio-themes-flat .minimizedWindowObject .maximize {
    padding-top: 0px;
    margin-top: 1px;
    width: 20px;
    margin-right: 4px;
+}
+
+.rstudio-themes-flat .moduleTabPanel.minimizedWindowObject .maximize {
+   padding-top: 6px;
 }
 
 .rstudio-themes-flat .minimizedWindowObject .primaryWindowFrameHeader {
