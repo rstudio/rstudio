@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -39,17 +40,38 @@ import com.google.inject.Inject;
  */
 public class VirtualConsole
 {
+   // don't do any processing of ANSI escape codes
+   public final static int ANSI_COLOR_OFF = 0;
+   
+   // convert ANSI color escape codes into css styles
+   public final static int ANSI_COLOR_ON = 1;
+   
+   // strip out ANSI escape sequences but don't apply styles
+   public final static int ANSI_COLOR_STRIP = 2;
+  
    public VirtualConsole()
    {
-      this(null);
+      this(null, ANSI_COLOR_ON);
    }
    
    public VirtualConsole(Element parent)
    {
+      this(parent, ANSI_COLOR_ON);
+   }
+
+   /**
+    * VirtualConsole constructor
+    * @param parent parent element
+    * @param showAnsiColors if true, apply visual styles for AnsiColor escape
+    * sequences, otherwise just strip them out
+    */
+   public VirtualConsole(Element parent, int ansiColorMode)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       parent_ = parent;
+      ansiColorMode_ = ansiColorMode;
    }
-   
+    
    @Inject
    private void initialize(UIPrefs prefs)
    {
@@ -68,6 +90,7 @@ public class VirtualConsole
 
    private void backspace()
    {
+      clearPartialAnsiCode();
       if (cursor_ == 0)
          return;
       cursor_--;
@@ -75,6 +98,7 @@ public class VirtualConsole
 
    private void carriageReturn()
    {
+      clearPartialAnsiCode();
       if (cursor_ == 0)
          return;
       while (cursor_ > 0 && output_.charAt(cursor_ - 1) != '\n')
@@ -83,6 +107,7 @@ public class VirtualConsole
 
    private void newline(String clazz)
    {
+      clearPartialAnsiCode();
       while (cursor_ < output_.length() && output_.charAt(cursor_) != '\n')
          cursor_++;
       // Now we're either at the end of the buffer, or on top of a '\n'
@@ -91,13 +116,18 @@ public class VirtualConsole
 
    private void formfeed()
    {
+      clearPartialAnsiCode();
       output_.setLength(0);
       cursor_ = 0;
       class_.clear();
       if (parent_ != null)
          parent_.setInnerHTML("");
    }
-
+   
+   private void clearPartialAnsiCode()
+   {
+      partialAnsiCode_ = null;
+   }
    
    @Override
    public String toString()
@@ -329,17 +359,39 @@ public class VirtualConsole
    
    public void submit(String data, String clazz)
    {
-      Match match = AnsiCode.ESC_CONTROL_PATTERN.match(data, 0);
+      // If previous submit end with an incomplete ansi code, add this
+      // submit to the previous (unwritten) data so we can try again.
+      if (partialAnsiCode_ != null)
+      {
+         data = partialAnsiCode_ + data;
+         partialAnsiCode_ = null;
+      }
+     
+      String currentClazz = clazz;
+
+      Match match = (ansiColorMode_ == ANSI_COLOR_OFF) ?
+            CONTROL.match(data, 0) :
+            AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
       {
-         text(data, clazz);
+         if (ansiColorMode_ == ANSI_COLOR_ON && ansiCodeStyles_ != null)
+         {
+            // This means we have previously determined styles but the chunk
+            // of text needing them wasn't in the same chunk
+            if (clazz != null)
+            {
+               currentClazz = clazz + " " + currentClazz;
+            }
+            else
+            {
+               currentClazz = ansiCodeStyles_;
+            }
+         }
+         text(data, currentClazz);
          return;
       }
       
-      String currentClazz  = clazz;
-      
       int tail = 0;
-      AnsiCode ansi = new AnsiCode();
       while (match != null)
       {
          int pos = match.getIndex();
@@ -367,8 +419,34 @@ public class VirtualConsole
                break;
             case '\033':
             case '\233':
-               tail = pos + match.getValue().length();
-               currentClazz = ansi.processCode(match.getValue(), clazz);
+               Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
+               if (ansiMatch == null || AnsiCode.partialSequence(ansiMatch.getValue()))
+               {
+                  // Might have an ANSI code that was split across submit calls;
+                  // save remainder of string to see if we can recognize it
+                  // when more arrives
+                  partialAnsiCode_ = data.substring(pos);
+                  return;
+               }
+               if (ansi_ == null)
+                  ansi_ = new AnsiCode();
+               ansiCodeStyles_ = ansi_.processCode(ansiMatch.getValue());
+               if (ansiColorMode_ == ANSI_COLOR_STRIP)
+               {
+                  currentClazz = clazz;
+               }
+               else
+               {
+                  if (clazz != null)
+                  {
+                     currentClazz = clazz + " " + ansiCodeStyles_;
+                  }
+                  else
+                  {
+                     currentClazz = ansiCodeStyles_;
+                  }
+               }
+               tail = pos + ansiMatch.getValue().length();
                break;
             default:
                assert false : "Unknown control char, please check regex";
@@ -451,11 +529,17 @@ public class VirtualConsole
       public SpanElement element;
    }
 
+   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+   
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<Integer, ClassRange>();
    private final Element parent_;
    
    private int cursor_ = 0;
+   private AnsiCode ansi_;
+   private String partialAnsiCode_;
+   private String ansiCodeStyles_;
+   private int ansiColorMode_;
    
    // Injected ----
    private UIPrefs prefs_;

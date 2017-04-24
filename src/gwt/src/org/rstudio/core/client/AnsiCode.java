@@ -211,18 +211,18 @@ public class AnsiCode
     * colors and visual appearance covered by SGR codes; other sequences 
     * such as cursor movement are ignored.
     * @param code escape sequence
-    * @return Clazzes
+    * @return Clazzes or null if no color classes were applied
     */
-   public String processCode(String code, String baseClazz)
+   public String processCode(String code)
    {
       if (code == null || code.length() < 2)
-         return getStyle(baseClazz); // unrecognized sequence, ignore
+         return null;
       if (code.charAt(0) != '\033' && code.charAt(code.length() - 1) != 'm')
-         return getStyle(baseClazz); // unsupported sequence, ignore
+         return null;
       if (code.length() == 2)
       {
          clazzes_.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
-         return getStyle(baseClazz);
+         return null;
       }
       
       int extendedColor = 0;
@@ -256,7 +256,7 @@ public class AnsiCode
                   // unknown extended color format; hard to recover so
                   // just reset back to defaults and return
                   clazzes_.clear();
-                  return getStyle(baseClazz);
+                  return null;
                }
             }
             else
@@ -424,9 +424,14 @@ public class AnsiCode
             // ignore all others
          }
       }
-      return getStyle(baseClazz);
+      return getStyle();
    }
    
+   public static boolean partialSequence(String code)
+   {
+      return (code.charAt(code.length() - 1) == 'm') ? false : true;
+   }
+ 
    public static String clazzForColor(int color)
    {
       int index = ForeColorNum.WHITE;
@@ -456,18 +461,16 @@ public class AnsiCode
       }
       return Color.clazzForColorIndex(index,  true /*background*/);
    }
-
-   private String getStyle(String baseClazz)
+   
+   private String getStyle()
    {
       if (clazzes_.isEmpty())
       {
-         return baseClazz;
+         return null;
       }
       
       // append current ANSI classes to the original class
       StringBuilder buildClazzes = new StringBuilder();
-      if (baseClazz != null)
-         buildClazzes.append(baseClazz);
       Iterator<String> itr = clazzes_.iterator();
       while (itr.hasNext())
       {
@@ -559,17 +562,33 @@ public class AnsiCode
       }
       clazzes_.remove(INVERSE_BG_STYLE);
    }
+   
+   public static String prettyPrint(String input)
+   {
+      // not efficient but only intended for debug/unit testing
+      return input.replace("\u001b", "<ESC>")
+                  .replace("\7", "<BEL>")
+                  .replace("\177", "<DEL>")
+                  .replace("\r", "<CR>")
+                  .replace("\n", "<LF>")
+                  .replace("\f", "<FF>")
+                  .replace("\b", "<BS>")
+                  .replace("\t", "<TAB>");
+   }
 
-   // Control characters handled by R console
-   public static final String CONTROL_REGEX = "[\r\b\f\n]";
+   // Control characters handled by R console, plus leading character of
+   // ANSI escape sequences
+   public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";
 
-   // RegEx to match ansi escape codes copied from https://github.com/chalk/ansi-regex
+   // RegEx to match ANSI escape codes copied from https://github.com/chalk/ansi-regex
    public static final String ANSI_REGEX = 
          "[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><@]";
    
-   // Match both console-supported control characters and ansi escape sequences
-   public static final Pattern ESC_CONTROL_PATTERN =
-         Pattern.create("(?:" + CONTROL_REGEX + ")|(?:" + ANSI_REGEX + ")");
+   // Match ANSI escape sequences
+   public static final Pattern ANSI_ESCAPE_PATTERN = Pattern.create(ANSI_REGEX);
+
+   // Match control characters and start of ANSI sequences
+   public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
    
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();

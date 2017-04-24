@@ -54,7 +54,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String cr = VirtualConsole.consolify("L1\nL2\rL3");
       Assert.assertEquals("L1\nL3", cr);
    }
-   
+
    public void testSimpleColor()
    {
       PreElement ele = Document.get().createPreElement();
@@ -64,7 +64,7 @@ public class VirtualConsoleTests extends GWTTestCase
             "<span class=\"error\">Error</span>", 
             ele.getInnerHTML());
    }
-   
+
    public void testTwoColors()
    {
       PreElement ele = Document.get().createPreElement();
@@ -520,4 +520,125 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
 
+   public void testAnsiCodeSplitAcrossSubmits()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color);
+      vc.submit(AnsiCode.SGR + "Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiCodeSplitAcrossSubmitsWithParentStyle()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color, "myStyle");
+      vc.submit(AnsiCode.SGR + "Hello", "myStyle");
+      String expected ="<span class=\"myStyle " + 
+            AnsiCode.clazzForColor(color) + "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testMultipleAnsiCodesSplitsAcrossSubmits()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      int bgColor = AnsiCode.BackColorNum.GREEN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color);
+      vc.submit(AnsiCode.SGR + AnsiCode.CSI);
+      vc.submit(Integer.toString(bgColor));
+      vc.submit(AnsiCode.SGR + "Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + " " + 
+            AnsiCode.clazzForBgColor(bgColor) + "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiCodeAtEndOfSubmitCall()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color);
+      vc.submit(AnsiCode.SGR);
+      vc.submit("Hello");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiCodeFollowedByMoreTextSubmits()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color);
+      vc.submit(AnsiCode.SGR);
+      vc.submit("Hello");
+      vc.submit(" World");
+      String expected ="<span class=\"" + 
+            AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+   
+   public void testAnsiComplexSequence1WithStripping()
+   {
+      int fgColor = AnsiCode.ForeColorNum.GREEN;
+      int bgColor = 230;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele, VirtualConsole.ANSI_COLOR_STRIP);
+      vc.submit(
+         AnsiCode.CSI + fgColor + ";" + 
+         AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
+         AnsiCode.BOLD + ";" + AnsiCode.UNDERLINE + ";" + AnsiCode.BOLD_BLURRED_OFF + ";" +
+         AnsiCode.INVERSE_OFF + AnsiCode.SGR + "Hello World", "myOriginalStyle");
+      String expected ="<span class=\"myOriginalStyle\">Hello World</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiComplexSequence1WithPassThrough()
+   {
+      int fgColor = AnsiCode.ForeColorNum.GREEN;
+      int bgColor = 230;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele, VirtualConsole.ANSI_COLOR_OFF);
+      vc.submit(
+         AnsiCode.CSI + fgColor + ";" + 
+         AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
+         AnsiCode.BOLD + ";" + AnsiCode.UNDERLINE + ";" + AnsiCode.BOLD_BLURRED_OFF + ";" +
+         AnsiCode.INVERSE_OFF + AnsiCode.SGR + "Hello World", "myOriginalStyle");
+      String expected ="<span class=\"myOriginalStyle\"><ESC>[32;48;5;230;1;4;22;27mHello World</span>";
+      Assert.assertEquals(expected, AnsiCode.prettyPrint(ele.getInnerHTML()));
+   }
+
+   public void testMultipleAnsiCodesSplitsAcrossSubmitsWithStripping()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      int bgColor = AnsiCode.BackColorNum.GREEN;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele, VirtualConsole.ANSI_COLOR_STRIP);
+      vc.submit(AnsiCode.CSI + color);
+      vc.submit(AnsiCode.SGR + AnsiCode.CSI);
+      vc.submit(Integer.toString(bgColor));
+      vc.submit(AnsiCode.SGR + "Hello");
+      String expected ="<span>Hello</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testAnsiCodeSplitAcrossSubmitsWithParentStyleWithPassthrough()
+   {
+      int color = AnsiCode.ForeColorNum.MAGENTA;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele, VirtualConsole.ANSI_COLOR_OFF);
+      vc.submit(AnsiCode.CSI + color, "myStyle");
+      vc.submit(AnsiCode.SGR + "Hello", "myStyle");
+      String expected ="<span class=\"myStyle\"><ESC>[35mHello</span>";
+      Assert.assertEquals(expected, AnsiCode.prettyPrint(ele.getInnerHTML()));
+   }
 }
