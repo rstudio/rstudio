@@ -983,7 +983,6 @@ public class Source implements InsertSourceHandler,
       if (!SourceWindowManager.isMainSourceWindow())
          return;
     
-      Debug.logToRConsole("Opening object explorer");
       ObjectExplorerHandle handle = event.getHandle();
       
       // attempt to open pre-existing tab

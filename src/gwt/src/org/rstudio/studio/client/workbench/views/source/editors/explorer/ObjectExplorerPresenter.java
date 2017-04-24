@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
@@ -46,8 +45,6 @@ public class ObjectExplorerPresenter
    @Override
    public void onObjectExplorerEvent(ObjectExplorerEvent event)
    {
-      Debug.logToRConsole("Responding to object explorer event");
-      
       switch (event.getType())
       {
       case NEW:        onNew(event.getData());       break;
@@ -61,7 +58,6 @@ public class ObjectExplorerPresenter
    
    private void onNew(ObjectExplorerEvent.Data eventData)
    {
-      Debug.logToRConsole("ObjectExplorer: onNew()");
       ObjectExplorerHandle handle = eventData.getHandle();
       OpenObjectExplorerEvent event = new OpenObjectExplorerEvent(handle);
       events_.fireEvent(event);
@@ -69,18 +65,13 @@ public class ObjectExplorerPresenter
    
    private void onOpenNode(ObjectExplorerEvent.Data data)
    {
-      Debug.logToRConsole("ObjectExplorer: onOpenNode()");
-      
    }
    
    private void onCloseNode(ObjectExplorerEvent.Data data)
    {
-      Debug.logToRConsole("ObjectExplorer: onCloseNode()");
    }
    
    // Private members ----
    
-   private final Commands commands_;
    private final EventBus events_;
-   private final SourceServerOperations server_;
 }
