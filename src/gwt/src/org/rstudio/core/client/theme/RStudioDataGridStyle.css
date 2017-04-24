@@ -99,8 +99,28 @@
 
 }
 
+.rstudio-themes-flat .dataGridSortedHeaderAscending img {
+  width: 0px !important;
+  height: 0px !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #818a98;
+  margin-left: 3px;
+}
+
 .dataGridSortedHeaderDescending {
 
+}
+
+.rstudio-themes-flat .dataGridSortedHeaderDescending img {
+  width: 0px !important;
+  height: 0px !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #818a98;
+  margin-left: 3px;
 }
 
 .dataGridEvenRow {
