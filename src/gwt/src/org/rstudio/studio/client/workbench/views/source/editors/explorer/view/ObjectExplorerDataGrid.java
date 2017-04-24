@@ -289,15 +289,8 @@ public class ObjectExplorerDataGrid
       @Override
       public void buildRowImpl(Data data, int index)
       {
-         int childIndex = data.getChildIndex();
-         int limit = getParentLimit(data);
-         
-         // bail if this is a row outside of the current
+         // TODO: bail if this is a row outside of the current
          // drawing limit
-         if (childIndex > limit)
-            return;
-         
-         // otherwise, draw this row
          super.buildRowImpl(data, index);
       }
    }
@@ -358,17 +351,6 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         int limit = getParentLimit(data);
-         if (data.getChildIndex() < limit)
-            renderDefault(context, data, builder);
-         else
-            renderMore(context, data, builder);
-      }
-      
-      private void renderDefault(Context context,
-                                 Data data,
-                                 SafeHtmlBuilder builder)
-      {
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
@@ -379,14 +361,6 @@ public class ObjectExplorerDataGrid
          
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
-      }
-      
-      private void renderMore(Context context,
-                              Data data,
-                              SafeHtmlBuilder builder)
-      {
-         // TODO: placeholder for expanding this row
-         builder.appendHtmlConstant("<div style='float: right;'>More...</div>");
       }
       
       private final void addIndent(SafeHtmlBuilder builder, Data data)
@@ -521,11 +495,6 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         // bail if this is a 'More...' row (ie, at limit)
-         int limit = getParentLimit(data);
-         if (data.getChildIndex() == limit)
-            return;
-         
          builder.append(SafeHtmlUtil.createDiv(
                "title", data.getDisplayType()));
          builder.appendEscaped(data.getDisplayType());
@@ -541,11 +510,6 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         // bail if this is a 'More...' row (ie, at limit)
-         int limit = getParentLimit(data);
-         if (data.getChildIndex() == limit)
-            return;
-         
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
