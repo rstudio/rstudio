@@ -79,6 +79,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.Ob
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
+import com.google.gwt.dom.builder.shared.HtmlDivBuilder;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -463,24 +465,22 @@ public class ObjectExplorerDataGrid
       {
          builder.appendHtmlConstant("<td>");
          
-         TagBuilder tagBuilder = new TagBuilder("div");
-         tagBuilder.set("title", data.getDisplayName());
+         HtmlDivBuilder divBuilder = HtmlBuilderFactory.get().createDivBuilder();
+         divBuilder.title(data.getDisplayName());
          
          JsVectorString classes = JsVectorString.createVector();
          if (data.hasTag(TAG_VIRTUAL))
             classes.push(RES.dataGridStyle().virtual());
          
          if (!classes.isEmpty())
-            tagBuilder.set("class", classes.join(" "));
-         
-         builder.append(tagBuilder.toSafeHtml());
+            divBuilder.className(classes.join(" "));
          
          String name = data.getDisplayName();
          if (name == null)
             name = "<unknown>";
-         builder.appendEscaped(name);
+         divBuilder.text(name);
+         builder.append(divBuilder.asSafeHtml());
          
-         builder.appendHtmlConstant("</div>");
          builder.appendHtmlConstant("</td>");
          
       }
