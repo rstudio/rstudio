@@ -128,7 +128,7 @@
    cache <- .rs.explorer.getCache()
    ids <- ls(envir = cache)
    lapply(ids, function(id) {
-      file <- file.path(cacheDir, sprintf("%s.rds", id))
+      file <- file.path(cacheDir, id)
       tryCatch(
          saveRDS(cache[[id]], file = file),
          error = warning
@@ -139,12 +139,11 @@
 .rs.addFunction("explorer.restoreCache", function(cacheDir)
 {
    cache <- .rs.explorer.getCache()
-   names <- list.files(cacheDir)
-   for (name in names) {
+   ids <- list.files(cacheDir)
+   for (id in ids) {
       tryCatch(
          {
-            id <- substring(name, 1, nchar(name) - 4)
-            path <- file.path(cacheDir, name)
+            path <- file.path(cacheDir, id)
             object <- readRDS(path)
             cache[[id]] <- object
          },

@@ -83,8 +83,7 @@ void removeOrphanedCacheItems()
    // source document available
    BOOST_FOREACH(const FilePath& cacheFile, cachedFiles)
    {
-      std::string filename = cacheFile.filename();
-      std::string id = filename.substr(0, filename.length() - ::strlen(".rds"));
+      std::string id = cacheFile.filename();
       
       bool foundId = false;
       BOOST_FOREACH(const FilePath& docPath, docPaths)
@@ -130,6 +129,16 @@ void onSuspend(const r::session::RSuspendOptions&,
 void onResume(const Settings&)
 {
    
+}
+
+void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // if we have a cache item associated with this document, remove it
+   FilePath cachePath = explorerCacheDir().childPath(pDoc->id());
+   
+   Error error = cachePath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
 }
 
 void onDeferredInit(bool)
@@ -206,6 +215,8 @@ core::Error initialize()
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onShutdown.connect(onShutdown);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
