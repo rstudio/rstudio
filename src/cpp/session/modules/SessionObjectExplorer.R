@@ -396,7 +396,7 @@
    # default to internal inspectors
    if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
       .rs.explorer.inspectXmlNode(object, context)
-   else if (is.list(object) || is.call(object))
+   else if (is.list(object) || is.call(object) || is.expression(object))
       .rs.explorer.inspectList(object, context)
    else if (is.environment(object))
       .rs.explorer.inspectEnvironment(object, context)
