@@ -1603,7 +1603,8 @@ body.ubuntu_mono .searchBox {
    top: 23px !important;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:first-child {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:first-child,
+.rstudio-themes-flat .moduleTabPanel.minimizedWindowObject table.gwt-TabLayoutPanelTab > tbody > tr > td:first-child {
    display: none;
 }
 
@@ -1612,7 +1613,8 @@ body.ubuntu_mono .searchBox {
    display: none;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:last-child {
+.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTabInner > table > tbody > tr > td:last-child,
+.rstudio-themes-flat .moduleTabPanel.minimizedWindowObject table.gwt-TabLayoutPanelTab > tbody > tr > td:last-child {
    display: none;
 }
 
