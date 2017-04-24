@@ -2,6 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
+@external rstudio-themes-flat;
 
 /** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
@@ -81,4 +82,8 @@
 .commitButton {
    float: right;
    margin-right: -1px;
+}
+
+.rstudio-themes-flat .commitButton {
+   margin-right: 0;
 }
