@@ -29,4 +29,11 @@ public interface ObjectExplorerServerOperations
          JsArrayString tags,
          int recursionDepth,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
+   
+   void explorerBeginInspect(
+         String handleId,
+         String objectName,
+         String docId,
+         ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
+   
 }

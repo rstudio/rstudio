@@ -57,6 +57,32 @@
    result
 })
 
+.rs.addJsonRpcHandler("explorer_begin_inspect", function(handle,
+                                                         name,
+                                                         id)
+{
+   # retrieve object from cache
+   object <- .rs.explorer.getCachedObject(handle)
+   
+   # remove old object from cache
+   .rs.explorer.removeCachedObject(handle)
+   
+   # re-cache object with stable (document) id
+   .rs.explorer.setCachedObject(object, id)
+   
+   # construct context and perform a depth-one inspection
+   context <- .rs.explorer.createContext(
+      name      = name,
+      access    = NULL,
+      tags      = character(),
+      recursive = 1
+   )
+   
+   # generate inspection result
+   result  <- .rs.explorer.inspectObject(object, context)
+   result
+})
+
 .rs.addFunction("objectAddress", function(object)
 {
    .Call("rs_objectAddress", object)
@@ -150,20 +176,18 @@
    )
 })
 
-.rs.addFunction("explorer.cacheObject", function(object,
-                                                 id = .rs.createUUID())
+.rs.addFunction("explorer.setCachedObject", function(object,
+                                                     id = .rs.createUUID())
 {
    cache <- .rs.explorer.getCache()
    cache[[id]] <- object
    id
 })
 
-.rs.addFunction("explorer.clearCache", function()
+.rs.addFunction("explorer.removeCachedObject", function(id)
 {
    cache <- .rs.explorer.getCache()
-   objects <- ls(envir = cache)
-   rm(list = objects, envir = cache)
-   cache
+   rm(list = id, envir = cache)
 })
 
 #' @param name The display name, as should be used in UI.
@@ -245,7 +269,7 @@
                                                   title)
 {
    # save in cached data environment
-   id <- .rs.explorer.cacheObject(object)
+   id <- .rs.explorer.setCachedObject(object)
    
    # return a handle object
    list(

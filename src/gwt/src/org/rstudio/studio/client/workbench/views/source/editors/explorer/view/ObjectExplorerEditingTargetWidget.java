@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -36,12 +37,13 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 
 public class ObjectExplorerEditingTargetWidget extends Composite
 {
-   public ObjectExplorerEditingTargetWidget(ObjectExplorerHandle handle)
+   public ObjectExplorerEditingTargetWidget(ObjectExplorerHandle handle,
+                                            SourceDocument document)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       panel_ = new DockLayoutPanel(Unit.PX);
-      grid_ = new ObjectExplorerDataGrid(handle);
+      grid_ = new ObjectExplorerDataGrid(handle, document);
       resizePanel_ = new ResizeLayoutPanel();
       controls_ = new FlowPanel();
       

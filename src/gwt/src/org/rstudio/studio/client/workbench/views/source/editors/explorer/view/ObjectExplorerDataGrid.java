@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectE
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerDataGrid.Data.ExpansionState;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -579,10 +580,12 @@ public class ObjectExplorerDataGrid
       };
    }
    
-   public ObjectExplorerDataGrid(ObjectExplorerHandle handle)
+   public ObjectExplorerDataGrid(ObjectExplorerHandle handle,
+                                 SourceDocument document)
    {
       super(1000, RES);
       handle_ = handle;
+      document_ = document;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -1017,7 +1020,7 @@ public class ObjectExplorerDataGrid
       // no children; make a server RPC request and then call back
       String extractingCode = generateExtractingRCode(data, "`__OBJECT__`");
       server_.explorerInspectObject(
-            handle_.getId(),
+            document_.getId(),
             extractingCode,
             data.getDisplayName(),
             data.getObjectAccess(),
@@ -1048,13 +1051,10 @@ public class ObjectExplorerDataGrid
    
    private void initializeRoot()
    {
-      server_.explorerInspectObject(
+      server_.explorerBeginInspect(
             handle_.getId(),
-            null,
             handle_.getName(),
-            null,
-            null,
-            1,
+            document_.getId(),
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
                @Override
@@ -1187,6 +1187,7 @@ public class ObjectExplorerDataGrid
    private final ListDataProvider<Data> dataProvider_;
    
    private final ObjectExplorerHandle handle_;
+   private final SourceDocument document_;
    private Data root_;
    
    private TableRowElement hoveredRow_;
