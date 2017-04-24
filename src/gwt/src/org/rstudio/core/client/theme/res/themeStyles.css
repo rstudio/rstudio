@@ -1681,11 +1681,11 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .gwt-DialogBox {
-   border: solid 1px #d6dadc;
+   border: solid 1px #bbbcbe;
    border-radius: 5px 5px 0px 0px;
    background: #F3F4F4;
    overflow: hidden !important;
-   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+   box-shadow: 0 30px 30px rgba(0, 0, 0, 0.20);
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogMiddleCenter {
