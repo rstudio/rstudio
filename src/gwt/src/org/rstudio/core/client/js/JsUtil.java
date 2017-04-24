@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 public class JsUtil
@@ -192,6 +193,14 @@ public class JsUtil
       for (Integer i : integers)
          result.push(i);
       return result;
+   }
+   
+   public static <T extends JavaScriptObject> JsArray<T> toJsArray(Collection<T> collection)
+   {
+      JsArray<T> object = JavaScriptObject.createArray().cast();
+      for (T t : collection)
+         object.push(t);
+      return object;
    }
    
    public native static JavaScriptObject createEmptyArray(int length) /*-{

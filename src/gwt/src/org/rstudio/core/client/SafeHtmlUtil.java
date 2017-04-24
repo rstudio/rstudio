@@ -89,6 +89,11 @@ public class SafeHtmlUtil
       builder.append(">");
       return SafeHtmlUtils.fromTrustedString(builder.toString());
    }
+   
+   public static SafeHtml createDiv(String... attribs)
+   {
+      return createOpenTag("div", attribs);
+   }
 
    public static SafeHtml createEmpty()
    {
@@ -102,6 +107,22 @@ public class SafeHtmlUtil
       {
          if (piece != null)
             builder.append(piece.asString());
+      }
+      return SafeHtmlUtils.fromTrustedString(builder.toString());
+   }
+   
+   public static SafeHtml createStyle(String... strings)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0, n = strings.length; i < n; i += 2)
+      {
+         String key = strings[i];
+         String value = strings[i + 1];
+         
+         builder.append(SafeHtmlUtils.htmlEscape(key))
+                .append(": ")
+                .append(SafeHtmlUtils.htmlEscape(value))
+                .append("; ");
       }
       return SafeHtmlUtils.fromTrustedString(builder.toString());
    }

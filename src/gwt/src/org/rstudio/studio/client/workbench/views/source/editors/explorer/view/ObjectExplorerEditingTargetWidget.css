@@ -1,0 +1,15 @@
+@CHARSET "UTF-8";
+
+.controls {
+	padding: 3px;
+	border-bottom: 1px solid #d6dadc;
+	background-color: #eeeff1;
+}
+
+.checkbox {
+	float: left;
+}
+
+.filter {
+	float: right;
+}

@@ -886,9 +886,16 @@ public class DomUtils
    }
    
    public static Element findParentElement(Element el,
+                                           ElementPredicate predicate)
+   {
+      return findParentElement(el, false, predicate);
+   }
+   
+   public static Element findParentElement(Element el,
+                                           boolean includeSelf,
    	                                     ElementPredicate predicate)
    {
-      Element parent = el.getParentElement();
+      Element parent = includeSelf ? el : el.getParentElement();
       while (parent != null)
       {
          if (predicate.test(parent))

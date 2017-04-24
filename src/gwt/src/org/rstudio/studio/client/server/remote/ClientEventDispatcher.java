@@ -148,6 +148,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
@@ -870,6 +871,11 @@ public class ClientEventDispatcher
          {
             RStudioAPIShowDialogEvent.Data data = event.getData();
             eventBus_.fireEvent(new RStudioAPIShowDialogEvent(data));
+         }
+         else if (type.equals(ClientEvent.ObjectExplorerEvent))
+         {
+            ObjectExplorerEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ObjectExplorerEvent(data));
          }
          else
          {

@@ -191,6 +191,7 @@ core::Error get(const std::string& id, bool includeContents, boost::shared_ptr<S
 core::Error getDurableProperties(const std::string& path,
                                  core::json::Object* pProperties);
 core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
+core::Error list(std::vector<core::FilePath>* pPaths);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents = true);
 core::Error remove(const std::string& id);
 core::Error removeAll();
