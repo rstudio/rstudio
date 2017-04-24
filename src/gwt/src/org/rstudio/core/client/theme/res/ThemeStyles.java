@@ -176,6 +176,4 @@ public interface ThemeStyles extends CssResource
    
    String displayNone();
    String logoAnchor();
-   
-   String clickableIcon();
 }

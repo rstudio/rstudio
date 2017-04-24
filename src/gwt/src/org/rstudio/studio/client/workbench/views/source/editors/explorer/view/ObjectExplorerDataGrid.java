@@ -29,7 +29,6 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
@@ -571,7 +570,7 @@ public class ObjectExplorerDataGrid
       }
       
       private static final String CLASS = StringUtil.join(new String[] {
-            ThemeStyles.INSTANCE.clickableIcon(),
+            RES.dataGridStyle().clickableIcon(),
             RES.dataGridStyle().buttonIcon()
       }, " ");
       
@@ -768,7 +767,7 @@ public class ObjectExplorerDataGrid
    public void onRowHover(RowHoverEvent event)
    {
       TableRowElement rowEl = event.getHoveringRow();
-      Element[] buttonEls = DomUtils.getElementsByClassName(rowEl, ThemeStyles.INSTANCE.clickableIcon());
+      Element[] buttonEls = DomUtils.getElementsByClassName(rowEl, RES.dataGridStyle().clickableIcon());
       if (buttonEls == null)
          return;
       
@@ -1253,6 +1252,7 @@ public class ObjectExplorerDataGrid
       String buttonIcon();
       String cellInnerTable();
       String virtual();
+      String clickableIcon();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
