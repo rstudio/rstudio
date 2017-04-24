@@ -186,7 +186,8 @@
 .rs.addFunction("explorer.removeCachedObject", function(id)
 {
    cache <- .rs.explorer.getCache()
-   rm(list = id, envir = cache)
+   if (exists(id, envir = cache))
+      rm(list = id, envir = cache)
 })
 
 #' @param name The display name, as should be used in UI.

@@ -109,8 +109,6 @@ void onShutdown(bool terminatedNormally)
    if (!terminatedNormally)
       return;
    
-   removeOrphanedCacheItems();
-   
    using namespace r::exec;
    Error error = RFunction(".rs.explorer.saveCache")
          .addParam(explorerCacheDirSystem())
@@ -133,10 +131,21 @@ void onResume(const Settings&)
 
 void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   Error error;
+   
    // if we have a cache item associated with this document, remove it
    FilePath cachePath = explorerCacheDir().childPath(pDoc->id());
    
-   Error error = cachePath.removeIfExists();
+   error = cachePath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   
+   // also attempt to remove from R cache
+   using namespace r::exec;
+   error = RFunction(".rs.explorer.removeCachedObject")
+         .addParam(pDoc->id())
+         .call();
+   
    if (error)
       LOG_ERROR(error);
 }
