@@ -76,7 +76,7 @@ public class JsVectorNumber extends JavaScriptObject
    public final native int indexOf(double value)
    /*-{
       for (var i = 0, n = this.length; i < n; i++)
-         if (this[i] == value)
+         if (this[i] === value)
            return i;
       return -1;
    }-*/;
