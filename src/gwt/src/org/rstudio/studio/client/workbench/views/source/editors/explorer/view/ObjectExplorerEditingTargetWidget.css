@@ -1,4 +1,5 @@
 @CHARSET "UTF-8";
+@external rstudio-themes-flat;
 
 .controls {
 	padding: 3px;
@@ -12,4 +13,8 @@
 
 .filter {
 	float: right;
+}
+
+.rstudio-themes-flat .controls {
+   background-color: #f3f4f7;
 }
