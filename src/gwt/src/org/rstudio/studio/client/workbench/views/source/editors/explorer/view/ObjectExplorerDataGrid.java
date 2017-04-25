@@ -978,7 +978,7 @@ public class ObjectExplorerDataGrid
    {
       Data data = getData().get(row);
       String code = generateExtractingRCode(data);
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(code, false));
    }
    
    private void viewRow(int row)

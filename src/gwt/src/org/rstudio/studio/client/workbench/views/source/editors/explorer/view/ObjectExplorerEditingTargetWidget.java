@@ -15,7 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -30,9 +34,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.inject.Inject;
 
 public class ObjectExplorerEditingTargetWidget extends Composite
 {
@@ -41,10 +45,10 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      panel_ = new DockLayoutPanel(Unit.PX);
+      mainWidget_ = new DockLayoutPanel(Unit.PX);
+      toolbar_ = new EditingTargetToolbar(commands_, true);
       grid_ = new ObjectExplorerDataGrid(handle, document);
       resizePanel_ = new ResizeLayoutPanel();
-      controls_ = new FlowPanel();
       
       cbAttributes_ = new CheckBox();
       filterWidget_ = new SearchWidget(new SuggestOracle()
@@ -55,9 +59,20 @@ public class ObjectExplorerEditingTargetWidget extends Composite
          }
       });
       
-      initControls();
-      initPanel();
-      initWidget(panel_);
+      initToolbar();
+      initMainWidget();
+      
+      PanelWithToolbars panel = new PanelWithToolbars(
+            toolbar_,
+            mainWidget_);
+      
+      initWidget(panel);
+   }
+   
+   @Inject
+   private void initialize(Commands commands)
+   {
+      commands_ = commands;
    }
    
    public void onActivate()
@@ -70,10 +85,8 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       // TODO
    }
    
-   private void initControls()
+   private void initToolbar()
    {
-      FlowPanel panel = new FlowPanel();
-      
       cbAttributes_.setText("Show Attributes");
       cbAttributes_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -83,8 +96,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
             grid_.toggleShowAttributes(cbAttributes_.getValue());
          }
       });
-      cbAttributes_.addStyleName(RES.styles().checkbox());
-      panel.add(cbAttributes_);
+      toolbar_.addLeftWidget(cbAttributes_);
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -94,14 +106,10 @@ public class ObjectExplorerEditingTargetWidget extends Composite
             grid_.setFilter(event.getValue());
          }
       });
-      filterWidget_.addStyleName(RES.styles().filter());
-      panel.add(filterWidget_);
-      
-      controls_.addStyleName(RES.styles().controls());
-      controls_.add(panel);
+      toolbar_.addRightWidget(filterWidget_);
    }
    
-   private void initPanel()
+   private void initMainWidget()
    {
       resizePanel_.add(grid_);
       resizePanel_.addResizeHandler(new ResizeHandler()
@@ -113,18 +121,20 @@ public class ObjectExplorerEditingTargetWidget extends Composite
          }
       });
       
-      panel_.setSize("100%", "100%");
-      panel_.addNorth(controls_, 24);
-      panel_.add(resizePanel_);
+      mainWidget_.setSize("100%", "100%");
+      mainWidget_.add(resizePanel_);
    }
    
-   private final DockLayoutPanel panel_;
-   private final FlowPanel controls_;
+   private final DockLayoutPanel mainWidget_;
+   private final Toolbar toolbar_;
    private final ResizeLayoutPanel resizePanel_;
    private final ObjectExplorerDataGrid grid_;
    
    private final CheckBox cbAttributes_;
    private final SearchWidget filterWidget_;
+   
+   // Injected
+   private Commands commands_;
    
    // Resources, etc ----
    public interface Resources extends ClientBundle
@@ -135,9 +145,6 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    
    public interface Styles extends CssResource
    {
-      String controls();
-      String checkbox();
-      String filter();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
