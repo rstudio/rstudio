@@ -134,8 +134,9 @@ public class TerminalLocalEcho
          
          // TODO (gary) temporary diagnostics to help isolate some cases
          // where local-echo is still not matching as expected 
-         Debug.log("LocalEcho Match Failure: received '" + outputToMatch + 
-               "' had: '" + lastOutput + "'");
+         Debug.log("LocalEcho Match Failure: received '" + 
+               AnsiCode.prettyPrint(outputToMatch) + "' had: '" + 
+               AnsiCode.prettyPrint(lastOutput) + "'");
          
          localEcho_.clear();
          writer_.write(outputToMatch);

@@ -31,16 +31,16 @@ public class AnsiCodeTests extends GWTTestCase
 
    public void testConsoleControlCharacterParse()
    {
-      // console only supports \n, \f, \b, \r; other control characters
-      // or non-control characters should pass through 
       boolean foundLinefeed = false;
       boolean foundFormfeed = false;
       boolean foundBackspace = false;
       boolean foundCarriageReturn = false;
+      boolean foundFirstESCMarker = false;
+      boolean foundSecondESCMarker = false;
 
       Pattern ConsoleCtrlPattern = Pattern.create(AnsiCode.CONTROL_REGEX);
       
-      String data = "A\nBC\fD\7EF\bG\rH";
+      String data = "A\nBC\fD\7EF\bG\rH\u001bZoom\u009bNoMore]";
       Match match = ConsoleCtrlPattern.match(data, 0);
       Assert.assertNotNull(match);
       while (match != null)
@@ -68,6 +68,18 @@ public class AnsiCodeTests extends GWTTestCase
             Assert.assertFalse(foundCarriageReturn);
             Assert.assertEquals(11, match.getIndex());
             foundCarriageReturn = true;
+         }
+         else if (match.getValue().compareTo("\u001b") == 0)
+         {
+            Assert.assertFalse(foundFirstESCMarker);
+            Assert.assertEquals(13, match.getIndex());
+            foundFirstESCMarker = true;
+         }
+         else if (match.getValue().compareTo("\u009b") == 0)
+         {
+            Assert.assertFalse(foundSecondESCMarker);
+            Assert.assertEquals(18, match.getIndex());
+            foundSecondESCMarker = true;
          }
          match = match.nextMatch();
       }
