@@ -150,16 +150,22 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    Error error;
    
    // if we have a cache item associated with this document, remove it
-   FilePath cachePath = explorerCacheDir().childPath(pDoc->id());
+   std::string id = pDoc->getProperty("id");
+   if (id.empty())
+      return;
    
+   FilePath cachePath = explorerCacheDir().childPath(id);
    error = cachePath.removeIfExists();
    if (error)
+   {
       LOG_ERROR(error);
+      return;
+   }
    
    // also attempt to remove from R cache
    using namespace r::exec;
    error = RFunction(".rs.explorer.removeCachedObject")
-         .addParam(pDoc->id())
+         .addParam(id)
          .call();
    
    if (error)
