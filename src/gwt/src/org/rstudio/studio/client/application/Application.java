@@ -706,6 +706,7 @@ public class Application implements ApplicationEventHandlers
    {
       if (uiPrefs_.get().getUseFlatThemes().getGlobalValue()) {
         Document.get().getBody().addClassName("rstudio-themes-flat");
+        Document.get().getBody().addClassName("rstudio-themes-default");
       }
 
       pAceThemes_.get();

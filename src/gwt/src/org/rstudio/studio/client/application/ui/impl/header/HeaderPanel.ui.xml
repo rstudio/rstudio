@@ -7,7 +7,7 @@
       <table class="{res.styles.panel}" cellpadding='0' cellspacing='0' border='0'>
          <tr>
             <td class="{res.styles.left}"></td>
-            <td class="{res.styles.center}" valign="middle">
+            <td class="{res.styles.center} rstudio-themes-background" valign="middle">
                <g:Widget ui:field="topLineWidget_" />
                <g:Widget ui:field="toolbarWidget_" />
             </td>

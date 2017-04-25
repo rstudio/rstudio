@@ -33,9 +33,14 @@
 @external windows, windows-highdpi, macintosh, linux;
 @external ubuntu_mono;
 
-@external rstudio-themes-flat;
 @external gwt-TabLayoutPanel;
 @external gwt-TabLayoutPanelTabInner;
+
+@external rstudio-themes-flat, rstudio-themes-dark;
+
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@external rstudio-themes-background;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -553,6 +558,11 @@ pre {
    opacity: 1.0;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .mainMenu .gwt-MenuItem {
+   text-shadow: 0px 1px 0px #000;
+   color: #FFF;
+}
+
 .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
    background-color: #D6E9F8;
 }
@@ -922,7 +932,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .toolbar {
    height: 22px;
-   background: #f3f4f7;
    border-bottom: 1px solid #d6dadc;
 }
 
@@ -992,7 +1001,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .secondaryToolbar {
-   background: #eeeff1;
+   background: none;
    border-bottom: solid 1px #d6dadc;
    height: 24px;
 }
@@ -1639,10 +1648,6 @@ body.ubuntu_mono .searchBox {
    margin-left: -1px;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter {
-   background: #f3f4f7;
-}
-
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td,
 .rstudio-themes-flat .minimizedWindowObject .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
    vertical-align: top !important;
@@ -1833,4 +1838,27 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .clearSearch {
    top: 3px;
+}
+
+/* rstudio-themes-flat background */
+
+.rstudio-themes-flat.rstudio-themes-default .rstudio-themes-background,
+.rstudio-themes-flat.rstudio-themes-default .toolbar,
+.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelContent {
+   background: #F3F4F7;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .rstudio-themes-background,
+.rstudio-themes-flat.rstudio-themes-dark-grey .toolbar,
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelContent {
+   background: #4E5C68;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
+.rstudio-themes-flat.rstudio-themes-alternate .toolbar,
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelContent {
+   background: #D2E4ED;
 }
