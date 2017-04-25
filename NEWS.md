@@ -20,6 +20,13 @@
   * Bash on Windows Subsystem for Linux, if installed on 64-bit Windows 10
 * Default Windows terminal shell type set in new Global Options/Terminal preferences pane
 
+### Object Explorer
+
+* New view for the exploration of hierarchical / deeply-nested R objects
+* Can recursively inspect R lists, environments, functions, S4 objects
+* Integration with the xml2 package for exploration of XML documents
+* Generate R code that can be used to access a particular item within object
+
 ### Themes
 
 * New flat, modern UI theme
