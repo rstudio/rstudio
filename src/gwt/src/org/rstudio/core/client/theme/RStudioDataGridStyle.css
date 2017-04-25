@@ -87,6 +87,10 @@
 
 }
 
+.rstudio-themes-flat .dataGridLastColumnHeader {
+  border-right: none;
+}
+
 .dataGridSortableHeader {
   cursor: default;
 }
