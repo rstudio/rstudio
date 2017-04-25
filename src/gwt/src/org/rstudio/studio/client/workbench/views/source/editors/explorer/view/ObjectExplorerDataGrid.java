@@ -291,8 +291,13 @@ public class ObjectExplorerDataGrid
       @Override
       public void buildRowImpl(Data data, int index)
       {
-         // TODO: bail if this is a row outside of the current
-         // drawing limit
+         int childIndex = data.getChildIndex();
+         int rowLimit = getParentLimit(data);
+         
+         // don't draw rows outside of the limit
+         if (childIndex > rowLimit)
+            return;
+         
          super.buildRowImpl(data, index);
       }
    }
@@ -338,8 +343,6 @@ public class ObjectExplorerDataGrid
       public boolean accept(T data);
    }
    
-   // Will be used soon!
-   @SuppressWarnings("unused")
    private static final int getParentLimit(Data data)
    {
       Data parent = data.getParentData();
@@ -348,8 +351,22 @@ public class ObjectExplorerDataGrid
       return parent.getLimit();
    }
    
+   private static final boolean isBoundaryRow(Data data)
+   {
+      int childIndex = data.getChildIndex();
+      int rowLimit = getParentLimit(data);
+      return childIndex == rowLimit;
+   }
+   
    private class NameCell extends AbstractCell<Data>
    {
+      public NameCell()
+      {
+         super();
+         String moreButtonCell = "<td><input type='button' value='More...' data-action='open'></input></td>";
+         moreButtonCellHtml_ = SafeHtmlUtils.fromTrustedString(moreButtonCell);
+      }
+      
       @Override
       public void render(Context context,
                          Data data,
@@ -359,8 +376,16 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant("<tr>");
          
          addIndent(builder, data);
-         addExpandIcon(builder, data);
-         addName(builder, data);
+         if (isBoundaryRow(data))
+         {
+            onNotExpandable(builder, data);
+            addViewMoreIcon(builder, data);
+         }
+         else
+         {
+            addExpandIcon(builder, data);
+            addName(builder, data);
+         }
          
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
@@ -454,8 +479,15 @@ public class ObjectExplorerDataGrid
          builder.append(divBuilder.asSafeHtml());
          
          builder.appendHtmlConstant("</td>");
-         
       }
+      
+      private final void addViewMoreIcon(SafeHtmlBuilder builder,
+                                         Data data)
+      {
+         builder.append(moreButtonCellHtml_);
+      }
+      
+      private final SafeHtml moreButtonCellHtml_;
    }
    
    private static class TypeCell extends AbstractCell<Data>
@@ -465,6 +497,9 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
+         if (isBoundaryRow(data))
+            return;
+         
          builder.append(SafeHtmlUtil.createDiv(
                "title", data.getDisplayType()));
          builder.appendEscaped(data.getDisplayType());
@@ -480,6 +515,9 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
+         if (isBoundaryRow(data))
+            return;
+         
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
@@ -870,6 +908,13 @@ public class ObjectExplorerDataGrid
    {
       Data data = getData().get(row);
       
+      // if this is a boundary row, open it
+      if (isBoundaryRow(data))
+      {
+         openRow(row);
+         return;
+      }
+      
       // if this node has children but is not expanded, expand it
       if (data.isExpandable() && data.getExpansionState() == ExpansionState.CLOSED)
       {
@@ -923,6 +968,19 @@ public class ObjectExplorerDataGrid
    private void openRow(final int row)
    {
       final Data data = getData().get(row);
+      
+      // if this is a boundary row, then update the boundary
+      if (isBoundaryRow(data))
+      {
+         Data parent = data.getParentData();
+         if (parent != null)
+         {
+            int limit = parent.getLimit();
+            parent.setLimit(limit + DEFAULT_ROW_LIMIT);
+         }
+         synchronize();
+         return;
+      }
       
       // bail if we've attempted to open something non-expandable
       if (!data.isExpandable())
@@ -1186,7 +1244,7 @@ public class ObjectExplorerDataGrid
    private static final int NAME_COLUMN_WIDTH = 180;
    private static final int TYPE_COLUMN_WIDTH = 180;
    
-   private static final int DEFAULT_ROW_LIMIT = 6;
+   private static final int DEFAULT_ROW_LIMIT = 20;
    
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
@@ -1237,6 +1295,7 @@ public class ObjectExplorerDataGrid
       String virtual();
       String verticalAlignHelper();
       String clickableIcon();
+      String moreButton();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
