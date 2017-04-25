@@ -40,8 +40,8 @@ import com.google.inject.Inject;
  */
 public class VirtualConsole
 {
-   // don't do any processing of ANSI escape codes
-    private final static int ANSI_COLOR_UNSET = -1;
+   // use preference to determine ANSI color behavior
+   private final static int ANSI_COLOR_UNSET = -1;
 
    // don't do any processing of ANSI escape codes
    public final static int ANSI_COLOR_OFF = 0;
