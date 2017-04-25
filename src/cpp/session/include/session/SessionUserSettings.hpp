@@ -25,6 +25,7 @@
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <core/json/Json.hpp>
 
@@ -102,6 +103,7 @@ public:
    bool handleErrorsInUserCodeOnly() const;
    int shinyViewerType() const;
    bool enableRSConnectUI() const;
+   core::text::AnsiCodeMode ansiConsoleMode() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -252,6 +254,7 @@ private:
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
    mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
+   mutable boost::scoped_ptr<int> pAnsiConsoleMode_;
    
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

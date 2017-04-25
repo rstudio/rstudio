@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
@@ -303,6 +304,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Integer> truncateLongLinesInConsoleHistory()
    {
       return integer("truncate_long_lines_in_console", 1000);
+   }
+   
+   public PrefValue<Integer> consoleAnsiMode()
+   {
+      return integer("ansi_console_mode", VirtualConsole.ANSI_COLOR_ON);
    }
    
    public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
