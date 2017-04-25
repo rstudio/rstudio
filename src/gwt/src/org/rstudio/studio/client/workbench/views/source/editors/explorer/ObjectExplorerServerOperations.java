@@ -33,7 +33,5 @@ public interface ObjectExplorerServerOperations
    void explorerBeginInspect(
          String handleId,
          String objectName,
-         String docId,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
-   
 }

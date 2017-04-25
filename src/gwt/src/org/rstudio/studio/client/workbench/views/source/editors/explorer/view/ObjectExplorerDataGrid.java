@@ -1003,7 +1003,7 @@ public class ObjectExplorerDataGrid
       // no children; make a server RPC request and then call back
       String extractingCode = generateExtractingRCode(data, "`__OBJECT__`");
       server_.explorerInspectObject(
-            document_.getId(),
+            handle_.getId(),
             extractingCode,
             data.getDisplayName(),
             data.getObjectAccess(),
@@ -1037,7 +1037,6 @@ public class ObjectExplorerDataGrid
       server_.explorerBeginInspect(
             handle_.getId(),
             handle_.getName(),
-            document_.getId(),
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
                @Override
@@ -1170,8 +1169,10 @@ public class ObjectExplorerDataGrid
    private final ListDataProvider<Data> dataProvider_;
    
    private final ObjectExplorerHandle handle_;
-   private final SourceDocument document_;
    private Data root_;
+   
+   @SuppressWarnings("unused")
+   private final SourceDocument document_;
    
    private TableRowElement hoveredRow_;
    private boolean showAttributes_;

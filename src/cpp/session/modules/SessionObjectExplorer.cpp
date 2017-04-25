@@ -60,14 +60,30 @@ void removeOrphanedCacheItems()
    if (!explorerCacheDir().exists())
       return;
    
-   // list source documents (use fact that file names here are
-   // the equivalent document IDs)
+   // list source documents
    std::vector<FilePath> docPaths;
    error = source_database::list(&docPaths);
    if (error)
    {
       LOG_ERROR(error);
       return;
+   }
+   
+   // read their properties
+   typedef source_database::SourceDocument SourceDocument;
+   typedef boost::shared_ptr<SourceDocument> Document;
+   
+   std::vector<Document> documents;
+   BOOST_FOREACH(const FilePath& docPath, docPaths)
+   {
+      Document pDoc(new SourceDocument());
+      Error error = source_database::get(docPath.filename(), false, pDoc);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      documents.push_back(pDoc);
    }
    
    // list objects in explorer cache
@@ -86,9 +102,9 @@ void removeOrphanedCacheItems()
       std::string id = cacheFile.filename();
       
       bool foundId = false;
-      BOOST_FOREACH(const FilePath& docPath, docPaths)
+      BOOST_FOREACH(Document pDoc, documents)
       {
-         if (id == docPath.filename())
+         if (id == pDoc->getProperty("id"))
          {
             foundId = true;
             break;

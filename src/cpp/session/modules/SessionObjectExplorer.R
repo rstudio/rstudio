@@ -57,18 +57,10 @@
    result
 })
 
-.rs.addJsonRpcHandler("explorer_begin_inspect", function(handle,
-                                                         name,
-                                                         id)
+.rs.addJsonRpcHandler("explorer_begin_inspect", function(id, name)
 {
    # retrieve object from cache
-   object <- .rs.explorer.getCachedObject(handle)
-   
-   # remove old object from cache
-   .rs.explorer.removeCachedObject(handle)
-   
-   # re-cache object with stable (document) id
-   .rs.explorer.setCachedObject(object, id)
+   object <- .rs.explorer.getCachedObject(id)
    
    # construct context and perform a depth-one inspection
    context <- .rs.explorer.createContext(

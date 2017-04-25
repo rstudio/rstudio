@@ -734,7 +734,20 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 
 Error list(std::vector<FilePath>* pPaths)
 {
-   return source_database::path().children(pPaths);
+   // list children
+   std::vector<FilePath> children;
+   Error error = source_database::path().children(&children);
+   if (error)
+      return error;
+   
+   // filter to actual source documents
+   core::algorithm::copy_if(
+            children.begin(),
+            children.end(),
+            std::back_inserter(*pPaths),
+            isSourceDocument);
+   
+   return Success();
 }
    
 Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)

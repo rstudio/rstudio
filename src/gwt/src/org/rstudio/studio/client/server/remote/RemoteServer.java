@@ -1846,13 +1846,11 @@ public class RemoteServer implements Server
    
    public void explorerBeginInspect(String handleId,
                                     String objectName,
-                                    String documentId,
                                     ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handleId));
       params.set(1, new JSONString(objectName));
-      params.set(2, new JSONString(documentId));
       sendRequest(RPC_SCOPE, EXPLORER_BEGIN_INSPECT, params, requestCallback);
    }
    
