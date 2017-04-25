@@ -359,8 +359,9 @@ public class VirtualConsole
    
    public void submit(String data, String clazz)
    {
-      // If previous submit end with an incomplete ansi code, add this
-      // submit to the previous (unwritten) data so we can try again.
+      // If previous submit ended with an incomplete ANSI code, add new data
+      // to the previous (unwritten) data so we can try again to recognize
+      // ANSI code.
       if (partialAnsiCode_ != null)
       {
          data = partialAnsiCode_ + data;
@@ -368,25 +369,28 @@ public class VirtualConsole
       }
      
       String currentClazz = clazz;
+      
+      // If previously determined classes from ANSI codes are available,
+      // combine them with input class so they are ready to use if
+      // there is text to output before any other ANSI codes in the
+      // data (or there are no more ANSI codes).
+      if (ansiColorMode_ == ANSI_COLOR_ON && ansiCodeStyles_ != null)
+      {
+         if (clazz != null)
+         {
+            currentClazz = clazz + " " + ansiCodeStyles_;
+         }
+         else
+         {
+            currentClazz = ansiCodeStyles_;
+         }
+      }
 
       Match match = (ansiColorMode_ == ANSI_COLOR_OFF) ?
             CONTROL.match(data, 0) :
             AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
       {
-         if (ansiColorMode_ == ANSI_COLOR_ON && ansiCodeStyles_ != null)
-         {
-            // This means we have previously determined styles but the chunk
-            // of text needing them wasn't in the same chunk
-            if (clazz != null)
-            {
-               currentClazz = clazz + " " + currentClazz;
-            }
-            else
-            {
-               currentClazz = ansiCodeStyles_;
-            }
-         }
          text(data, currentClazz);
          return;
       }

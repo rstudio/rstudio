@@ -573,7 +573,7 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
 
-   public void testAnsiCodeFollowedByMoreTextSubmits()
+   public void testSplitAnsiCodeFollowedByMoreTextSubmits()
    {
       int color = AnsiCode.ForeColorNum.MAGENTA;
       PreElement ele = Document.get().createPreElement();
@@ -586,7 +586,19 @@ public class VirtualConsoleTests extends GWTTestCase
             AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
-   
+
+   public void testAnsiCodeFollowedByMoreTextSubmits()
+   {
+      int color = AnsiCode.ForeColorNum.RED;
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR, "someClazz");
+      vc.submit("Hello World", "someClazz");
+      String expected ="<span class=\"someClazz " + 
+            AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+    
    public void testAnsiComplexSequence1WithStripping()
    {
       int fgColor = AnsiCode.ForeColorNum.GREEN;
