@@ -92,6 +92,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
@@ -522,9 +523,7 @@ public class ObjectExplorerDataGrid
                "data-action", ACTION_EXTRACT);
          
          builder.append(extractTag);
-         builder.append(SafeHtmlUtil.createOpenTag("span",
-               "class", RES.dataGridStyle().verticalAlignHelper()));
-         builder.appendHtmlConstant("</span>");
+         appendVerticalAlignHelper(builder);
          builder.append(IMAGE_EXTRACT_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
@@ -538,9 +537,7 @@ public class ObjectExplorerDataGrid
                "data-action", ACTION_VIEW);
          
          builder.append(viewTag);
-         builder.append(SafeHtmlUtil.createOpenTag("span",
-               "class", RES.dataGridStyle().verticalAlignHelper()));
-         builder.appendHtmlConstant("</span>");
+         appendVerticalAlignHelper(builder);
          builder.append(IMAGE_VIEW_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
@@ -551,6 +548,12 @@ public class ObjectExplorerDataGrid
             "data.frame",
             "function"
       };
+   }
+   
+   private static void appendVerticalAlignHelper(SafeHtmlBuilder builder)
+   {
+      String html = "<span class='" + RES.dataGridStyle().verticalAlignHelper() + "'></span>";
+      builder.append(SafeHtmlUtils.fromTrustedString(html));
    }
    
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle,

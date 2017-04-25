@@ -57,6 +57,10 @@
 	cursor: pointer;
 }
 
+.openRowIcon img, .closeRowIcon img {
+	margin-top: 3px;
+}
+
 .objectTypeIcon {
 	width: 20px !important;
 	margin-top: 2px;
