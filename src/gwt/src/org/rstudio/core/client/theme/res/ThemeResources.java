@@ -186,6 +186,9 @@ public interface ThemeResources extends ClientBundle
 
    @Source("viewFunctionCode_2x.png")
    ImageResource viewFunctionCode2x();
+   
+   @Source("inspectObject_2x.png")
+   ImageResource inspectObject2x();
 
    @Source("inlineEditIcon_2x.png")
    DataResource inlineEditIcon2x();

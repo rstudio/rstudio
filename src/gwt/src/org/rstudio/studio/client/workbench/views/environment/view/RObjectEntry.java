@@ -73,7 +73,7 @@ public class RObjectEntry
    {
       String type = rObject.getType();
       
-      if (rObject.isData() || rObjectHasDataClass())
+      if (isTabular() || isHierarchical())
       {
          return Categories.Data;
       }
@@ -89,6 +89,23 @@ public class RObjectEntry
    public boolean isPromise()
    {
       return rObject.getType() == "promise";
+   }
+   
+   public boolean isTabular()
+   {
+      return rObject.isData() || rObjectHasDataClass();
+   }
+   
+   public boolean isHierarchical()
+   {
+      if (isTabular())
+         return false;
+      
+      JsArrayString classes = rObject.getClazz();
+      for (int i = 0, n = classes.length(); i < n; i++)
+         if (HIERARCHICAL_CLASSES.contains(classes.get(i)))
+            return true;
+      return false;
    }
    
    public String getDisplayValue()
@@ -111,16 +128,23 @@ public class RObjectEntry
    public static final String NO_VALUE = "NO_VALUE";
    
    private static final Set<String> DATA_CLASSES = new HashSet<String>();
+   private static final Set<String> HIERARCHICAL_CLASSES = new HashSet<String>();
+   
    static {
+      
       DATA_CLASSES.addAll(ListUtil.create(
             "matrix",
             "data.frame",
             "cast_df",
             "xts",
-            "DataFrame",
+            "DataFrame"
+      ));
+      
+      HIERARCHICAL_CLASSES.addAll(ListUtil.create(
             "list",
             "environment"
       ));
+      
    }
    
    RObject rObject;

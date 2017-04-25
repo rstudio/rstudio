@@ -125,7 +125,8 @@ public interface ThemeStyles extends CssResource
    String dialogMessage();
    String sessionAbendMessage();
    String applicationHeaderStrong();
-          
+   
+   String environmentHierarchicalCol();
    String environmentDataFrameCol();
    String environmentFunctionCol();
 

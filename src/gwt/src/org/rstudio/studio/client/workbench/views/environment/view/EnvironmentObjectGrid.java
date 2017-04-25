@@ -340,17 +340,29 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             if (col.getType() == ObjectGridColumn.COLUMN_VALUE)
             {
                className += " " + style_.valueColumn();
-               if (host_.enableClickableObjects() &&
-                   (rowValue.getCategory() == Categories.Data ||
-                    rowValue.getCategory() == Categories.Function))
+               boolean isClickable =
+                     host_.enableClickableObjects() &&
+                     rowValue.getCategory() != Categories.Value;
+               if (isClickable)
                {
-                  className += " " + style_.decoratedValueCol() +
-                               " " +
-                               (rowValue.getCategory() == Categories.Function ?
-                               ThemeStyles.INSTANCE.environmentFunctionCol () :
-                               ThemeStyles.INSTANCE.environmentDataFrameCol()) +
-                               "  " +
-                               ThemeStyles.INSTANCE.handCursor();
+                  className += " " + style_.decoratedValueCol();
+                  
+                  switch (rowValue.getCategory())
+                  {
+                  case Categories.Function:
+                     className += " " + ThemeStyles.INSTANCE.environmentFunctionCol();
+                     break;
+                  case Categories.Data:
+                     if (rowValue.isHierarchical())
+                        className += " " + ThemeStyles.INSTANCE.environmentHierarchicalCol();
+                     else
+                        className += " " + ThemeStyles.INSTANCE.environmentDataFrameCol();
+                     break;
+                  default:
+                        // no styling
+                  }
+                  
+                  className += " " + ThemeStyles.INSTANCE.handCursor();
                }
                if (rowValue.isPromise())
                {

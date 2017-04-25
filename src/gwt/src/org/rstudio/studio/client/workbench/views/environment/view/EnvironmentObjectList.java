@@ -294,8 +294,12 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       {
          TableCellBuilder nameCol = row.startTD();
          String styleName = style_.nameCol();
-         if (rowValue.getCategory() == Categories.Data &&
-             host_.enableClickableObjects())
+         
+         boolean isClickable =
+               host_.enableClickableObjects() &&
+               rowValue.getCategory() != Categories.Value;
+         
+         if (isClickable)
          {
             styleName += (" " + style_.clickableCol() + " " +
                           ThemeStyles.INSTANCE.handCursor());
@@ -318,6 +322,9 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
+         boolean isClickable =
+               host_.enableClickableObjects() &&
+               rowValue.getCategory() != RObjectEntry.Categories.Value;
          if ((!title.equals(RObjectEntry.NO_VALUE)) &&
              title != null)
          {
@@ -332,20 +339,26 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          {
             descriptionStyle += (" " + style_.unevaluatedPromise());
          }
-         else if ((rowValue.getCategory() == RObjectEntry.Categories.Data ||
-                   rowValue.getCategory() == RObjectEntry.Categories.Function)
-                   &&
-                host_.enableClickableObjects())
+         else if (isClickable)
          {
             descriptionStyle += (" " +
                                  style_.decoratedValueCol() + " " +
                                  style_.clickableCol() + " " + 
                                  ThemeStyles.INSTANCE.handCursor());
          }
+         
          if (rowValue.getCategory() == RObjectEntry.Categories.Data)
          {
-            descriptionStyle += (" " + 
-                                ThemeStyles.INSTANCE.environmentDataFrameCol());
+            if (rowValue.isHierarchical())
+            {
+               descriptionStyle += (" " + 
+                     ThemeStyles.INSTANCE.environmentHierarchicalCol());
+            }
+            else
+            {
+               descriptionStyle += (" " + 
+                     ThemeStyles.INSTANCE.environmentDataFrameCol());
+            }
          }
          else if (rowValue.getCategory() == RObjectEntry.Categories.Function)
          {

@@ -1233,6 +1233,14 @@ body.ubuntu_mono .searchBox {
    font-weight: bold;
 }
 
+@sprite td.environmentHierarchicalCol {
+   width: 32px;
+   height: 15px;
+   gwt-image: 'inspectObject2x';
+   background-position: right center;
+   background-size: 32px 15px;
+}
+
 @sprite td.environmentDataFrameCol {
    width: 32px;
    height: 15px;

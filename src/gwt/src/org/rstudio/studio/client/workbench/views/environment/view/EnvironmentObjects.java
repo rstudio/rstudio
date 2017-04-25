@@ -555,7 +555,7 @@ public class EnvironmentObjects extends ResizeComposite
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
-      Boolean[] leaders = { false, false, false };
+      Boolean[] leaders = { false, false, false, false };
       boolean foundFirstObject = false;
 
       for (int i = 0; i < objects.size(); i++)

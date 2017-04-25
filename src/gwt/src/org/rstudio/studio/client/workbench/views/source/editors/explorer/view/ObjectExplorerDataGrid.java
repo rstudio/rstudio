@@ -30,10 +30,10 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 
 /*
@@ -359,7 +359,6 @@ public class ObjectExplorerDataGrid
          
          addIndent(builder, data);
          addExpandIcon(builder, data);
-         addIcon(builder, data);
          addName(builder, data);
          
          builder.appendHtmlConstant("</tr>");
@@ -430,37 +429,6 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant("</td>");
          
          return true;
-      }
-      
-      private final void addIcon(SafeHtmlBuilder builder,
-                                 Data data)
-      {
-         JsVectorString classes = data.getObjectClass().cast();
-         
-         // determine appropriate icon
-         ImageResource resource = null;
-         if (data.isS4())
-            resource = CodeIcons.INSTANCE.clazz2x();
-         else if (classes.contains("function"))
-            resource = CodeIcons.INSTANCE.function2x();
-         else if (classes.contains("data.frame") ||
-                  classes.contains("matrix") ||
-                  classes.contains("array"))
-            resource = CodeIcons.INSTANCE.dataFrame2x();
-         else if (classes.contains("list"))
-            resource = CodeIcons.INSTANCE.clazz2x();
-         else if (classes.contains("R6"))
-            resource = CodeIcons.INSTANCE.clazz2x();
-         else if (classes.contains("environment"))
-            resource = CodeIcons.INSTANCE.environment2x();
-         else
-            resource = CodeIcons.INSTANCE.variable2x();
-         
-         // add it
-         ImageResource2x res2x = new ImageResource2x(resource);
-         builder.appendHtmlConstant("<td style='width: 20px;'><div>");
-         builder.append(res2x.getSafeHtml());
-         builder.appendHtmlConstant("</td></div>");
       }
       
       private final void addName(SafeHtmlBuilder builder,
@@ -1270,12 +1238,10 @@ public class ObjectExplorerDataGrid
    private static final Resources RES = GWT.create(Resources.class);
 
    private static final ImageResource2x IMAGE_RIGHT_ARROW = new ImageResource2x(
-         RES.rightArrow(),
-         RES.rightArrow2x());
+         EnvironmentResources.INSTANCE.expandIcon2x());
 
    private static final ImageResource2x IMAGE_DOWN_ARROW = new ImageResource2x(
-         RES.downArrow(),
-         RES.downArrow2x());
+         EnvironmentResources.INSTANCE.collapseIcon2x());
 
    private static final ImageResource2x IMAGE_EXTRACT_CODE = new ImageResource2x(
          RES.extractCode(),
