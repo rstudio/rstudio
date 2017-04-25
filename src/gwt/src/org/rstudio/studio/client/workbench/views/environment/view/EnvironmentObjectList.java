@@ -405,7 +405,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                     style_.categoryHeaderRow());
             TableCellBuilder objectHeader = leaderRow.startTD();
             objectHeader.colSpan(3)
-                    .className(style_.categoryHeaderText())
+                    .className(style_.categoryHeaderText() + " rstudio-themes-background")
                     .text(categoryTitle)
                     .endTD();
             leaderRow.endTR();

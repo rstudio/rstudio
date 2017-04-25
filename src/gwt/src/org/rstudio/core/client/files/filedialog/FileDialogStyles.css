@@ -2,6 +2,7 @@
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
+@external rstudio-themes-flat;
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -88,6 +89,9 @@
    overflow: hidden;
    background-color: #eeeff1;
    font-size: 11px;
+}
+.rstudio-themes-flat .breadcrumb {
+   background: none;
 }
 .breadcrumb, .breadcrumb table, .breadcrumb td {
    height: 20px;
