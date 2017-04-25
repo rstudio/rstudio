@@ -554,6 +554,9 @@ public class ObjectExplorerDataGrid
                "data-action", ACTION_EXTRACT);
          
          builder.append(extractTag);
+         builder.append(SafeHtmlUtil.createOpenTag("span",
+               "class", RES.dataGridStyle().verticalAlignHelper()));
+         builder.appendHtmlConstant("</span>");
          builder.append(IMAGE_EXTRACT_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
@@ -567,14 +570,14 @@ public class ObjectExplorerDataGrid
                "data-action", ACTION_VIEW);
          
          builder.append(viewTag);
+         builder.append(SafeHtmlUtil.createOpenTag("span",
+               "class", RES.dataGridStyle().verticalAlignHelper()));
+         builder.appendHtmlConstant("</span>");
          builder.append(IMAGE_VIEW_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
       
-      private static final String CLASS = StringUtil.join(new String[] {
-            RES.dataGridStyle().clickableIcon(),
-            RES.dataGridStyle().buttonIcon()
-      }, " ");
+      private static final String CLASS = RES.dataGridStyle().clickableIcon();      
       
       private static final String[] VIEWABLE_CLASSES = new String[] {
             "data.frame",
@@ -822,21 +825,28 @@ public class ObjectExplorerDataGrid
          
       // iterate through other table cells to compute width of
       // buttons available here
-      Element containingRowEl = DomUtils.findParentElement(valueDescEl, new ElementPredicate()
-      {
-         @Override
-         public boolean test(Element el)
-         {
-            return el.hasTagName("tr");
-         }
-      });
+      Element containingRowEl = DomUtils.findParentElement(
+            valueDescEl,
+            new ElementPredicate()
+            {
+               @Override
+               public boolean test(Element el)
+               {
+                  return el.hasTagName("tr");
+               }
+            });
       
       if (containingRowEl == null)
          return;
-         
+      
+      // TODO: do a better job of automatically computing these widths,
+      // rather than hard-coding them
       int buttonWidth = 0;
-      for (int i = 1, n = containingRowEl.getChildCount(); i < n; i++)
-         buttonWidth += 24;
+      int n = containingRowEl.getChildCount();
+      if (n == 2)
+         buttonWidth = 20;
+      else if (n == 3)
+         buttonWidth = 48;
 
       int totalWidth = getOffsetWidth();
       int remainingWidth =
@@ -1251,9 +1261,9 @@ public class ObjectExplorerDataGrid
       String closeRowIcon();
       String objectTypeIcon();
       String valueDesc();
-      String buttonIcon();
       String cellInnerTable();
       String virtual();
+      String verticalAlignHelper();
       String clickableIcon();
    }
    

@@ -1,12 +1,11 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 /* DataGrid styling / overrides */
+
 /* Avoid GWT's inset styling for selected cells */
 .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
 .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
-	border-top: 1px solid #FFF !important;
-	border-left: 1px solid #FFF !important;
-	border-right: 1px solid #FFF !important;
+	border: 0;
 }
 
 .dataGridKeyboardSelectedRowCell:first-child {
@@ -15,6 +14,12 @@
 
 .dataGridEvenRowCell:first-child, .dataGridOddRowCell:first-child {
 	border-left: 2px solid #FFF;
+}
+
+.dataGridEvenRowCell, .dataGridOddRowCell {
+	border: 0;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 .dataGridWidget > div {
@@ -31,7 +36,6 @@
 
 .dataGridCell {
 	font-family: inherit;
-	border-bottom: 1px solid #ddd !important;
 	max-width: 100%;
 }
 
@@ -62,35 +66,44 @@
 	
 }
 
-.buttonIcon {
-	width: 20px !important;
-	height: 20px !important;
-}
-
 .cellInnerTable {
 	table-layout: fixed;
 	width: 100%;
+}
+
+.cellInnerTable td {
+	padding: 0;
 }
 
 .virtual {
 	font-style: italic;
 }
 
+.verticalAlignHelper {
+	display: inline-block;
+	height: 100%;
+	vertical-align: middle;
+}
+
 .clickableIcon {
-	border: 1px solid white;
-	background-color: white;
+	text-align: center;
+	width: 22px !important;
+	height: 20px !important;
+}
+
+.clickableIcon img {
+	display: inline-block;
+	vertical-align: middle;
 }
 
 .clickableIcon:hover {
 	border-radius: 2px;
 	background-color: #efefef;
-	border: 1px solid #dfdfdf;
 	cursor: pointer;
 }
 
 .clickableIcon:active {
 	border-radius: 2px;
 	background-color: #e6e6e6;
-	border: 1px solid #d6d6d6;
 	cursor: pointer;
 }
