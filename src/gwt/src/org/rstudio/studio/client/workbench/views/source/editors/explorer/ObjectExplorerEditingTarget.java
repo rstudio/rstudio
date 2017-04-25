@@ -121,7 +121,10 @@ public class ObjectExplorerEditingTarget
    
    public void update(ObjectExplorerHandle handle)
    {
-      // TODO
+      if (isActive_)
+      {
+         // TODO
+      }
    }
    
    // Private methods ----

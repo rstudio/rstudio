@@ -19,7 +19,6 @@ import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
@@ -116,9 +115,7 @@ public class NewConnectionInstallPackagePage
       return null;
    }
 
-   private NewConnectionSnippetHost contents_;
    private NewConnectionInfo info_;
    private DependencyManager dependencyManager_;
-   private NewConnectionWizard wizard_;
    private ConnectionsPresenter connectionsPresenter_;
 }

@@ -337,6 +337,8 @@ public class ObjectExplorerDataGrid
       public boolean accept(T data);
    }
    
+   // Will be used soon!
+   @SuppressWarnings("unused")
    private static final int getParentLimit(Data data)
    {
       Data parent = data.getParentData();

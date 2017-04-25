@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -126,9 +125,6 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    
    private final CheckBox cbAttributes_;
    private final SearchWidget filterWidget_;
-   
-   // Injected ----
-   private ObjectExplorerServerOperations server_;
    
    // Resources, etc ----
    public interface Resources extends ClientBundle
