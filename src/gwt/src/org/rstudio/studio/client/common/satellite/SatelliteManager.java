@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -60,10 +61,12 @@ public class SatelliteManager implements CloseHandler<Window>
          Session session,
          EventBus events,
          Provider<SourceWindowManager> pSourceWindowManager,
-         Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler)
+         Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler,
+         Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;
       events_ = events;
+      pUIPrefs_ = pUIPrefs;
       pSourceWindowManager_ = pSourceWindowManager;
       pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
       initializeCommonCallbacks();
@@ -278,6 +281,7 @@ public class SatelliteManager implements CloseHandler<Window>
                 !satellite.getWindow().isClosed())
             {
                satellite.getWindow().focus();
+
                break;
             }
          }   
@@ -466,6 +470,11 @@ public class SatelliteManager implements CloseHandler<Window>
       JavaScriptObject params = satelliteParams_.get(name);
       if (params != null)
          callSetParams(satelliteWnd, params);
+
+      // set themes
+      if (pUIPrefs_.get().getUseFlatThemes().getGlobalValue()) {
+         satellite.getWindow().getDocument().getBody().addClassName("rstudio-themes-flat");
+      }
    }
    
    // called to register child windows (not necessarily full-fledged 
@@ -709,7 +718,8 @@ public class SatelliteManager implements CloseHandler<Window>
       private final String name_;
       private final WindowEx window_;
    }
-   
+ 
+   private final Provider<UIPrefs> pUIPrefs_;
 }
 
 
