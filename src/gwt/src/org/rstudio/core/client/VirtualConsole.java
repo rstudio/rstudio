@@ -40,6 +40,9 @@ import com.google.inject.Inject;
  */
 public class VirtualConsole
 {
+   // use preference to determine ANSI color behavior
+   private final static int ANSI_COLOR_UNSET = -1;
+
    // don't do any processing of ANSI escape codes
    public final static int ANSI_COLOR_OFF = 0;
    
@@ -51,12 +54,12 @@ public class VirtualConsole
   
    public VirtualConsole()
    {
-      this(null, ANSI_COLOR_ON);
+      this(null);
    }
    
    public VirtualConsole(Element parent)
    {
-      this(parent, ANSI_COLOR_ON);
+      this(parent, ANSI_COLOR_UNSET);
    }
 
    /**
@@ -71,6 +74,8 @@ public class VirtualConsole
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       parent_ = parent;
+      if (ansiColorMode == ANSI_COLOR_UNSET)
+         ansiColorMode = prefs_.consoleAnsiMode().getValue();
       ansiColorMode_ = ansiColorMode;
    }
     

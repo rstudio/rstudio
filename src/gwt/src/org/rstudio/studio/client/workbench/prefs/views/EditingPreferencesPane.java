@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -216,7 +217,24 @@ public class EditingPreferencesPane extends PreferencesPane
       NumericValueWidget limitLengthPref =
             numericPref("Limit length of lines displayed in console to:", prefs_.truncateLongLinesInConsoleHistory());
       limitLengthPref.setWidth("36px");
-      displayPanel.add(limitLengthPref);
+      displayPanel.add(nudgeRightPlus(limitLengthPref));
+
+      consoleColorMode_ = new SelectWidget(
+            "ANSI Escape Codes:",
+            new String[] {
+                  "Show ANSI colors",
+                  "Remove ANSI codes",
+                  "Ignore ANSI codes (1.0 behavior)"
+            },
+            new String[] {
+                  Integer.toString(VirtualConsole.ANSI_COLOR_ON), 
+                  Integer.toString(VirtualConsole.ANSI_COLOR_STRIP),
+                  Integer.toString(VirtualConsole.ANSI_COLOR_OFF)
+            },
+            false,
+            true,
+            false);
+      displayPanel.add(consoleColorMode_);
       
       VerticalPanel savePanel = new VerticalPanel();
       
@@ -463,6 +481,7 @@ public class EditingPreferencesPane extends PreferencesPane
       // editing prefs
       EditingPrefs editingPrefs = prefs.getEditingPrefs();
       lineEndings_.setIntValue(editingPrefs.getLineEndings());
+      consoleColorMode_.setValue(Integer.toString(prefs_.consoleAnsiMode().getValue()));
       
       showCompletions_.setValue(prefs_.codeComplete().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
@@ -485,6 +504,8 @@ public class EditingPreferencesPane extends PreferencesPane
       
       // editing prefs
       prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
+      prefs_.consoleAnsiMode().setGlobalValue(StringUtil.parseInt(
+            consoleColorMode_.getValue(), VirtualConsole.ANSI_COLOR_ON));
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
       
@@ -557,6 +578,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
+   private final SelectWidget consoleColorMode_;
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
    private final TextBoxWithButton encoding_;

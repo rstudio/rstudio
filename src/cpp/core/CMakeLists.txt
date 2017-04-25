@@ -118,6 +118,7 @@ set (CORE_SOURCE_FILES
    tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
    tex/TexSynctex.cpp
+   text/AnsiCodeParser.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp

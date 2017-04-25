@@ -1546,10 +1546,13 @@ int main (int argc, char * const argv[])
 
       // environment variables so child processes know of ANSI color
       // escape sequence support in console
-      if (options.defaultConsoleTerm().length() > 0)
-         core::system::setenv("TERM", options.defaultConsoleTerm());
-      if (options.defaultCliColorForce())
-         core::system::setenv("CLICOLOR_FORCE", "1");
+      if (userSettings().ansiConsoleMode() == core::text::AnsiColorOn)
+      {
+         if (options.defaultConsoleTerm().length() > 0)
+            core::system::setenv("TERM", options.defaultConsoleTerm());
+         if (options.defaultCliColorForce())
+            core::system::setenv("CLICOLOR_FORCE", "1");
+      }
 
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 

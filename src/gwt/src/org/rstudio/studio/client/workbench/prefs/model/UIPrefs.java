@@ -290,6 +290,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          truncateLongLinesInConsoleHistory().setGlobalValue(
                              newUiPrefs.truncateLongLinesInConsoleHistory().getGlobalValue());
          
+         // console handling of ANSI escape codes
+         consoleAnsiMode().setGlobalValue(
+               newUiPrefs.consoleAnsiMode().getGlobalValue());
+         
          // chunk toolbar
          showInlineToolbarForRCodeChunks().setGlobalValue(
                newUiPrefs.showInlineToolbarForRCodeChunks().getGlobalValue());
