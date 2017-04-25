@@ -62,7 +62,9 @@ public class VirtualConsole
    /**
     * VirtualConsole constructor
     * @param parent parent element
-    * @param showAnsiColors if true, apply visual styles for AnsiColor escape
+    * @param ansiColorMode ANSI_COLOR_OFF: don't process ANSI escapes,
+    * ANSI_COLOR_ON: translate ANSI escapes into css styles, ANSI_COLOR_STRIP:
+    * strip out ANSI escape sequences but don't apply styles
     * sequences, otherwise just strip them out
     */
    public VirtualConsole(Element parent, int ansiColorMode)
