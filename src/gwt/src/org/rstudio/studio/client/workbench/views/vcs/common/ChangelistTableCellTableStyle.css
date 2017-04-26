@@ -1,9 +1,12 @@
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
 @eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 span.status {
    white-space: nowrap;
@@ -26,6 +29,10 @@ span.status img:first-child {
    margin-bottom: 0;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .cellTableSortableHeader {
+   color: white;
+}
+
 .cellTableSortableHeader img {
    background-size: 7px 4px !important;
    background-position: 2px 1px !important;
@@ -46,12 +53,15 @@ span.status img:first-child {
 
 .rstudio-themes-flat.rstudio-themes-default .cellTableSortableHeader {
    background: THEME_DEFAULT_BACKGROUND;
+   border-color: THEME_DEFAULT_BORDER;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-grey .cellTableSortableHeader {
    background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
 }
 
 .rstudio-themes-flat.rstudio-themes-alternate .cellTableSortableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
+   border-color: THEME_ALTERNATE_BORDER;
 }
