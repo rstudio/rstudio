@@ -154,3 +154,22 @@
 
 .browse {
 }
+
+.rstudio-themes-flat .browse {
+   color: #000;
+   float: right;
+   padding-bottom: 5px;
+   padding-left: 5px;
+   padding-right: 5px;
+   border: none;
+   border-left: solid 1px #400909;
+   background: none;
+}
+
+.rstudio-themes-flat button.browse:focus {
+   outline:0;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .browse {
+   color: #FFF;
+}
