@@ -126,7 +126,8 @@ public class TerminalSession extends XTermWidget
 
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
-            getTitle(), getSequence(), new ServerRequestCallback<ConsoleProcess>()
+            getTitle(), uiPrefs_.terminalUseWebsockets().getValue(), 
+            getSequence(), new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)

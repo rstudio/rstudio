@@ -350,6 +350,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getAllowShell() /*-{
       return this.allow_shell;
    }-*/;
+
+   public final native boolean getAllowTerminalWebsockets() /*-{
+      return this.allow_terminal_websockets;
+   }-*/;
    
    public final native boolean getAllowFileDownloads() /*-{
       return this.allow_file_download;
