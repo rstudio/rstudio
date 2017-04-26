@@ -1001,7 +1001,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .secondaryToolbar {
-   background: none;
    border-bottom: solid 1px #d6dadc;
    height: 24px;
 }
@@ -1845,20 +1844,20 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat.rstudio-themes-default .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-default .toolbar,
 .rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat.rstudio-themes-default .secondaryToolbar {
    background: #F3F4F7;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-grey .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-dark-grey .toolbar,
 .rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat.rstudio-themes-dark-grey .secondaryToolbar {
    background: #4E5C68;
 }
 
 .rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar,
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar {
    background: #D2E4ED;
 }
