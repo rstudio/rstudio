@@ -989,6 +989,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    max-height: 19px;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .toolbarSeparator {
+   filter: invert(100%);
+   transform: scaleX(-1);
+}
+
 .toolbarFileLabel {
    margin-right: 7px;
    white-space: nowrap;
@@ -1886,7 +1891,8 @@ body.rstudio-themes-flat.rstudio-themes-default {
 .rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject  > div:last-child {
+.rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat.rstudio-themes-default .toolbar {
    border-color: THEME_DEFAULT_BORDER;
 }
 
@@ -1910,7 +1916,8 @@ body.rstudio-themes-flat.rstudio-themes-dark-grey {
 .rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child {
+.rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat.rstudio-themes-dark-grey .toolbar {
    border-color: THEME_DARKGREY_BORDER;
 }
 
@@ -1934,6 +1941,7 @@ body.rstudio-themes-flat.rstudio-themes-alternate {
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject  > div:last-child {
+.rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat.rstudio-themes-alternate .toolbar {
    border-color: THEME_DARKGREY_BORDER;
 }
