@@ -23,13 +23,13 @@ public class RStudioThemes
 {
    public static void initializeThemes(UIPrefs uiPrefs, Document document)
    {
-      if (uiPrefs.getUseFlatThemes().getGlobalValue()) {
-         document.getBody().removeClassName("rstudio-themes-flat");
-         document.getBody().removeClassName("rstudio-themes-dark");
-         document.getBody().removeClassName("rstudio-themes-default");
-         document.getBody().removeClassName("rstudio-themes-dark-grey");
-         document.getBody().removeClassName("rstudio-themes-alternate");
-         
+      document.getBody().removeClassName("rstudio-themes-flat");
+      document.getBody().removeClassName("rstudio-themes-dark");
+      document.getBody().removeClassName("rstudio-themes-default");
+      document.getBody().removeClassName("rstudio-themes-dark-grey");
+      document.getBody().removeClassName("rstudio-themes-alternate");
+      
+      if (uiPrefs.getUseFlatThemes().getGlobalValue()) {         
          String themeName = uiPrefs.getFlatTheme().getGlobalValue();
          document.getBody().addClassName("rstudio-themes-flat");
          if (themeName.contains("dark")) {
