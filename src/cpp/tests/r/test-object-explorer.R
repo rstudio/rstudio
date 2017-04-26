@@ -41,3 +41,6 @@ str(inspected)
 
 .rs.explorer.viewObject(rnorm)
 
+big <- as.list(1:1E4)
+context <- .rs.explorer.createContext(recursive = 1)
+.rs.explorer.inspectObject(big, context)

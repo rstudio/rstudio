@@ -77,12 +77,12 @@
 
 .rs.addFunction("objectAddress", function(object)
 {
-   .Call("rs_objectAddress", object)
+   .Call("rs_objectAddress", object, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("objectClass", function(object)
 {
-   .Call("rs_objectClass", object)
+   .Call("rs_objectClass", object, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("objectType", function(object)
@@ -97,7 +97,7 @@
 
 .rs.addFunction("objectAttributes", function(object)
 {
-   .Call("rs_objectAttributes", object)
+   .Call("rs_objectAttributes", object, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
