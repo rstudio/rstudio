@@ -58,6 +58,7 @@ import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -704,10 +705,7 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      if (uiPrefs_.get().getUseFlatThemes().getGlobalValue()) {
-        Document.get().getBody().addClassName("rstudio-themes-flat");
-        Document.get().getBody().addClassName("rstudio-themes-default");
-      }
+      RStudioThemes.initializeThemes(uiPrefs_.get(), Document.get());
 
       pAceThemes_.get();
 
