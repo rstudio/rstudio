@@ -1838,6 +1838,19 @@ body.ubuntu_mono .searchBox {
    background: #FFF;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .search {
+   border-color: rgb(45,60,75);
+   background: rgb(145,154,161);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .search input {
+   color: white;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .search input::placeholder {
+   color: #EEE;
+}
+
 .rstudio-themes-flat .search .left {
    display: none;
 }
