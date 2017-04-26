@@ -53,6 +53,11 @@ SEXP asEnvironment(std::string name);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
+
+// convert S4 environments to primitive environments
+core::Error asPrimitiveEnvironment(SEXP envirSEXP,
+                                   SEXP* pTargetSEXP,
+                                   Protect* pProtect);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable ;
@@ -92,6 +97,7 @@ bool isDataFrame(SEXP object);
 bool isNull(SEXP object);
 bool isEnvironment(SEXP object);
 bool isPrimitiveEnvironment(SEXP object);
+bool isAtomic(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);

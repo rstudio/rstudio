@@ -15,6 +15,9 @@
 
 #include <core/StringUtils.hpp>
 
+#include <cstdarg>
+#include <cstdio>
+
 #include <algorithm>
 #include <map>
 #include <ostream>
@@ -679,6 +682,27 @@ std::string makeRandomByteString(std::size_t n)
    for (std::size_t i = 0; i < n; ++i)
       result[i] = (unsigned char) (::rand() % UCHAR_MAX);
    return result;
+}
+
+std::string format(const char* fmt, ...)
+{
+   std::va_list args;
+   
+   // determine buffer size
+   va_start(args, fmt);
+   int size = std::vsnprintf(NULL, 0, fmt, args);
+   va_end(args);
+   
+   // create buffer
+   std::vector<char> buffer(size + 1);
+   
+   // write to buffer
+   va_start(args, fmt);
+   std::vsnprintf(&buffer[0], size + 1, fmt, args);
+   va_end(args);
+
+   // return as string
+   return std::string(buffer.begin(), buffer.begin() + size);
 }
 
 } // namespace string_utils

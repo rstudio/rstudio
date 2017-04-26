@@ -16,7 +16,9 @@
 #ifndef CORE_STRING_UTILS_HPP
 #define CORE_STRING_UTILS_HPP
 
+#include <cstdio>
 #include <string>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
@@ -283,6 +285,8 @@ inline std::wstring trimWhitespace(const std::wstring& string)
 }
 
 std::string makeRandomByteString(std::size_t n);
+
+std::string format(const char* fmt, ...);
 
 } // namespace string_utils
 } // namespace core 

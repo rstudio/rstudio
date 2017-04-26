@@ -20,9 +20,11 @@ object <- list(
 )
 
 # debug(.rs.rpc.explorer_inspect_object)
-context <- .rs.explorer.createContext(recursive = 1)
+context <- .rs.explorer.createContext(recursive = 1L)
 i <- .rs.explorer.inspectObject(object, context)
 .rs.explorer.viewObject(object)
+
+.rs.explorer.inspectObject(object, context)
 
 library(xml2)
 doc <- read_xml("<root id='1'><child id ='a' /><child id='b' d='b'/></root>")
@@ -43,4 +45,12 @@ str(inspected)
 
 big <- as.list(1:1E4)
 context <- .rs.explorer.createContext(recursive = 1)
-.rs.explorer.inspectObject(big, context)
+profvis::profvis(
+   inspection <- .rs.explorer.inspectObject(big, context)
+)
+
+microbenchmark::microbenchmark(
+   .rs.objectClass(1),
+   .rs.objectAddress(1),
+   class(1)
+)

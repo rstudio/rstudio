@@ -304,8 +304,6 @@ void listEnvironment(SEXP env,
    }
 }
 
-namespace {
-
 Error asPrimitiveEnvironment(SEXP envirSEXP,
                              SEXP* pTargetSEXP,
                              Protect* pProtect)
@@ -340,6 +338,8 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
    // we have a primitive environment; all is well
    return Success();
 }
+
+namespace {
 
 bool hasActiveBindingImpl(const std::string& name,
                           SEXP envirSEXP,
@@ -564,6 +564,23 @@ bool isNull(SEXP object)
 bool isPrimitiveEnvironment(SEXP object)
 {
    return TYPEOF(object) == ENVSXP;
+}
+
+bool isAtomic(SEXP object)
+{
+   switch (TYPEOF(object))
+   {
+   case CHARSXP:
+   case LGLSXP:
+   case INTSXP:
+   case REALSXP:
+   case CPLXSXP:
+   case STRSXP:
+   case RAWSXP:
+      return true;
+   default:
+      return false;
+   }
 }
 
 bool isEnvironment(SEXP object)

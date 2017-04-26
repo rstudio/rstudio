@@ -15,6 +15,8 @@
 
 #include <tests/TestThat.hpp>
 
+#include <iostream>
+
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
@@ -54,6 +56,14 @@ context("isSubsequence")
       expect_true(trimWhitespace(string) == "abc");
       expect_true(trimWhitespace("abc") == "abc");
       expect_true(trimWhitespace("") == "");
+   }
+   
+   test_that("format works")
+   {
+      const char* fmt = "My favorite day is %s and my favorite number is %i.";
+      std::string formatted = format(fmt, "Tuesday", 42);
+      std::string expected = "My favorite day is Tuesday and my favorite number is 42.";
+      expect_true(formatted == expected);
    }
 }
 
