@@ -21,6 +21,11 @@
 # will produce an RPM of RStudio Desktop from the 64bit CentOS 7 container, 
 # with build version 1.2.345, in your package/linux/ directory.
 #
+# For convenience, this script will build the required image if it doesn't
+# exist, but for efficiency, this script does not attempt rebuild the image if
+# it's already built. If you're iterating on the Dockerfiles themselves, you'll
+# want to use "docker build" directly until you're happy with the
+# configuration, then use this script to test a build under the new config.
 
 # friendly names for arguments
 IMAGE=$1
@@ -70,5 +75,5 @@ if [ -n "$VERSION" ]; then
 fi
 
 # run compile step
-docker run -v $(pwd):/src --user jenkins $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && ./make-$FLAVOR-package $PACKAGE"
+docker run -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && ./make-$FLAVOR-package $PACKAGE"
 
