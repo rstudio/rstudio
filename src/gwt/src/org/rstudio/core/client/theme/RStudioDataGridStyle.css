@@ -203,24 +203,15 @@
 
 .rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
    background: THEME_DEFAULT_BACKGROUND;
-}
-
-.rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
-   background: THEME_DARKGREY_BACKGROUND;
-}
-
-.rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
-   background: THEME_ALTERNATE_BACKGROUND;
-}
-
-.rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
    border-color: THEME_DEFAULT_BORDER;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
+   background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
 .rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
+   background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }
