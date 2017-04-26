@@ -20,10 +20,10 @@ def resolve_deps(type, arch) {
   def linux_bin = (arch=='i386') ? 'linux32' : '' // only required in centos-land.
   switch ( type ) {
       case "DEB":
-        sh "cd dependencies/linux && ./install-dependencies-debian && cd ../.."
+        sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
         break
       case "RPM":
-        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum && cd ../.."
+        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
         break
   }
 }
@@ -101,8 +101,9 @@ try {
           //[os: 'centos5', arch: 'x86_64', flavor: 'server'],
           //[os: 'centos5', arch: 'i386', flavor: 'server'],
           [os: 'centos7', arch: 'x86_64', flavor: 'desktop'],
-          [os: 'centos7', arch: 'i386', flavor: 'desktop']
-
+          [os: 'centos7', arch: 'i386', flavor: 'desktop'],
+          [os: 'xenial', arch: 'x86_64', flavor: 'server'],
+          [os: 'xenial', arch: 'i386', flavor: 'server']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]

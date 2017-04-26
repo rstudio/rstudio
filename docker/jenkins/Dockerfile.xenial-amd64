@@ -1,4 +1,4 @@
-FROM ubuntu:precise
+FROM ubuntu:xenial
 
 ARG AWS_REGION=us-east-1
 
@@ -7,7 +7,7 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/' >> /etc/apt/sources.list \
+    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu xenial/' >> /etc/apt/sources.list \
     && apt-get update
 
 RUN apt-get update \
@@ -21,14 +21,14 @@ RUN apt-get update \
     libapparmor1 \
     libbz2-dev \
     libgl1-mesa-dev \
-    libgstreamer-plugins-base0.10-0 \
-    libgstreamer0.10-0 \
+    libgstreamer-plugins-base1.0-0 \
+    libgstreamer1.0-0 \
     libjpeg62 \
     libpam-dev \
     libpango1.0-dev \
     libssl-dev \
     libxslt1-dev \
-    openjdk-7-jdk \
+    openjdk-8-jdk \
     pkg-config \
     r-base \
     sudo \
@@ -37,9 +37,6 @@ RUN apt-get update \
     wget \
     zlib1g-dev
 
-# precise defaults to java6, swap to java7
-RUN update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
-
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
 COPY dependencies/common/install-boost /tmp/
@@ -47,7 +44,7 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 
 # install cmake
 COPY package/linux/install-dependencies /tmp/
-RUN bash /tmp/install-dependencies
+RUN /bin/bash /tmp/install-dependencies
 
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
