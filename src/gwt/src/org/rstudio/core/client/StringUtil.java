@@ -83,7 +83,20 @@ public class StringUtil
       else 
          return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
    }
-   
+
+   // Return current time as a timestamp (yyyy/m/d hh:mm:ss)
+   public static native String getTimestamp() /*-{
+      var now = new Date();
+      var date = [ now.getFullYear(), now.getMonth() + 1, now.getDate() ];
+      var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
+      for (var i = 1; i < 3; i++ ) {
+         if (time[i] < 10) {
+            time[i] = "0" + time[i];
+         }
+      }
+      return date.join("/") + " " + time.join(":");
+   }-*/;
+    
    // Given a raw size, convert it to a human-readable value 
    // (e.g. 11580 -> "11.3 KB"). Note that this routine must generally avoid
    // implicit casts and use only ints; GWT's JavaScript compiler will truncate

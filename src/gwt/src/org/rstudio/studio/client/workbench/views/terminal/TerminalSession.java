@@ -123,6 +123,8 @@ public class TerminalSession extends XTermWidget
 
       connecting_ = true;
       setNewTerminal(getHandle() == null);
+      
+      socket_.resetDiagnostics();
 
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
@@ -427,6 +429,14 @@ public class TerminalSession extends XTermWidget
       server_.processEraseBuffer(getHandle(), new SimpleRequestCallback<Void>());
    }
 
+   /**
+    * Show modal dialog with information about this terminal session.
+    */
+   public void showTerminalInfo()
+   {
+      new TerminalInfoDialog(this, socket_).showModal();
+   }
+   
    private int getInteractionMode()
    {
       if (consoleProcess_ != null)

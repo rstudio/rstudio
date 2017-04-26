@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.LinkedList;
 
 import org.rstudio.core.client.AnsiCode;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringSink;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -132,11 +132,10 @@ public class TerminalLocalEcho
          // didn't match previously echoed text; delete local-input
          // queue so we don't get too far out of sync and write text as-is
          
-         // TODO (gary) temporary diagnostics to help isolate some cases
-         // where local-echo is still not matching as expected 
-         Debug.log("LocalEcho Match Failure: received '" + 
-               AnsiCode.prettyPrint(outputToMatch) + "' had: '" + 
-               AnsiCode.prettyPrint(lastOutput) + "'");
+         // diagnostics to help isolate cases where local-echo is 
+         // not matching as expected 
+         diagnostic("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
+               "' Had: '" + AnsiCode.prettyPrint(lastOutput) + "'");
          
          localEcho_.clear();
          writer_.write(outputToMatch);
@@ -171,13 +170,38 @@ public class TerminalLocalEcho
       }
    }
    
+   private void diagnostic(String msg)
+   {
+      if (diagnostic_ == null)
+         diagnostic_ = new StringBuilder();
+     
+      diagnostic_.append(StringUtil.getTimestamp());
+      diagnostic_.append(": ");
+      diagnostic_.append(msg);
+      diagnostic_.append("\n");
+   }
+
+   public String getDiagnostics()
+   {
+      if (diagnostic_ == null || diagnostic_.length() == 0)
+         return("<none>\n");
+      else
+         return diagnostic_.toString();
+   }
+
+   public void resetDiagnostics()
+   {
+      diagnostic_ = null;
+   }
+   
   // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
    private static final Pattern ANSI_CTRL_PATTERN =
          Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\n\r\177\7]" + ")");
 
    // Pause local-echo until this time
    private long stopEchoPause_;
-
+   private StringBuilder diagnostic_;
+   
    private final StringSink writer_;
    private LinkedList<String> localEcho_ = new LinkedList<String>();
 }

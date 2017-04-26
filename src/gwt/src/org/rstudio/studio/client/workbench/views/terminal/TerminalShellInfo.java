@@ -33,6 +33,8 @@ public class TerminalShellInfo extends JavaScriptObject
    public static final int SHELL_PS32 = 5; // Powershell
    public static final int SHELL_PS64 = 6;
    // -- End Windows-only	
+   
+   public static final int SHELL_POSIX_BASH = 7;
 
    protected TerminalShellInfo() {}
 
@@ -42,5 +44,31 @@ public class TerminalShellInfo extends JavaScriptObject
 
    public final native String getShellName() /*-{
       return this.name;
-   }-*/;   
+   }-*/; 
+   
+   public static String getShellName(int shell)
+   {
+      switch (shell)
+      {
+      case SHELL_DEFAULT:
+         return "Default";
+      case SHELL_GITBASH:
+         return "Git Bash";
+      case SHELL_WSLBASH:
+         return "WSL";
+      case SHELL_CMD32:
+         return "Command Prompt (32-bit)";
+      case SHELL_CMD64:
+         return "Command Prompt (64-bit)";
+      case SHELL_PS32:
+         return "PowerShell (32-bit)";
+      case SHELL_PS64:
+         return "PowerShell (64-bit)";
+      case SHELL_POSIX_BASH:
+         return "Bash";
+      default:
+         return "Unknown";
+      }
+   }
+   
 }

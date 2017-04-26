@@ -391,6 +391,7 @@ public abstract class
    public abstract AppCommand clearTerminalScrollbackBuffer();
    public abstract AppCommand previousTerminal();
    public abstract AppCommand nextTerminal();
+   public abstract AppCommand showTerminalInfo();
     
    // Help
    public abstract AppCommand helpBack();

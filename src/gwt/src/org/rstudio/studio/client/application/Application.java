@@ -974,6 +974,7 @@ public class Application implements ApplicationEventHandlers
       commands_.clearTerminalScrollbackBuffer().remove();
       commands_.previousTerminal().remove();
       commands_.nextTerminal().remove();
+      commands_.showTerminalInfo().remove();
    }
 
    private final ApplicationView view_ ;
