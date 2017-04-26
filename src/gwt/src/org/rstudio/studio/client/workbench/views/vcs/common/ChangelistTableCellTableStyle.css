@@ -1,3 +1,10 @@
+@external rstudio-themes-flat;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
+
 span.status {
    white-space: nowrap;
 }
@@ -26,4 +33,25 @@ span.status img:first-child {
 
 .cellTableSortableHeader > div {
    padding-left: 13px !important;
+}
+
+.rstudio-themes-flat .cellTableSortableHeader {
+   border-top: none;
+   border-left: none;
+}
+
+.rstudio-themes-flat .cellTableSortableHeader:last-child {
+   border-right: none;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .cellTableSortableHeader {
+   background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .cellTableSortableHeader {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .cellTableSortableHeader {
+   background: THEME_ALTERNATE_BACKGROUND;
 }
