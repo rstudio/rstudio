@@ -20,10 +20,10 @@ def resolve_deps(type, arch) {
   def linux_bin = (arch=='i386') ? 'linux32' : '' // only required in centos-land.
   switch ( type ) {
       case "DEB":
-        sh "cd dependencies/linux && ./install-dependencies-debian && cd ../.."
+        sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
         break
       case "RPM":
-        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum && cd ../.."
+        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
         break
   }
 }
