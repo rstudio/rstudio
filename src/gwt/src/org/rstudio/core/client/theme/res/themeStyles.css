@@ -733,6 +733,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-right: 10px;
    white-space: nowrap;
 }
+
 .title, .subtitle {
    display: inline;
    color: black;
@@ -741,6 +742,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    text-shadow: white 0px 1px 0px;
    cursor: default;
 }
+
+.rstudio-themes-dark .title,
+.rstudio-themes-dark .subtitle {
+   color: white;
+   text-shadow: none;
+   font-weight: 400;
+}
+
 .subtitle {
    color: #999;
    margin-left: 6px;
