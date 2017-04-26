@@ -873,6 +873,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background-color: white;
    cursor: default;
 }
+
+.rstudio-themes-flat.rstudio-themes-dark .moduleTabPanel,
+.rstudio-themes-flat.rstudio-themes-dark .moduleTabPanel button {
+   color: white;
+}
+
 .moduleTabPanel .gwt-TabLayoutPanelTab {
    font-size: 11px;
    background: inherit;
@@ -900,6 +906,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    font-weight: bold;
    padding-top: 4px;
 }
+
+.rstudio-themes-flat.rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+   font-weight: 400;
+}
+
 .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutLeft {
    height: 24px;
    width: 6px;
