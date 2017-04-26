@@ -144,10 +144,6 @@ body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
 }
 
-body.rstudio-themes-flat {
-   background: rgb(247, 247, 247);
-}
-
 body {
    font-family: proportionalFont;
    font-size: 12px;
@@ -1875,6 +1871,10 @@ body.ubuntu_mono .searchBox {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
+body.rstudio-themes-flat.rstudio-themes-default {
+   background: rgb(247, 247, 247);
+}
+
 .rstudio-themes-flat.rstudio-themes-dark-grey .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-dark-grey .toolbar,
 .rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
@@ -1882,9 +1882,17 @@ body.ubuntu_mono .searchBox {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
+body.rstudio-themes-flat.rstudio-themes-dark-grey {
+   background: rgb(50, 76, 99);
+}
+
 .rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar,
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar {
    background: THEME_ALTERNATE_BACKGROUND;
+}
+
+body.rstudio-themes-flat.rstudio-themes-alternate {
+   background: rgb(162, 197, 215);
 }
