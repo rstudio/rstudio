@@ -1,4 +1,4 @@
-FROM ioft/i386-ubuntu:i386
+FROM ioft/i386-ubuntu:xenial
 
 ARG AWS_REGION=us-east-1
 
