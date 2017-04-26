@@ -24,8 +24,18 @@ public class RStudioThemes
    public static void initializeThemes(UIPrefs uiPrefs, Document document)
    {
       if (uiPrefs.getUseFlatThemes().getGlobalValue()) {
+         document.getBody().removeClassName("rstudio-themes-flat");
+         document.getBody().removeClassName("rstudio-themes-dark");
+         document.getBody().removeClassName("rstudio-themes-default");
+         document.getBody().removeClassName("rstudio-themes-dark-grey");
+         document.getBody().removeClassName("rstudio-themes-alternate");
+         
+         String themeName = uiPrefs.getFlatTheme().getGlobalValue();
          document.getBody().addClassName("rstudio-themes-flat");
-         document.getBody().addClassName("rstudio-themes-default");
+         if (themeName.contains("dark")) {
+            document.getBody().addClassName("rstudio-themes-dark");
+         }
+         document.getBody().addClassName("rstudio-themes-" + themeName);
       }
    }
 }

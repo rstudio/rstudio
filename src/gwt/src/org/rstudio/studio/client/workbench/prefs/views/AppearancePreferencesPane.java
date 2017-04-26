@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -159,17 +161,18 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
-      flatTheme_ = new CheckBox("Flat Themes", false);
-      flatTheme_.setValue(uiPrefs_.getUseFlatThemes().getGlobalValue());
-
-      flatTheme_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      flatTheme_ = new SelectWidget("Global theme:",
+                                new String[]{"Classic", "Flat", "Dark", "Alternate"},
+                                new String[]{"classic", "default", "dark-grey", "alternate"},
+                                false);
+      flatTheme_.addStyleName(res.styles().themeChooser());
+      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
       {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> arg0)
+         public void onChange(ChangeEvent event)
          {
-            uiPrefs_.getUseFlatThemes().setGlobalValue(flatTheme_.getValue());
          }
       });
+      flatTheme_.setValue(uiPrefs_.getFlatTheme().getGlobalValue());
 
       leftPanel.add(flatTheme_);
 
@@ -241,6 +244,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
+      uiPrefs_.getUseFlatThemes().setGlobalValue(flatTheme_.getValue() != "classic");
+      uiPrefs_.getFlatTheme().setGlobalValue(flatTheme_.getValue());
+      
+      RStudioThemes.initializeThemes(uiPrefs_, Document.get());
+
       return restartRequired;
    }
 
@@ -259,7 +267,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
-   private CheckBox flatTheme_;
+   private SelectWidget flatTheme_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
