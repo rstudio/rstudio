@@ -1,3 +1,10 @@
+@external rstudio-themes-flat;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
+
 .dataGridFirstColumn
 {
 	text-align: center;
@@ -17,4 +24,16 @@
 .packageNotApplicableColumn
 {
 	color: #b0b0b0;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
+   background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
+   background: THEME_ALTERNATE_BACKGROUND;
 }
