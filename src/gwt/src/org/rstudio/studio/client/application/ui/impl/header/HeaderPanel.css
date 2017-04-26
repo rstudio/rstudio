@@ -1,4 +1,9 @@
 @external rstudio-themes-flat;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 .panel {
    width: 100%;
@@ -37,4 +42,16 @@
 
 .rstudio-themes-flat .right {
    display: none;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .center {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .center {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .center {
+   border-color: THEME_ALTERNATE_BORDER;
 }

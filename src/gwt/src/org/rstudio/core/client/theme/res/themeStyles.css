@@ -46,6 +46,9 @@
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
 @eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -562,6 +565,7 @@ pre {
 .rstudio-themes-flat.rstudio-themes-dark .mainMenu .gwt-MenuItem {
    text-shadow: 0px 1px 0px #000;
    color: #FFF;
+   font-weight: 400;
 }
 
 .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
@@ -1862,7 +1866,7 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
-/* rstudio-themes-flat background */
+/* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat.rstudio-themes-default .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-default .toolbar,
@@ -1875,6 +1879,19 @@ body.rstudio-themes-flat.rstudio-themes-default {
    background: rgb(247, 247, 247);
 }
 
+.rstudio-themes-flat.rstudio-themes-default .gwt-DialogBox .dialogTopCenter,
+.rstudio-themes-flat.rstudio-themes-default table.header > tbody > tr > td,
+.rstudio-themes-flat.rstudio-themes-default .windowFrameObject > div:last-child,
+.rstudio-themes-flat.rstudio-themes-default .secondaryToolbar,
+.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
+.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject  > div:last-child {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+/* RSTUDIO DARK GREY THEME */
+
 .rstudio-themes-flat.rstudio-themes-dark-grey .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-dark-grey .toolbar,
 .rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
@@ -1886,13 +1903,37 @@ body.rstudio-themes-flat.rstudio-themes-dark-grey {
    background: rgb(50, 76, 99);
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-DialogBox .dialogTopCenter,
+.rstudio-themes-flat.rstudio-themes-dark-grey table.header > tbody > tr > td,
+.rstudio-themes-flat.rstudio-themes-dark-grey .windowFrameObject > div:last-child,
+.rstudio-themes-flat.rstudio-themes-dark-grey .secondaryToolbar,
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+/* RSTUDIO ALTERNATE THEME */
+
 .rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar,
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar {
+.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar,
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
 body.rstudio-themes-flat.rstudio-themes-alternate {
    background: rgb(162, 197, 215);
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-DialogBox .dialogTopCenter,
+.rstudio-themes-flat.rstudio-themes-alternate table.header > tbody > tr > td,
+.rstudio-themes-flat.rstudio-themes-alternate .windowFrameObject > div:last-child,
+.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar,
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject  > div:last-child {
+   border-color: THEME_DARKGREY_BORDER;
 }

@@ -30,4 +30,19 @@ public class ThemeColors
    {
       return "#D2E4ED";
    }
+
+   public static String getDefaultBorder()
+   {
+      return "#D6DADC";
+   }
+
+   public static String getDarkGreyBorder()
+   {
+      return "rgb(12,31,48)";
+   }
+
+   public static String getAlternateBorder()
+   {
+      return "rgb(162,197,215)";
+   }
 }
