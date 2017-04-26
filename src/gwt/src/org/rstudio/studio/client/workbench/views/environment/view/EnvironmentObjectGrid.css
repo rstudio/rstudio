@@ -29,7 +29,9 @@ th.objectGridHeader
 .rstudio-themes-flat th.objectGridHeader {
    border-top: none;
    border-left: none;
-   height: 16px;
+   padding: 0px;
+   padding-left: 2px;
+   padding-right: 2px;
 }
 
 .rstudio-themes-flat th.objectGridHeader:last-child {
