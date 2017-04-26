@@ -19,6 +19,7 @@ import java.util.LinkedList;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -193,7 +194,7 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         diagnostic("Connect with RPC");
+         diagnostic("Connected with RPC");
          callback.onConnected();
          break;
          
@@ -226,13 +227,14 @@ public class TerminalSessionSocket
             }
          }
 
-         diagnostic("Try to connect to " + url);
+         diagnostic("Connect WebSocket: '" + url + "'");
          socket_ = new Websocket(url);
          socket_.addListener(new WebsocketListenerExt() 
          {
             @Override
             public void onClose(CloseEvent event)
             {
+               diagnostic("WebSocket closed");
                socket_ = null;
             }
 
@@ -245,15 +247,14 @@ public class TerminalSessionSocket
             @Override
             public void onOpen()
             {
-               diagnostic("Websocket connected: " +
-                     consoleProcess_.getProcessInfo().getHandle());
+               diagnostic("WebSocket connected");
                callback.onConnected();
             }
 
             @Override
             public void onError()
             {
-               diagnostic("Websocket connect error, switching to rpc");
+               diagnostic("WebSocket connect error, switching to RPC");
                socket_ = null;
                
                // Unable to connect client to server via websocket; let server
@@ -263,13 +264,14 @@ public class TerminalSessionSocket
                   @Override
                   public void onResponseReceived(Void response)
                   {
+                     diagnostic("Switched to RPC");
                      callback.onConnected();
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
-                     callback.onError("Unable to switch back to Rpc mode");
+                     callback.onError("Unable to switch back to RPC mode");
                   }
                });
                return;
@@ -381,15 +383,40 @@ public class TerminalSessionSocket
 
    public void disconnect()
    {
+      diagnostic("Disconnected");
       socket_.close();
       socket_ = null;
       registrations_.removeHandler();
    }
    
+   public void resetDiagnostics()
+   {
+      diagnostic_ = null;
+      localEcho_.resetDiagnostics();
+   }
+   
+   public String getConnectionDiagnostics()
+   {
+      if (diagnostic_ == null || diagnostic_.length() == 0)
+         return("<none>\n");
+      else
+         return diagnostic_.toString();
+   }
+   
+   public String getLocalEchoDiagnostics()
+   {
+      return localEcho_.getDiagnostics();
+   }
+   
    private void diagnostic(String msg)
    {
-      if (reportTypingLag_)
-         xterm_.writeln(msg);
+      if (diagnostic_ == null)
+         diagnostic_ = new StringBuilder();
+     
+      diagnostic_.append(StringUtil.getTimestamp());
+      diagnostic_.append(": ");
+      diagnostic_.append(msg);
+      diagnostic_.append("\n");
    }
  
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -401,7 +428,8 @@ public class TerminalSessionSocket
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
    private TerminalLocalEcho localEcho_;
-
+   private StringBuilder diagnostic_;
+   
    // RegEx to match common password prompts
    private static final String PASSWORD_REGEX = 
          "(?:password:)|(?:passphrase:)";

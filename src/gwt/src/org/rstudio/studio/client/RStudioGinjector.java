@@ -120,6 +120,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalInfoDialog;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
@@ -228,6 +229,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewConnectionInstallPackagePage newConnectionInstallPackagePage);
    void injectMembers(ObjectExplorerEditingTargetWidget widget);
    void injectMembers(ObjectExplorerDataGrid widget);
+   void injectMembers(TerminalInfoDialog infoDialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

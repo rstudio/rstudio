@@ -118,6 +118,7 @@ public class TerminalPane extends WorkbenchPane
       commands_.renameTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
+      commands_.showTerminalInfo().setEnabled(false);
 
       return toolbar;
    }
@@ -353,6 +354,18 @@ public class TerminalPane extends WorkbenchPane
       activeTerminalToolbarButton_.nextTerminal();
    }
 
+   @Override
+   public void showTerminalInfo()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+
+      visibleTerminal.showTerminalInfo();
+   }
+   
    /**
     * Rename the currently visible terminal (client-side only).
     * 

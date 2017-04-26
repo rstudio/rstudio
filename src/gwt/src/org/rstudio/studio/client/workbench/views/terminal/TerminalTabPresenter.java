@@ -81,6 +81,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void clearTerminalScrollbackBuffer();
       void previousTerminal();
       void nextTerminal();
+      void showTerminalInfo();
    }
 
    @Inject
@@ -137,6 +138,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onNextTerminal()
    {
       view_.nextTerminal();
+   }
+
+   @Handler
+   public void onShowTerminalInfo()
+   {
+      view_.showTerminalInfo();
    }
 
    public void initialize()

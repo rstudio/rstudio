@@ -434,12 +434,13 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTerminal"/>
             <separator/>
             <cmd refid="renameTerminal"/>
-            <cmd refid="clearTerminalScrollbackBuffer"/>
+            <cmd refid="showTerminalInfo"/>
             <separator/>
             <cmd refid="activateTerminal"/>
             <cmd refid="previousTerminal"/>
             <cmd refid="nextTerminal"/>
             <separator/>
+            <cmd refid="clearTerminalScrollbackBuffer"/>
             <cmd refid="closeTerminal"/>
           </menu>
          <menu label="Addins">
@@ -2496,6 +2497,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="_Next Terminal"
         desc="Show next terminal"/>
+
+   <cmd id="showTerminalInfo"
+        label="Terminal Diagnostics..."
+        buttonLabel=""
+        menuLabel="Terminal _Diagnostics..."
+        desc="Show Info on Current Terminal"/>
  
    <cmd id="addinsMru0" visible="false" rebindable="false"/>
    <cmd id="addinsMru1" visible="false" rebindable="false"/>
