@@ -1997,7 +1997,7 @@ body.rstudio-themes-flat.rstudio-themes-alternate {
 .rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar {
-   border-color: THEME_DARKGREY_BORDER;
+   border-color: THEME_ALTERNATE_BORDER;
 }
 
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
