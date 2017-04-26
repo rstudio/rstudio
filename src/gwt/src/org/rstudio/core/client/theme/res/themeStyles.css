@@ -1981,7 +1981,7 @@ body.rstudio-themes-flat.rstudio-themes-dark-grey {
 .rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar,
 .rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar,
+.rstudio-themes-flat.rstudio-themes-alternate .secondaryToolbar {
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
