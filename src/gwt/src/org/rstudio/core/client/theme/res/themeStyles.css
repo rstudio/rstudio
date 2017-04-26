@@ -874,11 +874,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    cursor: default;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .moduleTabPanel,
-.rstudio-themes-flat.rstudio-themes-dark .moduleTabPanel button {
-   color: white;
-}
-
 .moduleTabPanel .gwt-TabLayoutPanelTab {
    font-size: 11px;
    background: inherit;
@@ -1003,6 +998,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .toolbarSeparator {
    margin-right: 5px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .toolbar,
+.rstudio-themes-flat.rstudio-themes-dark .toolbar button {
+   color: white;
 }
 
 .rstudio-themes-flat .toolbarSeparator {
@@ -1675,6 +1675,10 @@ body.ubuntu_mono .searchBox {
    padding-left: 9px;
    padding-right: 9px;
    margin-left: -1px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter {
+   color: white;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td,
