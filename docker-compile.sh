@@ -28,10 +28,10 @@ REPO=$(basename $(pwd))
 # check to see if there's already a built image
 IMAGEID=`docker images $REPO:$IMAGE --format "{{.ID}}"`
 if [ -z "$IMAGEID" ]; then
-    echo "No image found for $REPO:$IMAGE; building..."
+    echo "No image found for $REPO:$IMAGE. Building..."
     docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" .
 else
-    echo "Using image $IMAGEID for $REPO:$IMAGE."
+    echo "Found image $IMAGEID for $REPO:$IMAGE"
 fi
 
 # infer the package extension from the image name
@@ -48,8 +48,6 @@ if [ -n "$VERSION" ]; then
     ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]} RSTUDIO_VERSION_PATCH=${SPLIT[2]}"
 fi
 
-echo $IMAGE $FLAVOR $VERSION $PACKAGE $INSTALLER $ENV
-
 # run compile step
-# docker run -v $(pwd):/src --user jenkins $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && ./make-$FLAVOR-package $PACKAGE"
+docker run -v $(pwd):/src --user jenkins $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && ./make-$FLAVOR-package $PACKAGE"
 
