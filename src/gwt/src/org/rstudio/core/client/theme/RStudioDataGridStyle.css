@@ -57,6 +57,7 @@
 .rstudio-themes-flat .dataGridHeader {
   border-top: 0px;
   border-left: 0px;
+  height: 16px;
 }
 
 .dataGridCell {
