@@ -889,6 +889,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    std::string termHandle; // empty if starting a new terminal
    std::string termCaption;
    std::string termTitle;
+   bool useWebsockets;
    int termSequence = kNoTerminal;
    
    Error error = json::readParams(request.params,
@@ -898,6 +899,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
+                                  &useWebsockets,
                                   &termSequence);
    if (error)
       return error;
@@ -970,9 +972,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
             console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
-   bool useWebsockets = session::options().useTerminalWebsockets();
+   bool websockets = session::options().allowTerminalWebsockets() && useWebsockets;
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(options, ptrProcInfo, useWebsockets);
+               ConsoleProcess::createTerminalProcess(options, ptrProcInfo, websockets);
 
    ptrProc->onExit().connect(boost::bind(
                               &source_control::enqueueRefreshEvent));

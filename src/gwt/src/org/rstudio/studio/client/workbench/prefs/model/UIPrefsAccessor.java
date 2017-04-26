@@ -605,6 +605,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("terminal_local_echo", true);
    }
    
+   public PrefValue<Boolean> terminalUseWebsockets()
+   {
+      return bool("terminal_websockets", true);
+   }
+   
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

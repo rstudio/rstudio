@@ -144,11 +144,12 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param handle initial terminal handle (pass empty or null string for new terminal)
     * @param caption caption associated with the terminal
     * @param title title associated with the terminal
+    * @param websocket try to connect via WebSocket
     * @param sequence relative order of terminal creation (1-based)
     * @param requestCallback callback from server upon completion
     */
    void startTerminal(int shellType, int cols, int rows, String handle, 
-                      String caption, String title, int sequence, 
+                      String caption, String title, boolean websocket, int sequence, 
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);

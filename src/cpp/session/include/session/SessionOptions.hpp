@@ -164,8 +164,6 @@ public:
 
    bool showUserHomePage() const { return showUserHomePage_; }
    
-   bool useTerminalWebsockets() const { return useTerminalWebsockets_; }
-
    std::string defaultConsoleTerm() const { return defaultConsoleTerm_; }
    bool defaultCliColorForce() const { return defaultCliColorForce_; }
 
@@ -319,6 +317,11 @@ public:
    bool allowShell() const
    {
       return allowOverlay() || allowShell_;
+   }
+
+   bool allowTerminalWebsockets() const
+   {
+      return allowOverlay() || allowTerminalWebsockets_;
    }
 
    bool allowPackageInstallation() const
@@ -546,7 +549,6 @@ private:
    bool createProfile_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
-   bool useTerminalWebsockets_;
    int saveActionDefault_;
    bool standalone_;
    std::string authRequiredUserGroup_;
@@ -600,6 +602,7 @@ private:
    bool allowFileDownloads_;
    bool allowFileUploads_;
    bool allowShell_;
+   bool allowTerminalWebsockets_;
    bool allowPackageInstallation_;
    bool allowVcs_;
    bool allowCRANReposEdit_;

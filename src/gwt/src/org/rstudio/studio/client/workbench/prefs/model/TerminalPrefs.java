@@ -24,7 +24,7 @@ public class TerminalPrefs extends JavaScriptObject
    public static final native TerminalPrefs create(int defaultShell) /*-{
       var prefs = new Object();
       prefs.default_shell = defaultShell;
-      return prefs ;
+      return prefs;
    }-*/;
 
    public native final int getDefaultTerminalShellValue() /*-{

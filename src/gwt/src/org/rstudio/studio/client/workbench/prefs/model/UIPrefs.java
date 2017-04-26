@@ -209,6 +209,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          terminalLocalEcho().setGlobalValue(
                                  newUiPrefs.terminalLocalEcho().getGlobalValue());
          
+         terminalUseWebsockets().setGlobalValue(
+                                 newUiPrefs.terminalUseWebsockets().getGlobalValue());
+         
          /* Diagnostics */
          
          // R Diagnostics

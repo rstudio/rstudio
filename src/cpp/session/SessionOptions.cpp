@@ -205,9 +205,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("show-help-home",
        value<bool>(&showHelpHome_)->default_value(false),
          "show help home page at startup")
-      ("session-use-terminal-websockets",
-          value<bool>(&useTerminalWebsockets_)->default_value(true),
-          "try to communicate with terminal using websockets")
       ("session-default-console-term",
        value<std::string>(&defaultConsoleTerm_)->default_value("xterm-256color"),
        "default TERM setting for R console")
@@ -233,6 +230,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("allow-shell",
          value<bool>(&allowShell_)->default_value(true),
          "allow access to shell dialog")
+      ("allow-terminal-websockets",
+         value<bool>(&allowTerminalWebsockets_)->default_value(true),
+         "allow connection to terminal sessions with websockets")
       ("allow-file-downloads",
          value<bool>(&allowFileDownloads_)->default_value(true),
          "allow file downloads from the files pane")

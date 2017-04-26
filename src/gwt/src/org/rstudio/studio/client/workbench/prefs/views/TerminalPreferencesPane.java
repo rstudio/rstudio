@@ -47,6 +47,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
+      session_ = session;
       server_ = server;
 
       add(spaced(new Label("Use the terminal to run system commands, execute data-processing jobs, and more.")));
@@ -64,6 +65,13 @@ public class TerminalPreferencesPane extends PreferencesPane
                prefs_.terminalLocalEcho(), 
                "Local echo is more responsive but may get out of sync with some line-editing modes.");
          add(chkTerminalLocalEcho);
+      }
+      if (haveWebsocketPref())
+      {
+         CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
+               prefs_.terminalUseWebsockets(), 
+               "WebSockets are generally more responsive; try turning off if terminal won't connect.");
+         add(chkTerminalWebsocket);
       }
       
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
@@ -158,11 +166,17 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       return !BrowseCap.isWindowsDesktop();
    }
+   
+   private boolean haveWebsocketPref()
+   {
+      return session_.getSessionInfo().getAllowTerminalWebsockets();
+   }
  
    private SelectWidget terminalShell_;
 
    // Injected ----  
    private final UIPrefs prefs_;
    private final PreferencesDialogResources res_;
+   private final Session session_;
    private final Server server_;
  }
