@@ -2,7 +2,7 @@
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -118,6 +118,11 @@
 .breadcrumb table.path a
 {
    color: #0945bf;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .breadcrumb table.path a
+{
+   color: rgb(191,211,232);
 }
 
 .breadcrumb table.path .home {
