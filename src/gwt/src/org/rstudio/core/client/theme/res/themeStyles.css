@@ -1896,6 +1896,11 @@ body.rstudio-themes-flat.rstudio-themes-default {
    border-color: THEME_DEFAULT_BORDER;
 }
 
+.rstudio-themes-flat.rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter {
+   background: rgb(236, 237, 238);
+}
+
 /* RSTUDIO DARK GREY THEME */
 
 .rstudio-themes-flat.rstudio-themes-dark-grey .rstudio-themes-background,
@@ -1921,6 +1926,11 @@ body.rstudio-themes-flat.rstudio-themes-dark-grey {
    border-color: THEME_DARKGREY_BORDER;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter {
+   background: rgb(57, 67, 75);
+}
+
 /* RSTUDIO ALTERNATE THEME */
 
 .rstudio-themes-flat.rstudio-themes-alternate .rstudio-themes-background,
@@ -1944,4 +1954,9 @@ body.rstudio-themes-flat.rstudio-themes-alternate {
 .rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
 .rstudio-themes-flat.rstudio-themes-alternate .toolbar {
    border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
+.rstudio-themes-flat.rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter {
+   background: rgb(148, 180, 197);
 }
