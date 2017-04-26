@@ -1,6 +1,11 @@
 @external rstudio-themes-flat;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
 
 @def selectionBorderWidth 1px;
 
@@ -102,8 +107,29 @@
 .dataGridSortedHeaderAscending {
 
 }
+
+.rstudio-themes-flat .dataGridSortedHeaderAscending img {
+  width: 0px !important;
+  height: 0px !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #818a98;
+  margin-left: 3px;
+}
+
 .dataGridSortedHeaderDescending {
 
+}
+
+.rstudio-themes-flat .dataGridSortedHeaderDescending img {
+  width: 0px !important;
+  height: 0px !important;
+  background: none !important;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #818a98;
+  margin-left: 3px;
 }
 
 .dataGridEvenRow {
@@ -169,4 +195,16 @@
  */
 .dataGridKeyboardSelectedCell {
   border: selectionBorderWidth solid transparent;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
+   background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
+   background: THEME_ALTERNATE_BACKGROUND;
 }

@@ -1,5 +1,5 @@
 /*
- * RStudioThemes.java
+ * ThemeColors.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -12,20 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.core.client.theme;
 
-package org.rstudio.studio.client.application.ui;
-
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-
-import com.google.gwt.dom.client.Document;
-
-public class RStudioThemes
+public class ThemeColors
 {
-   public static void initializeThemes(UIPrefs uiPrefs, Document document)
+   public static String getDefaultBackground()
    {
-      if (uiPrefs.getUseFlatThemes().getGlobalValue()) {
-         document.getBody().addClassName("rstudio-themes-flat");
-         document.getBody().addClassName("rstudio-themes-default");
-      }
+      return "#F3F4F7";
+   }
+
+   public static String getDarkGreyBackground()
+   {
+      return "#4E5C68";
+   }
+
+   public static String getAlternateBackground()
+   {
+      return "#D2E4ED";
    }
 }
