@@ -158,12 +158,15 @@
 .browse {
    color: #000;
    float: right;
-   padding-bottom: 5px;
    padding-left: 5px;
    padding-right: 5px;
    border: none;
    border-left: solid 1px #c2c7cb;
    background: none;
+   width: 20px;
+   height: 20px;
+   overflow: hidden;
+   margin-top: 0px;
 }
 
 button.browse:focus {
