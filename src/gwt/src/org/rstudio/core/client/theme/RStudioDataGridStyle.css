@@ -57,6 +57,11 @@
   cursor: default;
 }
 
+.rstudio-themes-flat .dataGridHeader {
+   border-top: none;
+   border-left: none;
+}
+
 .rstudio-themes-flat.rstudio-themes-dark .dataGridHeader {
   border-top: 0px;
   border-left: 0px;
