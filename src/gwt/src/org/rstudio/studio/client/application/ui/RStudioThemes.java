@@ -31,6 +31,10 @@ public class RStudioThemes
       
       if (uiPrefs.getUseFlatThemes().getGlobalValue()) {         
          String themeName = uiPrefs.getFlatTheme().getGlobalValue();
+         
+         // upgrade classic theme when using flat themes
+         if (themeName == "classic") themeName = "default";
+         
          document.getBody().addClassName("rstudio-themes-flat");
          if (themeName.contains("dark")) {
             document.getBody().addClassName("rstudio-themes-dark");
