@@ -38,8 +38,7 @@
                                                           extractingCode,
                                                           name,
                                                           access,
-                                                          tags,
-                                                          recursive)
+                                                          tags)
 {
    # retrieve object from cache
    object  <- .rs.explorer.getCachedObject(id, extractingCode)
@@ -49,11 +48,11 @@
       name      = name,
       access    = access,
       tags      = tags,
-      recursive = recursive
+      recursive = 1
    )
    
    # generate inspection result
-   result  <- .rs.explorer.inspectObject(object, context)
+   result <- .rs.explorer.inspectObject(object, context)
    result
 })
 
@@ -278,9 +277,15 @@
                                                             children = NULL)
 {
    # extract pertinent values from context
-   name <- context$name
-   access <- context$access
-   tags <- context$tags
+   name      <- context$name
+   access    <- context$access
+   tags      <- context$tags
+   recursive <- context$recursive
+   
+   # if we did a recursive lookup, but children is still NULL,
+   # set it as an empty list
+   if (recursive && is.null(children))
+      children <- list()
    
    # determine whether this is an S4 object
    s4 <- isS4(object)
@@ -298,12 +303,13 @@
       (s4 && length(slotNames(object)) > 0) ||
       
       # is this a named atomic vector?
-      (is.atomic(object) && !is.null(names(object)) && n > 0)
+      (is.atomic(object) && !is.null(names(object)) && n > 0) ||
       
       # do we have relevant attributes?
       .rs.explorer.hasRelevantAttributes(object)
    
    # extract attributes when relevant
+   attributes <- NULL
    if (context$recursive && .rs.explorer.hasRelevantAttributes(object))
    {
       childName <- "(attributes)"
@@ -314,7 +320,7 @@
                                                       childAccess,
                                                       childTags)
       childResult <- .rs.explorer.inspectObject(attributes(object), childContext)
-      children[[length(children) + 1]] <- childResult
+      attributes <- childResult
    }
    
    # elements dictating how this should be displayed in UI
@@ -345,6 +351,7 @@
       s4         = .rs.scalar(isS4(object)),
       tags       = as.character(tags),
       display    = display,
+      attributes = attributes,
       children   = if (is.list(children)) unname(children)
    )
 })

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
@@ -80,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlDivBuilder;
 import com.google.gwt.dom.client.Element;
@@ -99,6 +99,7 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextHeader;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
@@ -990,14 +991,20 @@ public class ObjectExplorerDataGrid
       data.setExpansionState(ExpansionState.OPEN);
       
       // resolve children and show
-      withChildren(data, new CommandWithArg<JsArray<Data>>()
+      withChildren(data, new Command()
       {
          @Override
-         public void execute(JsArray<Data> children)
+         public void execute()
          {
             // set all direct children as visible
+            JsArray<Data> children = data.getChildrenData();
             for (int i = 0, n = children.length(); i < n; i++)
                children.get(i).setVisible(true);
+            
+            // set attributes as visible if available
+            Data attributes = data.getObjectAttributes().<Data>cast();
+            if (attributes != null)
+               attributes.setVisible(true);
             
             // force update of data grid
             synchronize();
@@ -1017,14 +1024,20 @@ public class ObjectExplorerDataGrid
       data.setExpansionState(ExpansionState.CLOSED);
       
       // set direct children as non-visible
-      withChildren(data, new CommandWithArg<JsArray<Data>>()
+      withChildren(data, new Command()
       {
          @Override
-         public void execute(JsArray<Data> children)
+         public void execute()
          {
             // set all direct children as invisible
+            JsArray<Data> children = data.getChildrenData();
             for (int i = 0, n = children.length(); i < n; i++)
                children.get(i).setVisible(false);
+            
+            // set attributes as invisible if available
+            Data attributes = data.getObjectAttributes().<Data>cast();
+            if (attributes != null)
+               attributes.setVisible(false);
             
             // force update of data grid
             synchronize();
@@ -1048,13 +1061,14 @@ public class ObjectExplorerDataGrid
    }
    
    private void withChildren(final Data data,
-                             final CommandWithArg<JsArray<Data>> command)
+                             final Command command)
    {
-      // if we already have children, use them
+      // if we already have children, exit early
       JsArray<Data> children = data.getChildrenData();
       if (children != null)
       {
-         command.execute(children);
+         if (command != null)
+            command.execute();
          return;
       }
       
@@ -1065,21 +1079,32 @@ public class ObjectExplorerDataGrid
             extractingCode,
             data.getDisplayName(),
             data.getObjectAccess(),
-            data.getTags(),
-            1,
+            data.getTags().<JsArrayString>cast(),
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
                @Override
                public void onResponseReceived(ObjectExplorerInspectionResult result)
                {
+                  Debug.logObject(result);
+                  
                   // set parent ownership for children
                   JsArray<Data> children = result.getChildren().cast();
                   data.setChildrenData(children);
                   for (int i = 0, n = children.length(); i < n; i++)
                      children.get(i).setParentData(data);
                   
-                  // execute command with children
-                  command.execute(children);
+                  // set parent ownership for attributes
+                  Data attributes = result.getObjectAttributes().<Data>cast();
+                  if (attributes != null)
+                  {
+                     data.setObjectAttributes(attributes);
+                     attributes.setParentData(data);
+                  }
+                  
+                  // execute command
+                  if (command != null)
+                     command.execute();
+                  
                }
                
                @Override
@@ -1149,10 +1174,6 @@ public class ObjectExplorerDataGrid
                }
             }
             
-            // skip attributes if disabled
-            if (!showAttributes_ && data.isAttributes())
-               return false;
-            
             // otherwise, check whether it's currently visible
             return data.isVisible();
          }
@@ -1192,17 +1213,17 @@ public class ObjectExplorerDataGrid
       dataProvider_.setList(data);
    }
    
-   private static final List<Data> flatten(Data data,
-                                           Filter<Data> filter) 
+   private final List<Data> flatten(Data data,
+                                    Filter<Data> filter) 
    {
       List<Data> list = new ArrayList<Data>();
       flattenImpl(data, filter, list);
       return list;
    }
    
-   private static final void flattenImpl(Data data,
-                                         Filter<Data> filter,
-                                         List<Data> output)
+   private final void flattenImpl(Data data,
+                                  Filter<Data> filter,
+                                  List<Data> output)
    {
       // exit if we're not accepting data here
       if (filter != null && !filter.accept(data))
@@ -1211,13 +1232,21 @@ public class ObjectExplorerDataGrid
       // add data
       output.add(data);
       
-      // recurse
+      // recurse through children
       JsArray<Data> children = data.getChildrenData();
       if (children == null)
          return;
       
       for (int i = 0, n = children.length(); i < n; i++)
          flattenImpl(children.get(i), filter, output);
+      
+      // add attributes if relevant
+      if (showAttributes_)
+      {
+         Data attributes = data.getObjectAttributes().<Data>cast();
+         if (attributes != null)
+            flattenImpl(data.getObjectAttributes().<Data>cast(), filter, output);
+      }
    }
    
    private final IdentityColumn<Data> nameColumn_;

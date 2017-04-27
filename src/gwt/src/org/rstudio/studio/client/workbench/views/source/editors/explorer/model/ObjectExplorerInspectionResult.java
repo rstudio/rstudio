@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer.model;
 
+import org.rstudio.core.client.JsVectorString;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -27,41 +29,29 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    {
    }
    
-   public final native String        getObjectAddress()     /*-{ return this["address"];    }-*/;
-   public final native String        getObjectType()        /*-{ return this["type"];       }-*/;
-   public final native JsArrayString getObjectClass()       /*-{ return this["class"];      }-*/;
-   public final native int           getObjectLength()      /*-{ return this["length"];     }-*/;
-   public final native String        getObjectAccess()      /*-{ return this["access"];     }-*/;
-   public final native boolean       isRecursive()          /*-{ return this["recursive"];  }-*/;
-   public final native boolean       isExpandable()         /*-{ return this["expandable"]; }-*/;
-   public final native boolean       isAtomic()             /*-{ return this["atomic"];     }-*/;
-   public final native boolean       isNamed()              /*-{ return this["named"];      }-*/;
-   public final native boolean       isS4()                 /*-{ return this["s4"];         }-*/;
+   public final native String         getObjectAddress()     /*-{ return this["address"];    }-*/;
+   public final native String         getObjectType()        /*-{ return this["type"];       }-*/;
+   public final native JsArrayString  getObjectClass()       /*-{ return this["class"];      }-*/;
+   public final native int            getObjectLength()      /*-{ return this["length"];     }-*/;
+   public final native String         getObjectAccess()      /*-{ return this["access"];     }-*/;
    
-   public final native JsArrayString getTags()              /*-{ return this["tags"];       }-*/;
+   public final native boolean isRecursive()   /*-{ return this["recursive"];  }-*/;
+   public final native boolean isExpandable()  /*-{ return this["expandable"]; }-*/;
+   public final native boolean isAtomic()      /*-{ return this["atomic"];     }-*/;
+   public final native boolean isNamed()       /*-{ return this["named"];      }-*/;
+   public final native boolean isS4()          /*-{ return this["s4"];         }-*/;
    
-   public final native String        getDisplayName()       /*-{ return this["display"]["name"]; }-*/;
-   public final native String        getDisplayType()       /*-{ return this["display"]["type"]; }-*/;
-   public final native String        getDisplayDesc()       /*-{ return this["display"]["desc"]; }-*/;
+   public final native String getDisplayName() /*-{ return this["display"]["name"];      }-*/;
+   public final native String getDisplayType() /*-{ return this["display"]["type"];      }-*/;
+   public final native String getDisplayDesc() /*-{ return this["display"]["desc"];      }-*/;
    
-   public final native boolean hasTag(String tag)
-   /*-{
-      var tags = this["tags"] || [];
-      for (var i = 0, n = tags.length; i < n; i++)
-         if (tags[i] == tag)
-            return true;
-      return false;
-   }-*/;
+   public final native JsVectorString getTags() /*-{ return this["tags"] || [];           }-*/;
+   public final boolean hasTag(String tag)         { return getTags().indexOf(tag) != -1; }
    
-   public final native JsArray<ObjectExplorerInspectionResult> getChildren()
-   /*-{
-      return this["children"];
-   }-*/;
+   public final native ObjectExplorerInspectionResult  getObjectAttributes()               /*-{ return this["attributes"]; }-*/;
+   public final native void setObjectAttributes(ObjectExplorerInspectionResult attributes) /*-{ this["attributes"] = attributes; }-*/;
    
-   public final native void setChildren(JsArray<ObjectExplorerInspectionResult> children)
-   /*-{
-      this["children"] = children;
-   }-*/;
-   
+   public final native JsArray<ObjectExplorerInspectionResult> getChildren()              /*-{ return this["children"];     }-*/;
+   public final native void setChildren(JsArray<ObjectExplorerInspectionResult> children) /*-{ this["children"] = children; }-*/;
    public final native int getChildIndex() /*-{ return this["index"] || 0; }-*/;
 }
