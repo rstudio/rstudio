@@ -2,7 +2,7 @@
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -120,6 +120,11 @@
    color: #0945bf;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .breadcrumb table.path a
+{
+   color: rgb(191,211,232);
+}
+
 .breadcrumb table.path .home {
    padding-left: 28px;
    background: HOME 0 1px no-repeat;
@@ -148,4 +153,23 @@
 }
 
 .browse {
+}
+
+.browse {
+   color: #000;
+   float: right;
+   padding-bottom: 5px;
+   padding-left: 5px;
+   padding-right: 5px;
+   border: none;
+   border-left: solid 1px #c2c7cb;
+   background: none;
+}
+
+button.browse:focus {
+   outline:0;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .browse {
+   color: #FFF;
 }

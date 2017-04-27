@@ -646,6 +646,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("use_flat_themes", false);
    }
+
+   public PrefValue<String> getFlatTheme()
+   {
+      return string("flat_theme", "classic");
+   }
    
    private String getDefaultPdfPreview()
    {

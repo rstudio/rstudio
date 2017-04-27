@@ -270,10 +270,15 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
+            String sortClassName = i == host_.getSortColumn() ? 
+              (host_.getAscendingSort() ? "dataGridSortedHeaderAscending" : "dataGridSortedHeaderDescending") : 
+              "";
+
             ObjectGridColumn col = columns_.get(i);
             TableCellBuilder cell = row.startTH();
             cell.className(style_.objectGridHeader() + " " +
-                           "rstudio-themes-background");
+                           "rstudio-themes-background" + " " +
+                           sortClassName);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
                   i == host_.getSortColumn(), 

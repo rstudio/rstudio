@@ -10,6 +10,13 @@
       @external gwt-Label;
       @external rstudio-themes-flat;
 
+      @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+      @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+      @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+      @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+
+
       @sprite .statusBar {
          gwt-image: 'statusBarTile';
          width: 100%;
@@ -49,7 +56,7 @@
       }
       .rstudio-themes-flat .statusBar .element {
          background-image: none;
-         background: #F5F5F5;
+         background: none;
          border-right: solid 1px #d6dadc;
       }
       .statusBar .element.pos {
@@ -61,6 +68,18 @@
       }
       .rstudio-themes-flat .statusBar .element.last {
          border-right: none;
+      }
+      .rstudio-themes-flat.rstudio-themes-default .statusBar,
+      .rstudio-themes-flat.rstudio-themes-default .statusBar .element {
+         border-color: THEME_DEFAULT_BORDER;
+      }
+      .rstudio-themes-flat.rstudio-themes-dark-grey .statusBar,
+      .rstudio-themes-flat.rstudio-themes-dark-grey .statusBar .element {
+         border-color: THEME_DARKGREY_BORDER;
+      }
+      .rstudio-themes-flat.rstudio-themes-alternate .statusBar,
+      .rstudio-themes-flat.rstudio-themes-alternate .statusBar .element  {
+         border-color: THEME_ALTERNATE_BORDER;
       }
    </ui:style>
 

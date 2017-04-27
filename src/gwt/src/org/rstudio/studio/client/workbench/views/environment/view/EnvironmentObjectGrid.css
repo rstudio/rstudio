@@ -1,5 +1,11 @@
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 .objectGridColumn,
 .objectGridHeader
@@ -29,7 +35,13 @@ th.objectGridHeader
 .rstudio-themes-flat th.objectGridHeader {
    border-top: none;
    border-left: none;
-   height: 16px;
+   padding: 0px;
+   padding-left: 2px;
+   padding-right: 2px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark th.objectGridHeader {
+   color: white;
 }
 
 .rstudio-themes-flat th.objectGridHeader:last-child {
@@ -60,4 +72,16 @@ th.checkColumn
 .decoratedValueCol
 {
 	padding-right: 35px;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .objectGridHeader {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .objectGridHeader {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .objectGridHeader {
+   border-color: THEME_ALTERNATE_BORDER;
 }

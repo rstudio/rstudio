@@ -47,6 +47,7 @@ public class StatusBarWidget extends Composite
       Binder binder = GWT.create(Binder.class);
       panel_ = binder.createAndBindUi(this);
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      panel_.addStyleName("rstudio-themes-background");
       
       panel_.setCellWidth(scope_, "100%");
       panel_.setCellWidth(message_, "100%");

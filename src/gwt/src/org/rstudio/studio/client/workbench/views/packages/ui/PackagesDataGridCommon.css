@@ -1,7 +1,12 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 @external ubuntu_mono;
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 /* Styles here are applied to every DataGrid involved in the Packrat/Packages
    workflow, including the Packages pane itself and the actions/conflict 
@@ -32,6 +37,10 @@
    border-top: none;
    border-left: none;
    height: 16px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .dataGridHeader {
+   color: white;
 }
 
 .rstudio-themes-flat .dataGridHeader:last-child {
@@ -70,4 +79,16 @@
 body.ubuntu_mono .dataGridCell input[type=checkbox] {
    margin-top: 0;
    margin-bottom: 0;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
+   border-color: THEME_ALTERNATE_BORDER;
 }

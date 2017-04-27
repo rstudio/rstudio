@@ -103,7 +103,7 @@ public class PathBreadcrumbWidget
       frame_ = new DockLayoutPanel(Unit.PX);
       eastFrame_ = new FlowPanel();
 
-      Image browse = new Image(new ImageResource2x(RES.browse2x()));
+      Button browse = new Button("...");
       browse.setStyleName(STYLES.browse());
       browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       browse.addClickHandler(new ClickHandler()
@@ -115,7 +115,7 @@ public class PathBreadcrumbWidget
       });
       browse.setTitle("Go to directory");
       eastFrame_.add(browse);
-      frame_.addEast(eastFrame_, browse.getWidth());
+      frame_.addEast(eastFrame_, 22);
       
       frame_.add(outer_);
       frame_.setStyleName(STYLES.breadcrumbFrame());
