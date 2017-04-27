@@ -343,13 +343,6 @@
       desc = .rs.scalar(.rs.explorer.objectDesc(object))
    )
    
-   # attach index to children when present (so that UI can
-   # more easily control whether particular rows are shown,
-   # for example). we use 0-based indexing here since that's
-   # what's most useful on the client side
-   for (index in seq_along(children))
-      children[[index]][["index"]] <- index - 1
-   
    # create inspection result
    list(
       address    = .rs.scalar(.rs.objectAddress(object)),

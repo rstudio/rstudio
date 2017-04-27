@@ -59,16 +59,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectE
  *
  * ### Value
  *
- * A short, succinct description of the value of the object within.
- *
- * ### Size
- *
- * The amount of memory occupied by this object.
- *
- * ### Inspect
- *
- * A set of one or more widgets, used to e.g. open data.frames in the Data Viewer,
- * to find functions, and so on.
+ * A short, succinct description of the value of the object within. Icons that can
+ * be used for interacting with this row (e.g. generating the R code that can access
+ * that value) are drawn in this cell.
  */
 
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
@@ -122,6 +115,19 @@ public class ObjectExplorerDataGrid
       {
       }
       
+      public static final native Data createMorePlaceholder(Data parent)
+      /*-{
+         return {
+            "parent": parent,
+            "placeholder": true
+         };
+      }-*/;
+      
+      public final native boolean isMorePlaceholder()
+      /*-{
+         return !!this["placeholder"];
+      }-*/;
+      
       public final boolean isAttributes()
       {
          return hasTag(TAG_ATTRIBUTES);
@@ -129,19 +135,19 @@ public class ObjectExplorerDataGrid
       
       // The number of child rows that should be shown
       // for this node.
-      public final native void setLimit(int limit)
+      public final native void setMaximumChildRowsShown(int limit)
       /*-{
-         this["limit"] = limit;
+         this["maxChildRowsShown"] = limit;
       }-*/;
       
-      public final int getLimit()
+      public final int getMaximumChildRowsShown()
       {
-         return getLimitImpl(DEFAULT_ROW_LIMIT);
+         return getMaximumChildRowsShownImpl(DEFAULT_ROW_LIMIT);
       }
       
-      private final native int getLimitImpl(int defaultLimit)
+      private final native int getMaximumChildRowsShownImpl(int defaultLimit)
       /*-{
-         return this["limit"] || defaultLimit;
+         return this["maxChildRowsShown"] || defaultLimit;
       }-*/;
       
       // Whether this node is matched, according to the
@@ -227,9 +233,12 @@ public class ObjectExplorerDataGrid
          return this["children"] || null;
       }-*/;
       
-      public final native void setChildrenData(JsArray<Data> data)
+      public final native void addChildrenData(JsArray<Data> data)
       /*-{
-         this["children"] = data;
+         var children = this["children"] || [];
+         for (var i = 0, n = data.length; i < n; i++)
+            children.push(data[i]);
+         this["children"] = children;
       }-*/;
       
       // Return the node's depth, or the number of parents.
@@ -300,20 +309,13 @@ public class ObjectExplorerDataGrid
       @Override
       public void buildRowImpl(Data data, int index)
       {
-         int childIndex = data.getChildIndex();
-         int rowLimit = getParentLimit(data);
-         
-         // don't draw rows outside of the limit
-         if (childIndex > rowLimit)
-            return;
-         
          super.buildRowImpl(data, index);
       }
    }
    
    private String generateExtractingRCode(Data data, String finalReplacement)
    {
-      if (data == null)
+      if (data == null || data.isMorePlaceholder())
          return null;
       
       // extract all access strings from data + parents
@@ -324,11 +326,9 @@ public class ObjectExplorerDataGrid
          data = data.getParentData();
       }
       
-      // if we have no accessors, this must be the root object
-      // just return from associated handle
       int n = accessors.size();
       if (n == 0)
-         return handle_.getTitle();
+         return finalReplacement;
       
       // start building up access string by repeatedly
       // substituting in accessors
@@ -352,14 +352,7 @@ public class ObjectExplorerDataGrid
       Data parent = data.getParentData();
       if (parent == null)
          return DEFAULT_ROW_LIMIT;
-      return parent.getLimit();
-   }
-   
-   private static final boolean isBoundaryRow(Data data)
-   {
-      int childIndex = data.getChildIndex();
-      int rowLimit = getParentLimit(data);
-      return childIndex == rowLimit;
+      return parent.getMaximumChildRowsShown();
    }
    
    private class NameCell extends AbstractCell<Data>
@@ -379,14 +372,14 @@ public class ObjectExplorerDataGrid
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
          
-         addIndent(builder, data);
-         if (isBoundaryRow(data))
+         if (data == null || data.isMorePlaceholder())
          {
-            onNotExpandable(builder, data);
-            addViewMoreIcon(builder, data);
+            onNotExpandable(builder);
+            addViewMoreIcon(builder);
          }
          else
          {
+            addIndent(builder, data);
             addExpandIcon(builder, data);
             addName(builder, data);
          }
@@ -405,8 +398,7 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant(html);
       }
       
-      private final boolean onNotExpandable(SafeHtmlBuilder builder,
-                                            Data data)
+      private final boolean onNotExpandable(SafeHtmlBuilder builder)
       {
          builder.appendHtmlConstant("<td style='width: 20px'></td>");
          return false;
@@ -418,7 +410,7 @@ public class ObjectExplorerDataGrid
       {
          // bail if this node is not expandable
          if (!data.isExpandable())
-            return onNotExpandable(builder, data);
+            return onNotExpandable(builder);
          
          // bail if we're not showing attributes, but a child attributes
          // node is the only thing that exists
@@ -426,14 +418,14 @@ public class ObjectExplorerDataGrid
          {
             // bail if the object is unnamed & atomic
             if (data.isAtomic() && !data.isNamed())
-               return onNotExpandable(builder, data);
+               return onNotExpandable(builder);
             
             JsArray<Data> children = data.getChildrenData();
             if (children != null && children.length() == 1)
             {
                Data child = children.get(0);
                if (child.hasTag(TAG_ATTRIBUTES))
-                  return onNotExpandable(builder, data);
+                  return onNotExpandable(builder);
             }
          }
          
@@ -485,8 +477,7 @@ public class ObjectExplorerDataGrid
          builder.appendHtmlConstant("</td>");
       }
       
-      private final void addViewMoreIcon(SafeHtmlBuilder builder,
-                                         Data data)
+      private final void addViewMoreIcon(SafeHtmlBuilder builder)
       {
          builder.append(moreButtonCellHtml_);
       }
@@ -501,7 +492,7 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         if (isBoundaryRow(data))
+         if (data == null || data.isMorePlaceholder())
             return;
          
          builder.append(SafeHtmlUtil.createDiv(
@@ -519,7 +510,7 @@ public class ObjectExplorerDataGrid
                          Data data,
                          SafeHtmlBuilder builder)
       {
-         if (isBoundaryRow(data))
+         if (data == null || data.isMorePlaceholder())
             return;
          
          builder.append(TABLE_OPEN_TAG);
@@ -912,10 +903,9 @@ public class ObjectExplorerDataGrid
    {
       Data data = getData().get(row);
       
-      // if this is a boundary row, open it
-      if (isBoundaryRow(data))
+      if (data.isMorePlaceholder())
       {
-         openRow(row);
+         retrieveMore(row);
          return;
       }
       
@@ -973,16 +963,9 @@ public class ObjectExplorerDataGrid
    {
       final Data data = getData().get(row);
       
-      // if this is a boundary row, then update the boundary
-      if (isBoundaryRow(data))
+      if (data.isMorePlaceholder())
       {
-         Data parent = data.getParentData();
-         if (parent != null)
-         {
-            int limit = parent.getLimit();
-            parent.setLimit(limit + DEFAULT_ROW_LIMIT);
-         }
-         synchronize();
+         retrieveMore(row);
          return;
       }
       
@@ -994,7 +977,7 @@ public class ObjectExplorerDataGrid
       data.setExpansionState(ExpansionState.OPEN);
       
       // resolve children and show
-      withChildren(data, new Command()
+      withChildren(data, false, new Command()
       {
          @Override
          public void execute()
@@ -1027,7 +1010,7 @@ public class ObjectExplorerDataGrid
       data.setExpansionState(ExpansionState.CLOSED);
       
       // set direct children as non-visible
-      withChildren(data, new Command()
+      withChildren(data, false, new Command()
       {
          @Override
          public void execute()
@@ -1063,12 +1046,36 @@ public class ObjectExplorerDataGrid
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
+   private void retrieveMore(int row)
+   {
+      Data data = getData().get(row);
+      Data parent = data.getParentData();
+      if (parent == null)
+         return;
+      
+      // select the previous row (so that we don't end up scrolling all over the place)
+      selectRowRelative(row);
+      
+      // update the limit on the number of children we're showing
+      parent.setMaximumChildRowsShown(parent.getMaximumChildRowsShown() + DEFAULT_ROW_LIMIT);
+      
+      withChildren(parent, true, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            synchronize();
+         }
+      });
+   }
+   
    private void withChildren(final Data data,
+                             final boolean forceRequest,
                              final Command command)
    {
       // if we already have children, exit early
       JsArray<Data> children = data.getChildrenData();
-      if (children != null)
+      if (!forceRequest && children != null)
       {
          if (command != null)
             command.execute();
@@ -1093,7 +1100,7 @@ public class ObjectExplorerDataGrid
                   
                   // set parent ownership for children
                   JsArray<Data> children = result.getChildren().cast();
-                  data.setChildrenData(children);
+                  data.addChildrenData(children);
                   for (int i = 0, n = children.length(); i < n; i++)
                      children.get(i).setParentData(data);
                   
@@ -1241,8 +1248,19 @@ public class ObjectExplorerDataGrid
       if (children == null)
          return;
       
-      for (int i = 0, n = children.length(); i < n; i++)
+      // only add children within the drawing limit to this list
+      int n = Math.min(children.length(), data.getMaximumChildRowsShown());
+      for (int i = 0; i < n; i++)
          flattenImpl(children.get(i), filter, output);
+      
+      // add a dummy 'More...' element (the CellTable's buildRowImpl
+      // will treat this specially). TODO: the server should probably
+      // set a 'more' flag instead or something similar?
+      boolean drawMore =
+            data.getExpansionState() == ExpansionState.OPEN &&
+            data.getObjectLength() > n;
+      if (drawMore)
+         output.add(Data.createMorePlaceholder(data));
       
       // add attributes if relevant
       if (showAttributes_)
