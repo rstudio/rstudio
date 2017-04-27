@@ -743,8 +743,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    cursor: default;
 }
 
-.rstudio-themes-dark .title,
-.rstudio-themes-dark .subtitle {
+.rstudio-themes-flat .title,
+.rstudio-themes-flat .subtitle {
+   text-shadow: #eef7fb 1px 0;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .title,
+.rstudio-themes-flat.rstudio-themes-dark .subtitle {
    color: white;
    text-shadow: none;
    font-weight: 400;
