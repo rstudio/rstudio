@@ -30,6 +30,7 @@
 ### Themes
 
 * New flat, modern UI theme
+* New dark theme option
 * Retina-quality icons throughout
 
 ### Data Import
@@ -66,7 +67,6 @@
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
-* Debugger support for R 3.4.0 and above
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
 * Improve performance of autocompletion for installed packages
@@ -84,6 +84,7 @@
 * Server Pro: Show the size of suspended sessions
 * Server Pro: Add user-defined session labels
 * Server Pro: Upgrade to nginx 1.12.0
+* Server Pro: Add support for NFSv4 Access Control Lists in Project Sharing
 
 ### Bug Fixes
 
