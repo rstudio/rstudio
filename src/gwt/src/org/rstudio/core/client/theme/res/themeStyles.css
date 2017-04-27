@@ -1654,6 +1654,10 @@ body.ubuntu_mono .searchBox {
    display: none;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .minimizedWindowObject table.tabLayoutCenter {
+   color: #bfbfbf;
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutLeft,
 .rstudio-themes-flat .minimizedWindowObject .tabLayoutLeft {
    display: none;
