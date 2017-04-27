@@ -111,6 +111,11 @@ public class ObjectExplorerDataGrid
                  RowHoverEvent.Handler,
                  CellPreviewEvent.Handler<ObjectExplorerDataGrid.Data>
 {
+   private static interface Filter<T>
+   {
+      public boolean accept(T data);
+   }
+   
    public static class Data extends ObjectExplorerInspectionResult
    {
       protected Data()
@@ -270,7 +275,10 @@ public class ObjectExplorerDataGrid
       /*-{
          var children = this["children"] || [];
          for (var i = 0, n = children.length; i < n; i++)
-            children[i].parent = this;
+         {
+            var child = children[i];
+            child["parent"] = this;
+         }
          
       }-*/;
       
@@ -337,11 +345,6 @@ public class ObjectExplorerDataGrid
    private String generateExtractingRCode(Data data)
    {
       return generateExtractingRCode(data, handle_.getTitle());
-   }
-   
-   private static interface Filter<T>
-   {
-      public boolean accept(T data);
    }
    
    private static final int getParentLimit(Data data)
@@ -1080,6 +1083,7 @@ public class ObjectExplorerDataGrid
             data.getDisplayName(),
             data.getObjectAccess(),
             data.getTags().<JsArrayString>cast(),
+            data.getNumChildren(),
             new ServerRequestCallback<ObjectExplorerInspectionResult>()
             {
                @Override
@@ -1273,7 +1277,7 @@ public class ObjectExplorerDataGrid
    private static final int NAME_COLUMN_WIDTH = 180;
    private static final int TYPE_COLUMN_WIDTH = 180;
    
-   private static final int DEFAULT_ROW_LIMIT = 20;
+   private static final int DEFAULT_ROW_LIMIT = 200;
    
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";

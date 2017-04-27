@@ -1825,6 +1825,7 @@ public class RemoteServer implements Server
                                      String objectName,
                                      String objectAccess,
                                      JsArrayString tags,
+                                     int fromIndex,
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
@@ -1833,6 +1834,7 @@ public class RemoteServer implements Server
             .add(objectName)
             .add(objectAccess)
             .add(tags)
+            .add(fromIndex)
             .get();
       
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);

@@ -51,7 +51,8 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    public final native ObjectExplorerInspectionResult  getObjectAttributes()               /*-{ return this["attributes"]; }-*/;
    public final native void setObjectAttributes(ObjectExplorerInspectionResult attributes) /*-{ this["attributes"] = attributes; }-*/;
    
-   public final native JsArray<ObjectExplorerInspectionResult> getChildren()              /*-{ return this["children"];     }-*/;
-   public final native void setChildren(JsArray<ObjectExplorerInspectionResult> children) /*-{ this["children"] = children; }-*/;
-   public final native int getChildIndex() /*-{ return this["index"] || 0; }-*/;
+   public final native JsArray<ObjectExplorerInspectionResult> getChildren()               /*-{ return this["children"];     }-*/;
+   public final native void setChildren(JsArray<ObjectExplorerInspectionResult> children)  /*-{ this["children"] = children; }-*/;
+   public final native int getChildIndex()                                                 /*-{ return this["index"] || 0; }-*/;
+   public final native int getNumChildren()                                                /*-{ return (this["children"] || []).length; }-*/;
 }

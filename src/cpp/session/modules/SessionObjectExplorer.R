@@ -38,7 +38,8 @@
                                                           extractingCode,
                                                           name,
                                                           access,
-                                                          tags)
+                                                          tags,
+                                                          start)
 {
    # retrieve object from cache
    object  <- .rs.explorer.getCachedObject(id, extractingCode)
@@ -48,7 +49,8 @@
       name      = name,
       access    = access,
       tags      = tags,
-      recursive = 1
+      recursive = 1,
+      start     = start + 1  # 0 -> 1-based indexing
    )
    
    # generate inspection result
@@ -66,7 +68,8 @@
       name      = name,
       access    = NULL,
       tags      = character(),
-      recursive = 1
+      recursive = 1,
+      start     = 1
    )
    
    # generate inspection result
@@ -97,6 +100,13 @@
 .rs.addFunction("objectAttributes", function(object)
 {
    .Call("rs_objectAttributes", object, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("explorer.slice", function(object,
+                                           start = 1,
+                                           end = 200)
+{
+   .rs.slice(object, start, end)
 })
 
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
@@ -191,16 +201,19 @@
 #'   inspected recursively (if applicable). Can either be a boolean
 #'   argument, or a numeric argument indicating the maximum depth
 #'   of the recursion.
+#' @param start The index at which inspection should begin.
 .rs.addFunction("explorer.createContext", function(name = NULL,
                                                    access = NULL,
                                                    tags = character(),
-                                                   recursive = FALSE)
+                                                   recursive = FALSE,
+                                                   start = 1)
 {
    list(
       name      = name,
       access    = access,
       tags      = tags,
-      recursive = recursive
+      recursive = recursive,
+      start     = start
    )
 })
 
@@ -217,9 +230,9 @@
       childContext$recursive <- recursive - 1
    
    # attach new context entries
-   childContext[["name"]] <- name
+   childContext[["name"]]   <- name
    childContext[["access"]] <- access
-   childContext[["tags"]] <- tags
+   childContext[["tags"]]   <- tags
    
    # return
    childContext
@@ -470,9 +483,11 @@
    children <- NULL
    if (context$recursive)
    {
-      # handle cases where list has no names
       names <- names(object)
-      indices <- seq_along(object)
+      indices <- .rs.explorer.slice(
+         seq_along(object),
+         context$start
+      )
       
       # iterate over children and inspect
       children <- lapply(indices, function(i)
@@ -504,12 +519,18 @@
    children <- NULL
    if (context$recursive)
    {
-      children <- .rs.enumerate(object, function(key, value)
+      # retrieve keys
+      keys <- .rs.explorer.slice(
+         ls(envir = object, all.names = TRUE),
+         context$start
+      )
+      
+      children <- lapply(keys, function(key)
       {
+         value <- object[[key]]
          name <- key
          access <- sprintf("#[[\"%s\"]]", key)
          tags <- character()
-         
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          result <- .rs.explorer.inspectObject(value, childContext)
          result[order(names(result))]
@@ -582,7 +603,10 @@
    if (context$recursive && !is.null(names(object)))
    {
       names <- names(object)
-      indices <- seq_along(object)
+      indices <- .rs.explorer.slice(
+         seq_along(object),
+         context$start
+      )
       
       # iterate over children and inspect
       children <- lapply(indices, function(i)
