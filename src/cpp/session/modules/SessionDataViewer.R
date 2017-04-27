@@ -584,7 +584,7 @@
    }
    else if (inherits(x, "vignette"))
    {
-     file.edit(file.path(x$Dir, x$File))
+     file.edit(file.path(x$Dir, "doc", x$File))
      return(invisible(NULL))
    }
    
