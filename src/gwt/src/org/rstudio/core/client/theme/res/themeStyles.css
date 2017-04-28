@@ -2007,6 +2007,10 @@ body.rstudio-themes-flat .rstudio-themes-default {
    background: #e7e8ea;
 }
 
+.rstudio-themes-flat .rstudio-themes-default .multiPodUtilityArea {
+   background: linear-gradient(to right, rgba(0,0,0,0), rgb(236, 237, 238) 13%);
+}
+
 /* RSTUDIO DARK GREY THEME */
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstudio-themes-background,
@@ -2039,6 +2043,10 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center {
    background: rgb(47, 57, 65);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .multiPodUtilityArea {
+   background: linear-gradient(to right, rgba(0,0,0,0), rgb(47, 57, 65) 13%);
 }
 
 /* RSTUDIO ALTERNATE THEME */
@@ -2091,4 +2099,8 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .minimize:hover,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .maximize:hover {
    filter: brightness(0.4);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .multiPodUtilityArea {
+   background: linear-gradient(to right, rgba(0,0,0,0), rgb(158, 160, 187) 13%);
 }
