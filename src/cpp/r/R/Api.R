@@ -393,5 +393,8 @@
    .Call("rs_getPersistentValue", name)
 })
 
-
+.rs.addApiFunction("getConsoleHasColor", function(name) {
+   value <- .rs.readUiPref("ansi_console_mode")
+   if (is.null(value) || value != 1) FALSE else TRUE
+})
 

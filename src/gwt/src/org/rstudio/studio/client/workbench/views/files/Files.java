@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -381,11 +382,17 @@ public class Files
                         currentPath_,
                         new ProgressOperationWithInput<FileSystemItem>() {
 
-         public void execute(final FileSystemItem targetFile,
+         public void execute(FileSystemItem targetFile,
                              final ProgressIndicator progress)
          {
             if (targetFile == null)
                return;
+            
+            if (StringUtil.isNullOrEmpty(targetFile.getExtension()))
+            {
+               targetFile = FileSystemItem.createFile(
+                     targetFile.getPath() + selectedFiles.get(0).getExtension());
+            }
             
             server_.copyFile(selectedFiles.get(0),
                  targetFile,

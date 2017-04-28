@@ -473,7 +473,17 @@ public class Source implements InsertSourceHandler,
                {
                   FileSystemItem toPath = 
                         FileSystemItem.createFile(event.getTo());
-                  input.getName().setValue(toPath.getName(), true);
+                  if (input instanceof TextEditingTarget)
+                  {
+                     // for text files, notify the editing surface so it can
+                     // react to the new file type
+                     ((TextEditingTarget)input).setPath(toPath);
+                  }
+                  else
+                  {
+                     // for other files, just rename the tab
+                     input.getName().setValue(toPath.getName(), true);
+                  }
                   events_.fireEvent(new SourceFileSavedEvent(
                         input.getId(), event.getTo()));
                }

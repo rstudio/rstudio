@@ -6442,6 +6442,21 @@ public class TextEditingTarget implements
       return notebook_;
    }
    
+   /**
+    * Updates the path of the file loaded in the editor, as though the user
+    * had just saved the file at the new paht.
+    * 
+    * @param path New path for the editor
+    */
+   public void setPath(FileSystemItem path)
+   {
+      // Find the new type
+      TextFileType type = fileTypeRegistry_.getTextTypeForFile(path);
+      
+      // Simulate a completed save of the new path
+      new SaveProgressIndicator(path, type, null).onCompleted();
+   }
+   
    private void setRMarkdownBehaviorEnabled(boolean enabled)
    {
       // register idle monitor; automatically creates/refreshes previews
