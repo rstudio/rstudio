@@ -2028,3 +2028,21 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center {
    background: rgb(158, 160, 187);
 }
+
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe .maximize,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe-maximized .maximize,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe-exclusive .maximize,
+.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .minimize,
+.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .maximize {
+   filter: brightness(0.7);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize:hover,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe .maximize:hover,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe-maximized .maximize:hover,
+.rstudio-themes-flat .rstudio-themes-alternate .windowframe-exclusive .maximize:hover,
+.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .minimize:hover,
+.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .maximize:hover {
+   filter: brightness(0.4);
+}
