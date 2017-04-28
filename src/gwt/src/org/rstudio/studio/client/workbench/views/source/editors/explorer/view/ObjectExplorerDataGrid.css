@@ -53,6 +53,8 @@
 	gwt-image: 'expandIcon2x';
 	background-position: center;
 	cursor: pointer;
+	height: 14px;
+	width: 14px;
 	background-size: 14px 14px;
 }
 
@@ -60,18 +62,24 @@
 	gwt-image: 'collapseIcon2x';
 	background-position: center;
 	cursor: pointer;
+	height: 14px;
+	width: 14px;
 	background-size: 14px 14px;
 }
 
 @sprite .spriteExtractCodeIcon {
 	gwt-image: 'extractCode2x';
 	background-position: center;
+	height: 18px;
+	width: 20px;
 	background-size: 20px 18px;
 }
 
 @sprite .spriteViewObjectIcon {
 	gwt-image: 'viewObject2x';
 	background-position: center;
+	height: 18px;
+	width: 20px;
 	background-size: 15px 13px;
 }
 
@@ -83,10 +91,12 @@
 .cellInnerTable {
 	table-layout: fixed;
 	width: 100%;
+	border-spacing: 0;
 }
 
 .cellInnerTable td {
-	padding: 0;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 .virtual {
