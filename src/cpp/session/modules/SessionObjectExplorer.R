@@ -188,19 +188,22 @@
 #'   inspected recursively (if applicable). Can either be a boolean
 #'   argument, or a numeric argument indicating the maximum depth
 #'   of the recursion.
-#' @param start The index at which inspection should begin.
+#' @param start The index at which inspection should begin, for children.
+#' @param end The index at which inspection should end, for children.
 .rs.addFunction("explorer.createContext", function(name = NULL,
                                                    access = NULL,
                                                    tags = character(),
                                                    recursive = FALSE,
-                                                   start = 1)
+                                                   start = 1,
+                                                   end = 200)
 {
    list(
       name      = name,
       access    = access,
       tags      = tags,
       recursive = recursive,
-      start     = start
+      start     = start,
+      end       = end
    )
 })
 
@@ -209,21 +212,20 @@
                                                         access,
                                                         tags)
 {
-   childContext <- context
-   
-   # support recursion depth
+   # decrement a numeric recursion count
    recursive <- context$recursive
-   if (is.numeric(recursive) && recursive)
-      childContext$recursive <- recursive - 1
+   if (is.numeric(recursive))
+      recursive <- recursive - 1
    
-   # attach new context entries
-   childContext[["name"]]   <- name
-   childContext[["access"]] <- access
-   childContext[["tags"]]   <- tags
-   childContext[["more"]]   <- FALSE
-   
-   # return
-   childContext
+   # establish a new context
+   .rs.explorer.createContext(
+      name      = name,
+      access    = access,
+      tags      = tags,
+      recursive = recursive,
+      start     = 1,
+      end       = 200
+   )
 })
 
 .rs.addFunction("explorer.fireEvent", function(type, data = list())
@@ -503,7 +505,7 @@
       # retrieve keys
       allKeys <- ls(envir = object, all.names = TRUE)
       keys <- .rs.slice(allKeys, context$start, context$end)
-      context$more <- context$end > length(allKeys)
+      context$more <- length(allKeys) > context$end
       
       children <- lapply(keys, function(key)
       {
@@ -584,7 +586,7 @@
    {
       names <- names(object)
       indices <- .rs.slice(seq_along(object), context$start, context$end)
-      context$more <- length(object) < context$end
+      context$more <- length(object) > context$end
       
       # iterate over children and inspect
       children <- lapply(indices, function(i)

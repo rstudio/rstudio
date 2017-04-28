@@ -1081,8 +1081,6 @@ public class ObjectExplorerDataGrid
                @Override
                public void onResponseReceived(ObjectExplorerInspectionResult result)
                {
-                  Debug.logObject(result);
-                  
                   // set parent ownership for children
                   JsArray<Data> children = result.getChildren().cast();
                   data.addChildrenData(children);
@@ -1100,7 +1098,6 @@ public class ObjectExplorerDataGrid
                   // execute command
                   if (command != null)
                      command.execute();
-                  
                }
                
                @Override
@@ -1254,11 +1251,11 @@ public class ObjectExplorerDataGrid
          flattenImpl(children.get(i), filter, output);
       
       // add a dummy 'More...' element (the CellTable's buildRowImpl
-      // will treat this specially). TODO: the server should probably
-      // set a 'more' flag instead or something similar?
-      boolean drawMore =
+      // will treat this specially)
+      boolean drawMore = 
             data.getExpansionState() == ExpansionState.OPEN &&
-            data.getObjectLength() > n;
+            data.isMoreAvailable();
+      
       if (drawMore)
          output.add(Data.createMorePlaceholder(data));
       

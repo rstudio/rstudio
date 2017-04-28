@@ -35,11 +35,12 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    public final native int            getObjectLength()      /*-{ return this["length"];     }-*/;
    public final native String         getObjectAccess()      /*-{ return this["access"];     }-*/;
    
-   public final native boolean isRecursive()   /*-{ return this["recursive"];  }-*/;
-   public final native boolean isExpandable()  /*-{ return this["expandable"]; }-*/;
-   public final native boolean isAtomic()      /*-{ return this["atomic"];     }-*/;
-   public final native boolean isNamed()       /*-{ return this["named"];      }-*/;
-   public final native boolean isS4()          /*-{ return this["s4"];         }-*/;
+   public final native boolean isRecursive()       /*-{ return this["recursive"];  }-*/;
+   public final native boolean isExpandable()      /*-{ return this["expandable"]; }-*/;
+   public final native boolean isAtomic()          /*-{ return this["atomic"];     }-*/;
+   public final native boolean isNamed()           /*-{ return this["named"];      }-*/;
+   public final native boolean isS4()              /*-{ return this["s4"];         }-*/;
+   public final native boolean isMoreAvailable()   /*-{ return this["more"];       }-*/;
    
    public final native String getDisplayName() /*-{ return this["display"]["name"];      }-*/;
    public final native String getDisplayType() /*-{ return this["display"]["type"];      }-*/;
@@ -53,6 +54,5 @@ public class ObjectExplorerInspectionResult extends JavaScriptObject
    
    public final native JsArray<ObjectExplorerInspectionResult> getChildren()               /*-{ return this["children"];     }-*/;
    public final native void setChildren(JsArray<ObjectExplorerInspectionResult> children)  /*-{ this["children"] = children; }-*/;
-   public final native int getChildIndex()                                                 /*-{ return this["index"] || 0; }-*/;
    public final native int getNumChildren()                                                /*-{ return (this["children"] || []).length; }-*/;
 }
