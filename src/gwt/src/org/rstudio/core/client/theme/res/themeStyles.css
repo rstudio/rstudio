@@ -1440,6 +1440,7 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat.rstudio-themes-dark .gwt-CheckBox input[type="checkbox"] {
    background: #d3d8dc;
+   border-color: rgb(45,60,75);
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"],
