@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
@@ -28,6 +27,7 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
@@ -91,21 +91,20 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.HeaderPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 
 public class ObjectExplorerDataGrid
-      extends DataGrid<ObjectExplorerDataGrid.Data>
+      extends RStudioDataGrid<ObjectExplorerDataGrid.Data>
       implements AttachEvent.Handler,
                  ClickHandler,
                  ScrollHandler,
@@ -600,13 +599,23 @@ public class ObjectExplorerDataGrid
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle,
                                  SourceDocument document)
    {
-      super(1000, RES);
+      super(RES);
       handle_ = handle;
       document_ = document;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setSize("100%", "100%");
+      
+      // initialize synchronize timer
+      synchronizeTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            synchronize();
+         }
+      };
       
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
@@ -626,19 +635,12 @@ public class ObjectExplorerDataGrid
       dataProvider_.addDataDisplay(this);
       
       // register handlers
-      handlers_ = new HandlerRegistrations();
-      
       setKeyboardSelectionHandler(this);
       setTableBuilder(new TableBuilder(this));
       addAttachHandler(this);
+      addScrollHandler(this);
       addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
-      
-      // register a scroll handler (unfortunately, DataGrid doesn't
-      // seem to expose a friendly way of doing this)
-      final HeaderPanel headerPanel = (HeaderPanel) getWidget();
-      final ScrollPanel scrollPanel = (ScrollPanel) headerPanel.getContentWidget();
-      scrollPanel.addScrollHandler(this);
       
       // populate the view once initially
       initializeRoot();
@@ -681,7 +683,11 @@ public class ObjectExplorerDataGrid
    @Override
    public void onScroll(ScrollEvent event)
    {
-      Debug.logToRConsole("On Scroll!");
+      // get the number of visible rows
+      visibleRows_ = getVisibleRows();
+      
+      // synchronize with client on timeout (debounce)
+      synchronizeTimer_.schedule(10);
    }
    
    @Override
@@ -1302,18 +1308,19 @@ public class ObjectExplorerDataGrid
    
    // Members ----
    
+   private final ObjectExplorerHandle handle_;
+   private final Timer synchronizeTimer_;
+   private Range visibleRows_;
+   private Data root_;
+   
+   @SuppressWarnings("unused")
+   private final SourceDocument document_;
+   
    private final IdentityColumn<Data> nameColumn_;
    private final IdentityColumn<Data> typeColumn_;
    private final IdentityColumn<Data> valueColumn_;
    
    private final ListDataProvider<Data> dataProvider_;
-   
-   private final ObjectExplorerHandle handle_;
-   private Data root_;
-   
-   @SuppressWarnings("unused")
-   private final SourceDocument document_;
-   private final HandlerRegistrations handlers_;
    
    private TableRowElement hoveredRow_;
    private boolean showAttributes_;
