@@ -870,6 +870,33 @@ bool hasSubprocesses(PidType pid)
 #endif
 }
 
+FilePath currentWorkingDirViaLsof(PidType pid)
+{
+   return FilePath();
+}
+
+FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath)
+{
+   if (!procFsPath.exists())
+   {
+      return FilePath();
+   }
+
+   // TODO (gary)
+
+   return FilePath();
+}
+
+FilePath currentWorkingDir(PidType pid)
+{
+   core::FilePath procFsPath("/proc");
+   if (!procFsPath.exists())
+   {
+      return currentWorkingDirViaLsof(pid);
+   }
+   return currentWorkingDirViaProcFs(pid, procFsPath);
+}
+
 Error daemonize()
 {
    // fork

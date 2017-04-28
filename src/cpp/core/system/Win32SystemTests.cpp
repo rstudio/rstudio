@@ -181,6 +181,13 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hProcess);
       CloseHandle(pi.hThread);
    }
+
+   SECTION("Determine current-working-directory of another process")
+   {
+      // TODO (gary) -- implement
+      CHECK(true);
+   }
+
 }
 
 } // end namespace tests

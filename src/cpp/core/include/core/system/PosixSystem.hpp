@@ -206,9 +206,16 @@ bool hasSubprocessesViaPgrep(PidType pid);
 // subprocesses or unable to determine if there are subprocesses
 bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath);
 
+// Determine current working directory of a given process by shelling out
+// to lsof; used on systems without procfs.
+FilePath currentWorkingDirViaLsof(PidType pid);
+
+// Determine current working directory of a given process via procfs; returns
+// empty FilePath if unable to determine.
+FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath);
+
 } // namespace system
 } // namespace core
 } // namespace rstudio
 
 #endif // CORE_SYSTEM_POSIX_SYSTEM_HPP
-

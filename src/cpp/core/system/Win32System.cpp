@@ -912,6 +912,12 @@ bool hasSubprocesses(PidType pid)
    return false;
 }
 
+FilePath currentWorkingDir(PidType pid)
+{
+   // TODO (gary) -- implement for Win32
+   return FilePath();
+}
+
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {
    if (*pHandle != NULL)

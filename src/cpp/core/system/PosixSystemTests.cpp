@@ -186,6 +186,27 @@ context("PosixSystemTests")
       }
    }
 #endif
+
+   test_that("Current working directory determined correctly with generic method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "2", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDir(pid);
+         expect_false(cwd.empty());
+         expect_true(cwd.exists());
+
+         kill(pid, SIGKILL);
+      }
+   }
 }
 
 } // end namespace tests
