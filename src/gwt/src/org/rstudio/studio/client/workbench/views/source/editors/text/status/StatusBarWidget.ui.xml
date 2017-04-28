@@ -69,16 +69,16 @@
       .rstudio-themes-flat .statusBar .element.last {
          border-right: none;
       }
-      .rstudio-themes-flat.rstudio-themes-default .statusBar,
-      .rstudio-themes-flat.rstudio-themes-default .statusBar .element {
+      .rstudio-themes-flat .rstudio-themes-default .statusBar,
+      .rstudio-themes-flat .rstudio-themes-default .statusBar .element {
          border-color: THEME_DEFAULT_BORDER;
       }
-      .rstudio-themes-flat.rstudio-themes-dark-grey .statusBar,
-      .rstudio-themes-flat.rstudio-themes-dark-grey .statusBar .element {
+      .rstudio-themes-flat .rstudio-themes-dark-grey .statusBar,
+      .rstudio-themes-flat .rstudio-themes-dark-grey .statusBar .element {
          border-color: THEME_DARKGREY_BORDER;
       }
-      .rstudio-themes-flat.rstudio-themes-alternate .statusBar,
-      .rstudio-themes-flat.rstudio-themes-alternate .statusBar .element  {
+      .rstudio-themes-flat .rstudio-themes-alternate .statusBar,
+      .rstudio-themes-flat .rstudio-themes-alternate .statusBar .element  {
          border-color: THEME_ALTERNATE_BORDER;
       }
    </ui:style>
