@@ -350,7 +350,7 @@
       display    = display,
       attributes = attributes,
       children   = if (is.list(children)) unname(children),
-      more       = more
+      more       = .rs.scalar(more)
    )
 })
 

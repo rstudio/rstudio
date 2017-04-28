@@ -1250,8 +1250,7 @@ public class ObjectExplorerDataGrid
       for (int i = 0; i < n; i++)
          flattenImpl(children.get(i), filter, output);
       
-      // add a dummy 'More...' element (the CellTable's buildRowImpl
-      // will treat this specially)
+      // add a dummy 'More...' element
       boolean drawMore = 
             data.getExpansionState() == ExpansionState.OPEN &&
             data.isMoreAvailable();
