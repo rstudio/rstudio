@@ -104,7 +104,7 @@
 
 .rs.addFunction("explorer.slice", function(object,
                                            start = 1,
-                                           end = 200)
+                                           end = start + 199)
 {
    .rs.slice(object, start, end)
 })
