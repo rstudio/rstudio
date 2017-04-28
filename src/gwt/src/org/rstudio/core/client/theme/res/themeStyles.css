@@ -589,6 +589,15 @@ pre {
    z-index: 50;
    background-size: 14px 14px;
 }
+.rstudio-themes-flat .windowframe-maximized .maximize:hover,
+.rstudio-themes-flat .windowframe-exclusive .maximize:hover {
+   background-image: RESTORE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .windowframe-maximized .maximize:hover,
+.rstudio-themes-flat .rstudio-themes-dark .windowframe-exclusive .maximize:hover {
+   filter: brightness(1.50);
+}
 .windowframe .minimize {
    background-image: MINIMIZE;
    z-index: 50;
@@ -598,14 +607,37 @@ pre {
    background-image: MAXIMIZESELECTED;
    background-size: 14px 14px;
 }
+.rstudio-themes-flat .windowframe .maximize:hover {
+   background-image: MAXIMIZE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .windowframe .maximize:hover {
+   filter: brightness(1.50);
+}
 .windowframe-maximized .maximize:hover,
 .windowframe-exclusive .maximize:hover {
    background-image: RESTORESELECTED;
    background-size: 14px 14px;
 }
+.rstudio-themes-flat .windowframe-maximized .maximize:hover,
+.rstudio-themes-flat .windowframe-exclusive .maximize:hover {
+   background-image: RESTORE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .windowframe-maximized .maximize:hover,
+.rstudio-themes-flat .rstudio-themes-dark .windowframe-exclusive .maximize:hover {
+   filter: brightness(1.50);
+}
 .windowframe .minimize:hover {
    background-image: MINIMIZESELECTED;
    background-size: 14px 14px;
+}
+.rstudio-themes-flat .windowframe .minimize:hover {
+   background-image: MINIMIZE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .windowframe .minimize:hover {
+   filter: brightness(1.50);
 }
 
 .windowframe-exclusive .minimize {
@@ -692,9 +724,23 @@ pre {
    background-image: MAXIMIZESELECTED;
    background-size: 14px 14px;
 }
+.rstudio-themes-flat .minimizedWindow .maximize:hover {
+   background-image: MAXIMIZE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .minimizedWindow .maximize:hover {
+   filter: brightness(1.50);
+}
 .minimizedWindow .minimize:hover {
    background-image: RESTORESELECTED;
    background-size: 14px 14px;
+}
+.rstudio-themes-flat .minimizedWindow .minimize:hover {
+   background-image: RESTORE;
+   filter: brightness(0.4);
+}
+.rstudio-themes-flat .rstudio-themes-dark .minimizedWindow .minimize:hover {
+   filter: brightness(1.50);
 }
 .minimizedWindow .center {
    background-image: PODMINIMIZEDTILE;
