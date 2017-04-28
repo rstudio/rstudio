@@ -38,3 +38,6 @@ if [ -x "$rcpath" ]; then
    $rcpath -J /home/vagrant/rstudio-build
 fi
 
+# perform overlay config
+./provision-primary-overlay.sh
+
