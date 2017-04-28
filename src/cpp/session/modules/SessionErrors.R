@@ -77,13 +77,64 @@
    # remove hidden entries from the stack
    stack <- stack[!sapply(stack, is.null)]
 
+   
+   # look for python entry point and fill in the stack from reticulate if we can
+   ammended_stack <- list()
+   lapply(stack, function(x) {
+      func <- x$func
+      if (.rs.hasPythonStackTrace(func)) {
+         foundUserCode <<- TRUE # python code always includes src references
+         python_stack_trace <- .rs.getActivePythonStackTrace()
+         for (item in python_stack_trace)
+            ammended_stack[[length(ammended_stack) + 1]] <<- item
+      } else {
+         ammended_stack[[length(ammended_stack) + 1]] <<- x
+      }
+   })
+   
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
       err <- list(
-         frames = stack,
+         frames = ammended_stack,
          message = .rs.scalar(geterrmessage()))
       errorReporter(err)
+   }
+})
+
+.rs.addFunction("hasPythonStackTrace", function(func) {
+   grepl("^py_call_impl\\(", func) && 
+         .rs.isPackageVersionInstalled("reticulate", "0.7.0.9005") &&
+         !is.null(reticulate::py_last_error())
+})
+
+.rs.addFunction("getActivePythonStackTrace", function() {
+   stack <- list()
+   # silence errors so anything unexpected doesn't mess with global RStudio error handling
+   tryCatch({
+      traceback <- reticulate::py_last_error()$traceback
+      for (i in 1:length(traceback)) {
+         lineData <- .rs.pyStackItemToLineDataList(traceback[[i]])
+         if (!is.null(lineData))
+            stack[[length(stack) + 1]] <- lineData
+      }
+   }, error = function(e) NULL)
+   stack
+})
+
+.rs.addFunction("pyStackItemToLineDataList", function(item) {
+   matches <- regmatches(item, regexec('^\\s+\\w+ \\"([^\\"]+)\\", \\w+ (\\d+), \\w+ ([A-Za-z_0-9]+).*$',item))[[1]]
+   if (length(matches) == 4) {
+      list(
+         func = .rs.scalar(matches[[4]]),
+         file = .rs.scalar(matches[[2]]),
+         line_number = .rs.scalar(matches[[3]]),
+         end_line_nubmer = .rs.scalar(matches[[3]]),
+         character_number = .rs.scalar(0),
+         character_number = .rs.scalar(0)
+      ) 
+   } else {
+      NULL
    }
 })
 
