@@ -67,7 +67,7 @@
       name           = name,
       access         = NULL,
       tags           = character(),
-      start          = 1
+      start          = 0
    )
 })
 
