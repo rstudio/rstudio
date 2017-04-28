@@ -104,7 +104,7 @@ public abstract class VirtualizedDataGrid<T> extends DataGrid<T>
          @Override
          public void onScroll(ScrollEvent event)
          {
-            redrawTimer_.schedule(100);
+            redrawTimer_.schedule(700);
          }
       });
       
