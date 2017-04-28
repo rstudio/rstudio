@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
@@ -82,6 +83,9 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -94,13 +98,17 @@ import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.HeaderPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
 
 public class ObjectExplorerDataGrid
       extends DataGrid<ObjectExplorerDataGrid.Data>
-      implements ClickHandler,
+      implements AttachEvent.Handler,
+                 ClickHandler,
+                 ScrollHandler,
                  RowHoverEvent.Handler,
                  CellPreviewEvent.Handler<ObjectExplorerDataGrid.Data>
 {
@@ -618,10 +626,19 @@ public class ObjectExplorerDataGrid
       dataProvider_.addDataDisplay(this);
       
       // register handlers
+      handlers_ = new HandlerRegistrations();
+      
       setKeyboardSelectionHandler(this);
       setTableBuilder(new TableBuilder(this));
+      addAttachHandler(this);
       addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
+      
+      // register a scroll handler (unfortunately, DataGrid doesn't
+      // seem to expose a friendly way of doing this)
+      final HeaderPanel headerPanel = (HeaderPanel) getWidget();
+      final ScrollPanel scrollPanel = (ScrollPanel) headerPanel.getContentWidget();
+      scrollPanel.addScrollHandler(this);
       
       // populate the view once initially
       initializeRoot();
@@ -653,6 +670,19 @@ public class ObjectExplorerDataGrid
    }
    
    // Handlers ---
+   
+   @Override
+   public void onAttachOrDetach(AttachEvent event)
+   {
+      if (event.isAttached())
+         return;
+   }
+   
+   @Override
+   public void onScroll(ScrollEvent event)
+   {
+      Debug.logToRConsole("On Scroll!");
+   }
    
    @Override
    public void onClick(ClickEvent event)
@@ -811,7 +841,6 @@ public class ObjectExplorerDataGrid
    public void onResize()
    {
       super.onResize();
-      
       updateHoverRowWidth();
    }
    
@@ -1271,6 +1300,8 @@ public class ObjectExplorerDataGrid
       }
    }
    
+   // Members ----
+   
    private final IdentityColumn<Data> nameColumn_;
    private final IdentityColumn<Data> typeColumn_;
    private final IdentityColumn<Data> valueColumn_;
@@ -1282,6 +1313,7 @@ public class ObjectExplorerDataGrid
    
    @SuppressWarnings("unused")
    private final SourceDocument document_;
+   private final HandlerRegistrations handlers_;
    
    private TableRowElement hoveredRow_;
    private boolean showAttributes_;
