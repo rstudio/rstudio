@@ -18,16 +18,19 @@ package org.rstudio.studio.client.application.ui;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UIPrefs uiPrefs, Document document)
+   public static void initializeThemes(UIPrefs uiPrefs,
+                                       Document document,
+                                       Element element)
    {
       document.getBody().removeClassName("rstudio-themes-flat");
-      document.getBody().removeClassName("rstudio-themes-dark");
-      document.getBody().removeClassName("rstudio-themes-default");
-      document.getBody().removeClassName("rstudio-themes-dark-grey");
-      document.getBody().removeClassName("rstudio-themes-alternate");
+      element.removeClassName("rstudio-themes-dark");
+      element.removeClassName("rstudio-themes-default");
+      element.removeClassName("rstudio-themes-dark-grey");
+      element.removeClassName("rstudio-themes-alternate");
       
       if (uiPrefs.getUseFlatThemes().getGlobalValue()) {         
          String themeName = uiPrefs.getFlatTheme().getGlobalValue();
@@ -37,9 +40,9 @@ public class RStudioThemes
          
          document.getBody().addClassName("rstudio-themes-flat");
          if (themeName.contains("dark")) {
-            document.getBody().addClassName("rstudio-themes-dark");
+            element.addClassName("rstudio-themes-dark");
          }
-         document.getBody().addClassName("rstudio-themes-" + themeName);
+         element.addClassName("rstudio-themes-" + themeName);
       }
    }
 }

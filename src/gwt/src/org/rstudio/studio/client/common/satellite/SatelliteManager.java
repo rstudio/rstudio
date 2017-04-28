@@ -473,7 +473,9 @@ public class SatelliteManager implements CloseHandler<Window>
          callSetParams(satelliteWnd, params);
 
       // set themes
-      RStudioThemes.initializeThemes(pUIPrefs_.get(), satellite.getWindow().getDocument());
+      RStudioThemes.initializeThemes(pUIPrefs_.get(),
+                                     satellite.getWindow().getDocument(),
+                                     satellite.getWindow().getDocument().getBody());
    }
    
    // called to register child windows (not necessarily full-fledged 

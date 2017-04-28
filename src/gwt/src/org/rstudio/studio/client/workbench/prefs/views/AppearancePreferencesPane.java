@@ -247,7 +247,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       uiPrefs_.getUseFlatThemes().setGlobalValue(flatTheme_.getValue() != "classic");
       uiPrefs_.getFlatTheme().setGlobalValue(flatTheme_.getValue());
       
-      RStudioThemes.initializeThemes(uiPrefs_, Document.get());
+      RStudioThemes.initializeThemes(uiPrefs_, Document.get(), Document.get().getBody());
 
       return restartRequired;
    }
