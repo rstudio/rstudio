@@ -24,16 +24,14 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.RStudioDataGrid;
+import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 
 /*
@@ -83,31 +81,24 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.ScrollEvent;
-import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.AbstractCellTable;
-import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.RowHoverEvent;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 
 public class ObjectExplorerDataGrid
-      extends RStudioDataGrid<ObjectExplorerDataGrid.Data>
+      extends VirtualizedDataGrid<ObjectExplorerDataGrid.Data>
       implements AttachEvent.Handler,
                  ClickHandler,
-                 ScrollHandler,
                  RowHoverEvent.Handler,
                  CellPreviewEvent.Handler<ObjectExplorerDataGrid.Data>
 {
@@ -305,21 +296,6 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   public static class TableBuilder
-         extends DefaultCellTableBuilder<Data>
-   {
-      public TableBuilder(AbstractCellTable<Data> table)
-      {
-         super(table);
-      }
-      
-      @Override
-      public void buildRowImpl(Data data, int index)
-      {
-         super.buildRowImpl(data, index);
-      }
-   }
-   
    private String generateExtractingRCode(Data data, String finalReplacement)
    {
       if (data == null || data.isMorePlaceholder())
@@ -442,16 +418,14 @@ public class ObjectExplorerDataGrid
          {
          case CLOSED:
             builder.append(SafeHtmlUtil.createOpenTag("div",
-                  "class", RES.dataGridStyle().openRowIcon(),
+                  "class", RES.dataGridStyle().spriteExpandIcon(),
                   "data-action", ACTION_OPEN));
-            builder.append(IMAGE_RIGHT_ARROW.getSafeHtml());
             builder.appendHtmlConstant("</div>");
             break;
          case OPEN:
             builder.append(SafeHtmlUtil.createOpenTag("div",
-                  "class", RES.dataGridStyle().closeRowIcon(),
+                  "class", RES.dataGridStyle().spriteCollapseIcon(),
                   "data-action", ACTION_CLOSE));
-            builder.append(IMAGE_DOWN_ARROW.getSafeHtml());
             builder.appendHtmlConstant("</div>");
             break;
          }
@@ -558,13 +532,10 @@ public class ObjectExplorerDataGrid
                                   SafeHtmlBuilder builder)
       {
          SafeHtml extractTag = SafeHtmlUtil.createDiv(
-               "class",       CLASS,
+               "class",       CLASS + " " + RES.dataGridStyle().spriteExtractCodeIcon(),
                "style",       "visibility: hidden",
                "data-action", ACTION_EXTRACT);
-         
          builder.append(extractTag);
-         appendVerticalAlignHelper(builder);
-         builder.append(IMAGE_EXTRACT_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
       
@@ -572,13 +543,10 @@ public class ObjectExplorerDataGrid
                                SafeHtmlBuilder builder)
       {
          SafeHtml viewTag = SafeHtmlUtil.createDiv(
-               "class",       CLASS,
+               "class",       CLASS + " " + RES.dataGridStyle().spriteViewObjectIcon(),
                "style",       "visibility: hidden",
                "data-action", ACTION_VIEW);
-         
          builder.append(viewTag);
-         appendVerticalAlignHelper(builder);
-         builder.append(IMAGE_VIEW_CODE.getSafeHtml());
          builder.appendHtmlConstant("</div>");
       }
       
@@ -607,16 +575,6 @@ public class ObjectExplorerDataGrid
       
       setSize("100%", "100%");
       
-      // initialize synchronize timer
-      synchronizeTimer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            synchronize();
-         }
-      };
-      
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
@@ -635,10 +593,12 @@ public class ObjectExplorerDataGrid
       dataProvider_.addDataDisplay(this);
       
       // register handlers
+      
+      // TODO: re-enable later
+      setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+      
       setKeyboardSelectionHandler(this);
-      setTableBuilder(new TableBuilder(this));
       addAttachHandler(this);
-      addScrollHandler(this);
       addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
       
@@ -678,16 +638,6 @@ public class ObjectExplorerDataGrid
    {
       if (event.isAttached())
          return;
-   }
-   
-   @Override
-   public void onScroll(ScrollEvent event)
-   {
-      // get the number of visible rows
-      visibleRows_ = getVisibleRows();
-      
-      // synchronize with client on timeout (debounce)
-      synchronizeTimer_.schedule(10);
    }
    
    @Override
@@ -1247,9 +1197,24 @@ public class ObjectExplorerDataGrid
       }
       
       setData(data);
+      redraw();
    }
    
-   private List<Data> getData()
+   @Override
+   public int getRowHeight()
+   {
+      return 24;
+   }
+   
+   @Override
+   public int getTotalNumberOfRows()
+   {
+      if (dataProvider_ == null)
+         return 0;
+      return getData().size();
+   }
+   
+   public List<Data> getData()
    {
       return dataProvider_.getList();
    }
@@ -1309,8 +1274,6 @@ public class ObjectExplorerDataGrid
    // Members ----
    
    private final ObjectExplorerHandle handle_;
-   private final Timer synchronizeTimer_;
-   private Range visibleRows_;
    private Data root_;
    
    @SuppressWarnings("unused")
@@ -1377,33 +1340,21 @@ public class ObjectExplorerDataGrid
    
    public interface Styles extends RStudioDataGridStyle
    {
-      String openRowIcon();
-      String closeRowIcon();
-      String objectTypeIcon();
-      String valueDesc();
-      String cellInnerTable();
       String virtual();
       String verticalAlignHelper();
+      
+      String spriteExpandIcon();
+      String spriteCollapseIcon();
+      String spriteExtractCodeIcon();
+      String spriteViewObjectIcon();
+      
+      String cellInnerTable();
+      String valueDesc();
       String clickableIcon();
-      String moreButton();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
 
-   private static final ImageResource2x IMAGE_RIGHT_ARROW = new ImageResource2x(
-         EnvironmentResources.INSTANCE.expandIcon2x());
-
-   private static final ImageResource2x IMAGE_DOWN_ARROW = new ImageResource2x(
-         EnvironmentResources.INSTANCE.collapseIcon2x());
-
-   private static final ImageResource2x IMAGE_EXTRACT_CODE = new ImageResource2x(
-         RES.extractCode(),
-         RES.extractCode2x());
-
-   private static final ImageResource2x IMAGE_VIEW_CODE = new ImageResource2x(
-         RES.viewObject(),
-         RES.viewObject2x());
-   
    private static final SafeHtml TABLE_OPEN_TAG = SafeHtmlUtil.createOpenTag(
          "table",
          "class", RES.dataGridStyle().cellInnerTable());

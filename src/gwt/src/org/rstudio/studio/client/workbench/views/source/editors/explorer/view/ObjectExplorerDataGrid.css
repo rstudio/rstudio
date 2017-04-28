@@ -16,6 +16,10 @@
 	border-left: 2px solid #FFF;
 }
 
+.dataGridEvenRow, .dataGridOddRow {
+	height: 24px !important;
+}
+
 .dataGridEvenRowCell, .dataGridOddRowCell {
 	border: 0;
 	padding-top: 0;
@@ -43,31 +47,33 @@
 	outline: 0;
 }
 
+/* Sprites */
+
+@sprite .spriteExpandIcon {
+	gwt-image: 'rightArrow';
+	background-position: center;
+	cursor: pointer;
+}
+
+@sprite .spriteCollapseIcon {
+	gwt-image: 'downArrow';
+	background-position: center;
+	cursor: pointer;
+}
+
+@sprite .spriteExtractCodeIcon {
+	gwt-image: 'extractCode';
+	background-position: center;
+}
+
+@sprite .spriteViewObjectIcon {
+	gwt-image: 'viewObject';
+	background-position: center;
+}
+
 /* Other non-override styling */
 
-.openRowIcon {
-	width: 20px !important;
-	text-align: center;
-	cursor: pointer;
-}
-
-.closeRowIcon {
-	width: 20px !important;
-	text-align: center;
-	cursor: pointer;
-}
-
-.openRowIcon img, .closeRowIcon img {
-	margin-top: 3px;
-}
-
-.objectTypeIcon {
-	width: 20px !important;
-	margin-top: 2px;
-}
-
 .valueDesc {
-	
 }
 
 .cellInnerTable {
@@ -109,9 +115,5 @@
 .clickableIcon:active {
 	border-radius: 2px;
 	background-color: #e6e6e6;
-	cursor: pointer;
-}
-
-.moreButton {
 	cursor: pointer;
 }
