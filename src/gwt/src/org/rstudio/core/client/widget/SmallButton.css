@@ -42,7 +42,7 @@
    overflow: hidden;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark button.smallButton > table:first-child {
+.rstudio-themes-flat .rstudio-themes-dark button.smallButton > table:first-child {
    box-shadow: none;
 }
 
@@ -59,7 +59,7 @@
    font-size: 10px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .buttonCenter {
+.rstudio-themes-flat .rstudio-themes-dark .buttonCenter {
    color: white;
 }
 
@@ -67,11 +67,11 @@
    background: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark button.smallButton > table:first-child {
+.rstudio-themes-flat .rstudio-themes-dark button.smallButton > table:first-child {
    border-color: rgb(45,60,75);
    background: rgb(145,154,161);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .buttonContent {
+.rstudio-themes-flat .rstudio-themes-dark .buttonContent {
    color: white;
 }

@@ -39,7 +39,7 @@
    height: 16px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark .dataGridHeader {
    color: white;
 }
 
@@ -81,14 +81,14 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat.rstudio-themes-default .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-alternate .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader {
    border-color: THEME_ALTERNATE_BORDER;
 }
