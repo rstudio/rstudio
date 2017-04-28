@@ -145,6 +145,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
+      events.addHandler(ThemeChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -616,6 +617,14 @@ public class Application implements ApplicationEventHandlers
       view_.showSessionAbendWarning();
    }
    
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getGlobalValue(),
+                                     Document.get(),
+                                     rootPanel_.getElement());
+   }
+   
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
@@ -708,7 +717,9 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get(), Document.get(), rootPanel_.getElement());
+      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getGlobalValue(),
+                                     Document.get(),
+                                     rootPanel_.getElement());
 
       pAceThemes_.get();
 

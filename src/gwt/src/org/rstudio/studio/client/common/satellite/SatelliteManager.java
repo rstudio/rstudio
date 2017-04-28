@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
@@ -473,9 +474,9 @@ public class SatelliteManager implements CloseHandler<Window>
          callSetParams(satelliteWnd, params);
 
       // set themes
-      RStudioThemes.initializeThemes(pUIPrefs_.get(),
-                                     satellite.getWindow().getDocument(),
-                                     satellite.getWindow().getDocument().getBody());
+      events_.fireEventToSatellite(new ThemeChangedEvent(
+         pUIPrefs_.get().getFlatTheme().getGlobalValue()),
+         satelliteWnd);
    }
    
    // called to register child windows (not necessarily full-fledged 

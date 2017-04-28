@@ -14,15 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -34,7 +30,8 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -44,10 +41,12 @@ public class AppearancePreferencesPane extends PreferencesPane
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UIPrefs uiPrefs,
-                                    final AceThemes themes)
+                                    final AceThemes themes,
+                                    EventBus eventBus)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
+      eventBus_ = eventBus;
 
       VerticalPanel leftPanel = new VerticalPanel();
 
@@ -244,11 +243,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
-      uiPrefs_.getUseFlatThemes().setGlobalValue(flatTheme_.getValue() != "classic");
-      uiPrefs_.getFlatTheme().setGlobalValue(flatTheme_.getValue());
+      uiPrefs_.getFlatTheme().setGlobalValue(flatTheme_.getValue());  
+      ThemeChangedEvent themeChangedEvent = new ThemeChangedEvent(flatTheme_.getValue());
+      eventBus_.fireEvent(themeChangedEvent);
+      eventBus_.fireEventToAllSatellites(themeChangedEvent);
       
-      RStudioThemes.initializeThemes(uiPrefs_, Document.get(), Document.get().getBody());
-
       return restartRequired;
    }
 
@@ -300,4 +299,5 @@ public class AppearancePreferencesPane extends PreferencesPane
          "    UseMethod(\"plot\")\n" +
          "}\n";
 
+   EventBus eventBus_;
 }

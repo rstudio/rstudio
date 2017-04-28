@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UIPrefs uiPrefs,
+   public static void initializeThemes(String themeName,
                                        Document document,
                                        Element element)
    {
@@ -32,17 +32,16 @@ public class RStudioThemes
       element.removeClassName("rstudio-themes-dark-grey");
       element.removeClassName("rstudio-themes-alternate");
       
-      if (uiPrefs.getUseFlatThemes().getGlobalValue()) {         
-         String themeName = uiPrefs.getFlatTheme().getGlobalValue();
-         
-         // upgrade classic theme when using flat themes
-         if (themeName == "classic") themeName = "default";
-         
+      if (themeName != "classic") {         
          document.getBody().addClassName("rstudio-themes-flat");
          if (themeName.contains("dark")) {
             element.addClassName("rstudio-themes-dark");
          }
          element.addClassName("rstudio-themes-" + themeName);
       }
+   }
+
+   public static boolean isFlat(UIPrefs prefs) {
+      return prefs.getFlatTheme().getValue() != "classic"; 
    }
 }
