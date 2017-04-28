@@ -40,7 +40,8 @@
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external rstudio-themes-background;
+@external rstudio-themes-background, rstudio-themes-inverts;
+
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
