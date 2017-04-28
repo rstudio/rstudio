@@ -50,7 +50,8 @@
       access    = access,
       tags      = tags,
       recursive = 1,
-      start     = start + 1  # 0 -> 1-based indexing
+      start     = start + 1,   # 0 -> 1-based indexing,
+      end       = start + 200  # 200 elements inclusive
    )
    
    # generate inspection result
@@ -60,21 +61,14 @@
 
 .rs.addJsonRpcHandler("explorer_begin_inspect", function(id, name)
 {
-   # retrieve object from cache
-   object <- .rs.explorer.getCachedObject(id)
-   
-   # construct context and perform a depth-one inspection
-   context <- .rs.explorer.createContext(
-      name      = name,
-      access    = NULL,
-      tags      = character(),
-      recursive = 1,
-      start     = 1
+   .rs.rpc.explorer_inspect_object(
+      id             = id,
+      extractingCode = NULL,
+      name           = name,
+      access         = NULL,
+      tags           = character(),
+      start          = 1
    )
-   
-   # generate inspection result
-   result  <- .rs.explorer.inspectObject(object, context)
-   result
 })
 
 .rs.addFunction("objectAddress", function(object)
@@ -100,13 +94,6 @@
 .rs.addFunction("objectAttributes", function(object)
 {
    .Call("rs_objectAttributes", object, PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("explorer.slice", function(object,
-                                           start = 1,
-                                           end = start + 199)
-{
-   .rs.slice(object, start, end)
 })
 
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
@@ -233,6 +220,7 @@
    childContext[["name"]]   <- name
    childContext[["access"]] <- access
    childContext[["tags"]]   <- tags
+   childContext[["more"]]   <- FALSE
    
    # return
    childContext
@@ -294,6 +282,7 @@
    access    <- context$access
    tags      <- context$tags
    recursive <- context$recursive
+   more      <- isTRUE(context$more)
    
    # if we did a recursive lookup, but children is still NULL,
    # set it as an empty list
@@ -358,7 +347,8 @@
       tags       = as.character(tags),
       display    = display,
       attributes = attributes,
-      children   = if (is.list(children)) unname(children)
+      children   = if (is.list(children)) unname(children),
+      more       = more
    )
 })
 
@@ -477,10 +467,8 @@
    if (context$recursive)
    {
       names <- names(object)
-      indices <- .rs.explorer.slice(
-         seq_along(object),
-         context$start
-      )
+      indices <- .rs.slice(seq_along(object), context$start, context$end)
+      context$more <- length(object) > context$end
       
       # iterate over children and inspect
       children <- lapply(indices, function(i)
@@ -513,10 +501,9 @@
    if (context$recursive)
    {
       # retrieve keys
-      keys <- .rs.explorer.slice(
-         ls(envir = object, all.names = TRUE),
-         context$start
-      )
+      allKeys <- ls(envir = object, all.names = TRUE)
+      keys <- .rs.slice(allKeys, context$start, context$end)
+      context$more <- context$end > length(allKeys)
       
       children <- lapply(keys, function(key)
       {
@@ -596,10 +583,8 @@
    if (context$recursive && !is.null(names(object)))
    {
       names <- names(object)
-      indices <- .rs.explorer.slice(
-         seq_along(object),
-         context$start
-      )
+      indices <- .rs.slice(seq_along(object), context$start, context$end)
+      context$more <- length(object) < context$end
       
       # iterate over children and inspect
       children <- lapply(indices, function(i)
