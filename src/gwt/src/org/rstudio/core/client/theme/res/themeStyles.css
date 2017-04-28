@@ -1438,6 +1438,10 @@ body.ubuntu_mono .searchBox {
   margin: 3px 3px 5px 3px;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark .gwt-CheckBox input[type="checkbox"] {
+   background: #d3d8dc;
+}
+
 .macintosh .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-CheckBox input[type="checkbox"],
 .windows-highdpi .gwt-CheckBox input[type="checkbox"] {
