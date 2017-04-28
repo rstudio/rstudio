@@ -1309,23 +1309,23 @@ public class ObjectExplorerDataGrid
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ObjectExplorerDataGrid.css"})
       Styles dataGridStyle();
       
-      @Source("images/downArrow.png")
-      ImageResource downArrow();
+      @Source("images/expandIcon.png")
+      ImageResource expandIcon();
       
-      @Source("images/downArrow_2x.png")
-      ImageResource downArrow2x();
+      @Source("images/expandIcon_2x.png")
+      ImageResource expandIcon2x();
+      
+      @Source("images/collapseIcon.png")
+      ImageResource collapseIcon();
+      
+      @Source("images/collapseIcon_2x.png")
+      ImageResource collapseIcon2x();
       
       @Source("images/extractCode.png")
       ImageResource extractCode();
       
       @Source("images/extractCode_2x.png")
       ImageResource extractCode2x();
-      
-      @Source("images/rightArrow.png")
-      ImageResource rightArrow();
-      
-      @Source("images/rightArrow_2x.png")
-      ImageResource rightArrow2x();
       
       @Source("images/viewObject.png")
       ImageResource viewObject();

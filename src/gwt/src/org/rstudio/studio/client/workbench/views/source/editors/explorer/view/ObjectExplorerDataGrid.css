@@ -50,25 +50,29 @@
 /* Sprites */
 
 @sprite .spriteExpandIcon {
-	gwt-image: 'rightArrow';
+	gwt-image: 'expandIcon2x';
 	background-position: center;
 	cursor: pointer;
+	background-size: 14px 14px;
 }
 
 @sprite .spriteCollapseIcon {
-	gwt-image: 'downArrow';
+	gwt-image: 'collapseIcon2x';
 	background-position: center;
 	cursor: pointer;
+	background-size: 14px 14px;
 }
 
 @sprite .spriteExtractCodeIcon {
-	gwt-image: 'extractCode';
+	gwt-image: 'extractCode2x';
 	background-position: center;
+	background-size: 20px 18px;
 }
 
 @sprite .spriteViewObjectIcon {
-	gwt-image: 'viewObject';
+	gwt-image: 'viewObject2x';
 	background-position: center;
+	background-size: 15px 13px;
 }
 
 /* Other non-override styling */
