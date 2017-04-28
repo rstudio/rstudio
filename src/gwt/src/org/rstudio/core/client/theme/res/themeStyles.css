@@ -1922,6 +1922,10 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts {
+   filter: invert(100%);
+}
+
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,
