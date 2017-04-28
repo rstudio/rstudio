@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
@@ -116,7 +117,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          {
             final SessionInfo sessionInfo = session.getSessionInfo();
             
-            isFlatTheme_ = pUIPrefs_.get().getUseFlatThemes().getValue(); 
+            isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get()); 
             toolbar_.completeInitialization(sessionInfo);
             
             new JSObjectStateValue(
