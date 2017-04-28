@@ -3,6 +3,11 @@
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
 @external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -175,4 +180,16 @@ button.browse:focus {
 
 .rstudio-themes-flat.rstudio-themes-dark .browse {
    color: #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-default .browse {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .browse {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat.rstudio-themes-alternate .browse {
+   border-color: THEME_ALTERNATE_BORDER;
 }
