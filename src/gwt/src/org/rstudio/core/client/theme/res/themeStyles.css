@@ -648,13 +648,35 @@ pre {
    -webkit-font-smoothing: subpixel-antialiased;
 }
 
-.rstudio-themes-flat .windowFrameObject > div:last-child {
+.windowFrameWidget {
+
+}
+
+.windowFrameConsoleLayout {
+
+}
+
+.rstudio-themes-flat .windowFrameObject {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
    left: 2px !important;
-   top: 2px !important;
+   top: 3px !important;
    right: 2px !important;
    bottom: 2px !important;
+}
+
+.rstudio-themes-flat .windowFrameObject > div:last-child {
+   left: 0px !important;
+   top: 0px !important;
+   right: 0px !important;
+   bottom: 0px !important;
+}
+
+.rstudio-themes-flat .windowFrameObject div.windowFrameConsoleLayout {
+   left: 0px !important;
+   top: 24px !important;
+   right: 0px !important;
+   bottom: 0px !important;
 }
 
 .macintosh #rstudio_console_input {

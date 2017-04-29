@@ -924,7 +924,7 @@ public class PaneManager
    private LogicalWindow createConsole()
    {
       PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
-
+      
       ToolbarButton goToWorkingDirButton =
             commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
@@ -946,6 +946,20 @@ public class PaneManager
             terminalTab_,
             eventBus_,
             goToWorkingDirButton);
+      
+      
+      
+      // In order to be able to style the actual layout div that GWT uses internally
+      // to construct the WindowFrame layout, we need to assign it ourselves.
+      for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
+         boolean hasLookupClass = false;
+         for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
+               hasLookupClass = true;
+         }
+         
+         if (hasLookupClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().windowFrameConsoleLayout());
+      }
       
       return logicalWindow;
    }
