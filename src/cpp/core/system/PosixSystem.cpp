@@ -872,7 +872,49 @@ bool hasSubprocesses(PidType pid)
 
 FilePath currentWorkingDirViaLsof(PidType pid)
 {
-   return FilePath();
+   // lsof -a -p PID -d cwd -Fn
+   //
+   shell_utils::ShellCommand cmd("lsof");
+   cmd << shell_utils::EscapeFilesOnly;
+   cmd << "-a";
+   cmd << "-p" << pid;
+   cmd << "-d cwd";
+   cmd << "-Fn";
+
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error error = runCommand(cmd, options, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   if (result.exitStatus != 0)
+      return FilePath();
+
+   // For a process with PID 1234 with cwd of /Users/foo, this command
+   // outputs three lines, as follows:
+   // p1234\n
+   // fcwd\n
+   // n/Users/foo\n
+   size_t pos = result.stdOut.find_first_of('\n');
+   if (pos == std::string::npos)
+      return FilePath();
+   pos = result.stdOut.find_first_of('\n', pos + 1);
+   if (pos == std::string::npos)
+      return FilePath();
+   pos += 1; // skip over \n
+   if (pos >= result.stdOut.length())
+      return FilePath();
+   if (result.stdOut.at(pos) != 'n')
+      return FilePath();
+   pos++;
+   size_t finalPos = result.stdOut.find_first_of('\n', pos);
+   if (finalPos == std::string::npos || finalPos == pos)
+      return FilePath();
+
+   // from current position to just before the next \n
+   return FilePath(result.stdOut.substr(pos, finalPos - pos));
 }
 
 FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath)
