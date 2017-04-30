@@ -947,18 +947,22 @@ public class PaneManager
             eventBus_,
             goToWorkingDirButton);
       
-      
-      
       // In order to be able to style the actual layout div that GWT uses internally
       // to construct the WindowFrame layout, we need to assign it ourselves.
       for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
-         boolean hasLookupClass = false;
+         boolean hasWidgetClass = false;
+         boolean hasHeaderClass = false;
+         
          for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
-               hasLookupClass = true;
+               hasWidgetClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
+               hasHeaderClass = true;
          }
          
-         if (hasLookupClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().windowFrameConsoleLayout());
+         if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
+         if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
       }
       
       return logicalWindow;

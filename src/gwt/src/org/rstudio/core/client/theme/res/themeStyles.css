@@ -652,7 +652,11 @@ pre {
 
 }
 
-.windowFrameConsoleLayout {
+.consoleWidgetLayout {
+
+}
+
+.consoleHeaderLayout {
 
 }
 
@@ -672,7 +676,19 @@ pre {
    bottom: 0px !important;
 }
 
-.rstudio-themes-flat .windowFrameObject div.windowFrameConsoleLayout {
+.rstudio-themes-flat .windowFrameObject div.consoleHeaderLayout {
+   left: 0px !important;
+   top: 0px !important;
+   right: 0px !important;
+}
+
+.rstudio-themes-flat .windowFrameObject div.consoleHeaderLayout .primaryWindowFrameHeader {
+   margin-right: 0px;
+   margin-bottom: 2px;
+   border-bottom: solid 1px #d6dadc;
+}
+
+.rstudio-themes-flat .windowFrameObject div.consoleWidgetLayout {
    left: 0px !important;
    top: 24px !important;
    right: 0px !important;
@@ -2015,7 +2031,8 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-default .toolbar {
+.rstudio-themes-flat .rstudio-themes-default .toolbar,
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject div.consoleHeaderLayout .primaryWindowFrameHeader {
    border-color: THEME_DEFAULT_BORDER;
 }
 
@@ -2053,7 +2070,8 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-dark-grey .toolbar {
+.rstudio-themes-flat .rstudio-themes-dark-grey .toolbar,
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject div.consoleHeaderLayout .primaryWindowFrameHeader {
    border-color: THEME_DARKGREY_BORDER;
 }
 
@@ -2091,7 +2109,8 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-alternate .toolbar {
+.rstudio-themes-flat .rstudio-themes-alternate .toolbar,
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject div.consoleHeaderLayout .primaryWindowFrameHeader {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
