@@ -664,6 +664,14 @@ pre {
 
 }
 
+.consoleMinimizeLayout {
+
+}
+
+.consoleMaximizeLayout {
+
+}
+
 .rstudio-themes-flat .windowFrameObject > div:last-child {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
@@ -701,6 +709,15 @@ pre {
    top: 24px !important;
    right: 0px !important;
    bottom: 0px !important;
+}
+
+.rstudio-themes-flat .windowFrameObject.consoleWindowFrame .consoleMinimizeLayout {
+   top: 5px !important;
+   right: 25px !important;
+}
+.rstudio-themes-flat .windowFrameObject.consoleWindowFrame .consoleMaximizeLayout {
+   top: 5px !important;
+   right: 7px !important;
 }
 
 .macintosh #rstudio_console_input {

@@ -953,6 +953,8 @@ public class PaneManager
       for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
          boolean hasWidgetClass = false;
          boolean hasHeaderClass = false;
+         boolean hasMinimizeClass = false;
+         boolean hasMaximizeClass = false;
          
          for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
@@ -960,10 +962,18 @@ public class PaneManager
             
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
                hasHeaderClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().minimize()))
+               hasMinimizeClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().maximize()))
+               hasMaximizeClass = true;
          }
          
          if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
          if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
+         if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
+         if (hasMaximizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMaximizeLayout());
       }
       
       return logicalWindow;
