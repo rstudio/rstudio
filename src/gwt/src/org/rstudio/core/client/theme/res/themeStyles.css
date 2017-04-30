@@ -50,6 +50,7 @@
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+@eval THEME_GLOBAL_INACTIVE org.rstudio.core.client.theme.ThemeColors.getInactiveBackground();
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -1792,7 +1793,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .minimizedWindowObject table.tabLayoutCenter {
    background-image: none;
-   background: rgb(236, 237, 238);
+   background: THEME_GLOBAL_INACTIVE;
    border-right: solid 1px #d6dadc;
    border-left: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
@@ -2066,7 +2067,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter {
-   background: rgb(236, 237, 238);
+   background: THEME_GLOBAL_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
@@ -2075,7 +2076,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 }
 
 .rstudio-themes-flat .rstudio-themes-default .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(0,0,0,0), rgb(236, 237, 238) 13%);
+   background: linear-gradient(to right, rgba(0,0,0,0), THEME_GLOBAL_INACTIVE 13%);
 }
 
 /* RSTUDIO DARK GREY THEME */
