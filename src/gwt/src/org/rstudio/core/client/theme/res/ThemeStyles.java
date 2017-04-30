@@ -182,6 +182,7 @@ public interface ThemeStyles extends CssResource
    String minimizedWindowObject();
    String windowFrameWidget();
 
+   String consoleWindowFrame();
    String consoleWidgetLayout();
    String consoleHeaderLayout();
 }

@@ -949,6 +949,7 @@ public class PaneManager
       
       // In order to be able to style the actual layout div that GWT uses internally
       // to construct the WindowFrame layout, we need to assign it ourselves.
+      frame.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleWindowFrame());
       for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
          boolean hasWidgetClass = false;
          boolean hasHeaderClass = false;
