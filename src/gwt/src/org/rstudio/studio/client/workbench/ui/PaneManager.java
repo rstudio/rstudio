@@ -947,33 +947,35 @@ public class PaneManager
             eventBus_,
             goToWorkingDirButton);
       
-      // In order to be able to style the actual layout div that GWT uses internally
-      // to construct the WindowFrame layout, we need to assign it ourselves.
-      frame.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleWindowFrame());
-      for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
-         boolean hasWidgetClass = false;
-         boolean hasHeaderClass = false;
-         boolean hasMinimizeClass = false;
-         boolean hasMaximizeClass = false;
-         
-         for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
-            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
-               hasWidgetClass = true;
+      if (consoleTabPanel_.consoleOnly()) {
+         // In order to be able to style the actual layout div that GWT uses internally
+         // to construct the WindowFrame layout, we need to assign it ourselves.
+         frame.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
+         for (Element e = frame.getElement().getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
+            boolean hasWidgetClass = false;
+            boolean hasHeaderClass = false;
+            boolean hasMinimizeClass = false;
+            boolean hasMaximizeClass = false;
             
-            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
-               hasHeaderClass = true;
+            for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
+               if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
+                  hasWidgetClass = true;
+               
+               if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
+                  hasHeaderClass = true;
+               
+               if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().minimize()))
+                  hasMinimizeClass = true;
+               
+               if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().maximize()))
+                  hasMaximizeClass = true;
+            }
             
-            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().minimize()))
-               hasMinimizeClass = true;
-            
-            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().maximize()))
-               hasMaximizeClass = true;
+            if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWidgetLayout());
+            if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleOnlyHeaderLayout());
+            if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleOnlyMinimizeLayout());
+            if (hasMaximizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleOnlyMaximizeLayout());
          }
-         
-         if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
-         if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
-         if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
-         if (hasMaximizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMaximizeLayout());
       }
       
       return logicalWindow;

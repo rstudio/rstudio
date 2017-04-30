@@ -269,16 +269,21 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       consoleOnly_ = terminalTabVisible_;
       managePanels();
    }
+   
+   public boolean consoleOnly()
+   {
+      return !terminalTabVisible_ &&
+             !compilePdfTabVisible_ && 
+             !findResultsTabVisible_ &&
+             !sourceCppTabVisible_ &&
+             !renderRmdTabVisible_ &&
+             !deployContentTabVisible_ &&
+             !markersTabVisible_;
+   }
 
    private void managePanels()
    {
-      boolean consoleOnly = !terminalTabVisible_ &&
-                            !compilePdfTabVisible_ && 
-                            !findResultsTabVisible_ &&
-                            !sourceCppTabVisible_ &&
-                            !renderRmdTabVisible_ &&
-                            !deployContentTabVisible_ &&
-                            !markersTabVisible_;
+      boolean consoleOnly = consoleOnly();
 
       if (!consoleOnly)
       {

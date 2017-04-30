@@ -652,23 +652,23 @@ pre {
 
 }
 
-.consoleWidgetLayout {
+.consoleOnlyWidgetLayout {
 
 }
 
-.consoleHeaderLayout {
+.consoleOnlyHeaderLayout {
 
 }
 
-.consoleWindowFrame {
+.consoleOnlyWindowFrame {
 
 }
 
-.consoleMinimizeLayout {
+.consoleOnlyMinimizeLayout {
 
 }
 
-.consoleMaximizeLayout {
+.consoleOnlyMaximizeLayout {
 
 }
 
@@ -681,7 +681,7 @@ pre {
    bottom: 2px !important;
 }
 
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
    left: 2px !important;
@@ -690,20 +690,20 @@ pre {
    bottom: 2px !important;
 }
 
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame div.consoleHeaderLayout {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyHeaderLayout {
    left: 0px !important;
    top: 0px !important;
    right: 0px !important;
    bottom: 0px !important;
 }
 
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyHeaderLayout .primaryWindowFrameHeader {
    margin-right: 0px;
    margin-bottom: 2px;
    border-bottom: solid 1px #d6dadc;
 }
 
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame div.consoleWidgetLayout {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyWidgetLayout {
    border: none;
    left: 0px !important;
    top: 24px !important;
@@ -711,11 +711,11 @@ pre {
    bottom: 0px !important;
 }
 
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame .consoleMinimizeLayout {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame .consoleOnlyMinimizeLayout {
    top: 5px !important;
    right: 25px !important;
 }
-.rstudio-themes-flat .windowFrameObject.consoleWindowFrame .consoleMaximizeLayout {
+.rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame .consoleOnlyMaximizeLayout {
    top: 5px !important;
    right: 7px !important;
 }
@@ -2057,8 +2057,8 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject  > div:last-child,
 .rstudio-themes-flat .rstudio-themes-default .toolbar,
-.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleWindowFrame {
+.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_DEFAULT_BORDER;
 }
 
@@ -2097,8 +2097,8 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child,
 .rstudio-themes-flat .rstudio-themes-dark-grey .toolbar,
-.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleWindowFrame {
+.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_DARKGREY_BORDER;
 }
 
@@ -2137,8 +2137,8 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
 .rstudio-themes-flat .rstudio-themes-alternate .toolbar,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleWindowFrame {
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleOnlyHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
