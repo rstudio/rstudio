@@ -924,7 +924,7 @@ public class PaneManager
    private LogicalWindow createConsole()
    {
       PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
-
+      
       ToolbarButton goToWorkingDirButton =
             commands_.goToWorkingDir().createToolbarButton();
       goToWorkingDirButton.addStyleName(
@@ -946,6 +946,8 @@ public class PaneManager
             terminalTab_,
             eventBus_,
             goToWorkingDirButton);
+      
+      consoleTabPanel_.addLayoutStyles(frame.getElement());
       
       return logicalWindow;
    }

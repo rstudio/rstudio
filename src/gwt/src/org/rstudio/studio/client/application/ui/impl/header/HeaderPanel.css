@@ -44,19 +44,19 @@
    display: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .center,
-.rstudio-themes-flat.rstudio-themes-dark .center button {
+.rstudio-themes-flat .rstudio-themes-dark .center,
+.rstudio-themes-flat .rstudio-themes-dark .center button {
    color: white;
 }
 
-.rstudio-themes-flat.rstudio-themes-default .center {
+.rstudio-themes-flat .rstudio-themes-default .center {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .center {
+.rstudio-themes-flat .rstudio-themes-dark-grey .center {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-alternate .center {
+.rstudio-themes-flat .rstudio-themes-alternate .center {
    border-color: THEME_ALTERNATE_BORDER;
 }

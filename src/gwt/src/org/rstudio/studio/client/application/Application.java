@@ -145,6 +145,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
+      events.addHandler(ThemeChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -153,8 +154,11 @@ public class Application implements ApplicationEventHandlers
    public void go(final RootLayoutPanel rootPanel, 
                   final Command dismissLoadingProgress)
    {
+      rootPanel_ = rootPanel;
+
       Widget w = view_.getWidget();
       rootPanel.add(w);
+
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
@@ -613,6 +617,14 @@ public class Application implements ApplicationEventHandlers
       view_.showSessionAbendWarning();
    }
    
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getGlobalValue(),
+                                     Document.get(),
+                                     rootPanel_.getElement());
+   }
+   
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
@@ -705,7 +717,9 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get(), Document.get());
+      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getGlobalValue(),
+                                     Document.get(),
+                                     rootPanel_.getElement());
 
       pAceThemes_.get();
 
@@ -994,4 +1008,5 @@ public class Application implements ApplicationEventHandlers
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 
    private ClientStateUpdater clientStateUpdaterInstance_;
+   private RootLayoutPanel rootPanel_;
 }

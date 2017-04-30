@@ -40,7 +40,7 @@ th.objectGridHeader
    padding-right: 2px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark th.objectGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark th.objectGridHeader {
    color: white;
 }
 
@@ -74,14 +74,14 @@ th.checkColumn
 	padding-right: 35px;
 }
 
-.rstudio-themes-flat.rstudio-themes-default .objectGridHeader {
+.rstudio-themes-flat .rstudio-themes-default .objectGridHeader {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .objectGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .objectGridHeader {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-alternate .objectGridHeader {
+.rstudio-themes-flat .rstudio-themes-alternate .objectGridHeader {
    border-color: THEME_ALTERNATE_BORDER;
 }

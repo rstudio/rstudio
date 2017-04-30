@@ -142,6 +142,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
+      frame_.addStyleName("ace_editor");
       navigate(ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }

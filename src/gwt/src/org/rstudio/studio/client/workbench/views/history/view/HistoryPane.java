@@ -129,6 +129,8 @@ public class HistoryPane extends WorkbenchPane
    {
       mainPanel_ = new LayoutPanel();
 
+      mainPanel_.addStyleName("ace_editor");
+
       VerticalPanel vpanel = new VerticalPanel();
       vpanel.setSize("100%", "100%");
 
