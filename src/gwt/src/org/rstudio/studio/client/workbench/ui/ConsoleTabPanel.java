@@ -22,6 +22,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
+import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
 
 public class ConsoleTabPanel extends WorkbenchTabPanel
@@ -269,22 +271,22 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       consoleOnly_ = terminalTabVisible_;
       managePanels();
    }
-   
-   public boolean consoleOnly()
-   {
-      return !terminalTabVisible_ &&
-             !compilePdfTabVisible_ && 
-             !findResultsTabVisible_ &&
-             !sourceCppTabVisible_ &&
-             !renderRmdTabVisible_ &&
-             !deployContentTabVisible_ &&
-             !markersTabVisible_;
-   }
 
    private void managePanels()
    {
-      boolean consoleOnly = consoleOnly();
-
+      boolean consoleOnly = !terminalTabVisible_ &&
+                            !compilePdfTabVisible_ && 
+                            !findResultsTabVisible_ &&
+                            !sourceCppTabVisible_ &&
+                            !renderRmdTabVisible_ &&
+                            !deployContentTabVisible_ &&
+                            !markersTabVisible_;
+      
+      if (consoleOnly)
+         owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
+      else
+         owner_.removeStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
+      
       if (!consoleOnly)
       {
          ArrayList<WorkbenchTab> tabs = new ArrayList<WorkbenchTab>();
@@ -340,6 +342,39 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setContextButton(null, 0, 0, 1);
             owner_.setContextButton(null, 0, 0, 2);
          }
+      }
+      
+      addLayoutStyles(owner_.getElement());
+   }
+   
+   public void addLayoutStyles(Element parent)
+   {
+      // In order to be able to style the actual layout div that GWT uses internally
+      // to construct the WindowFrame layout, we need to assign it ourselves.
+      for (Element e = parent.getFirstChildElement(); e != null; e = e.getNextSiblingElement()) {
+         boolean hasWidgetClass = false;
+         boolean hasHeaderClass = false;
+         boolean hasMinimizeClass = false;
+         boolean hasMaximizeClass = false;
+         
+         for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
+               hasWidgetClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
+               hasHeaderClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().minimize()))
+               hasMinimizeClass = true;
+            
+            if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().maximize()))
+               hasMaximizeClass = true;
+         }
+         
+         if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
+         if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
+         if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
+         if (hasMaximizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMaximizeLayout());
       }
    }
 
