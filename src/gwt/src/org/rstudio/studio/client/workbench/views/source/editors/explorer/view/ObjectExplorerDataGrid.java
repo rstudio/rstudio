@@ -593,10 +593,6 @@ public class ObjectExplorerDataGrid
       dataProvider_.addDataDisplay(this);
       
       // register handlers
-      
-      // TODO: re-enable later
-      setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      
       setKeyboardSelectionHandler(this);
       addAttachHandler(this);
       addRowHoverHandler(this);

@@ -15,8 +15,9 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.theme.RStudioDataGridResources;
-
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
@@ -115,9 +116,19 @@ public abstract class VirtualizedDataGrid<T> extends DataGrid<T>
          @Override
          public void run()
          {
-            redraw();
+            redrawIfNecessary();
          }
       };
+   }
+   
+   @Override
+   protected boolean resetFocusOnCell()
+   {
+      // normally, when a DataGrid is re-drawn, it
+      // will also attempt to restore focus such that
+      // the previously selected cell is placed into view;
+      // we override this method to avoid that behavior
+      return true;
    }
    
    @Override
@@ -125,6 +136,31 @@ public abstract class VirtualizedDataGrid<T> extends DataGrid<T>
    {
       updateActiveRows();
       super.redraw();
+   }
+   
+   public void redrawIfNecessary()
+   {
+      int oldFirstActiveRow = firstActiveRow_;
+      int oldLastActiveRow = lastActiveRow_;
+      
+      updateActiveRows();
+      
+      boolean changed =
+            (firstActiveRow_ != oldFirstActiveRow) ||
+            (lastActiveRow_ != oldLastActiveRow);
+      
+      if (changed)
+      {
+         redraw();
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               VirtualizedDataGrid.this.onResize();
+            }
+         });
+      }
    }
    
    public HeaderPanel getHeaderPanel()
@@ -203,6 +239,7 @@ public abstract class VirtualizedDataGrid<T> extends DataGrid<T>
    private int lastActiveRow_;
    private Timer redrawTimer_;
    
+   // Static Members ----
    private static final int ROW_PADDING = 200;
    private static final Resources RES = GWT.create(RStudioDataGridResources.class);
 }
