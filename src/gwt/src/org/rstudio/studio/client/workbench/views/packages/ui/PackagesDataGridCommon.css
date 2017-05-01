@@ -102,13 +102,10 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader {
-   border-color: THEME_DARKGREY_BORDER;
-}
-
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .dataGridEvenRowCell,
 .rstudio-themes-flat .rstudio-themes-dark-grey .dataGridOddRowCell {
-   border: none;
+   border-color: THEME_DARKGREY_BORDER;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader,
