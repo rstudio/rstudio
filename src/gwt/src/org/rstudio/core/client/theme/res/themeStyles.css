@@ -1147,6 +1147,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
   border-bottom: 1px solid rgb(169,169,169);
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .secondaryToolbarPanel {
+  background: #6c7a86;
+}
+
 .rstudio-themes-flat .secondaryToolbar {
    border-bottom: solid 1px #d6dadc;
    height: 24px;
