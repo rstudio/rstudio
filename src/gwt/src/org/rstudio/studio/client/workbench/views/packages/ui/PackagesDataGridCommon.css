@@ -49,7 +49,7 @@
 
 .dataGridCell
 {
-    padding: 1px 6px;
+   padding: 1px 6px;
 	vertical-align: top;
 	color: #606060;
 }
@@ -96,7 +96,9 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-default .dataGridHeader,
+.rstudio-themes-flat .rstudio-themes-default .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-default .dataGridOddRowCell {
    border-color: THEME_DEFAULT_BORDER;
 }
 
@@ -104,6 +106,13 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridOddRowCell {
+   border: none;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader,
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridOddRowCell {
    border-color: THEME_ALTERNATE_BORDER;
 }
