@@ -479,14 +479,15 @@
          {
             name <- sprintf("[[%i]]", i)
             access <- sprintf("#[[%i]]", i)
+            tags <- .rs.explorer.tags$VIRTUAL
          }
          else
          {
             name <- names[[i]]
             access <- sprintf("#[[\"%s\"]]", name)
+            tags <- character()
          }
          
-         tags <- character()
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
@@ -595,14 +596,15 @@
          {
             name <- sprintf("[[%i]]", i)
             access <- sprintf("#[[%i]]", i)
+            tags <- .rs.explorer.tags$VIRTUAL
          }
          else
          {
             name <- names[[i]]
             access <- sprintf("#[[\"%s\"]]", name)
+            tags <- character()
          }
          
-         tags <- character()
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
