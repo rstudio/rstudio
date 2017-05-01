@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -146,15 +147,16 @@ public class AceThemes
    
    private void applyTheme(Document document, final String themeName)
    {
-      // add theme styles
-      if (currentStyleEl_ != null)
-         currentStyleEl_.removeFromParent();
+      Element oldStyleEl = document.getElementById(linkId_);
+      if (oldStyleEl != null)
+         oldStyleEl.removeFromParent();
       
-      currentStyleEl_ = document.createLinkElement();
-      currentStyleEl_.setType("text/css");
-      currentStyleEl_.setRel("stylesheet");
-      currentStyleEl_.setHref(getThemeUrl(themeName));
-      document.getBody().appendChild(currentStyleEl_);
+      LinkElement currentStyleEl = document.createLinkElement();
+      currentStyleEl.setType("text/css");
+      currentStyleEl.setRel("stylesheet");
+      currentStyleEl.setId(linkId_);
+      currentStyleEl.setHref(getThemeUrl(themeName));
+      document.getBody().appendChild(currentStyleEl);
       
       addDarkClassIfNecessary(themeName);
       
@@ -200,6 +202,5 @@ public class AceThemes
    private final HashMap<String, Boolean> darkThemes_;
    private final String defaultThemeName_ = TEXTMATE;
    private final Provider<UIPrefs> prefs_;
-   
-   private LinkElement currentStyleEl_;
+   private final String linkId_ = "rstudio-acethemes-linkelement";
 }
