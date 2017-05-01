@@ -92,6 +92,7 @@ public class ConnectionsPane extends WorkbenchPane
       
       // create main panel
       mainPanel_ = new LayoutPanel();
+      mainPanel_.addStyleName("ace_editor_theme");
       
       // create data grid
       keyProvider_ = new ProvidesKey<Connection>() {
@@ -104,7 +105,6 @@ public class ConnectionsPane extends WorkbenchPane
       
       selectionModel_ = new SingleSelectionModel<Connection>();
       connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
-      connectionsDataGrid_.addStyleName("ace_editor");
       connectionsDataGrid_.setSelectionModel(selectionModel_);
       selectionModel_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {

@@ -104,7 +104,7 @@ public class HelpPane extends WorkbenchPane
       frame_.setAceTheme();
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
-      frame_.addStyleName("ace_editor");
+      frame_.addStyleName("ace_editor_theme");
       ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
 
       return new AutoGlassPanel(frame_);

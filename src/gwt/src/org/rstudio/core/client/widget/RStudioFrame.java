@@ -55,7 +55,7 @@ public class RStudioFrame extends Frame
          BodyElement body = getWindow().getDocument().getBody();
          if (body != null)
          {
-            body.addClassName("ace_editor");
+            body.addClassName("ace_editor_theme");
          }
       }
    }

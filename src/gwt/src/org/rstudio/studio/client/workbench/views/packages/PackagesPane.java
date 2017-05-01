@@ -322,7 +322,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       packagesTableContainer_ = new LayoutPanel();
-      packagesTableContainer_.addStyleName("ace_editor");
+      packagesTableContainer_.addStyleName("ace_editor_theme");
       return packagesTableContainer_;
    }
    
