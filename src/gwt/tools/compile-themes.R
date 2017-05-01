@@ -825,6 +825,10 @@ for (file in themeFiles) {
    ## to preserve this theme, but apply it to the '.ace_editor' directly.
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
    content <- gsub(regex, ".ace_editor {", content)
+
+   ## Copy ace_editor as ace_editor_theme
+   regex <- paste("^\\.ace_editor \\{$", sep = "")
+   content <- gsub(regex, ".ace_editor, .ace_editor_theme {", content)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
