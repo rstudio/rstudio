@@ -75,5 +75,5 @@ if [ -n "$VERSION" ]; then
 fi
 
 # run compile step
-docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && ./make-$FLAVOR-package $PACKAGE"
+docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE"
 
