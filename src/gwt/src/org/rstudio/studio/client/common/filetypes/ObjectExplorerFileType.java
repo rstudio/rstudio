@@ -22,10 +22,9 @@ public class ObjectExplorerFileType extends EditableFileType
 {
    public ObjectExplorerFileType()
    {
-      // TODO: need image icon for explorer
       super("object_explorer",
             "Object Explorer",
-            new ImageResource2x(FileIconResources.INSTANCE.iconMermaid2x()));
+            new ImageResource2x(FileIconResources.INSTANCE.iconObjectExplorer2x()));
    }
 
    @Override
