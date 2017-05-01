@@ -1,3 +1,5 @@
+@external rstudio-themes-flat, rstudio-themes-dark;
+
 .link {
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -10,4 +12,8 @@
 
 .link:hover {
    text-decoration: underline;	
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .link {
+   color: #b4b4d8;
 }

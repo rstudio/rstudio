@@ -54,14 +54,29 @@
 	color: #606060;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .dataGridCell
+{
+   color: inherit;
+}
+
 .dataGridOddRow
 {
 	background-color: white; 
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .dataGridOddRow
+{
+   background-color: inherit;
+}
+
 .dataGridEvenRow
 {
 	background-color: white; 
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .dataGridEvenRow
+{
+   background-color: inherit;
 }
 
 .dataGridEvenRowCell
