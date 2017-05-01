@@ -599,7 +599,7 @@
       view <- .rs.explorer.viewObject(x,
                                       title = title,
                                       envir = env)
-      return(view)
+      return(invisible(view))
    }
       
 
