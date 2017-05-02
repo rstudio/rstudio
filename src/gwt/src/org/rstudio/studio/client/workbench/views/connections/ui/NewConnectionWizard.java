@@ -58,11 +58,12 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
          operation
       );
 
-      updateHelpLink(new HelpLink(
+      mainHelpLink_ = new HelpLink(
          "Using RStudio Connections",
          "rstudio_connections",
          false,
-         true));
+         true);
+      setHelpLink(mainHelpLink_);
 
       RStudioGinjector.INSTANCE.injectMembers(this); 
    }
@@ -72,14 +73,14 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
                      WizardPage<NewConnectionContext, ConnectionOptions> page,
                      boolean okButtonVisible)
    {
-      updateHelpLink(page.getHelpLink());
+      setHelpLink(page.getHelpLink());
    }
 
    @Override
    protected void onPageDeactivated(
                      WizardPage<NewConnectionContext, ConnectionOptions> page)
    {
-      updateHelpLink(null);
+      setHelpLink(mainHelpLink_);
    }
 
    @Override
@@ -123,4 +124,6 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    {
       RES.styles().ensureInjected();
    }
+   
+   private HelpLink mainHelpLink_ = null;
 }
