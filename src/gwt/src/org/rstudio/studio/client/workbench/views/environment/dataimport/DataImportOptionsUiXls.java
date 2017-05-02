@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.studio.client.application.ApplicationUtils;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
@@ -103,6 +104,16 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       nameTextBox_.setText("");
       sheetListBox_.clear();
       sheetListBox_.addItem("Default", "");
+   }
+   
+   @Override
+   public HelpLink getHelpLink()
+   {
+      return new HelpLink(
+         "Reading Excel files using readxl",
+         "http://readxl.tidyverse.org/",
+         false,
+         false);
    }
    
    void initDefaults()

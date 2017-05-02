@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -165,7 +166,17 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    {
       onValidated.execute(validate(input));
    }
+
+   protected void setHelpLink(HelpLink helpLink) {
+      if (helpLink_ != null) removeLeftWidget(helpLink_);
+
+      if (helpLink != null) {
+         helpLink_ = helpLink;
+         addLeftWidget(helpLink_);
+      }
+   }
   
    private final ProgressIndicator progressIndicator_;
    private boolean validating_ = false;
+   private HelpLink helpLink_ = null;
 }

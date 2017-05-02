@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,6 +39,8 @@ public class DataImportDialog extends ModalDialog<String>
       
       setOkButtonCaption("Import");
       setEnterDisabled(true);
+      
+      setHelpLink(dataImport_.getHelpLink());
    }
    
    @Override

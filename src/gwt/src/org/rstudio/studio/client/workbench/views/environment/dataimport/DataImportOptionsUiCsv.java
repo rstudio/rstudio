@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
@@ -319,6 +320,16 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          escapeListBox_.getElement().removeAttribute("disabled");
          quotesListBox_.getElement().removeAttribute("disabled");
       }
+   }
+   
+   @Override
+   public HelpLink getHelpLink()
+   {
+      return new HelpLink(
+         "Reading rectangular data using readr",
+         "http://readr.tidyverse.org/",
+         false,
+         false);
    }
    
    @UiField
