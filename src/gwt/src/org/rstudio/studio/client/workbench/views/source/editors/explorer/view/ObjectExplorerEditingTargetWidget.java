@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -25,12 +26,15 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -51,6 +55,18 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       resizePanel_ = new ResizeLayoutPanel();
       
       cbAttributes_ = new CheckBox();
+      
+      refreshButton_ = new ToolbarButton(
+            RES.refresh2x(),
+            new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  grid_.refresh();
+               }
+            });
+      
       filterWidget_ = new SearchWidget(new SuggestOracle()
       {
          @Override
@@ -96,6 +112,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
             grid_.toggleShowAttributes(cbAttributes_.getValue());
          }
       });
+      
       toolbar_.addLeftWidget(cbAttributes_);
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
@@ -106,7 +123,11 @@ public class ObjectExplorerEditingTargetWidget extends Composite
             grid_.setFilter(event.getValue());
          }
       });
+      
+      refreshButton_.addStyleName(RES.styles().refreshButton());
+      
       toolbar_.addRightWidget(filterWidget_);
+      toolbar_.addRightWidget(refreshButton_);
    }
    
    private void initMainWidget()
@@ -130,6 +151,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    private final ResizeLayoutPanel resizePanel_;
    private final ObjectExplorerDataGrid grid_;
    
+   private final ToolbarButton refreshButton_;
    private final CheckBox cbAttributes_;
    private final SearchWidget filterWidget_;
    
@@ -139,12 +161,16 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    // Resources, etc ----
    public interface Resources extends ClientBundle
    {
+      @Source("images/refresh_2x.png")
+      ImageResource refresh2x();
+      
       @Source("ObjectExplorerEditingTargetWidget.css")
       Styles styles();
    }
    
    public interface Styles extends CssResource
    {
+      String refreshButton();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

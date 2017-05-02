@@ -558,12 +558,6 @@ public class ObjectExplorerDataGrid
       };
    }
    
-   private static void appendVerticalAlignHelper(SafeHtmlBuilder builder)
-   {
-      String html = "<span class='" + RES.dataGridStyle().verticalAlignHelper() + "'></span>";
-      builder.append(SafeHtmlUtils.fromTrustedString(html));
-   }
-   
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle,
                                  SourceDocument document)
    {
@@ -611,6 +605,11 @@ public class ObjectExplorerDataGrid
    }
    
    // Public methods ----
+   
+   public void refresh()
+   {
+      initializeRoot();
+   }
    
    public void toggleShowAttributes(boolean showAttributes)
    {
