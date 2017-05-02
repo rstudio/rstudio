@@ -189,6 +189,8 @@ context("PosixSystemTests")
 
    test_that("Current working directory determined correctly with generic method")
    {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
       pid_t pid = fork();
       expect_false(pid == -1);
 
@@ -203,6 +205,7 @@ context("PosixSystemTests")
          FilePath cwd = currentWorkingDir(pid);
          expect_false(cwd.empty());
          expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
 
          kill(pid, SIGKILL);
       }
@@ -210,6 +213,8 @@ context("PosixSystemTests")
 
    test_that("Current working directory determined correctly with lsof method")
    {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
       pid_t pid = fork();
       expect_false(pid == -1);
 
@@ -224,6 +229,7 @@ context("PosixSystemTests")
          FilePath cwd = currentWorkingDirViaLsof(pid);
          expect_false(cwd.empty());
          expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
 
          kill(pid, SIGKILL);
       }
