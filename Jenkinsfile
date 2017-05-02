@@ -105,7 +105,6 @@ try {
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
                       container = pullBuildPush(image_name: 'jenkins/ide', image_tag: image_tag, build_args: jenkins_user_build_args())
-                      container = pull_build_push(current_container)
                     }
                     container.inside() {
                         stage('resolve deps'){
