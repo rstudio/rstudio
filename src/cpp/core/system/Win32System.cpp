@@ -914,7 +914,10 @@ bool hasSubprocesses(PidType pid)
 
 FilePath currentWorkingDir(PidType pid)
 {
-   // TODO (gary) -- implement for Win32
+   // NYI for Win32; commonly accepted technique for this is to use
+   // CreateRemoteThread to inject code to run GetCurrentDirectory in the
+   // context of the target program. That is ugly and we aren't
+   // likely to ever do it.
    return FilePath();
 }
 
