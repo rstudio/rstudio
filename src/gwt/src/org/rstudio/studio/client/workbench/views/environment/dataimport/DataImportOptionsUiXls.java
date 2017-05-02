@@ -60,7 +60,9 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          Integer.parseInt(skipTextBox_.getValue()),
          columnNamesCheckBox_.getValue().booleanValue(),
          !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
-         openDataViewerCheckBox_.getValue().booleanValue()
+         openDataViewerCheckBox_.getValue().booleanValue(),
+         Integer.parseInt(maxTextBox_.getValue()),
+         rangeTextBox_.getValue()
       );
    }
    
@@ -148,6 +150,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       naListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
+      maxTextBox_.addValueChangeHandler(valueChangeHandler);
+      rangeTextBox_.addValueChangeHandler(valueChangeHandler);
    }
    
    @UiField
