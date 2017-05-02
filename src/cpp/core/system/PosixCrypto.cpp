@@ -257,8 +257,6 @@ core::Error rsaInit()
    const int KEY_SIZE = 1024;
    const int ENTROPY_BYTES = 4096;
 
-   BIGNUM *bn = BN_new();
-   BN_set_word(bn, RSA_F4);
    const BIGNUM *bn_n;
    const BIGNUM *bn_e;
 
@@ -283,9 +281,10 @@ core::Error rsaInit()
 
       bn_n = s_pRSA->n;
       bn_e = s_pRSA->e;
-
-      BN_clear_free(bn);
    #else
+      BIGNUM *bn = BN_new();
+      BN_set_word(bn, RSA_F4);
+ 
       s_pRSA = RSA_new();
       int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
       BN_clear_free(bn);
