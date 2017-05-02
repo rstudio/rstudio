@@ -288,7 +288,7 @@ core::Error rsaInit()
       int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
       if (rc != 1) {
         return lastCryptoError(ERROR_LOCATION);
-        OPENSSL_free(s_pRSA)
+        OPENSSL_free(s_pRSA);
       }
       BN_clear_free(bn);
    
