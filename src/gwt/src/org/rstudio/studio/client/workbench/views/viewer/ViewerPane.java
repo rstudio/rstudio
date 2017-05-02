@@ -140,9 +140,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame() ;
+      frame_ = new RStudioFrame();
+      frame_.setAceTheme();
       frame_.setSize("100%", "100%");
-      frame_.addStyleName("ace_editor");
+      frame_.addStyleName("ace_editor_theme");
       navigate(ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }

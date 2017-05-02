@@ -8,7 +8,7 @@
   background: #555 ;
 }
 
-.ace_editor {
+.ace_editor, .ace_editor_theme {
   background-color: #323232;
   color: #FFFFFF
 }

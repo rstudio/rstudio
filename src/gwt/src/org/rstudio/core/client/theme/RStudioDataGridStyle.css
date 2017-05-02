@@ -22,6 +22,10 @@
    outline: none;
 }
 
+.rstudio-themes-flat .dataGridWidget {
+  background-color: inherit;
+}
+
 .dataGridWidget > div {
 	/* Override GWT styling set on element */
 	min-height: 16px !important;
