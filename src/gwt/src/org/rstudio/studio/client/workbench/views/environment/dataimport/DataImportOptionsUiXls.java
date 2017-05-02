@@ -162,6 +162,12 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
 
    @UiField
    CheckBox openDataViewerCheckBox_;
+
+   @UiField
+   TextBox maxTextBox_;
+
+   @UiField
+   TextBox rangeTextBox_;
    
    private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
       return response && response.options && response.options.sheets ? response.options.sheets : [];
