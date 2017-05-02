@@ -217,7 +217,7 @@ TEST_CASE("Win32SystemTests")
 
       // API is not implemented on Windows and should always return an empty
       // FilePath. See currentWorkingDir in Win32System.cpp for more info.
-      EXPECT(cwd.empty());
+      CHECK(cwd.empty());
 
       TerminateProcess(pi.hProcess, 1);
       WaitForSingleObject(pi.hProcess, INFINITE);
