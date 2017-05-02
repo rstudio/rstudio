@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
@@ -61,8 +62,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          columnNamesCheckBox_.getValue().booleanValue(),
          !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
          openDataViewerCheckBox_.getValue().booleanValue(),
-         Integer.parseInt(maxTextBox_.getValue()),
-         rangeTextBox_.getValue()
+         !maxTextBox_.getValue().isEmpty() ? Integer.parseInt(maxTextBox_.getValue()) : null,
+         !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null
       );
    }
    
@@ -70,6 +71,14 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    public void setAssembleResponse(DataImportAssembleResponse response)
    {
       nameTextBox_.setText(response.getDataName());
+
+      if (ApplicationUtils.compareVersions(response.getPackageVersion(), "1.0.0") < 0) {
+         maxTextBox_.setEnabled(false);
+         maxTextBox_.getElement().setPropertyString("placeholder", "(readxl 1.0)");
+
+         rangeTextBox_.setEnabled(false);
+         rangeTextBox_.getElement().setPropertyString("placeholder", "(requires readxl 1.0)");
+      }
    }
    
    @Override
