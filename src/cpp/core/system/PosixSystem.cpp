@@ -940,7 +940,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 FilePath currentWorkingDir(PidType pid)
 {
 #ifdef HAVE_PROCSELF
-   return currentWorkingDirViaProcFs(pid, procFsPath);
+   return currentWorkingDirViaProcFs(pid);
 #else
    return currentWorkingDirViaLsof(pid);
 #endif
