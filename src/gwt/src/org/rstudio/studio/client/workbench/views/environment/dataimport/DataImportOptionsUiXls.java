@@ -47,6 +47,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       
       initDefaults();
       initEvents();
+
+      rangeTextBox_.getElement().setPropertyString("placeholder", "A1:D10");
    }
    
    @Override
