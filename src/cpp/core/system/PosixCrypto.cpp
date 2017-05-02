@@ -283,14 +283,16 @@ core::Error rsaInit()
 
       bn_n = s_pRSA->n;
       bn_e = s_pRSA->e;
+
+      BN_clear_free(bn);
    #else
       s_pRSA = RSA_new();
       int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
+      BN_clear_free(bn);
       if (rc != 1) {
         return lastCryptoError(ERROR_LOCATION);
         RSA_free(s_pRSA);
       }
-      BN_clear_free(bn);
    
       RSA_get0_key(s_pRSA, &bn_n, &bn_e, NULL);
    #endif
