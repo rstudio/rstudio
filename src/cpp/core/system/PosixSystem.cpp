@@ -917,6 +917,7 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
+#ifdef HAVE_PROCSELF
 FilePath currentWorkingDirViaProcFs(PidType pid)
 {
    core::FilePath procFsPath("/proc");
@@ -936,6 +937,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
    else
       return FilePath();
 }
+#endif // HAVE_PROCSELF
 
 FilePath currentWorkingDir(PidType pid)
 {
