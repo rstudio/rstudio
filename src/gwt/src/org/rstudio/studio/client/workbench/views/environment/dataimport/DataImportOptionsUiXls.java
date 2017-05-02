@@ -111,9 +111,9 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    {
       return new HelpLink(
          "Reading Excel files using readxl",
-         "http://readxl.tidyverse.org/",
+         "import_readxl",
          false,
-         false);
+         true);
    }
    
    void initDefaults()

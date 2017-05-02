@@ -125,9 +125,9 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    {
       return new HelpLink(
          "Reading statistical data using haven",
-         "http://haven.tidyverse.org/",
+         "import_haven",
          false,
-         false);
+         true);
    }
    
    @UiFactory

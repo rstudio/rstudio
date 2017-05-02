@@ -327,9 +327,9 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    {
       return new HelpLink(
          "Reading rectangular data using readr",
-         "http://readr.tidyverse.org/",
+         "import_readr",
          false,
-         false);
+         true);
    }
    
    @UiField
