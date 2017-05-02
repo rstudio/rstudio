@@ -760,8 +760,10 @@ bool hasSubprocessesMac(PidType pid)
 }
 #endif
 
-bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
+#ifdef HAVE_PROCSELF
+bool hasSubprocessesViaProcFs(PidType pid)
 {
+   core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
       return true; // err on the side of assuming child processes exist
@@ -815,7 +817,6 @@ bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
       Error error = rstudio::core::readStringFromFile(statFile, &contents);
       if (error)
       {
-         LOG_ERROR(error);
          continue;
       }
 
@@ -854,19 +855,20 @@ bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
    }
    return false;
 }
+#endif // HAVE_PROCSELF
 
 bool hasSubprocesses(PidType pid)
 {
-#ifndef __APPLE__
-   core::FilePath procFsPath("/proc");
-   if (!procFsPath.exists())
-   {
-      return hasSubprocessesViaPgrep(pid);
-   }
-   return hasSubprocessesViaProcFs(pid, procFsPath);
-
-#else
+#ifdef __APPLE__
    return hasSubprocessesMac(pid);
+#else // Linux
+
+#ifdef HAVE_PROCSELF
+   return hasSubprocessesViaProcFs(pid);
+#else
+   return hasSubprocessesViaPgrep(pid);
+#endif
+
 #endif
 }
 
@@ -915,26 +917,33 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
-FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath)
+FilePath currentWorkingDirViaProcFs(PidType pid)
 {
+   core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
       return FilePath();
    }
 
-   // TODO (gary)
+   std::string procId = safe_convert::numberToString(pid);
+   if (procId.empty())
+      return FilePath();
 
-   return FilePath();
+   // /proc/PID/cwd is a symbolic link to the process' current working directory
+   FilePath pidPath = procFsPath.complete(procId).complete("cwd");
+   if (pidPath.isSymlink())
+      return pidPath.resolveSymlink();
+   else
+      return FilePath();
 }
 
 FilePath currentWorkingDir(PidType pid)
 {
-   core::FilePath procFsPath("/proc");
-   if (!procFsPath.exists())
-   {
-      return currentWorkingDirViaLsof(pid);
-   }
+#ifdef HAVE_PROCSELF
    return currentWorkingDirViaProcFs(pid, procFsPath);
+#else
+   return currentWorkingDirViaLsof(pid);
+#endif
 }
 
 Error daemonize()

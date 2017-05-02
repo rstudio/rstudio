@@ -53,10 +53,7 @@ namespace {
 // - On Windows, we use Filesystem v3 with wide character paths. This is
 //   because narrow character paths on Windows can't cover the entire
 //   Unicode space since there is no ANSI code page for UTF-8.
-// - On non-Windows, if Filesystem v3 is available, we use it.
-// - Otherwise, we use Filesystem v2. This is necessary for older versions
-//   of Boost that come preinstalled on some long-term-stable Linux distro
-//   versions that we still want to support.
+// - On non-Windows, we use Filesystem v3.
 #ifdef _WIN32
 
 #define BOOST_FS_STRING(path) toString((path).generic_wstring())
@@ -76,14 +73,7 @@ typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #else
-
-#define BOOST_FS_STRING(str) (str)
-#define BOOST_FS_PATH2STR(str) ((str).string())
-#define BOOST_FS_PATH2STRNATIVE(str) ((str).string())
-#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
-typedef boost::filesystem::basic_directory_iterator<path_t> dir_iterator;
-typedef boost::filesystem::basic_recursive_directory_iterator<path_t> recursive_dir_iterator;
-
+#error FilePath requires Filesystem v3
 #endif
 
 
@@ -171,10 +161,8 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    {
 #ifdef _WIN32
       return FilePath(boost::filesystem::current_path().wstring()) ;
-#elif defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
-      return FilePath(boost::filesystem::current_path().string()) ;
 #else
-      return FilePath(boost::filesystem::current_path<path_t>().string()) ;
+      return FilePath(boost::filesystem::current_path().string()) ;
 #endif
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -349,6 +337,22 @@ bool FilePath::isSymlink() const
    {
       logError(pImpl_->path, e, ERROR_LOCATION);
       return false;
+   }
+}
+
+FilePath FilePath::resolveSymlink() const
+{
+   try
+   {
+      if (!isSymlink())
+         return *this;
+
+      return FilePath(BOOST_FS_PATH2STR(boost::filesystem::read_symlink(pImpl_->path)));
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION);
+      return *this;
    }
 }
 

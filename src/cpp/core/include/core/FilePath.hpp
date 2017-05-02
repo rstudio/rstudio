@@ -83,6 +83,9 @@ public:
    // is the file a symlink?
    bool isSymlink() const;
 
+   // resolve symlink; if not a symlink, just return the path as-is
+   FilePath resolveSymlink() const;
+
    // size of file in bytes
    uintmax_t size() const;
   

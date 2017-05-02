@@ -204,7 +204,9 @@ bool hasSubprocessesViaPgrep(PidType pid);
 
 // Detect subprocesses via procfs; returns false no subprocesses, true if
 // subprocesses or unable to determine if there are subprocesses
-bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath);
+#ifdef HAVE_PROCSELF
+bool hasSubprocessesViaProcFs(PidType pid);
+#endif // HAVE_PROCSELF
 
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
@@ -212,7 +214,9 @@ FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
 // empty FilePath if unable to determine.
-FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath);
+#ifdef HAVE_PROCSELF
+FilePath currentWorkingDirViaProcFs(PidType pid);
+#endif // HAVE_PROCSELF
 
 } // namespace system
 } // namespace core
