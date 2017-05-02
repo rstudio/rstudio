@@ -1,4 +1,5 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
+@external editor_dark;
 
 .link {
 	overflow: hidden;
@@ -14,6 +15,6 @@
    text-decoration: underline;	
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .link {
+.rstudio-themes-flat.editor_dark .link {
    color: #b4b4d8;
 }
