@@ -75,10 +75,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
 
       if (ApplicationUtils.compareVersions(response.getPackageVersion(), "1.0.0") < 0) {
          maxTextBox_.setEnabled(false);
-         maxTextBox_.getElement().setPropertyString("placeholder", "(readxl 1.0)");
-
          rangeTextBox_.setEnabled(false);
-         rangeTextBox_.getElement().setPropertyString("placeholder", "(requires readxl 1.0)");
       }
    }
    
