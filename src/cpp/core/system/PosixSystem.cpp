@@ -892,29 +892,27 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    if (result.exitStatus != 0)
       return FilePath();
 
-   // For a process with PID 1234 with cwd of /Users/foo, this command
-   // outputs three lines, as follows:
-   // p1234\n
-   // fcwd\n
-   // n/Users/foo\n
-   size_t pos = result.stdOut.find_first_of('\n');
-   if (pos == std::string::npos)
-      return FilePath();
-   pos = result.stdOut.find_first_of('\n', pos + 1);
-   if (pos == std::string::npos)
-      return FilePath();
-   pos += 1; // skip over \n
-   if (pos >= result.stdOut.length())
-      return FilePath();
-   if (result.stdOut.at(pos) != 'n')
-      return FilePath();
-   pos++;
-   size_t finalPos = result.stdOut.find_first_of('\n', pos);
-   if (finalPos == std::string::npos || finalPos == pos)
-      return FilePath();
+   // lsof outputs multiple lines, which varies by platform. We want the one
+   // starting with lowercase 'n', after that is the current working directory.
+   size_t pos = 0;
+   while (pos != std::string::npos && pos < result.stdOut.length())
+   {
+      if (result.stdOut.at(pos) == 'n')
+      {
+         pos++;
+         size_t finalPos = result.stdOut.find_first_of('\n', pos);
+         if (finalPos != std::string::npos)
+            return FilePath(result.stdOut.substr(pos, finalPos - pos));
+         else
+            return FilePath(result.stdOut.substr(pos));
+      }
 
-   // from current position to just before the next \n
-   return FilePath(result.stdOut.substr(pos, finalPos - pos));
+      // next line
+      pos = result.stdOut.find_first_of('\n', pos);
+      pos++;
+   }
+
+   return FilePath();
 }
 
 FilePath currentWorkingDirViaProcFs(PidType pid, core::FilePath procFsPath)
