@@ -28,7 +28,7 @@ public class DataImportOptionsXls extends DataImportOptions
       boolean colNames,
       String na,
       boolean openDataViewer,
-      int nMax,
+      Integer nMax,
       String range
       ) /*-{
          return {
