@@ -198,6 +198,9 @@ public class WindowFrame extends Composite
             ensureHeightRegistration_ =
                ((HasEnsureHeightHandlers)main_).addEnsureHeightHandler(this);
          }
+         
+         final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
+         main_.addStyleName(styles.windowFrameWidget());
 
          frame_.add(main_);
          frame_.setWidgetLeftRight(

@@ -93,20 +93,26 @@ public class ImageResource2x implements ImageResource
 
    public SafeHtml getSafeHtml()
    {
-      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      if (html_ == null)
+      {
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
 
-      sb.appendHtmlConstant("<img src=\"");
-      sb.appendHtmlConstant(getSafeUri().asString());
-      sb.appendHtmlConstant("\" width=\"");
-      sb.appendHtmlConstant(new Integer(getWidth()).toString());
-      sb.appendHtmlConstant("\" height=\"");
-      sb.appendHtmlConstant(new Integer(getHeight()).toString());
-      sb.appendHtmlConstant("\">");
+         sb.appendHtmlConstant("<img src=\"");
+         sb.appendHtmlConstant(getSafeUri().asString());
+         sb.appendHtmlConstant("\" width=\"");
+         sb.appendHtmlConstant(new Integer(getWidth()).toString());
+         sb.appendHtmlConstant("\" height=\"");
+         sb.appendHtmlConstant(new Integer(getHeight()).toString());
+         sb.appendHtmlConstant("\">");
+         
+         html_ = sb.toSafeHtml();
+      }
 
-      return sb.toSafeHtml();
+      return html_;
    }
    
    private ImageResource ref_;
    private ImageResource ref2x_;
+   private SafeHtml html_;
    private boolean use2xResolution_ = true;
 }

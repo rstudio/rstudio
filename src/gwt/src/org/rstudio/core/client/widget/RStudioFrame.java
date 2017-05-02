@@ -18,7 +18,11 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.dom.client.BodyElement;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Frame;
 
 public class RStudioFrame extends Frame
@@ -40,6 +44,34 @@ public class RStudioFrame extends Frame
          getElement().setAttribute("sandbox", StringUtil.notNull(sandboxAllow));
       if (url != null)
          setUrl(url);
+   }
+   
+   private void addAceThemeStyle()
+   {
+      if (getWindow() != null && getWindow().getDocument() != null)
+      {
+         RStudioGinjector.INSTANCE.getAceThemes().applyTheme(getWindow().getDocument());
+         
+         BodyElement body = getWindow().getDocument().getBody();
+         if (body != null)
+         {
+            body.addClassName("ace_editor_theme");
+         }
+      }
+   }
+
+   public void setAceTheme()
+   {
+      addAceThemeStyle();
+      
+      this.addLoadHandler(new LoadHandler()
+      {      
+         @Override
+         public void onLoad(LoadEvent arg0)
+         {
+            addAceThemeStyle();
+         }
+      });
    }
    
    public WindowEx getWindow()

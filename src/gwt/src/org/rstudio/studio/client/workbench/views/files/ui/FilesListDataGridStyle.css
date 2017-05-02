@@ -1,5 +1,7 @@
 @def selectionBorderWidth 2px;
 
+@external rstudio-themes-flat, rstudio-themes-dark;
+
 .dataGridCell {
   padding: 0 1px;
 }
@@ -18,7 +20,20 @@
   color: #606060;
 }
 
-.dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
-  border: selectionBorderWidth solid #ffffff;
-  color: #606060;
+.dataGridWidget {
+
+}
+
+.rstudio-themes-flat .dataGridCell {
+  padding: 0 1px;
+  border-color: transparent;
+}
+
+.rstudio-themes-flat .dataGridEvenRow,
+.rstudio-themes-flat .dataGridOddRow,
+.rstudio-themes-flat .dataGridHoveredRow,
+.rstudio-themes-flat .dataGridSelectedRow,
+.rstudio-themes-flat .dataGridKeyboardSelectedRow {
+  background: inherit;
+  color: inherit;
 }

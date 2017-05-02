@@ -20,8 +20,14 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AttachDetachException;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.VerticalPanel;
+
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.server.ServerError;
 
 public class Debug
@@ -154,6 +160,32 @@ public class Debug
       consoleEl.appendChild(textEl);
       consoleEl.appendChild(Document.get().createBRElement());
       consoleEl.setScrollTop(Integer.MAX_VALUE);
+   }
+   
+   public static void logStatus(String html)
+   {
+      Element el = debugPopupElement();
+      html = html.replaceAll("\n", "<br />");
+      el.setInnerHTML(html);
+   }
+   
+   private static final Element debugPopupElement()
+   {
+      Element el = DOM.getElementById("rstudio_debug_output");
+      if (el != null)
+         return el;
+               
+      final MiniPopupPanel popupPanel = new MiniPopupPanel(false, false);
+      VerticalPanel verticalPanel = new VerticalPanel();
+      FlowPanel contentPanel = new FlowPanel();
+      contentPanel.getElement().setId("rstudio_debug_output");
+      verticalPanel.add(new HTML("<h3 style='margin: 0;'>RStudio Debug Output</h4><hr />"));
+      verticalPanel.add(contentPanel);
+      popupPanel.setWidget(verticalPanel);
+      popupPanel.setAutoHideEnabled(false);
+      popupPanel.setAutoHideOnHistoryEventsEnabled(false);
+      popupPanel.show();
+      return contentPanel.getElement();
    }
    
    public static native void breakpoint() /*-{

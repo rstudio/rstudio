@@ -125,7 +125,7 @@
    color: #0945bf;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .breadcrumb table.path a
+.rstudio-themes-flat .rstudio-themes-dark .breadcrumb table.path a
 {
    color: rgb(191,211,232);
 }
@@ -178,18 +178,18 @@ button.browse:focus {
    outline:0;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .browse {
+.rstudio-themes-flat .rstudio-themes-dark .browse {
    color: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-default .browse {
+.rstudio-themes-flat .rstudio-themes-default .browse {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .browse {
+.rstudio-themes-flat .rstudio-themes-dark-grey .browse {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-alternate .browse {
+.rstudio-themes-flat .rstudio-themes-alternate .browse {
    border-color: THEME_ALTERNATE_BORDER;
 }

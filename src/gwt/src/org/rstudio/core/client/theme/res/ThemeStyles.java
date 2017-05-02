@@ -180,4 +180,11 @@ public interface ThemeStyles extends CssResource
 
    String windowFrameObject();
    String minimizedWindowObject();
+   String windowFrameWidget();
+
+   String consoleOnlyWindowFrame();
+   String consoleWidgetLayout();
+   String consoleHeaderLayout();
+   String consoleMinimizeLayout();
+   String consoleMaximizeLayout();
 }

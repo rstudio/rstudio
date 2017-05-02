@@ -18,7 +18,7 @@ public class ThemeColors
 {
    public static String getDefaultBackground()
    {
-      return "#F3F4F7";
+      return "#F4F8F9";
    }
 
    public static String getDarkGreyBackground()
@@ -44,5 +44,10 @@ public class ThemeColors
    public static String getAlternateBorder()
    {
       return "rgb(162,197,215)";
+   }
+
+   public static String getInactiveBackground()
+   {
+      return "#ecedee";
    }
 }

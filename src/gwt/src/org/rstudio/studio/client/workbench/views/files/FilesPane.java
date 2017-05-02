@@ -291,6 +291,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
       dockPanel.add(filesList_);
+      dockPanel.addStyleName("ace_editor_theme");
       
       // return container
       return dockPanel;

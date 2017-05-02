@@ -1851,3 +1851,23 @@
    code
    
 })
+
+.rs.addFunction("slice", function(object,
+                                  start = 1,
+                                  end = length(object))
+{
+   n <- length(object)
+   if (n == 0)
+      return(object)
+   
+   if (start < 0) start <- n + start
+   if (end < 0)   end <- n + end
+   
+   start <- max(1, start)
+   end   <- min(n, end)
+   
+   if (start > end)
+      return(object[0])
+   
+   return(object[start:end])
+})

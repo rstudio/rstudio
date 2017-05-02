@@ -27,7 +27,7 @@ public interface ObjectExplorerServerOperations
          String objectName,
          String objectAccess,
          JsArrayString tags,
-         int recursionDepth,
+         int fromIndex,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
    
    void explorerBeginInspect(

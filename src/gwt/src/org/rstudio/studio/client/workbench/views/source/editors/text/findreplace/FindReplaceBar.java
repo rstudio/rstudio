@@ -64,6 +64,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       
       Shelf shelf = new Shelf(true);
       shelf.setWidth("100%");
+      shelf.addStyleName("rstudio-themes-background"); 
 
       VerticalPanel panel = new VerticalPanel();
       ElementIds.assignElementId(panel.getElement(), 

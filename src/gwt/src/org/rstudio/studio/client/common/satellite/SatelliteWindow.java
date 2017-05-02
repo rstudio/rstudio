@@ -20,6 +20,9 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.satellite.events.SatelliteWindowEventHandlers;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -34,7 +37,8 @@ import com.google.inject.Provider;
 
 public abstract class SatelliteWindow extends Composite
                                       implements RequiresResize, 
-                                      ProvidesResize
+                                                 ProvidesResize,
+                                                 SatelliteWindowEventHandlers
 {
    public SatelliteWindow(Provider<EventBus> pEventBus,
                           Provider<FontSizeManager> pFontSizeManager)
@@ -42,6 +46,8 @@ public abstract class SatelliteWindow extends Composite
       // save references
       pEventBus_ = pEventBus;
       pFontSizeManager_ = pFontSizeManager;
+
+      pEventBus_.get().addHandler(ThemeChangedEvent.TYPE, this);
       
       // occupy full client area of the window
       if (!allowScrolling())
@@ -53,6 +59,15 @@ public abstract class SatelliteWindow extends Composite
        
       // init widget
       initWidget(mainPanel_);
+   }
+
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      RStudioThemes.initializeThemes(
+         event.getName(),
+         Document.get(),
+         mainPanel_.getElement());
    }
 
    protected boolean allowScrolling()

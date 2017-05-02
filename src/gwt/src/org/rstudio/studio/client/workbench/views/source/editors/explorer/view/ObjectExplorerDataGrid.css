@@ -16,6 +16,10 @@
 	border-left: 2px solid #FFF;
 }
 
+.dataGridEvenRow, .dataGridOddRow {
+	height: 24px !important;
+}
+
 .dataGridEvenRowCell, .dataGridOddRowCell {
 	border: 0;
 	padding-top: 0;
@@ -43,40 +47,56 @@
 	outline: 0;
 }
 
+/* Sprites */
+
+@sprite .spriteExpandIcon {
+	gwt-image: 'expandIcon2x';
+	background-position: center;
+	cursor: pointer;
+	height: 14px;
+	width: 14px;
+	background-size: 14px 14px;
+}
+
+@sprite .spriteCollapseIcon {
+	gwt-image: 'collapseIcon2x';
+	background-position: center;
+	cursor: pointer;
+	height: 14px;
+	width: 14px;
+	background-size: 14px 14px;
+}
+
+@sprite .spriteExtractCodeIcon {
+	gwt-image: 'extractCode2x';
+	background-position: center;
+	height: 18px;
+	width: 20px;
+	background-size: 20px 18px;
+}
+
+@sprite .spriteViewObjectIcon {
+	gwt-image: 'viewObject2x';
+	background-position: center;
+	height: 18px;
+	width: 20px;
+	background-size: 15px 13px;
+}
+
 /* Other non-override styling */
 
-.openRowIcon {
-	width: 20px !important;
-	text-align: center;
-	cursor: pointer;
-}
-
-.closeRowIcon {
-	width: 20px !important;
-	text-align: center;
-	cursor: pointer;
-}
-
-.openRowIcon img, .closeRowIcon img {
-	margin-top: 3px;
-}
-
-.objectTypeIcon {
-	width: 20px !important;
-	margin-top: 2px;
-}
-
 .valueDesc {
-	
 }
 
 .cellInnerTable {
 	table-layout: fixed;
 	width: 100%;
+	border-spacing: 0;
 }
 
 .cellInnerTable td {
-	padding: 0;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 .virtual {
@@ -109,9 +129,5 @@
 .clickableIcon:active {
 	border-radius: 2px;
 	background-color: #e6e6e6;
-	cursor: pointer;
-}
-
-.moreButton {
 	cursor: pointer;
 }

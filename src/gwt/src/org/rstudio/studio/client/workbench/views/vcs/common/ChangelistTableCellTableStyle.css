@@ -29,7 +29,7 @@ span.status img:first-child {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .cellTableSortableHeader {
+.rstudio-themes-flat .rstudio-themes-dark .cellTableSortableHeader {
    color: white;
 }
 
@@ -51,17 +51,17 @@ span.status img:first-child {
    border-right: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-default .cellTableSortableHeader {
+.rstudio-themes-flat .rstudio-themes-default .cellTableSortableHeader {
    background: THEME_DEFAULT_BACKGROUND;
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .cellTableSortableHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .cellTableSortableHeader {
    background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat.rstudio-themes-alternate .cellTableSortableHeader {
+.rstudio-themes-flat .rstudio-themes-alternate .cellTableSortableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }

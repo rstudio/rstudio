@@ -49,6 +49,7 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
+import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -1824,25 +1825,18 @@ public class RemoteServer implements Server
                                      String objectName,
                                      String objectAccess,
                                      JsArrayString tags,
-                                     int recursionDepth,
+                                     int fromIndex,
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(handleId));
-      params.set(1, extractingCode == null ? JSONNull.getInstance() : new JSONString(extractingCode));
-      params.set(2, new JSONString(objectName));
-      params.set(3, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
+      JSONArray params = new JSONArrayBuilder()
+            .add(handleId)
+            .add(extractingCode)
+            .add(objectName)
+            .add(objectAccess)
+            .add(tags)
+            .add(fromIndex)
+            .get();
       
-      JSONArray jsonTags = new JSONArray();
-      if (tags != null)
-      {
-         for (int i = 0, n = tags.length(); i < n; i++)
-         {
-            jsonTags.set(i, new JSONString(tags.get(i)));
-         }
-      }
-      params.set(4, jsonTags);
-      params.set(5, new JSONNumber(recursionDepth));
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
    }
    

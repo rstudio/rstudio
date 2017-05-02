@@ -92,6 +92,7 @@ public class ConnectionsPane extends WorkbenchPane
       
       // create main panel
       mainPanel_ = new LayoutPanel();
+      mainPanel_.addStyleName("ace_editor_theme");
       
       // create data grid
       keyProvider_ = new ProvidesKey<Connection>() {

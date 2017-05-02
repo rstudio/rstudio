@@ -2,10 +2,10 @@
   background: rgba(181, 213, 255, 0.5);
 }
 
-.dataGridHoveredRowCell {
-  border: selectionBorderWidth solid transparent;
+.dataGridCell {
+  border: 0px;
+  padding: 3px !important;
 }
-
 
 .statusColumn {
    color: #606060;

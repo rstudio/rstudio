@@ -641,11 +641,6 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("wrap_tab_navigation", false);
    }
-   
-   public PrefValue<Boolean> getUseFlatThemes()
-   {
-      return bool("use_flat_themes", false);
-   }
 
    public PrefValue<String> getFlatTheme()
    {

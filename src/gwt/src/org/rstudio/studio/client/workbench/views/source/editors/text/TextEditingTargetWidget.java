@@ -455,6 +455,7 @@ public class TextEditingTargetWidget
                      @Override
                      protected void onComplete()
                      {
+                        if (destination == 0) editorPanel_.setWidgetSize(docOutlineWidget_, 0);
                         target_.setPreferredOutlineWidgetVisibility(destination != 0);
                      }
                   }.run(500);

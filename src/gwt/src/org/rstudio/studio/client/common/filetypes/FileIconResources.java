@@ -197,4 +197,7 @@ public interface FileIconResources extends ClientBundle
    
    @Source("iconStan_2x.png")
    ImageResource iconStan2x();
+   
+   @Source("iconObjectExplorer_2x.png")
+   ImageResource iconObjectExplorer2x();
 }

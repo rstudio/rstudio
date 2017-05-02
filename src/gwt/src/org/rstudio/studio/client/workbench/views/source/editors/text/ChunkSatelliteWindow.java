@@ -119,7 +119,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
 
       chunkOutputWidget_.getElement().getStyle().setHeight(100, Unit.PCT);
 
-      mainPanel.addStyleName("ace_editor");
+      mainPanel.addStyleName("ace_editor_theme");
 
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);

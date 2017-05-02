@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -154,7 +155,7 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
-      if (!prefs_.getUseFlatThemes().getValue()) {
+      if (!RStudioThemes.isFlat(prefs_)) {
          searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
       }
 
