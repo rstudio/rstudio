@@ -401,7 +401,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 {
    # get the original function  
    packageName = paste("package:", package, sep="")
-   original <- get(name, packageName, mode="function")
+   original <- base::get(name, packageName, mode="function")
    
    # install the hook
    if (!is.null(original))
