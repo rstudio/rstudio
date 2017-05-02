@@ -502,6 +502,11 @@
          optionTypes[["col_types"]] <- "columnDefinitionsReadXl"
          optionTypes[["range"]] <- "character"
 
+         if (!is.null(options[["range"]]) && nchar(options[["range"]]) > 0) {
+            options[["skip"]] <- NULL
+            options[["n_max"]] <- NULL
+         }
+
          return(list(
             name = "read_excel",
             reference = readxl::read_excel,

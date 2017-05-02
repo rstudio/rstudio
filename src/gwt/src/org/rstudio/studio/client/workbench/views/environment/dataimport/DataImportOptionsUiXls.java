@@ -152,6 +152,18 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
             triggerChange();
          }
       };
+
+      ValueChangeHandler<String> rangeChangeHandler = new ValueChangeHandler<String>()
+      {
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            maxTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
+            skipTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
+            triggerChange();
+         }
+      };
       
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
       sheetListBox_.addChangeHandler(changeHandler);
@@ -160,7 +172,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       naListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
       maxTextBox_.addValueChangeHandler(valueChangeHandler);
-      rangeTextBox_.addValueChangeHandler(valueChangeHandler);
+      rangeTextBox_.addValueChangeHandler(rangeChangeHandler);
    }
    
    @UiField
