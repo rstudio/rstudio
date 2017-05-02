@@ -114,6 +114,7 @@ public class FindOutputPane extends WorkbenchPane
       });
 
       container_ =  new SimplePanel();
+      container_.addStyleName("ace_editor_theme");
       container_.setSize("100%", "100%");
       statusPanel_ = new StatusPanel();
       statusPanel_.setSize("100%", "100%");
