@@ -468,8 +468,9 @@ public class AceEditor implements DocDisplay,
       
       if (Desktop.isDesktop())
       {
-         commands_.cutDummy().execute();
-         if (isEmacsModeOn()) clearEmacsMark();
+         Desktop.getFrame().clipboardCut();
+         if (isEmacsModeOn())
+            clearEmacsMark();
       }
       else
       {
@@ -528,8 +529,9 @@ public class AceEditor implements DocDisplay,
       
       if (Desktop.isDesktop())
       {
-         commands_.cutDummy().execute();
-         if (isEmacsModeOn()) clearEmacsMark();
+         Desktop.getFrame().clipboardCut();
+         if (isEmacsModeOn())
+            clearEmacsMark();
       }
       else
       {
@@ -544,7 +546,9 @@ public class AceEditor implements DocDisplay,
          return;
       
       if (Desktop.isDesktop())
-         commands_.pasteDummy().execute();
+      {
+         Desktop.getFrame().clipboardPaste();
+      }
       else
       {
          if (yankedText_ == null)

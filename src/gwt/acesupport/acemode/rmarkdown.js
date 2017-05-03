@@ -50,7 +50,7 @@ var Mode = function(suppressHighlighting, session) {
       session,
       this.$tokenizer,
       /^r-/,
-      new RegExp(RMarkdownHighlightRules.prototype.$reRChunkStartString),
+      new RegExp(RMarkdownHighlightRules.prototype.$reChunkStartString),
       new RegExp(RMarkdownHighlightRules.prototype.$reChunkEndString)
    );
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
