@@ -553,7 +553,7 @@ pre {
 
 .mainMenu .gwt-MenuItem {
    padding: 5px 9px 5px 9px;
-   height: 15px;
+   height: 15px;.
    text-shadow: 0px 1px 0px #FFFFFF;
 }
 .mainMenu .gwt-MenuItem-selected {
@@ -900,11 +900,17 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: 4px;
    margin-left: 3px;
 }
+
+.rstudio-themes-flat .rstudio-themes-dark .closeTabButton {
+   filter: invert(100%) brightness(100%);
+}
+
 .gwt-TabLayoutPanel-Workbench .gwt-TabLayoutPanelTab .closeTabButton {
    position: relative;
    top: 5px;
    margin-left: 4px;
 }
+
 .closeTabButton {
    filter: literal("alpha(opacity = 40)") !important;
    opacity: 0.4;
