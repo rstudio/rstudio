@@ -54,7 +54,7 @@ var RMarkdownHighlightRules = function() {
       this,
       RHighlightRules,
       "r",
-      this.$reRChunkStartString,
+      this.$reChunkStartString,
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
@@ -182,8 +182,8 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
          "^(?:[ ]{4})?`{3,}\\s*\\{" + engine + "\\b(?:.*)\\}\\s*$";
    }
 
-   this.$reRChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(.*)\\}\\s*$";
+   this.$reChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{\\w+\\b(.*)\\}\\s*$";
 
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
