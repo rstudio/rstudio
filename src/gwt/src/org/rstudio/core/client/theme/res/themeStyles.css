@@ -876,6 +876,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    float: left;
 }
 
+@def TABSTRIPHEIGHT 21px;
+
 /** Document tabs **/
 /*
 @def TABSTRIPHEIGHT 24px;
@@ -1084,8 +1086,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .toolbar {
-   height: 22px;
    border-bottom: 1px solid #d6dadc;
+   height: 21px;
 }
 
 .toolbar * {
@@ -1163,7 +1165,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: TABSTRIPHEIGHT;
+   height: TABSTRIPHEIGHT !important;
 }
 
 .secondaryToolbarPanel {
@@ -1177,7 +1179,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .secondaryToolbar {
    border-bottom: solid 1px #d6dadc;
-   height: 24px;
+   height: 20px !important;
 }
 
 .toolbarButtonRightImage {
@@ -1281,7 +1283,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .webGlobalToolbar {
    border-bottom: 0;
-   height: 24px;
+   height: 22px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1874,7 +1876,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .logoAnchor {
-   top: 3px !important;
+   top: 2px !important;
 }
 
 .rstudio-themes-flat .dialogTabPanel {
