@@ -1,6 +1,14 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external rstudio-themes-flat;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+
+
 @def headerRowHeight 20px;
 
 .environmentPane
@@ -140,4 +148,26 @@
 	background-color: #e8e8ff;
 }
 
+.rstudio-themes-flat .rstudio-themes-default .objectGrid td.nameCol,
+.rstudio-themes-flat .rstudio-themes-default .objectGrid td.expandCol,
+.rstudio-themes-flat .rstudio-themes-default .objectGrid td.valueCol,
+.rstudio-themes-flat .rstudio-themes-default .objectGrid .detailRow,
+.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
+   border-color: THEME_DEFAULT_BORDER;
+}
 
+.rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid td.nameCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid td.expandCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid td.valueCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid .detailRow,
+.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .objectGrid td.nameCol,
+.rstudio-themes-flat .rstudio-themes-alternate .objectGrid td.expandCol,
+.rstudio-themes-flat .rstudio-themes-alternate .objectGrid td.valueCol,
+.rstudio-themes-flat .rstudio-themes-alternate .objectGrid .detailRow,
+.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
+   border-color: THEME_ALTERNATE_BORDER;
+}

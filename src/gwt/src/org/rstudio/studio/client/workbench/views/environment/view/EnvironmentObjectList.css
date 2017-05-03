@@ -1,10 +1,27 @@
 @def headerRowHeight 20px;
 
+@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+
 .categoryHeaderRow
 {
    background-color: #f0f0f0;
    font-weight: bold;
    height: headerRowHeight;
+}
+
+.rstudio-themes-flat .categoryHeaderRow
+{
+   color: #000;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .categoryHeaderRow
+{
+   color: #FFF;
 }
 
 .expandIcon
@@ -103,4 +120,28 @@ td.decoratedValueCol
 .objectList td
 {
    border-collapse: collapse;
+}
+
+.rstudio-themes-flat .rstudio-themes-default td.nameCol,
+.rstudio-themes-flat .rstudio-themes-default td.expandCol,
+.rstudio-themes-flat .rstudio-themes-default td.valueCol,
+.rstudio-themes-flat .rstudio-themes-default .detailRow,
+.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey td.nameCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey td.expandCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey td.valueCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey .detailRow,
+.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate td.nameCol,
+.rstudio-themes-flat .rstudio-themes-alternate td.expandCol,
+.rstudio-themes-flat .rstudio-themes-alternate td.valueCol,
+.rstudio-themes-flat .rstudio-themes-alternate .detailRow,
+.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
+   border-color: THEME_ALTERNATE_BORDER;
 }

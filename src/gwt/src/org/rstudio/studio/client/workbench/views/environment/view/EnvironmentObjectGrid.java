@@ -76,6 +76,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       setSelectionModel(selection_, 
          DefaultSelectionEventManager.<RObjectEntry>createCheckboxManager(0));
       addStyleName(style_.objectGrid());
+      addStyleName("ace_editor_theme");
    }
 
    // Returns the objects that should be considered selected. 
