@@ -279,6 +279,10 @@ Error terminateProcess(PidType pid);
 
 // Returns true if pid has one or more subprocesses
 bool hasSubprocesses(PidType pid);
+
+// Get current-working directory of a process; returns empty FilePath
+// if unable to determine cwd
+FilePath currentWorkingDir(PidType pid);
    
 } // namespace system
 } // namespace core 

@@ -143,13 +143,13 @@ context("PosixSystemTests")
          kill(pid, SIGKILL);
       }
    }
-#else
+#endif // __APPLE__
+
+#ifdef HAVE_PROCSELF
    test_that("No subprocess detected correctly with procfs method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
-      core::FilePath procFsPath("/proc");
-      expect_true(procFsPath.exists());
 
       if (pid == 0)
       {
@@ -159,7 +159,7 @@ context("PosixSystemTests")
       else
       {
          // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesViaProcFs(pid, procFsPath));
+         expect_false(hasSubprocessesViaProcFs(pid));
 
          kill(pid, SIGKILL);
       }
@@ -169,8 +169,6 @@ context("PosixSystemTests")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
-      core::FilePath procFsPath("/proc");
-      expect_true(procFsPath.exists());
 
       if (pid == 0)
       {
@@ -180,12 +178,86 @@ context("PosixSystemTests")
       else
       {
          // we now have a subprocess
-         expect_true(hasSubprocessesViaProcFs(getpid(), procFsPath));
+         expect_true(hasSubprocessesViaProcFs(getpid()));
 
          kill(pid, SIGKILL);
       }
    }
-#endif
+#endif // HAVE_PROCSELF
+
+   test_that("Current working directory determined correctly with generic method")
+   {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDir(pid);
+         expect_false(cwd.empty());
+         expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+   test_that("Current working directory determined correctly with lsof method")
+   {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDirViaLsof(pid);
+         expect_false(cwd.empty());
+         expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
+
+         kill(pid, SIGKILL);
+      }
+   }
+
+#ifdef HAVE_PROCSELF
+   test_that("Current working directory determined correctly with procfs method")
+   {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp("sleep", "sleep", "5", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDirViaProcFs(pid);
+         expect_false(cwd.empty());
+         expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
+
+         kill(pid, SIGKILL);
+      }
+   }
+#endif // HAVE_PROCSELF
 }
 
 } // end namespace tests

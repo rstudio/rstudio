@@ -760,8 +760,10 @@ bool hasSubprocessesMac(PidType pid)
 }
 #endif
 
-bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
+#ifdef HAVE_PROCSELF
+bool hasSubprocessesViaProcFs(PidType pid)
 {
+   core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
       return true; // err on the side of assuming child processes exist
@@ -815,7 +817,6 @@ bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
       Error error = rstudio::core::readStringFromFile(statFile, &contents);
       if (error)
       {
-         LOG_ERROR(error);
          continue;
       }
 
@@ -854,19 +855,96 @@ bool hasSubprocessesViaProcFs(PidType pid, core::FilePath procFsPath)
    }
    return false;
 }
+#endif // HAVE_PROCSELF
 
 bool hasSubprocesses(PidType pid)
 {
-#ifndef __APPLE__
+#ifdef __APPLE__
+   return hasSubprocessesMac(pid);
+#else // Linux
+
+#ifdef HAVE_PROCSELF
+   return hasSubprocessesViaProcFs(pid);
+#else
+   return hasSubprocessesViaPgrep(pid);
+#endif
+
+#endif
+}
+
+FilePath currentWorkingDirViaLsof(PidType pid)
+{
+   // lsof -a -p PID -d cwd -Fn
+   //
+   shell_utils::ShellCommand cmd("lsof");
+   cmd << shell_utils::EscapeFilesOnly;
+   cmd << "-a";
+   cmd << "-p" << pid;
+   cmd << "-d cwd";
+   cmd << "-Fn";
+
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error error = runCommand(cmd, options, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   if (result.exitStatus != 0)
+      return FilePath();
+
+   // lsof outputs multiple lines, which varies by platform. We want the one
+   // starting with lowercase 'n', after that is the current working directory.
+   size_t pos = 0;
+   while (pos != std::string::npos && pos < result.stdOut.length())
+   {
+      if (result.stdOut.at(pos) == 'n')
+      {
+         pos++;
+         size_t finalPos = result.stdOut.find_first_of('\n', pos);
+         if (finalPos != std::string::npos)
+            return FilePath(result.stdOut.substr(pos, finalPos - pos));
+         else
+            return FilePath(result.stdOut.substr(pos));
+      }
+
+      // next line
+      pos = result.stdOut.find_first_of('\n', pos);
+      pos++;
+   }
+
+   return FilePath();
+}
+
+#ifdef HAVE_PROCSELF
+FilePath currentWorkingDirViaProcFs(PidType pid)
+{
    core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
-      return hasSubprocessesViaPgrep(pid);
+      return FilePath();
    }
-   return hasSubprocessesViaProcFs(pid, procFsPath);
 
+   std::string procId = safe_convert::numberToString(pid);
+   if (procId.empty())
+      return FilePath();
+
+   // /proc/PID/cwd is a symbolic link to the process' current working directory
+   FilePath pidPath = procFsPath.complete(procId).complete("cwd");
+   if (pidPath.isSymlink())
+      return pidPath.resolveSymlink();
+   else
+      return FilePath();
+}
+#endif // HAVE_PROCSELF
+
+FilePath currentWorkingDir(PidType pid)
+{
+#ifdef HAVE_PROCSELF
+   return currentWorkingDirViaProcFs(pid);
 #else
-   return hasSubprocessesMac(pid);
+   return currentWorkingDirViaLsof(pid);
 #endif
 }
 
