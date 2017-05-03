@@ -52,6 +52,26 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       VerticalPanel leftPanel = new VerticalPanel();
 
+      flatTheme_ = new SelectWidget("RStudio theme:",
+                                new String[]{"Classic", "Modern", "Sky"},
+                                new String[]{"classic", "modern", "alternate"},
+                                false);
+      flatTheme_.addStyleName(res.styles().themeChooser());
+      flatTheme_.getListBox().getElement().<SelectElement>cast().setSize(3);
+      flatTheme_.getListBox().getElement().getStyle().setHeight(50, Unit.PX);
+      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         public void onChange(ChangeEvent event)
+         {
+         }
+      });
+
+      String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
+      if (themeAlias == "default" || themeAlias ==  "dark-grey") themeAlias = "modern";
+      flatTheme_.setValue(themeAlias);
+
+      leftPanel.add(flatTheme_);
+
       if (Desktop.isDesktop())
       {
          // no zoom level on cocoa desktop
@@ -99,6 +119,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          String[] fonts = Desktop.getFrame().getFixedWidthFontList().split("\\n");
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
+         fontFace_.getListBox().setWidth("95%");
 
          String value = Desktop.getFrame().getFixedWidthFont();
          String label = Desktop.getFrame().getFixedWidthFont().replaceAll("\\\"",
@@ -133,7 +154,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                                    labels,
                                    values,
                                    false);
-      fontSize_.getListBox().setWidth("100%");
+      fontSize_.getListBox().setWidth("95%");
       if (!fontSize_.setValue(uiPrefs.fontSize().getGlobalValue() + ""))
          fontSize_.getListBox().setSelectedIndex(3);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
@@ -155,29 +176,11 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
          }
       });
-      theme_.getListBox().getElement().<SelectElement>cast().setSize(10);
-      theme_.getListBox().getElement().getStyle().setHeight(300, Unit.PX);
+      theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
+      theme_.getListBox().getElement().getStyle().setHeight(250, Unit.PX);
       theme_.addStyleName(res.styles().themeChooser());
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
-      flatTheme_ = new SelectWidget("RStudio theme:",
-                                new String[]{"Classic", "Modern", "Sky"},
-                                new String[]{"classic", "modern", "alternate"},
-                                false);
-      flatTheme_.addStyleName(res.styles().themeChooser());
-      flatTheme_.getListBox().getElement().<SelectElement>cast().setSize(3);
-      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
-      {
-         public void onChange(ChangeEvent event)
-         {
-         }
-      });
-
-      String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
-      if (themeAlias == "default" || themeAlias ==  "dark-grey") themeAlias = "modern";
-      flatTheme_.setValue(themeAlias);
-
-      leftPanel.add(flatTheme_);
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
 
