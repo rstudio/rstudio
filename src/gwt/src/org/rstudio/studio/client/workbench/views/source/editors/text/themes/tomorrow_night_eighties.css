@@ -8,7 +8,7 @@
   background: #444 ;
 }
 
-.ace_editor, .ace_editor_theme {
+.ace_editor, .rstudio-themes-flat .ace_editor_theme {
   background-color: #2D2D2D;
   color: #CCCCCC
 }

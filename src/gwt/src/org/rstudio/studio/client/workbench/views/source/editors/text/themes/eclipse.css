@@ -9,7 +9,7 @@
   background: #ebebeb;
 }
 
-.ace_editor, .ace_editor_theme {
+.ace_editor, .rstudio-themes-flat .ace_editor_theme {
   background-color: #FFFFFF;
   color: black;
 }
