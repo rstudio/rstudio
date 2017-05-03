@@ -984,8 +984,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .dirtyTabIndicator {
    display: none;
 }
+
 .dirtyTab .dirtyTabIndicator {
    display: inline;
+}
+
+.rstudio-themes-flat .dirtyTab .dirtyTabIndicator {
+   display: inline-block;
+   padding-top: 4px;
 }
 
 /** Module tabs **/
