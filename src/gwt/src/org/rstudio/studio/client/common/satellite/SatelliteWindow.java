@@ -61,13 +61,20 @@ public abstract class SatelliteWindow extends Composite
       initWidget(mainPanel_);
    }
 
+   public boolean suportsThemes()
+   {
+      return false;
+   }
+
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(
-         event.getName(),
-         Document.get(),
-         mainPanel_.getElement());
+      if (suportsThemes()) {
+         RStudioThemes.initializeThemes(
+            event.getName(),
+            Document.get(),
+            mainPanel_.getElement());
+      }
    }
 
    protected boolean allowScrolling()

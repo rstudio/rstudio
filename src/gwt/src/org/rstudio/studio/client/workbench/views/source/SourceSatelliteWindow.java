@@ -131,6 +131,12 @@ public class SourceSatelliteWindow extends SatelliteWindow
    {
       return this;
    }
+
+   @Override
+   public boolean suportsThemes()
+   {
+      return true;
+   }
    
    private final Provider<EventBus> pEventBus_;
    private final Provider<SourceSatellitePresenter> pPresenter_;
