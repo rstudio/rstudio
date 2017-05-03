@@ -124,7 +124,7 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading statistical data using haven",
+         "Reading data using haven",
          "import_haven",
          false,
          true);
