@@ -337,6 +337,11 @@ div.DTS div.DTS_Loading.showLoading {
     height: 23px;
 }
 
+.editor_dark #rsGridData tbody tr.even, 
+.editor_dark #rsGridData tbody tr.odd {
+    background: none;
+}
+
 #rsGridData {
     display: block;
 }
@@ -396,3 +401,6 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
     right: -28px;
 }
 
+div.dataTables_scroll div.dataTables_scrollHead {
+    background: none !important;
+}
