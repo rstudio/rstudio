@@ -23,7 +23,7 @@ project(DESKTOP)
 if(WIN32)
   set(QT_VERSION "5.4.1")
 else()
-  set(QT_VERSION "5.4.0")
+  set(QT_VERSION "5.4.2")
 endif()
 
 set(QT_VERSION_SUBDIR "5.4")
@@ -78,6 +78,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5WebKit REQUIRED)
+find_package(Qt5WebChannel REQUIRED)
 find_package(Qt5WebKitWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
@@ -304,6 +305,7 @@ if(NOT APPLE)
       Widgets
       Gui
       Network
+      WebChannel
       WebKit
       WebKitWidgets
       PrintSupport
@@ -493,12 +495,12 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Sql.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.5
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libicui18n.so.53
-                       ${QT_LIBRARY_DIR}/libicui18n.so.53.1
-                       ${QT_LIBRARY_DIR}/libicuuc.so.53
-                       ${QT_LIBRARY_DIR}/libicuuc.so.53.1
-                       ${QT_LIBRARY_DIR}/libicudata.so.53
-                       ${QT_LIBRARY_DIR}/libicudata.so.53.1
+                       ${QT_LIBRARY_DIR}/libicui18n.so.55
+                       ${QT_LIBRARY_DIR}/libicui18n.so.55.1
+                       ${QT_LIBRARY_DIR}/libicuuc.so.55
+                       ${QT_LIBRARY_DIR}/libicuuc.so.55.1
+                       ${QT_LIBRARY_DIR}/libicudata.so.55
+                       ${QT_LIBRARY_DIR}/libicudata.so.55.1
               DESTINATION ${RSTUDIO_INSTALL_BIN})
    # copy qt dlls directly to bin on win32
    elseif(WIN32)
