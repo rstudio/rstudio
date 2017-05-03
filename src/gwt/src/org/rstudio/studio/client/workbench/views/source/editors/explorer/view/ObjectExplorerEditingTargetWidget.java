@@ -50,6 +50,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       mainWidget_ = new DockLayoutPanel(Unit.PX);
+      mainWidget_.addStyleName("ace_editor_theme");
       toolbar_ = new EditingTargetToolbar(commands_, true);
       grid_ = new ObjectExplorerDataGrid(handle, document);
       resizePanel_ = new ResizeLayoutPanel();

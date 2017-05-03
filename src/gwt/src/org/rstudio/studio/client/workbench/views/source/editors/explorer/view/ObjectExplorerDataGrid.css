@@ -1,5 +1,6 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external editor_dark;
 /* DataGrid styling / overrides */
 
 /* Avoid GWT's inset styling for selected cells */
@@ -10,10 +11,11 @@
 
 .dataGridKeyboardSelectedRowCell:first-child {
 	border-left: 2px solid #0AF !important;
+	padding-left: 4px !important;
 }
 
 .dataGridEvenRowCell:first-child, .dataGridOddRowCell:first-child {
-	border-left: 2px solid #FFF;
+	padding-left: 6px;
 }
 
 .dataGridEvenRow, .dataGridOddRow {
