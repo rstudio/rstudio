@@ -67,6 +67,7 @@ public class DataEditingTargetWidget extends Composite
       commands_ = commands;
 
       frame_ = new RStudioFrame(dataItem.getContentUrl());
+      frame_.setAceTheme();
       frame_.setSize("100%", "100%");
       table_ = new DataTable(this);
 
