@@ -58,7 +58,7 @@
             </div>
             <div class="{style.optionsColumn}">
                 <div class="{style.optionsRow} {style.firstRow}">
-                    <div class="{style.optionLabel}">Max:</div>
+                    <div class="{style.optionLabel}">Max Rows:</div>
                     <g:TextBox ui:field="maxTextBox_" styleName="{style.skipTextBox}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
