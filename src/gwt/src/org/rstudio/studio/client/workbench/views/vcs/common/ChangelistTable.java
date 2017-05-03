@@ -145,6 +145,7 @@ public abstract class ChangelistTable extends Composite
       table_.setSize("100%", "auto");
 
       layout_ = new LayoutPanel();
+      layout_.addStyleName("ace_editor_theme");
       scrollPanel_ = new ScrollPanel(table_);
       layout_.add(scrollPanel_);
       layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
