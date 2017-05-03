@@ -902,7 +902,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .closeTabButton {
-   filter: invert(100%) brightness(100%);
+   -webkit-filter: invert(100%) brightness(100%);
+      -moz-filter: invert(100%) brightness(100%);
+       -ms-filter: invert(100%) brightness(100%);
+        -o-filter: invert(100%) brightness(100%);
+           filter: invert(100%) brightness(100%);
 }
 
 .gwt-TabLayoutPanel-Workbench .gwt-TabLayoutPanelTab .closeTabButton {
@@ -1133,8 +1137,16 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .toolbarSeparator {
-   filter: invert(100%);
-   transform: scaleX(-1);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
+   -webkit-transform: scaleX(-1);
+      -moz-transform: scaleX(-1);
+       -ms-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+           transform: scaleX(-1);
 }
 
 .toolbarFileLabel {
@@ -2057,7 +2069,11 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts {
-   filter: invert(100%);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
 }
 
 /* RSTUDIO DEFAULT THEME */
