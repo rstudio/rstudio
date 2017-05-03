@@ -42,4 +42,8 @@ public class DataImportAssembleResponse extends JavaScriptObject
    public final native JavaScriptObject getLocalFiles() /*-{
       return this.localFiles;
    }-*/;
+
+   public final native String getPackageVersion() /*-{
+      return this.packageVersion ? this.packageVersion.join(' ') : null;
+   }-*/;
 }

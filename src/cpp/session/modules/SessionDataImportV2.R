@@ -491,6 +491,8 @@
          options[["col_names"]] <- dataImportOptions$columnNames
          options[["skip"]] <- dataImportOptions$skip
          options[["col_types"]] <- dataImportOptions$columnDefinitions
+         options[["n_max"]] <- dataImportOptions$nMax
+         options[["range"]] <- dataImportOptions$range
 
          # set special parameter types
          optionTypes <- list()
@@ -498,6 +500,12 @@
          optionTypes[["sheet"]] <- "character"
          optionTypes[["na"]] <- "character"
          optionTypes[["col_types"]] <- "columnDefinitionsReadXl"
+         optionTypes[["range"]] <- "character"
+
+         if (!is.null(options[["range"]]) && nchar(options[["range"]]) > 0) {
+            options[["skip"]] <- NULL
+            options[["n_max"]] <- NULL
+         }
 
          return(list(
             name = "read_excel",
@@ -622,6 +630,16 @@
       ),
       collapse = "\n"
    )
+
+   packageNameFromOptions <- list(
+      "text" = "readr",
+      "statistics" = "haven",
+      "xls" = "readxl"
+   )
+
+   importInfo$packageVersion <- as.character(packageVersion(
+      packageNameFromOptions[[dataImportOptions$mode]]
+   ))
 
    importInfo
 })
