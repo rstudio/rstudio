@@ -1,7 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
@@ -92,6 +92,11 @@
    background-color: #f0f0f0;
    font-weight: bold;
    height: headerRowHeight;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .categoryHeaderRow
+{
+   font-weight: 400;
 }
 
 .categoryHeaderText
