@@ -82,79 +82,101 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                      continue;
                   }
                   
-                  connectToProcess(
-                        proc,
-                        new ServerRequestCallback<ConsoleProcess>()
+                  server_.processTestExists(
+                        proc.getHandle(), 
+                        new ServerRequestCallback<Boolean>()
                         {
+
                            @Override
-                           public void onResponseReceived(
-                                 final ConsoleProcess cproc)
+                           public void onResponseReceived(Boolean exists)
                            {
-                              // first determine whether to create and/or
-                              // show the dialog immediately
-                              boolean createDialog = false;
-                              boolean showDialog = false;
-
-                              // standard dialog -- always show it
-                              if (!proc.getShowOnOutput())
+                              if (exists)
                               {
-                                 createDialog = true;
-                                 showDialog = true;
-                              }
 
-                              // showOnOutput dialog that already has 
-                              // output -- make sure the user sees it
-                              //
-                              // NOTE: we have to trim the  buffered output
-                              // for the comparison because when the password
-                              // manager provides a password the back-end
-                              // process sometimes echos a newline back to us
-                              //
-                              else if (proc.getBufferedOutput().trim().length() > 0)
-                              {
-                                 createDialog = true;
-                                 showDialog = true;
-                              }
+                                 connectToProcess(
+                                       proc,
+                                       new ServerRequestCallback<ConsoleProcess>()
+                                       {
+                                          @Override
+                                          public void onResponseReceived(
+                                                                         final ConsoleProcess cproc)
+                                          {
+                                             // first determine whether to create and/or
+                                             // show the dialog immediately
+                                             boolean createDialog = false;
+                                             boolean showDialog = false;
 
-                              // showOnOutput dialog that has exited
-                              // and has no output -- reap it
-                              else if (proc.getExitCode() != null)
-                              {
-                                 cproc.reap(new VoidServerRequestCallback());
-                              }
+                                             // standard dialog -- always show it
+                                             if (!proc.getShowOnOutput())
+                                             {
+                                                createDialog = true;
+                                                showDialog = true;
+                                             }
 
-                              // showOnOutput dialog with no output that is
-                              // still running -- create but don't show yet
-                              else
-                              {
-                                 createDialog = true;
-                              }
+                                             // showOnOutput dialog that already has 
+                                             // output -- make sure the user sees it
+                                             //
+                                             // NOTE: we have to trim the  buffered output
+                                             // for the comparison because when the password
+                                             // manager provides a password the back-end
+                                             // process sometimes echos a newline back to us
+                                             //
+                                             else if (proc.getBufferedOutput().trim().length() > 0)
+                                             {
+                                                createDialog = true;
+                                                showDialog = true;
+                                             }
 
-                              // take indicated actions
-                              if (createDialog)
-                              {
-                                 ConsoleProgressDialog dlg = new ConsoleProgressDialog(
-                                       proc.getCaption(),
-                                       cproc,
-                                       proc.getBufferedOutput(),
-                                       proc.getExitCode(),
-                                       cryptoServer);
+                                             // showOnOutput dialog that has exited
+                                             // and has no output -- reap it
+                                             else if (proc.getExitCode() != null)
+                                             {
+                                                cproc.reap(new VoidServerRequestCallback());
+                                             }
 
-                                 if (showDialog)
-                                    dlg.showModal();
-                                 else
-                                    dlg.showOnOutput();
-                              }
-                           }
+                                             // showOnOutput dialog with no output that is
+                                             // still running -- create but don't show yet
+                                             else
+                                             {
+                                                createDialog = true;
+                                             }
+
+                                             // take indicated actions
+                                             if (createDialog)
+                                             {
+                                                ConsoleProgressDialog dlg = new ConsoleProgressDialog(
+                                                      proc.getCaption(),
+                                                      cproc,
+                                                      proc.getBufferedOutput(),
+                                                      proc.getExitCode(),
+                                                      cryptoServer);
+
+                                                if (showDialog)
+                                                   dlg.showModal();
+                                                else
+                                                   dlg.showOnOutput();
+                                             }
+                                          }
+
+                                          @Override
+                                          public void onError(ServerError error)
+                                          {
+                                             Debug.logError(error);
+                                          }
+                                       });
+                              } // process handle exists
+                           } // process test response received
 
                            @Override
                            public void onError(ServerError error)
                            {
+                              // error testing if process exists
                               Debug.logError(error);
                            }
                         });
-               }
-            }
+                  
+               } // looping through processes
+            } // onSessionInit
          });
 
          eventBus_.addHandler(

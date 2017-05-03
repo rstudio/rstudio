@@ -506,6 +506,7 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 void ConsoleProcess::onExit(int exitCode)
 {
    procInfo_->setExitCode(exitCode);
+   saveConsoleProcesses();
 
    json::Object data;
    data["handle"] = handle();
@@ -793,6 +794,24 @@ Error procUseRpc(const json::JsonRpcRequest& request,
 
    // Used to downgrade to Rpc after client was unable to connect to Websocket
    pos->second->setRpcMode();
+   return Success();
+}
+
+// Determine if a given process handle exists in the table; used by client
+// to detect stale consoleprocs.
+Error procTestExists(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   bool exists = (pos == s_procs.end()) ? false : true;
+   pResponse->setResult(exists);
    return Success();
 }
 
@@ -1125,6 +1144,22 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 {
    if (!terminatedNormally)
       return;
+
+   // When shutting down, only preserve ConsoleProcesses that are marked
+   // with allow_restart. Others should not survive a shutdown/restart.
+   ProcTable::const_iterator nextIt = s_procs.begin();
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it = nextIt)
+   {
+      nextIt = it;
+      ++nextIt;
+      if (it->second->getAllowRestart() == false)
+      {
+         s_procs.erase(it->second->handle());
+      }
+   }
+
    saveConsoleProcesses();
 }
 
@@ -1164,6 +1199,7 @@ Error initialize()
       (bind(registerRpcMethod, "process_set_title", procSetTitle))
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
+      (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc));
 
    return initBlock.execute();
