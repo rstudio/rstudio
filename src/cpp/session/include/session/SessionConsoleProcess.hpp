@@ -137,6 +137,7 @@ public:
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
+   bool getAllowRestart() { return procInfo_->getAllowRestart(); }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();

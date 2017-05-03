@@ -17,7 +17,6 @@ package org.rstudio.studio.client.application.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
 public class ThemeChangedEvent extends CrossWindowEvent<ThemeChangedEvent.Handler>

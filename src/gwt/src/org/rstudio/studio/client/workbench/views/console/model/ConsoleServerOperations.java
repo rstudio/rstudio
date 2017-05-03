@@ -66,6 +66,16 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     */
    void processUseRpc(String handle,
                       ServerRequestCallback<Void> requestCallback);
+   
+   /**
+    * Test if server knows about a given process handle. Doesn't mean process
+    * is necessarily running, just that the server has it in the ConsoleProcess
+    * table and additional operations can safely be attempted.
+    * @param handle handle to test
+    * @param requestCallback
+    */
+   public void processTestExists(String handle,
+                                 ServerRequestCallback<Boolean> requestCallback);
 
    /**
     * Set/update the caption of given process.
