@@ -282,6 +282,8 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermUnderline { text-decoration: underline; }",
       ".xtermBlink { text-decoration: blink; }",
       ".xtermHidden { visibility: hidden; }",
+      ".xtermItalic { font-style: italic; }",
+      ".xtermStrike { text-decoration: line-through; }",
       ".xtermColor0 { color: #2e3436; }",
       ".xtermBgColor0 { background-color: #2e3436; }",
       ".xtermColor1 { color: #cc0000; }",
