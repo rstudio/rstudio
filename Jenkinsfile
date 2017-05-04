@@ -92,18 +92,18 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-          [os: 'precise', arch: 'amd64', flavor: 'desktop'],
-          [os: 'precise', arch: 'i386', flavor: 'desktop'],
-          [os: 'precise', arch: 'amd64', flavor: 'server'],
-          [os: 'precise', arch: 'i386', flavor: 'server'],
-          [os: 'centos6', arch: 'x86_64', flavor: 'server'],
-          [os: 'centos6', arch: 'i386', flavor: 'server'],
-          //[os: 'centos5', arch: 'x86_64', flavor: 'server'],
-          //[os: 'centos5', arch: 'i386', flavor: 'server'],
+          [os: 'precise', arch: 'amd64',  flavor: 'desktop'],
+          [os: 'precise', arch: 'i386',   flavor: 'desktop'],
+          [os: 'precise', arch: 'amd64',  flavor: 'server' ],
+          [os: 'precise', arch: 'i386',   flavor: 'server' ],
+          [os: 'centos6', arch: 'x86_64', flavor: 'server' ],
+          [os: 'centos6', arch: 'i386',   flavor: 'server' ],
           [os: 'centos7', arch: 'x86_64', flavor: 'desktop'],
-          [os: 'centos7', arch: 'i386', flavor: 'desktop'],
-          [os: 'xenial', arch: 'amd64', flavor: 'server'],
-          [os: 'xenial', arch: 'i386', flavor: 'server']
+          [os: 'centos7', arch: 'i386',   flavor: 'desktop'],
+          [os: 'xenial',  arch: 'amd64',  flavor: 'server' ],
+          [os: 'xenial',  arch: 'i386',   flavor: 'server' ],
+          [os: 'xenial',  arch: 'amd64',  flavor: 'desktop'],
+          [os: 'xenial',  arch: 'i386',   flavor: 'desktop']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]
