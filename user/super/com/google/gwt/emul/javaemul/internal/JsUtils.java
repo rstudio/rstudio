@@ -15,6 +15,8 @@
  */
 package javaemul.internal;
 
+import javaemul.internal.annotations.UncheckedCast;
+
 /**
  * Provides an interface for simple JavaScript idioms that can not be expressed in Java.
  */
@@ -52,12 +54,9 @@ public class JsUtils {
    return bool;
   }-*/;
 
-  public static native long unsafeCastToLong(Object l) /*-{
-    return l;
-  }-*/;
-
-  public static native NativeArray unsafeCastToNativeArray(Object array) /*-{
-    return array;
+  @UncheckedCast
+  public static native <T> T uncheckedCast(Object o) /*-{
+    return o;
   }-*/;
 
   public static native <T> T getProperty(Object map, String key) /*-{

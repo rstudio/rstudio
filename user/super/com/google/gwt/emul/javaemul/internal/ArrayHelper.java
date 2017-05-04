@@ -101,7 +101,7 @@ public class ArrayHelper {
   private static native NativeFunction getSpliceFunction();
 
   public static NativeArray asNativeArray(Object array) {
-    return JsUtils.unsafeCastToNativeArray(array);
+    return JsUtils.uncheckedCast(array);
   }
 }
 

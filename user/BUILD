@@ -45,6 +45,10 @@ java_library(
 java_library(
     name = "gwt-javaemul-annotations",
     srcs = glob(["super/com/google/gwt/emul/javaemul/internal/annotations/*.java"]),
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
 )
 
 # The classes in gwt-user.jar that GWT applications can depend on.
@@ -95,11 +99,8 @@ java_library(
     ),
     compatible_with = ["//buildenv/target:appengine"],
     javacopts = [
+        "-Xep:FutureReturnValueIgnored:OFF",
         "-Xep:MissingCasesInEnumSwitch:OFF",
-        "-Xep:SelfComparison:OFF",
-        "-Xep:SelfEquals:OFF",
-        "-Xep:FallThrough:OFF",
-        "-Xep:ReturnValueIgnored:OFF",
         "-Xep:EqualsIncompatibleType:OFF",
     ],
     plugins = [
@@ -140,14 +141,7 @@ java_library(
         "src/com/google/gwt/user/server/Base64Utils.java",
     ],
     compatible_with = ["//buildenv/target:appengine"],
-    javacopts = [
-        "-Xep:MissingCasesInEnumSwitch:OFF",
-        "-Xep:SelfComparison:OFF",
-        "-Xep:SelfEquals:OFF",
-        "-Xep:FallThrough:OFF",
-        "-Xep:ReturnValueIgnored:OFF",
-        "-Xep:EqualsIncompatibleType:OFF",
-    ],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
     deps = [
         "//third_party/java_src/gwt/svn/trunk/dev:requestfactory-apt-deps",
     ],
@@ -412,6 +406,8 @@ java_library(
             "src/com/google/gwt/i18n/rebind/keygen/*.java",
             "super/com/google/gwt/emul/javaemul/internal/ArrayHelper.java",
             "super/com/google/gwt/emul/javaemul/internal/ArrayStamper.java",
+            "super/com/google/gwt/emul/javaemul/internal/JsUtils.java",
+            "super/com/google/gwt/emul/javaemul/internal/NativeArray.java",
             # And it's also sensible to want for serialization:
             "src/com/google/gwt/user/client/ui/SuggestOracle.java",
         ],
@@ -421,17 +417,17 @@ java_library(
         ] + DTO_SRCS + JVM_REGEXP_SRCS,
     ),
     compatible_with = ["//buildenv/target:appengine"],
+    javacopts = ["-Xep:EqualsIncompatibleType:OFF"],
     deps = [
         ":gwt-dto-serializers",
+        ":gwt-javaemul-annotations",
+        ":gwt-jsinterop-annotations",
         ":jvm_regexp",
         "//third_party/java/servlet/servlet_api",
         "//third_party/java_src/gwt/svn/tools:servlet_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
         "//third_party/java_src/gwt/svn/trunk/dev:servlet-deps",
     ],
-    javacopts = [
-        "-Xep:EqualsIncompatibleType:OFF",
-    ]
 )
 
 # The minimum requirements for GWT-RPC serializable object definition.
@@ -453,6 +449,13 @@ java_library(
         "public",
     ],
     gwtxml = "Gwt-dto-serializers.gwt.xml",
+)
+
+# GWT pluggable type annotations in a separate library.
+java_library(
+    name = "gwt-safehtml-pluggabletypes",
+    srcs = glob(["src/com/google/gwt/safehtml/shared/annotations/Is*.java"]),
+    compatible_with = ["//buildenv/target:appengine"],
 )
 
 # Creates gwt-testing.jar, which contains GWTTestCase and its infrastructure.
@@ -544,16 +547,14 @@ AugmentedJar(
         "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code",
     ],
     javacopts = [
+        "-Xep:CheckReturnValue:OFF",
+        "-Xep:ReturnValueIgnored:OFF",
         "-Xep:SelfComparison:OFF",  # go/self-comparison-lsc
         "-Xep:SelfEquals:OFF",  # go/self-equals-lsc
         "-Xep:IdentityBinaryExpression:OFF",
         "-Xep:LoopConditionChecker:OFF",
-        "-Xep:CollectionIncompatibleType:OFF",
-        "-Xep:MissingCasesInEnumSwitch:OFF",
-        "-Xep:FallThrough:OFF",
-        "-Xep:ReturnValueIgnored:OFF",
-        "-Xep:JUnit3TestNotRun:OFF",
         "-Xep:EqualsIncompatibleType:OFF",
+        "-Xep:LogicalAssignment:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",
@@ -686,7 +687,7 @@ filegroup(
 
 filegroup(
     name = "java_emul_internal",
-    srcs = glob(["super/com/google/gwt/emul/javaemul/**/*.java"]),
+    srcs = glob(["super/com/google/gwt/emul/javaemul/internal/*.java"]),
     visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )
 

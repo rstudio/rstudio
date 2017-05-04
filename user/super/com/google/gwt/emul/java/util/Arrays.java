@@ -44,6 +44,8 @@ import javaemul.internal.ArrayHelper;
 import javaemul.internal.JsUtils;
 import javaemul.internal.NativeArray.CompareFunction;
 
+import jsinterop.annotations.JsFunction;
+
 /**
  * Utility methods related to native arrays.
  * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html">
@@ -1757,16 +1759,27 @@ public class Arrays {
     nativeSort(array, fromIndex, toIndex, getIntComparator());
   }
 
+  @JsFunction
+  private interface CompareDoubleFunction {
+    double compare(double d1, double d2);
+  }
+
   private static CompareFunction getIntComparator() {
-    return (a, b) -> JsUtils.unsafeCastToDouble(a) - JsUtils.unsafeCastToDouble(b);
+    return JsUtils.uncheckedCast((CompareDoubleFunction) (a, b) -> a - b);
   }
 
   private static CompareFunction getDoubleComparator() {
-    return (a, b) -> Double.compare(JsUtils.unsafeCastToDouble(a), JsUtils.unsafeCastToDouble(b));
+    return JsUtils.uncheckedCast((CompareDoubleFunction) Double::compare);
+  }
+
+  @JsFunction
+  private interface CompareLongFunction {
+    @SuppressWarnings("unusable-by-js")
+    int compare(long d1, long d2);
   }
 
   private static CompareFunction getLongComparator() {
-    return (a, b) -> Long.compare(JsUtils.unsafeCastToLong(a), JsUtils.unsafeCastToLong(b));
+    return JsUtils.uncheckedCast((CompareLongFunction) Long::compare);
   }
 
   private Arrays() { }
