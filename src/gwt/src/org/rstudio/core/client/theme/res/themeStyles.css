@@ -1081,13 +1081,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    width: 100%;
    height: 23px;
    background: TOOLBARBACKGROUND repeat-x top;
-   padding: 0;
+   padding: 0 0 0 6px;
    white-space: nowrap;
 }
 
-.toolbar > table {
-   width: 100%;
-   padding: 0 0 0 6px;
+.toolbarWrapper {
+   
 }
 
 .rstudio-themes-flat .toolbar {

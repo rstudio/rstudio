@@ -109,7 +109,7 @@ public class Toolbar extends Composite
    {
       super();
 
-      HTMLPanel borderWrapper = new HTMLPanel("");
+      toolbarWrapper_ = new HTMLPanel("");
 
       horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -129,9 +129,12 @@ public class Toolbar extends Composite
                                           rightToolbarPanel_,
                                           HasHorizontalAlignment.ALIGN_RIGHT);
 
-      borderWrapper.add(horizontalPanel_);
-      initWidget(borderWrapper);
-      setStyleName(styles_.toolbar());
+      horizontalPanel_.addStyleName(styles_.toolbar());
+
+      toolbarWrapper_.add(horizontalPanel_);
+      initWidget(toolbarWrapper_);
+
+      setStyleName(styles_.toolbarWrapper());
    }
 
    protected void manageSeparators()
@@ -289,6 +292,12 @@ public class Toolbar extends Composite
       else
          return DEFAULT_HEIGHT;
    }
+
+   @Override
+   public void addStyleName(String styleName)
+   {
+      horizontalPanel_.addStyleName(styleName);
+   }
    
    private void removeAllWidgets(HorizontalPanel panel)
    {
@@ -351,6 +360,7 @@ public class Toolbar extends Composite
    private HorizontalPanel horizontalPanel_ ;
    private HorizontalPanel leftToolbarPanel_ ;
    private HorizontalPanel rightToolbarPanel_ ;
+   private HTMLPanel toolbarWrapper_;
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;
 

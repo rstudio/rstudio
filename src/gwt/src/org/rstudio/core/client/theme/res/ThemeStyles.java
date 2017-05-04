@@ -189,4 +189,5 @@ public interface ThemeStyles extends CssResource
    String consoleMaximizeLayout();
 
    String secondaryTallerToolbar();
+   String toolbarWrapper();
 }
