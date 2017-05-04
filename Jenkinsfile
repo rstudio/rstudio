@@ -104,7 +104,7 @@ try {
                     stage('prepare ws/container'){
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
-                      container = pullBuildPush(image_name: 'jenkins/ide', image_tag: image_tag, build_args: jenkins_user_build_args())
+                      container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${containers[i].os}-${containers[i].arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
                     }
                     container.inside() {
                         stage('resolve deps'){
