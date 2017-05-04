@@ -72,9 +72,9 @@ elseif(RSTUDIO_DESKTOP)
   # look for the well known locations for Qt SDK to determine which version
   # of libgstreamer we depend on
   if(EXISTS "/opt/RStudio-QtSDK/Qt5.4.2" OR EXISTS "$ENV{HOME}/Qt5.4.2")
-    set(RSTUDIO_DEBIAN_DEPENDS "{RSTUDIO_DEBIAN_DEPENDS}libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, ")
+    set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, ")
   else()
-    set(RSTUDIO_DEBIAN_DEPENDS "{RSTUDIO_DEBIAN_DEPENDS}libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
+    set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
   endif()
 
   # rpm dependencies
