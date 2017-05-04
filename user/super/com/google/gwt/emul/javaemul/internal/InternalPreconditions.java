@@ -125,11 +125,15 @@ public final class InternalPreconditions {
   }
 
   public static void checkType(boolean expression) {
+    checkType(expression, null);
+  }
+
+  public static void checkType(boolean expression, String message) {
     if (IS_TYPE_CHECKED) {
-      checkCriticalType(expression);
+      checkCriticalType(expression, message);
     } else if (IS_ASSERTED) {
       try {
-        checkCriticalType(expression);
+        checkCriticalType(expression, message);
       } catch (Exception e) {
         throw new AssertionError(e);
       }
@@ -137,8 +141,12 @@ public final class InternalPreconditions {
   }
 
   public static void checkCriticalType(boolean expression) {
+    checkCriticalType(expression, null);
+  }
+
+  public static void checkCriticalType(boolean expression, String message) {
     if (!expression) {
-      throw new ClassCastException();
+      throw new ClassCastException(message);
     }
   }
 
