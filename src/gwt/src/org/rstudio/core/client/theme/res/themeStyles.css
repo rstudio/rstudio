@@ -2037,11 +2037,15 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .search {
-   top: 1px;
+   top: 0px;
    height: 16px;
    border: solid 1px #d6dadc;
    border-radius: 3px;
    background: #FFF;
+}
+
+.rstudio-themes-flat .tallerToolbarWrapper .search {
+   top: 2px;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .search {
