@@ -67,8 +67,16 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, libssl1.0.0 | libssl1.0.2, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libssl1.0.0 | libssl1.0.2, ")
   
+  # look for the well known locations for Qt SDK to determine which version
+  # of libgstreamer we depend on
+  if(EXISTS "/opt/RStudio-QtSDK/Qt5.4.2" OR EXISTS "$ENV{HOME}/Qt5.4.2")
+    set(RSTUDIO_DEBIAN_DEPENDS "{RSTUDIO_DEBIAN_DEPENDS}libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, ")
+  else()
+    set(RSTUDIO_DEBIAN_DEPENDS "{RSTUDIO_DEBIAN_DEPENDS}libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
+  endif()
+
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 

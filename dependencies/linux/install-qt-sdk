@@ -29,7 +29,7 @@ else
 fi
 
 # presume 5.4.0
-QT_VERSION = 5.4.0
+QT_VERSION=5.4.0
 
 # test for libgstreamer
 which apt-cache > /dev/null
