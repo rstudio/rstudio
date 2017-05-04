@@ -1188,7 +1188,9 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .secondaryToolbar {
+   height: 20px !important;
 }
+
 
 .tallerToolbarWrapper {
 
