@@ -187,4 +187,6 @@ public interface ThemeStyles extends CssResource
    String consoleHeaderLayout();
    String consoleMinimizeLayout();
    String consoleMaximizeLayout();
+
+   String secondaryTallerToolbar();
 }

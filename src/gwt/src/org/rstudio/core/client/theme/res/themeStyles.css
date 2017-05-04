@@ -1182,6 +1182,15 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    height: 20px !important;
 }
 
+.secondaryTallerToolbar {
+
+}
+
+.rstudio-themes-flat .secondaryTallerToolbar {
+   border-bottom: solid 1px #d6dadc;
+   height: 23px !important;  
+}
+
 .toolbarButtonRightImage {
    display: none;
 }
