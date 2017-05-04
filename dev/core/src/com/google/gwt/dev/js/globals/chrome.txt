@@ -227,6 +227,7 @@ IdleDeadline
 Image
 ImageBitmap
 ImageBitmapRenderingContext
+ImageCapture
 ImageData
 Infinity
 InputDeviceCapabilities
@@ -265,6 +266,7 @@ MediaKeys
 MediaList
 MediaQueryList
 MediaQueryListEvent
+MediaSettingsRange
 MediaSource
 MediaStreamAudioDestinationNode
 MediaStreamAudioSourceNode
@@ -282,6 +284,7 @@ MutationObserver
 MutationRecord
 NaN
 NamedNodeMap
+NavigationPreloadManager
 Navigator
 Node
 NodeFilter
@@ -314,6 +317,7 @@ PeriodicWave
 Permission
 PermissionStatus
 Permissions
+PhotoCapabilities
 Plugin
 PluginArray
 PointerEvent
@@ -323,6 +327,8 @@ PresentationAvailability
 PresentationConnection
 PresentationConnectionAvailableEvent
 PresentationConnectionCloseEvent
+PresentationConnectionList
+PresentationReceiver
 PresentationRequest
 ProcessingInstruction
 ProgressEvent
@@ -336,6 +342,8 @@ RTCCertificate
 RTCDataChannel
 RTCIceCandidate
 RTCPeerConnection
+RTCRtpContributingSource
+RTCRtpReceiver
 RTCSessionDescription
 RTCStatsReport
 RadioNodeList
@@ -606,6 +614,7 @@ WebSocket
 WheelEvent
 Window
 Worker
+WritableStream
 XMLDocument
 XMLHttpRequest
 XMLHttpRequestEventTarget
@@ -775,6 +784,7 @@ onwheel
 open
 openDatabase
 opener
+origin
 outerHeight
 outerWidth
 pageXOffset
