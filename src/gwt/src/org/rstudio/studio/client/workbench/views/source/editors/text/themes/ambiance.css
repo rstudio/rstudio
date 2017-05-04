@@ -61,7 +61,7 @@
   box-shadow: inset 0 0 10px black;
 }
 
-.ace_editor, .ace_editor_theme {
+.ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   color: #E6E1DC;
   background-color: #202020;
 }

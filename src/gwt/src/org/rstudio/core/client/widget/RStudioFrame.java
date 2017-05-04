@@ -21,6 +21,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.dom.client.BodyElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Frame;
@@ -55,6 +56,9 @@ public class RStudioFrame extends Frame
          BodyElement body = getWindow().getDocument().getBody();
          if (body != null)
          {
+            if (Document.get().getBody().hasClassName("rstudio-themes-flat"))
+               body.addClassName("rstudio-themes-flat");
+            
             body.addClassName("ace_editor_theme");
          }
       }

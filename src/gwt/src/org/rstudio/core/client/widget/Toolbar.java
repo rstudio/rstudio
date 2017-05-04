@@ -109,6 +109,8 @@ public class Toolbar extends Composite
    {
       super();
 
+      HTMLPanel borderWrapper = new HTMLPanel("");
+
       horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       leftToolbarPanel_ = new HorizontalPanel();
@@ -127,7 +129,8 @@ public class Toolbar extends Composite
                                           rightToolbarPanel_,
                                           HasHorizontalAlignment.ALIGN_RIGHT);
 
-      initWidget(horizontalPanel_);
+      borderWrapper.add(horizontalPanel_);
+      initWidget(borderWrapper);
       setStyleName(styles_.toolbar());
    }
 

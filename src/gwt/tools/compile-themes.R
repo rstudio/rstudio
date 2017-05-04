@@ -828,7 +828,7 @@ for (file in themeFiles) {
 
    ## Copy ace_editor as ace_editor_theme
    regex <- paste("^\\.ace_editor \\{$", sep = "")
-   content <- gsub(regex, ".ace_editor, .ace_editor_theme {", content)
+   content <- gsub(regex, ".ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {", content)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")

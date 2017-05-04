@@ -20,6 +20,11 @@
   color: #606060;
 }
 
+.dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
+  border: selectionBorderWidth solid #ffffff;
+  color: #606060;
+}
+
 .dataGridWidget {
 
 }

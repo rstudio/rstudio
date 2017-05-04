@@ -876,6 +876,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    float: left;
 }
 
+@def TABSTRIPHEIGHT 21px;
+
 /** Document tabs **/
 /*
 @def TABSTRIPHEIGHT 24px;
@@ -902,7 +904,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .closeTabButton {
-   filter: invert(100%) brightness(100%);
+   -webkit-filter: invert(100%) brightness(100%);
+      -moz-filter: invert(100%) brightness(100%);
+       -ms-filter: invert(100%) brightness(100%);
+        -o-filter: invert(100%) brightness(100%);
+           filter: invert(100%) brightness(100%);
 }
 
 .gwt-TabLayoutPanel-Workbench .gwt-TabLayoutPanelTab .closeTabButton {
@@ -980,8 +986,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .dirtyTabIndicator {
    display: none;
 }
+
 .dirtyTab .dirtyTabIndicator {
    display: inline;
+}
+
+.rstudio-themes-flat .dirtyTab .dirtyTabIndicator {
+   display: inline-block;
+   padding-top: 4px;
 }
 
 /** Module tabs **/
@@ -1069,13 +1081,18 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    width: 100%;
    height: 23px;
    background: TOOLBARBACKGROUND repeat-x top;
-   padding: 0 0 0 6px;
+   padding: 0;
    white-space: nowrap;
 }
 
+.toolbar > table {
+   width: 100%;
+   padding: 0 0 0 6px;
+}
+
 .rstudio-themes-flat .toolbar {
-   height: 22px;
    border-bottom: 1px solid #d6dadc;
+   height: 21px;
 }
 
 .toolbar * {
@@ -1133,8 +1150,16 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .toolbarSeparator {
-   filter: invert(100%);
-   transform: scaleX(-1);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
+   -webkit-transform: scaleX(-1);
+      -moz-transform: scaleX(-1);
+       -ms-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+           transform: scaleX(-1);
 }
 
 .toolbarFileLabel {
@@ -1145,7 +1170,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: TABSTRIPHEIGHT;
+   height: TABSTRIPHEIGHT !important;
 }
 
 .secondaryToolbarPanel {
@@ -1159,7 +1184,16 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .secondaryToolbar {
    border-bottom: solid 1px #d6dadc;
-   height: 24px;
+   height: 20px !important;
+}
+
+.secondaryTallerToolbar {
+
+}
+
+.rstudio-themes-flat .secondaryTallerToolbar {
+   border-bottom: solid 1px #d6dadc;
+   height: 23px !important;  
 }
 
 .toolbarButtonRightImage {
@@ -1263,7 +1297,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .rstudio-themes-flat .webGlobalToolbar {
    border-bottom: 0;
-   height: 24px;
+   height: 22px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1856,7 +1890,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .logoAnchor {
-   top: 3px !important;
+   top: 2px !important;
 }
 
 .rstudio-themes-flat .dialogTabPanel {
@@ -2057,7 +2091,11 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts {
-   filter: invert(100%);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
 }
 
 /* RSTUDIO DEFAULT THEME */

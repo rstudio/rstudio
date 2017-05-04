@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -136,6 +137,9 @@ public class EnvironmentPane extends WorkbenchPane
             imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
       toolbar.addLeftWidget(environmentButton_);
+
+      ThemeStyles styles = ThemeStyles.INSTANCE;
+      toolbar.addStyleName(styles.secondaryTallerToolbar());
       
       SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
          @Override
