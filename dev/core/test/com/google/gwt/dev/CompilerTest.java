@@ -1495,6 +1495,67 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_dateStampChange(JsOutputOption.DETAILED);
   }
 
+  // Repro for bug #9518
+  public void testIncrementalRecompile_jsPropertyConsistencyCheck()
+      throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Supertype defines the getter.
+    MockJavaResource superType =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.SuperType",
+            "package com.foo;",
+            "import jsinterop.annotations.JsProperty;",
+            "public class SuperType {",
+            "  @JsProperty String getString() { return null; }",
+            "}");
+
+    // Subtype defines the setter.
+    MockJavaResource subType =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.SubType",
+            "package com.foo;",
+            "import jsinterop.annotations.JsProperty;",
+            "public class SubType extends SuperType {",
+            "  @JsProperty void setString(String s) {}",
+            "}");
+
+    MockJavaResource testEntryPoint =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.TestEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class TestEntryPoint implements EntryPoint {",
+            "  public void onModuleLoad() {",
+            // Create Impl and pass it to JS but do not explicitly call m
+            "    new SubType();",
+            "  }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/TestModule.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.TestEntryPoint'/>",
+            "</module>");
+
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+
+    // Perform a first compile.
+    compileToJs(relinkApplicationDir, "com.foo.TestModule",
+        Lists.newArrayList(moduleResource, testEntryPoint, subType, superType),
+        relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
+
+    // Invalidate ONLY the subtype. The types referred by the parameters of supertype methods are
+    // going to be reference only which means that the supertype property will have a reference
+    // to a JClassType for "java.lang.String" that isExternal() and is different from the
+    // (non external) reference in the supertype.
+    relinkMinimalRebuildCache.markSourceFileStale("com/foo/SubType.java");
+    compileToJs(relinkApplicationDir, "com.foo.TestModule", Lists.<MockResource> newArrayList(),
+        relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
+  }
+
   public void testIncrementalRecompile_invalidatePreamble() throws UnableToCompleteException,
       IOException, InterruptedException {
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();

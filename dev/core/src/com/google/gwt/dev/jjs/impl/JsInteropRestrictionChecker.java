@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsUtils;
@@ -644,11 +645,20 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   private void checkJsPropertyConsistency(JMember member, JsMember newMember) {
     if (newMember.setter != null && newMember.getter != null) {
       List<JParameter> setterParams = ((JMethod) newMember.setter).getParams();
-      if (newMember.getter.getType() != setterParams.get(0).getType()) {
+      if (isSameType(newMember.getter.getType(), setterParams.get(0).getType())) {
         logError(member, "JsProperty setter %s and getter %s cannot have inconsistent types.",
             getMemberDescription(newMember.setter), getMemberDescription(newMember.getter));
       }
     }
+  }
+
+  /**
+   * Returns true if {@code thisType} is the same type as {@code thatType}.
+   */
+  private boolean isSameType(JType thisType, JType thatType) {
+    // NOTE: The comparison here is made by signature instead of reference equality because under
+    // incremental compilation this types might be reference only and hence not unique.
+    return !thisType.getJavahSignatureName().equals(thatType.getJavahSignatureName());
   }
 
   private void checkNameConsistency(JMember member) {
