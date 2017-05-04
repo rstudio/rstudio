@@ -47,6 +47,17 @@ th, td.first-child {
     font-weight: bold;
 }
 
+.rstudio-themes-flat th,
+.rstudio-themes-flat td.first-child {
+    color: #000;
+}
+
+.editor_dark.rstudio-themes-flat th,
+.editor_dark.rstudio-themes-flat td.first-child {
+    color: #FFF;
+    font-weight: 400;
+}
+
 td.first-child {
     text-align: right; 
 }
@@ -59,7 +70,6 @@ table.dataTable thead td {
 }
 
 th.first-child {
-    background: none !important;
 }
 
 th.first-child div {
@@ -275,6 +285,10 @@ th:focus {
     border-top: 1px solid #cfd4d8;
     height: 25px;
     text-align: left;
+}
+
+.rstudio-themes-flat.editor_dark #rsGridData_info {
+    color: #FFF;
 }
 
 .numberCell {
