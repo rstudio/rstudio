@@ -35,19 +35,19 @@ VERSION_REGEX='[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-*.*'
 
 # use GWT_VERSION to specify the default version or get it from the file name
 gwtVersionDefault=${GWT_VERSION:=$(expr "$gwtPathDefault" : '.*gwt-\('$VERSION_REGEX'\)\.zip')}
-jsinteropVersionDefault=${JSINTEROP_VERSION:=1.0.0-SNAPSHOT}
+jsinteropVersionDefault=${JSINTEROP_VERSION:=HEAD-SNAPSHOT}
 
 # prompt for info
-read -e -p"GWT version for Maven (${gwtVersionDefault:-ex: 2.8.0-SNAPSHOT}): " gwtVersion
+read -e -p"GWT version for Maven (${gwtVersionDefault:-ex: HEAD-SNAPSHOT}): " gwtVersion
 gwtVersion=${gwtVersion:=$gwtVersionDefault}
-if ! expr "$gwtVersion" : "$VERSION_REGEX" >/dev/null; then
+if test "$gwtVersion" != "HEAD-SNAPSHOT" && ! expr "$gwtVersion" : "$VERSION_REGEX" >/dev/null; then
   echo "Please enter a version of the form x.y.z or x.y.z-abc"
   exit 1
 fi
 
-read -e -p"JsInterop version for Maven (${jsinteropVersionDefault:-ex: 1.0.0-SNAPSHOT}): " jsinteropVersion
+read -e -p"JsInterop version for Maven (${jsinteropVersionDefault:-ex: HEAD-SNAPSHOT}): " jsinteropVersion
 jsinteropVersion=${jsinteropVersion:=$jsinteropVersionDefault}
-if ! expr "$jsinteropVersion" : "$VERSION_REGEX" >/dev/null; then
+if test "$jsinteropVersion" != "HEAD-SNAPSHOT" && ! expr "$jsinteropVersion" : "$VERSION_REGEX" >/dev/null; then
   echo "Please enter a version of the form x.y.z or x.y.z-abc"
   exit 1
 fi
