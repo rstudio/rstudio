@@ -298,6 +298,11 @@ public class Toolbar extends Composite
    {
       horizontalPanel_.addStyleName(styleName);
    }
+
+   public Widget getWrapper()
+   {
+      return toolbarWrapper_;
+   }
    
    private void removeAllWidgets(HorizontalPanel panel)
    {
