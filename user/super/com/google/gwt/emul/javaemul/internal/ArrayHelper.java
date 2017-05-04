@@ -15,6 +15,10 @@
  */
 package javaemul.internal;
 
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
+
 /**
  * Provides utilities to perform operations on Arrays.
  */
@@ -31,34 +35,29 @@ public class ArrayHelper {
    * Unlike clone, this method returns a copy of the array that is not type marked. This is only
    * safe for temp arrays as returned array will not do any type checks.
    */
-  public static native Object[] unsafeClone(Object array, int fromIndex, int toIndex) /*-{
-    return array.slice(fromIndex, toIndex);
-  }-*/;
-
-  public static <T> T[] createFrom(T[] array, int length) {
-    Object result = createNativeArray(length);
-    return ArrayStamper.stampJavaTypeInfo(result, array);
+  public static Object[] unsafeClone(Object array, int fromIndex, int toIndex) {
+    return asNativeArray(array).slice(fromIndex, toIndex);
   }
 
-  private static native Object createNativeArray(int length)/*-{
-    return new Array(length);
-  }-*/;
+  public static <T> T[] createFrom(T[] array, int length) {
+    return ArrayStamper.stampJavaTypeInfo(new NativeArray(length), array);
+  }
 
-  public static native int getLength(Object array) /*-{
-    return array.length;
-  }-*/;
+  public static int getLength(Object array) {
+    return asNativeArray(array).length;
+  }
 
-  public static native void setLength(Object array, int length)/*-{
-    array.length = length;
-  }-*/;
+  public static void setLength(Object array, int length) {
+    asNativeArray(array).length = length;
+  }
 
-  public static native void removeFrom(Object array, int index, int deleteCount) /*-{
-    array.splice(index, deleteCount);
-  }-*/;
+  public static void removeFrom(Object array, int index, int deleteCount) {
+    asNativeArray(array).splice(index, deleteCount);
+  }
 
-  public static native void insertTo(Object array, int index, Object value) /*-{
-    array.splice(index, 0, value);
-  }-*/;
+  public static void insertTo(Object array, int index, Object value) {
+    asNativeArray(array).splice(index, 0, value);
+  }
 
   public static void insertTo(Object array, int index, Object[] values) {
     copy(values, 0, array, index, values.length, false);
@@ -80,19 +79,29 @@ public class ArrayHelper {
       src = unsafeClone(src, srcOfs, srcOfs + len);
       srcOfs = 0;
     }
+    NativeArray destArray = asNativeArray(dest);
     for (int batchStart = srcOfs, end = srcOfs + len; batchStart < end;) {
       // increment in block
       int batchEnd = Math.min(batchStart + ARRAY_PROCESS_BATCH_SIZE, end);
       len = batchEnd - batchStart;
-      applySplice(dest, destOfs, overwrite ? len : 0, unsafeClone(src, batchStart, batchEnd));
+      Object[] spliceArgs = unsafeClone(src, batchStart, batchEnd);
+      asNativeArray(spliceArgs).splice(0, 0, destOfs, overwrite ? len : 0);
+      getSpliceFunction().apply(destArray, spliceArgs);
       batchStart = batchEnd;
       destOfs += len;
     }
   }
 
-  private static native void applySplice(Object array, int index, int deleteCount,
-      Object arrayToAdd) /*-{
-    Array.prototype.splice.apply(array, [index, deleteCount].concat(arrayToAdd));
-  }-*/;
+  @JsType(isNative = true, name = "Function", namespace = JsPackage.GLOBAL)
+  private static class NativeFunction {
+    public native String apply(Object thisContext, Object[] argsArray);
+  }
+
+  @JsProperty(name = "Array.prototype.splice", namespace = "<window>")
+  private static native NativeFunction getSpliceFunction();
+
+  public static NativeArray asNativeArray(Object array) {
+    return JsUtils.unsafeCastToNativeArray(array);
+  }
 }
 

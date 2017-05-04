@@ -41,7 +41,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javaemul.internal.ArrayHelper;
-import jsinterop.annotations.JsFunction;
+import javaemul.internal.JsUtils;
+import javaemul.internal.NativeArray.CompareFunction;
 
 /**
  * Utility methods related to native arrays.
@@ -1279,7 +1280,7 @@ public class Arrays {
   }
 
   public static void sort(double[] array) {
-    nativeSort(array, getDoubleComparator());
+    ArrayHelper.asNativeArray(array).sort(getDoubleComparator());
   }
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
@@ -1288,7 +1289,7 @@ public class Arrays {
   }
 
   public static void sort(float[] array) {
-    nativeSort(array, getDoubleComparator());
+    ArrayHelper.asNativeArray(array).sort(getDoubleComparator());
   }
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
@@ -1306,7 +1307,7 @@ public class Arrays {
   }
 
   public static void sort(long[] array) {
-    nativeSort(array, getLongComparator());
+    ArrayHelper.asNativeArray(array).sort(getLongComparator());
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
@@ -1734,18 +1735,11 @@ public class Arrays {
   }
 
   /**
-   * Sort an entire array using the given comparator
-   */
-  private static native void nativeSort(Object array, Object compareFunction) /*-{
-    array.sort(compareFunction);
-  }-*/;
-
-  /**
    * Sort a subset of an array using the given comparator
    */
-  private static void nativeSort(Object array, int fromIndex, int toIndex, Object compareFunction) {
+  private static void nativeSort(Object array, int fromIndex, int toIndex, CompareFunction fn) {
     Object temp = ArrayHelper.unsafeClone(array, fromIndex, toIndex);
-    nativeSort(temp, compareFunction);
+    ArrayHelper.asNativeArray(temp).sort(fn);
     ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
   }
 
@@ -1753,7 +1747,7 @@ public class Arrays {
    * Sort an entire array of number primitives of integral type.
    */
   private static void nativeIntegerSort(Object array) {
-    nativeSort(array, getIntComparator());
+    ArrayHelper.asNativeArray(array).sort(getIntComparator());
   }
 
   /**
@@ -1763,32 +1757,16 @@ public class Arrays {
     nativeSort(array, fromIndex, toIndex, getIntComparator());
   }
 
-  @JsFunction
-  private interface CompareDoubleFunction {
-    int compare(double d1, double d2);
+  private static CompareFunction getIntComparator() {
+    return (a, b) -> JsUtils.unsafeCastToDouble(a) - JsUtils.unsafeCastToDouble(b);
   }
 
-  private static CompareDoubleFunction getDoubleComparator() {
-    return Double::compare;
+  private static CompareFunction getDoubleComparator() {
+    return (a, b) -> Double.compare(JsUtils.unsafeCastToDouble(a), JsUtils.unsafeCastToDouble(b));
   }
 
-  @JsFunction
-  private interface CompareLongFunction {
-    @SuppressWarnings("unusable-by-js")
-    int compare(long d1, long d2);
-  }
-
-  private static CompareLongFunction getLongComparator() {
-    return Long::compare;
-  }
-
-  @JsFunction
-  private interface CompareIntFunction {
-    int compare(int d1, int d2);
-  }
-
-  private static CompareIntFunction getIntComparator() {
-    return (a, b) -> a - b;
+  private static CompareFunction getLongComparator() {
+    return (a, b) -> Long.compare(JsUtils.unsafeCastToLong(a), JsUtils.unsafeCastToLong(b));
   }
 
   private Arrays() { }

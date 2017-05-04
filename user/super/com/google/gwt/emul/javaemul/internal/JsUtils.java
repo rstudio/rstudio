@@ -52,6 +52,14 @@ public class JsUtils {
    return bool;
   }-*/;
 
+  public static native long unsafeCastToLong(Object l) /*-{
+    return l;
+  }-*/;
+
+  public static native NativeArray unsafeCastToNativeArray(Object array) /*-{
+    return array;
+  }-*/;
+
   public static native <T> T getProperty(Object map, String key) /*-{
     return map[key];
   }-*/;
