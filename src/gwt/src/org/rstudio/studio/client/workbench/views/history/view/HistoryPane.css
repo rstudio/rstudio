@@ -1,6 +1,9 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external rstudio-themes-flat;
+@external editor_dark;
+
 .selected {
    background-color: #ccc;
 }
@@ -45,6 +48,10 @@
    overflow: visible;
    margin-left: 28px;
    text-indent: -28px;
+}
+
+.rstudio-themes-flat.editor_dark .historyTable .selected td:first-child div {
+   color: #FFF;
 }
 
 .command {
