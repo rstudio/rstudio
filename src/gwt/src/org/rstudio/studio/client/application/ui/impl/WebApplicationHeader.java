@@ -218,6 +218,7 @@ public class WebApplicationHeader extends Composite
                                    eventBus,
                                    pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
+      toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
       
       // create host for project commands
       projectBarCommandsPanel_ = new HorizontalPanel();

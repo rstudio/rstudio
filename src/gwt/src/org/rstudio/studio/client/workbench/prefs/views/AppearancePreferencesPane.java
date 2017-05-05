@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -49,6 +51,26 @@ public class AppearancePreferencesPane extends PreferencesPane
       eventBus_ = eventBus;
 
       VerticalPanel leftPanel = new VerticalPanel();
+
+      flatTheme_ = new SelectWidget("RStudio theme:",
+                                new String[]{"Classic", "Modern", "Sky"},
+                                new String[]{"classic", "modern", "alternate"},
+                                false);
+      flatTheme_.addStyleName(res.styles().themeChooser());
+      flatTheme_.getListBox().getElement().<SelectElement>cast().setSize(3);
+      flatTheme_.getListBox().getElement().getStyle().setHeight(50, Unit.PX);
+      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         public void onChange(ChangeEvent event)
+         {
+         }
+      });
+
+      String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
+      if (themeAlias == "default" || themeAlias ==  "dark-grey") themeAlias = "modern";
+      flatTheme_.setValue(themeAlias);
+
+      leftPanel.add(flatTheme_);
 
       if (Desktop.isDesktop())
       {
@@ -97,6 +119,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          String[] fonts = Desktop.getFrame().getFixedWidthFontList().split("\\n");
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
+         fontFace_.getListBox().setWidth("95%");
 
          String value = Desktop.getFrame().getFixedWidthFont();
          String label = Desktop.getFrame().getFixedWidthFont().replaceAll("\\\"",
@@ -127,10 +150,11 @@ public class AppearancePreferencesPane extends PreferencesPane
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
 
-      fontSize_ = new SelectWidget("Font size:",
+      fontSize_ = new SelectWidget("Editor Font size:",
                                    labels,
                                    values,
                                    false);
+      fontSize_.getListBox().setWidth("95%");
       if (!fontSize_.setValue(uiPrefs.fontSize().getGlobalValue() + ""))
          fontSize_.getListBox().setSelectedIndex(3);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
@@ -140,8 +164,6 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
-
-      leftPanel.add(fontSize_);
 
       theme_ = new SelectWidget("Editor theme:",
                                 themes.getThemeNames(),
@@ -154,26 +176,13 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
          }
       });
-      theme_.getListBox().getElement().<SelectElement>cast().setSize(10);
-      theme_.getListBox().getElement().getStyle().setHeight(300, Unit.PX);
+      theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
+      theme_.getListBox().getElement().getStyle().setHeight(250, Unit.PX);
       theme_.addStyleName(res.styles().themeChooser());
-      leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
-      flatTheme_ = new SelectWidget("Global theme:",
-                                new String[]{"Classic", "Flat", "Dark", "Alternate"},
-                                new String[]{"classic", "default", "dark-grey", "alternate"},
-                                false);
-      flatTheme_.addStyleName(res.styles().themeChooser());
-      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
-      {
-         public void onChange(ChangeEvent event)
-         {
-         }
-      });
-      flatTheme_.setValue(uiPrefs_.getFlatTheme().getGlobalValue());
-
-      leftPanel.add(flatTheme_);
+      leftPanel.add(fontSize_);
+      leftPanel.add(theme_);
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
@@ -243,7 +252,19 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
-      uiPrefs_.getFlatTheme().setGlobalValue(flatTheme_.getValue());  
+      String themeName = flatTheme_.getValue();
+      if (themeName == "modern") {
+         RegExp keyReg = RegExp.compile(
+            "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
+            "material|merbivore soft|merbivore|mono industrial|monokai|" +
+            "pastel on dark|solarized dark|tomorrow night bluw|tomorrow night bright|" +
+            "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
+         
+         MatchResult result = keyReg.exec(theme_.getValue());
+         themeName = result != null ? "dark-grey" : "default";
+      }
+
+      uiPrefs_.getFlatTheme().setGlobalValue(themeName);  
       ThemeChangedEvent themeChangedEvent = new ThemeChangedEvent(flatTheme_.getValue());
       eventBus_.fireEvent(themeChangedEvent);
       eventBus_.fireEventToAllSatellites(themeChangedEvent);

@@ -20,6 +20,11 @@
   color: #606060;
 }
 
+.dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
+  border: selectionBorderWidth solid #ffffff;
+  color: #606060;
+}
+
 .dataGridWidget {
 
 }
@@ -35,5 +40,14 @@
 .rstudio-themes-flat .dataGridSelectedRow,
 .rstudio-themes-flat .dataGridKeyboardSelectedRow {
   background: inherit;
+  color: inherit;
+}
+
+.rstudio-themes-flat .dataGridEvenRowCell,
+.rstudio-themes-flat .dataGridOddRowCell,
+.rstudio-themes-flat .dataGridHoveredRowCell,
+.rstudio-themes-flat .dataGridSelectedRowCell,
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell,
+.rstudio-themes-flat .dataGridKeyboardSelectedCell   {
   color: inherit;
 }

@@ -23,7 +23,7 @@
   right: 0;
   background: #1D1D1D;
 }
-.ace_editor, .ace_editor_theme {
+.ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   background-color: #161616;
   color: #E6E1DC;
 }

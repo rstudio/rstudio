@@ -53,6 +53,7 @@ import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -439,6 +440,9 @@ public class ConnectionsPane extends WorkbenchPane
       connectionType_.getElement().getStyle().setMarginRight(10, Unit.PX);
       secondaryToolbar_.addRightWidget(connectionIcon_);
       secondaryToolbar_.addRightWidget(connectionType_);
+
+      ThemeStyles styles = ThemeStyles.INSTANCE;
+      secondaryToolbar_.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
       return secondaryToolbar_;
    }

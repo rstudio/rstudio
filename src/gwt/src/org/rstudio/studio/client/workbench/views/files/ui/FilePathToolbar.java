@@ -71,11 +71,11 @@ public class FilePathToolbar extends Composite
       UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       
       LayoutPanel layout = new LayoutPanel();
-      String layoutPanelHeight = RStudioThemes.isFlat(uiPrefs) ? "20px" : "21px";
-      layout.setSize("100%", layoutPanelHeight);
+      layout.setSize("100%", "21px");
 
       initWidget(layout);
-      setStyleName(ThemeStyles.INSTANCE.secondaryToolbar());
+      addStyleName(ThemeStyles.INSTANCE.toolbarWrapper());
+      addStyleName(ThemeStyles.INSTANCE.secondaryToolbar());
 
       navigationObserver_ = navigationObserver;
       

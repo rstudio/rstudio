@@ -46,6 +46,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       disconnectedUI_.setWidth("100%");
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       codePanel_ = new ConnectionCodePanel(false);
+      codePanel_.addStyleName(ThemeStyles.INSTANCE.toolbarWrapper());
       codePanel_.addStyleName(ThemeStyles.INSTANCE.secondaryToolbarPanel());
       codePanel_.getElement().getStyle().setPadding(8, Unit.PX);
       codePanel_.setHeight((codePanelHeight-5) + "px");
