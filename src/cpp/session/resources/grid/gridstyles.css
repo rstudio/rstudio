@@ -368,7 +368,7 @@ div.DTS div.DTS_Loading.showLoading {
 }
 
 .rstudio-themes-flat.editor_dark #rsGridData tbody tr.odd {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 #rsGridData {
