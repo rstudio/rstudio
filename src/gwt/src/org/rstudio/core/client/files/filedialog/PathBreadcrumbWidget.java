@@ -84,7 +84,12 @@ public class PathBreadcrumbWidget
       Image fade = new Image(RES.fade());
       fade.setStylePrimaryName(STYLES.fade());
       fade_ = fade.getElement();
-      outer_.getElement().appendChild(fade_);
+
+      fadeWrapper_ = new HTMLPanel("");
+      fadeWrapper_.setStylePrimaryName(STYLES.fadeWrapper());
+      fadeWrapper_.getElement().appendChild(fade_);
+
+      outer_.getElement().appendChild(fadeWrapper_.getElement());
 
       if (linkUp_ != null)
       {
@@ -201,12 +206,12 @@ public class PathBreadcrumbWidget
       int scrollPos = outer_.getElement().getPropertyInt("scrollLeft");
       if (scrollPos > 0)
       {
-         fade_.getStyle().setDisplay(Style.Display.BLOCK);
-         fade_.getStyle().setLeft(scrollPos, Style.Unit.PX);
+         fadeWrapper_.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+         fadeWrapper_.getElement().getStyle().setLeft(scrollPos, Style.Unit.PX);
       }
       else
       {
-         fade_.getStyle().setDisplay(Style.Display.NONE);
+         fadeWrapper_.getElement().getStyle().setDisplay(Style.Display.NONE);
       }
    }
 
@@ -309,6 +314,7 @@ public class PathBreadcrumbWidget
    private FlowPanel eastFrame_;
    private boolean projectIconsAdded_ = false;
    private final DockLayoutPanel frame_;
+   private HTMLPanel fadeWrapper_;
    
    private Provider<Session> pSession_;
 }

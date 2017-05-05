@@ -162,6 +162,22 @@
    height: 24px;
 }
 
+.fadeWrapper {
+
+}
+
+.rstudio-themes-flat.editor_dark .breadcrumb .fadeWrapper {
+   position: absolute;
+   left: 0;
+   top: 0;
+   width: 25px;
+   height: 24px;
+}
+
+.rstudio-themes-flat.editor_dark .breadcrumb .fadeWrapper img {
+   display: none !important;
+}
+
 .goUp {
    margin: 0 3px 0 12px;
 }
