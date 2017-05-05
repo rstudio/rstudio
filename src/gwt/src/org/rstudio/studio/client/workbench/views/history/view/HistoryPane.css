@@ -7,9 +7,19 @@
 .selected {
    background-color: #ccc;
 }
+
+.rstudio-themes-flat.editor_dark  .selected {
+   background-color: rgba(255, 255, 255, 0.10);
+}
+
 *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
    background-color: rgb(146, 193, 240)
 }
+
+.rstudio-themes-flat.editor_dark *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
+   background-color: rgba(255, 255, 255, 0.20);
+}
+
 @if user.agent ie8 {
    .selected {
       background-color: rgb(146, 193, 240)
