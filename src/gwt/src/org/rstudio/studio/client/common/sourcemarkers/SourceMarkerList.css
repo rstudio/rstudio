@@ -1,3 +1,5 @@
+@external rstudio-themes-flat;
+@external editor_dark;
 
 .iconCell {
    vertical-align: top;
@@ -31,9 +33,19 @@
 .selectedRow {
    background-color: #ccc;
 }
+
+.rstudio-themes-flat.editor_dark  .selectedRow {
+   background-color: rgba(255, 255, 255, 0.10);
+}
+
 *:focus .selectedRow {
    background-color: rgb(146, 193, 240)
 }
+
+.rstudio-themes-flat.editor_dark *:focus .selectedRow {
+   background-color: rgba(255, 255, 255, 0.20);
+}
+
 @if user.agent ie8 {
    .selectedRow {
       background-color: rgb(146, 193, 240)

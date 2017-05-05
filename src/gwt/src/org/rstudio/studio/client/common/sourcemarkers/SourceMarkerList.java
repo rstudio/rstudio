@@ -103,6 +103,7 @@ public class SourceMarkerList extends Composite
       
       
       ScrollPanel scrollPanel = new ScrollPanel(errorTable_);
+      scrollPanel.addStyleName("ace_editor_theme");
       scrollPanel.setSize("100%", "100%");
       initWidget(scrollPanel);
    }
