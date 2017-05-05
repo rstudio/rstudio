@@ -42,3 +42,12 @@
   background: inherit;
   color: inherit;
 }
+
+.rstudio-themes-flat .dataGridEvenRowCell,
+.rstudio-themes-flat .dataGridOddRowCell,
+.rstudio-themes-flat .dataGridHoveredRowCell,
+.rstudio-themes-flat .dataGridSelectedRowCell,
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell,
+.rstudio-themes-flat .dataGridKeyboardSelectedCell   {
+  color: inherit;
+}

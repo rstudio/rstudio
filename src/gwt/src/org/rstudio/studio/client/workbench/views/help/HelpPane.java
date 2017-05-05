@@ -342,7 +342,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftPopupMenu(title_ = new Label(), history_.getMenu());
 
       ThemeStyles styles = ThemeStyles.INSTANCE;
-      toolbar.addStyleName(styles.secondaryTallerToolbar());
+      toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
       if (isFindSupported())
       {

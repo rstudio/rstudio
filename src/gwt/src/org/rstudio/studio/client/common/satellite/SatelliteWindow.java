@@ -61,7 +61,7 @@ public abstract class SatelliteWindow extends Composite
       initWidget(mainPanel_);
    }
 
-   public boolean suportsThemes()
+   public boolean supportsThemes()
    {
       return false;
    }
@@ -69,12 +69,19 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      if (suportsThemes()) {
-         RStudioThemes.initializeThemes(
-            event.getName(),
-            Document.get(),
-            mainPanel_.getElement());
+      // By default, we only apply the flat theme to match other dialogs, then
+      // specific satellites can opt in to full theming using `suportsThemes()`.
+
+      String themeName = event.getName();
+{
+      if (!supportsThemes()) 
+         themeName = event.getName() != "classic" ? "default" : "classic";
       }
+
+      RStudioThemes.initializeThemes(
+         themeName,
+         Document.get(),
+         mainPanel_.getElement());
    }
 
    protected boolean allowScrolling()

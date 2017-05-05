@@ -158,7 +158,7 @@ public class AceThemes
       currentStyleEl.setHref(getThemeUrl(themeName));
       document.getBody().appendChild(currentStyleEl);
       
-      addDarkClassIfNecessary(themeName);
+      addDarkClassIfNecessary(document, themeName);
       
       // Deferred so that the browser can render the styles.
       new Timer()
@@ -181,12 +181,12 @@ public class AceThemes
       applyTheme(document, prefs_.get().theme().getValue());
    }
    
-   public void addDarkClassIfNecessary(String themeName)
+   public void addDarkClassIfNecessary(Document document, String themeName)
    {
       if (isDark(themeName))
-         Document.get().getBody().addClassName("editor_dark");
+         document.getBody().addClassName("editor_dark");
       else
-         Document.get().getBody().removeClassName("editor_dark");
+         document.getBody().removeClassName("editor_dark");
    }
 
    public String getEffectiveThemeName(String themeName)

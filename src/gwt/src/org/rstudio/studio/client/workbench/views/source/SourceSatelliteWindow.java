@@ -133,7 +133,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    }
 
    @Override
-   public boolean suportsThemes()
+   public boolean supportsThemes()
    {
       return true;
    }
