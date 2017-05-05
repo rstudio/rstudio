@@ -25,6 +25,6 @@ public class NativeRegExp {
   public int lastIndex;
   public NativeRegExp(String regex) { }
   public NativeRegExp(String regex, String mode) { }
-  public native Object exec(String value);
+  public native String[] exec(String value);
   public native boolean test(String value);
 }

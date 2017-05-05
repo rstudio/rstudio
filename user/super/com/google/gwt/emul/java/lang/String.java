@@ -349,12 +349,8 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   private NativeString asNativeString() {
-    return toNative(this);
+    return JsUtils.uncheckedCast(this);
   }
-
-  private static native NativeString toNative(String str) /*-{
-    return str;
-  }-*/;
 
   @Override
   public char charAt(int index) {
@@ -592,13 +588,9 @@ public final class String implements Comparable<String>, CharSequence,
     return asNativeString().replace(jsRegEx, replace);
   }
 
-  private static native int getMatchIndex(Object matchObject) /*-{
-    return matchObject.index;
-  }-*/;
-
-  private static native int getMatchLength(Object matchObject, int index) /*-{
-    return matchObject[index].length;
-  }-*/;
+  private static int getMatchIndex(String[] matchObject) {
+    return JsUtils.getIntProperty(matchObject, "index");
+  }
 
   /**
    * Regular expressions vary from the standard implementation. The
@@ -635,14 +627,14 @@ public final class String implements Comparable<String>, CharSequence,
     while (true) {
       // None of the information in the match returned are useful as we have no
       // subgroup handling
-      Object matchObj = compiled.exec(trail);
+      String[] matchObj = compiled.exec(trail);
       if (matchObj == null || trail == "" || (count == (maxMatch - 1) && maxMatch > 0)) {
         out[count] = trail;
         break;
       } else {
         out[count] = trail.substring(0, getMatchIndex(matchObj));
-        trail = trail.substring(
-            getMatchIndex(matchObj) + getMatchLength(matchObj, 0), trail.length());
+        trail =
+            trail.substring(getMatchIndex(matchObj) + matchObj[0].length(), trail.length());
         // Force the compiled pattern to reset internal state
         compiled.lastIndex = 0;
         // Only one zero length match per character to ensure termination
