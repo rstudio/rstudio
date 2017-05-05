@@ -294,7 +294,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.outputSource", function(rnbData) {
    force(rnbData)
-   function(code, context, ...) {
+   
+   # define output source
+   result <- function(code, context, ...) {
       
       # resolve chunk id (attempt to match labels)
       chunkId <- .rs.rnb.resolveActiveChunkId(rnbData, context$label)
@@ -383,6 +385,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (!is.list(x)) list(x) else x
       })
    }
+   
+   # attach a pre_knit handler that injects setup chunk options
+   attr(result, "pre_knit") <- function() {
+      
+      # extract setup chunk options
+      options <- rnbData$chunk_info$default_chunk_options
+      if (is.null(options))
+         return()
+      
+      # set those options
+      knitr::opts_chunk$set(options)
+      
+      # return invisibly
+      invisible(NULL)
+   }
+   
+   # return output source
+   result
 })
 
 # SessionSourceDatabase.cpp

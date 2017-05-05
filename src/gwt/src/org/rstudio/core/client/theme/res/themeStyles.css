@@ -44,13 +44,26 @@
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
-@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
-@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
-@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
-@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
-@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
-@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
-@eval THEME_GLOBAL_INACTIVE org.rstudio.core.client.theme.ThemeColors.getInactiveBackground();
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DEFAULT_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultInactiveBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_ALTERNATE_INACTIVE org.rstudio.core.client.theme.ThemeColors.alternateInactiveBackground;
+
+@eval THEME_DEFAULT_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultMostInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_ALTERNATE_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.alternateMostInactiveBackground;
+
+@eval THEME_DEFAULT_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.defaultMostInactiveTransparentBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveTransparentBackground;
+@eval THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.alternateMostInactiveTransparentBackground;
+
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -1282,6 +1295,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 	color: #494949;
 }
 
+.rstudio-themes-flat.editor_dark .emptyProjectMenu .toolbarButtonLabel {
+   color: #FFF;
+}
+
 @if user.agent gecko1_8 { .webHeaderBarCommandsProjectMenu {
       margin-top: 1px;
       margin-left: 5px;
@@ -1326,6 +1343,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: DESKTOPGLOBALTOOLBARBACKGROUND bottom repeat-x;
 }
 
+.desktopGlobalToolbarWrapper {
+   
+}
+
+.rstudio-themes-flat .desktopGlobalToolbarWrapper {
+   height: 24px;
+}
 
 .windowFrameToolbarButton {
    margin-top: -2px;
@@ -1860,7 +1884,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .minimizedWindowObject table.tabLayoutCenter {
    background-image: none;
-   background: THEME_GLOBAL_INACTIVE;
+   background: THEME_DEFAULT_INACTIVE;
    border-right: solid 1px #d6dadc;
    border-left: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
@@ -1924,7 +1948,7 @@ body.ubuntu_mono .searchBox {
    border-radius: 5px 5px 0px 0px;
    background: #F3F4F4;
    overflow: hidden !important;
-   box-shadow: 0 21px 21px rgba(0, 0, 0, 0.35);
+   box-shadow: 0 15px 15px rgba(0, 0, 0, 0.26);
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogMiddleCenter {
@@ -2142,16 +2166,16 @@ body.rstudio-themes-flat .rstudio-themes-default {
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter {
-   background: THEME_GLOBAL_INACTIVE;
+   background: THEME_DEFAULT_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject .center {
-   background: #e7e8ea;
+   background: THEME_DEFAULT_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(236, 237, 238, 0), THEME_GLOBAL_INACTIVE 13%);
+   background: linear-gradient(to right, THEME_DEFAULT_MOST_INACTIVE_TRANSPARENT, THEME_DEFAULT_MOST_INACTIVE 13%);
 }
 
 /* RSTUDIO DARK GREY THEME */
@@ -2183,16 +2207,16 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter {
-   background: rgb(57, 67, 75);
+   background: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center {
-   background: rgb(47, 57, 65);
+   background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(7, 57, 65, 0), rgb(47, 57, 65) 13%);
+   background: linear-gradient(to right, THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT, THEME_DARKGREY_MOST_INACTIVE 13%);
 }
 
 /* RSTUDIO ALTERNATE THEME */
@@ -2224,12 +2248,12 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter {
-   background: rgb(148, 180, 197);
+   background: THEME_ALTERNATE_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center {
-   background: rgb(158, 160, 187);
+   background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize,
@@ -2251,5 +2275,5 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(158, 160, 187, 0), rgb(158, 160, 187) 13%);
+   background: linear-gradient(to right, THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT, THEME_ALTERNATE_MOST_INACTIVE 13%);
 }

@@ -16,38 +16,24 @@ package org.rstudio.core.client.theme;
 
 public class ThemeColors
 {
-   public static String getDefaultBackground()
-   {
-      return "#F4F8F9";
-   }
+   public static String defaultBackground                          = "rgb(244, 248, 249)";
+   public static String defaultBackgroundTransparent               = "rgba(244, 248, 249, 0)";
+   public static String defaultInactiveBackground                  = "rgb(236, 237, 238)";
+   public static String defaultMostInactiveBackground              = "rgb(231, 232, 234)";
+   public static String defaultMostInactiveTransparentBackground   = "rgba(231, 232, 234, 0)";
+   public static String defaultBorder                              = "rgb(214,218,220)";
 
-   public static String getDarkGreyBackground()
-   {
-      return "#4E5C68";
-   }
+   public static String darkGreyBackground                         = "rgb(78, 92, 104)";
+   public static String darkGreyBackgroundTransparent              = "rgba(78, 92, 104, 0)";
+   public static String darkGreyInactiveBackground                 = "rgb(57, 67, 75)";
+   public static String darkGreyMostInactiveBackground             = "rgb(47, 57, 65)";
+   public static String darkGreyMostInactiveTransparentBackground  = "rgba(47, 57, 65, 0)";
+   public static String darkGreyBorder                             = "rgb(12, 31, 48)";
 
-   public static String getAlternateBackground()
-   {
-      return "#D2E4ED";
-   }
-
-   public static String getDefaultBorder()
-   {
-      return "#D6DADC";
-   }
-
-   public static String getDarkGreyBorder()
-   {
-      return "rgb(12,31,48)";
-   }
-
-   public static String getAlternateBorder()
-   {
-      return "rgb(162,197,215)";
-   }
-
-   public static String getInactiveBackground()
-   {
-      return "#ecedee";
-   }
+   public static String alternateBackground                        = "rgb(210, 228, 237)";
+   public static String alternateBackgroundTransparent             = "rgba(210, 228, 237, 0)";
+   public static String alternateInactiveBackground                = "rgb(148, 180, 197)";
+   public static String alternateMostInactiveBackground            = "rgb(158, 160, 187)";
+   public static String alternateMostInactiveTransparentBackground = "rgba(158, 160, 187, 0)";
+   public static String alternateBorder                            = "rgb(162, 197, 215)";
 }

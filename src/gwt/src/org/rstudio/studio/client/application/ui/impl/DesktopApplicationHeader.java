@@ -180,6 +180,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                                    events, 
                                    pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
+      toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
    

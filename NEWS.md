@@ -49,6 +49,7 @@
 
 * Python chunks now respect virtualenv if present
 * 'Rename in Scope' now works within R chunks
+* Global chunk options (e.g. 'echo') now properly respected in Notebook mode
 * Fixed an issue where non-R chunk output could become duplicated
 * Added option to set notebook mode in the document's YAML header
 * Allow setting default chunk connection option to raw connection object
