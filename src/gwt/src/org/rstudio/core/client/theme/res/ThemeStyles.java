@@ -191,4 +191,5 @@ public interface ThemeStyles extends CssResource
    String tallerToolbarWrapper();
    String toolbarWrapper();
    String webGlobalToolbarWrapper();
+   String desktopGlobalToolbarWrapper();
 }
