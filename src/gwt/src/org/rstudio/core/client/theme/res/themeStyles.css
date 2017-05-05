@@ -1924,7 +1924,7 @@ body.ubuntu_mono .searchBox {
    border-radius: 5px 5px 0px 0px;
    background: #F3F4F4;
    overflow: hidden !important;
-   box-shadow: 0 21px 21px rgba(0, 0, 0, 0.35);
+   box-shadow: 0 15px 15px rgba(0, 0, 0, 0.26);
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogMiddleCenter {
