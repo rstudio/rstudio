@@ -88,24 +88,21 @@ public class DataEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-default #rsGridData_info,\n" +
          ".rstudio-themes-flat.rstudio-themes-default th,\n" +
          ".rstudio-themes-flat.rstudio-themes-default td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable thead td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable tbody td {\n" +
+         ".rstudio-themes-flat.rstudio-themes-default table.dataTable thead td {\n" +
          "   background-color: " + ThemeColors.getDefaultBackground() + ";\n" +
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey #rsGridData_info,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey th,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead td {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead th {\n" +
          "   background-color: " + ThemeColors.getDarkGreyBackground() + ";\n" +
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate #rsGridData_info,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate th,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead td {\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead th {\n" +
          "   background-color: " + ThemeColors.getAlternateBackground() + ";\n" +
          "}\n" +
          "\n";

@@ -36,6 +36,10 @@ table.dataTable tbody td {
     font-size: 11px;
 }
 
+.rstudio-themes-flat table.dataTable tbody td  {
+    background: none;
+}
+
 th {
     text-align: left; 
 }
@@ -52,8 +56,8 @@ th, td.first-child {
     color: #000;
 }
 
-.editor_dark.rstudio-themes-flat th,
-.editor_dark.rstudio-themes-flat td.first-child {
+.rstudio-themes-flat.editor_dark th,
+.rstudio-themes-flat.editor_dark td.first-child {
     color: #FFF;
     font-weight: 400;
 }
@@ -346,14 +350,25 @@ div.DTS div.DTS_Loading.showLoading {
     background-color: #fdfdfd;
 }
 
+.rstudio-themes-flat.editor_dark #rsGridData #rsGridData tbody tr.even {
+    background: none;
+}
+
 #rsGridData tbody tr.even, 
 #rsGridData tbody tr.odd {
     height: 23px;
 }
 
-.editor_dark #rsGridData tbody tr.even, 
-.editor_dark #rsGridData tbody tr.odd {
+.rstudio-themes-flat #rsGridData tbody tr.even {
     background: none;
+}
+
+.rstudio-themes-flat #rsGridData tbody tr.odd {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.rstudio-themes-flat.editor_dark #rsGridData tbody tr.odd {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 #rsGridData {
