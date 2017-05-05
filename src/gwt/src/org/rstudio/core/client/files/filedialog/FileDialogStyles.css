@@ -86,6 +86,10 @@
    margin-left: 2px;
 }
 
+.rstudio-themes-flat .gwt-CheckBox-FilesSelectAll {
+   margin-top: 2px;
+}
+
 .gwt-DialogBox .breadcrumbFrame {
    width: 500px;
    margin-top: 6px;
@@ -95,6 +99,10 @@
 
 .breadcrumbFrame {
    height: 20px;
+}
+
+.rstudio-themes-flat .breadcrumbFrame {
+   margin-top: 1px;
 }
 
 .breadcrumb {
@@ -148,6 +156,10 @@
 .project {
    margin-bottom: 2px;
    margin-right: 4px;
+}
+
+.rstudio-themes-flat .project {
+   margin-top: 1px;
 }
 
 .breadcrumb table.path .last {
