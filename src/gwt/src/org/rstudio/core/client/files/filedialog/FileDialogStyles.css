@@ -137,6 +137,11 @@
    background-size: 6px 9px;
 }
 
+.rstudio-themes-flat .breadcrumb table.path a,
+.rstudio-themes-flat .breadcrumb table.path span {
+   padding-top: 4px;
+}
+
 .breadcrumb table.path a
 {
    color: #0945bf;
