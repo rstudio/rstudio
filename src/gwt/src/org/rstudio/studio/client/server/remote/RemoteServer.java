@@ -727,6 +727,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_SET_ACTIVE, params, requestCallback);   
    }
 
+   @Override
+   public void createNamedTerminalCompleted(String terminalId,
+                                            ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CREATE_NAMED_TERMINAL_COMPLETED, terminalId, requestCallback);
+   }
+
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -5203,6 +5210,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_SET_ACTIVE = "process_set_active";
+   private static final String CREATE_NAMED_TERMINAL_COMPLETED = "create_named_terminal_completed";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

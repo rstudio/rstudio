@@ -22,8 +22,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -200,7 +198,26 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
+      serverCreatingTerminal_ = false;
       terminals_.createNewTerminal();
+   }
+
+   @Override
+   public void createNamedTerminal(String caption)
+   {
+      if (creatingTerminal_)
+         return;
+
+      creatingTerminal_ = true;
+      serverCreatingTerminal_ = true;
+      
+      if (!terminals_.createNamedTerminal(caption))
+      {
+         // Name was not available. 
+         creatingTerminal_ = false;
+         serverCreatingTerminal_ = false;
+         server_.createNamedTerminalCompleted(null, new VoidServerRequestCallback());
+      }
    }
 
    @Override
@@ -279,6 +296,7 @@ public class TerminalPane extends WorkbenchPane
 
       // set client state back to startup values
       creatingTerminal_ = false;
+      serverCreatingTerminal_ = false;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
 
@@ -420,6 +438,15 @@ public class TerminalPane extends WorkbenchPane
          setFocusOnVisible();
       }
       creatingTerminal_ = false;
+
+      if (serverCreatingTerminal_)
+      {
+         // We need to ensure a 'createNamedTerminalCompleted' event is always
+         // returned as we have a 'wait-for' event on the server side
+         serverCreatingTerminal_ = false;
+         server_.createNamedTerminalCompleted(terminal.getCaption(), 
+               new VoidServerRequestCallback());
+      }
    }
 
    @Override
@@ -691,6 +718,7 @@ public class TerminalPane extends WorkbenchPane
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
+   private boolean serverCreatingTerminal_; // create initiated from server
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;

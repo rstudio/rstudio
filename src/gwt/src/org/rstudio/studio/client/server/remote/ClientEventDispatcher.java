@@ -163,6 +163,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTyp
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
@@ -888,6 +889,11 @@ public class ClientEventDispatcher
          {
             ClearTerminalEvent.Data data = event.getData();
             eventBus_.fireEvent(new ClearTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.CreateNamedTerminal))
+         {
+            CreateNamedTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CreateNamedTerminalEvent(data));
          }
          else
          {

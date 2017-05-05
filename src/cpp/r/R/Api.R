@@ -431,3 +431,13 @@
 .rs.addApiFunction("getActiveTerminalId", function() {
    .Call("rs_getActiveTerminalId")
 })
+
+.rs.addApiFunction("createTerminal", function(id = "") {
+   if (is.null(id))
+      id <- ""
+
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+
+   .Call("rs_createNamedTerminal", id)
+})

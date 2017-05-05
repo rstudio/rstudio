@@ -306,6 +306,24 @@ public class TerminalList implements Iterable<String>,
    }
 
    /**
+    * Determine if a caption is already in use
+    * @param caption to check
+    * @return true if caption is not in use (i.e. a new terminal can use it)
+    */
+   public boolean isCaptionAvailable(String caption)
+   {
+      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      {
+         if (item.getValue().getCaption().equals(caption))
+         {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   /**
     * Get metadata for terminal with given handle.
     * @param handle handle of terminal of interest
     * @return terminal metadata or null if not found
@@ -328,6 +346,36 @@ public class TerminalList implements Iterable<String>,
                     ConsoleProcessInfo.DEFAULT_COLS,
                     ConsoleProcessInfo.DEFAULT_ROWS,
                     TerminalShellInfo.SHELL_DEFAULT);
+   }
+
+   /**
+    * Initiate startup of a new terminal with specified caption.
+    * @param caption desired caption; if null or empty creates standard caption
+    * @return true if caption available, false if name already in use
+    */
+   public boolean createNamedTerminal(String caption)
+   {
+      if (StringUtil.isNullOrEmpty(caption))
+      {
+         createNewTerminal();
+         return true;
+      }
+      
+      // is this terminal name available?
+      if (!isCaptionAvailable(caption))
+      {
+         return false;
+      }
+      
+      startTerminal(nextTerminalSequence(),
+                    null,  // handle
+                    caption,  // caption
+                    null,  // title
+                    true,  // childProcs
+                    ConsoleProcessInfo.DEFAULT_COLS,
+                    ConsoleProcessInfo.DEFAULT_ROWS,
+                    TerminalShellInfo.SHELL_DEFAULT);
+      return true;
    }
 
    /**

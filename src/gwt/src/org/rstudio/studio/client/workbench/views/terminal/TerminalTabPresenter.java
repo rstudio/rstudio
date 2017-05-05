@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -42,7 +43,8 @@ import com.google.inject.Provider;
 public class TerminalTabPresenter extends BusyPresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
-                                             CreateTerminalEvent.Handler
+                                             CreateTerminalEvent.Handler,
+                                             CreateNamedTerminalEvent.Handler
 
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
@@ -89,7 +91,13 @@ public class TerminalTabPresenter extends BusyPresenter
       void nextTerminal();
       void showTerminalInfo();
       void sendToTerminal(String text, String caption);
-
+      
+      /**
+       * Create a new terminal with given caption.
+       * @param caption requested terminal caption, or null to autogenerate
+       * caption
+       */
+      void createNamedTerminal(String caption);
    }
 
    @Inject
@@ -175,6 +183,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onClearTerminal(ClearTerminalEvent event)
    {
       view_.clearTerminalScrollbackBuffer(event.getId());
+   }
+
+   @Override
+   public void onCreateNamedTerminal(CreateNamedTerminalEvent event)
+   {
+      view_.createNamedTerminal(event.getId());
    }
 
    public void onSessionInit(SessionInitEvent sie)

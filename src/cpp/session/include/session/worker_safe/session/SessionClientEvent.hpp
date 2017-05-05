@@ -172,6 +172,8 @@ extern const int kRStudioAPIShowDialogCompleted;
 extern const int kObjectExplorerEvent;
 extern const int kSendToTerminal;
 extern const int kClearTerminal;
+extern const int kCreateNamedTerminal;
+extern const int kCreateNamedTerminalCompleted;
 }
    
 class ClientEvent

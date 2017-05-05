@@ -163,6 +163,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ObjectExplorerEvent = "object_explorer_event";
    public static final String SendToTerminal = "send_to_terminal";
    public static final String ClearTerminal = "clear_terminal";
+   public static final String CreateNamedTerminal = "create_named_terminal";
 
    protected ClientEvent()
    {

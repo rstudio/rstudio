@@ -36,10 +36,79 @@ namespace session {
 namespace console_process {
 
 namespace {
-   typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
-   ProcTable s_procs;
-   std::string s_activeTerminalHandle;
-   ConsoleProcessSocket s_terminalSocket;
+
+typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
+ProcTable s_procs;
+std::string s_activeTerminalHandle;
+ConsoleProcessSocket s_terminalSocket;
+
+module_context::WaitForMethodFunction s_waitForCreatedTerminalId;
+
+// Returns id (caption) of currently selected terminal, if any
+SEXP rs_getActiveTerminalId()
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   if (s_activeTerminalHandle.empty())
+      return R_NilValue;
+
+   ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
+   if (pos == s_procs.end())
+   {
+      s_activeTerminalHandle.clear();
+      return R_NilValue;
+   }
+
+   json::Value captionValue = pos->second->getCaption();
+
+   return r::sexp::create(captionValue, &protect);
+}
+
+// Create a terminal with given id (caption). If null, create with automatically
+// generated name. Returns resulting name in either case (or null on error,
+// including if requested name is already in use) via WaitForMethodFunction.
+SEXP rs_createNamedTerminal(SEXP typeSEXP)
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   std::string terminalId = r::sexp::asString(typeSEXP);
+
+   json::Object eventData;
+   eventData["id"] = terminalId;
+
+   // send the event
+   ClientEvent createNamedTerminalEvent(client_events::kCreateNamedTerminal, eventData);
+
+   // wait for event to complete
+   json::JsonRpcRequest request;
+
+   bool succeeded = s_waitForCreatedTerminalId(&request, createNamedTerminalEvent);
+   if (!succeeded)
+      return R_NilValue;
+
+   std::string resultId;
+
+   Error error = json::readParams(request.params, &resultId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   // if the id is empty, couldn't create the terminal, either due to an
+   // error or because the requested terminalId was already in use
+   if (resultId.empty())
+      return R_NilValue;
+
+   return r::sexp::create(resultId, &protect);
+}
+
 } // anonymous namespace
 
 void saveConsoleProcesses();
@@ -1211,26 +1280,6 @@ void onResume(const core::Settings& /*settings*/)
 {
 }
 
-// Returns id (caption) of currently selected terminal, if any
-SEXP rs_getActiveTerminalId()
-{
-   r::sexp::Protect protect;
-
-   if (s_activeTerminalHandle.empty())
-      return R_NilValue;
-
-   ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
-   if (pos == s_procs.end())
-   {
-      s_activeTerminalHandle.clear();
-      return R_NilValue;
-   }
-
-   json::Value captionValue = pos->second->getCaption();
-
-   return r::sexp::create(captionValue, &protect);
-}
-
 Error initialize()
 {
    using boost::bind;
@@ -1241,7 +1290,11 @@ Error initialize()
 
    loadConsoleProcesses();
 
+   using namespace module_context;
+   s_waitForCreatedTerminalId = registerWaitForMethod("create_named_terminal_completed");
+
    RS_REGISTER_CALL_METHOD(rs_getActiveTerminalId, 0);
+   RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
 
    // install rpc methods
    ExecBlock initBlock ;

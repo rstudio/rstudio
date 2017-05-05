@@ -171,6 +171,8 @@ const int kRStudioAPIShowDialogCompleted = 152;
 const int kObjectExplorerEvent = 153;
 const int kSendToTerminal = 154;
 const int kClearTerminal = 155;
+const int kCreateNamedTerminal = 156;
+const int kCreateNamedTerminalCompleted = 157;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -468,6 +470,10 @@ std::string ClientEvent::typeName() const
          return "send_to_terminal";
       case client_events::kClearTerminal:
          return "clear_terminal";
+      case client_events::kCreateNamedTerminal:
+         return "create_named_terminal";
+      case client_events::kCreateNamedTerminalCompleted:
+         return "create_named_terminal_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
