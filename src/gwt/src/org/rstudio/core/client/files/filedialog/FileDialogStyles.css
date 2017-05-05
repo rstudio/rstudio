@@ -4,10 +4,19 @@
 @external breadcrumb, breadcrumb-filepane;
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external editor_dark;
 
-@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
-@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
-@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+
+@eval THEME_DEFAULT_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.defaultBackgroundTransparent;
+@eval THEME_DARKGREY_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.darkGreyBackgroundTransparent;
+@eval THEME_ALTERNATE_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.alternateBackgroundTransparent;
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -192,4 +201,16 @@ button.browse:focus {
 
 .rstudio-themes-flat .rstudio-themes-alternate .browse {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-default .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_DEFAULT_BACKGROUND, THEME_DEFAULT_BACKGROUND_TRANSPARENT);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_DARKGREY_BACKGROUND, THEME_DARKGREY_BACKGROUND_TRANSPARENT);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_ALTERNATE_BACKGROUND, THEME_ALTERNATE_BACKGROUND_TRANSPARENT);
 }
