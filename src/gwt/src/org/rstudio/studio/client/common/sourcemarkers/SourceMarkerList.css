@@ -116,4 +116,7 @@ div.disclosure {
 
 @sprite .selectedRow div.disclosure {
    gwt-image: 'logContextButton2x';
+   width: 20px !important;
+   height: 16px !important;
+   background-size: 20px 16px !important;
 }
