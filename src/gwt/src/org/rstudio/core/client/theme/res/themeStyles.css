@@ -1090,9 +1090,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .toolbarWrapper {
-   height: 21px;
+   height: 22px;
    border-bottom: 1px solid #d6dadc;
    overflow: hidden;
+   margin-top: -1px;
 }
 
 .rstudio-themes-flat .toolbar {
@@ -1188,7 +1189,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .secondaryToolbar {
-   height: 20px !important;
+   height: 21px !important;
 }
 
 
@@ -1199,6 +1200,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .rstudio-themes-flat .tallerToolbarWrapper {
    border-bottom: solid 1px #d6dadc;
    height: 23px !important;  
+   padding-top: 1px;
 }
 
 .toolbarButtonRightImage {
@@ -2037,7 +2039,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .search {
-   top: 0px;
+   top: 1px;
    height: 16px;
    border: solid 1px #d6dadc;
    border-radius: 3px;
