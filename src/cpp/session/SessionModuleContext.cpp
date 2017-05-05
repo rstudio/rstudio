@@ -158,6 +158,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRStudioAPIShowDialog;
       else if (name == "object_explorer_event")
          type = session::client_events::kObjectExplorerEvent;
+      else if (name == "send_to_terminal")
+         type = session::client_events::kSendToTerminal;
+      else if (name == "clear_terminal")
+         type = session::client_events::kClearTerminal;
 
       if (type != -1)
       {

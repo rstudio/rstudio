@@ -661,7 +661,7 @@ public class RemoteServer implements Server
    @Override
    public void processSetCaption(String handle,
                                  String caption,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
@@ -716,6 +716,15 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
       sendRequest(RPC_SCOPE, PROCESS_TEST_EXISTS, params, requestCallback);   
+   }
+
+   @Override 
+   public void processSetActive(String handle,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_SET_ACTIVE, params, requestCallback);   
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -5193,6 +5202,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
+   private static final String PROCESS_SET_ACTIVE = "process_set_active";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

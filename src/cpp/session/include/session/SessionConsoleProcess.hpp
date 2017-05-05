@@ -134,6 +134,7 @@ public:
    void onSuspend();
    bool isStarted() { return started_; }
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
+   std::string getCaption() { return procInfo_->getCaption(); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }

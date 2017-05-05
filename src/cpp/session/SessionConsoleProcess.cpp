@@ -21,6 +21,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RRoutines.hpp>
+
 #include "session-config.h"
 
 #ifdef RSTUDIO_SERVER
@@ -36,6 +38,7 @@ namespace console_process {
 namespace {
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
+   std::string s_activeTerminalHandle;
    ConsoleProcessSocket s_terminalSocket;
 } // anonymous namespace
 
@@ -700,8 +703,19 @@ Error procSetCaption(const json::JsonRpcRequest& request,
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
    
+   // make sure we don't have this name already
+   for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
+   {
+      if (it != pos && it->second->getCaption() == caption)
+      {
+         pResponse->setResult(false /*duplicate name*/);
+         return Success();
+      }
+   }
+
    pos->second->setCaption(caption);
    saveConsoleProcesses();
+   pResponse->setResult(true /*successful*/);
    return Success();
 }
 
@@ -812,6 +826,26 @@ Error procTestExists(const json::JsonRpcRequest& request,
    ProcTable::const_iterator pos = s_procs.find(handle);
    bool exists = (pos == s_procs.end()) ? false : true;
    pResponse->setResult(exists);
+   return Success();
+}
+
+// Notification from client of currently-selected terminal.
+Error procSetActive(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params, &handle);
+
+   if (error)
+      return error;
+
+   // make sure this handle actually exists
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   s_activeTerminalHandle = handle;
    return Success();
 }
 
@@ -1177,6 +1211,26 @@ void onResume(const core::Settings& /*settings*/)
 {
 }
 
+// Returns id (caption) of currently selected terminal, if any
+SEXP rs_getActiveTerminalId()
+{
+   r::sexp::Protect protect;
+
+   if (s_activeTerminalHandle.empty())
+      return R_NilValue;
+
+   ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
+   if (pos == s_procs.end())
+   {
+      s_activeTerminalHandle.clear();
+      return R_NilValue;
+   }
+
+   json::Value captionValue = pos->second->getCaption();
+
+   return r::sexp::create(captionValue, &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -1186,6 +1240,8 @@ Error initialize()
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    loadConsoleProcesses();
+
+   RS_REGISTER_CALL_METHOD(rs_getActiveTerminalId, 0);
 
    // install rpc methods
    ExecBlock initBlock ;
@@ -1200,7 +1256,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
-      (bind(registerRpcMethod, "process_use_rpc", procUseRpc));
+      (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
+      (bind(registerRpcMethod, "process_set_active", procSetActive));
 
    return initBlock.execute();
 }

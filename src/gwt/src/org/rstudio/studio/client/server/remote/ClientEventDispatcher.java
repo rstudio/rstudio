@@ -162,6 +162,8 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -876,6 +878,16 @@ public class ClientEventDispatcher
          {
             ObjectExplorerEvent.Data data = event.getData();
             eventBus_.fireEvent(new ObjectExplorerEvent(data));
+         }
+         else if (type.equals(ClientEvent.SendToTerminal))
+         {
+            SendToTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SendToTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.ClearTerminal))
+         {
+            ClearTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ClearTerminalEvent(data));
          }
          else
          {

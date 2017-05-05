@@ -30,7 +30,9 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
@@ -38,6 +40,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 public class TerminalTabPresenter extends BusyPresenter
+                                  implements SendToTerminalEvent.Handler,
+                                             ClearTerminalEvent.Handler,
+                                             CreateTerminalEvent.Handler
+
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
@@ -78,10 +84,12 @@ public class TerminalTabPresenter extends BusyPresenter
       void terminateAllTerminals();
 
       void renameTerminal();
-      void clearTerminalScrollbackBuffer();
+      void clearTerminalScrollbackBuffer(String caption);
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
+      void sendToTerminal(String text, String caption);
+
    }
 
    @Inject
@@ -125,7 +133,7 @@ public class TerminalTabPresenter extends BusyPresenter
    @Handler
    public void onClearTerminalScrollbackBuffer()
    {
-      view_.clearTerminalScrollbackBuffer();
+      view_.clearTerminalScrollbackBuffer(null);
    }
 
    @Handler
@@ -150,10 +158,23 @@ public class TerminalTabPresenter extends BusyPresenter
    {
    }
 
+   @Override
    public void onCreateTerminal(CreateTerminalEvent event)
    {
       onActivateTerminal();
       view_.createTerminal();
+   }
+
+   @Override
+   public void onSendToTerminal(SendToTerminalEvent event)
+   {
+      view_.sendToTerminal(event.getText(), event.getId());
+   }
+
+   @Override
+   public void onClearTerminal(ClearTerminalEvent event)
+   {
+      view_.clearTerminalScrollbackBuffer(event.getId());
    }
 
    public void onSessionInit(SessionInitEvent sie)

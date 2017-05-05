@@ -169,6 +169,8 @@ const int kPackageExtensionIndexingCompleted = 150;
 const int kRStudioAPIShowDialog = 151;
 const int kRStudioAPIShowDialogCompleted = 152;
 const int kObjectExplorerEvent = 153;
+const int kSendToTerminal = 154;
+const int kClearTerminal = 155;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -460,8 +462,12 @@ std::string ClientEvent::typeName() const
          return "rstudioapi_show_dialog";
       case client_events::kRStudioAPIShowDialogCompleted:
          return "rstudioapi_show_dialog_completed";
-     case client_events::kObjectExplorerEvent:
+      case client_events::kObjectExplorerEvent:
          return "object_explorer_event";
+      case client_events::kSendToTerminal:
+         return "send_to_terminal";
+      case client_events::kClearTerminal:
+         return "clear_terminal";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
