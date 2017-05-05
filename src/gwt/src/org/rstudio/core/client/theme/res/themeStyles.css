@@ -1282,6 +1282,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 	color: #494949;
 }
 
+.rstudio-themes-flat.editor_dark .emptyProjectMenu .toolbarButtonLabel {
+   color: #FFF;
+}
+
 @if user.agent gecko1_8 { .webHeaderBarCommandsProjectMenu {
       margin-top: 1px;
       margin-left: 5px;
