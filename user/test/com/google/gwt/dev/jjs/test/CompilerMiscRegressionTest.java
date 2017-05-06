@@ -401,4 +401,58 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     assertEquals("Hello", argumentsParameterClasher(1, "Hello", "GoodBye").get(0));
     assertEquals("Hello", argumentsVariableClasher(1, "Hello", "GoodBye").get(0));
   }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+  private static class NativeArray {
+    @JsProperty(name = "length")
+    public int len;
+    @JsMethod(name = "push")
+    public native void add(double element);
+  }
+
+  private static native Object newArray() /*-{
+    return @NativeArray::new()();
+  }-*/;
+
+  private static native int arrayLength(Object array) /*-{
+    return array.@NativeArray::len;
+  }-*/;
+
+  private static native void arrayAdd(Object array, double d) /*-{
+    array.@NativeArray::add(D)(d);
+    return array;
+  }-*/;
+
+  private static native Object newArrayThroughCtorReference() /*-{
+    var ctor =  @NativeArray::new();
+    return ctor();
+  }-*/;
+
+  private static native boolean isNan(double number) /*-{
+    return @Global::isNan(D)(number);
+  }-*/;
+
+  private static native double getNan() /*-{
+    return @Global::Nan;
+  }-*/;
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  private static class Global {
+    @JsProperty(namespace = JsPackage.GLOBAL, name = "NaN")
+    public static double Nan;
+    @JsMethod(namespace = JsPackage.GLOBAL, name = "isNaN")
+    public static native boolean isNan(double number);
+  }
+
+  // Regression tests for issue #9520.
+  public void testNativeConstructorJSNI() {
+    Object nativeArray = newArray();
+    arrayAdd(nativeArray, 0);
+    arrayAdd(nativeArray, 1);
+    assertTrue(nativeArray instanceof NativeArray);
+    assertEquals(2, arrayLength(nativeArray));
+    assertTrue(newArrayThroughCtorReference() instanceof NativeArray);
+    assertTrue(Double.isNaN(getNan()));
+    assertTrue(isNan(Double.NaN));
+  }
 }
