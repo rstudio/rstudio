@@ -109,6 +109,43 @@ SEXP rs_createNamedTerminal(SEXP typeSEXP)
    return r::sexp::create(resultId, &protect);
 }
 
+// Returns busy state of a terminal (i.e. does the shell have any child
+// processes?)
+SEXP rs_isTerminalBusy(SEXP typeSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(typeSEXP);
+
+   if (terminalId.empty())
+   {
+      if (s_activeTerminalHandle.empty())
+      {
+         return R_NilValue;
+      }
+      else
+      {
+         ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
+         if (pos == s_procs.end())
+         {
+            s_activeTerminalHandle.clear();
+            return R_NilValue;
+         }
+         return r::sexp::create(pos->second->getIsBusy(), &protect);
+      }
+   }
+
+   for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
+   {
+      if (it->second->getCaption() == terminalId)
+      {
+         return r::sexp::create(it->second->getIsBusy(), &protect);
+      }
+   }
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 void saveConsoleProcesses();
@@ -1295,6 +1332,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_getActiveTerminalId, 0);
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
 
    // install rpc methods
    ExecBlock initBlock ;
