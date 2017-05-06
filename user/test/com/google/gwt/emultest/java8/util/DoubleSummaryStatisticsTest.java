@@ -45,7 +45,7 @@ public class DoubleSummaryStatisticsTest extends EmulTestBase {
     assertEquals(0d, stats.getSum());
 
     double initial = 1.0d;
-    long count = 1000000;
+    long count = 100000;
 
     // 'precision' is the hardcoded result of Math.ulp(initial) in JVM,
     // since GWT does not emulate Math.ulp().
