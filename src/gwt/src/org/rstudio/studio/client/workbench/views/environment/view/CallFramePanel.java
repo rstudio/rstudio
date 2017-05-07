@@ -83,6 +83,8 @@ public class CallFramePanel extends ResizeComposite
       
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      addStyleName("ace_editor");
+
       Label tracebackTitle = new Label("Traceback");
       tracebackTitle.addStyleName(style.tracebackHeader());
       
