@@ -67,6 +67,23 @@ SEXP rs_getActiveTerminalId()
    return r::sexp::create(captionValue, &protect);
 }
 
+// Return vector of all terminal ids (captions)
+SEXP rs_getAllTerminalIds()
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   std::vector<std::string> allCaptions;
+   for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
+   {
+      allCaptions.push_back(it->second->getCaption());
+   }
+
+   return r::sexp::create(allCaptions, &protect);
+}
+
 // Create a terminal with given id (caption). If null, create with automatically
 // generated name. Returns resulting name in either case (or null on error,
 // including if requested name is already in use) via WaitForMethodFunction.
@@ -1331,6 +1348,7 @@ Error initialize()
    s_waitForCreatedTerminalId = registerWaitForMethod("create_named_terminal_completed");
 
    RS_REGISTER_CALL_METHOD(rs_getActiveTerminalId, 0);
+   RS_REGISTER_CALL_METHOD(rs_getAllTerminalIds, 0);
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
 

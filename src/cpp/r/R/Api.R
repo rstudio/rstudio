@@ -451,3 +451,7 @@
 
    .Call("rs_isTerminalBusy", id)
 })
+
+.rs.addApiFunction("getAllTerminalIds", function() {
+   .Call("rs_getAllTerminalIds")
+})
