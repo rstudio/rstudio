@@ -122,6 +122,7 @@ public class ConsolePane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       secondaryToolbar_ = new SecondaryToolbar(true);
+      secondaryToolbar_.getWrapper().addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
        
       return secondaryToolbar_;
    }
