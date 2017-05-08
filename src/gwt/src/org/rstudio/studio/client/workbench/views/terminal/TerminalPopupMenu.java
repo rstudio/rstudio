@@ -159,10 +159,9 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    public void setActiveTerminalByCaption(String caption)
    {
       String handle = terminals_.handleForCaption(caption);
-      if (StringUtil.isNullOrEmpty(caption))
+      if (StringUtil.isNullOrEmpty(handle))
          return;
-      
-      setActiveTerminal(caption, handle); 
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
    }
 
    /**
