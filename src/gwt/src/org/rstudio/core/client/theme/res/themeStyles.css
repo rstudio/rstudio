@@ -1059,17 +1059,24 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    width: 6px;
    background: MULTIPODACTIVETABLEFT right top no-repeat;
 }
+
 .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
    height: 24px;
    background: MULTIPODACTIVETABTILE top repeat-x;
    padding-left: 3px;
    padding-right: 3px;
 }
+
+.rstudio-themes-flat .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
+   height: 25px;
+}
+
 .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutRight {
    height: 24px;
    width: 6px;
    background: MULTIPODACTIVETABRIGHT left top no-repeat;
 }
+
 .moduleTabPanel .toolbar {
    background-image: TOOLBARBACKGROUND2;
 }
@@ -2148,7 +2155,8 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
@@ -2195,7 +2203,8 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
@@ -2242,7 +2251,8 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent {
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel {
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
