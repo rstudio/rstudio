@@ -718,15 +718,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_TEST_EXISTS, params, requestCallback);   
    }
 
-   @Override 
-   public void processSetActive(String handle,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(handle)));
-      sendRequest(RPC_SCOPE, PROCESS_SET_ACTIVE, params, requestCallback);   
-   }
-
    @Override
    public void createNamedTerminalCompleted(String terminalId,
                                             ServerRequestCallback<Void> requestCallback)
@@ -5209,7 +5200,6 @@ public class RemoteServer implements Server
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
-   private static final String PROCESS_SET_ACTIVE = "process_set_active";
    private static final String CREATE_NAMED_TERMINAL_COMPLETED = "create_named_terminal_completed";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";

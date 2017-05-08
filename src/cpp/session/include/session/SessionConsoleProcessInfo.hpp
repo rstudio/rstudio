@@ -118,6 +118,8 @@ public:
    void appendToOutputBuffer(char ch);
    std::string bufferedOutput() const;
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
+   std::string getFullSavedBuffer() const;
+   int getBufferLineCount() const;
    void deleteLogFile() const;
 
    // Has the process exited, and what was the exit code?

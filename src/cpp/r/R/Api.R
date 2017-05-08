@@ -398,38 +398,29 @@
    if (is.null(value) || value != 1) FALSE else TRUE
 })
 
-.rs.addApiFunction("sendToTerminal", function(text, id = "") {
+.rs.addApiFunction("sendToTerminal", function(text, id) {
    if (!is.character(text))
       stop("'text' should be a character vector", call. = FALSE)
 
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
 
    text <- paste(text, collapse = "\n")
    data <- list(text = .rs.scalar(text), id = .rs.scalar(id))
 
+   .Call("rs_ensureTerminalRunning", id)
    .rs.enqueClientEvent("send_to_terminal", data)
    invisible(data)
 })
 
-.rs.addApiFunction("clearTerminal", function(id = "") {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
+.rs.addApiFunction("clearTerminal", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
 
    data <- list(id = .rs.scalar(id))
 
    .rs.enqueClientEvent("clear_terminal", data)
    invisible(data)
-})
-
-.rs.addApiFunction("getActiveTerminalId", function() {
-   .Call("rs_getActiveTerminalId")
 })
 
 .rs.addApiFunction("createTerminal", function(id = "") {
@@ -442,16 +433,21 @@
    .Call("rs_createNamedTerminal", id)
 })
 
-.rs.addApiFunction("isTerminalBusy", function(id = "") {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
+.rs.addApiFunction("isTerminalBusy", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
 
    .Call("rs_isTerminalBusy", id)
 })
 
-.rs.addApiFunction("getAllTerminalIds", function() {
-   .Call("rs_getAllTerminalIds")
+.rs.addApiFunction("getAllTerminals", function() {
+   .Call("rs_getAllTerminals")
 })
+
+.rs.addApiFunction("getTerminalContext", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_getTerminalContext", id)
+})
+

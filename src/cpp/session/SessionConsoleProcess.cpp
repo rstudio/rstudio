@@ -16,6 +16,8 @@
 #include <session/SessionConsoleProcess.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
+#include <boost/range/adaptor/map.hpp>
 
 #include <core/Exec.hpp>
 
@@ -37,38 +39,35 @@ namespace console_process {
 
 namespace {
 
-typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
+typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
+typedef std::map<std::string, ConsoleProcessPtr> ProcTable;
+
 ProcTable s_procs;
-std::string s_activeTerminalHandle;
 ConsoleProcessSocket s_terminalSocket;
 
 module_context::WaitForMethodFunction s_waitForCreatedTerminalId;
 
-// Returns id (caption) of currently selected terminal, if any
-SEXP rs_getActiveTerminalId()
+ConsoleProcessPtr findProcByHandle(const std::string& handle)
 {
-   r::sexp::Protect protect;
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
+      return pos->second;
+   else
+      return ConsoleProcessPtr();
+}
 
-   if (!session::options().allowShell())
-      return R_NilValue;
-
-   if (s_activeTerminalHandle.empty())
-      return R_NilValue;
-
-   ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
-   if (pos == s_procs.end())
+ConsoleProcessPtr findProcByCaption(const std::string& caption)
+{
+   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
    {
-      s_activeTerminalHandle.clear();
-      return R_NilValue;
+      if (proc->getCaption() == caption)
+         return proc;
    }
-
-   json::Value captionValue = pos->second->getCaption();
-
-   return r::sexp::create(captionValue, &protect);
+   return ConsoleProcessPtr();
 }
 
 // Return vector of all terminal ids (captions)
-SEXP rs_getAllTerminalIds()
+SEXP rs_getAllTerminals()
 {
    r::sexp::Protect protect;
 
@@ -128,38 +127,75 @@ SEXP rs_createNamedTerminal(SEXP typeSEXP)
 
 // Returns busy state of a terminal (i.e. does the shell have any child
 // processes?)
-SEXP rs_isTerminalBusy(SEXP typeSEXP)
+SEXP rs_isTerminalBusy(SEXP terminalsSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::vector<std::string> terminalIds;
+   if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
+      return R_NilValue;
+
+   std::vector<bool> isBusy;
+   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   {
+      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      if (proc == NULL)
+      {
+         isBusy.push_back(false);
+         continue;
+      }
+      isBusy.push_back(proc->getIsBusy());
+   }
+   return r::sexp::create(isBusy, &protect);
+}
+
+// Returns bunch of metadata about terminal instance(s).
+SEXP rs_getTerminalContext(SEXP terminalsSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::vector<std::string> terminalIds;
+   if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
+      return R_NilValue;
+
+   r::sexp::ListBuilder outerBuilder(&protect);
+   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   {
+      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      if (proc == NULL)
+      {
+         continue;
+      }
+
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("handle", proc->handle());
+      builder.add("caption", proc->getCaption());
+      builder.add("title", proc->getTitle());
+      builder.add("running", proc->isStarted());
+      builder.add("busy", proc->getIsBusy());
+      builder.add("connection", proc->getChannelMode());
+      builder.add("sequence", proc->getTerminalSequence());
+      builder.add("lines", proc->getBufferLineCount());
+
+      outerBuilder.add(proc->getCaption(), builder);
+   }
+
+   return r::sexp::create(outerBuilder, &protect);
+}
+
+// Ensure terminal is running (has started its process); a terminal can be
+// unstarted if the session has previously been suspended and restarted,
+// but user hasn't visited the terminal in the client.
+SEXP rs_ensureTerminalRunning(SEXP typeSEXP)
 {
    r::sexp::Protect protect;
 
    std::string terminalId = r::sexp::asString(typeSEXP);
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
+      return R_NilValue;
 
-   if (terminalId.empty())
-   {
-      if (s_activeTerminalHandle.empty())
-      {
-         return R_NilValue;
-      }
-      else
-      {
-         ProcTable::const_iterator pos = s_procs.find(s_activeTerminalHandle);
-         if (pos == s_procs.end())
-         {
-            s_activeTerminalHandle.clear();
-            return R_NilValue;
-         }
-         return r::sexp::create(pos->second->getIsBusy(), &protect);
-      }
-   }
-
-   for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
-   {
-      if (it->second->getCaption() == terminalId)
-      {
-         return r::sexp::create(it->second->getIsBusy(), &protect);
-      }
-   }
-
+   proc->start();
    return R_NilValue;
 }
 
@@ -658,6 +694,19 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
    }
 }
 
+std::string ConsoleProcess::getChannelMode() const
+{
+   switch(procInfo_->getChannelMode())
+   {
+   case Rpc:
+      return "rpc";
+   case Websocket:
+      return "websocket";
+   default:
+      return "unknown";
+   }
+}
+
 void ConsoleProcess::setRpcMode()
 {
    s_terminalSocket.stopListening(handle());
@@ -697,10 +746,10 @@ Error procStart(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &handle);
    if (error)
       return error;
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
    {
-      return pos->second->start();
+      return proc->start();
    }
    else
    {
@@ -716,10 +765,10 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &handle);
    if (error)
       return error;
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
    {
-      pos->second->interrupt();
+      proc->interrupt();
       return Success();
    }
    else
@@ -737,10 +786,10 @@ Error procReap(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
    {
-      pos->second->deleteLogFile();
+      proc->deleteLogFile();
       if (s_procs.erase(handle))
       {
          saveConsoleProcesses();
@@ -769,10 +818,10 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
    {
-      pos->second->enqueInput(input);
+      proc->enqueInput(input);
       return Success();
    }
    else
@@ -794,10 +843,10 @@ Error procSetSize(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos != s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
    {
-      pos->second->resize(cols, rows);
+      proc->resize(cols, rows);
       return Success();
 
    }
@@ -820,23 +869,20 @@ Error procSetCaption(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
    {
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
    
    // make sure we don't have this name already
-   for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
+   if (findProcByCaption(caption) != NULL)
    {
-      if (it != pos && it->second->getCaption() == caption)
-      {
-         pResponse->setResult(false /*duplicate name*/);
-         return Success();
-      }
+      pResponse->setResult(false /*duplicate name*/);
+      return Success();
    }
 
-   pos->second->setCaption(caption);
+   proc->setCaption(caption);
    saveConsoleProcesses();
    pResponse->setResult(true /*successful*/);
    return Success();
@@ -854,13 +900,13 @@ Error procSetTitle(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
    {
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
    
-   pos->second->setTitle(title);
+   proc->setTitle(title);
    return Success();
 }
 
@@ -874,13 +920,13 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
    {
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
 
-   pos->second->deleteLogFile();
+   proc->deleteLogFile();
    return Success();
 }
 
@@ -898,14 +944,13 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
    if (requestedChunk < 0)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    json::Object result;
    bool moreAvailable;
-   std::string chunkContent = pos->second->getSavedBufferChunk(
-            requestedChunk, &moreAvailable);
+   std::string chunkContent = proc->getSavedBufferChunk(requestedChunk, &moreAvailable);
 
    result["chunk"] = chunkContent;
    result["chunk_number"] = requestedChunk;
@@ -925,12 +970,12 @@ Error procUseRpc(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    // Used to downgrade to Rpc after client was unable to connect to Websocket
-   pos->second->setRpcMode();
+   proc->setRpcMode();
    return Success();
 }
 
@@ -946,29 +991,8 @@ Error procTestExists(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   bool exists = (pos == s_procs.end()) ? false : true;
+   bool exists = (findProcByHandle(handle) == NULL) ? false : true;
    pResponse->setResult(exists);
-   return Success();
-}
-
-// Notification from client of currently-selected terminal.
-Error procSetActive(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   std::string handle;
-
-   Error error = json::readParams(request.params, &handle);
-
-   if (error)
-      return error;
-
-   // make sure this handle actually exists
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   if (pos == s_procs.end())
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   s_activeTerminalHandle = handle;
    return Success();
 }
 
@@ -1037,14 +1061,14 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
    if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
       // return existing ConsoleProcess if it is still running
-      ProcTable::const_iterator pos = s_procs.find(procInfo->getHandle());
-      if (pos != s_procs.end() && pos->second->isStarted())
+      ConsoleProcessPtr proc = findProcByHandle(procInfo->getHandle());
+      if (proc != NULL && proc->isStarted())
       {
          // Jiggle the size of the pseudo-terminal, this will force the app
          // to refresh itself; this does rely on the host performing a second
          // resize to the actual available size. Clumsy, but so far this is
          // the best I've come up with.
-         cp = pos->second;
+         cp = proc;
          cp->resize(25, 5);
       }
       else
@@ -1284,8 +1308,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
 
 bool isKnownProcHandle(const std::string& handle)
 {
-   ProcTable::const_iterator pos = s_procs.find(handle);
-   return pos != s_procs.end();
+   return findProcByHandle(handle) != NULL;
 }
 
 void loadConsoleProcesses()
@@ -1347,10 +1370,11 @@ Error initialize()
    using namespace module_context;
    s_waitForCreatedTerminalId = registerWaitForMethod("create_named_terminal_completed");
 
-   RS_REGISTER_CALL_METHOD(rs_getActiveTerminalId, 0);
-   RS_REGISTER_CALL_METHOD(rs_getAllTerminalIds, 0);
+   RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
+   RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
+   RS_REGISTER_CALL_METHOD(rs_ensureTerminalRunning, 1);
 
    // install rpc methods
    ExecBlock initBlock ;
@@ -1365,8 +1389,7 @@ Error initialize()
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
-      (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
-      (bind(registerRpcMethod, "process_set_active", procSetActive));
+      (bind(registerRpcMethod, "process_use_rpc", procUseRpc));
 
    return initBlock.execute();
 }

@@ -132,14 +132,18 @@ public:
    void interrupt();
    void resize(int cols, int rows);
    void onSuspend();
-   bool isStarted() { return started_; }
+   bool isStarted() const { return started_; }
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
-   std::string getCaption() { return procInfo_->getCaption(); }
+   std::string getCaption() const { return procInfo_->getCaption(); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
+   std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
-   bool getIsBusy() { return procInfo_->getHasChildProcs(); }
-   bool getAllowRestart() { return procInfo_->getAllowRestart(); }
+   bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
+   bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
+   std::string getChannelMode() const;
+   int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
+   int getBufferLineCount() const { return procInfo_->getBufferLineCount(); }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
@@ -148,7 +152,7 @@ public:
    // after the requested chunk, *pMoreAvailable will be set to true
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
 
-   void setShowOnOutput(bool showOnOutput) { procInfo_->setShowOnOutput(showOnOutput); }
+   void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson( core::json::Object& obj);

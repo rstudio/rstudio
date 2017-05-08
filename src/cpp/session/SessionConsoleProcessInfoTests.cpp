@@ -401,11 +401,83 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(moreAvailable);
       CHECK_FALSE(loaded.compare(expected));
 
-     // cleanup
+      // cleanup
       cpi.deleteLogFile();
       loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
       CHECK(loaded.empty());
       CHECK_FALSE(moreAvailable);
+   }
+
+   SECTION("Verify loading entire buffer trims to max allowed")
+   {
+      const int smallMaxLines = 3;
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, smallMaxLines);
+
+      // blow away anything that might have been left over from a previous
+      // failed run
+      cpi.deleteLogFile();
+
+      bool moreAvailable;
+      std::string loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
+
+      // fill buffer with more than one chunk and more lines than the
+      // maximum specified; each line is one-chunk in length, and filled
+      // with digits corresponding to the line #, "0000...", "1111..."
+      for (int i = 0; i < smallMaxLines + 2; i++)
+      {
+         std::string str = boost::lexical_cast<std::string>(i);
+         std::string line(kOutputBufferSize - 1, str[0]);
+         line += "\n";
+         cpi.appendToOutputBuffer(line);
+      }
+
+      // now when we request the full buffer, we expect the buffer to
+      // be trimmed to have smallMaxLines + 1
+      std::string expected2(kOutputBufferSize -1, '2');
+      std::string expected3(kOutputBufferSize -1, '3');
+      std::string expected4(kOutputBufferSize -1, '4');
+      std::string expected = std::string("\n") + expected2 + std::string("\n") +
+            expected3 + std::string("\n") + expected4 + std::string("\n");
+      loaded = cpi.getFullSavedBuffer();
+      CHECK_FALSE(loaded.compare(expected));
+
+      // cleanup
+      cpi.deleteLogFile();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
+   }
+
+   SECTION("Verify line counting")
+   {
+      const int lines = 10;
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
+                             channelMode, channelId, lines * 2);
+
+      // blow away anything that might have been left over from a previous
+      // failed run
+      cpi.deleteLogFile();
+
+      // fill buffer with several lines of text
+      // maximum specified; each line is one-chunk in length, and filled
+      // with digits corresponding to the line #, "0000...", "1111..."
+      for (int i = 0; i < lines; i++)
+      {
+         std::string str = boost::lexical_cast<std::string>(i);
+         std::string line(10, str[0]);
+         line += "\n";
+         cpi.appendToOutputBuffer(line);
+      }
+
+      // line count includes any partial lines at the end (even a zero-
+      // length line after a final \n)
+      CHECK(cpi.getBufferLineCount() == lines + 1);
+
+      // cleanup
+      cpi.deleteLogFile();
    }
 }
 

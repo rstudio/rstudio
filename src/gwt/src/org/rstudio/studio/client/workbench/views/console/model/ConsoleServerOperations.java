@@ -78,14 +78,6 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                                  ServerRequestCallback<Boolean> requestCallback);
    
    /**
-    * Inform server which terminal handle is currently selected.
-    * @param handle handle of selected terminal
-    * @param requestCallback
-    */
-   public void processSetActive(String handle,
-                                ServerRequestCallback<Void> requestCallback);
-
-   /**
     * Set/update the caption of given process.
     * @param handle process handle
     * @param caption new caption
