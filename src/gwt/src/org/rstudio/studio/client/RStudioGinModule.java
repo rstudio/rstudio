@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import org.rstudio.core.client.MiddleMousePasteListener;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
@@ -282,6 +283,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MathJaxLoader.class).asEagerSingleton();
       bind(ProjectTemplateRegistryProvider.class).in(Singleton.class);
       bind(PackageProvidedExtensions.class).asEagerSingleton();
+      bind(MiddleMousePasteListener.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
