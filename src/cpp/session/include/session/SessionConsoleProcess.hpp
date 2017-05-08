@@ -144,6 +144,9 @@ public:
    std::string getChannelMode() const;
    int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
    int getBufferLineCount() const { return procInfo_->getBufferLineCount(); }
+   int getCols() const { return cols_; }
+   int getRows() const { return rows_; }
+   PidType getPid() const { return pid_; }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
@@ -193,6 +196,13 @@ private:
    // Whether the tty should be notified of a resize
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
+
+   // Last known size of pseudo-tty
+   int cols_;
+   int rows_;
+
+   // Last known PID of associated process
+   PidType pid_;
 
    // Has client been notified of state of childProcs_ at least once?
    bool childProcsSent_;

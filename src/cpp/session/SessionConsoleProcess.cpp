@@ -176,6 +176,9 @@ SEXP rs_getTerminalContext(SEXP terminalsSEXP)
       builder.add("connection", proc->getChannelMode());
       builder.add("sequence", proc->getTerminalSequence());
       builder.add("lines", proc->getBufferLineCount());
+      builder.add("cols", proc->getCols());
+      builder.add("rows", proc->getRows());
+      builder.add("pid", proc->getPid());
 
       outerBuilder.add(proc->getCaption(), builder);
    }
@@ -205,7 +208,8 @@ void saveConsoleProcesses();
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
-     childProcsSent_(false), lastInputSequence_(kIgnoreSequence), started_(false)
+     cols_(-1), rows_(-1), pid_(-1), childProcsSent_(false),
+     lastInputSequence_(kIgnoreSequence), started_(false)
 {
    regexInit();
 
@@ -218,8 +222,8 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false)
+     interrupt_(false), newCols_(-1), newRows_(-1), cols_(-1), rows_(-1), pid_(-1),
+     childProcsSent_(false), lastInputSequence_(kIgnoreSequence), started_(false)
 {
    commonInit();
 }
@@ -229,7 +233,8 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
+     interrupt_(false), newCols_(-1), newRows_(-1), cols_(-1), rows_(-1), pid_(-1),
+     childProcsSent_(false),
      lastInputSequence_(kIgnoreSequence), started_(false)
 {
    commonInit();
@@ -251,6 +256,8 @@ void ConsoleProcess::commonInit()
 
    if (interactionMode() != InteractionNever)
    {
+      rows_ = options_.rows;
+      cols_ = options_.cols;
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
       // prompting works properly
@@ -477,7 +484,6 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    if (interrupt_)
       return false;
 
-
    if (procInfo_->getChannelMode() == Rpc)
    {
       processQueuedInput(ops);
@@ -496,9 +502,13 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    if (newCols_ != -1 && newRows_ != -1)
    {
       ops.ptySetSize(newCols_, newRows_);
+      rows_ = newRows_;
+      cols_ = newCols_;
       newCols_ = -1;
       newRows_ = -1;
    }
+
+   pid_ = ops.getPid();
    
    // continue
    return true;

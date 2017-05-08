@@ -262,6 +262,11 @@ Error ChildProcess::ptyInterrupt()
    return pImpl_->pty.interrupt();
 }
 
+PidType ChildProcess::getPid()
+{
+   return pImpl_->pid;
+}
+
 Error ChildProcess::terminate()
 {
    // terminate with exit code 15 (15 is SIGTERM on posix)

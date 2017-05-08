@@ -322,6 +322,11 @@ Error ChildProcess::ptyInterrupt()
                          ERROR_LOCATION);
 }
 
+PidType ChildProcess::getPid()
+{
+   return pImpl_->pid;
+}
+
 Error ChildProcess::terminate()
 {
    // only send signal if the process is open
