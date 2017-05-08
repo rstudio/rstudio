@@ -15,10 +15,6 @@
 #
 #
 
-# This archive includes the files required to build against Qt 5.4.0. It
-# was created by installing Qt 5.4.0 via an interactive installer, and 
-# manually removing components not needed by RStudio.
-
 # define QT archive to download
 SYSTEM_ARCH=`getconf LONG_BIT`
 if [ "$SYSTEM_ARCH" == "64" ]
@@ -28,8 +24,8 @@ else
   QT_ARCH=x86
 fi
 
-# presume 5.4.0
-QT_VERSION=5.4.0
+# presume 5.4.1
+QT_VERSION=5.4.1
 
 # test for libgstreamer
 which apt-cache > /dev/null

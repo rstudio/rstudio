@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -462,9 +462,16 @@ if(RSTUDIO_BUNDLE_QT)
       # install dependent libraries
       set(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib")
       set(QT_FULL_VERSION ${QT_VERSION})
+
+      # Qt 5.4.0 (default)
       set(SO_VERSION "53")
 
-      # use newer system library versions for Qt > 5.4.1
+      # Qt 5.4.1
+      if(QT_VERSION VERSION_GREATER 5.4.0)
+         set(SO_VERSION "42")
+      endif()
+
+      # Qt 5.4.2
       if(QT_VERSION VERSION_GREATER 5.4.1)
          set(SO_VERSION "55")
       endif()

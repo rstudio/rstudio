@@ -36,6 +36,12 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# install Qt SDK
+COPY dependencies/linux/install-qt-sdk /tmp/
+RUN mkdir -p /opt/RStudio-QtSDK && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.1 && \
+    /tmp/install-qt-sdk
+
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999

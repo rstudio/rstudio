@@ -46,7 +46,7 @@ RUN userdel systemd-bus-proxy && userdel systemd-network && groupdel input
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.0 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.1 && \
     /tmp/install-qt-sdk
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
