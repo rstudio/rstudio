@@ -173,6 +173,7 @@ const int kSendToTerminal = 154;
 const int kClearTerminal = 155;
 const int kCreateNamedTerminal = 156;
 const int kCreateNamedTerminalCompleted = 157;
+const int kActivateTerminal = 158;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -474,6 +475,8 @@ std::string ClientEvent::typeName() const
          return "create_named_terminal";
       case client_events::kCreateNamedTerminalCompleted:
          return "create_named_terminal_completed";
+      case client_events::kActivateTerminal:
+         return "activate_terminal";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

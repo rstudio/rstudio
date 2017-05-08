@@ -162,6 +162,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
@@ -894,6 +895,11 @@ public class ClientEventDispatcher
          {
             CreateNamedTerminalEvent.Data data = event.getData();
             eventBus_.fireEvent(new CreateNamedTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.ActivateTerminal))
+         {
+            ActivateNamedTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ActivateNamedTerminalEvent(data));
          }
          else
          {

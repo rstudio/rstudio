@@ -324,6 +324,23 @@ public class TerminalList implements Iterable<String>,
    }
 
    /**
+    * Obtain handle for given caption.
+    * @param caption to find
+    * @return handle if found, or null
+    */
+   public String handleForCaption(String caption)
+   {
+      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      {
+         if (item.getValue().getCaption().equals(caption))
+         {
+            return item.getValue().getHandle();
+         }
+      }
+      return null;
+   }
+
+   /**
     * Get metadata for terminal with given handle.
     * @param handle handle of terminal of interest
     * @return terminal metadata or null if not found

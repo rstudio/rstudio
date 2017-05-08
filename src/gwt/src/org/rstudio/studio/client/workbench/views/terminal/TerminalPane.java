@@ -221,6 +221,15 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
+   public void activateNamedTerminal(String caption)
+   {
+      if (StringUtil.isNullOrEmpty(caption))
+         return;
+      
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
+   }
+
+   @Override
    public void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
    {
       // Expect to receive this after a browser reset, so if we already have

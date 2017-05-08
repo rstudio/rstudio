@@ -164,6 +164,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kClearTerminal;
       else if (name == "create_named_terminal")
          type = session::client_events::kCreateNamedTerminal;
+      else if (name == "activate_terminal")
+         type = session::client_events::kActivateTerminal;
 
       if (type != -1)
       {

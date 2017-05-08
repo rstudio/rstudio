@@ -408,7 +408,6 @@
    text <- paste(text, collapse = "\n")
    data <- list(text = .rs.scalar(text), id = .rs.scalar(id))
 
-   .Call("rs_ensureTerminalRunning", id)
    .rs.enqueClientEvent("send_to_terminal", data)
    invisible(data)
 })
@@ -449,5 +448,18 @@
       stop("'id' must be a character vector")
 
    .Call("rs_getTerminalContext", id)
+})
+
+.rs.addApiFunction("showTerminal", function(id = NULL) {
+   if (is.null(id))
+      id <- ""
+
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+
+   data <- list(id = .rs.scalar(id))
+
+   .rs.enqueClientEvent("activate_terminal", data)
+   invisible(data)
 })
 

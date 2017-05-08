@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -153,6 +154,15 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+   }
+   
+   public void setActiveTerminalByCaption(String caption)
+   {
+      String handle = terminals_.handleForCaption(caption);
+      if (StringUtil.isNullOrEmpty(caption))
+         return;
+      
+      setActiveTerminal(caption, handle); 
    }
 
    /**

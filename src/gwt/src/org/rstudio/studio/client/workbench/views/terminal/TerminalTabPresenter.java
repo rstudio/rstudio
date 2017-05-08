@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
@@ -44,7 +45,8 @@ public class TerminalTabPresenter extends BusyPresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
-                                             CreateNamedTerminalEvent.Handler
+                                             CreateNamedTerminalEvent.Handler,
+                                             ActivateNamedTerminalEvent.Handler
 
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
@@ -98,6 +100,13 @@ public class TerminalTabPresenter extends BusyPresenter
        * caption
        */
       void createNamedTerminal(String caption);
+      
+      /**
+       * Activate (display) terminal with given caption. If none specified,
+       * do nothing.
+       * @param caption
+       */
+      void activateNamedTerminal(String caption);
    }
 
    @Inject
@@ -189,6 +198,13 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onCreateNamedTerminal(CreateNamedTerminalEvent event)
    {
       view_.createNamedTerminal(event.getId());
+   }
+
+   @Override
+   public void onActivateNamedTerminal(ActivateNamedTerminalEvent event)
+   {
+      onActivateTerminal();
+      view_.activateNamedTerminal(event.getId());
    }
 
    public void onSessionInit(SessionInitEvent sie)
