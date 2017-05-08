@@ -155,6 +155,9 @@ public:
    // after the requested chunk, *pMoreAvailable will be set to true
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
 
+   // Get the full terminal buffer
+   std::string getBuffer() const;
+
    void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;

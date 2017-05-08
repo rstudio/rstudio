@@ -398,7 +398,7 @@
    if (is.null(value) || value != 1) FALSE else TRUE
 })
 
-.rs.addApiFunction("sendToTerminal", function(text, id) {
+.rs.addApiFunction("sendToTerminal", function(id, text) {
    if (!is.character(text))
       stop("'text' should be a character vector", call. = FALSE)
 
@@ -463,3 +463,12 @@
    invisible(data)
 })
 
+.rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = NULL) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   if (is.null(stripAnsi) || !is.logical(stripAnsi))
+      stop("'stripAnsi' must be a logical vector")
+
+   .Call("rs_getTerminalBuffer", id, stripAnsi)
+})

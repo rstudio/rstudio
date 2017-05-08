@@ -19,6 +19,8 @@
 #include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
+#include <core/Algorithm.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -189,17 +191,37 @@ SEXP rs_getTerminalContext(SEXP terminalsSEXP)
 // Ensure terminal is running (has started its process); a terminal can be
 // unstarted if the session has previously been suspended and restarted,
 // but user hasn't visited the terminal in the client.
-SEXP rs_ensureTerminalRunning(SEXP typeSEXP)
+SEXP rs_ensureTerminalRunning(SEXP idSEXP)
 {
    r::sexp::Protect protect;
 
-   std::string terminalId = r::sexp::asString(typeSEXP);
+   std::string terminalId = r::sexp::asString(idSEXP);
    ConsoleProcessPtr proc = findProcByCaption(terminalId);
    if (proc == NULL)
       return R_NilValue;
 
    proc->start();
    return R_NilValue;
+}
+
+// Return buffer for a terminal, optionally stripping out Ansi codes.
+SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(idSEXP);
+   bool stripAnsi = r::sexp::asLogical(stripSEXP);
+
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
+      return R_NilValue;
+
+   std::string buffer = proc->getBuffer();
+
+   if (stripAnsi)
+      core::text::stripAnsiCodes(&buffer);
+   string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
+   return r::sexp::create(core::algorithm::split(buffer, "\n"), &protect);
 }
 
 } // anonymous namespace
@@ -566,6 +588,11 @@ void ConsoleProcess::deleteLogFile() const
 std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable) const
 {
    return procInfo_->getSavedBufferChunk(chunk, pMoreAvailable);
+}
+
+std::string ConsoleProcess::getBuffer() const
+{
+   return procInfo_->getFullSavedBuffer();
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output)
@@ -1385,6 +1412,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
    RS_REGISTER_CALL_METHOD(rs_ensureTerminalRunning, 1);
+   RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
 
    // install rpc methods
    ExecBlock initBlock ;

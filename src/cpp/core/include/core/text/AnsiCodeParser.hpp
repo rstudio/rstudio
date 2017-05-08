@@ -16,6 +16,8 @@
 #ifndef ANSI_CODE_PARSER_HPP
 #define ANSI_CODE_PARSER_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 namespace text {
@@ -26,12 +28,8 @@ enum AnsiCodeMode {
    AnsiColorStrip = 2 // strip out ANSI escape sequences but don't apply styles
 };
 
-// Prevent build-time "no code" warning; this file will be used to implement
-// server-side ANSI code parser, which will be needed to ensure
-// notebook publishing can either ignore (strip-out) ANSI codes output by R
-// code using something like the Crayon package, or (ideally) implement
-// color support in the published output.
-bool ansiFuncPlaceholder();
+// Strip Ansi codes from a string
+void stripAnsiCodes(std::string* pStr);
 
 } // namespace text
 } // namespace core
