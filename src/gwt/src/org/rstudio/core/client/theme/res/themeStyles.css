@@ -2137,6 +2137,10 @@ body.ubuntu_mono .searchBox {
            filter: invert(100%);
 }
 
+.progressPanel {
+
+}
+
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,
@@ -2292,3 +2296,6 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .multiPodUtilityArea {
    background: linear-gradient(to right, THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT, THEME_ALTERNATE_MOST_INACTIVE 13%);
 }
+
+/* RSTUDIO THEMES END */
+
