@@ -2810,10 +2810,7 @@ public class Source implements InsertSourceHandler,
       
       // begin queue processing if it's the only work in the queue
       if (openFileQueue_.size() == 1)
-      {
-         Debug.devlog("initiate queue process");
          processOpenFileQueue();
-      }
    }
    
    private void processOpenFileQueue()
