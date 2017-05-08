@@ -59,6 +59,7 @@ public class JsUtils {
     return o;
   }-*/;
 
+  @UncheckedCast
   public static native <T> T getProperty(Object map, String key) /*-{
     return map[key];
   }-*/;
