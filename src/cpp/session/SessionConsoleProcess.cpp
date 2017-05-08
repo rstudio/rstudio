@@ -224,6 +224,26 @@ SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    return r::sexp::create(core::algorithm::split(buffer, "\n"), &protect);
 }
 
+// Kill terminal and its processes.
+SEXP rs_killTerminal(SEXP terminalsSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::vector<std::string> terminalIds;
+   if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
+      return R_NilValue;
+
+   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   {
+      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      if (proc != NULL)
+      {
+         proc->interrupt();
+      }
+   }
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 void saveConsoleProcesses();
@@ -1413,6 +1433,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
    RS_REGISTER_CALL_METHOD(rs_ensureTerminalRunning, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
+   RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
 
    // install rpc methods
    ExecBlock initBlock ;

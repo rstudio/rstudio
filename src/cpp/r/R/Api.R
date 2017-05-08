@@ -472,3 +472,11 @@
 
    .Call("rs_getTerminalBuffer", id, stripAnsi)
 })
+
+.rs.addApiFunction("killTerminal", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_killTerminal", id)
+})
+
