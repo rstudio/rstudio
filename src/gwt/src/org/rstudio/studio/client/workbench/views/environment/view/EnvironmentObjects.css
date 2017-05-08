@@ -8,6 +8,9 @@
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
 
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
 
 @def headerRowHeight 20px;
 
@@ -175,4 +178,16 @@
 .rstudio-themes-flat .rstudio-themes-alternate .objectGrid .detailRow,
 .rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
+   background: THEME_DEFAULT_BACKGROUND;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
+   background: THEME_ALTERNATE_BACKGROUND;
 }

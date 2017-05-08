@@ -2151,6 +2151,11 @@ body.rstudio-themes-flat .rstudio-themes-default {
    background: rgb(246, 247, 249);
 }
 
+.rstudio-themes-flat .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(246, 247, 249) !important;
+}
+
 .rstudio-themes-flat .rstudio-themes-default table.header > tbody > tr > td,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-default .secondaryToolbar,
@@ -2192,6 +2197,11 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
    background: rgb(50, 76, 99);
 }
 
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(50, 76, 99) !important;
+}
+
 .rstudio-themes-flat .rstudio-themes-dark-grey table.header > tbody > tr > td,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-dark-grey .secondaryToolbar,
@@ -2231,6 +2241,11 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 body.rstudio-themes-flat .rstudio-themes-alternate {
    background: rgb(162, 197, 215);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(162, 197, 215) !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate table.header > tbody > tr > td,
