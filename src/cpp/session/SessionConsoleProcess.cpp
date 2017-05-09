@@ -150,41 +150,33 @@ SEXP rs_isTerminalBusy(SEXP terminalsSEXP)
    return r::sexp::create(isBusy, &protect);
 }
 
-// Returns bunch of metadata about terminal instance(s).
-SEXP rs_getTerminalContext(SEXP terminalsSEXP)
+// Returns bunch of metadata about a terminal instance.
+SEXP rs_getTerminalContext(SEXP terminalSEXP)
 {
    r::sexp::Protect protect;
 
-   std::vector<std::string> terminalIds;
-   if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
-      return R_NilValue;
+   std::string terminalId = r::sexp::asString(terminalSEXP);
 
-   r::sexp::ListBuilder outerBuilder(&protect);
-   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
-      if (proc == NULL)
-      {
-         continue;
-      }
-
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("handle", proc->handle());
-      builder.add("caption", proc->getCaption());
-      builder.add("title", proc->getTitle());
-      builder.add("running", proc->isStarted());
-      builder.add("busy", proc->getIsBusy());
-      builder.add("connection", proc->getChannelMode());
-      builder.add("sequence", proc->getTerminalSequence());
-      builder.add("lines", proc->getBufferLineCount());
-      builder.add("cols", proc->getCols());
-      builder.add("rows", proc->getRows());
-      builder.add("pid", proc->getPid());
-
-      outerBuilder.add(proc->getCaption(), builder);
+      return R_NilValue;
    }
 
-   return r::sexp::create(outerBuilder, &protect);
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("handle", proc->handle());
+   builder.add("caption", proc->getCaption());
+   builder.add("title", proc->getTitle());
+   builder.add("running", proc->isStarted());
+   builder.add("busy", proc->getIsBusy());
+   builder.add("connection", proc->getChannelMode());
+   builder.add("sequence", proc->getTerminalSequence());
+   builder.add("lines", proc->getBufferLineCount());
+   builder.add("cols", proc->getCols());
+   builder.add("rows", proc->getRows());
+   builder.add("pid", proc->getPid());
+
+   return r::sexp::create(builder, &protect);
 }
 
 // Ensure terminal is running (has started its process); a terminal can be
@@ -255,6 +247,30 @@ SEXP rs_getVisibleTerminal()
       return R_NilValue;
 
    return r::sexp::create(proc->getCaption(), &protect);
+}
+
+SEXP rs_clearTerminal(SEXP idSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(idSEXP);
+
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
+      return R_NilValue;
+
+   // clear the server-side log directly
+   proc->deleteLogFile();
+
+   // send the event to the client; if not connected, it will get the cleared
+   // server-side buffer next time it connects.
+   json::Object eventData;
+   eventData["id"] = terminalId;
+
+   ClientEvent clearNamedTerminalEvent(client_events::kClearTerminal, eventData);
+   module_context::enqueClientEvent(clearNamedTerminalEvent);
+
+   return R_NilValue;
 }
 
 } // anonymous namespace
@@ -1470,6 +1486,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
    RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
+   RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
 
    // install rpc methods
    ExecBlock initBlock ;
