@@ -19,9 +19,6 @@ import org.rstudio.core.client.widget.MiniPopupPanel;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Singleton;
@@ -56,25 +53,49 @@ public class JavaScriptEventHistory
       public boolean accept(EventData event);
    }
    
-   // NOTE: should not be constructed directly;
-   // inject the singleton instance with GWT
    public JavaScriptEventHistory()
    {
       queue_ = JavaScriptObject.createArray().cast();
+      registerEventListeners();
+   }
+   
+   private final native void registerEventListeners()
+   /*-{
+      var self = this;
       
-      Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent preview)
-         {
-            EventData eventData = EventData.create(preview.getNativeEvent());
-            queue_.unshift(eventData);
-            queue_.setLength(QUEUE_LENGTH);
-            
-            // toggle this if you want to see events as they're emitted real-time
-            debugHistory();
-         }
+      // get reference to document body
+      var document = $doc;
+      var body = document.body;
+      console.log(body);
+      
+      // define our handler (we can just use a single one)
+      var handler = $entry(function(event) {
+         self.@org.rstudio.studio.client.JavaScriptEventHistory::onEvent(Lcom/google/gwt/dom/client/NativeEvent;)(event);
       });
+      
+      // iterate through all keys on body object, and
+      // register handlers for any prefixed with 'on'
+      for (var key in body) {
+         
+         // skip keys that don't have an 'on' prefix
+         if (key.indexOf("on") != 0)
+            continue;
+            
+         // extract event name and attach handler
+         var event = key.slice(2);
+         body.addEventListener(event, handler)
+      }
+      
+   }-*/;
+   
+   private void onEvent(NativeEvent event)
+   {
+      EventData eventData = EventData.create(event);
+      queue_.unshift(eventData);
+      queue_.setLength(QUEUE_LENGTH);
+
+      // toggle this if you want to see events as they're emitted real-time
+      debugHistory();
    }
    
    public EventData findEvent(Predicate predicate)
