@@ -718,3 +718,4 @@
 .xtermBgColor254 { background-color: #e4e4e4; }
 .xtermColor255 { color: #eeeeee; }
 .xtermBgColor255 { background-color: #eeeeee; }
+.editor_dark.ace_editor_theme a { color: #FFF !important; }

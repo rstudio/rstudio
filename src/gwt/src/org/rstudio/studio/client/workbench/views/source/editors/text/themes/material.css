@@ -163,3 +163,6 @@
 .ace_console_error {
   background-color: #455054;
 }
+.editor_dark.ace_editor_theme a {
+  color: #FFF !important;
+}

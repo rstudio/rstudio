@@ -36,4 +36,10 @@ public class ThemeColors
    public static String alternateMostInactiveBackground            = "rgb(158, 160, 187)";
    public static String alternateMostInactiveTransparentBackground = "rgba(158, 160, 187, 0)";
    public static String alternateBorder                            = "rgb(162, 197, 215)";
+
+   public static String lightControlBackground                     = "#FFF";
+   public static String lightControlBorder                         = "#d6dadc";
+
+   public static String darkControlBackground                      = "rgb(108,121,131)";
+   public static String darkControlBorder                          = "rgb(45,60,75)";
 }
