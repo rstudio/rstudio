@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -49,7 +50,7 @@ public class RStudioFrame extends Frame
          setUrl(url);
    }
    
-   private void addThemesStyle(String customStyle)
+   private void addThemesStyle(String customStyle, String urlStyle)
    {
       if (getWindow() != null && getWindow().getDocument() != null)
       {
@@ -59,6 +60,13 @@ public class RStudioFrame extends Frame
             StyleElement style = document.createStyleElement();
             style.setInnerHTML(customStyle);
             document.getHead().appendChild(style);
+         }
+         
+         if (urlStyle != null) {
+            LinkElement styleLink = document.createLinkElement();
+            styleLink.setHref(urlStyle);
+            styleLink.setRel("stylesheet");
+            document.getHead().appendChild(styleLink);
          }
          
          RStudioGinjector.INSTANCE.getAceThemes().applyTheme(document);
@@ -78,17 +86,24 @@ public class RStudioFrame extends Frame
    {
       setAceThemeAndCustomStyle(null);
    }
-
+   
    public void setAceThemeAndCustomStyle(final String customStyle)
    {
-      addThemesStyle(customStyle);
+      setAceThemeAndCustomStyle(customStyle, null);  
+   }
+
+   public void setAceThemeAndCustomStyle(
+      final String customStyle,
+      final String urlStyle)
+   {
+      addThemesStyle(customStyle, urlStyle);
       
       this.addLoadHandler(new LoadHandler()
       {      
          @Override
          public void onLoad(LoadEvent arg0)
          {
-            addThemesStyle(customStyle);
+            addThemesStyle(customStyle, urlStyle);
          }
       });
    }

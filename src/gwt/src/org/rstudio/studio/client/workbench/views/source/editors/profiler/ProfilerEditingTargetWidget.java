@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -45,6 +46,10 @@ public class ProfilerEditingTargetWidget extends Composite
                                           panel);
 
       profilePage_ = new RStudioFrame();
+      profilePage_.setAceThemeAndCustomStyle(
+         getCustomStyle(),
+         "../profiler_resource/profiler.css");
+
       profilePage_.setWidth("100%");
       profilePage_.setHeight("100%");
       
@@ -57,6 +62,35 @@ public class ProfilerEditingTargetWidget extends Composite
          profilePage_.getElement().getParentElement().setAttribute("height", "100%");
       
       initWidget(mainPanel);
+   }
+
+   private String getCustomStyle()
+   {
+      return
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer {\n" +
+         "   border-color: " + ThemeColors.defaultBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer {\n" +
+         "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer {\n" +
+         "   border-color: " + ThemeColors.alternateBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer {\n" +
+         "   background-color: " + ThemeColors.defaultBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer {\n" +
+         "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer {\n" +
+         "   background-color: " + ThemeColors.alternateBackground + ";\n" +
+         "}\n" +
+         "\n";
    }
 
    public void print()
