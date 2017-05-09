@@ -31,7 +31,7 @@ public class ProgressSpinner extends Composite
       // compute sizes
       outerRadius_ = (COORD_SIZE / 2) - 10;
       innerRadius_ = (outerRadius_ / 2) + 5;
-      color_ = color == COLOR_WHITE ? "255, 255, 255" : "0, 0, 0";
+      colorType_ = color;
 
       // create canvas host
       canvas_ = Canvas.createIfSupported();
@@ -61,14 +61,26 @@ public class ProgressSpinner extends Composite
          }
       }, FRAME_RATE_MS);
    }
+
+   public boolean isSupported()
+   {
+      return canvas_ != null;
+   }
    
    public void detach()
    {
       complete_ = true;
    }
+
+   public void setColorType(int color)
+   {
+      colorType_ = color;
+   }
    
    private void redraw()
    {
+      String color = colorType_ == COLOR_WHITE ? "255, 255, 255" : "0, 0, 0";
+
       Context2d ctx = canvas_.getContext2d();
       double center = COORD_SIZE / 2;
       // clear canvas (we draw with an alpha channel so otherwise would stack)
@@ -88,7 +100,7 @@ public class ProgressSpinner extends Composite
          // compute transparency for this blade
          double alpha = 1.0 - (((double)((i + frame_) % NUM_BLADES)) / 
                                ((double)NUM_BLADES));
-         ctx.setStrokeStyle("rgba(" + color_ + ", " + alpha + ")");
+         ctx.setStrokeStyle("rgba(" + color + ", " + alpha + ")");
          
          // draw the blade
          ctx.moveTo(center + sin * innerRadius_,
@@ -111,7 +123,7 @@ public class ProgressSpinner extends Composite
    private final int innerRadius_;
    private final int outerRadius_;
    private final Canvas canvas_;
-   private final String color_;
+   private int colorType_;
 
    private int frame_ = 0;
    private boolean complete_ = false;

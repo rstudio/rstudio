@@ -192,4 +192,6 @@ public interface ThemeStyles extends CssResource
    String toolbarWrapper();
    String webGlobalToolbarWrapper();
    String desktopGlobalToolbarWrapper();
+
+   String progressPanel();
 }
