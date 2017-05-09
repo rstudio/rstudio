@@ -1501,7 +1501,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat td.environmentDataFrameCol {
-   background: none;
+   background-color: inherit;
 }
 
 @sprite td.environmentFunctionCol {
