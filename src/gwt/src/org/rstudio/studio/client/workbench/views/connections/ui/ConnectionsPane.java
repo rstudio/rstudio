@@ -612,7 +612,10 @@ public class ConnectionsPane extends WorkbenchPane
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       
       toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
-      toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
+
+      ToolbarButton refreshButton = commands_.refreshConnection().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar_.addRightWidget(refreshButton);
       
       connectionName_.setText(connection.getDisplayName());
       connectionIcon_.setUrl(connection.getIconData());

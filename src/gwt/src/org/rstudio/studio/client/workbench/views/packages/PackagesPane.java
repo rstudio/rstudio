@@ -22,6 +22,7 @@ import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
@@ -282,8 +283,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addRightWidget(searchWidget_);
       
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshPackages().createToolbarButton());
-      
+
+      ToolbarButton refreshButton = commands_.refreshPackages().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton);
       
       return toolbar;
    }

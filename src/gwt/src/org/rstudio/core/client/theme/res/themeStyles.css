@@ -2171,6 +2171,14 @@ body.ubuntu_mono .searchBox {
    opacity: 0.5;
 }
 
+.refreshToolbarButton {
+
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .refreshToolbarButton {
+   opacity: 0.8;
+}
+
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,

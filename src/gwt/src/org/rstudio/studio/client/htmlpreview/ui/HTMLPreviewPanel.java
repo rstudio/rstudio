@@ -155,8 +155,10 @@ public class HTMLPreviewPanel extends ResizeComposite
       });
       
       refreshButtonSeparator_ = toolbar.addRightSeparator();
-      refreshButton_ = toolbar.addRightWidget(
-                     commands.refreshHtmlPreview().createToolbarButton());
+
+      ToolbarButton refreshButton = commands.refreshHtmlPreview().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      refreshButton_ = toolbar.addRightWidget(refreshButton);
       
       
       return toolbar;
