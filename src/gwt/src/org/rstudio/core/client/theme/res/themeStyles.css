@@ -1578,6 +1578,10 @@ body.ubuntu_mono .searchBox {
    z-index: 10;
 }
 
+.rstudio-themes-flat .tabOverflowPopup {
+   z-index: 1000;
+}
+
 .tabOverflowPopup .gwt-MenuBar>table {
    width: 100%;
 }
