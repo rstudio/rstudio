@@ -798,6 +798,12 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermBgColor255 { background-color: #eeeeee; }")
 }
 
+themes_static_rules <- function() {
+  paste(".editor_dark.ace_editor_theme a {",
+        "color: #FFF !important;",
+        "}")
+}
+
 ## Get the set of all theme .css files
 outDir <- "../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes"
 themeDir <- "ace/lib/ace/theme"
@@ -1037,6 +1043,9 @@ for (file in themeFiles) {
    # Add xterm-256 colors for colorized console output
    content <- c(content,
                 create_xterm_color_rules(background, foreground, isDark)) 
+
+   # Theme rules
+   content <- add_content(content, themes_static_rules()) 
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))
