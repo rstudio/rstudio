@@ -194,4 +194,7 @@ public interface ThemeStyles extends CssResource
    String desktopGlobalToolbarWrapper();
 
    String progressPanel();
+
+   String consoleClearButton();
+   String terminalClearButton();
 }

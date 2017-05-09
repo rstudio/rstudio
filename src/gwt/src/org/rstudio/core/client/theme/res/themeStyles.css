@@ -2158,6 +2158,19 @@ body.ubuntu_mono .searchBox {
 
 }
 
+.consoleClearButton {
+
+}
+
+.terminalClearButton {
+
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .consoleClearButton,
+.rstudio-themes-flat .rstudio-themes-dark .terminalClearButton {
+   opacity: 0.5;
+}
+
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,
