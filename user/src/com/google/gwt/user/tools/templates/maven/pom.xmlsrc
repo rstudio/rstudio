@@ -70,13 +70,11 @@
       <plugin>
         <groupId>net.ltgt.gwt.maven</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>1.0-rc-6</version>
+        <version>1.0-rc-8</version>
         <executions>
           <execution>
             <goals>
-              <goal>import-sources</goal>
               <goal>compile</goal>
-              <goal>import-test-sources</goal>
               <goal>test</goal>
             </goals>
           </execution>
