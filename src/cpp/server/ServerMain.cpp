@@ -189,6 +189,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true)); 
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
