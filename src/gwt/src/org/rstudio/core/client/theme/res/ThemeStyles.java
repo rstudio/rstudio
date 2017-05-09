@@ -198,4 +198,6 @@ public interface ThemeStyles extends CssResource
    String consoleClearButton();
    String terminalClearButton();
    String refreshToolbarButton();
+
+   String tabIcon();
 }
