@@ -158,6 +158,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -2734,26 +2736,9 @@ public class Source implements InsertSourceHandler,
       // Warning: event.getFile() can be null (e.g. new Sweave document)
       if (file != null && file.getLength() < 0)
       {
-         // If the file has no size info, stat the file from the server. This
-         // is to prevent us from opening large files accidentally.
-
-         server_.stat(file.getPath(), new ServerRequestCallback<FileSystemItem>()
-         {
-            @Override
-            public void onResponseReceived(FileSystemItem response)
-            {
-               action.execute(response);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               // Couldn't stat the file? Proceed anyway. If the file doesn't
-               // exist, we'll let the downstream code be the one to show the
-               // error.
-               action.execute(file);
-            }
-         });
+         statQueue_.add(new StatFileEntry(file, action));
+         if (statQueue_.size() == 1)
+            processStatQueue();
       }
       else
       {
@@ -2761,6 +2746,42 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   private void processStatQueue()
+   {
+      if (statQueue_.isEmpty())
+         return;
+      final StatFileEntry entry = statQueue_.peek();
+      final Command processNextEntry = new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  statQueue_.remove();
+                  if (!statQueue_.isEmpty())
+                     processStatQueue();
+               }
+            };
+       
+       server_.stat(entry.file.getPath(), new ServerRequestCallback<FileSystemItem>()
+       {
+          @Override
+          public void onResponseReceived(FileSystemItem response)
+          {
+             processNextEntry.execute();
+             entry.action.execute(response);
+          }
+
+          @Override
+          public void onError(ServerError error)
+          {
+             processNextEntry.execute();
+             // Couldn't stat the file? Proceed anyway. If the file doesn't
+             // exist, we'll let the downstream code be the one to show the
+             // error.
+             entry.action.execute(entry.file);
+          }
+        });
+   }
 
    private void openFile(FileSystemItem file)
    {
@@ -2784,14 +2805,45 @@ public class Source implements InsertSourceHandler,
                          final TextFileType fileType,
                          final CommandWithArg<EditingTarget> executeOnSuccess)
    {
-      openFile(file,
-            fileType,
+      // add this work to the queue
+      openFileQueue_.add(new OpenFileEntry(file, fileType, executeOnSuccess));
+      
+      // begin queue processing if it's the only work in the queue
+      if (openFileQueue_.size() == 1)
+         processOpenFileQueue();
+   }
+   
+   private void processOpenFileQueue()
+   {
+      // no work to do
+      if (openFileQueue_.isEmpty())
+         return;
+      
+      // find the first work unit
+      final OpenFileEntry entry = openFileQueue_.peek();
+      
+      // define command to advance queue
+      final Command processNextEntry = new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  openFileQueue_.remove();
+                  if (!openFileQueue_.isEmpty())
+                     processOpenFileQueue();
+                  
+               }
+            };
+      
+      openFile(entry.file,
+            entry.fileType,
             new ResultCallback<EditingTarget, ServerError>() {
                @Override
                public void onSuccess(EditingTarget target)
                {
-                  if (executeOnSuccess != null)
-                     executeOnSuccess.execute(target);
+                  processNextEntry.execute();
+                  if (entry.executeOnSuccess != null)
+                     entry.executeOnSuccess.execute(target);
                }
 
                @Override
@@ -2811,7 +2863,8 @@ public class Source implements InsertSourceHandler,
                   globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                                              "Error while opening file",
                                              message);
-                 
+
+                  processNextEntry.execute();
                }
             });  
    }
@@ -4327,6 +4380,34 @@ public class Source implements InsertSourceHandler,
       docDisplay.focus();
    }
    
+   private class OpenFileEntry
+   {
+      public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,
+            CommandWithArg<EditingTarget> executeIn)
+      {
+         file = fileIn;
+         fileType = fileTypeIn;
+         executeOnSuccess = executeIn;
+      }
+      public final FileSystemItem file;
+      public final TextFileType fileType;
+      public final CommandWithArg<EditingTarget> executeOnSuccess;
+   }
+   
+   private class StatFileEntry
+   {
+      public StatFileEntry(FileSystemItem fileIn, 
+            CommandWithArg<FileSystemItem> actionIn)
+      {
+         file = fileIn;
+         action = actionIn;
+      }
+      public final FileSystemItem file;
+      public final CommandWithArg<FileSystemItem> action;
+   }
+   
+   final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
+   final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
