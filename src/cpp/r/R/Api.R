@@ -402,24 +402,19 @@
    if (!is.character(text))
       stop("'text' should be a character vector", call. = FALSE)
 
-   if (is.null(id) || !is.character(id))
-      stop("'id' must be a character vector")
+   if (is.null(id) || !is.character(id) || length(id) != 1)
+      stop("'id' must be a character vector of length one")
 
-   text <- paste(text, collapse = "\n")
-   data <- list(text = .rs.scalar(text), id = .rs.scalar(id))
-
-   .rs.enqueClientEvent("send_to_terminal", data)
-   invisible(data)
+  .Call("rs_sendToTerminal", id, text)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("clearTerminal", function(id) {
-   if (is.null(id) || !is.character(id))
-      stop("'id' must be a character vector")
+   if (is.null(id) || !is.character(id) || length(id) != 1)
+      stop("'id' must be a character vector of length one")
 
-   data <- list(id = .rs.scalar(id))
-
-   .rs.enqueClientEvent("clear_terminal", data)
-   invisible(data)
+  .Call("rs_clearTerminal", id)
+  invisible(NULL)
 })
 
 .rs.addApiFunction("createTerminal", function(id = "") {
@@ -444,8 +439,8 @@
 })
 
 .rs.addApiFunction("getTerminalContext", function(id) {
-   if (is.null(id) || !is.character(id))
-      stop("'id' must be a character vector")
+   if (is.null(id) || !is.character(id) || (length(id) != 1))
+      stop("'id' must be a single element character vector")
 
    .Call("rs_getTerminalContext", id)
 })
