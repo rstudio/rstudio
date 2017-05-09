@@ -38,22 +38,44 @@
     .otherRow {
         margin-bottom: 4px;
     }
+    .optionSmallLabel {
+        width: 50px;
+        margin-top: 3px;
+    }
+    .optionLabel {
+        width: 70px;
+        margin-top: 3px;
+    }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
         <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
         <div class="{style.optionsBlock} {style.optionsDirectionRow}">
             <div class="{style.optionsColumn}">
                 <div class="{style.optionsRow} {style.firstRow}">
-                    <div class="{style.optionLabel} {style.nameLabel}">Name:</div>
+                    <div class="{style.optionSmallLabel} {style.nameLabel}">Name:</div>
                     <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.optionLabel}">Sheet:</div>
+                    <div class="{style.optionSmallLabel}">Sheet:</div>
                     <g:ListBox ui:field="sheetListBox_" styleName="{style.optionsGrowListBox}"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <div class="{style.optionSmallLabel} {style.nameLabel}">Range:</div>
+                    <g:TextBox ui:field="rangeTextBox_" styleName="{style.nameTextBox}"/>
+                </div>
+            </div>
+            <div class="{style.optionsColumn}">
+                <div class="{style.optionsRow} {style.firstRow}">
+                    <div class="{style.optionLabel}">Max Rows:</div>
+                    <g:TextBox ui:field="maxTextBox_" styleName="{style.skipTextBox}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
                     <div class="{style.optionLabel}">Skip:</div>
                     <g:TextBox ui:field="skipTextBox_" styleName="{style.skipTextBox}"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <div class="{style.optionLabel}">NA:</div>
+                    <g:ListBox ui:field="naListBox_" styleName="{style.naListBox}"/>
                 </div>
             </div>
             <div class="{style.optionsColumn}">
@@ -61,11 +83,9 @@
                     <g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.naLabel}">NA:</div>
-                    <g:ListBox ui:field="naListBox_" styleName="{style.naListBox}"/>
+                    <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
                 </div>
             </div>
         </div>

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
@@ -73,6 +74,11 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    public void fireEvent(GwtEvent<?> event)
    {
       handlerManager_.fireEvent(event);
+   }
+   
+   public HelpLink getHelpLink()
+   {
+      return null;
    }
    
    @UiField

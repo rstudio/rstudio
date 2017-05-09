@@ -117,7 +117,7 @@ SEXP PlotManipulator::get(const std::string& name) const
 {
    if (!empty())
    {
-      r::exec::RFunction getFunction("get");
+      r::exec::RFunction getFunction("base:::get");
       getFunction.addParam(name);
       getFunction.addParam("envir", sexp());
       r::sexp::Protect rProtect;

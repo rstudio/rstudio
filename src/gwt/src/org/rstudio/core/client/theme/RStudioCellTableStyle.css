@@ -1,13 +1,17 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-
 @def selectionBorderWidth 1px;
 
+@external editor_dark;
 
 .cellTableWidget {
    font-size: 9pt;
    background-color: white;
    outline: none;
+}
+
+.editor_dark .cellTableWidget {
+   background-color: inherit;
 }
 
 .cellTableFirstColumn {
@@ -125,6 +129,10 @@
   /* color: white; */
   height: auto;
   overflow: auto;
+}
+
+.editor_dark .cellTableSelectedRow {
+  color: #FFF;
 }
 
 .cellTableSelectedRowCell {

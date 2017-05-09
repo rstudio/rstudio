@@ -443,7 +443,13 @@ void onDocSaved(FilePath path)
          // contexts)
          error = target.removeIfExists();
          if (!error)
+         {
             error = source.copy(target);
+
+            // copying the definitions file doesn't copy the ACL under some
+            // configurations, so have our helper fix it up
+            module_context::events().onPermissionsChanged(target);
+         }
       }
       else if (source.isDirectory())
       {

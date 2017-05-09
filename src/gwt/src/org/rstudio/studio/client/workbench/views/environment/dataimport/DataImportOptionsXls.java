@@ -27,7 +27,9 @@ public class DataImportOptionsXls extends DataImportOptions
       int skip,
       boolean colNames,
       String na,
-      boolean openDataViewer
+      boolean openDataViewer,
+      Integer nMax,
+      String range
       ) /*-{
          return {
             "mode": "xls",
@@ -36,7 +38,9 @@ public class DataImportOptionsXls extends DataImportOptions
             "skip": skip,
             "columnNames": colNames,
             "na": na,
-            "openDataViewer": openDataViewer
+            "openDataViewer": openDataViewer,
+            "nMax": nMax,
+            "range": range
        }
    }-*/;
 }

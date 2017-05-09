@@ -215,6 +215,11 @@
 })
 
 .rs.addFunction("toDataFrame", function(x, name, flatten) {
+   
+   # if we have a data.table, convert it to a data.frame explicitly
+   if (inherits(x, "data.table"))
+      x <- as.data.frame(x)
+   
   # if it's not already a frame, coerce it to a frame
   if (!is.data.frame(x)) {
     frame <- NULL
@@ -599,7 +604,7 @@
       view <- .rs.explorer.viewObject(x,
                                       title = title,
                                       envir = env)
-      return(view)
+      return(invisible(view))
    }
       
 

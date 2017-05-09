@@ -37,21 +37,10 @@ def s3_upload(type, flavor, os, arch) {
   sh "aws s3 cp package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
 }
 
-def pull_build_push(current_container) {
-  def image_tag = "${current_container.os}-${current_container.arch}-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
-  def image_cache
-  try {
-    image_cache = docker.image("jenkins/ide:" + image_tag)
-    image_cache.pull()
-  } catch(e) {
-    // assume this is "image not found" and simply build.
-  }
+def jenkins_user_build_args() {
   def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
   def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
-  def build_args = "--cache-from ${image_cache.imageName()} --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
-  def container = docker.build("jenkins/ide:" + image_tag, "${build_args} -f docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch} .")
-  container.push()
-  return container
+  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
 }
 
 def get_type_from_os(os) {
@@ -112,19 +101,18 @@ try {
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}"] = {
                 def current_container = containers[index]
                 node('ide') {
-                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                      stage('prepare ws/container'){
-                        prepareWorkspace()
-                        container = pull_build_push(current_container)
-                      }
-                      container.inside() {
-                          stage('resolve deps'){
-                              resolve_deps(get_type_from_os(current_container.os), current_container.arch)
-                          }
-                          stage('compile package') {
-                              compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
-                          }
-                      }
+                    stage('prepare ws/container'){
+                      prepareWorkspace()
+                      def image_tag = "${current_container.os}-${current_container.arch}-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
+                      container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
+                    }
+                    container.inside() {
+                        stage('resolve deps'){
+                            resolve_deps(get_type_from_os(current_container.os), current_container.arch)
+                        }
+                        stage('compile package') {
+                            compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                        }
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)

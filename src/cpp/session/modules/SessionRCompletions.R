@@ -1906,10 +1906,13 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # data
-   if (.rs.acContextTypes$FUNCTION %in% type &&
+   if (length(type) &&
+       type[[1]] == .rs.acContextTypes$FUNCTION &&
        string[[1]] == "data" &&
        numCommas[[1]] == 0)
+   {
       return(.rs.getCompletionsData(token))
+   }
    
    # package name
    if (.rs.acContextTypes$PACKAGE %in% type)

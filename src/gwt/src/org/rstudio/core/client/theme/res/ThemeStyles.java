@@ -187,4 +187,11 @@ public interface ThemeStyles extends CssResource
    String consoleHeaderLayout();
    String consoleMinimizeLayout();
    String consoleMaximizeLayout();
+
+   String tallerToolbarWrapper();
+   String toolbarWrapper();
+   String webGlobalToolbarWrapper();
+   String desktopGlobalToolbarWrapper();
+
+   String progressPanel();
 }

@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicatorDelay;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -723,4 +724,8 @@ public class DataImport extends Composite
          return !column.col_name && column.col_type != 'rownames';
       });
    }-*/;
+   
+   public HelpLink getHelpLink() {
+      return dataImportOptionsUi_.getHelpLink();
+   }
 }

@@ -4,9 +4,11 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
-@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
-@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+@external editor_dark;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
 
 /* Styles here are applied to every DataGrid involved in the Packrat/Packages
    workflow, including the Packages pane itself and the actions/conflict 
@@ -49,9 +51,14 @@
 
 .dataGridCell
 {
-    padding: 1px 6px;
+   padding: 1px 6px;
 	vertical-align: top;
 	color: #606060;
+}
+
+.rstudio-themes-flat .dataGridCell
+{
+   color: inherit;
 }
 
 .dataGridOddRow
@@ -59,9 +66,19 @@
 	background-color: white; 
 }
 
+.rstudio-themes-flat .dataGridOddRow
+{
+   background-color: inherit;
+}
+
 .dataGridEvenRow
 {
 	background-color: white; 
+}
+
+.rstudio-themes-flat .dataGridEvenRow
+{
+   background-color: inherit;
 }
 
 .dataGridEvenRowCell
@@ -81,14 +98,20 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-default .dataGridHeader,
+.rstudio-themes-flat .rstudio-themes-default .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-default .dataGridOddRowCell {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader,
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridOddRowCell {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader {
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader,
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridEvenRowCell,
+.rstudio-themes-flat .rstudio-themes-alternate .dataGridOddRowCell {
    border-color: THEME_ALTERNATE_BORDER;
 }

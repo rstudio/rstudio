@@ -87,6 +87,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
       addStyleName(style_.objectList());
+      addStyleName("ace_editor_theme");
    }
 
    @Override

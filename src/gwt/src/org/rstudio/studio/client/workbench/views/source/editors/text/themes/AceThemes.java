@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -73,6 +74,7 @@ public class AceThemes
       themesByName_ = new HashMap<String, String>();
       darkThemes_ = new HashMap<String, Boolean>();
       events_ = events;
+      prefs_ = prefs;
       
       addTheme(AMBIANCE, res.ambiance(), true);
       addTheme(CHAOS, res.chaos(), true);
@@ -143,19 +145,20 @@ public class AceThemes
          return darkThemes_.containsKey(themeName);
    }
    
-   private void applyTheme(final String themeName)
+   private void applyTheme(Document document, final String themeName)
    {
-      // add theme styles
-      if (currentStyleEl_ != null)
-         currentStyleEl_.removeFromParent();
+      Element oldStyleEl = document.getElementById(linkId_);
+      if (oldStyleEl != null)
+         oldStyleEl.removeFromParent();
       
-      currentStyleEl_ = Document.get().createLinkElement();
-      currentStyleEl_.setType("text/css");
-      currentStyleEl_.setRel("stylesheet");
-      currentStyleEl_.setHref(getThemeUrl(themeName));
-      Document.get().getBody().appendChild(currentStyleEl_);
+      LinkElement currentStyleEl = document.createLinkElement();
+      currentStyleEl.setType("text/css");
+      currentStyleEl.setRel("stylesheet");
+      currentStyleEl.setId(linkId_);
+      currentStyleEl.setHref(getThemeUrl(themeName));
+      document.getBody().appendChild(currentStyleEl);
       
-      addDarkClassIfNecessary(themeName);
+      addDarkClassIfNecessary(document, themeName);
       
       // Deferred so that the browser can render the styles.
       new Timer()
@@ -167,13 +170,23 @@ public class AceThemes
          }
       }.schedule(100);
    }
+
+   private void applyTheme(final String themeName)
+   {
+      applyTheme(Document.get(), themeName);
+   }
+
+   public void applyTheme(Document document)
+   {
+      applyTheme(document, prefs_.get().theme().getValue());
+   }
    
-   public void addDarkClassIfNecessary(String themeName)
+   public void addDarkClassIfNecessary(Document document, String themeName)
    {
       if (isDark(themeName))
-         Document.get().getBody().addClassName("editor_dark");
+         document.getBody().addClassName("editor_dark");
       else
-         Document.get().getBody().removeClassName("editor_dark");
+         document.getBody().removeClassName("editor_dark");
    }
 
    public String getEffectiveThemeName(String themeName)
@@ -188,6 +201,6 @@ public class AceThemes
    private final HashMap<String, String> themesByName_;
    private final HashMap<String, Boolean> darkThemes_;
    private final String defaultThemeName_ = TEXTMATE;
-   
-   private LinkElement currentStyleEl_;
+   private final Provider<UIPrefs> prefs_;
+   private final String linkId_ = "rstudio-acethemes-linkelement";
 }

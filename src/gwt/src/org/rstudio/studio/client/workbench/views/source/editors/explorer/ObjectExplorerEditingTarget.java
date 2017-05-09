@@ -91,7 +91,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public ImageResource getIcon()
    {
-      return new ImageResource2x(FileIconResources.INSTANCE.iconCsv2x());
+      return new ImageResource2x(FileIconResources.INSTANCE.iconObjectExplorer2x());
    }
 
    private ObjectExplorerHandle getHandle()

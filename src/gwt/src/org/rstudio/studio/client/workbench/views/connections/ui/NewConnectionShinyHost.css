@@ -1,6 +1,11 @@
 @external gwt-Image;
 @external macintosh;
 
+@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
 .infoPanel {
    width: 500px;
    margin-top: 8px;
@@ -31,6 +36,18 @@
    width: 100% !important;
    height: 75px !important;
    font-size: 9pt;
+}
+
+.codeViewer {
+   border: 1px solid #BBB !important;
+   background-color: #FFF;
+   width: 100% !important;
+   height: 75px !important;
+   font-size: 9pt;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .codeViewer {
+   border: 1px solid THEME_DARKGREY_BORDER !important;
 }
 
 .dialogCodePanel {

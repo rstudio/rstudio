@@ -54,6 +54,7 @@ public class GitPane extends WorkbenchPane implements Display
       createBranchToolbarButton_ = createBranchToolbarButton;     
       
       table_ = changelistTablePresenter.getView();
+      table_.addStyleName("ace_editor_theme");
    }
 
    @Override

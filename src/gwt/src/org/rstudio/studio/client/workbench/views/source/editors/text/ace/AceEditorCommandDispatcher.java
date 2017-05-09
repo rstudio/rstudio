@@ -23,8 +23,6 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.CommandType;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.ExecutionPolicy;
 
 @Singleton
 public class AceEditorCommandDispatcher
@@ -46,94 +44,94 @@ public class AceEditorCommandDispatcher
    public void onYankRegion()
    {
       fireEvent(
-            CommandType.YANK_REGION,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.YANK_REGION,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onYankBeforeCursor()
    {
       fireEvent(
-            CommandType.YANK_BEFORE_CURSOR,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.YANK_BEFORE_CURSOR,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onYankAfterCursor()
    {
       fireEvent(
-            CommandType.YANK_AFTER_CURSOR,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.YANK_AFTER_CURSOR,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onPasteLastYank()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.PASTE_LAST_YANK,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.PASTE_LAST_YANK,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onInsertAssignmentOperator()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.INSERT_ASSIGNMENT_OPERATOR,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onInsertPipeOperator()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.INSERT_PIPE_OPERATOR,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.INSERT_PIPE_OPERATOR,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onJumpToMatching()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.JUMP_TO_MATCHING,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.JUMP_TO_MATCHING,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onSelectToMatching()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.SELECT_TO_MATCHING,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.SELECT_TO_MATCHING,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onExpandToMatching()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.EXPAND_TO_MATCHING,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.EXPAND_TO_MATCHING,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onAddCursorAbove()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.ADD_CURSOR_ABOVE,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.ADD_CURSOR_ABOVE,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    @Handler
    public void onAddCursorBelow()
    {
       fireEvent(
-            AceEditorCommandEvent.CommandType.ADD_CURSOR_BELOW,
-            ExecutionPolicy.FOCUSED);
+            AceEditorCommandEvent.ADD_CURSOR_BELOW,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
    
    // Private methods ----
    
-   private void fireEvent(CommandType type, ExecutionPolicy policy)
+   private void fireEvent(int type, int policy)
    {
       AceEditorCommandEvent event = new AceEditorCommandEvent(type, policy);
       if (Satellite.isCurrentWindowSatellite())

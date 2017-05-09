@@ -143,6 +143,17 @@ std::string ConsoleProcessInfo::getSavedBufferChunk(
    return chunk;
 }
 
+std::string ConsoleProcessInfo::getFullSavedBuffer() const
+{
+   // Read buffer (trims to maxOutputLines_)
+   return console_persist::getSavedBuffer(handle_, maxOutputLines_);
+}
+
+int ConsoleProcessInfo::getBufferLineCount() const
+{
+   return console_persist::getSavedBufferLineCount(handle_, maxOutputLines_);
+}
+
 std::string ConsoleProcessInfo::bufferedOutput() const
 {
    boost::circular_buffer<char>::const_iterator pos =

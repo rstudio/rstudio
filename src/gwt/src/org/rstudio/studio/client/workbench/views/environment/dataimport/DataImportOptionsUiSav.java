@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 
 import com.google.gwt.core.client.GWT;
@@ -117,6 +118,16 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
             }
          }
       }
+   }
+   
+   @Override
+   public HelpLink getHelpLink()
+   {
+      return new HelpLink(
+         "Reading data using haven",
+         "import_haven",
+         false,
+         true);
    }
    
    @UiFactory

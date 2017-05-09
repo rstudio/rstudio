@@ -1,6 +1,8 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external editor_dark;
+
 .findOutput {
    width: 100%;
    height: 100%;
@@ -41,6 +43,10 @@
    .selectedRow {
       background-color: rgb(146, 193, 240)
    }
+}
+
+.editor_dark .selectedRow {
+   color: #FFF;
 }
 
 .overflowWarning {

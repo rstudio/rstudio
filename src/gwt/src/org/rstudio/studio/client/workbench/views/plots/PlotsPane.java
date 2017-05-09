@@ -110,6 +110,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    protected Widget createMainWidget()
    {
       panel_ = new LayoutPanel();
+      panel_.addStyleName("ace_editor_theme");
       panel_.setSize("100%", "100%");
 
       frame_ = new ImageFrame();

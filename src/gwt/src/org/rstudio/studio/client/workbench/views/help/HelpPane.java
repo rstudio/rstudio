@@ -48,6 +48,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -101,8 +102,10 @@ public class HelpPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       frame_ = new RStudioFrame();
+      frame_.setAceTheme();
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
+      frame_.addStyleName("ace_editor_theme");
       ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
 
       return new AutoGlassPanel(frame_);
@@ -335,8 +338,11 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar() ;
+      SecondaryToolbar toolbar = new SecondaryToolbar();
       toolbar.addLeftPopupMenu(title_ = new Label(), history_.getMenu());
+
+      ThemeStyles styles = ThemeStyles.INSTANCE;
+      toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
       if (isFindSupported())
       {

@@ -1,12 +1,25 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external rstudio-themes-flat;
+@external editor_dark;
+
 .selected {
    background-color: #ccc;
 }
+
+.rstudio-themes-flat.editor_dark  .selected {
+   background-color: rgba(255, 255, 255, 0.10);
+}
+
 *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
    background-color: rgb(146, 193, 240)
 }
+
+.rstudio-themes-flat.editor_dark *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
+   background-color: rgba(255, 255, 255, 0.20);
+}
+
 @if user.agent ie8 {
    .selected {
       background-color: rgb(146, 193, 240)
@@ -45,6 +58,10 @@
    overflow: visible;
    margin-left: 28px;
    text-indent: -28px;
+}
+
+.rstudio-themes-flat.editor_dark .historyTable .selected td:first-child div {
+   color: #FFF;
 }
 
 .command {

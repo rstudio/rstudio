@@ -21,7 +21,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -118,28 +117,6 @@ public class Wizard<I,T> extends ModalDialog<T>
       });
       nextButton_.setVisible(false);
       addActionButton(nextButton_);
-   }
-
-   public void updateHelpLink(HelpLink helpLink) {
-      if (helpLink == null) {
-         if (helpLink_ != null) removeLeftWidget(helpLink_);
-         helpLink_ = null;
-         return;
-      }
-
-      if (helpLink_ == null) {
-         WizardResources.Styles styles = WizardResources.INSTANCE.styles();
-
-         helpLink_ = new HelpLink(
-               "",
-               "",
-               false);
-         helpLink_.addStyleName(styles.helpLink());
-         addLeftWidget(helpLink_);
-      }
-
-      helpLink_.setCaption(helpLink.getCaption());
-      helpLink_.setLink(helpLink.getLink(), helpLink.isRStudioLink());
    }
 
    @Override
@@ -593,5 +570,4 @@ public class Wizard<I,T> extends ModalDialog<T>
    private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;
    private boolean validating_ = false;
-   private HelpLink helpLink_ = null;
 }

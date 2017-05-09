@@ -31,6 +31,10 @@
    margin-top: 9px; 
 }
 
+.rstudio-themes-flat .optionsPanel {
+   margin-top: 7px; 
+}
+
 .checkboxLabel {
    margin-top: 4px;
    margin-right: 8px;

@@ -4,10 +4,19 @@
 @external breadcrumb, breadcrumb-filepane;
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external editor_dark;
 
-@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
-@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
-@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+
+@eval THEME_DEFAULT_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.defaultBackgroundTransparent;
+@eval THEME_DARKGREY_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.darkGreyBackgroundTransparent;
+@eval THEME_ALTERNATE_BACKGROUND_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.alternateBackgroundTransparent;
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
@@ -77,6 +86,10 @@
    margin-left: 2px;
 }
 
+.rstudio-themes-flat .gwt-CheckBox-FilesSelectAll {
+   margin-top: 2px;
+}
+
 .gwt-DialogBox .breadcrumbFrame {
    width: 500px;
    margin-top: 6px;
@@ -86,6 +99,10 @@
 
 .breadcrumbFrame {
    height: 20px;
+}
+
+.rstudio-themes-flat .breadcrumbFrame {
+   margin-top: 1px;
 }
 
 .breadcrumb {
@@ -120,6 +137,11 @@
    background-size: 6px 9px;
 }
 
+.rstudio-themes-flat .breadcrumb table.path a,
+.rstudio-themes-flat .breadcrumb table.path span {
+   padding-top: 4px;
+}
+
 .breadcrumb table.path a
 {
    color: #0945bf;
@@ -141,6 +163,10 @@
    margin-right: 4px;
 }
 
+.rstudio-themes-flat .project {
+   margin-top: 1px;
+}
+
 .breadcrumb table.path .last {
    padding-right: 8px;
 }
@@ -151,6 +177,22 @@
    top: 0;
    width: 25px;
    height: 24px;
+}
+
+.fadeWrapper {
+
+}
+
+.rstudio-themes-flat.editor_dark .breadcrumb .fadeWrapper {
+   position: absolute;
+   left: 0;
+   top: 0;
+   width: 25px;
+   height: 24px;
+}
+
+.rstudio-themes-flat.editor_dark .breadcrumb .fadeWrapper img {
+   display: none !important;
 }
 
 .goUp {
@@ -192,4 +234,16 @@ button.browse:focus {
 
 .rstudio-themes-flat .rstudio-themes-alternate .browse {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-default .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_DEFAULT_BACKGROUND, THEME_DEFAULT_BACKGROUND_TRANSPARENT);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_DARKGREY_BACKGROUND, THEME_DARKGREY_BACKGROUND_TRANSPARENT);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_ALTERNATE_BACKGROUND, THEME_ALTERNATE_BACKGROUND_TRANSPARENT);
 }

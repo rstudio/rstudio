@@ -257,6 +257,9 @@ core::Error rsaInit()
    const int KEY_SIZE = 1024;
    const int ENTROPY_BYTES = 4096;
 
+   const BIGNUM *bn_n;
+   const BIGNUM *bn_e;
+
    int rnd = ::open("/dev/urandom", O_RDONLY);
    if (rnd == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -271,14 +274,32 @@ core::Error rsaInit()
 
    RAND_seed(entropy, ENTROPY_BYTES);
 
-   s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, NULL, NULL);
-   if (!s_pRSA)
-      return lastCryptoError(ERROR_LOCATION);
+   #if OPENSSL_VERSION_NUMBER < 0x10100000L
+      s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, NULL, NULL);
+      if (!s_pRSA)
+         return lastCryptoError(ERROR_LOCATION);
 
-   char* n = BN_bn2hex(s_pRSA->n);
+      bn_n = s_pRSA->n;
+      bn_e = s_pRSA->e;
+   #else
+      BIGNUM *bn = BN_new();
+      BN_set_word(bn, RSA_F4);
+ 
+      s_pRSA = RSA_new();
+      int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
+      BN_clear_free(bn);
+      if (rc != 1) {
+        RSA_free(s_pRSA);
+        return lastCryptoError(ERROR_LOCATION);
+      }
+   
+      RSA_get0_key(s_pRSA, &bn_n, &bn_e, NULL);
+   #endif
+
+   char* n = BN_bn2hex(bn_n);
    s_modulo = n;
    OPENSSL_free(n);
-   char* e = BN_bn2hex(s_pRSA->e);
+   char* e = BN_bn2hex(bn_e);
    s_exponent = e;
    OPENSSL_free(e);
 

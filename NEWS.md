@@ -49,6 +49,7 @@
 
 * Python chunks now respect virtualenv if present
 * 'Rename in Scope' now works within R chunks
+* Global chunk options (e.g. 'echo') now properly respected in Notebook mode
 * Fixed an issue where non-R chunk output could become duplicated
 * Added option to set notebook mode in the document's YAML header
 * Allow setting default chunk connection option to raw connection object
@@ -78,6 +79,7 @@
 * Show disambiguation in overflow list when two editor tabs have the same filename
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
+* OS X: Always show project label on dock tiles
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses

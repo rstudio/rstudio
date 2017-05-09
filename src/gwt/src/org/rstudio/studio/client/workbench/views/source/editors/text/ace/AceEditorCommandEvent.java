@@ -22,51 +22,45 @@ import com.google.gwt.event.shared.EventHandler;
 @JavaScriptSerializable
 public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEvent.Handler>
 {
-   public static enum CommandType
-   {
-      YANK_REGION,
-      YANK_BEFORE_CURSOR,
-      YANK_AFTER_CURSOR,
-      PASTE_LAST_YANK,
-      INSERT_ASSIGNMENT_OPERATOR,
-      INSERT_PIPE_OPERATOR,
-      JUMP_TO_MATCHING,
-      SELECT_TO_MATCHING,
-      EXPAND_TO_MATCHING,
-      ADD_CURSOR_ABOVE,
-      ADD_CURSOR_BELOW
-   }
+   public static final int YANK_REGION                =  1;
+   public static final int YANK_BEFORE_CURSOR         =  2;
+   public static final int YANK_AFTER_CURSOR          =  3;
+   public static final int PASTE_LAST_YANK            =  4;
+   public static final int INSERT_ASSIGNMENT_OPERATOR =  5;
+   public static final int INSERT_PIPE_OPERATOR       =  6;
+   public static final int JUMP_TO_MATCHING           =  7;
+   public static final int SELECT_TO_MATCHING         =  8;
+   public static final int EXPAND_TO_MATCHING         =  9;
+   public static final int ADD_CURSOR_ABOVE           = 10;
+   public static final int ADD_CURSOR_BELOW           = 11;
    
-   public static enum ExecutionPolicy
-   {
-      FOCUSED,
-      ALWAYS;
-   }
+   public static final int EXECUTION_POLICY_FOCUSED = 1;
+   public static final int EXECUTION_POLICY_ALWAYS  = 2;
    
    // Required for '@JavaScriptSerializable' but is otherwise unused
    public AceEditorCommandEvent()
    {
-      this(null, null);
+      this(-1, -1);
    }
    
-   public AceEditorCommandEvent(CommandType command, ExecutionPolicy policy)
+   public AceEditorCommandEvent(int command, int policy)
    {
       command_ = command;
       policy_ = policy;
    }
    
-   public final CommandType getCommand()
+   public final int getCommand()
    {
       return command_;
    }
    
-   public final ExecutionPolicy getExecutionPolicy()
+   public final int getExecutionPolicy()
    {
       return policy_;
    }
    
-   private final CommandType command_;
-   private final ExecutionPolicy policy_;
+   private final int command_;
+   private final int policy_;
    
    // Boilerplate ----
    

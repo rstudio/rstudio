@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.studio.client.application.ApplicationUtils;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
@@ -47,6 +49,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       
       initDefaults();
       initEvents();
+
+      rangeTextBox_.getElement().setPropertyString("placeholder", "A1:D10");
    }
    
    @Override
@@ -58,7 +62,9 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          Integer.parseInt(skipTextBox_.getValue()),
          columnNamesCheckBox_.getValue().booleanValue(),
          !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
-         openDataViewerCheckBox_.getValue().booleanValue()
+         openDataViewerCheckBox_.getValue().booleanValue(),
+         !maxTextBox_.getValue().isEmpty() ? Integer.parseInt(maxTextBox_.getValue()) : null,
+         !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null
       );
    }
    
@@ -66,6 +72,11 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    public void setAssembleResponse(DataImportAssembleResponse response)
    {
       nameTextBox_.setText(response.getDataName());
+
+      if (ApplicationUtils.compareVersions(response.getPackageVersion(), "1.0.0") < 0) {
+         maxTextBox_.setEnabled(false);
+         rangeTextBox_.setEnabled(false);
+      }
    }
    
    @Override
@@ -90,6 +101,16 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       nameTextBox_.setText("");
       sheetListBox_.clear();
       sheetListBox_.addItem("Default", "");
+   }
+   
+   @Override
+   public HelpLink getHelpLink()
+   {
+      return new HelpLink(
+         "Reading Excel files using readxl",
+         "import_readxl",
+         false,
+         true);
    }
    
    void initDefaults()
@@ -139,6 +160,18 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
             triggerChange();
          }
       };
+
+      ValueChangeHandler<String> rangeChangeHandler = new ValueChangeHandler<String>()
+      {
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            maxTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
+            skipTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
+            triggerChange();
+         }
+      };
       
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
       sheetListBox_.addChangeHandler(changeHandler);
@@ -146,6 +179,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       naListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
+      maxTextBox_.addValueChangeHandler(valueChangeHandler);
+      rangeTextBox_.addValueChangeHandler(rangeChangeHandler);
    }
    
    @UiField
@@ -162,6 +197,12 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
 
    @UiField
    CheckBox openDataViewerCheckBox_;
+
+   @UiField
+   TextBox maxTextBox_;
+
+   @UiField
+   TextBox rangeTextBox_;
    
    private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
       return response && response.options && response.options.sheets ? response.options.sheets : [];

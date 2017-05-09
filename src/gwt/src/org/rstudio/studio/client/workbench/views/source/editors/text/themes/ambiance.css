@@ -61,7 +61,7 @@
   box-shadow: inset 0 0 10px black;
 }
 
-.ace_editor {
+.ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   color: #E6E1DC;
   background-color: #202020;
 }
@@ -282,6 +282,8 @@
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
+.xtermItalic { font-style: italic; }
+.xtermStrike { text-decoration: line-through; }
 .xtermColor0 { color: #2e3436; }
 .xtermBgColor0 { background-color: #2e3436; }
 .xtermColor1 { color: #cc0000; }
@@ -794,3 +796,4 @@
 .xtermBgColor254 { background-color: #e4e4e4; }
 .xtermColor255 { color: #eeeeee; }
 .xtermBgColor255 { background-color: #eeeeee; }
+.editor_dark.ace_editor_theme a { color: #FFF !important; }

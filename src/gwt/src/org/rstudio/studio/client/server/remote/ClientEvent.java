@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -161,6 +161,10 @@ class ClientEvent extends JavaScriptObject
    public static final String RStudioAPIShowDialog = "rstudioapi_show_dialog";
    public static final String RStudioAPIShowDialogCompleted = "rstudioapi_show_dialog_completed";
    public static final String ObjectExplorerEvent = "object_explorer_event";
+   public static final String SendToTerminal = "send_to_terminal";
+   public static final String ClearTerminal = "clear_terminal";
+   public static final String CreateNamedTerminal = "create_named_terminal";
+   public static final String ActivateTerminal = "activate_terminal";
 
    protected ClientEvent()
    {

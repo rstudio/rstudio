@@ -1,3 +1,5 @@
+@external rstudio-themes-flat, editor_dark;
+
 .callFrame
 {
    padding-left: 5px;
@@ -16,6 +18,10 @@
 {
    background-color: #FFEE9B;
    cursor: default;
+}
+
+.rstudio-themes-flat.editor_dark .activeFrame {
+   background-color: rgba(255, 255, 255, 0.20);
 }
 
 .noSourceFrame

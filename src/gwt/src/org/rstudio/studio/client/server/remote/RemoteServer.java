@@ -49,6 +49,7 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
+import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -660,7 +661,7 @@ public class RemoteServer implements Server
    @Override
    public void processSetCaption(String handle,
                                  String caption,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
@@ -707,6 +708,25 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(StringUtil.notNull(handle)));
       sendRequest(RPC_SCOPE, PROCESS_USE_RPC, params, requestCallback);   
    }
+
+   @Override 
+   public void processTestExists(String handle,
+                                 ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_TEST_EXISTS, params, requestCallback);   
+   }
+
+   @Override 
+   public void processNotifyVisible(String handle,
+                                    ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);   
+   }
+
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
@@ -1824,25 +1844,18 @@ public class RemoteServer implements Server
                                      String objectName,
                                      String objectAccess,
                                      JsArrayString tags,
-                                     int recursionDepth,
+                                     int fromIndex,
                                      ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(handleId));
-      params.set(1, extractingCode == null ? JSONNull.getInstance() : new JSONString(extractingCode));
-      params.set(2, new JSONString(objectName));
-      params.set(3, objectAccess == null ? JSONNull.getInstance() : new JSONString(objectAccess));
+      JSONArray params = new JSONArrayBuilder()
+            .add(handleId)
+            .add(extractingCode)
+            .add(objectName)
+            .add(objectAccess)
+            .add(tags)
+            .add(fromIndex)
+            .get();
       
-      JSONArray jsonTags = new JSONArray();
-      if (tags != null)
-      {
-         for (int i = 0, n = tags.length(); i < n; i++)
-         {
-            jsonTags.set(i, new JSONString(tags.get(i)));
-         }
-      }
-      params.set(4, jsonTags);
-      params.set(5, new JSONNumber(recursionDepth));
       sendRequest(RPC_SCOPE, EXPLORER_INSPECT_OBJECT, params, requestCallback);
    }
    
@@ -5189,6 +5202,8 @@ public class RemoteServer implements Server
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
    private static final String PROCESS_USE_RPC = "process_use_rpc";
+   private static final String PROCESS_TEST_EXISTS = "process_test_exists";
+   private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

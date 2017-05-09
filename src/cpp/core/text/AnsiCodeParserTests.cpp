@@ -24,9 +24,22 @@ namespace tests {
 
 context("Ansi Code Parsing")
 {
-   test_that("placeholder compiles")
+   test_that("Ansi stripping doesn't modify plain text")
    {
-      expect_true(ansiFuncPlaceholder());
+      std::string expect("abcd12345\nderkjdf\r\n234");
+      std::string noAnsi = expect;
+      stripAnsiCodes(&noAnsi);
+
+      expect_true(expect == noAnsi);
+   }
+
+   test_that("Ansi stripping gets rid of Ansi escapes")
+   {
+      std::string hasAnsi("abc\x1b[31mHello\x1b[39m World\nBye.");
+      std::string expect("abcHello World\nBye.");
+      stripAnsiCodes(&hasAnsi);
+
+      expect_true(expect == hasAnsi);
    }
 }
 

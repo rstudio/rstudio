@@ -282,6 +282,8 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermUnderline { text-decoration: underline; }",
       ".xtermBlink { text-decoration: blink; }",
       ".xtermHidden { visibility: hidden; }",
+      ".xtermItalic { font-style: italic; }",
+      ".xtermStrike { text-decoration: line-through; }",
       ".xtermColor0 { color: #2e3436; }",
       ".xtermBgColor0 { background-color: #2e3436; }",
       ".xtermColor1 { color: #cc0000; }",
@@ -796,6 +798,12 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermBgColor255 { background-color: #eeeeee; }")
 }
 
+themes_static_rules <- function() {
+  paste(".editor_dark.ace_editor_theme a {",
+        "color: #FFF !important;",
+        "}")
+}
+
 ## Get the set of all theme .css files
 outDir <- "../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes"
 themeDir <- "ace/lib/ace/theme"
@@ -825,6 +833,10 @@ for (file in themeFiles) {
    ## to preserve this theme, but apply it to the '.ace_editor' directly.
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
    content <- gsub(regex, ".ace_editor {", content)
+
+   ## Copy ace_editor as ace_editor_theme
+   regex <- paste("^\\.ace_editor \\{$", sep = "")
+   content <- gsub(regex, ".ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {", content)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
@@ -1031,6 +1043,9 @@ for (file in themeFiles) {
    # Add xterm-256 colors for colorized console output
    content <- c(content,
                 create_xterm_color_rules(background, foreground, isDark)) 
+
+   # Theme rules
+   content <- add_content(content, themes_static_rules()) 
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))

@@ -42,7 +42,7 @@ public class AnsiCode
 
    public static final int ITALIC = 3;
    public static final int ITALIC_OFF = 23;
-   public static final String ITALIC_STYLE = "NYI";
+   public static final String ITALIC_STYLE = "xtermItalic";
 
    public static final int UNDERLINE = 4;
    public static final int UNDERLINE_OFF = 24;
@@ -64,7 +64,7 @@ public class AnsiCode
 
    public static final int STRIKETHROUGH = 9;
    public static final int STRIKETHROUGH_OFF = 29;
-   public static final String STROKETHROUGH_STYLE = "NYI";
+   public static final String STRIKETHROUGH_STYLE = "xtermStrike";
 
    public static final int FOREGROUND_MIN = 30;
    public static final int FOREGROUND_MAX = 37;
@@ -323,11 +323,11 @@ public class AnsiCode
          }
          else if (codeVal == ITALIC)
          {
-            // NYI clazzes_.add(ITALIC_STYLE);
+            clazzes_.add(ITALIC_STYLE);
          }
          else if (codeVal == ITALIC_OFF)
          {
-            // NYI clazzes_.remove(ITALIC_STYLE);
+            clazzes_.remove(ITALIC_STYLE);
          }
          else if (codeVal == UNDERLINE)
          {
@@ -381,11 +381,11 @@ public class AnsiCode
          }
          else if (codeVal == STRIKETHROUGH)
          {
-            // NYI clazzes_.add(STRIKETHROUGH_STYLE);
+            clazzes_.add(STRIKETHROUGH_STYLE);
          }
          else if (codeVal == STRIKETHROUGH_OFF)
          {
-            // NYI clazzes_.remove(STRIKETHROUGH_OFF);
+            clazzes_.remove(STRIKETHROUGH_STYLE);
          }
          else if (Color.isFgColorCode(codeVal))
          {

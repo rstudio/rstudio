@@ -615,6 +615,7 @@ Iter countNewlinesImpl(Iter begin,
             lastNewline = it;
             ++it;
             ++newlineCount;
+            continue;
          }
       }
       

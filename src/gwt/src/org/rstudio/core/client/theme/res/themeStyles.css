@@ -44,13 +44,32 @@
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
-@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDefaultBackground();
-@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getDarkGreyBackground();
-@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.getAlternateBackground();
-@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.getDefaultBorder();
-@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.getDarkGreyBorder();
-@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.getAlternateBorder();
-@eval THEME_GLOBAL_INACTIVE org.rstudio.core.client.theme.ThemeColors.getInactiveBackground();
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DEFAULT_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultInactiveBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_ALTERNATE_INACTIVE org.rstudio.core.client.theme.ThemeColors.alternateInactiveBackground;
+
+@eval THEME_DEFAULT_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultMostInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_ALTERNATE_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.alternateMostInactiveBackground;
+
+@eval THEME_DEFAULT_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.defaultMostInactiveTransparentBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveTransparentBackground;
+@eval THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.alternateMostInactiveTransparentBackground;
+
+@eval THEME_LIGHT_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.lightControlBackground;
+@eval THEME_LIGHT_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.lightControlBorder;
+
+@eval THEME_DARK_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkControlBackground;
+@eval THEME_DARK_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.darkControlBorder;
+
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -876,6 +895,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    float: left;
 }
 
+@def TABSTRIPHEIGHT 21px;
+
 /** Document tabs **/
 /*
 @def TABSTRIPHEIGHT 24px;
@@ -900,11 +921,21 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: 4px;
    margin-left: 3px;
 }
+
+.rstudio-themes-flat .rstudio-themes-dark .closeTabButton {
+   -webkit-filter: invert(100%) brightness(100%);
+      -moz-filter: invert(100%) brightness(100%);
+       -ms-filter: invert(100%) brightness(100%);
+        -o-filter: invert(100%) brightness(100%);
+           filter: invert(100%) brightness(100%);
+}
+
 .gwt-TabLayoutPanel-Workbench .gwt-TabLayoutPanelTab .closeTabButton {
    position: relative;
    top: 5px;
    margin-left: 4px;
 }
+
 .closeTabButton {
    filter: literal("alpha(opacity = 40)") !important;
    opacity: 0.4;
@@ -974,8 +1005,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .dirtyTabIndicator {
    display: none;
 }
+
 .dirtyTab .dirtyTabIndicator {
    display: inline;
+}
+
+.rstudio-themes-flat .dirtyTab .dirtyTabIndicator {
+   display: inline-block;
+   padding-top: 4px;
 }
 
 /** Module tabs **/
@@ -1028,17 +1065,24 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    width: 6px;
    background: MULTIPODACTIVETABLEFT right top no-repeat;
 }
+
 .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
    height: 24px;
    background: MULTIPODACTIVETABTILE top repeat-x;
    padding-left: 3px;
    padding-right: 3px;
 }
+
+.rstudio-themes-flat .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
+   height: 25px;
+}
+
 .moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutRight {
    height: 24px;
    width: 6px;
    background: MULTIPODACTIVETABRIGHT left top no-repeat;
 }
+
 .moduleTabPanel .toolbar {
    background-image: TOOLBARBACKGROUND2;
 }
@@ -1067,9 +1111,20 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
-.rstudio-themes-flat .toolbar {
+.toolbarWrapper {
+
+}
+
+.rstudio-themes-flat .toolbarWrapper {
    height: 22px;
    border-bottom: 1px solid #d6dadc;
+   overflow: hidden;
+   margin-top: -1px;
+}
+
+.rstudio-themes-flat .toolbar {
+   border: none;
+   background: none;
 }
 
 .toolbar * {
@@ -1127,8 +1182,16 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .toolbarSeparator {
-   filter: invert(100%);
-   transform: scaleX(-1);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
+   -webkit-transform: scaleX(-1);
+      -moz-transform: scaleX(-1);
+       -ms-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+           transform: scaleX(-1);
 }
 
 .toolbarFileLabel {
@@ -1139,7 +1202,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
-   height: TABSTRIPHEIGHT;
+   height: TABSTRIPHEIGHT !important;
 }
 
 .secondaryToolbarPanel {
@@ -1147,9 +1210,23 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
   border-bottom: 1px solid rgb(169,169,169);
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .secondaryToolbarPanel {
+  background: #6c7a86;
+}
+
 .rstudio-themes-flat .secondaryToolbar {
+   height: 21px !important;
+}
+
+
+.tallerToolbarWrapper {
+
+}
+
+.rstudio-themes-flat .tallerToolbarWrapper {
    border-bottom: solid 1px #d6dadc;
-   height: 24px;
+   height: 23px !important;  
+   padding-top: 1px;
 }
 
 .toolbarButtonRightImage {
@@ -1231,6 +1308,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 	color: #494949;
 }
 
+.rstudio-themes-flat.editor_dark .emptyProjectMenu .toolbarButtonLabel {
+   color: #FFF;
+}
+
 @if user.agent gecko1_8 { .webHeaderBarCommandsProjectMenu {
       margin-top: 1px;
       margin-left: 5px;
@@ -1247,13 +1328,17 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: none;
 }
 
-.rstudio-themes-flat .globalToolbar {
-   padding-top: 2px;
+.webGlobalToolbarWrapper {
+
 }
 
-.rstudio-themes-flat .webGlobalToolbar {
+.rstudio-themes-flat .globalToolbar {
+
+}
+
+.rstudio-themes-flat .toolbarWrapper.webGlobalToolbarWrapper {
    border-bottom: 0;
-   height: 24px;
+   height: 22px;
 }
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
@@ -1271,6 +1356,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: DESKTOPGLOBALTOOLBARBACKGROUND bottom repeat-x;
 }
 
+.desktopGlobalToolbarWrapper {
+   
+}
+
+.rstudio-themes-flat .desktopGlobalToolbarWrapper {
+   height: 24px;
+}
 
 .windowFrameToolbarButton {
    margin-top: -2px;
@@ -1396,6 +1488,10 @@ body.ubuntu_mono .searchBox {
    background-size: 32px 15px;
 }
 
+.rstudio-themes-flat td.environmentHierarchicalCol {
+   background: none;
+}
+
 @sprite td.environmentDataFrameCol {
    width: 32px;
    height: 15px;
@@ -1404,12 +1500,20 @@ body.ubuntu_mono .searchBox {
    background-size: 32px 15px;
 }
 
+.rstudio-themes-flat td.environmentDataFrameCol {
+   background: none;
+}
+
 @sprite td.environmentFunctionCol {
    width: 32px;
    height: 15px;
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
+}
+
+.rstudio-themes-flat td.environmentFunctionCol {
+   background: none;
 }
 
 .odd {
@@ -1793,7 +1897,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .minimizedWindowObject table.tabLayoutCenter {
    background-image: none;
-   background: THEME_GLOBAL_INACTIVE;
+   background: THEME_DEFAULT_INACTIVE;
    border-right: solid 1px #d6dadc;
    border-left: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
@@ -1834,7 +1938,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .logoAnchor {
-   top: 3px !important;
+   top: 2px !important;
 }
 
 .rstudio-themes-flat .dialogTabPanel {
@@ -1857,7 +1961,7 @@ body.ubuntu_mono .searchBox {
    border-radius: 5px 5px 0px 0px;
    background: #F3F4F4;
    overflow: hidden !important;
-   box-shadow: 0 21px 21px rgba(0, 0, 0, 0.35);
+   box-shadow: 0 15px 15px rgba(0, 0, 0, 0.26);
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogMiddleCenter {
@@ -1974,14 +2078,18 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .search {
    top: 1px;
    height: 16px;
-   border: solid 1px #d6dadc;
+   border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
-   background: #FFF;
+   background: THEME_LIGHT_CONTROL_BACKGROUND;
+}
+
+.rstudio-themes-flat .tallerToolbarWrapper .search {
+   top: 2px;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .search {
-   border-color: rgb(45,60,75);
-   background: rgb(145,154,161);
+   border-color: THEME_DARK_CONTROL_BORDER;
+   background: THEME_DARK_CONTROL_BACKGROUND;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .search input {
@@ -2035,21 +2143,36 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts {
-   filter: invert(100%);
+   -webkit-filter: invert(100%);
+      -moz-filter: invert(100%);
+       -ms-filter: invert(100%);
+        -o-filter: invert(100%);
+           filter: invert(100%);
+}
+
+.progressPanel {
+
 }
 
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,
-.rstudio-themes-flat .rstudio-themes-default .toolbar,
+.rstudio-themes-flat .rstudio-themes-default .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .secondaryToolbar,
-.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader {
+.rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
 body.rstudio-themes-flat .rstudio-themes-default {
-   background: rgb(247, 247, 247);
+   background: rgb(246, 247, 249);
+}
+
+.rstudio-themes-flat .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(246, 247, 249) !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-default table.header > tbody > tr > td,
@@ -2059,7 +2182,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-default .toolbar,
+.rstudio-themes-flat .rstudio-themes-default .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_DEFAULT_BORDER;
@@ -2067,30 +2190,37 @@ body.rstudio-themes-flat .rstudio-themes-default {
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject table.tabLayoutCenter {
-   background: THEME_GLOBAL_INACTIVE;
+   background: THEME_DEFAULT_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject .center {
-   background: #e7e8ea;
+   background: THEME_DEFAULT_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(158, 160, 187, 0), THEME_GLOBAL_INACTIVE 13%);
+   background: linear-gradient(to right, THEME_DEFAULT_MOST_INACTIVE_TRANSPARENT, THEME_DEFAULT_MOST_INACTIVE 13%);
 }
 
 /* RSTUDIO DARK GREY THEME */
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstudio-themes-background,
-.rstudio-themes-flat .rstudio-themes-dark-grey .toolbar,
+.rstudio-themes-flat .rstudio-themes-dark-grey .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .secondaryToolbar,
-.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader {
+.rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
 body.rstudio-themes-flat .rstudio-themes-dark-grey {
    background: rgb(50, 76, 99);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(50, 76, 99) !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey table.header > tbody > tr > td,
@@ -2100,7 +2230,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-dark-grey .toolbar,
+.rstudio-themes-flat .rstudio-themes-dark-grey .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_DARKGREY_BORDER;
@@ -2108,30 +2238,37 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject table.tabLayoutCenter {
-   background: rgb(57, 67, 75);
+   background: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center {
-   background: rgb(47, 57, 65);
+   background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(7, 57, 65, 0), rgb(47, 57, 65) 13%);
+   background: linear-gradient(to right, THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT, THEME_DARKGREY_MOST_INACTIVE 13%);
 }
 
 /* RSTUDIO ALTERNATE THEME */
 
 .rstudio-themes-flat .rstudio-themes-alternate .rstudio-themes-background,
-.rstudio-themes-flat .rstudio-themes-alternate .toolbar,
+.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader {
+.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel {
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
 body.rstudio-themes-flat .rstudio-themes-alternate {
    background: rgb(162, 197, 215);
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-VDragger {
+   background: rgb(162, 197, 215) !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate table.header > tbody > tr > td,
@@ -2141,7 +2278,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-alternate .toolbar,
+.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame {
    border-color: THEME_ALTERNATE_BORDER;
@@ -2149,12 +2286,12 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter {
-   background: rgb(148, 180, 197);
+   background: THEME_ALTERNATE_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center {
-   background: rgb(158, 160, 187);
+   background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize,
@@ -2176,5 +2313,8 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .multiPodUtilityArea {
-   background: linear-gradient(to right, rgba(158, 160, 187, 0), rgb(158, 160, 187) 13%);
+   background: linear-gradient(to right, THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT, THEME_ALTERNATE_MOST_INACTIVE 13%);
 }
+
+/* RSTUDIO THEMES END */
+

@@ -799,6 +799,7 @@ var RCodeModel = function(session, tokenizer,
       var value = token.value;
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
+      var chunkCount = this.$scopes.getChunkCount()
 
       do
       {
@@ -999,9 +1000,10 @@ var RCodeModel = function(session, tokenizer,
          // multimode documents.
          else if (/\bcodebegin\b/.test(type))
          {
+            chunkCount++;
             var chunkStartPos = position;
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
-            var chunkNum = this.$scopes.getChunkCount() + 1;
+            var chunkNum = chunkCount;
 
                var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
                var scopeName = "Chunk " + chunkNum;
