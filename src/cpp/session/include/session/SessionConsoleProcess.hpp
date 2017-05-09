@@ -163,6 +163,8 @@ public:
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson( core::json::Object& obj);
 
+   void onReceivedInput(const std::string& input);
+
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
    bool onContinue(core::system::ProcessOperations& ops);
@@ -181,7 +183,6 @@ private:
                            const std::string& output);
 
    ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks();
-   void onReceivedInput(const std::string& input);
    void onConnectionOpened();
    void onConnectionClosed();
 

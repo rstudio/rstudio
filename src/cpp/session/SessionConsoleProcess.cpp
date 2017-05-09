@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RRoutines.hpp>
+#include <r/RExec.hpp>
 
 #include "session-config.h"
 
@@ -68,6 +69,20 @@ ConsoleProcessPtr findProcByCaption(const std::string& caption)
          return proc;
    }
    return ConsoleProcessPtr();
+}
+
+// findProcByCaption that reports an R error for unknown caption
+ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
+{
+   ConsoleProcessPtr proc = findProcByCaption(caption);
+   if (proc == NULL)
+   {
+      std::string error("Unknown terminal '");
+      error += caption;
+      error += "'";
+      r::exec::error(error);
+   }
+   return proc;
 }
 
 // Determine next terminal sequence, used when creating terminal name
@@ -179,22 +194,6 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    return r::sexp::create(builder, &protect);
 }
 
-// Ensure terminal is running (has started its process); a terminal can be
-// unstarted if the session has previously been suspended and restarted,
-// but user hasn't visited the terminal in the client.
-SEXP rs_ensureTerminalRunning(SEXP idSEXP)
-{
-   r::sexp::Protect protect;
-
-   std::string terminalId = r::sexp::asString(idSEXP);
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
-   if (proc == NULL)
-      return R_NilValue;
-
-   proc->start();
-   return R_NilValue;
-}
-
 // Return buffer for a terminal, optionally stripping out Ansi codes.
 SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
 {
@@ -203,7 +202,7 @@ SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    std::string terminalId = r::sexp::asString(idSEXP);
    bool stripAnsi = r::sexp::asLogical(stripSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
    if (proc == NULL)
       return R_NilValue;
 
@@ -255,7 +254,7 @@ SEXP rs_clearTerminal(SEXP idSEXP)
 
    std::string terminalId = r::sexp::asString(idSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
    if (proc == NULL)
       return R_NilValue;
 
@@ -270,6 +269,28 @@ SEXP rs_clearTerminal(SEXP idSEXP)
    ClientEvent clearNamedTerminalEvent(client_events::kClearTerminal, eventData);
    module_context::enqueClientEvent(clearNamedTerminalEvent);
 
+   return R_NilValue;
+}
+
+// Send text to the terminal
+SEXP rs_sendToTerminal(SEXP idSEXP, SEXP textSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(idSEXP);
+   std::string text = r::sexp::asString(textSEXP);
+
+   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+   if (!proc)
+      return R_NilValue;
+
+   if (!proc->isStarted())
+   {
+      r::exec::error("Terminal is not running and cannot accept input");
+      return R_NilValue;
+   }
+
+   proc->onReceivedInput(text);
    return R_NilValue;
 }
 
@@ -1213,8 +1234,8 @@ ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSock
    return cb;
 }
 
-// received input from websocket (e.g. user typing on client); called on
-// different thread
+// received input from websocket (e.g. user typing on client), or from
+// rstudioapi, may be called on different thread
 void ConsoleProcess::onReceivedInput(const std::string& input)
 {
    LOCK_MUTEX(mutex_)
@@ -1482,11 +1503,11 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
-   RS_REGISTER_CALL_METHOD(rs_ensureTerminalRunning, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
    RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
    RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_sendToTerminal, 2);
 
    // install rpc methods
    ExecBlock initBlock ;
