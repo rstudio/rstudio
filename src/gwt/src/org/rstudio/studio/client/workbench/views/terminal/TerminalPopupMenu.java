@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -23,8 +24,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -54,10 +59,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
    @Inject
    private void initialize(Commands commands,
-                           EventBus events)
+                           EventBus events,
+                           WorkbenchServerOperations server)
    {
       commands_ = commands;
       eventBus_ = events;
+      server_ = server;
    }
    
    @Override
@@ -154,6 +161,16 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+      
+      // inform server of the selection
+      server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    public void setActiveTerminalByCaption(String caption)
@@ -306,4 +323,5 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    // Injected ----  
    private Commands commands_;
    private EventBus eventBus_;
+   private WorkbenchServerOperations server_;
 }

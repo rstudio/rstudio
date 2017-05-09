@@ -42,6 +42,10 @@ namespace console_process {
 namespace {
 
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
+
+// terminal currently visible in the client
+std::string s_visibleTerminalHandle;
+
 typedef std::map<std::string, ConsoleProcessPtr> ProcTable;
 
 ProcTable s_procs;
@@ -237,6 +241,20 @@ SEXP rs_killTerminal(SEXP terminalsSEXP)
       }
    }
    return R_NilValue;
+}
+
+SEXP rs_getVisibleTerminal()
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   ConsoleProcessPtr proc = findProcByHandle(s_visibleTerminalHandle);
+   if (proc == NULL)
+      return R_NilValue;
+
+   return r::sexp::create(proc->getCaption(), &protect);
 }
 
 } // anonymous namespace
@@ -1061,6 +1079,29 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    return ptrProc;
 }
 
+// Notification from client of currently-selected terminal.
+Error procNotifyVisible(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params, &handle);
+
+   if (error)
+      return error;
+
+   // make sure this handle actually exists
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
+   {
+      s_visibleTerminalHandle.clear();
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   s_visibleTerminalHandle = handle;
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& program,
       const std::vector<std::string>& args,
@@ -1392,6 +1433,7 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
       }
    }
 
+   s_visibleTerminalHandle.clear();
    saveConsoleProcesses();
 }
 
@@ -1403,6 +1445,7 @@ void saveConsoleProcesses()
 void onSuspend(core::Settings* /*pSettings*/)
 {
    serializeConsoleProcs();
+   s_visibleTerminalHandle.clear();
 }
 
 void onResume(const core::Settings& /*settings*/)
@@ -1426,6 +1469,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_ensureTerminalRunning, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
    RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
 
    // install rpc methods
    ExecBlock initBlock ;
@@ -1440,7 +1484,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
-      (bind(registerRpcMethod, "process_use_rpc", procUseRpc));
+      (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
+      (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible));
 
    return initBlock.execute();
 }
