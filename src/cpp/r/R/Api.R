@@ -481,3 +481,6 @@
    invisible(NULL)
 })
 
+.rs.addApiFunction("getVisibleTerminal", function() {
+   .Call("rs_getVisibleTerminal")
+})
