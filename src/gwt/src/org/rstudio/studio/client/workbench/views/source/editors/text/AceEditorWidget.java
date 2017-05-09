@@ -42,6 +42,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
@@ -89,8 +90,8 @@ public class AceEditorWidget extends Composite
       setSize("100%", "100%");
 
       capturingHandlers_ = new HandlerManager(this);
-      addEventListener(getElement(), "keydown", capturingHandlers_);
-      addEventListener(getElement(), "keyup", capturingHandlers_);
+      addEventListener(getElement(), "keydown",  capturingHandlers_);
+      addEventListener(getElement(), "keyup",    capturingHandlers_);
       addEventListener(getElement(), "keypress", capturingHandlers_);
 
       addStyleName("loading");
@@ -269,6 +270,19 @@ public class AceEditorWidget extends Composite
                   events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
             }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
+            editor_,
+            "changeSelection",
+            new CommandWithArg<Void>()
+            {
+               @Override
+               public void execute(Void event)
+               {
+                  fireEvent(new AceSelectionChangedEvent());
+               }
+            }));
+      
       
       addAttachHandler(new AttachEvent.Handler()
       {
@@ -529,7 +543,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, KeyUpEvent.getType());
    }
-
+   
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return capturingHandlers_.addHandler(KeyDownEvent.getType(), handler);
@@ -573,6 +587,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)
    {
       return addHandler(handler, AceClickEvent.TYPE);
+   }
+   
+   public HandlerRegistration addSelectionChangedHandler(AceSelectionChangedEvent.Handler handler)
+   {
+      return addHandler(handler, AceSelectionChangedEvent.TYPE);
    }
    
    public void forceResize()

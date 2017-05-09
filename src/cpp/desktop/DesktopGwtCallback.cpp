@@ -23,6 +23,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <QClipboard>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QApplication>
@@ -57,8 +58,9 @@ namespace rstudio {
 namespace desktop {
 
 namespace {
-   WindowTracker s_windowTracker;
-}
+WindowTracker s_windowTracker;
+QString s_globalMouseSelection;
+} // end anonymous namespace
 
 extern QString scratchPath;
 
@@ -68,6 +70,15 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
      pSynctex_(NULL),
      pendingQuit_(PendingQuitNone)
 {
+    QClipboard* cb = QApplication::clipboard();
+
+    // listen for clipboard data change events
+    QObject::connect(cb, SIGNAL(changed(QClipboard::Mode)),
+                     this, SLOT(onClipboardChanged(QClipboard::Mode)));
+
+    // initialize the global selection
+    if (cb->supportsSelection())
+        s_globalMouseSelection = cb->text(QClipboard::Selection);
 }
 
 Synctex& GwtCallback::synctex()
@@ -244,6 +255,24 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    return createAliasedPath(result);
 }
 
+void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
+{
+    // if this is a change in the selection contents, track it
+    if (mode == QClipboard::Selection)
+    {
+        QClipboard* cb = QApplication::clipboard();
+        QString text = cb->text(mode);
+
+        // when one clicks on an Ace instance, a hidden length-one selection
+        // will sneak in here. explicitly screen those out.
+        if (text == QString::fromUtf8("\x01"))
+            return;
+
+        // update our tracked global selection
+        s_globalMouseSelection = text;
+    }
+}
+
 void GwtCallback::doAction(const QKeySequence& keys)
 {
    int keyCode = keys[0];
@@ -293,6 +322,19 @@ void GwtCallback::clipboardCopy()
 void GwtCallback::clipboardPaste()
 {
    doAction(QKeySequence::Paste);
+}
+
+void GwtCallback::setGlobalMouseSelection(QString selection)
+{
+    QClipboard* clipboard = QApplication::clipboard();
+    if (clipboard->supportsSelection())
+        clipboard->setText(selection, QClipboard::Selection);
+    s_globalMouseSelection = selection;
+}
+
+QString GwtCallback::getGlobalMouseSelection()
+{
+    return s_globalMouseSelection;
 }
 
 QString GwtCallback::proportionalFont()

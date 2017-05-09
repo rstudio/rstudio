@@ -66,24 +66,27 @@ public class JavaScriptEventHistory
       // get reference to document body
       var document = $doc;
       var body = document.body;
-      console.log(body);
       
       // define our handler (we can just use a single one)
       var handler = $entry(function(event) {
          self.@org.rstudio.studio.client.JavaScriptEventHistory::onEvent(Lcom/google/gwt/dom/client/NativeEvent;)(event);
       });
       
+      // define the events that we want to listen to
+      var events = [
+         "cut", "copy", "paste",
+         "resize", "scroll",
+         "keydown", "keypress", "keyup",
+         "mouseenter", "mouseleave", "mouseover", "mousemove", "mouseout",
+         "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel",
+         "drag", "dragstart", "dragend", "dragenter", "dragover", "dragleave", "drop"
+      ];
+         
+      
       // iterate through all keys on body object, and
       // register handlers for any prefixed with 'on'
-      for (var key in body) {
-         
-         // skip keys that don't have an 'on' prefix
-         if (key.indexOf("on") != 0)
-            continue;
-            
-         // extract event name and attach handler
-         var event = key.slice(2);
-         body.addEventListener(event, handler)
+      for (var i = 0, n = events.length; i < n; i++) {
+         body.addEventListener(events[i], handler, true)
       }
       
    }-*/;
@@ -93,9 +96,6 @@ public class JavaScriptEventHistory
       EventData eventData = EventData.create(event);
       queue_.unshift(eventData);
       queue_.setLength(QUEUE_LENGTH);
-
-      // toggle this if you want to see events as they're emitted real-time
-      debugHistory();
    }
    
    public EventData findEvent(Predicate predicate)

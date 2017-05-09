@@ -14,18 +14,41 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.JavaScriptEventHistory;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.JavaScriptEventHistory.EventData;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
 import com.google.inject.Inject;
 
 public class AceEditorMixins
 {
-   public AceEditorMixins()
+   public AceEditorMixins(AceEditor editor)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      editor_ = editor.getWidget().getEditor();
+      
+      initializeMixins(editor_);
+      
+      // on Linux, record whenever the user selects something in Ace
+      if (BrowseCap.isLinuxDesktop())
+      {
+         editor.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+         {
+            @Override
+            public void onSelectionChanged(AceSelectionChangedEvent event)
+            {
+               String selection = editor_.getSelectedText();
+               if (!StringUtil.isNullOrEmpty(selection))
+                  Desktop.getFrame().setGlobalMouseSelection(selection);
+            }
+         });
+      }
    }
    
    @Inject
@@ -34,35 +57,32 @@ public class AceEditorMixins
       history_ = history;
    }
    
-   public static void initializeMixins()
-   {
-      if (INITIALIZED)
-         return;
-      INITIALIZED = true;
-      initializeMixinsImpl();
-   }
-   
-   private static final native void initializeMixinsImpl()
+   private final native void initializeMixins(AceEditorNative editor)
    /*-{
-      var Editor = $wnd.require("ace/editor").Editor;
-      var RStudioEditor = $wnd.require("rstudio/loader").RStudioEditor;
+      // store reference to mixins object
+      var self = this;
       
-      (function() {
+      // override the 'onPaste()' method provided by the Editor prototype
+      editor.$onPaste = editor.onPaste;
+      
+      editor.onPaste = $entry(function(text) {
          
-         this.onPaste = function(text)
-         {
-            @org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(Lorg/rstudio/studio/client/workbench/views/source/editors/text/ace/AceEditorNative;Ljava/lang/String;)(this, text);
-         };
-         
-      }).call(RStudioEditor.prototype);
+         // call mixins method
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(Lorg/rstudio/studio/client/workbench/views/source/editors/text/ace/AceEditorNative;Ljava/lang/String;)(this, text);
+      });
+      
    }-*/;
    
-   private static final void onPaste(AceEditorNative editor, String text)
+   private final void onPaste(AceEditorNative editor, String text)
    {
-      Debug.logToRConsole("On paste!");
-      
-      // TODO: detect whether this paste event is issued in response to a middle click
+      // detect whether this paste event is issued in response to a middle click
       // -- in such cases, we want to paste using the global mouse selection
+      boolean useGlobalMouseSelection =
+            BrowseCap.isLinuxDesktop() &&
+            isPasteTriggeredByMiddleClick();
+      
+      if (useGlobalMouseSelection)
+         text = Desktop.getFrame().getGlobalMouseSelection();
       
       // normalize line endings (Ace expects only '\n' line endings based
       // on how we initialize it, and '\r\n' line endings cause issues)
@@ -72,14 +92,45 @@ public class AceEditorMixins
       invokePasteHandler(editor, text);
    }
    
+   private final boolean isPasteTriggeredByMiddleClick()
+   {
+      EventData event = history_.findEvent(new JavaScriptEventHistory.Predicate()
+      {
+         @Override
+         public boolean accept(EventData event)
+         {
+            String type = event.getType();
+            for (String candidate : CANDIDATES)
+               if (type.contentEquals(candidate))
+                  return true;
+            return false;
+         }
+         
+         private final String[] CANDIDATES = new String[] {
+               "mousedown", "click", "mouseup",
+               "keydown", "keypress", "keyup"
+         };
+      });
+      
+      if (event == null)
+         return false;
+      
+      String type = event.getType();
+      return
+            type.equals("mousedown") ||
+            type.equals("click") ||
+            type.equals("mouseup");
+   }
+   
    private static final native void invokePasteHandler(AceEditorNative editor, String text)
    /*-{
-      var Editor = $wnd.require("ace/editor").Editor;
-      Editor.onPaste.call(editor, text);
+      editor.$onPaste(text);
    }-*/;
    
+   private final AceEditorNative editor_;
+   
    // Injected ----
-   private JavaScriptEventHistory history_;
+   private static JavaScriptEventHistory history_;
    
    // Static Members ----
    private static boolean INITIALIZED = false;
