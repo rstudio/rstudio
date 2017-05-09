@@ -16,3 +16,7 @@
 .rstudio-themes-flat.rstudio-themes-dark .profvis-footer {
    color: #FFF;
 }
+
+.rstudio-themes-flat .profvis-splitbar-horizontal {
+   background: none;
+}
