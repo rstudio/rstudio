@@ -253,6 +253,7 @@ public class AceEditor implements DocDisplay,
                                  {
                                     if (command != null)
                                        command.execute();
+                                    AceEditorMixins.initializeMixins();
                                  }
                               });
                            }
@@ -641,12 +642,14 @@ public class AceEditor implements DocDisplay,
    }
 
    @Inject
-   void initialize(CodeToolsServerOperations server,
+   void initialize(AceEditorMixins mixins,
+                   CodeToolsServerOperations server,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
                    Commands commands,
                    EventBus events)
    {
+      mixins_ = mixins;
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
@@ -3871,6 +3874,7 @@ public class AceEditor implements DocDisplay,
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
+   private AceEditorMixins mixins_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

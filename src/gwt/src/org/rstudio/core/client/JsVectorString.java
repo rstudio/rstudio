@@ -161,6 +161,11 @@ public class JsVectorString extends JavaScriptObject
       this.reverse();
    }-*/;
    
+   public final native void setLength(int length)
+   /*-{
+      this.length = length;
+   }-*/;
+   
    public final String shift()
    {
       return shift(defaultValue());

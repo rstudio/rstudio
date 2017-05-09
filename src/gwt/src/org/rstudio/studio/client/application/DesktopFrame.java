@@ -40,6 +40,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
+   String getGlobalMouseSelection();
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);

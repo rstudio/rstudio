@@ -107,6 +107,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.Ob
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorIdleCommands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
@@ -231,6 +232,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ObjectExplorerEditingTargetWidget widget);
    void injectMembers(ObjectExplorerDataGrid widget);
    void injectMembers(TerminalInfoDialog infoDialog);
+   void injectMembers(AceEditorMixins mixins);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
