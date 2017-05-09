@@ -55,6 +55,24 @@ context("isSubsequence")
       expect_true(trimWhitespace("abc") == "abc");
       expect_true(trimWhitespace("") == "");
    }
+
+   test_that("countNewLines works with empty string")
+   {
+      std::string str("");
+      expect_true(countNewlines(str) == 0);
+   }
+
+   test_that("countNewLines works with line feed")
+   {
+      std::string str("\n\n\n");
+      expect_true(countNewlines(str) == 3);
+   }
+
+   test_that("countNewLines works with carriage return/line feed")
+   {
+      std::string str("\r\n\r\n");
+      expect_true(countNewlines(str) == 2);
+   }
 }
 
 } // end namespace string_utils

@@ -26,6 +26,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/Types.hpp>
 #include <core/FilePath.hpp>
 
@@ -251,6 +252,9 @@ public:
 
    // Terminate the process (SIGTERM)
    virtual Error terminate() = 0;
+
+   // Return associated process-id
+   virtual PidType getPid() = 0;
 
    boost::weak_ptr<ProcessOperations> getWeakPtr()
    {

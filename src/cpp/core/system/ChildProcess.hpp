@@ -64,6 +64,9 @@ public:
    // terminate the process
    virtual Error terminate();
 
+   // get process id
+   virtual PidType getPid();
+
    // Does this process have any subprocesses? True if there are
    // subprocesses, if it hasn't been checked yet, or if the process
    // isn't configured to check for subprocesses.

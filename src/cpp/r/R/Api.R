@@ -1,19 +1,19 @@
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
-  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation", 
+  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation",
                                              PACKAGE=""))
-  
-  info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
+
+  info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode",
                                          PACKAGE=""))
 
   info$edition <- .Call(getNativeSymbolInfo("rs_rstudioEdition",
                                             PACKAGE=""))
-  
+
   info$version <- package_version(
     .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
   )
-  
+
   info
 })
 
@@ -23,36 +23,36 @@
 
 
 .rs.addApiFunction("previewRd", function(rdFile) {
-  
+
   if (!is.character(rdFile) || (length(rdFile) != 1))
     stop("rdFile must be a single element character vector.")
   if (!file.exists(rdFile))
     stop("The specified rdFile ' ", rdFile, "' does not exist.")
-      
+
   invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
 })
 
 .rs.addApiFunction("viewer", function(url, height = NULL) {
-  
+
   if (!is.character(url) || (length(url) != 1))
     stop("url must be a single element character vector.")
-  
+
   if (identical(height, "maximize"))
      height <- -1
 
   if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
      stop("height must be a single element numeric vector or 'maximize'.")
-  
-  invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
+
+  invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))
 })
 
 
 .rs.addApiFunction("savePlotAsImage", function(
-                   file, 
+                   file,
                    format = c("png", "jpeg", "bmp", "tiff", "emf", "svg", "eps"),
                    width,
                    height) {
-   
+
    file <- path.expand(file)
    format <- match.arg(format)
    if (!is.numeric(width))
@@ -62,26 +62,26 @@
    invisible(.Call("rs_savePlotAsImage", file, format, width, height))
 })
 
-.rs.addApiFunction("sourceMarkers", function(name, 
-                                             markers, 
+.rs.addApiFunction("sourceMarkers", function(name,
+                                             markers,
                                              basePath = NULL,
                                              autoSelect = c("none", "first", "error")) {
-   
+
    # validate name
    if (!is.character(name))
       stop("name parameter is specified or invalid: ", name, call. = FALSE)
-   
+
    # validate autoSelect
    autoSelect = match.arg(autoSelect)
-   
+
    # normalize basePath
    if (!is.null(basePath))
       basePath <- .rs.normalizePath(basePath,  mustWork = TRUE)
-   
+
    if (is.data.frame(markers)) {
-      
+
       cols <- colnames(markers)
-      
+
       if (!"type" %in% cols || !is.character(markers$type))
          stop("markers type field is unspecified or invalid", call. = FALSE)
       if (!"file" %in% cols || !is.character(markers$file))
@@ -92,13 +92,13 @@
          stop("markers column field is unspecified or invalid", call. = FALSE)
       if (!"message" %in% cols || !is.character(markers$message))
          stop("markers message field is unspecified or invalid", call. = FALSE)
-      
+
       # normalize paths
       markers$file <- .rs.normalizePath(markers$file, mustWork = TRUE)
-      
+
       # check for html
       markers$messageHTML <- inherits(markers$message, "html")
-      
+
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style", "usage")
@@ -112,33 +112,33 @@
             stop("Marker column is unspecified or invalid", marker$line, call. = FALSE)
          if (!is.character(marker$message))
             stop("Marker message is unspecified or invalid: ", marker$message, call. = FALSE)
-         
+
          marker$type <- .rs.scalar(marker$type)
          marker$file <- .rs.scalar(.rs.normalizePath(marker$file, mustWork = TRUE))
          marker$line <- .rs.scalar(as.numeric(marker$line))
          marker$column <- .rs.scalar(as.numeric(marker$column))
          marker$message <- .rs.scalar(marker$message)
          marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
-         
+
          marker
       })
    } else {
       stop("markers was not a data.frame or a list", call. = FALSE)
    }
-   
+
    # validate basePath
    if (is.null(basePath))
       basePath <- ""
    else if (!is.character(basePath))
       stop("basePath parameter is not of type character", call. = FALSE)
-   
+
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
 })
 
 .rs.addApiFunction("navigateToFile", function(filePath, line = 1L, col = 1L) {
    # validate file argument
    if (!is.character(filePath)) {
-      stop("filePath must be a character")  
+      stop("filePath must be a character")
    }
    if (!file.exists(filePath)) {
       stop(filePath, " does not exist.")
@@ -151,16 +151,16 @@
    }
 
    # expand and alias for client
-   filePath <- .rs.normalizePath(filePath, winslash="/", mustWork = TRUE) 
+   filePath <- .rs.normalizePath(filePath, winslash="/", mustWork = TRUE)
    homeDir <- path.expand("~")
    if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
       filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
    }
-   
+
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
       file_name     = .rs.scalar(filePath),
-      line_number   = .rs.scalar(line), 
+      line_number   = .rs.scalar(line),
       column_number = .rs.scalar(col)))
 
    invisible(NULL)
@@ -169,43 +169,43 @@
 .rs.addFunction("validateAndTransformLocation", function(location)
 {
    invalidRangeMsg <- "'ranges' should be a list of 4-element integer vectors"
-   
+
    # allow a single range (then validate that it's a true range after)
    if (!is.list(location) || inherits(location, "document_range"))
       location <- list(location)
-   
+
    ranges <- lapply(location, function(el) {
-      
+
       # detect proxy Inf object
       if (identical(el, Inf))
          el <- c(Inf, 0, Inf, 0)
-      
+
       # detect positions (2-element vectors) and transform them to ranges
       n <- length(el)
       if (n == 2 && is.numeric(el))
          el <- c(el, el)
-      
+
       # detect document_ranges and transform
       if (is.list(el) && all(c("start", "end") %in% names(el)))
          el <- c(el$start, el$end)
-      
+
       # validate we have a range-like object
       if (length(el) != 4 || !is.numeric(el) || any(is.na(el)))
          stop(invalidRangeMsg, call. = FALSE)
-      
+
       # transform out-of-bounds values appropriately
       el[el < 1] <- 1
       el[is.infinite(el)] <- NA
-      
+
       # transform from 1-based to 0-based indexing for server
       result <- as.integer(el) - 1L
-      
+
       # treat NAs as end of row / column
       result[is.na(result)] <- as.integer(2 ^ 31 - 1)
-      
+
       result
    })
-   
+
    ranges
 })
 
@@ -216,25 +216,25 @@
 })
 
 .rs.addApiFunction("insertText", function(location, text, id = "") {
-   
+
    invalidTextMsg <- "'text' should be a character vector"
    invalidLengthMsg <- "'text' should either be length 1, or same length as 'ranges'"
 
    if (is.null(id))
       id <- ""
-   
+
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
-   
+
    # allow calls of the form:
-   #    
+   #
    #    insertText("foo")
    #    insertText(text = "foo")
-   #    
+   #
    # in such cases, we replace the current selection. we pass an empty range
    # and let upstream interpret this as a request to replace the current
    # selection.
-   
+
    if (missing(text) && is.character(location)) {
       text <- location
       location <- list()
@@ -244,25 +244,25 @@
    } else if (length(location) == 0) {
       return()
    }
-   
+
    ranges <- .rs.validateAndTransformLocation(location)
    if (!is.character(text))
       stop(invalidTextMsg, call. = FALSE)
-   
+
    if (length(text) != 1 && length(ranges) != length(text))
       stop(invalidLengthMsg, call. = FALSE)
-   
+
    # sort the ranges in decreasing order -- this way, we can
    # ensure the replacements occur correctly (except in the
    # case of overlaps)
    if (length(ranges)) {
       idx <- order(unlist(lapply(ranges, `[[`, 1)))
-      
+
       ranges <- ranges[idx]
       if (length(text) != 1)
          text <- text[idx]
    }
-   
+
    data <- list(ranges = ranges, text = text, id = .rs.scalar(id))
    .rs.enqueEditorClientEvent("replace_ranges", data)
    invisible(data)
@@ -306,7 +306,7 @@
 {
    if (!is.character(code))
       stop("'code' should be a character vector", call. = FALSE)
-   
+
    code <- paste(code, collapse = "\n")
    data <- list(
       code = .rs.scalar(code),
@@ -314,7 +314,7 @@
       execute = .rs.scalar(as.logical(execute)),
       focus = .rs.scalar(as.logical(focus))
    )
-   
+
    .rs.enqueClientEvent("send_to_console", data)
    invisible(data)
 })
@@ -396,5 +396,88 @@
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE
+})
+
+.rs.addApiFunction("sendToTerminal", function(id, text) {
+   if (!is.character(text))
+      stop("'text' should be a character vector", call. = FALSE)
+
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   text <- paste(text, collapse = "\n")
+   data <- list(text = .rs.scalar(text), id = .rs.scalar(id))
+
+   .rs.enqueClientEvent("send_to_terminal", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("clearTerminal", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   data <- list(id = .rs.scalar(id))
+
+   .rs.enqueClientEvent("clear_terminal", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("createTerminal", function(id = "") {
+   if (is.null(id))
+      id <- ""
+
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+
+   .Call("rs_createNamedTerminal", id)
+})
+
+.rs.addApiFunction("isTerminalBusy", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_isTerminalBusy", id)
+})
+
+.rs.addApiFunction("getAllTerminals", function() {
+   .Call("rs_getAllTerminals")
+})
+
+.rs.addApiFunction("getTerminalContext", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_getTerminalContext", id)
+})
+
+.rs.addApiFunction("showTerminal", function(id = NULL) {
+   if (is.null(id))
+      id <- ""
+
+   if (!is.character(id))
+      stop("'id' must be NULL or a character vector of length one")
+
+   data <- list(id = .rs.scalar(id))
+
+   .rs.enqueClientEvent("activate_terminal", data)
+   invisible(data)
+})
+
+.rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = NULL) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   if (is.null(stripAnsi) || !is.logical(stripAnsi))
+      stop("'stripAnsi' must be a logical vector")
+
+   .Call("rs_getTerminalBuffer", id, stripAnsi)
+})
+
+.rs.addApiFunction("killTerminal", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_killTerminal", id)
+   invisible(NULL)
 })
 

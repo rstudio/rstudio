@@ -76,16 +76,17 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     */
    public void processTestExists(String handle,
                                  ServerRequestCallback<Boolean> requestCallback);
-
+   
    /**
     * Set/update the caption of given process.
     * @param handle process handle
     * @param caption new caption
-    * @param requestCallback response
+    * @param requestCallback response; true if successfully renamed, false if
+    * unable to rename due to name already in use
     */
    void processSetCaption(String handle,
                           String caption,
-                          ServerRequestCallback<Void> requestCallback);
+                          ServerRequestCallback<Boolean> requestCallback);
    /**
     * Set/update the title of given process.
     * @param handle process handle

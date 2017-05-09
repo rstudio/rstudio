@@ -41,6 +41,10 @@ void saveConsoleProcesses(const std::string& metadata);
 // then returns the trimmed buffer.
 std::string getSavedBuffer(const std::string& handle, int maxLines);
 
+// Return number of lines in the saved buffer for given ConsoleProcess;
+// buffer will be trimmed to max number of lines and rewritten.
+int getSavedBufferLineCount(const std::string& handle, int maxLines);
+
 // Add to the saved buffer for the given ConsoleProcess
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer);
 

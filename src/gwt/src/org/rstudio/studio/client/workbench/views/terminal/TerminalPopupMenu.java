@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -154,6 +155,14 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
    }
+   
+   public void setActiveTerminalByCaption(String caption)
+   {
+      String handle = terminals_.handleForCaption(caption);
+      if (StringUtil.isNullOrEmpty(handle))
+         return;
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+   }
 
    /**
     * Refresh caption of active terminal based on busy status.
@@ -291,8 +300,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    }
 
    private ToolbarButton toolbarButton_;
-   private Commands commands_;
-   private EventBus eventBus_;
    private String activeTerminalHandle_;
    private TerminalList terminals_;
+
+   // Injected ----  
+   private Commands commands_;
+   private EventBus eventBus_;
 }

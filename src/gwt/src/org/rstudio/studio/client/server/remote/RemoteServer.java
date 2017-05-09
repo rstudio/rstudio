@@ -661,7 +661,7 @@ public class RemoteServer implements Server
    @Override
    public void processSetCaption(String handle,
                                  String caption,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
