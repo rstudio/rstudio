@@ -96,13 +96,4 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processSetTitle(String handle,
                         String title,
                         ServerRequestCallback<Void> requestCallback);
-
-   /**
-    * Inform server the requested terminal has been created.
-    * @param terminalId terminalId (caption) of created terminal, or null
-    * @param requestCallback
-    */
-   public void createNamedTerminalCompleted(
-                         String terminalId,
-                         ServerRequestCallback<Void> requestCallback);
 }

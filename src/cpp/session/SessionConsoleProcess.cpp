@@ -47,8 +47,6 @@ typedef std::map<std::string, ConsoleProcessPtr> ProcTable;
 ProcTable s_procs;
 ConsoleProcessSocket s_terminalSocket;
 
-module_context::WaitForMethodFunction s_waitForCreatedTerminalId;
-
 ConsoleProcessPtr findProcByHandle(const std::string& handle)
 {
    ProcTable::const_iterator pos = s_procs.find(handle);
@@ -66,6 +64,20 @@ ConsoleProcessPtr findProcByCaption(const std::string& caption)
          return proc;
    }
    return ConsoleProcessPtr();
+}
+
+// Determine next terminal sequence, used when creating terminal name
+// via rstudioapi: mimics what happens in client code.
+std::string nextTerminalName()
+{
+   int maxNum = kNoTerminal;
+   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   {
+      maxNum = std::max(maxNum, proc->getTerminalSequence());
+   }
+   maxNum++;
+
+   return std::string("Terminal ") + safe_convert::numberToString(maxNum);
 }
 
 // Return vector of all terminal ids (captions)
@@ -86,8 +98,7 @@ SEXP rs_getAllTerminals()
 }
 
 // Create a terminal with given id (caption). If null, create with automatically
-// generated name. Returns resulting name in either case (or null on error,
-// including if requested name is already in use) via WaitForMethodFunction.
+// generated name. Returns resulting name in either case.
 SEXP rs_createNamedTerminal(SEXP typeSEXP)
 {
    r::sexp::Protect protect;
@@ -96,35 +107,19 @@ SEXP rs_createNamedTerminal(SEXP typeSEXP)
       return R_NilValue;
 
    std::string terminalId = r::sexp::asString(typeSEXP);
+   if (terminalId.empty())
+   {
+      terminalId = nextTerminalName();
+   }
 
    json::Object eventData;
    eventData["id"] = terminalId;
 
    // send the event
    ClientEvent createNamedTerminalEvent(client_events::kCreateNamedTerminal, eventData);
+   module_context::enqueClientEvent(createNamedTerminalEvent);
 
-   // wait for event to complete
-   json::JsonRpcRequest request;
-
-   bool succeeded = s_waitForCreatedTerminalId(&request, createNamedTerminalEvent);
-   if (!succeeded)
-      return R_NilValue;
-
-   std::string resultId;
-
-   Error error = json::readParams(request.params, &resultId);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return R_NilValue;
-   }
-
-   // if the id is empty, couldn't create the terminal, either due to an
-   // error or because the requested terminalId was already in use
-   if (resultId.empty())
-      return R_NilValue;
-
-   return r::sexp::create(resultId, &protect);
+   return r::sexp::create(terminalId, &protect);
 }
 
 // Returns busy state of a terminal (i.e. does the shell have any child
@@ -1423,9 +1418,6 @@ Error initialize()
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    loadConsoleProcesses();
-
-   using namespace module_context;
-   s_waitForCreatedTerminalId = registerWaitForMethod("create_named_terminal_completed");
 
    RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);

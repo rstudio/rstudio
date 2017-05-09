@@ -478,5 +478,6 @@
       stop("'id' must be a character vector")
 
    .Call("rs_killTerminal", id)
+   invisible(NULL)
 })
 

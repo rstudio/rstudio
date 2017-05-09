@@ -172,8 +172,7 @@ const int kObjectExplorerEvent = 153;
 const int kSendToTerminal = 154;
 const int kClearTerminal = 155;
 const int kCreateNamedTerminal = 156;
-const int kCreateNamedTerminalCompleted = 157;
-const int kActivateTerminal = 158;
+const int kActivateTerminal = 157;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -473,8 +472,6 @@ std::string ClientEvent::typeName() const
          return "clear_terminal";
       case client_events::kCreateNamedTerminal:
          return "create_named_terminal";
-      case client_events::kCreateNamedTerminalCompleted:
-         return "create_named_terminal_completed";
       case client_events::kActivateTerminal:
          return "activate_terminal";
       default:
