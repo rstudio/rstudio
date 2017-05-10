@@ -13,10 +13,20 @@
  *
  */
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-footer {
+.rstudio-themes-flat.rstudio-themes-dark .profvis-footer,
+.rstudio-themes-flat.rstudio-themes-dark .profvis-status-bar,
+.rstudio-themes-flat.rstudio-themes-dark .result-block-active {
    color: #FFF;
 }
 
 .rstudio-themes-flat .profvis-splitbar-horizontal {
    background: none;
+}
+
+.rstudio-themes-flat .separator-block {
+   display: none;
+}
+
+.rstudio-themes-flat .info-block {
+   border-right: solid 1px #FFF;
 }

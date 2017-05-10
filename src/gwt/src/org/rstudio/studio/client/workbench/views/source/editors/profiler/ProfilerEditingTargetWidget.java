@@ -67,27 +67,33 @@ public class ProfilerEditingTargetWidget extends Composite
    private String getCustomStyle()
    {
       return
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .info-block {\n" +
          "   border-color: " + ThemeColors.defaultBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .info-block {\n" +
          "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .info-block {\n" +
          "   border-color: " + ThemeColors.alternateBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.defaultBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer {\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.alternateBackground + ";\n" +
          "}\n" +
          "\n" +
@@ -101,6 +107,18 @@ public class ProfilerEditingTargetWidget extends Composite
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal {\n" +
          "   background-color: " + ThemeColors.alternateBodyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .result-block-active {\n" +
+         "   background-color: " + ThemeColors.defaultMostInactiveBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .result-block-active {\n" +
+         "   background-color: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .result-block-active {\n" +
+         "   background-color: " + ThemeColors.alternateMostInactiveBackground + ";\n" +
          "}\n";
    }
 
