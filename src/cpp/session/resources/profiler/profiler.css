@@ -24,13 +24,13 @@
    color: inherit;
 }
 
-.rstudio-themes-flat .profvis-table th {
+.rstudio-themes-flat.rstudio-themes-dark .profvis-table th {
    background: rgba(255, 255, 255, 0.2);
    border-top: none;
    font-weight: 400;
 }
 
-.rstudio-themes-flat table.profvis-table tr.active {
+.rstudio-themes-flat.rstudio-themes-dark table.profvis-table tr.active {
    background: rgba(255, 255, 255, 0.05);
 }
 
@@ -53,4 +53,24 @@
 
 .rstudio-themes-flat .info-block {
    border-right: solid 1px #FFF;
+}
+
+.rstudio-themes-flat .profvis-treetable {
+   color: inherit;
+}
+
+.rstudio-themes-flat .profvis-treetable table tr {
+   background: inherit !important;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable th {
+   background: rgba(255, 255, 255, 0.2);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-collapse > div > div {
+   border-top: 6px solid #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-expand > div > div {
+   border-left: 6px solid #FFF;
 }
