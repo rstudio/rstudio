@@ -20,6 +20,29 @@
    color: #FFF;
 }
 
+.rstudio-themes-flat span.identifier {
+   color: inherit;
+}
+
+.rstudio-themes-flat .profvis-table th {
+   background: rgba(255, 255, 255, 0.2);
+   border-top: none;
+   font-weight: 400;
+}
+
+.rstudio-themes-flat table.profvis-table tr.active {
+   background: rgba(255, 255, 255, 0.05);
+}
+
+.rstudio-themes-flat table.profvis-table .membar-right-cell,
+.rstudio-themes-flat table.profvis-table .timebar-cell {
+   border-color: #444;
+}
+
+.rstudio-themes-flat table.profvis-table tr {
+   border-top: none;
+}
+
 .rstudio-themes-flat .profvis-splitbar-horizontal {
    background: none;
 }
