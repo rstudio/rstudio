@@ -74,3 +74,35 @@
 .rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-expand > div > div {
    border-left: 6px solid #FFF;
 }
+
+.rstudio-themes-flat .profvis-flamegraph .background {
+   fill: rgba(249, 249, 250, 0);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .tick {
+   fill: #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .tick line {
+   stroke: #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .domain {
+   stroke: #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell text {
+   fill: #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell rect {
+   fill: rgba(255,255,255,0.3);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell.highlighted .rect {
+   fill: rgba(255,255,255,0.5);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell.highlighted.active .rect {
+   fill: rgba(255,255,255,0.7);
+}
