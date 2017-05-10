@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client;
 
-import org.rstudio.core.client.JsVector;
+import java.util.LinkedList;
+import java.util.Queue;
+
 import org.rstudio.core.client.widget.MiniPopupPanel;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -55,7 +57,7 @@ public class JavaScriptEventHistory
    
    public JavaScriptEventHistory()
    {
-      queue_ = JavaScriptObject.createArray().cast();
+      queue_ = new LinkedList<EventData>();
       registerEventListeners();
    }
    
@@ -94,15 +96,16 @@ public class JavaScriptEventHistory
    private void onEvent(NativeEvent event)
    {
       EventData eventData = EventData.create(event);
-      queue_.unshift(eventData);
-      queue_.setLength(QUEUE_LENGTH);
+      queue_.add(eventData);
+      if (queue_.size() > QUEUE_LENGTH)
+         queue_.remove();
    }
    
    public EventData findEvent(Predicate predicate)
    {
-      for (int i = 0, n = queue_.length(); i < n; i++)
-         if (predicate.accept(queue_.get(i)))
-            return queue_.get(i);
+      for (EventData data : queue_)
+         if (predicate.accept(data))
+            return data;
       return null;
    }
    
@@ -115,9 +118,12 @@ public class JavaScriptEventHistory
       
       VerticalPanel contentPanel = new VerticalPanel();
       contentPanel.add(new HTML("<h4 style='margin: 0;'>JavaScript Event History</h2><hr />"));
-      for (int i = 0, n = Math.min(10, queue_.length()); i < n; i++)
+      
+      int i = 0, n = Math.min(10, queue_.size());
+      for (EventData event : queue_)
       {
-         EventData event = queue_.get(i);
+         if (i++ == n)
+            break;
          contentPanel.add(new HTML("Event: " + event.getType()));
       }
       
@@ -129,7 +135,6 @@ public class JavaScriptEventHistory
       }
    }
    
-   private final JsVector<EventData> queue_;
-   
+   private final Queue<EventData> queue_;
    private static final int QUEUE_LENGTH = 10;
 }
