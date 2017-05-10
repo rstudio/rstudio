@@ -24,9 +24,8 @@ import jsinterop.annotations.JsProperty;
  */
 public class JsUtils {
 
-  public static native int compare(String a, String b) /*-{
-    return a == b ? 0 : (a < b ? -1 : 1);
-  }-*/;
+  @JsMethod(namespace = "<window>", name = "Date.now")
+  public static native double getTime();
 
   @JsMethod(namespace = "<window>")
   public static native boolean isFinite(double d);

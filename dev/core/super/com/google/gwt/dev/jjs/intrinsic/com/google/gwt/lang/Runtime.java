@@ -176,11 +176,19 @@ public class Runtime {
     @Runtime::prototypesByTypeId = {};
 
     // Do polyfills for all methods expected in a modern browser.
-    // Patch up Array.isArray for browsers that don't support the fast native check.
+
+    // Required by IE8
     if (!Array.isArray) {
-        Array.isArray = function (vArg) {
-          return Object.prototype.toString.call(vArg) === "[object Array]";
-        };
+      Array.isArray = function (vArg) {
+        return Object.prototype.toString.call(vArg) === "[object Array]";
+      };
+    }
+
+    // Required by IE8
+    if (!Date.now) {
+      Date.now = function now() {
+        return new Date().getTime();
+      };
     }
   }-*/;
 

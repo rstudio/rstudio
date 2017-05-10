@@ -22,8 +22,8 @@ import static javaemul.internal.InternalPreconditions.isTypeChecked;
 import java.io.PrintStream;
 
 import javaemul.internal.ArrayHelper;
-import javaemul.internal.DateUtil;
 import javaemul.internal.HashCodes;
+import javaemul.internal.JsUtils;
 
 import jsinterop.annotations.JsMethod;
 
@@ -93,7 +93,7 @@ public final class System {
   }
 
   public static long currentTimeMillis() {
-    return (long) DateUtil.now();
+    return (long) JsUtils.getTime();
   }
 
   /**
