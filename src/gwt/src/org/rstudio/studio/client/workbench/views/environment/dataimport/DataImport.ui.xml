@@ -76,7 +76,7 @@
             -webkit-flex-direction: column;
             flex-direction: column;
 
-            min-width: 300px;
+            min-width: 100px;
         }
         .codeTextArea {
             width: literal("calc(100% - 10px)");
