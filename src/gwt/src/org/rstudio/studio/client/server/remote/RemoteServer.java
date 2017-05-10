@@ -2122,6 +2122,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HISTORY_ARCHIVE_ITEMS, params, requestCallback);
    }
    
+   public void searchHistory(
+         String query, 
+         long maxEntries,
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(query));
+      params.set(1, new JSONNumber(maxEntries));
+      sendRequest(RPC_SCOPE, SEARCH_HISTORY, params, requestCallback);
+   }
   
    public void searchHistoryArchive(
          String query, 
@@ -5310,6 +5320,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_HISTORY_ITEMS = "remove_history_items";
    private static final String CLEAR_HISTORY = "clear_history";
    private static final String GET_HISTORY_ARCHIVE_ITEMS = "get_history_archive_items";
+   private static final String SEARCH_HISTORY = "search_history";
    private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
    private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
 

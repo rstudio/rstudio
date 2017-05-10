@@ -147,7 +147,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    
    public void beginSearch()
    {
-      server_.searchHistoryArchive(
+      server_.searchHistory(
             input_.getText(), 20, 
             new HistoryCallback(input_.getText(), PopupMode.PopupIncremental));
    }

@@ -255,6 +255,53 @@ Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
    return setJsonResultFromHistory(startIndex, endIndex, pResponse);
 }
    
+Error searchHistory(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // get the query
+   std::string query;
+   int maxEntries;
+   Error error = json::readParams(request.params, &query, &maxEntries);
+   if (error)
+      return error;
+   
+   int idx = 0;
+
+   // get all entries from console history
+   std::vector<std::string> entries;
+   r::session::consoleHistory().subset(
+         0, r::session::consoleHistory().size() - 1, &entries);
+   std::vector<HistoryEntry> matchingEntries;
+   for (std::vector<std::string>::const_reverse_iterator 
+            it = entries.rbegin();
+            it != entries.rend();
+            ++it)
+   {
+      // check limit
+      if (matchingEntries.size() >= static_cast<std::size_t>(maxEntries))
+         break;
+
+      if (boost::algorithm::contains(*it, query))
+      {
+         if (!matchingEntries.empty() && 
+             matchingEntries[matchingEntries.size() - 1].command == *it)
+         {
+            // skip consecutive matching entries for brevity
+            continue;
+         }
+
+         // add command to results
+         matchingEntries.push_back(HistoryEntry(idx++, 0, *it));
+      }
+   }
+
+   // return json
+   json::Object entriesJson;
+   historyEntriesAsJson(matchingEntries, &entriesJson);
+   pResponse->setResult(entriesJson);
+   return Success();
+}
+
 Error searchHistoryArchive(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -272,7 +319,7 @@ Error searchHistoryArchive(const json::JsonRpcRequest& request,
    std::copy(tok.begin(), tok.end(), std::back_inserter(searchTerms));
    
    // examine the items in the history for matches
-   const std::vector<HistoryEntry>& allEntries =  historyArchive().entries();
+   const std::vector<HistoryEntry>& allEntries = historyArchive().entries();
    std::vector<HistoryEntry> matchingEntries;
    for (std::vector<HistoryEntry>::const_reverse_iterator 
             it = allEntries.rbegin();
@@ -396,6 +443,7 @@ Error initialize()
       (bind(registerRpcMethod, "remove_history_items", removeHistoryItems))
       (bind(registerRpcMethod, "clear_history", clearHistory))
       (bind(registerRpcMethod, "get_history_archive_items", getHistoryArchiveItems))
+      (bind(registerRpcMethod, "search_history", searchHistory))
       (bind(registerRpcMethod, "search_history_archive", searchHistoryArchive))
       (bind(registerRpcMethod, "search_history_archive_by_prefix", searchHistoryArchiveByPrefix));
    return initBlock.execute();
