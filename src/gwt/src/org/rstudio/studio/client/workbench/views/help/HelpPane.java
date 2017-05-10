@@ -52,7 +52,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
@@ -102,8 +102,7 @@ public class HelpPane extends WorkbenchPane
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
-      frame_.setAceTheme();
+      frame_ = new RStudioThemedFrame();
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
@@ -713,7 +712,7 @@ public class HelpPane extends WorkbenchPane
    private final ToolbarLinkMenu history_ ;
  
    private Label title_ ;
-   private RStudioFrame frame_ ;
+   private RStudioThemedFrame frame_ ;
    private FindTextBox findTextBox_;
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
