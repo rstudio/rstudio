@@ -45,6 +45,8 @@
 
 .rstudio-themes-flat .profvis-splitbar-horizontal {
    background: none;
+   border-top: solid 1px #FFF;
+   border-bottom: solid 1px #FFF;
 }
 
 .rstudio-themes-flat .separator-block {

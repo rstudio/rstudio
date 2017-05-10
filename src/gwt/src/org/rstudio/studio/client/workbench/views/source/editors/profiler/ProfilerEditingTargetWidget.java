@@ -72,6 +72,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .info-block {\n" +
          "   border-color: " + ThemeColors.defaultBorder + ";\n" +
          "}\n" +
@@ -80,6 +81,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .info-block {\n" +
          "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
          "}\n" +
@@ -88,6 +90,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .info-block {\n" +
          "   border-color: " + ThemeColors.alternateBorder + ";\n" +
          "}\n" +
