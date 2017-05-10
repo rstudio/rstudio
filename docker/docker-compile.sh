@@ -8,7 +8,7 @@
 # 
 # The syntax is as follows:
 #
-#     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION]
+#     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION] [VARIANT]
 #
 # where the image name is the platform and architecture, the flavor name is
 # the kind of package you wish to build (desktop or server), and the version
@@ -31,6 +31,7 @@
 IMAGE=$1
 FLAVOR=$2
 VERSION=$3
+VARIANT=$4
 
 # abort on error
 set -e
@@ -42,7 +43,7 @@ REPO=$(basename $(pwd))
 # print usage if no argument supplied
 if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     echo -e "Compiles RStudio inside a Docker container."
-    echo -e "Usage: docker-compile.sh image-name flavor-name [version]\n"
+    echo -e "Usage: docker-compile.sh image-name flavor-name [version] [variant]\n"
     echo -e "Valid images:\n"
     ls -f docker/jenkins/Dockerfile.* | sed -e 's/.*Dockerfile.//'
     echo -e "\nValid flavors:\n"
@@ -75,5 +76,5 @@ if [ -n "$VERSION" ]; then
 fi
 
 # run compile step
-docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE"
+docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE clean $VARIANT"
 

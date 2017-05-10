@@ -38,7 +38,7 @@ include_directories(
 add_executable(rserver-pam ${PAM_SOURCE_FILES} ${PAM_HEADER_FILES})
 
 # add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
+if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set_target_properties(rserver-pam PROPERTIES
                          INSTALL_RPATH \$ORIGIN)

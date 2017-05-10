@@ -19,13 +19,6 @@ cmake_policy(SET CMP0020 OLD)
 
 project(DESKTOP)
 
-# require Qt 5.4
-if(WIN32)
-  set(QT_VERSION "5.4.1")
-else()
-  set(QT_VERSION "5.4.0")
-endif()
-
 set(QT_VERSION_SUBDIR "5.4")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
@@ -44,17 +37,27 @@ if(NOT WIN32)
          endif()
       endif()
 
-      set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_VERSION}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
-      if(EXISTS ${QMAKE_QT50_SDK})
-         set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
-      else()
-         set(QMAKE_QT50_SDK "$ENV{HOME}/Qt${QT_VERSION}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
+      # find the newest installed Qt version among the versions we build
+      # against
+      foreach(QT_CANDIDATE 5.4.0 5.4.1 5.4.2)
+         set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
             set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+            set(QT_VERSION "${QT_CANDIDATE}")
+            break()
+         else()
+            set(QMAKE_QT50_SDK "$ENV{HOME}/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
+            if(EXISTS ${QMAKE_QT50_SDK})
+               set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+               set(QT_VERSION "${QT_CANDIDATE}")
+               break()
+            endif()
          endif()
-      endif()
+      endforeach()
    endif()
 else()
+   # only Qt 5.4.1 is supported on windows
+   set(QT_VERSION "5.4.1")
    if(NOT QT_QMAKE_EXECUTABLE)
       set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\mingw491_32")
       if(EXISTS ${QMAKE_QT50_SDK})
@@ -78,6 +81,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5WebKit REQUIRED)
+find_package(Qt5WebChannel REQUIRED)
 find_package(Qt5WebKitWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
@@ -304,6 +308,7 @@ if(NOT APPLE)
       Widgets
       Gui
       Network
+      WebChannel
       WebKit
       WebKitWidgets
       PrintSupport
@@ -457,6 +462,13 @@ if(RSTUDIO_BUNDLE_QT)
       # install dependent libraries
       set(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib")
       set(QT_FULL_VERSION ${QT_VERSION})
+      set(SO_VERSION "53")
+
+      # use newer system library versions for Qt > 5.4.1
+      if(QT_VERSION VERSION_GREATER 5.4.1)
+         set(SO_VERSION "55")
+      endif()
+
       install(PROGRAMS ${QT_LIBRARY_DIR}/libQt5Core.so.5
                        ${QT_LIBRARY_DIR}/libQt5Core.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5DBus.so.5
@@ -493,12 +505,12 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Sql.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.5
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libicui18n.so.53
-                       ${QT_LIBRARY_DIR}/libicui18n.so.53.1
-                       ${QT_LIBRARY_DIR}/libicuuc.so.53
-                       ${QT_LIBRARY_DIR}/libicuuc.so.53.1
-                       ${QT_LIBRARY_DIR}/libicudata.so.53
-                       ${QT_LIBRARY_DIR}/libicudata.so.53.1
+                       ${QT_LIBRARY_DIR}/libicui18n.so.${SO_VERSION}
+                       ${QT_LIBRARY_DIR}/libicui18n.so.${SO_VERSION}.1
+                       ${QT_LIBRARY_DIR}/libicuuc.so.${SO_VERSION}
+                       ${QT_LIBRARY_DIR}/libicuuc.so.${SO_VERSION}.1
+                       ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}
+                       ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}.1
               DESTINATION ${RSTUDIO_INSTALL_BIN})
    # copy qt dlls directly to bin on win32
    elseif(WIN32)
