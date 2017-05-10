@@ -2745,6 +2745,8 @@ public class CompilerTest extends ArgProcessorTestBase {
         "java.lang.CharSequence",
         "java.lang.Comparable",
         "java.lang.Double",
+        "java.lang.HasCharSequenceTypeMarker",
+        "java.lang.HasComparableTypeMarker",
         "java.lang.Number",
         "java.lang.String",
         "java.lang.String$NativeFunction",

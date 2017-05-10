@@ -371,7 +371,11 @@ public final class String implements Comparable<String>, CharSequence,
 
   @Override
   public int compareTo(String other) {
-    return JsUtils.compare(checkNotNull(this), checkNotNull(other));
+    // Trick compiler into thinking that these are double so what we could do arithmetic comparison
+    // which is supported on underlying JavaScript strings.
+    double a = JsUtils.unsafeCastToDouble(checkNotNull(this));
+    double b = JsUtils.unsafeCastToDouble(checkNotNull(other));
+    return a == b ? 0 : (a < b ? -1 : 1);
   }
 
   public int compareToIgnoreCase(String other) {

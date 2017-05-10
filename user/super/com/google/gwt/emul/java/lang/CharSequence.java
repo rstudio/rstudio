@@ -62,12 +62,12 @@ public interface CharSequence {
 
   // CHECKSTYLE_OFF: Utility methods.
   @JsMethod
-  static boolean $isInstance(Object instance) {
+  static boolean $isInstance(HasCharSequenceTypeMarker instance) {
     if (JsUtils.typeOf(instance).equals("string")) {
       return true;
     }
 
-    return instance != null && JsUtils.hasCharSequenceTypeMarker(instance);
+    return instance != null && instance.getTypeMarker() == true;
   }
   // CHECKSTYLE_ON: end utility methods
 }

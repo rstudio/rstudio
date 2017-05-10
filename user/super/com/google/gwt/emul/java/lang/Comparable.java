@@ -31,13 +31,13 @@ public interface Comparable<T> {
 
   // CHECKSTYLE_OFF: Utility methods.
   @JsMethod
-  static boolean $isInstance(Object instance) {
+  static boolean $isInstance(HasComparableTypeMarker instance) {
     String type = JsUtils.typeOf(instance);
     if (type.equals("boolean") || type.equals("number") || type.equals("string")) {
       return true;
     }
 
-    return instance != null && JsUtils.hasComparableTypeMarker(instance);
+    return instance != null && instance.getTypeMarker() == true;
   }
   // CHECKSTYLE_ON: end utility methods
 }

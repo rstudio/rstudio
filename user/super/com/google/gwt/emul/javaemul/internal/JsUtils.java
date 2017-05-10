@@ -16,6 +16,8 @@
 package javaemul.internal;
 
 import javaemul.internal.annotations.UncheckedCast;
+import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsProperty;
 
 /**
  * Provides an interface for simple JavaScript idioms that can not be expressed in Java.
@@ -26,25 +28,25 @@ public class JsUtils {
     return a == b ? 0 : (a < b ? -1 : 1);
   }-*/;
 
-  public static native boolean isFinite(double d) /*-{
-    return isFinite(d);
-  }-*/;
+  @JsMethod(namespace = "<window>")
+  public static native boolean isFinite(double d);
 
-  public static native boolean isNaN(double d) /*-{
-    return isNaN(d);
-  }-*/;
+  @JsMethod(namespace = "<window>")
+  public static native boolean isNaN(double d);
 
-  public static native int parseInt(String s, int radix) /*-{
-    return parseInt(s, radix);
-  }-*/;
+  @JsMethod(namespace = "<window>")
+  public static native int parseInt(String s, int radix);
 
-  public static native boolean isUndefined(Object value) /*-{
-    return value === undefined;
-  }-*/;
+  @JsProperty(namespace = "<window>")
+  public static native Object getUndefined();
 
-  public static native String unsafeCastToString(Object string) /*-{
-   return string;
-  }-*/;
+  public static boolean isUndefined(Object value) {
+    return isSame(value, getUndefined());
+  }
+
+  public static native boolean isSame(Object x, Object y) /*-{
+    return x === y;
+   }-*/;
 
   public static native double unsafeCastToDouble(Object number) /*-{
    return number;
@@ -81,14 +83,6 @@ public class JsUtils {
 
   public static native String typeOf(Object o) /*-{
     return typeof o;
-  }-*/;
-
-  public static native boolean hasComparableTypeMarker(Object o) /*-{
-    return o.$implements__java_lang_Comparable;
-  }-*/;
-
-  public static native boolean hasCharSequenceTypeMarker(Object o) /*-{
-    return o.$implements__java_lang_CharSequence;
   }-*/;
 }
 

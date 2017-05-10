@@ -173,7 +173,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @Override
   public boolean containsKey(Object key) {
     return key instanceof String
-        ? hasStringValue(JsUtils.unsafeCastToString(key)) : hasHashValue(key);
+        ? hasStringValue(JsUtils.uncheckedCast(key)) : hasHashValue(key);
   }
 
   @Override
@@ -199,21 +199,21 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   @Override
   public V get(Object key) {
     return key instanceof String
-        ? getStringValue(JsUtils.unsafeCastToString(key)) : getHashValue(key);
+        ? getStringValue(JsUtils.uncheckedCast(key)) : getHashValue(key);
   }
 
   @SpecializeMethod(params = {String.class, Object.class}, target = "putStringValue")
   @Override
   public V put(K key, V value) {
     return key instanceof String
-        ? putStringValue(JsUtils.unsafeCastToString(key), value) : putHashValue(key, value);
+        ? putStringValue(JsUtils.uncheckedCast(key), value) : putHashValue(key, value);
   }
 
   @SpecializeMethod(params = {String.class}, target = "removeStringValue")
   @Override
   public V remove(Object key) {
     return key instanceof String
-        ? removeStringValue(JsUtils.unsafeCastToString(key)) : removeHashValue(key);
+        ? removeStringValue(JsUtils.uncheckedCast(key)) : removeHashValue(key);
   }
 
   @Override

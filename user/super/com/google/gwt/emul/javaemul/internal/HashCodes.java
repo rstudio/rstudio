@@ -22,7 +22,7 @@ public class HashCodes {
   public static int getIdentityHashCode(Object o) {
     switch (JsUtils.typeOf(o)) {
       case "string":
-        return getStringHashCode(JsUtils.unsafeCastToString(o));
+        return getStringHashCode(JsUtils.uncheckedCast(o));
       case "number":
         return Double.hashCode(JsUtils.unsafeCastToDouble(o));
       case "boolean":
