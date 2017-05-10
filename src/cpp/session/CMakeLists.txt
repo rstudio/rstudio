@@ -392,9 +392,17 @@ target_link_libraries(rsession
 )
 
 # configure and install r-ldpaths script
-if(UNIX AND NOT APPLE)
+if(UNIX)
+
+   if(APPLE)
+     set(LIBRARY_PATH_ENVVAR "DYLD_FALLBACK_LIBRARY_PATH")
+   else()
+     set(LIBRARY_PATH_ENVVAR "LD_LIBRARY_PATH")
+   endif()
+
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/r-ldpath.in
-                  ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath)
+                  ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath
+                  @ONLY)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
