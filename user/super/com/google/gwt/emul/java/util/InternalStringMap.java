@@ -82,21 +82,23 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
 
   @Override
   public Iterator<Entry<K, V>> iterator() {
-    return new Iterator<Map.Entry<K,V>>() {
+    return new Iterator<Map.Entry<K, V>>() {
       InternalJsMap.Iterator<V> entries = backingMap.entries();
       InternalJsMap.IteratorEntry<V> current = entries.next();
       InternalJsMap.IteratorEntry<V> last;
 
       @Override
       public boolean hasNext() {
-        return !current.done;
+        return !current.isDone();
       }
+
       @Override
       public Entry<K, V> next() {
         last = current;
         current = entries.next();
         return newMapEntry(last, valueMod);
       }
+
       @Override
       public void remove() {
         InternalStringMap.this.remove(last.getKey());
@@ -104,14 +106,15 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
     };
   }
 
-  private Entry<K, V> newMapEntry(final InternalJsMap.IteratorEntry<V> entry,
-      final int lastValueMod) {
+  private Entry<K, V> newMapEntry(
+      final InternalJsMap.IteratorEntry<V> entry, final int lastValueMod) {
     return new AbstractMapEntry<K, V>() {
       @SuppressWarnings("unchecked")
       @Override
       public K getKey() {
         return (K) entry.getKey();
       }
+
       @Override
       public V getValue() {
         if (valueMod != lastValueMod) {
@@ -120,6 +123,7 @@ class InternalStringMap<K, V> implements Iterable<Entry<K, V>> {
         }
         return entry.getValue();
       }
+
       @Override
       public V setValue(V object) {
         return put(entry.getKey(), object);

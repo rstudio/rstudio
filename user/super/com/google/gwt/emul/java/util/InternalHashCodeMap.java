@@ -103,8 +103,8 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
 
   @Override
   public Iterator<Entry<K, V>> iterator() {
-    return new Iterator<Map.Entry<K,V>>() {
-      final InternalJsMap.Iterator<Object> chains = backingMap.entries();
+    return new Iterator<Map.Entry<K, V>>() {
+      final InternalJsMap.Iterator<?> chains = backingMap.entries();
       int itemIndex = 0;
       Entry<K, V>[] chain = newEntryChain();
       Entry<K, V> lastEntry = null;
@@ -114,8 +114,8 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
         if (itemIndex < chain.length) {
           return true;
         }
-        InternalJsMap.IteratorEntry<Object> current = chains.next();
-        if (!current.done) {
+        InternalJsMap.IteratorEntry<?> current = chains.next();
+        if (!current.isDone()) {
           // Move to the beginning of next chain
           chain = unsafeCastToArray(current.getValue());
           itemIndex = 0;

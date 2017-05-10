@@ -18,40 +18,60 @@ package java.util;
 import javaemul.internal.JsUtils;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
-// TODO(goktug): These classes should be interfaces with defender methods instead.
-@JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
-class InternalJsMap<V> {
+@JsType(isNative = true, name = "Map", namespace = JsPackage.GLOBAL)
+interface InternalJsMap<V> {
 
-  @JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
-  static class Iterator<V> {
-    public native IteratorEntry<V> next();
+  @JsType(isNative = true, name = "IteratorIterable", namespace = JsPackage.GLOBAL)
+  interface Iterator<V> {
+    IteratorEntry<V> next();
   }
 
-  @JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
-  static class IteratorEntry<V> {
-    private Object[] value;
-    public boolean done;
+  // IteratorEntry<V> is the modeling for IIterableResult<Array<String|V>> as IteratorEntry<V> but
+  // java and jsinterop lack expressibility to represent this abstraction (Java does not have
+  // union types and JsInterop does not allow to map type variables). So IteratorEntry<V> ends up
+  // mapping to IIterableResult<V> which is not an accurate mapping.
+  // It is convenient to model in this way so that users of this internal class don't have to deal
+  // with the internal implementation and the mismatch is handled here with overlay methods.
+  @JsType(isNative = true, name = "IIterableResult", namespace = JsPackage.GLOBAL)
+  interface IteratorEntry<V> {
+    @JsProperty
+    boolean isDone();
+    @JsProperty(name = "value")
+    Object[] getValueInternal();
     @JsOverlay
-    public final String getKey() { return JsUtils.unsafeCastToString(value[0]); }
+    default String getKey() { return JsUtils.uncheckedCast(getValueInternal()[0]); }
     @JsOverlay
-    public final V getValue() { return (V) value[1]; }
+    default V getValue() { return JsUtils.uncheckedCast(getValueInternal()[1]); }
   }
 
-  public native V get(int key);
-  public native V get(String key);
-  public native void set(int key, V value);
-  public native void set(String key, V value);
-  @JsOverlay
-  public final void delete(int key) { JsHelper.delete(this, key); }
-  @JsOverlay
-  public final void delete(String key) { JsHelper.delete(this, key); }
-  public native Iterator<V> entries();
+  V get(int key);
+  V get(String key);
+  void set(int key, V value);
+  void set(String key, V value);
+  Iterator<V> entries();
 
-  // Calls to delete are via brackets to be compatible with old browsers where delete is keyword.
-  private static class JsHelper {
-    static native void delete(InternalJsMap obj, int key) /*-{ obj["delete"](key); }-*/;
-    static native void delete(InternalJsMap obj, String key) /*-{ obj["delete"](key); }-*/;
+  @JsOverlay
+  default void delete(int key) {
+    // Calls delete without map.delete in order to be compatible with old browsers where delete is a
+    // keyword.
+    DeleteFunction fn = JsUtils.getProperty(this, "delete");
+    fn.call(this, key);
+  }
+
+  @JsOverlay
+  default void delete(String key) {
+    // Calls delete without map.delete in order to be compatible with old browsers where delete is a
+    // keyword.
+    DeleteFunction fn = JsUtils.getProperty(this, "delete");
+    fn.call(this, key);
+  }
+
+  @JsType(isNative = true, name = "Function", namespace = JsPackage.GLOBAL)
+  interface DeleteFunction {
+    void call(InternalJsMap<?> thisArg, String key);
+    void call(InternalJsMap<?> thisArg, int key);
   }
 }
