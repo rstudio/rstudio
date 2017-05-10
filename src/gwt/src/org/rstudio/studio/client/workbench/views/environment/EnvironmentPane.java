@@ -120,7 +120,10 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addRightWidget(viewButton_);
       
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
+
+      ToolbarButton refreshButton = commands_.refreshEnvironment().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton);
       
 
       return toolbar;

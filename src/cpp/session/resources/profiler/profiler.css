@@ -1,0 +1,76 @@
+/*
+ * profiler.css
+ *
+ * Copyright (C) 2009-17 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-footer,
+.rstudio-themes-flat.rstudio-themes-dark .profvis-status-bar,
+.rstudio-themes-flat.rstudio-themes-dark .result-block-active,
+.rstudio-themes-flat.rstudio-themes-dark .options-button {
+   color: #FFF;
+}
+
+.rstudio-themes-flat span.identifier {
+   color: inherit;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-table th {
+   background: rgba(255, 255, 255, 0.2);
+   border-top: none;
+   font-weight: 400;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark table.profvis-table tr.active {
+   background: rgba(255, 255, 255, 0.05);
+}
+
+.rstudio-themes-flat table.profvis-table .membar-right-cell,
+.rstudio-themes-flat table.profvis-table .timebar-cell {
+   border-color: #444;
+}
+
+.rstudio-themes-flat table.profvis-table tr {
+   border-top: none;
+}
+
+.rstudio-themes-flat .profvis-splitbar-horizontal {
+   background: none;
+}
+
+.rstudio-themes-flat .separator-block {
+   display: none;
+}
+
+.rstudio-themes-flat .info-block {
+   border-right: solid 1px #FFF;
+}
+
+.rstudio-themes-flat .profvis-treetable {
+   color: inherit;
+}
+
+.rstudio-themes-flat .profvis-treetable table tr {
+   background: inherit !important;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable th {
+   background: rgba(255, 255, 255, 0.2);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-collapse > div > div {
+   border-top: 6px solid #FFF;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-expand > div > div {
+   border-left: 6px solid #FFF;
+}

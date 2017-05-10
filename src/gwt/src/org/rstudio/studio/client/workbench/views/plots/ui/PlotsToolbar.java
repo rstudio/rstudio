@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.plots.ui;
 
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -78,7 +79,10 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
     
       // refresh
       addRightSeparator();
-      addRightWidget(commands_.refreshPlot().createToolbarButton());
+
+      ToolbarButton refreshButton = commands_.refreshPlot().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      addRightWidget(refreshButton);
    }
    
    private final Commands commands_;   

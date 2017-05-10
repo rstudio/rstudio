@@ -23,6 +23,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
@@ -111,7 +112,10 @@ public class TerminalPane extends WorkbenchPane
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
-      toolbar.addRightWidget(commands_.clearTerminalScrollbackBuffer().createToolbarButton());
+
+      ToolbarButton clearButton = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
+      clearButton.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
+      toolbar.addRightWidget(clearButton);
 
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);

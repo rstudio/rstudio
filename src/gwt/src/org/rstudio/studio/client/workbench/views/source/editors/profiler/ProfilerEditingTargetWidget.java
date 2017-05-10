@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -45,6 +46,11 @@ public class ProfilerEditingTargetWidget extends Composite
                                           panel);
 
       profilePage_ = new RStudioFrame();
+      profilePage_.setAceThemeAndCustomStyle(
+         getCustomStyle(),
+         "../profiler_resource/profiler.css",
+         true);
+
       profilePage_.setWidth("100%");
       profilePage_.setHeight("100%");
       
@@ -57,6 +63,73 @@ public class ProfilerEditingTargetWidget extends Composite
          profilePage_.getElement().getParentElement().setAttribute("height", "100%");
       
       initWidget(mainPanel);
+   }
+
+   private String getCustomStyle()
+   {
+      return
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable td,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .info-block {\n" +
+         "   border-color: " + ThemeColors.defaultBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable td,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .info-block {\n" +
+         "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable td,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .info-block {\n" +
+         "   border-color: " + ThemeColors.alternateBorder + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar {\n" +
+         "   background-color: " + ThemeColors.defaultBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar {\n" +
+         "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar {\n" +
+         "   background-color: " + ThemeColors.alternateBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-splitbar-horizontal {\n" +
+         "   background-color: " + ThemeColors.defaultBodyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-splitbar-horizontal {\n" +
+         "   background-color: " + ThemeColors.darkGreyBodyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal {\n" +
+         "   background-color: " + ThemeColors.alternateBodyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .result-block-active {\n" +
+         "   background-color: " + ThemeColors.defaultMostInactiveBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .result-block-active {\n" +
+         "   background-color: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .result-block-active {\n" +
+         "   background-color: " + ThemeColors.alternateMostInactiveBackground + ";\n" +
+         "}\n";
    }
 
    public void print()

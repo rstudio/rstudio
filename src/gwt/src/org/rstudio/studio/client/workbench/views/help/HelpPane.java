@@ -56,6 +56,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -329,9 +330,11 @@ public class HelpPane extends WorkbenchPane
       toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
 
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshHelp().createToolbarButton());
+
+      ToolbarButton refreshButton = commands_.refreshHelp().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton);
     
-      
       return toolbar;
    }
    
