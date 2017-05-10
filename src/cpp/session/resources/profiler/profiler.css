@@ -15,7 +15,8 @@
 
 .rstudio-themes-flat.rstudio-themes-dark .profvis-footer,
 .rstudio-themes-flat.rstudio-themes-dark .profvis-status-bar,
-.rstudio-themes-flat.rstudio-themes-dark .result-block-active {
+.rstudio-themes-flat.rstudio-themes-dark .result-block-active,
+.rstudio-themes-flat.rstudio-themes-dark .options-button {
    color: #FFF;
 }
 
