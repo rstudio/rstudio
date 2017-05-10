@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
+import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -94,6 +95,7 @@ public class AceEditorMixins
    
    private final boolean isPasteTriggeredByMiddleClick()
    {
+      // find the first key or mouse event in the JS event history
       EventData event = history_.findEvent(new JavaScriptEventHistory.Predicate()
       {
          @Override
@@ -112,9 +114,19 @@ public class AceEditorMixins
          };
       });
       
+      // shouldn't happen, but guard against failure to find any
+      // associated event
       if (event == null)
          return false;
       
+      // check to see if the middle mouse button was associated with
+      // this event
+      int button = event.getButton();
+      if (button != Event.BUTTON_MIDDLE)
+         return false;
+      
+      // ensure that this was a click-related mouse event
+      // (be permissive as to what mouse even occurred)
       String type = event.getType();
       return
             type.equals("mousedown") ||
