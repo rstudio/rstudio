@@ -143,7 +143,4 @@ public class AceEditorMixins
    
    // Injected ----
    private static JavaScriptEventHistory history_;
-   
-   // Static Members ----
-   private static boolean INITIALIZED = false;
 }
