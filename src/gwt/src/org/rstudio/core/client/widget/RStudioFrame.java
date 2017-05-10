@@ -50,7 +50,7 @@ public class RStudioFrame extends Frame
          setUrl(url);
    }
    
-   private void addThemesStyle(String customStyle, String urlStyle)
+   private void addThemesStyle(String customStyle, String urlStyle, boolean removeBodyStyle)
    {
       if (getWindow() != null && getWindow().getDocument() != null)
       {
@@ -74,6 +74,8 @@ public class RStudioFrame extends Frame
          BodyElement body = document.getBody();
          if (body != null)
          {
+            if (removeBodyStyle) body.removeAttribute("style");
+            
             String themeName = RStudioGinjector.INSTANCE.getUIPrefs().getFlatTheme().getValue();
             RStudioThemes.initializeThemes(themeName, document, document.getBody());
             
@@ -89,21 +91,22 @@ public class RStudioFrame extends Frame
    
    public void setAceThemeAndCustomStyle(final String customStyle)
    {
-      setAceThemeAndCustomStyle(customStyle, null);  
+      setAceThemeAndCustomStyle(customStyle, null, false);  
    }
 
    public void setAceThemeAndCustomStyle(
       final String customStyle,
-      final String urlStyle)
+      final String urlStyle,
+      final boolean removeBodyStyle)
    {
-      addThemesStyle(customStyle, urlStyle);
+      addThemesStyle(customStyle, urlStyle, removeBodyStyle);
       
       this.addLoadHandler(new LoadHandler()
       {      
          @Override
          public void onLoad(LoadEvent arg0)
          {
-            addThemesStyle(customStyle, urlStyle);
+            addThemesStyle(customStyle, urlStyle, removeBodyStyle);
          }
       });
    }

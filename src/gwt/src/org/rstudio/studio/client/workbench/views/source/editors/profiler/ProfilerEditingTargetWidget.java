@@ -48,7 +48,8 @@ public class ProfilerEditingTargetWidget extends Composite
       profilePage_ = new RStudioFrame();
       profilePage_.setAceThemeAndCustomStyle(
          getCustomStyle(),
-         "../profiler_resource/profiler.css");
+         "../profiler_resource/profiler.css",
+         true);
 
       profilePage_.setWidth("100%");
       profilePage_.setHeight("100%");
