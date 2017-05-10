@@ -1045,7 +1045,8 @@ for (file in themeFiles) {
                 create_xterm_color_rules(background, foreground, isDark)) 
 
    # Theme rules
-   content <- add_content(content, themes_static_rules()) 
+   content <- c(content,
+                themes_static_rules()) 
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))
