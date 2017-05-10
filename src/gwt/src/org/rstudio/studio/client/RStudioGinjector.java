@@ -31,6 +31,7 @@ import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -231,6 +232,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ObjectExplorerEditingTargetWidget widget);
    void injectMembers(ObjectExplorerDataGrid widget);
    void injectMembers(TerminalInfoDialog infoDialog);
+   void injectMembers(RStudioThemedFrame frame);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -34,7 +34,7 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
-   private RStudioFrame profilePage_;
+   private RStudioThemedFrame profilePage_;
    
    public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
@@ -45,8 +45,8 @@ public class ProfilerEditingTargetWidget extends Composite
                                           createToolbar(commands, publishHtmlSource), 
                                           panel);
 
-      profilePage_ = new RStudioFrame();
-      profilePage_.setAceThemeAndCustomStyle(
+      profilePage_ = new RStudioThemedFrame(
+         null,
          getCustomStyle(),
          "../profiler_resource/profiler.css",
          true);

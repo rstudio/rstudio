@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.dataviewer.DataTable;
@@ -114,8 +115,11 @@ public class DataEditingTargetWidget extends Composite
 
       commands_ = commands;
 
-      frame_ = new RStudioFrame(dataItem.getContentUrl());
-      frame_.setAceThemeAndCustomStyle(getCustomStyle());
+      frame_ = new RStudioThemedFrame(
+         dataItem.getContentUrl(),
+         getCustomStyle(),
+         null,
+         false);
       frame_.setSize("100%", "100%");
       table_ = new DataTable(this);
 
@@ -218,6 +222,6 @@ public class DataEditingTargetWidget extends Composite
    }
 
    private final Commands commands_;
-   private RStudioFrame frame_;
+   private RStudioThemedFrame frame_;
    private DataTable table_;
 }
