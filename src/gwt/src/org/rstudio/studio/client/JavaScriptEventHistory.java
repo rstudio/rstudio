@@ -41,8 +41,8 @@ public class JavaScriptEventHistory
       public static final native EventData create(NativeEvent event)
       /*-{
          return {
-            "type"   : event.type,
-            "button" : event.button
+            "type"   : event.type   || "",
+            "button" : event.button || 0
          };
       }-*/;
       
