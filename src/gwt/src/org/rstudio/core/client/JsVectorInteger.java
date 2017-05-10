@@ -161,6 +161,11 @@ public class JsVectorInteger extends JavaScriptObject
       this.reverse();
    }-*/;
    
+   public final native void setLength(int length)
+   /*-{
+      this.length = length;
+   }-*/;
+   
    public final int shift()
    {
       return shift(defaultValue());

@@ -161,6 +161,11 @@ public class JsVectorBoolean extends JavaScriptObject
       this.reverse();
    }-*/;
    
+   public final native void setLength(int length)
+   /*-{
+      this.length = length;
+   }-*/;
+   
    public final boolean shift()
    {
       return shift(defaultValue());
