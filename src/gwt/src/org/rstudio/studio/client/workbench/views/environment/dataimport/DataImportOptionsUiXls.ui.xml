@@ -11,7 +11,7 @@
     }
     .optionsListBox {
     }
-    .skipTextBox {
+    .paramsTextBox {
         width: 65px;
         padding-left: 5px;
         padding-right: 5px;
@@ -28,9 +28,6 @@
     }
     .naLabel {
         padding-right: 5px;
-    }
-    .naListBox {
-        width: 80px;
     }
     .firstRow {
         margin-bottom: 6px;
@@ -67,15 +64,15 @@
             <div class="{style.optionsColumn}">
                 <div class="{style.optionsRow} {style.firstRow}">
                     <div class="{style.optionLabel}">Max Rows:</div>
-                    <g:TextBox ui:field="maxTextBox_" styleName="{style.skipTextBox}"/>
+                    <g:TextBox ui:field="maxTextBox_" styleName="{style.paramsTextBox}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
                     <div class="{style.optionLabel}">Skip:</div>
-                    <g:TextBox ui:field="skipTextBox_" styleName="{style.skipTextBox}"/>
+                    <g:TextBox ui:field="skipTextBox_" styleName="{style.paramsTextBox}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
                     <div class="{style.optionLabel}">NA:</div>
-                    <g:ListBox ui:field="naListBox_" styleName="{style.naListBox}"/>
+                    <g:TextBox ui:field="naTextBox_" styleName="{style.paramsTextBox}"/>
                 </div>
             </div>
             <div class="{style.optionsColumn}">
