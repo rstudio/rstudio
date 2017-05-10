@@ -28,9 +28,9 @@ def resolve_deps(type, arch) {
   }
 }
 
-def compile_package(type, flavor) {
+def compile_package(type, flavor, variant) {
   def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
-  sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean && cd ../.."
+  sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 }
 
 def s3_upload(type, flavor, os, arch) {
@@ -81,18 +81,18 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-          [os: 'precise', arch: 'amd64', flavor: 'desktop'],
-          [os: 'precise', arch: 'i386', flavor: 'desktop'],
-          [os: 'precise', arch: 'amd64', flavor: 'server'],
-          [os: 'precise', arch: 'i386', flavor: 'server'],
-          [os: 'centos6', arch: 'x86_64', flavor: 'server'],
-          [os: 'centos6', arch: 'i386', flavor: 'server'],
-          //[os: 'centos5', arch: 'x86_64', flavor: 'server'],
-          //[os: 'centos5', arch: 'i386', flavor: 'server'],
-          [os: 'centos7', arch: 'x86_64', flavor: 'desktop'],
-          [os: 'centos7', arch: 'i386', flavor: 'desktop'],
-          [os: 'xenial', arch: 'amd64', flavor: 'server'],
-          [os: 'xenial', arch: 'i386', flavor: 'server']
+          [os: 'precise', arch: 'amd64',  flavor: 'desktop', variant: 'trusty'],
+          [os: 'precise', arch: 'i386',   flavor: 'desktop', variant: 'trusty'],
+          [os: 'precise', arch: 'amd64',  flavor: 'server',  variant: ''],
+          [os: 'precise', arch: 'i386',   flavor: 'server',  variant: ''],
+          [os: 'centos6', arch: 'x86_64', flavor: 'server',  variant: ''],
+          [os: 'centos6', arch: 'i386',   flavor: 'server',  variant: ''],
+          [os: 'centos6', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
+          [os: 'centos6', arch: 'i386',   flavor: 'server',  variant: 'SLES'],
+          [os: 'centos7', arch: 'x86_64', flavor: 'desktop', variant: ''],
+          [os: 'centos7', arch: 'i386',   flavor: 'desktop', variant: ''],
+          [os: 'xenial',  arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
+          [os: 'xenial',  arch: 'i386',   flavor: 'desktop', variant: 'xenial']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]
@@ -111,7 +111,7 @@ try {
                             resolve_deps(get_type_from_os(current_container.os), current_container.arch)
                         }
                         stage('compile package') {
-                            compile_package(get_type_from_os(current_container.os), current_container.flavor)
+                            compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
                     }
                     stage('upload artifacts') {

@@ -40,6 +40,9 @@ namespace {
 #define kProfilesCacheDir "profiles-cache"
 #define kProfilesUrlPath "profiles"
 
+#define kProfilerResource "profiler_resource"
+#define kProfilerResourceLocation "/" kProfilerResource "/"
+
 std::string profilesCacheDir() 
 {
    return module_context::scopedScratchPath().childPath(kProfilesCacheDir)
@@ -64,6 +67,16 @@ void handleProfilerResReq(const http::Request& request,
    core::FilePath profileResource = profilesPath.childPath(resourceName);
 
    pResponse->setCacheableFile(profileResource, request);
+}
+
+void handleProfilerResourceResReq(const http::Request& request,
+                            http::Response* pResponse)
+{
+   std::string path("profiler/");
+   path.append(http::util::pathAfterPrefix(request, kProfilerResourceLocation));
+
+   core::FilePath profilerResource = options().rResourcesPath().childPath(path);
+   pResponse->setCacheableFile(profilerResource, request);
 }
 
 void onDocPendingRemove(
@@ -95,7 +108,8 @@ Error initialize()
 
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
-      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq));
+      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq))
+      (boost::bind(module_context::registerUriHandler, kProfilerResourceLocation, handleProfilerResourceResReq));
 
    RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
 

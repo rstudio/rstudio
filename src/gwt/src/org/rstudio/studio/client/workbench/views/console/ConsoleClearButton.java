@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -37,6 +38,7 @@ public class ConsoleClearButton extends Composite
       commands_ = commands;
       ImageResource icon = commands_.consoleClear().getImageResource();
       ToolbarButton button = new ToolbarButton(icon, commands.consoleClear());
+      panel.addStyleName(ThemeStyles.INSTANCE.consoleClearButton());
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);

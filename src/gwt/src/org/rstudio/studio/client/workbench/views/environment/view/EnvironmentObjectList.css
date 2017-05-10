@@ -79,7 +79,7 @@ td.valueCol
 
 .rstudio-themes-flat td.valueCol
 {
-   background: none;
+   background-color: inherit;
 }
 
 .widthSettingRow td.expandCol,

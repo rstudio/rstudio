@@ -1,7 +1,7 @@
 /*
  * RStudioFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,14 +18,7 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 
-import com.google.gwt.dom.client.BodyElement;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.StyleElement;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Frame;
 
 public class RStudioFrame extends Frame
@@ -47,50 +40,6 @@ public class RStudioFrame extends Frame
          getElement().setAttribute("sandbox", StringUtil.notNull(sandboxAllow));
       if (url != null)
          setUrl(url);
-   }
-   
-   private void addThemesStyle(String customStyle)
-   {
-      if (getWindow() != null && getWindow().getDocument() != null)
-      {
-         Document document = getWindow().getDocument();
-         
-         if (customStyle != null) {
-            StyleElement style = document.createStyleElement();
-            style.setInnerHTML(customStyle);
-            document.getHead().appendChild(style);
-         }
-         
-         RStudioGinjector.INSTANCE.getAceThemes().applyTheme(document);
-         
-         BodyElement body = document.getBody();
-         if (body != null)
-         {
-            String themeName = RStudioGinjector.INSTANCE.getUIPrefs().getFlatTheme().getValue();
-            RStudioThemes.initializeThemes(themeName, document, document.getBody());
-            
-            body.addClassName("ace_editor_theme");
-         }
-      }
-   }
-   
-   public void setAceTheme()
-   {
-      setAceThemeAndCustomStyle(null);
-   }
-
-   public void setAceThemeAndCustomStyle(final String customStyle)
-   {
-      addThemesStyle(customStyle);
-      
-      this.addLoadHandler(new LoadHandler()
-      {      
-         @Override
-         public void onLoad(LoadEvent arg0)
-         {
-            addThemesStyle(customStyle);
-         }
-      });
    }
    
    public WindowEx getWindow()

@@ -1059,8 +1059,11 @@ public class DocTabLayoutPanel
          contentPanel_.setStylePrimaryName(styles_.tabLayoutCenter());
          contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
-         if (icon != null)
-            contentPanel_.add(imageForIcon(icon));
+         if (icon != null) {
+            Image tabImage = imageForIcon(icon);
+            tabImage.addStyleName(ThemeStyles.INSTANCE.tabIcon());
+            contentPanel_.add(tabImage);
+         }
 
          label_ = new Label(title, false);
          label_.addStyleName(styles_.docTabLabel());

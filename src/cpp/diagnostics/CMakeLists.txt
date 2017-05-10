@@ -61,7 +61,7 @@ add_executable(diagnostics
 )
 
 # add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
+if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set_target_properties(diagnostics PROPERTIES
                          INSTALL_RPATH \$ORIGIN)

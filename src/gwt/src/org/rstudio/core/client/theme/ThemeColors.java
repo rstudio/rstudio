@@ -22,6 +22,7 @@ public class ThemeColors
    public static String defaultMostInactiveBackground              = "rgb(231, 232, 234)";
    public static String defaultMostInactiveTransparentBackground   = "rgba(231, 232, 234, 0)";
    public static String defaultBorder                              = "rgb(214,218,220)";
+   public static String defaultBodyBackground                      = "rgb(246, 247, 249)";
 
    public static String darkGreyBackground                         = "rgb(78, 92, 104)";
    public static String darkGreyBackgroundTransparent              = "rgba(78, 92, 104, 0)";
@@ -29,6 +30,7 @@ public class ThemeColors
    public static String darkGreyMostInactiveBackground             = "rgb(47, 57, 65)";
    public static String darkGreyMostInactiveTransparentBackground  = "rgba(47, 57, 65, 0)";
    public static String darkGreyBorder                             = "rgb(12, 31, 48)";
+   public static String darkGreyBodyBackground                     = "rgb(50, 76, 99)";
 
    public static String alternateBackground                        = "rgb(210, 228, 237)";
    public static String alternateBackgroundTransparent             = "rgba(210, 228, 237, 0)";
@@ -36,6 +38,7 @@ public class ThemeColors
    public static String alternateMostInactiveBackground            = "rgb(158, 160, 187)";
    public static String alternateMostInactiveTransparentBackground = "rgba(158, 160, 187, 0)";
    public static String alternateBorder                            = "rgb(162, 197, 215)";
+   public static String alternateBodyBackground                    = "rgb(162, 197, 215)";
 
    public static String lightControlBackground                     = "#FFF";
    public static String lightControlBorder                         = "#d6dadc";

@@ -18,11 +18,12 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -101,16 +103,19 @@ public class TerminalPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
 
-      activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
-      toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
-      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.previousTerminal().createToolbarButton());
       toolbar.addLeftWidget(commands_.nextTerminal().createToolbarButton());
+      toolbar.addLeftSeparator();
+      activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
+      toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
       toolbar.addLeftSeparator();
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
-      toolbar.addRightWidget(commands_.clearTerminalScrollbackBuffer().createToolbarButton());
+
+      ToolbarButton clearButton = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
+      clearButton.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
+      toolbar.addRightWidget(clearButton);
 
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
@@ -198,6 +203,30 @@ public class TerminalPane extends WorkbenchPane
 
       creatingTerminal_ = true;
       terminals_.createNewTerminal();
+   }
+
+   @Override
+   public void createNamedTerminal(String caption)
+   {
+      if (creatingTerminal_)
+         return;
+
+      creatingTerminal_ = true;
+      
+      if (!terminals_.createNamedTerminal(caption))
+      {
+         // Name was not available. 
+         creatingTerminal_ = false;
+      }
+   }
+
+   @Override
+   public void activateNamedTerminal(String caption)
+   {
+      if (StringUtil.isNullOrEmpty(caption))
+         return;
+      
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
    }
 
    @Override
@@ -299,31 +328,37 @@ public class TerminalPane extends WorkbenchPane
       globalDisplay_.promptForText("Rename Terminal",
             "Please enter the new terminal name:",
             origCaption,
-            0,
-            origCaption.length(),
-            null,
-            new ProgressOperationWithInput<String>()
+            new OperationWithInput<String>()
             {
                @Override
-               public void execute(final String newCaption,
-                                   final ProgressIndicator progress)
+               public void execute(final String newCaption)
                {
-                  progress.onProgress("Renaming terminal...");
-
                   // rename in the UI
                   renameVisibleTerminalInClient(newCaption);
 
                   // rename on the server
                   server_.processSetCaption(visibleTerminal.getHandle(), 
                         newCaption,
-                        new VoidServerRequestCallback(progress)
+                        new ServerRequestCallback<Boolean>()
                         {
+                           @Override
+                           public void onResponseReceived(Boolean result)
+                           {
+                              if (result == false)
+                              {
+                                 globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+                                       "Name already in use",
+                                       "Please enter a unique name.");
+                                 // failed, put back original caption on client
+                                 renameVisibleTerminalInClient(origCaption);
+                              }
+                           }
+                           
                            @Override
                            public void onError(ServerError error)
                            {
                               // failed, put back original caption on client
                               renameVisibleTerminalInClient(origCaption);
-                              Debug.logError(error);
                            }
                         });
                }
@@ -331,15 +366,22 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void clearTerminalScrollbackBuffer()
+   public void clearTerminalScrollbackBuffer(String caption)
    {
-      final TerminalSession visibleTerminal = getSelectedTerminal();
-      if (visibleTerminal == null)
-      {
+      final TerminalSession terminalToClear = getTerminalWithCaption(caption);
+      if (terminalToClear == null)
          return;
-      }
 
-      visibleTerminal.clearBuffer();
+      terminalToClear.clearBuffer();
+   }
+
+   @Override
+   public void sendToTerminal(String text, String caption)
+   {
+      final TerminalSession terminal = getTerminalWithCaption(caption);
+      if (text == null || terminal == null)
+         return;
+      terminal.receivedInput(text);
    }
 
    @Override
@@ -379,7 +421,6 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // The caption lives in multiple places:
-      // TODO (gary) consolidate ownership or update with event
       // (1) the TerminalSession for connected terminals
       // (2) the dropdown menu label
       // (3) the TerminalMetadata held in terminals_
@@ -533,17 +574,54 @@ public class TerminalPane extends WorkbenchPane
    }
 
    /**
+    * Find loaded terminal session for a given caption
+    * @param caption of TerminalSession to return
+    * @return TerminalSession with that caption, or null
+    */
+   private TerminalSession loadedTerminalWithCaption(String caption)
+   {
+      int total = getLoadedTerminalCount();
+      for (int i = 0; i < total; i++)
+      {
+         TerminalSession t = getLoadedTerminalAtIndex(i);
+         if (t != null && t.getCaption().equals(caption))
+         {
+            return t;
+         }
+      }
+      return null;
+   }
+
+
+   /**
     * @return Selected terminal, or null if there is no selected terminal.
     */
    public TerminalSession getSelectedTerminal()
    {
-      Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
-      if (visibleWidget instanceof TerminalSession)
-      {
-         return (TerminalSession)visibleWidget;
-      }
-      return null;
+      return getTerminalWithCaption(null);
    }
+
+   /**
+    * Return a terminal by caption.
+    * @param caption caption to find; if null or empty, returns currently
+    * selected terminal; null if no terminals open.
+    * @return
+    */
+   public TerminalSession getTerminalWithCaption(String caption)
+   {
+      if (StringUtil.isNullOrEmpty(caption))
+      {
+         Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
+         if (visibleWidget instanceof TerminalSession)
+         {
+            return (TerminalSession)visibleWidget;
+         }
+         return null;
+      }
+      
+      return loadedTerminalWithCaption(caption);
+   }
+
 
    /**
     * If a terminal is visible give it focus and update dropdown selection.

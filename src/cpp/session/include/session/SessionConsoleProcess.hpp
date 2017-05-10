@@ -132,12 +132,21 @@ public:
    void interrupt();
    void resize(int cols, int rows);
    void onSuspend();
-   bool isStarted() { return started_; }
+   bool isStarted() const { return started_; }
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
+   std::string getCaption() const { return procInfo_->getCaption(); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
+   std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
-   bool getAllowRestart() { return procInfo_->getAllowRestart(); }
+   bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
+   bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
+   std::string getChannelMode() const;
+   int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
+   int getBufferLineCount() const { return procInfo_->getBufferLineCount(); }
+   int getCols() const { return cols_; }
+   int getRows() const { return rows_; }
+   PidType getPid() const { return pid_; }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
@@ -146,10 +155,15 @@ public:
    // after the requested chunk, *pMoreAvailable will be set to true
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
 
-   void setShowOnOutput(bool showOnOutput) { procInfo_->setShowOnOutput(showOnOutput); }
+   // Get the full terminal buffer
+   std::string getBuffer() const;
+
+   void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson( core::json::Object& obj);
+
+   void onReceivedInput(const std::string& input);
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
@@ -169,7 +183,6 @@ private:
                            const std::string& output);
 
    ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks();
-   void onReceivedInput(const std::string& input);
    void onConnectionOpened();
    void onConnectionClosed();
 
@@ -187,6 +200,13 @@ private:
    // Whether the tty should be notified of a resize
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
+
+   // Last known size of pseudo-tty
+   int cols_;
+   int rows_;
+
+   // Last known PID of associated process
+   PidType pid_;
 
    // Has client been notified of state of childProcs_ at least once?
    bool childProcsSent_;

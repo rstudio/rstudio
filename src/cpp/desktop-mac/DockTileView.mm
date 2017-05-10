@@ -24,7 +24,6 @@
 {
    if (self = [super init])
    {
-      showLabel_ = FALSE;
    }
    return self;
 }
@@ -39,11 +38,6 @@
    }
 }
 
-- (void) setShowLabel: (BOOL) show
-{
-   showLabel_ = show;
-}
-
 - (void) drawRect: (NSRect)rect
 {
    // get the current bounds
@@ -56,7 +50,7 @@
            operation:NSCompositeCopy fraction:1.0];
    
    // draw the label if needed
-   if (showLabel_ && (label_ != nil))
+   if (label_ != nil)
    {
       // sizes all based on the containing bounds
       const CGFloat kBaseSize = 128;

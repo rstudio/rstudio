@@ -147,8 +147,11 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       }
       
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(refreshButton_ = 
-                  commands_.refreshPresentation().createToolbarButton());
+
+      refreshButton_ = commands_.refreshPresentation().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+
       progressButton_ = new ToolbarButton(
                               CoreResources.INSTANCE.progress_gray(),
                               new ClickHandler() {

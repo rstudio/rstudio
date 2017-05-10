@@ -52,10 +52,11 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -101,8 +102,7 @@ public class HelpPane extends WorkbenchPane
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
-      frame_.setAceTheme();
+      frame_ = new RStudioThemedFrame();
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
@@ -329,9 +329,11 @@ public class HelpPane extends WorkbenchPane
       toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
 
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshHelp().createToolbarButton());
+
+      ToolbarButton refreshButton = commands_.refreshHelp().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton);
     
-      
       return toolbar;
    }
    
@@ -710,7 +712,7 @@ public class HelpPane extends WorkbenchPane
    private final ToolbarLinkMenu history_ ;
  
    private Label title_ ;
-   private RStudioFrame frame_ ;
+   private RStudioThemedFrame frame_ ;
    private FindTextBox findTextBox_;
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;

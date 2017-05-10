@@ -424,7 +424,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       boolean result = !trimExcess();
 
-      resizeCommand_.nudge();
+      // if we're currently scrolled to the bottom, nudge the timer so that we
+      // will keep up with output
+      if (scrollPanel_.isScrolledToBottom())
+         resizeCommand_.nudge();
       
       return result;
    }

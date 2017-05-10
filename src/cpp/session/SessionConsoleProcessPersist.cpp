@@ -159,6 +159,12 @@ std::string getSavedBuffer(const std::string& handle, int maxLines)
    return trimmedOutput;
 }
 
+int getSavedBufferLineCount(const std::string& handle, int maxLines)
+{
+   std::string buffer = getSavedBuffer(handle, maxLines);
+   return string_utils::countNewlines(buffer) + 1;
+}
+
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer)
 {
    FilePath log;

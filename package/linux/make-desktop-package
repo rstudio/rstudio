@@ -3,7 +3,7 @@
 set -e
 
 # make standard package
-./make-package Desktop $1 $2
+./make-package Desktop $1 $2 $3
 
 # make tar.gz
 BUILD_DIR=build-Desktop-$1

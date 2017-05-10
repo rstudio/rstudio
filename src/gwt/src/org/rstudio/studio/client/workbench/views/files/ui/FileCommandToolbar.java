@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -60,6 +61,7 @@ public class FileCommandToolbar extends Toolbar
 
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();
+      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       addRightWidget(refreshButton);
    }
 }

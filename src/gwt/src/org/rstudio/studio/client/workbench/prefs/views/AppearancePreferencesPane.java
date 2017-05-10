@@ -57,8 +57,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                                 new String[]{"classic", "modern", "alternate"},
                                 false);
       flatTheme_.addStyleName(res.styles().themeChooser());
-      flatTheme_.getListBox().getElement().<SelectElement>cast().setSize(3);
-      flatTheme_.getListBox().getElement().getStyle().setHeight(50, Unit.PX);
+      flatTheme_.getListBox().setWidth("95%");
       flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          public void onChange(ChangeEvent event)

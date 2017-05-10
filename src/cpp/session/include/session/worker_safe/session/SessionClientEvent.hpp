@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -170,6 +170,10 @@ extern const int kPackageExtensionIndexingCompleted;
 extern const int kRStudioAPIShowDialog;
 extern const int kRStudioAPIShowDialogCompleted;
 extern const int kObjectExplorerEvent;
+extern const int kSendToTerminal;
+extern const int kClearTerminal;
+extern const int kCreateNamedTerminal;
+extern const int kActivateTerminal;
 }
    
 class ClientEvent

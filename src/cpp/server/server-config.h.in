@@ -15,7 +15,7 @@
 
 #cmakedefine RSTUDIO_DEVELOPMENT
 
-#cmakedefine RSTUDIO_PACKAGE_BUILD_SLES
+#cmakedefine RSTUDIO_PACKAGE_VARIANT
 
 
 
