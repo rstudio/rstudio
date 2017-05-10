@@ -17,8 +17,7 @@
 #define DESKTOP_WEB_VIEW_HPP
 
 #include <QtGui>
-#include <QWebView>
-#include <QWebInspector>
+#include <QWebEngineView>
 
 #include "DesktopWebPage.hpp"
 
@@ -27,7 +26,7 @@ namespace desktop {
 
 class MainWindow;
 
-class WebView : public ::QWebView
+class WebView : public ::QWebEngineView
 {
    Q_OBJECT
 
@@ -63,7 +62,6 @@ protected slots:
 
 private:
    QUrl baseUrl_;
-   QWebInspector* pWebInspector_;
    WebPage* pWebPage_;
    double dpiZoomScaling_;
 };

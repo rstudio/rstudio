@@ -22,8 +22,9 @@
 #include <core/FilePath.hpp>
 
 #include <QWidget>
-#include <QWebFrame>
-#include <QtDebug>
+#include <QWebEnginePage>
+#include <QWebEngineSettings>
+
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopSatelliteWindow.hpp"
@@ -46,20 +47,22 @@ WindowTracker s_windowTracker;
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebPage(parent),
+      QWebEnginePage(parent),
       baseUrl_(baseUrl),
       navigated_(false),
       allowExternalNav_(allowExternalNavigate)
 {
-   settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
-   settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanAccessClipboard, true);
-   QString storagePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-   settings()->setOfflineStoragePath(storagePath);
-   settings()->enablePersistentStorage(storagePath);
+   settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
+   settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
 
-   setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
+   // TODO: not available? find alternate API?
+   // QString storagePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+   // settings()->setOfflineStoragePath(storagePath);
+   // settings()->enablePersistentStorage(storagePath);
+
+   // TODO: QtWebEngine no longer uses NetworkAccessManager
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
@@ -88,7 +91,7 @@ void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
    pendingWindow_ = pendingWnd;
 }
 
-QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
+QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
 {
    QString name;
    bool isSatellite = false;
@@ -201,12 +204,15 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
+   // TODO
+   // return this->QWebEnginePage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
+
+   return QString::fromUtf8("NYI");
 }
 
-bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
-                                       const QNetworkRequest& request,
-                                       NavigationType navType)
+bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
+                                      const QNetworkRequest& request,
+                                      NavigationType navType)
 {
    QUrl url = request.url();
 
@@ -251,8 +257,8 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    else
    {
       if (url.scheme() == QString::fromUtf8("data") &&
-          (navType == QWebPage::NavigationTypeLinkClicked ||
-           navType == QWebPage::NavigationTypeFormSubmitted))
+          (navType == QWebEnginePage::NavigationTypeLinkClicked ||
+           navType == QWebEnginePage::NavigationTypeFormSubmitted))
       {
          handleBase64Download(pWebFrame, url);
       }
@@ -262,7 +268,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
          navigated_ = true;
          return true;
       }
-      else if (navType == QWebPage::NavigationTypeLinkClicked)
+      else if (navType == QWebEnginePage::NavigationTypeLinkClicked)
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
@@ -283,7 +289,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    }
 }
 
-void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
+void WebPage::handleBase64Download(QWebEnginePage* pWebFrame, QUrl url)
 {
    // look for beginning of base64 data
    QString base64 = QString::fromUtf8("base64,");
@@ -301,31 +307,32 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    QByteArray byteArray = QByteArray::fromBase64(base64ByteArray);
 
    // find the a tag in the page with this href
-   QWebElement aTag;
-   QString urlString = url.toString(QUrl::None);
-   QWebElementCollection aElements = pWebFrame->findAllElements(
-                                             QString::fromUtf8("a"));
-   for (int i=0; i<aElements.count(); i++)
-   {
-      QWebElement a = aElements.at(i);
-      QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
-      if (href == urlString)
-      {
-         aTag = a;
-         break;
-      }
-   }
+   // TODO: QWebElement APIs no longer available
+   // QWebElement aTag;
+   // QString urlString = url.toString(QUrl::None);
+   // QWebEngineElementCollection aElements = pWebFrame->findAllElements(
+   //                                           QString::fromUtf8("a"));
+   // for (int i=0; i<aElements.count(); i++)
+   // {
+   //    QWebEngineElement a = aElements.at(i);
+   //    QString href = a.attribute(QString::fromUtf8("href"));
+   //    href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
+   //    if (href == urlString)
+   //    {
+   //       aTag = a;
+   //       break;
+   //    }
+   // }
 
-   // if no a tag was found then bail
-   if (aTag.isNull())
-   {
-      LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
-      return;
-   }
+   // // if no a tag was found then bail
+   // if (aTag.isNull())
+   // {
+   //    LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
+   //    return;
+   // }
 
    // get the download attribute (default filename)
-   QString download = aTag.attribute(QString::fromUtf8("download"));
+   QString download = QString::fromUtf8("NYI");
    QString defaultFilename = defaultSaveDir_.absoluteFilePath(download);
 
    // prompt for filename
@@ -396,17 +403,18 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 
 void WebPage::triggerAction(WebAction action, bool checked)
 {
-   // swallow copy events when the selection is empty
-   if (action == QWebPage::Copy || action == QWebPage::Cut)
-   {
-      QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
-      bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
-      if (emptySelection)
-         return;
-   }
+   // TODO: Implement as JS callback
+   // // swallow copy events when the selection is empty
+   // if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
+   // {
+   //    QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
+   //    bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
+   //    if (emptySelection)
+   //       return;
+   // }
 
    // delegate to base
-   QWebPage::triggerAction(action, checked);
+   QWebEnginePage::triggerAction(action, checked);
 }
 
 } // namespace desktop

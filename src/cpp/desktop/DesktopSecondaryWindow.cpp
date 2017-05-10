@@ -18,6 +18,7 @@
 #include <QApplication>
 #include <QToolBar>
 #include <QDesktopWidget>
+#include <QWebEngineHistory>
 
 #include "DesktopWebView.hpp"
 
@@ -94,7 +95,7 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
 
 void SecondaryWindow::print()
 {
-   printRequested(webView()->page()->mainFrame());
+   printRequested(webView()->page());
 }
 
 void SecondaryWindow::manageCommandState()

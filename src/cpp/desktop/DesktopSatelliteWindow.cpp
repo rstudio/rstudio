@@ -15,7 +15,7 @@
 
 #include "DesktopSatelliteWindow.hpp"
 
-#include <QWebFrame>
+#include <QWebEnginePage>
 #include <QShortcut>
 
 #include "DesktopGwtCallback.hpp"
@@ -45,10 +45,11 @@ void SatelliteWindow::onJavaScriptWindowObjectCleared()
 {
    GwtWindow::onJavaScriptWindowObjectCleared();
 
-   webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromUtf8("desktop"),
-         &gwtCallback_,
-         QWebFrame::QtOwnership);
+   // TODO: need to use QWebChannel for exposing C++ objects to JS
+   // webView()->page()->mainFrame()->addToJavaScriptWindowObject(
+   //       QString::fromUtf8("desktop"),
+   //       &gwtCallback_,
+   //       QWebEnginePage::QtOwnership);
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
@@ -67,33 +68,54 @@ void SatelliteWindow::finishLoading(bool ok)
       avoidMoveCursorIfNecessary();
 }
 
+namespace {
+
+class RStudioReadyToCloseJSCallback
+{
+public:
+   RStudioReadyToCloseJSCallback(QCloseEvent* pEvent)
+      : pEvent_(pEvent)
+   {
+   }
+
+   void operator()(const QVariant& result)
+   {
+        // pFrame->evaluateJavaScript(
+        //     QString::fromUtf8("window.rstudioCloseSourceWindow();"));
+        // event->ignore();
+        // return;
+   }
+
+private:
+   QCloseEvent* pEvent_;
+
+};
+
+} // end anonymous namespace
+
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
-   QWebFrame* pFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pPage = webView()->page();
 
    // the source window has special close semantics
    if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))
    {
-     if (!pFrame->evaluateJavaScript(
-            QString::fromUtf8("window.rstudioReadyToClose")).toBool())
-     {
-        pFrame->evaluateJavaScript(
-            QString::fromUtf8("window.rstudioCloseSourceWindow();"));
-        event->ignore();
-        return;
-     }
+      QString cmd = QString::fromUtf8("window.rstudioReadyToClose");
+      pPage->runJavaScript(cmd, RStudioReadyToCloseJSCallback(event));
    }
-   pFrame->evaluateJavaScript(QString::fromUtf8(
-        "if (window.notifyRStudioSatelliteClosing) "
-        "   window.notifyRStudioSatelliteClosing();"));
+   // TODO:Move into RStudioReadyToCloseJSCallback?
+   //
+   // pFrame->evaluateJavaScript(QString::fromUtf8(
+   //      "if (window.notifyRStudioSatelliteClosing) "
+   //      "   window.notifyRStudioSatelliteClosing();"));
 
-   // forward the close event to the web view
-   webView()->event(event);
+   // // forward the close event to the web view
+   // webView()->event(event);
 }
 
 void SatelliteWindow::onActivated()
 {
-   webView()->page()->mainFrame()->evaluateJavaScript(QString::fromUtf8(
+   webView()->page()->runJavaScript(QString::fromUtf8(
          "if (window.notifyRStudioSatelliteReactivated) "
          "   window.notifyRStudioSatelliteReactivated(null);"));
 }

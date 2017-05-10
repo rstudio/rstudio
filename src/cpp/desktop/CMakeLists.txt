@@ -19,14 +19,9 @@ cmake_policy(SET CMP0020 OLD)
 
 project(DESKTOP)
 
-# require Qt 5.4
-if(WIN32)
-  set(QT_VERSION "5.4.1")
-else()
-  set(QT_VERSION "5.4.0")
-endif()
-
-set(QT_VERSION_SUBDIR "5.4")
+# require Qt 5.6
+set(QT_VERSION "5.6.1")
+set(QT_VERSION_SUBDIR "5.6")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -65,6 +60,8 @@ else()
    endif()
 endif()
 
+message(STATUS "Found Qt ${QT_VERSION} (qmake: ${QT_QMAKE_EXECUTABLE})")
+
 # set the cmake prefix path based on the location of the qmake executable
 get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
 set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
@@ -77,8 +74,8 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
-find_package(Qt5WebKit REQUIRED)
-find_package(Qt5WebKitWidgets REQUIRED)
+find_package(Qt5WebEngine REQUIRED)
+find_package(Qt5WebEngineWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5Positioning REQUIRED)
@@ -304,8 +301,8 @@ if(NOT APPLE)
       Widgets
       Gui
       Network
-      WebKit
-      WebKitWidgets
+      WebEngine
+      WebEngineWidgets
       PrintSupport
       Quick
       Positioning
@@ -362,7 +359,7 @@ else()
       ${DESKTOP_UI_SOURCES}
       ${ICNS_FILES})
 
-   qt5_use_modules(RStudio Core Widgets Gui Network WebKit WebKitWidgets)
+   qt5_use_modules(RStudio Core Widgets Gui Network WebEngine WebEngineWidgets)
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
@@ -467,10 +464,10 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Network.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Widgets.so.5
                        ${QT_LIBRARY_DIR}/libQt5Widgets.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebChannel.so.5
                        ${QT_LIBRARY_DIR}/libQt5WebChannel.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Positioning.so.5
