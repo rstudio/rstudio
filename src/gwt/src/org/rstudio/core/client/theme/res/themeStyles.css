@@ -1149,10 +1149,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .toolbarButton {
-   filter: brightness(90%) saturate(90%);
-}
-
 .toolbarButton.noLabel {
    margin-right: 4px;
 }
@@ -1270,6 +1266,19 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
   padding-right: 6px;
   padding-left: 4px;
   height: 16px;
+}
+
+.rstudio-themes-flat .toolbarButtonLatchable {
+  height: 17px;
+  background: none;
+}
+
+.rstudio-themes-flat .toolbarButtonLatchable {
+   border-color: THEME_LIGHT_CONTROL_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButtonLatchable {
+   border-color: THEME_DARK_CONTROL_BORDER;
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
@@ -1862,6 +1871,10 @@ body.ubuntu_mono .searchBox {
    margin-right: 6px;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .toolbarInfoLabel {
+   color: #FFF;
+}
+
 .displayNone {
 	display: none !important;
 }
@@ -1923,11 +1936,16 @@ body.ubuntu_mono .searchBox {
    color: white;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs .dirtyTab table.tabLayoutCenter {
+   color: #acbee0;
+}
+
 .tabIcon {
 
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon {
+.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon,
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
    filter: brightness(90%) saturate(90%);
 }
 
