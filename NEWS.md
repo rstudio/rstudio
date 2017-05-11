@@ -94,6 +94,7 @@
 * Fixed an issue where dragging tabs out multiple times could revert contents to older version
 * macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 * Fixed mangling of YAML header string values containing backticks 
+* Fixed mangling of YAML indentation when re-indenting R Markdown documents
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
