@@ -1149,10 +1149,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
-   filter: brightness(90%) saturate(90%);
-}
-
 .toolbarButton.noLabel {
    margin-right: 4px;
 }
@@ -1944,7 +1940,8 @@ body.ubuntu_mono .searchBox {
 
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon {
+.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon,
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
    filter: brightness(90%) saturate(90%);
 }
 
