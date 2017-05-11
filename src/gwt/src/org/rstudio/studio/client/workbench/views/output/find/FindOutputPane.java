@@ -33,9 +33,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerResultEvent;
 
 import java.util.ArrayList;
 
@@ -45,11 +47,44 @@ public class FindOutputPane extends WorkbenchPane
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
-   public FindOutputPane(Commands commands)
+   public FindOutputPane(Commands commands,
+                         EventBus events)
    {
       super("Find Results");
       commands_ = commands;
+      events_ = events;
       ensureWidget();
+      
+      events_.addHandler(SelectMarkerResultEvent.TYPE, new SelectMarkerResultEvent.Handler()
+      {
+         @Override
+         public void onSelectMarkerResult(SelectMarkerResultEvent event)
+         {
+            int index = event.getIndex();
+            boolean relative = event.isRelative();
+            
+            if (relative)
+            {
+               if (index > 0)
+               {
+                  for (int i = 0; i < index; i++)
+                     table_.selectNextRow();
+               }
+               else
+               {
+                  index = -index;
+                  for (int i = 0; i < index; i++)
+                     table_.selectPreviousRow();
+               }
+            }
+            else
+            {
+               table_.setSelected(index, 1, true);
+            }
+            
+            fireSelectionCommitted();
+         }
+      });
    }
 
    @Override
@@ -273,6 +308,7 @@ public class FindOutputPane extends WorkbenchPane
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
+   private final EventBus events_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
    private SimplePanel container_;

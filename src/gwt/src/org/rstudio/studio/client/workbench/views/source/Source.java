@@ -729,23 +729,7 @@ public class Source implements InsertSourceHandler,
    
    private void initVimCommands()
    {
-      vimCommands_.save(this);
-      vimCommands_.selectTabIndex(this);
-      vimCommands_.selectNextTab(this);
-      vimCommands_.selectPreviousTab(this);
-      vimCommands_.closeActiveTab(this);
-      vimCommands_.closeAllTabs(this);
-      vimCommands_.createNewDocument(this);
-      vimCommands_.saveAndCloseActiveTab(this);
-      vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
-      vimCommands_.runRScript(this);
-      vimCommands_.reflowText(this);
-      vimCommands_.showVimHelp(
-            RStudioGinjector.INSTANCE.getShortcutViewer());
-      vimCommands_.showHelpAtCursor(this);
-      vimCommands_.reindent(this);
-      vimCommands_.expandShrinkSelection(this);
-      vimCommands_.addStarRegister();
+      vimCommands_.initialize(this, RStudioGinjector.INSTANCE.getShortcutViewer());
    }
    
    private void vimSetTabIndex(int index)
@@ -754,6 +738,11 @@ public class Source implements InsertSourceHandler,
       if (index >= tabCount)
          return;
       setPhysicalTabIndex(index);
+   }
+   
+   private void selectMarkerResultRelative(int index)
+   {
+      events_.fireEvent(new SelectMarkerResultEvent(index, true));
    }
    
    private void closeAllTabs(boolean interactive)
@@ -3710,11 +3699,12 @@ public class Source implements InsertSourceHandler,
       return temp.size() == 0;
    }
    
-   private void pasteFileContentsAtCursor(final String path, final String encoding)
+   private void pasteFileContentsAtCursor(final String path)
    {
       if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
       {
          final TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         final String encoding = uiPrefs_.defaultEncoding().getValue();
          server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
          {
             @Override

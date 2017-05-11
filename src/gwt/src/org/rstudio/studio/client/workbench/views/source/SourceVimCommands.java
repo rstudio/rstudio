@@ -18,18 +18,17 @@ import org.rstudio.core.client.command.ShortcutViewer;
 
 public class SourceVimCommands
 {
-   public final native void save(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
-         })
-      );
-   }-*/;
-   
-   public native final void selectTabIndex(Source source) /*-{
+   public final native void initialize(Source source, ShortcutViewer viewer) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-      for (var i = 1; i <= 100; i++) {
+      
+      // Save current document
+      Vim.defineEx("write", "w", $entry(function(cm, params) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
+      }));
+      
+      // Select tab by index
+      for (var i = 1; i < 100; i++) {
          (function(i) {
             Vim.defineEx("b" + i, "b" + i, $entry(function(cm, params) {
                source.@org.rstudio.studio.client.workbench.views.source.Source::vimSetTabIndex(I)(i - 1);
@@ -37,11 +36,11 @@ public class SourceVimCommands
          })(i);
       }
       
-      var nextTab = $entry(function(cm, args, vim) {
+      // Select next tab
+      Vim.defineAction("selectNextTab", $entry(function(cm, args, vim) {
          source.@org.rstudio.studio.client.workbench.views.source.Source::nextTabWithWrap()();
-      });
-     
-      Vim.defineAction("selectNextTab", nextTab);
+      }));
+      
       Vim.mapCommand({
          keys: "gt",
          type: "action",
@@ -49,12 +48,20 @@ public class SourceVimCommands
          isEdit: false,
          context: "normal"
       });
-
-      var prevTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
+      
+      Vim.mapCommand({
+         keys: "]b",
+         type: "action",
+         action: "selectNextTab",
+         isEdit: false,
+         context: "normal"
       });
-     
-      Vim.defineAction("selectPreviousTab", prevTab);
+
+      // Select previous tab
+      Vim.defineAction("selectPreviousTab", $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
+      }));
+      
       Vim.mapCommand({
          keys: "gT",
          type: "action",
@@ -62,26 +69,53 @@ public class SourceVimCommands
          isEdit: false,
          context: "normal"
       });
-   }-*/;
-   
-   public native final void selectNextTab(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
-         })
-      );
-   }-*/;
-   
-   public native final void selectPreviousTab(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
-         })
-      );
-   }-*/;
-   
-   public native final void closeActiveTab(Source source) /*-{
-      var callback = $entry(function(cm, params) {
+      
+      Vim.mapCommand({
+         keys: "[b",
+         type: "action",
+         action: "selectPreviousTab",
+         isEdit: false,
+         context: "normal"
+      });
+      
+      // Select next search result
+      Vim.defineAction("selectNextSearchResult", $entry(function(cm, args) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::selectMarkerResultRelative(I)(1);
+      }));
+      
+      Vim.mapCommand({
+         keys: "]q",
+         type: "action",
+         action: "selectNextSearchResult",
+         isEdit: false,
+         context: "normal"
+      });
+      
+      // Select previous search result
+      Vim.defineAction("selectPreviousSearchResult", $entry(function(cm, args) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::selectSearchResultRelative(I)(-1);
+      }));
+      
+      Vim.mapCommand({
+         keys: "[q",
+         type: "action",
+         action: "selectPreviousSearchResult",
+         isEdit: false,
+         context: "normal"
+      });
+      
+      // Select next buffer
+      Vim.defineEx("bnext", "bn", $entry(function(cm, params) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+      }));
+      
+      // Select previous buffer
+      Vim.defineEx("bprev", "bp", $entry(function(cm, params) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+      }));
+      
+      // Close document
+      var closeDocument = $entry(function(cm, params) {
       
          var interactive = true;
          if (params.argString && params.argString === "!")
@@ -90,26 +124,31 @@ public class SourceVimCommands
          source.@org.rstudio.studio.client.workbench.views.source.Source::closeSourceDoc(Z)(interactive);
       });
        
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
-   }-*/;
-   
-   public native final void closeAllTabs(Source source) /*-{
-      var callback = $entry(function(cm, params) {
+      Vim.defineEx("bdelete", "bd", closeDocument);
+      Vim.defineEx("quit", "q", closeDocument);
       
+      // Close other tabs
+      Vim.defineEx("only", "on", $entry(function(cm, params) {
+         
+         var interactive = true;
+         if (params.argString && params.argString === "!")
+            interactive = false;
+            
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onCloseOtherSourceDocs()();
+         
+      }));
+      
+      // Close all tabs
+      Vim.defineEx("qall", "qa", $entry(function(cm, params) {
          var interactive = true;
          if (params.argString && params.argString === "!")
             interactive = false;
          
          source.@org.rstudio.studio.client.workbench.views.source.Source::closeAllTabs(Z)(interactive);
-      });
-       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
-   }-*/;
-   
-   public native final void createNewDocument(Source source) /*-{
-   
-      var callback = $entry(function(cm, params) {
+      }));
+      
+      // Create new document
+      var createNewDocument = $entry(function(cm, params) {
          
          // Handle 'e!'
          if (params.argString && params.argString === "!")
@@ -126,57 +165,37 @@ public class SourceVimCommands
          }
       });
       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("tabedit", "tabe", callback);
-      
-   }-*/;
+      Vim.defineEx("badd", "bad", createNewDocument);
+      Vim.defineEx("edit", "e", createNewDocument);
+      Vim.defineEx("tabedit", "tabe", createNewDocument);
    
-   public native final void saveAndCloseActiveTab(Source source) /*-{
-   
-      var callback = $entry(function(cm, params) {
+      // Save and close active tab
+      Vim.defineEx("wq", "wq", $entry(function(cm, params) {
          source.@org.rstudio.studio.client.workbench.views.source.Source::saveAndCloseActiveSourceDoc()();
-      });
+      }));
       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("wq", "wq", callback);
-      
-   }-*/;
-   
-   public native final void readFile(Source source, String encoding) /*-{
-   
-      var callback = $entry(function(cm, params) {
+      // Read a file and paste contents at cursor position
+      Vim.defineEx("read", "r", $entry(function(cm, params) {
          if (params.args && params.args.length === 1) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;)(params.args[0]);
          }
-      });
+      }));
       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("read", "r", callback);
-   
-   }-*/;
-   
-   public native final void runRScript(Source source) /*-{
-      
-      var callback = $entry(function(cm, params) {
+      // Run an R script
+      Vim.defineEx("Rscript", "R", $entry(function(cm, params) {
          if (params.args) {
             source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(Ljava/lang/String;)(params.argString);
          }
-      });
-      
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("Rscript", "R", callback);
+      }));
    
-   }-*/;
-   
-   public native final void reflowText(Source source) /*-{
-   
-     var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-     
-     var callback = $entry(function(cm, args, vim) {
+     // Reflow text
+     var reflowText = $entry(function(cm, args, vim) {
         source.@org.rstudio.studio.client.workbench.views.source.Source::reflowText()();
         if (vim.visualMode)
            Vim.exitVisualMode(cm, false);
      });
      
-     Vim.defineAction("reflowText", callback);
+     Vim.defineAction("reflowText", reflowText);
      Vim.mapCommand({
         keys: "gq",
         type: "action",
@@ -191,18 +210,15 @@ public class SourceVimCommands
         isEdit: true,
         context: "normal"
      });
-   }-*/;
    
-   public native final void reindent(Source source) /*-{
+     // Re-indent
+     var reindent = $entry(function(cm, args, vim) {
+        source.@org.rstudio.studio.client.workbench.views.source.Source::reindent()();
+        if (vim.visualMode)
+          Vim.exitVisualMode(cm, false);
+     });
       
-      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-      var callback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::reindent()();
-         if (vim.visualMode)
-            Vim.exitVisualMode(cm, false);
-      });
-      
-      Vim.defineAction("reindent", callback);
+      Vim.defineAction("reindent", reindent);
       
       Vim.mapCommand({
          keys: "==",
@@ -220,16 +236,12 @@ public class SourceVimCommands
          context: "visual"
       });
       
-   }-*/;
-   
-   public native final void showHelpAtCursor(Source source) /*-{
-     var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-     
-     var callback = $entry(function(cm, args, vim) {
+      // Show help at cursor position
+      var showHelpAtCursor = $entry(function(cm, args, vim) {
         source.@org.rstudio.studio.client.workbench.views.source.Source::showHelpAtCursor()();
      });
      
-     Vim.defineAction("showHelpAtCursor", callback);
+     Vim.defineAction("showHelpAtCursor", showHelpAtCursor);
      Vim.mapCommand({
         keys: "K",
         type: "action",
@@ -237,107 +249,47 @@ public class SourceVimCommands
         isEdit: false,
         context: "normal"
      });
-   }-*/;
 
-   public native final void showVimHelp(ShortcutViewer viewer) /*-{
-
-      var callback = $entry(function(cm, params) {
-         viewer.@org.rstudio.core.client.command.ShortcutViewer::showVimKeyboardShortcuts()();
-      });
+     // Show vim help
+     Vim.defineEx("help", "help", $entry(function(cm, params) {
+        viewer.@org.rstudio.core.client.command.ShortcutViewer::showVimKeyboardShortcuts()();
+     }));
       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
-   }-*/;
-   
-   public native final void expandShrinkSelection(Source source) /*-{
+     // Expand / shrink selection
+     function toVimSelection(range) {
+        return {
+           anchor: {
+              line: range.start.row, ch: range.start.column
+           },
+           head: {
+              line: range.end.row, ch: range.end.column - 1
+           }
+        };
+     }
       
-      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-      
-      function toVimSelection(range) {
-         return {
-            anchor: {
-               line: range.start.row, ch: range.start.column
-            },
-            head: {
-               line: range.end.row, ch: range.end.column - 1
-            }
-         };
-      }
-      
-      var expandCallback = $entry(function(cm, origHead, motionArgs, vim) {
-         vim.sel = toVimSelection(cm.ace.$expandSelection());
-      });
-      
-      Vim.defineMotion("expandSelection", expandCallback);
-      Vim.mapCommand({
-         keys: "v",
-         type: "motion",
-         motion: "expandSelection",
-         context: "visual"
-      });
-      
-      var shrinkCallback = $entry(function(cm, origHead, motionArgs, vim) {
-         vim.sel = toVimSelection(cm.ace.$shrinkSelection());
-      });
-      
-      Vim.defineMotion("shrinkSelection", shrinkCallback);
-      Vim.mapCommand({
-         keys: "V",
-         type: "motion",
-         motion: "shrinkSelection",
-         context: "visual"
-      });
-   
-   }-*/;
-   
-   public native final void addStarRegister() /*-{
-      
-      var SystemClipboardRegister = function(text, linewise, blockwise) {
-         this.clear();
-         this.keyBuffer = [text || ''];
-         this.insertModeChanges = [];
-         this.searchQueries = [];
-         this.linewise = !!linewise;
-         this.blockwise = !!blockwise;
-      }
-      
-      // TODO: Reimplement this and read/write
-      // from the system clipboard using appropriate
-      // callbacks.
-      SystemClipboardRegister.prototype = {
-         
-         setText: function(text, linewise, blockwise) {
-            this.keyBuffer = [text || ''];
-            this.linewise = !!linewise;
-            this.blockwise = !!blockwise;
-         },
-         
-         pushText: function(text, linewise) {
-            this.keyBuffer.push(text);
-            if (linewise) {
-               if (!this.linewise) {
-                  this.keyBuffer.push('\n');
-               }
-               this.linewise = true;
-            }
-            this.keyBuffer.push(text);
-         },
-         
-         clear: function() {
-            this.keyBuffer = [];
-            this.insertModeChanges = [];
-            this.searchQueries = [];
-            this.linewise = false;
-         },
-         
-         toString: function() {
-            return this.keyBuffer.join('');
-         }
-         
-      };
-      
-      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-      var controller = Vim.getRegisterController();
-      // controller.registers['*'] = new SystemClipboardRegister();
+     var expandCallback = $entry(function(cm, origHead, motionArgs, vim) {
+        vim.sel = toVimSelection(cm.ace.$expandSelection());
+     });
+     
+     Vim.defineMotion("expandSelection", expandCallback);
+     Vim.mapCommand({
+        keys: "v",
+        type: "motion",
+        motion: "expandSelection",
+        context: "visual"
+     });
+     
+     var shrinkCallback = $entry(function(cm, origHead, motionArgs, vim) {
+        vim.sel = toVimSelection(cm.ace.$shrinkSelection());
+     });
+     
+     Vim.defineMotion("shrinkSelection", shrinkCallback);
+     Vim.mapCommand({
+        keys: "V",
+        type: "motion",
+        motion: "shrinkSelection",
+        context: "visual"
+     });
    
    }-*/;
 }
