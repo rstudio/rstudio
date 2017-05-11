@@ -1328,6 +1328,13 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   if (handle.empty())
+   {
+      // nothing selected in client
+      s_visibleTerminalHandle.clear();
+      return Success();
+   }
+
    // make sure this handle actually exists
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
