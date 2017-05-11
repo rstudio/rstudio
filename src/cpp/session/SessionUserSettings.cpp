@@ -385,6 +385,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int ansiConsoleMode = readPref<int>(prefs, "ansi_console_mode", core::text::AnsiColorOn);
    pAnsiConsoleMode_.reset(new int(ansiConsoleMode));
+
+   int terminalWebsockets = readPref<bool>(prefs, "terminal_websockets", true);
+   pTerminalWebsockets_.reset(new bool(terminalWebsockets));
 }
 
 
@@ -562,6 +565,11 @@ core::FilePath UserSettings::initialWorkingDirectory() const
 core::text::AnsiCodeMode UserSettings::ansiConsoleMode() const
 {
    return static_cast<core::text::AnsiCodeMode>(readUiPref<int>(pAnsiConsoleMode_));
+}
+
+bool UserSettings::terminalWebsockets() const
+{
+   return readUiPref<bool>(pTerminalWebsockets_);
 }
 
 CRANMirror UserSettings::cranMirror() const

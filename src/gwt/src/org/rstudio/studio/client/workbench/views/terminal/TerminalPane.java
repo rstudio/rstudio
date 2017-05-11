@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -65,6 +66,7 @@ public class TerminalPane extends WorkbenchPane
                           implements TerminalTabPresenter.Display,
                                      TerminalSessionStartedEvent.Handler,
                                      TerminalSessionStoppedEvent.Handler,
+                                     ServerProcessExitEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
@@ -83,6 +85,7 @@ public class TerminalPane extends WorkbenchPane
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      events_.addHandler(ServerProcessExitEvent.TYPE, this);
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
@@ -447,28 +450,57 @@ public class TerminalPane extends WorkbenchPane
       }
       creatingTerminal_ = false;
    }
-
-   @Override
-   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   
+   /**
+    * Cleanup after process with given handle has terminated.
+    * @param handle identifier for process that exited
+    */
+   private void cleanupAfterTerminate(String handle)
    {
-      // Figure out which terminal to switch to, send message to do so,
-      // and remove the stopped terminal.
-      TerminalSession currentTerminal = event.getTerminalWidget();
-      String handle = currentTerminal.getHandle();
+      if (terminals_.indexOfTerminal(handle) == -1)
+      {
+         // Don't know about this process handle, nothing to do on client related
+         // to the Terminal pane.
+         return;
+      }
 
+      // Figure out which terminal to switch to, send message to do so.
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
          events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
       }
+
+      // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
-      terminalSessionsPanel_.remove(currentTerminal);
+      server_.processReap(handle, new VoidServerRequestCallback());
+
+      // If terminal was loaded, remove its pane.
+      TerminalSession currentTerminal = loadedTerminalWithHandle(handle);
+      if (currentTerminal != null)
+      {
+         terminalSessionsPanel_.remove(currentTerminal);
+      }
 
       if (newTerminalHandle == null)
       {
          activeTerminalToolbarButton_.setNoActiveTerminal();
          setTerminalTitle("");
       }
+   }
+
+   @Override
+   public void onServerProcessExit(ServerProcessExitEvent event)
+   {
+      // Notification from server that a process exited.
+      cleanupAfterTerminate(event.getProcessHandle());
+   }
+
+   @Override
+   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   {
+      // Notification from a TerminalSession that it is being forcibly closed.
+      cleanupAfterTerminate(event.getTerminalWidget().getHandle());
    }
 
    @Override
