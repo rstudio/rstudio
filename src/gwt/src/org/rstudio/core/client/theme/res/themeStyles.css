@@ -1862,6 +1862,10 @@ body.ubuntu_mono .searchBox {
    margin-right: 6px;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .toolbarInfoLabel {
+   color: #FFF;
+}
+
 .displayNone {
 	display: none !important;
 }
