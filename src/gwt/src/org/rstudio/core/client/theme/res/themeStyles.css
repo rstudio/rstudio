@@ -1149,7 +1149,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .toolbarButton {
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
    filter: brightness(90%) saturate(90%);
 }
 
@@ -1270,6 +1270,19 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
   padding-right: 6px;
   padding-left: 4px;
   height: 16px;
+}
+
+.rstudio-themes-flat .toolbarButtonLatchable {
+  height: 17px;
+  background: none;
+}
+
+.rstudio-themes-flat .toolbarButtonLatchable {
+   border-color: THEME_LIGHT_CONTROL_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButtonLatchable {
+   border-color: THEME_DARK_CONTROL_BORDER;
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
