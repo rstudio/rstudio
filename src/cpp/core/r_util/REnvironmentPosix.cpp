@@ -70,18 +70,39 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
    return FilePath();
 }
 
+// extra paths from R (for rJava)
+std::string extraLibraryPaths(const FilePath& ldPathsScript,
+                              const std::string& rHome)
+{
+   // no-op if no script is passed
+   if (ldPathsScript.empty())
+      return std::string();
+
+   // verify that script exists
+   if (!ldPathsScript.exists())
+   {
+      LOG_WARNING_MESSAGE("r-ldpath script not found at " +
+                          ldPathsScript.absolutePath());
+      return std::string();
+   }
+
+   // run script to capture paths
+   std::string command = ldPathsScript.absolutePath() + " " + rHome;
+   system::ProcessResult result;
+   Error error = runCommand(command, core::system::ProcessOptions(), &result);
+   if (error)
+      LOG_ERROR(error);
+   std::string libraryPaths = result.stdOut;
+   boost::algorithm::trim(libraryPaths);
+   
+   return libraryPaths;
+}
+
 // MacOS X Specific
 #ifdef __APPLE__
 
 #define kLibRFileName            "libR.dylib"
 #define kLibraryPathEnvVariable  "DYLD_FALLBACK_LIBRARY_PATH"
-
-// no extra paths on the mac
-std::string extraLibraryPaths(const FilePath& ldPathsScript,
-                              const std::string& rHome)
-{
-   return std::string();
-}
 
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
@@ -173,33 +194,6 @@ bool detectRLocationsUsingFramework(FilePath* pHomePath,
 
 #define kLibRFileName            "libR.so"
 #define kLibraryPathEnvVariable  "LD_LIBRARY_PATH"
-
-// extra paths from R (for rjava) on linux
-std::string extraLibraryPaths(const FilePath& ldPathsScript,
-                              const std::string& rHome)
-{
-   // no-op if no script is passed
-   if (ldPathsScript.empty())
-      return std::string();
-
-   // verify that script exists
-   if (!ldPathsScript.exists())
-   {
-      LOG_WARNING_MESSAGE("r-ldpaths script not found at " +
-                          ldPathsScript.absolutePath());
-      return std::string();
-   }
-
-   // run script to capture paths
-   std::string command = ldPathsScript.absolutePath() + " " + rHome;
-   system::ProcessResult result;
-   Error error = runCommand(command, core::system::ProcessOptions(), &result);
-   if (error)
-      LOG_ERROR(error);
-   std::string libraryPaths = result.stdOut;
-   boost::algorithm::trim(libraryPaths);
-   return libraryPaths;
-}
 
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
@@ -662,6 +656,7 @@ bool detectREnvironment(const FilePath& whichRScript,
                                           rLibPath,
                                           ldPathsScript,
                                           ldLibraryPath);
+   
    pVars->push_back(std::make_pair(kLibraryPathEnvVariable, libraryPath));
 
    // set R_ARCH on the mac if we are running against CRAN R
@@ -734,6 +729,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
                                               rHomePath.absolutePath());
    if (!extraPaths.empty())
       libraryPath.append(":" + extraPaths);
+   
    return libraryPath;
 }
 
@@ -751,11 +747,11 @@ Error rVersion(const FilePath& rHomePath,
    // if additional LD_LIBRARY_PATH paths were supplied, provide those as well
    if (!ldLibraryPath.empty())
    {
-      std::string libPath = core::system::getenv(env, "LD_LIBRARY_PATH");
+      std::string libPath = core::system::getenv(env, kLibraryPathEnvVariable);
       if (!libPath.empty())
          libPath += ":";
       libPath += ldLibraryPath;
-      core::system::setenv(&env, "LD_LIBRARY_PATH", libPath);
+      core::system::setenv(&env, kLibraryPathEnvVariable, libPath);
    }
 
    // determine the R version

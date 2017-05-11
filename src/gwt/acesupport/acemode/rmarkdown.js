@@ -134,10 +134,13 @@ oop.inherits(Mode, MarkdownMode);
    this.getNextLineIndent = function(state, line, tab, row, dontSubset)
    {
       var mode = activeMode(state);
+
       if (mode === "r")
          return this.codeModel.getNextLineIndent(state, line, tab, row);
       else if (mode === "r-cpp")
          return this.cpp_codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
+      else if (mode === "yaml")
+         return this.$getIndent(this.$session.getLine(row + 1));
       else
          return this.$getNextLineIndent(state, line, tab);
    };
@@ -149,6 +152,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.$r_outdent.checkOutdent(state, line, input);
       else if (mode === "r-cpp")
          return this.$cpp_outdent.checkOutdent(state, line, input);
+      else if (mode === "yaml")
+         return false;
       else
          return this.$outdent.checkOutdent(line, input);
    };
@@ -160,15 +165,27 @@ oop.inherits(Mode, MarkdownMode);
          return this.$r_outdent.autoOutdent(state, session, row);
       else if (mode === "r-cpp")
          return this.$cpp_outdent.autoOutdent(state, session, row);
+      else if (mode === "yaml")
+         return;
       else
          return this.$outdent.autoOutdent(session, row);
    };
 
    this.transformAction = function(state, action, editor, session, text) {
       var mode = activeMode(state);
+      if (mode === "r-cpp")
+         return this.transformActionCpp(state, action, editor, session, text);
+      else if (mode === "yaml")
+         return this.transformActionYaml(state, action, editor, session, text);
+      else
+         return false;
+   };
+
+   this.transformActionCpp = function(state, action, editor, session, text) {
+
       // from c_cpp.js
       if (action === 'insertion') {
-         if ((text === "\n") && (mode === "r-cpp")) {
+         if (text === "\n") {
             // If newline in a doxygen comment, continue the comment
             var pos = editor.getSelectionRange().start;
             var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
@@ -177,7 +194,7 @@ oop.inherits(Mode, MarkdownMode);
             }
          }
 
-         else if ((text === "R") && (mode === "r-cpp")) {
+         else if (text === "R") {
             // If newline to start and embedded R chunk complete the chunk
             var pos = editor.getSelectionRange().start;
             var match = /^(\s*\/\*{3,}\s*)/.exec(session.doc.getLine(pos.row));
@@ -187,6 +204,38 @@ oop.inherits(Mode, MarkdownMode);
             }
          }
       }
+
+      return false;
+   };
+
+   this.transformActionYaml = function(state, action, editor, session, text)
+   {
+      if (action === "insertion")
+      {
+         if (text === "\n")
+         {
+            // get current line + indent
+            var pos = editor.getCursorPosition();
+            var row = pos.row;
+            var line = session.getLine(row);
+            var indent = this.$getIndent(line);
+
+            // if this line ends with a ':' or opening bracket,
+            // then add some indent
+            if (/[:({[]$/.test(line)) {
+               var tab = this.$session.getTabString();
+               return {
+                  text: "\n" + indent + tab
+               };
+            }
+
+            // otherwise, just preserve the current indent
+            return {
+               text: "\n" + indent
+            };
+         }
+      }
+
       return false;
    };
 

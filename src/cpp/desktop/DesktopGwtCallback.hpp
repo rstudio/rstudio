@@ -65,11 +65,18 @@ public slots:
                            bool forceDefaultExtension);
    QString getExistingDirectory(const QString& caption,
                                 const QString& dir);
+
+   void onClipboardChanged(QClipboard::Mode mode);
+
    void undo(bool forAce);
    void redo(bool forAce);
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
+
+   void setGlobalMouseSelection(QString selection);
+   QString getGlobalMouseSelection();
+
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);

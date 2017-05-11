@@ -52,7 +52,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
   # on RHEL 5 we also depend on libffi
-  if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_BUILD_SLES)
+  if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
      set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
 
@@ -67,8 +67,16 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, libssl1.0.0 | libssl1.0.2, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libssl1.0.0 | libssl1.0.2, ")
   
+  # look for the well known locations for Qt SDK to determine which version
+  # of libgstreamer we depend on
+  if(EXISTS "/opt/RStudio-QtSDK/Qt5.4.2" OR EXISTS "$ENV{HOME}/Qt5.4.2")
+    set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, ")
+  else()
+    set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, ")
+  endif()
+
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 
@@ -80,13 +88,16 @@ set(RSTUDIO_PACKAGE_SUFFIX "-")
 if(RSTUDIO_SERVER)
    # SLES builds are produced from a CentOS5 machine, so check for specific SLES
    # target first
-   if(RSTUDIO_PACKAGE_BUILD_SLES)
+   if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
    elseif(IS_RHEL_5)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
    elseif(IS_RHEL) 
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
    endif()
+elseif(NOT RSTUDIO_PACKAGE_VARIANT STREQUAL "")
+   # for desktop builds, use the package variant name directly when non-empty
+   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}${RSTUDIO_PACKAGE_VARIANT}-")
 endif()
 
 # include overlay if it exists

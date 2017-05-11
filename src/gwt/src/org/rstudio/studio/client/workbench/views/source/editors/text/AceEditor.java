@@ -288,6 +288,7 @@ public class AceEditor implements DocDisplay,
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
+      mixins_ = new AceEditorMixins(this);
       ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
@@ -2740,7 +2741,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addHandler(handler, DocumentChangedEvent.TYPE);
    }
-
+   
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addCapturingKeyDownHandler(handler);
@@ -2853,6 +2854,11 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
    {
       return widget_.addKeyUpHandler(handler);
+   }
+   
+   public HandlerRegistration addSelectionChangedHandler(AceSelectionChangedEvent.Handler handler)
+   {
+      return widget_.addSelectionChangedHandler(handler);
    }
 
    public void autoHeight()
@@ -3871,6 +3877,7 @@ public class AceEditor implements DocDisplay,
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
+   private final AceEditorMixins mixins_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

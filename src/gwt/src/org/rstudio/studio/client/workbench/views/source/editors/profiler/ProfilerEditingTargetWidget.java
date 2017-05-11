@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -34,7 +34,7 @@ public class ProfilerEditingTargetWidget extends Composite
                                          implements ProfilerPresenter.Display
               
 {
-   private RStudioFrame profilePage_;
+   private RStudioThemedFrame profilePage_;
    
    public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
@@ -45,8 +45,8 @@ public class ProfilerEditingTargetWidget extends Composite
                                           createToolbar(commands, publishHtmlSource), 
                                           panel);
 
-      profilePage_ = new RStudioFrame();
-      profilePage_.setAceThemeAndCustomStyle(
+      profilePage_ = new RStudioThemedFrame(
+         null,
          getCustomStyle(),
          "../profiler_resource/profiler.css",
          true);
@@ -72,6 +72,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .info-block {\n" +
          "   border-color: " + ThemeColors.defaultBorder + ";\n" +
          "}\n" +
@@ -80,6 +81,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .info-block {\n" +
          "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
          "}\n" +
@@ -88,6 +90,7 @@ public class ProfilerEditingTargetWidget extends Composite
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable td,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .info-block {\n" +
          "   border-color: " + ThemeColors.alternateBorder + ";\n" +
          "}\n" +

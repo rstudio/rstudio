@@ -282,6 +282,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MathJaxLoader.class).asEagerSingleton();
       bind(ProjectTemplateRegistryProvider.class).in(Singleton.class);
       bind(PackageProvidedExtensions.class).asEagerSingleton();
+      bind(JavaScriptEventHistory.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

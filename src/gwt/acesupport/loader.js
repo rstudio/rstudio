@@ -271,5 +271,6 @@ function loadEditor(container) {
    return env.editor;
 }
 
+exports.RStudioEditor = RStudioEditor;
 exports.loadEditor = loadEditor;
 });

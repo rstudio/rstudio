@@ -161,6 +161,11 @@ public class JsVectorNumber extends JavaScriptObject
       this.reverse();
    }-*/;
    
+   public final native void setLength(int length)
+   /*-{
+      this.length = length;
+   }-*/;
+   
    public final double shift()
    {
       return shift(defaultValue());

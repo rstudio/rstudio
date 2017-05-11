@@ -8,14 +8,7 @@
   background: #263238
 }
 
-.ace_editor {
-  background-color: #263238;
-  color: #C5C8C6
-}
-
-.ace_editor_theme,
-.rstudio-themes-flat.ace_editor_theme,
-.rstudio-themes-flat .ace_editor_theme  {
+.ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   background-color: #263238;
   color: #C5C8C6
 }

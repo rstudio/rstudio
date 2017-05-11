@@ -20,7 +20,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -140,8 +140,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
-      frame_.setAceTheme();
+      frame_ = new RStudioThemedFrame();
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
       navigate(ABOUT_BLANK, false);
@@ -266,7 +265,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
 
-   private RStudioFrame frame_;
+   private RStudioThemedFrame frame_;
    private String unmodifiedUrl_;
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;

@@ -799,7 +799,7 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
 }
 
 themes_static_rules <- function() {
-  paste(".editor_dark.ace_editor_theme a {",
+  paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
         "color: #FFF !important;",
         "}")
 }
@@ -836,7 +836,12 @@ for (file in themeFiles) {
 
    ## Copy ace_editor as ace_editor_theme
    regex <- paste("^\\.ace_editor \\{$", sep = "")
-   content <- gsub(regex, ".ace_editor, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {", content)
+   content <- gsub(regex, paste(
+      ".ace_editor",
+      ".rstudio-themes-flat.ace_editor_theme .profvis-flamegraph",
+      ".rstudio-themes-flat.ace_editor_theme", 
+      ".rstudio-themes-flat .ace_editor_theme {",
+      sep = ", "), content)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
@@ -1045,7 +1050,8 @@ for (file in themeFiles) {
                 create_xterm_color_rules(background, foreground, isDark)) 
 
    # Theme rules
-   content <- add_content(content, themes_static_rules()) 
+   content <- c(content,
+                themes_static_rules()) 
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))

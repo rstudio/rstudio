@@ -197,11 +197,17 @@ bool prepareEnvironment(Options& options)
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
    
-   // determine rLdPaths script location
-   FilePath supportingFilePath = options.supportingFilePath();
-   FilePath rLdScriptPath = supportingFilePath.complete("bin/r-ldpath");
+   // determine rLdPaths script location -- handle both debug
+   // and release configurations
+   FilePath rLdScriptPath = options.scriptsPath().complete("session/r-ldpath");
    if (!rLdScriptPath.exists())
-      rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
+   {
+      FilePath exePath;
+      Error error = core::system::executablePath(NULL, &exePath);
+      if (error)
+         LOG_ERROR(error);
+      rLdScriptPath = exePath.parent().complete("r-ldpath");
+   }
    
    // attempt to detect R environment
    std::string rScriptPath, rVersion, errMsg;

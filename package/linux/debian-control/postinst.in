@@ -4,34 +4,34 @@
 set +e 
 
 # add rserver user account
-sudo useradd -r rstudio-server
-sudo groupadd -r rstudio-server
+useradd -r rstudio-server
+groupadd -r rstudio-server
 
 # create softlink to admin script in /usr/sbin
-sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
 # create config directory and default config files
-sudo mkdir -p /etc/rstudio
+mkdir -p /etc/rstudio
 if ! test -f /etc/rstudio/rserver.conf
 then
-  sudo sh -c "printf '# Server Configuration File\n\n' > /etc/rstudio/rserver.conf"
+  sh -c "printf '# Server Configuration File\n\n' > /etc/rstudio/rserver.conf"
 fi
 if ! test -f /etc/rstudio/rsession.conf
 then
-  sudo sh -c "echo '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf"
+  sh -c "echo '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf"
 fi
 
 # create var directories
-sudo mkdir -p /var/run/rstudio-server
-sudo mkdir -p /var/lock/rstudio-server
-sudo mkdir -p /var/log/rstudio-server
-sudo mkdir -p /var/lib/rstudio-server
-sudo mkdir -p /var/lib/rstudio-server/conf
-sudo mkdir -p /var/lib/rstudio-server/body
-sudo mkdir -p /var/lib/rstudio-server/proxy
+mkdir -p /var/run/rstudio-server
+mkdir -p /var/lock/rstudio-server
+mkdir -p /var/log/rstudio-server
+mkdir -p /var/lib/rstudio-server
+mkdir -p /var/lib/rstudio-server/conf
+mkdir -p /var/lib/rstudio-server/body
+mkdir -p /var/lib/rstudio-server/proxy
 
 # suspend all sessions
-sudo rstudio-server force-suspend-all
+rstudio-server force-suspend-all
 
 # check lsb release and init system
 LSB_RELEASE=`lsb_release --id --short`
@@ -40,37 +40,37 @@ INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
 # add apparmor profile (but don't for systemd as this borks up process management)
 if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/ && ! test $INIT_SYSTEM = "systemd"
 then
-   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
-   sudo apparmor_parser -r /etc/apparmor.d/rstudio-server 2>/dev/null
+   cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
+   apparmor_parser -r /etc/apparmor.d/rstudio-server 2>/dev/null
 elif test -e /etc/apparmor.d/rstudio-server
 then
-   sudo rm -f /etc/apparmor.d/rstudio-server
-   sudo invoke-rc.d apparmor reload 2>/dev/null
+   rm -f /etc/apparmor.d/rstudio-server
+   invoke-rc.d apparmor reload 2>/dev/null
 fi
 
 # add systemd, upstart, or init.d script and start the server
 if test "$INIT_SYSTEM" = "systemd"
 then
-   sudo systemctl stop rstudio-server.service 2>/dev/null
-   sudo systemctl disable rstudio-server.service 2>/dev/null
-   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /etc/systemd/system/rstudio-server.service
-   sudo systemctl daemon-reload
-   sudo systemctl enable rstudio-server.service
-   sudo systemctl start rstudio-server.service
+   systemctl stop rstudio-server.service 2>/dev/null
+   systemctl disable rstudio-server.service 2>/dev/null
+   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /etc/systemd/system/rstudio-server.service
+   systemctl daemon-reload
+   systemctl enable rstudio-server.service
+   systemctl start rstudio-server.service
    sleep 1
-   sudo systemctl --no-pager status rstudio-server.service
+   systemctl --no-pager status rstudio-server.service
 elif test $LSB_RELEASE = "Ubuntu" && test -d /etc/init/
 then
-   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.conf /etc/init/
-   sudo initctl reload-configuration
-   sudo initctl stop rstudio-server 2>/dev/null
-   sudo initctl start rstudio-server
+   cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.conf /etc/init/
+   initctl reload-configuration
+   initctl stop rstudio-server 2>/dev/null
+   initctl start rstudio-server
 else
-   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/debian/rstudio-server /etc/init.d/
-   sudo chmod +x /etc/init.d/rstudio-server
-   sudo update-rc.d rstudio-server defaults
-   sudo /etc/init.d/rstudio-server stop  2>/dev/null
-   sudo /etc/init.d/rstudio-server start
+   cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/debian/rstudio-server /etc/init.d/
+   chmod +x /etc/init.d/rstudio-server
+   update-rc.d rstudio-server defaults
+   /etc/init.d/rstudio-server stop  2>/dev/null
+   /etc/init.d/rstudio-server start
 fi
 
 # clear error termination state

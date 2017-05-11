@@ -47,12 +47,6 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
-# build for SLES if requested
-if [ "$4" == "SLES" ]
-then
-  RSTUDIO_PACKAGE_BUILD_SLES=1
-fi
-
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 rm -f CMakeCache.txt
@@ -60,7 +54,7 @@ rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
       -DRSTUDIO_PACKAGE_BUILD=1 \
-      -DRSTUDIO_PACKAGE_BUILD_SLES=$RSTUDIO_PACKAGE_BUILD_SLES \
+      -DRSTUDIO_PACKAGE_VARIANT=$4 \
       -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
       ../../..
 

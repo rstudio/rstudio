@@ -3,7 +3,7 @@
 #
 # install-qt-sdk
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -27,12 +27,26 @@ then
 else
   QT_ARCH=x86
 fi
-QT_SDK_BINARY=QtSDK-5.4.0-${QT_ARCH}.tar.gz
+
+# presume 5.4.0
+QT_VERSION=5.4.0
+
+# test for libgstreamer
+which apt-cache > /dev/null
+if [ $? == 0 ]; then
+  # debian (currently no test for CentOS based systems)
+  apt-cache show libgstreamer1.0 > /dev/null
+  if [ $? == 0 ]; then
+    QT_VERSION=5.4.2
+  fi
+fi
+
+QT_SDK_BINARY=QtSDK-${QT_VERSION}-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 
 # set Qt SDK dir if not already defined
 if [ -z "$QT_SDK_DIR" ]; then
-  QT_SDK_DIR=~/Qt5.4.0
+  QT_SDK_DIR=~/Qt${QT_VERSION}
 fi
 
 if ! test -e $QT_SDK_DIR
@@ -43,6 +57,6 @@ then
    tar xzf /tmp/$QT_SDK_BINARY
    rm /tmp/$QT_SDK_BINARY
 else
-   echo "Qt 5.4.0 SDK already installed"
+   echo "Qt $QT_VERSION SDK already installed"
 fi
 

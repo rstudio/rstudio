@@ -360,7 +360,7 @@ if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
 endif()
 
 # add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
+if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set_target_properties(rsession PROPERTIES
                          INSTALL_RPATH \$ORIGIN)
@@ -392,9 +392,17 @@ target_link_libraries(rsession
 )
 
 # configure and install r-ldpaths script
-if(UNIX AND NOT APPLE)
+if(UNIX)
+
+   if(APPLE)
+     set(LIBRARY_PATH_ENVVAR "DYLD_FALLBACK_LIBRARY_PATH")
+   else()
+     set(LIBRARY_PATH_ENVVAR "LD_LIBRARY_PATH")
+   endif()
+
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/r-ldpath.in
-                  ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath)
+                  ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath
+                  @ONLY)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
@@ -452,7 +460,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   if(RSTUDIO_PACKAGE_BUILD_SLES)
+   if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
       # when producing a SUSE Linux Enterpise build, we want to install the 
       # static Pandoc binaries (see dependencies/common/install-pandoc)
       set(PANDOC_EXTENSION_DIR "/static")

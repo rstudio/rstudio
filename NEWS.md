@@ -59,6 +59,7 @@
 * ANSI escape code support in console for colored output
 * Add support for custom, user-provided project templates
 * Add support for creating new Git branches and adding remotes
+* Add support for middle-click pasting using X11 global selection (Linux Desktop only)
 * Document cursor position is now saved and restored between RStudio sessions
 * Add support for changing editor tabs with the mouse wheel
 * Snippets can now be inserted in the R console
@@ -93,6 +94,7 @@
 * Fixed an issue where dragging tabs out multiple times could revert contents to older version
 * macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 * Fixed mangling of YAML header string values containing backticks 
+* Fixed mangling of YAML indentation when re-indenting R Markdown documents
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox

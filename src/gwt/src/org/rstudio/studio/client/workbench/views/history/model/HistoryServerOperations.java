@@ -45,6 +45,17 @@ public interface HistoryServerOperations
    
    
    /*
+    *  searchHistory - search the project history for the query  (return up to
+    *  maxEntries). the search is conducted beginning with the most recent
+    *  history items and returned in descending order (i.e. newest ones
+    *  first)
+    */
+   void searchHistory (
+         String query,
+         long maxEntries,
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
+
+   /*
     *  clearHistory -- clear the entire history 
     */
    void clearHistory(ServerRequestCallback<Void> requestCallback);

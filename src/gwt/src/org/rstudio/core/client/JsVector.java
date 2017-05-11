@@ -161,6 +161,11 @@ public class JsVector<T> extends JavaScriptObject
       this.reverse();
    }-*/;
    
+   public final native void setLength(int length)
+   /*-{
+      this.length = length;
+   }-*/;
+   
    public final T shift()
    {
       return shift(defaultValue());

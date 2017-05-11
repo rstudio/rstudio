@@ -61,7 +61,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          !sheetListBox_.getSelectedValue().isEmpty() ? sheetListBox_.getSelectedValue() : null,
          Integer.parseInt(skipTextBox_.getValue()),
          columnNamesCheckBox_.getValue().booleanValue(),
-         !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
+         !naTextBox_.getValue().isEmpty() ? naTextBox_.getValue() : null,
          openDataViewerCheckBox_.getValue().booleanValue(),
          !maxTextBox_.getValue().isEmpty() ? Integer.parseInt(maxTextBox_.getValue()) : null,
          !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null
@@ -121,12 +121,6 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       openDataViewerCheckBox_.setValue(true);
       
       sheetListBox_.addItem("Default", "");
-      
-      naListBox_.addItem("Default", "");
-      naListBox_.addItem("NA", "NA");
-      naListBox_.addItem("null", "null");
-      naListBox_.addItem("0", "0");
-      naListBox_.addItem("empty", "empty");
    }
    
    void initEvents()
@@ -177,7 +171,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       sheetListBox_.addChangeHandler(changeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
-      naListBox_.addChangeHandler(changeHandler);
+      naTextBox_.addValueChangeHandler(valueChangeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
       maxTextBox_.addValueChangeHandler(valueChangeHandler);
       rangeTextBox_.addValueChangeHandler(rangeChangeHandler);
@@ -193,7 +187,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    CheckBox columnNamesCheckBox_;
    
    @UiField
-   ListBox naListBox_;
+   TextBox naTextBox_;
 
    @UiField
    CheckBox openDataViewerCheckBox_;
