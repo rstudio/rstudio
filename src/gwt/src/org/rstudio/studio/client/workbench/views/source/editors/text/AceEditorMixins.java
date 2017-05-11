@@ -23,7 +23,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
-import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -122,7 +121,7 @@ public class AceEditorMixins
       // check to see if the middle mouse button was associated with
       // this event
       int button = event.getButton();
-      if (button != Event.BUTTON_MIDDLE)
+      if (button != EventData.BUTTON_MIDDLE)
          return false;
       
       // ensure that this was a click-related mouse event

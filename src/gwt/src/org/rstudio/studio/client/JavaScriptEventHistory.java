@@ -42,12 +42,17 @@ public class JavaScriptEventHistory
       /*-{
          return {
             "type"   : event.type   || "",
-            "button" : event.button || 0
+            "button" : event.button || -1
          };
       }-*/;
       
       public final native String getType() /*-{ return this["type"];   }-*/;
       public final native int getButton()  /*-{ return this["button"]; }-*/;
+      
+      public static final int BUTTON_NONE   = -1;
+      public static final int BUTTON_LEFT   =  0;
+      public static final int BUTTON_MIDDLE =  1;
+      public static final int BUTTON_RIGHT  =  2;
    }
    
    public interface Predicate
