@@ -466,7 +466,7 @@
    invisible(NULL)
 })
 
-.rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = NULL) {
+.rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = TRUE) {
    if (is.null(id) || !is.character(id) || (length(id) != 1))
       stop("'id' must be a single element character vector")
 
