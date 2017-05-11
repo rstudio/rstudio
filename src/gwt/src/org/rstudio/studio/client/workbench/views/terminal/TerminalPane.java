@@ -473,6 +473,7 @@ public class TerminalPane extends WorkbenchPane
 
       // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
+      server_.processReap(handle, new VoidServerRequestCallback());
 
       // If terminal was loaded, remove its pane.
       TerminalSession currentTerminal = loadedTerminalWithHandle(handle);
@@ -491,37 +492,14 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onServerProcessExit(ServerProcessExitEvent event)
    {
-      // Notification from server than a process exited. See
-      // onTerminalSessionStopped for more details.
+      // Notification from server that a process exited.
       cleanupAfterTerminate(event.getProcessHandle());
    }
 
    @Override
    public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
    {
-      // Notification from a TerminalSession that its process exited.
-      // We can get both this notification, and the onServerProcessExit
-      // notification for the same terminal.
-      //
-      // If a terminal was running on the server, and is on the dropdown list,
-      // but never loaded in the client (typically after a browser refresh),
-      // we WON'T get this notification since the TerminalSession was never
-      // created, and rely on the other notification to cleanup when a process
-      // ends on the server. For example, create a terminal, then refresh the
-      // browser without going back to the terminal in the client, then kill
-      // the terminal on the server, possibly via the API (or "kill" in command
-      // prompt). We want the terminal to go away on the client otherwise we
-      // have a zombie terminal in the dropdown.
-      //
-      // OTOH, in cases where the client has a terminal in the list that 
-      // doesn't exist on the server (e.g. process exited on the server while 
-      // the client wasn't connected thus the process exit notification didn't
-      // get through) closing the terminal via Close command on client won't 
-      // trigger the onServerProcessExit callback, only this one.
-      //
-      // So... we call the same cleanup from both codepaths, and it deals
-      // with the possibility of the call happening more than once for the
-      // same handle.
+      // Notification from a TerminalSession that it is being forcibly closed.
       cleanupAfterTerminate(event.getTerminalWidget().getHandle());
    }
 

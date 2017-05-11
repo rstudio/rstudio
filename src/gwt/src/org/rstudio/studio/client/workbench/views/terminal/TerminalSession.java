@@ -28,7 +28,6 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -54,7 +53,6 @@ import com.google.inject.Inject;
  */
 public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
-                                        ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
                                         XTermTitleEvent.Handler,
                                         SessionSerializationHandler
@@ -150,7 +148,6 @@ public class TerminalSession extends XTermWidget
                return;
             } 
 
-            addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
@@ -212,18 +209,6 @@ public class TerminalSession extends XTermWidget
       consoleProcess_ = null;
       connected_ = false;
       connecting_ = false;
-   }
-
-   @Override
-   public void onProcessExit(ProcessExitEvent event)
-   {
-      unregisterHandlers();
-      if (consoleProcess_ != null)
-      {
-         consoleProcess_.reap(new VoidServerRequestCallback());
-      }
-
-      eventBus_.fireEvent(new TerminalSessionStoppedEvent(this));
    }
 
    @Override
