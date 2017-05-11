@@ -24,11 +24,13 @@
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
 
 #include "session-config.h"
+#include "modules/SessionWorkbench.hpp"
 
 #ifdef RSTUDIO_SERVER
 #include <core/system/Crypto.hpp>
@@ -51,6 +53,12 @@ typedef std::map<std::string, ConsoleProcessPtr> ProcTable;
 
 ProcTable s_procs;
 ConsoleProcessSocket s_terminalSocket;
+
+bool useWebsockets()
+{
+   return session::options().allowTerminalWebsockets() &&
+                     session::userSettings().terminalWebsockets();
+}
 
 ConsoleProcessPtr findProcByHandle(const std::string& handle)
 {
@@ -97,6 +105,63 @@ std::string nextTerminalName()
    maxNum++;
 
    return std::string("Terminal ") + safe_convert::numberToString(maxNum);
+}
+
+std::string serializeConsoleProcs()
+{
+   json::Array array;
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it++)
+   {
+      array.push_back(it->second->toJson());
+   }
+
+   std::ostringstream ostr;
+   json::write(array, ostr);
+   return ostr.str();
+}
+
+void saveConsoleProcesses()
+{
+   ConsoleProcessInfo::saveConsoleProcesses(serializeConsoleProcs());
+}
+
+void saveConsoleProcessesAtShutdown(bool terminatedNormally)
+{
+   if (!terminatedNormally)
+      return;
+
+   // When shutting down, only preserve ConsoleProcesses that are marked
+   // with allow_restart. Others should not survive a shutdown/restart.
+   ProcTable::const_iterator nextIt = s_procs.begin();
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it = nextIt)
+   {
+      nextIt = it;
+      ++nextIt;
+      if (it->second->getAllowRestart() == false)
+      {
+         s_procs.erase(it->second->handle());
+      }
+   }
+
+   s_visibleTerminalHandle.clear();
+   saveConsoleProcesses();
+}
+
+Error reapConsoleProcess(const ConsoleProcess& proc)
+{
+   proc.deleteLogFile();
+   if (s_procs.erase(proc.handle()))
+   {
+      saveConsoleProcesses();
+      return Success();
+   }
+   return systemError(boost::system::errc::invalid_argument,
+                      "Error reaping console process",
+                      ERROR_LOCATION);
 }
 
 // Return vector of all terminal ids (captions)
@@ -165,6 +230,29 @@ SEXP rs_isTerminalBusy(SEXP terminalsSEXP)
    return r::sexp::create(isBusy, &protect);
 }
 
+// Returns running state of a terminal (i.e. does the shell have a shell process?)
+SEXP rs_isTerminalRunning(SEXP terminalsSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::vector<std::string> terminalIds;
+   if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
+      return R_NilValue;
+
+   std::vector<bool> isRunning;
+   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   {
+      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      if (proc == NULL)
+      {
+         isRunning.push_back(false);
+         continue;
+      }
+      isRunning.push_back(proc->isStarted());
+   }
+   return r::sexp::create(isRunning, &protect);
+}
+
 // Returns bunch of metadata about a terminal instance.
 SEXP rs_getTerminalContext(SEXP terminalSEXP)
 {
@@ -217,8 +305,6 @@ SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
 // Kill terminal and its processes.
 SEXP rs_killTerminal(SEXP terminalsSEXP)
 {
-   r::sexp::Protect protect;
-
    std::vector<std::string> terminalIds;
    if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
       return R_NilValue;
@@ -250,8 +336,6 @@ SEXP rs_getVisibleTerminal()
 
 SEXP rs_clearTerminal(SEXP idSEXP)
 {
-   r::sexp::Protect protect;
-
    std::string terminalId = r::sexp::asString(idSEXP);
 
    ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
@@ -275,8 +359,6 @@ SEXP rs_clearTerminal(SEXP idSEXP)
 // Send text to the terminal
 SEXP rs_sendToTerminal(SEXP idSEXP, SEXP textSEXP)
 {
-   r::sexp::Protect protect;
-
    std::string terminalId = r::sexp::asString(idSEXP);
    std::string text = r::sexp::asString(textSEXP);
 
@@ -294,9 +376,118 @@ SEXP rs_sendToTerminal(SEXP idSEXP, SEXP textSEXP)
    return R_NilValue;
 }
 
+// Activate a terminal to ensure it is running (and optionally visible).
+SEXP rs_activateTerminal(SEXP idSEXP, SEXP showSEXP)
+{
+   std::string terminalId = r::sexp::asString(idSEXP);
+   bool show = r::sexp::asLogical(showSEXP);
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   if (!terminalId.empty())
+   {
+      ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+      if (!proc)
+         return R_NilValue;
+
+      if (!proc->isStarted())
+      {
+         // start the process
+         proc = proc->createTerminalProcess(proc);
+         if (!proc)
+         {
+            LOG_ERROR_MESSAGE("Unable to create consoleproc for terminal via activateTerminal");
+            return R_NilValue;
+         }
+         Error err = proc->start();
+         if (err)
+         {
+            LOG_ERROR(err);
+            reapConsoleProcess(*proc);
+            r::exec::error(err.summary());
+            return R_NilValue;
+         }
+      }
+   }
+
+   if (show)
+   {
+      json::Object eventData;
+      eventData["id"] = terminalId;
+
+      ClientEvent activateTerminalEvent(client_events::kActivateTerminal, eventData);
+      module_context::enqueClientEvent(activateTerminalEvent);
+   }
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
-void saveConsoleProcesses();
+// create process options for a terminal
+core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
+      TerminalShell::TerminalShellType shellType,
+      int cols, int rows, int termSequence)
+
+{
+   // configure environment for shell
+   core::system::Options shellEnv;
+   core::system::environment(&shellEnv);
+
+#ifndef _WIN32
+   // set xterm title to show current working directory after each command
+   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
+                        "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
+
+   std::string editorCommand = session::modules::workbench::editFileCommand();
+   if (!editorCommand.empty())
+   {
+      core::system::setenv(&shellEnv, "GIT_EDITOR", editorCommand);
+      core::system::setenv(&shellEnv, "SVN_EDITOR", editorCommand);
+   }
+#endif
+
+   if (termSequence != kNoTerminal)
+   {
+      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
+                           boost::lexical_cast<std::string>(termSequence));
+   }
+
+   // ammend shell paths as appropriate
+   session::modules::workbench::ammendShellPaths(&shellEnv);
+
+   // set options
+   core::system::ProcessOptions options;
+   options.workingDir = module_context::shellWorkingDirectory();
+   options.environment = shellEnv;
+   options.smartTerminal = true;
+   options.reportHasSubprocs = true;
+   options.cols = cols;
+   options.rows = rows;
+
+   // set path to shell
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+
+   if (shells.getInfo(shellType, &shell))
+   {
+      options.shellPath = shell.path;
+      options.args = shell.args;
+   }
+
+   // last-ditch, use system shell
+   if (!options.shellPath.exists())
+   {
+      TerminalShell sysShell;
+      if (AvailableTerminalShells::getSystemShell(&sysShell))
+      {
+         options.shellPath = sysShell.path;
+         options.args = sysShell.args;
+      }
+   }
+
+   return options;
+}
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
@@ -861,6 +1052,7 @@ Error procStart(const json::JsonRpcRequest& request,
    else
    {
       return systemError(boost::system::errc::invalid_argument,
+                         "Error starting consoleProc",
                          ERROR_LOCATION);
    }
 }
@@ -881,6 +1073,7 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    else
    {
       return systemError(boost::system::errc::invalid_argument,
+                         "Error interrupting consoleProc",
                          ERROR_LOCATION);
    }
 }
@@ -895,17 +1088,11 @@ Error procReap(const json::JsonRpcRequest& request,
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc != NULL)
-   {
-      proc->deleteLogFile();
-      if (s_procs.erase(handle))
-      {
-         saveConsoleProcesses();
-         return Success();
-      }
-   }
-   
-   return systemError(boost::system::errc::invalid_argument,
-                      ERROR_LOCATION);
+      return reapConsoleProcess(*proc);
+   else
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error reaping consoleProc",
+                         ERROR_LOCATION);
 }
 
 Error procWriteStdin(const json::JsonRpcRequest& request,
@@ -934,6 +1121,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    else
    {
       return systemError(boost::system::errc::invalid_argument,
+                         "Error writing to consoleProc",
                          ERROR_LOCATION);
    }
 }
@@ -960,6 +1148,7 @@ Error procSetSize(const json::JsonRpcRequest& request,
    else
    {
       return systemError(boost::system::errc::invalid_argument,
+                         "Error setting consoleProc terminal size",
                          ERROR_LOCATION);
    }
 }
@@ -979,7 +1168,9 @@ Error procSetCaption(const json::JsonRpcRequest& request,
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
    {
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error setting terminal caption",
+                         ERROR_LOCATION);
    }
    
    // make sure we don't have this name already
@@ -1010,7 +1201,9 @@ Error procSetTitle(const json::JsonRpcRequest& request,
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
    {
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error setting terminal title",
+                         ERROR_LOCATION);
    }
    
    proc->setTitle(title);
@@ -1030,7 +1223,9 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
    {
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error erasing terminal buffer",
+                         ERROR_LOCATION);
    }
 
    proc->deleteLogFile();
@@ -1049,11 +1244,15 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
    if (error)
       return error;
    if (requestedChunk < 0)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Invalid buffer chunk requested",
+                         ERROR_LOCATION);
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error getting buffer chunk",
+                         ERROR_LOCATION);
 
    json::Object result;
    bool moreAvailable;
@@ -1079,7 +1278,9 @@ Error procUseRpc(const json::JsonRpcRequest& request,
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error switching terminal to RPC",
+                         ERROR_LOCATION);
 
    // Used to downgrade to Rpc after client was unable to connect to Websocket
    proc->setRpcMode();
@@ -1132,7 +1333,9 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    if (proc == NULL)
    {
       s_visibleTerminalHandle.clear();
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error notifying selected terminal",
+                         ERROR_LOCATION);
    }
 
    s_visibleTerminalHandle = handle;
@@ -1223,6 +1426,23 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
                               cp->createConsoleProcessSocketConnectionCallbacks());
    }
    return cp;
+}
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
+      core::system::ProcessOptions options,
+      boost::shared_ptr<ConsoleProcessInfo> procInfo)
+{
+   return createTerminalProcess(options, procInfo, useWebsockets());
+}
+
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
+      boost::shared_ptr<ConsoleProcess> proc)
+{
+   core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
+            proc->procInfo_->getShellType(),
+            80, 25, proc->procInfo_->getTerminalSequence());
+   return createTerminalProcess(options, proc->procInfo_);
 }
 
 ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSocketConnectionCallbacks()
@@ -1389,21 +1609,6 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-std::string serializeConsoleProcs()
-{
-   json::Array array;
-   for (ProcTable::const_iterator it = s_procs.begin();
-        it != s_procs.end();
-        it++)
-   {
-      array.push_back(it->second->toJson());
-   }
-
-   std::ostringstream ostr;
-   json::write(array, ostr);
-   return ostr.str();
-}
-   
 void deserializeConsoleProcs(const std::string& jsonStr)
 {
    if (jsonStr.empty())
@@ -1450,35 +1655,6 @@ void loadConsoleProcesses()
    ConsoleProcessInfo::deleteOrphanedLogs(isKnownProcHandle);
 }
 
-void saveConsoleProcessesAtShutdown(bool terminatedNormally)
-{
-   if (!terminatedNormally)
-      return;
-
-   // When shutting down, only preserve ConsoleProcesses that are marked
-   // with allow_restart. Others should not survive a shutdown/restart.
-   ProcTable::const_iterator nextIt = s_procs.begin();
-   for (ProcTable::const_iterator it = s_procs.begin();
-        it != s_procs.end();
-        it = nextIt)
-   {
-      nextIt = it;
-      ++nextIt;
-      if (it->second->getAllowRestart() == false)
-      {
-         s_procs.erase(it->second->handle());
-      }
-   }
-
-   s_visibleTerminalHandle.clear();
-   saveConsoleProcesses();
-}
-
-void saveConsoleProcesses()
-{
-   ConsoleProcessInfo::saveConsoleProcesses(serializeConsoleProcs());
-}
-   
 void onSuspend(core::Settings* /*pSettings*/)
 {
    serializeConsoleProcs();
@@ -1499,14 +1675,16 @@ Error initialize()
 
    loadConsoleProcesses();
 
-   RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
+   RS_REGISTER_CALL_METHOD(rs_activateTerminal, 2);
    RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
-   RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
+   RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
    RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
    RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
-   RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
-   RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
+   RS_REGISTER_CALL_METHOD(rs_isTerminalRunning, 1);
+   RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
    RS_REGISTER_CALL_METHOD(rs_sendToTerminal, 2);
 
    // install rpc methods

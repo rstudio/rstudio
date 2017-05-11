@@ -104,6 +104,7 @@ public:
    int shinyViewerType() const;
    bool enableRSConnectUI() const;
    core::text::AnsiCodeMode ansiConsoleMode() const;
+   bool terminalWebsockets() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -255,6 +256,7 @@ private:
    mutable boost::scoped_ptr<int> pShinyViewerType_;
    mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
    mutable boost::scoped_ptr<int> pAnsiConsoleMode_;
+   mutable boost::scoped_ptr<bool> pTerminalWebsockets_;
    
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

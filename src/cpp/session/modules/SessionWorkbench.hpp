@@ -18,6 +18,13 @@
 
 #include <string>
 
+#include <core/system/Environment.hpp>
+#include <session/SessionOptions.hpp>
+
+#include "SessionVCS.hpp"
+#include "SessionGit.hpp"
+#include "SessionSVN.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -32,7 +39,25 @@ namespace workbench {
 std::string editFileCommand();
 
 core::Error initialize();
-                       
+
+template <typename T>
+void ammendShellPaths(T* pTarget)
+{
+   // non-path git bin dir
+   std::string gitBinDir = git::nonPathGitBinDir();
+   if (!gitBinDir.empty())
+      core::system::addToPath(pTarget, gitBinDir);
+
+   // non-path svn bin dir
+   std::string svnBinDir = svn::nonPathSvnBinDir();
+   if (!svnBinDir.empty())
+      core::system::addToPath(pTarget, svnBinDir);
+
+   // msys_ssh path
+   core::system::addToPath(pTarget,
+                           session::options().msysSshPath().absolutePath());
+}
+
 } // namespace workbench
 } // namespace modules
 } // namespace session

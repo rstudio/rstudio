@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -128,8 +129,8 @@ public class TerminalSession extends XTermWidget
 
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
-            getTitle(), uiPrefs_.terminalUseWebsockets().getValue(), 
-            getSequence(), new ServerRequestCallback<ConsoleProcess>()
+            getTitle(), getSequence(), 
+            new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)
@@ -426,7 +427,7 @@ public class TerminalSession extends XTermWidget
       
       // talk directly to the server so it will wake up if suspended and
       // clear its buffer cache
-      server_.processEraseBuffer(getHandle(), new SimpleRequestCallback<Void>());
+      server_.processEraseBuffer(getHandle(), new SimpleRequestCallback<Void>("Clearing Buffer"));
    }
 
    /**
@@ -574,22 +575,37 @@ public class TerminalSession extends XTermWidget
 
       // Talk directly to the server; this will wake it up if suspended so
       // it can actually get rid of the process record.
-      server_.processInterrupt(getHandle(), new SimpleRequestCallback<Void>()
+      server_.processInterrupt(getHandle(), new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void response)
          {
             server_.processReap(getHandle(), new VoidServerRequestCallback());
+            cleanupAfterTerminate();
+         }
 
-            // Forcefully kill this session on the client instead of waiting 
-            // for the ProcessExitEvent which we won't get in some scenarios 
-            // such as issuing terminate while session was suspended, or if
-            // something is just plain busted and the session isn't accepting
-            // input.
-            unregisterHandlers();
-            eventBus_.fireEvent(new TerminalSessionStoppedEvent(TerminalSession.this));
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+
+            // If we are in a state where the server doesn't know about the 
+            // terminal we are trying to kill and returned an error, 
+            // eradicate it on the client so it goes away.
+            cleanupAfterTerminate();
          }
       });
+   }
+   
+   private void cleanupAfterTerminate()
+   {
+      // Forcefully kill this session on the client instead of waiting 
+      // for the ProcessExitEvent which we won't get in some scenarios 
+      // such as issuing terminate while session was suspended, or if
+      // something is just plain busted and the session isn't accepting
+      // input.
+      unregisterHandlers();
+      eventBus_.fireEvent(new TerminalSessionStoppedEvent(TerminalSession.this));
    }
 
    @Override

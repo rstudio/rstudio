@@ -109,8 +109,20 @@ public:
    static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
-         bool enableWebsockets = true);
-   
+         bool enableWebsockets);
+
+   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
+         core::system::ProcessOptions options,
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
+
+   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
+         boost::shared_ptr<ConsoleProcess> proc);
+
+   static core::system::ProcessOptions createTerminalProcOptions(
+         TerminalShell::TerminalShellType shellType,
+         int cols, int rows,
+         int termSequence);
+
    virtual ~ConsoleProcess() {}
 
    // set a custom prompt handler -- return true to indicate the prompt

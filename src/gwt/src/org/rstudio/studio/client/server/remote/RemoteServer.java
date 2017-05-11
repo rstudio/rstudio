@@ -497,7 +497,6 @@ public class RemoteServer implements Server
                      String terminalHandle,
                      String caption,
                      String title,
-                     boolean websocket,
                      int sequence,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
@@ -508,8 +507,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
       params.set(4, new JSONString(StringUtil.notNull(caption)));
       params.set(5, new JSONString(StringUtil.notNull(title)));
-      params.set(6, JSONBoolean.getInstance(websocket));
-      params.set(7, new JSONNumber(sequence));
+      params.set(6, new JSONNumber(sequence));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
