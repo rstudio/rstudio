@@ -70,15 +70,15 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
      pSynctex_(NULL),
      pendingQuit_(PendingQuitNone)
 {
-    QClipboard* cb = QApplication::clipboard();
+    QClipboard* clipboard = QApplication::clipboard();
 
     // listen for clipboard data change events
-    QObject::connect(cb, SIGNAL(changed(QClipboard::Mode)),
+    QObject::connect(clipboard, SIGNAL(changed(QClipboard::Mode)),
                      this, SLOT(onClipboardChanged(QClipboard::Mode)));
 
     // initialize the global selection
-    if (cb->supportsSelection())
-        s_globalMouseSelection = cb->text(QClipboard::Selection);
+    if (clipboard->supportsSelection())
+        s_globalMouseSelection = clipboard->text(QClipboard::Selection);
 }
 
 Synctex& GwtCallback::synctex()
@@ -260,16 +260,21 @@ void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
     // if this is a change in the selection contents, track it
     if (mode == QClipboard::Selection)
     {
-        QClipboard* cb = QApplication::clipboard();
-        QString text = cb->text(mode);
+        QClipboard* clipboard = QApplication::clipboard();
+        QString text = clipboard->text(mode);
 
         // when one clicks on an Ace instance, a hidden length-one selection
         // will sneak in here. explicitly screen those out.
         if (text == QString::fromUtf8("\x01"))
-            return;
-
-        // update our tracked global selection
-        s_globalMouseSelection = text;
+        {
+           // restore the old global selection
+           clipboard->setText(s_globalMouseSelection, QClipboard::Selection);
+        }
+        else
+        {
+           // otherwise, update our tracked global selection
+           s_globalMouseSelection = text;
+        }
     }
 }
 
