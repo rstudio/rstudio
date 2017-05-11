@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -65,6 +66,7 @@ public class TerminalPane extends WorkbenchPane
                           implements TerminalTabPresenter.Display,
                                      TerminalSessionStartedEvent.Handler,
                                      TerminalSessionStoppedEvent.Handler,
+                                     ServerProcessExitEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
@@ -83,6 +85,7 @@ public class TerminalPane extends WorkbenchPane
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      events_.addHandler(ServerProcessExitEvent.TYPE, this);
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
@@ -447,28 +450,79 @@ public class TerminalPane extends WorkbenchPane
       }
       creatingTerminal_ = false;
    }
-
-   @Override
-   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   
+   /**
+    * Cleanup after process with given handle has terminated.
+    * @param handle identifier for process that exited
+    */
+   private void cleanupAfterTerminate(String handle)
    {
-      // Figure out which terminal to switch to, send message to do so,
-      // and remove the stopped terminal.
-      TerminalSession currentTerminal = event.getTerminalWidget();
-      String handle = currentTerminal.getHandle();
+      if (terminals_.indexOfTerminal(handle) == -1)
+      {
+         // Don't know about this process handle, nothing to do on client related
+         // to the Terminal pane.
+         return;
+      }
 
+      // Figure out which terminal to switch to, send message to do so.
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
          events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
       }
+
+      // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
-      terminalSessionsPanel_.remove(currentTerminal);
+
+      // If terminal was loaded, remove its pane.
+      TerminalSession currentTerminal = loadedTerminalWithHandle(handle);
+      if (currentTerminal != null)
+      {
+         terminalSessionsPanel_.remove(currentTerminal);
+      }
 
       if (newTerminalHandle == null)
       {
          activeTerminalToolbarButton_.setNoActiveTerminal();
          setTerminalTitle("");
       }
+   }
+
+   @Override
+   public void onServerProcessExit(ServerProcessExitEvent event)
+   {
+      // Notification from server than a process exited. See
+      // onTerminalSessionStopped for more details.
+      cleanupAfterTerminate(event.getProcessHandle());
+   }
+
+   @Override
+   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   {
+      // Notification from a TerminalSession that its process exited.
+      // We can get both this notification, and the onServerProcessExit
+      // notification for the same terminal.
+      //
+      // If a terminal was running on the server, and is on the dropdown list,
+      // but never loaded in the client (typically after a browser refresh),
+      // we WON'T get this notification since the TerminalSession was never
+      // created, and rely on the other notification to cleanup when a process
+      // ends on the server. For example, create a terminal, then refresh the
+      // browser without going back to the terminal in the client, then kill
+      // the terminal on the server, possibly via the API (or "kill" in command
+      // prompt). We want the terminal to go away on the client otherwise we
+      // have a zombie terminal in the dropdown.
+      //
+      // OTOH, in cases where the client has a terminal in the list that 
+      // doesn't exist on the server (e.g. process exited on the server while 
+      // the client wasn't connected thus the process exit notification didn't
+      // get through) closing the terminal via Close command on client won't 
+      // trigger the onServerProcessExit callback, only this one.
+      //
+      // So... we call the same cleanup from both codepaths, and it deals
+      // with the possibility of the call happening more than once for the
+      // same handle.
+      cleanupAfterTerminate(event.getTerminalWidget().getHandle());
    }
 
    @Override

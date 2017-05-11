@@ -157,11 +157,12 @@ Error reapConsoleProcess(const ConsoleProcess& proc)
    if (s_procs.erase(proc.handle()))
    {
       saveConsoleProcesses();
-      return Success();
    }
-   return systemError(boost::system::errc::invalid_argument,
-                      "Error reaping console process",
-                      ERROR_LOCATION);
+
+   // don't report errors if tried to reap something that isn't in the
+   // table; there are cases where we do reaping on the server-side and
+   // the client may also try to reap the same thing after-the-fact
+   return Success();
 }
 
 // Return vector of all terminal ids (captions)
@@ -277,7 +278,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    builder.add("lines", proc->getBufferLineCount());
    builder.add("cols", proc->getCols());
    builder.add("rows", proc->getRows());
-   builder.add("pid", proc->getPid());
+   builder.add("pid", static_cast<int>(proc->getPid()));
 
    return r::sexp::create(builder, &protect);
 }
@@ -315,6 +316,7 @@ SEXP rs_killTerminal(SEXP terminalsSEXP)
       if (proc != NULL)
       {
          proc->interrupt();
+         reapConsoleProcess(*proc);
       }
    }
    return R_NilValue;
