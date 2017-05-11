@@ -1936,6 +1936,10 @@ body.ubuntu_mono .searchBox {
    color: white;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs .dirtyTab table.tabLayoutCenter {
+   color: #acbee0;
+}
+
 .tabIcon {
 
 }
