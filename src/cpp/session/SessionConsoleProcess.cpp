@@ -189,7 +189,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    builder.add("lines", proc->getBufferLineCount());
    builder.add("cols", proc->getCols());
    builder.add("rows", proc->getRows());
-   builder.add("pid", proc->getPid());
+   builder.add("pid", static_cast<int>(proc->getPid()));
 
    return r::sexp::create(builder, &protect);
 }
