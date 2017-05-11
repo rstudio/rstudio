@@ -25,23 +25,37 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerEvent;
 
 public class MarkersOutputPane extends WorkbenchPane
       implements MarkersOutputPresenter.Display
 {
    @Inject
-   public MarkersOutputPane(Commands commands)
+   public MarkersOutputPane(Commands commands,
+                            EventBus events)
    {
       super("Markers");
       markerSetsToolbarButton_ = new MarkerSetsToolbarButton();
       markerList_ = new SourceMarkerList();
       clearButton_ = new ToolbarButton(commands.clearPlots().getImageResource(),
                                        null);
+      
+      events.addHandler(SelectMarkerEvent.TYPE, new SelectMarkerEvent.Handler()
+      {
+         @Override
+         public void onSelectMarker(SelectMarkerEvent event)
+         {
+            if (active_)
+               markerList_.onSelectMarker(event);
+         }
+      });
+      
       ensureWidget();
    }
    
@@ -115,11 +129,20 @@ public class MarkersOutputPane extends WorkbenchPane
    public void onSelected()
    {
       super.onSelected();
+      active_ = true;
       markerList_.focus();
       markerList_.ensureSelection();
+   }
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      active_ = false;
    }
    
    private SourceMarkerList markerList_;
    private MarkerSetsToolbarButton markerSetsToolbarButton_;
    private ToolbarButton clearButton_;
+   private boolean active_;
 }

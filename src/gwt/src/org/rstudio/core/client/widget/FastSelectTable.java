@@ -31,6 +31,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -556,6 +557,26 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       clearSelection();
       setSelected(rowToSelect, true);
       return true;
+   }
+   
+   public void onSelectMarker(SelectMarkerEvent event)
+   {
+      int index = event.getIndex();
+      boolean relative = event.isRelative();
+      
+      if (relative)
+      {
+         // discover the current selected row (handle
+         // the multiple selection case by choosing last)
+         int row = 0;
+         if (getSelectedRowIndexes().size() > 0)
+            row = getSelectedRowIndexes().get(getSelectedRowIndexes().size() - 1);
+         setSelected(row + index, 1, true);
+      }
+      else
+      {
+         setSelected(index, 1, true);
+      }
    }
 
    private TableRowElement getRow(int row)

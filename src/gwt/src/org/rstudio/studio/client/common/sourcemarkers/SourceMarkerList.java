@@ -22,6 +22,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.FastSelectTable;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
@@ -204,6 +205,11 @@ public class SourceMarkerList extends Composite
    private void fireSelectionCommitedEvent(CodeNavigationTarget target)
    {
       SelectionCommitEvent.fire(this, target);
+   }
+   
+   public void onSelectMarker(SelectMarkerEvent event)
+   {
+      errorTable_.onSelectMarker(event);
    }
 
    private final SourceMarkerItemCodec codec_;

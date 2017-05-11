@@ -42,7 +42,7 @@ public class SelectMarkerEvent extends GwtEvent<SelectMarkerEvent.Handler>
    
    public interface Handler extends EventHandler
    {
-      void onSelectMarkerResult(SelectMarkerEvent event);
+      void onSelectMarker(SelectMarkerEvent event);
    }
    
    @Override
@@ -54,13 +54,8 @@ public class SelectMarkerEvent extends GwtEvent<SelectMarkerEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      if (consumed_)
-         return;
-      
-      consumed_ = true;
-      handler.onSelectMarkerResult(this);
+      handler.onSelectMarker(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private boolean consumed_ = false;
 }

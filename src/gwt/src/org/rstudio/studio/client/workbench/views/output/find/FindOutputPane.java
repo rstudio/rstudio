@@ -58,31 +58,10 @@ public class FindOutputPane extends WorkbenchPane
       events_.addHandler(SelectMarkerEvent.TYPE, new SelectMarkerEvent.Handler()
       {
          @Override
-         public void onSelectMarkerResult(SelectMarkerEvent event)
+         public void onSelectMarker(SelectMarkerEvent event)
          {
-            int index = event.getIndex();
-            boolean relative = event.isRelative();
-            
-            if (relative)
-            {
-               if (index > 0)
-               {
-                  for (int i = 0; i < index; i++)
-                     table_.selectNextRow();
-               }
-               else
-               {
-                  index = -index;
-                  for (int i = 0; i < index; i++)
-                     table_.selectPreviousRow();
-               }
-            }
-            else
-            {
-               table_.setSelected(index, 1, true);
-            }
-            
-            fireSelectionCommitted();
+            if (active_)
+               table_.onSelectMarker(event);
          }
       });
    }
@@ -208,10 +187,18 @@ public class FindOutputPane extends WorkbenchPane
    {
       super.onSelected();
       
+      active_ = true;
       table_.focus();
       ArrayList<Integer> indices = table_.getSelectedRowIndexes();
       if (indices.isEmpty())
          table_.selectNextRow();
+   }
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      active_ = false;
    }
 
    @Override
@@ -316,6 +303,7 @@ public class FindOutputPane extends WorkbenchPane
    private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
+   private boolean active_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
