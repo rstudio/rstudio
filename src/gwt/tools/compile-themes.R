@@ -799,7 +799,7 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
 }
 
 themes_static_rules <- function() {
-  paste(".editor_dark.ace_editor_theme a {",
+  paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
         "color: #FFF !important;",
         "}")
 }
