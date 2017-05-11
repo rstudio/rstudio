@@ -78,28 +78,28 @@ public class SourceVimCommands
          context: "normal"
       });
       
-      // Select next search result
-      Vim.defineAction("selectNextSearchResult", $entry(function(cm, args) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::selectMarkerResultRelative(I)(1);
+      // Select next marker
+      Vim.defineAction("selectNextMarker", $entry(function(cm, args) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::selectMarkerRelative(I)(1);
       }));
       
       Vim.mapCommand({
          keys: "]q",
          type: "action",
-         action: "selectNextSearchResult",
+         action: "selectNextMarker",
          isEdit: false,
          context: "normal"
       });
       
-      // Select previous search result
-      Vim.defineAction("selectPreviousSearchResult", $entry(function(cm, args) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::selectSearchResultRelative(I)(-1);
+      // Select previous marker
+      Vim.defineAction("selectPreviousMarker", $entry(function(cm, args) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::selectMarkerRelative(I)(-1);
       }));
       
       Vim.mapCommand({
          keys: "[q",
          type: "action",
-         action: "selectPreviousSearchResult",
+         action: "selectPreviousMarker",
          isEdit: false,
          context: "normal"
       });

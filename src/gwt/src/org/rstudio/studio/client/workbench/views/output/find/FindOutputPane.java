@@ -37,7 +37,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
-import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerResultEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerEvent;
 
 import java.util.ArrayList;
 
@@ -55,10 +55,10 @@ public class FindOutputPane extends WorkbenchPane
       events_ = events;
       ensureWidget();
       
-      events_.addHandler(SelectMarkerResultEvent.TYPE, new SelectMarkerResultEvent.Handler()
+      events_.addHandler(SelectMarkerEvent.TYPE, new SelectMarkerEvent.Handler()
       {
          @Override
-         public void onSelectMarkerResult(SelectMarkerResultEvent event)
+         public void onSelectMarkerResult(SelectMarkerEvent event)
          {
             int index = event.getIndex();
             boolean relative = event.isRelative();

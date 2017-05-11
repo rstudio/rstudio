@@ -740,9 +740,9 @@ public class Source implements InsertSourceHandler,
       setPhysicalTabIndex(index);
    }
    
-   private void selectMarkerResultRelative(int index)
+   private void selectMarkerRelative(int index)
    {
-      events_.fireEvent(new SelectMarkerResultEvent(index, true));
+      events_.fireEvent(new SelectMarkerEvent(index, true));
    }
    
    private void closeAllTabs(boolean interactive)

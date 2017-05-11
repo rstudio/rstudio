@@ -1,7 +1,7 @@
 /*
  * SelectMarkerResultEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SelectMarkerResultEvent extends GwtEvent<SelectMarkerResultEvent.Handler>
+public class SelectMarkerEvent extends GwtEvent<SelectMarkerEvent.Handler>
 {
-   public SelectMarkerResultEvent(int index, boolean relative)
+   public SelectMarkerEvent(int index, boolean relative)
    {
       index_ = index;
       relative_ = relative;
@@ -42,7 +42,7 @@ public class SelectMarkerResultEvent extends GwtEvent<SelectMarkerResultEvent.Ha
    
    public interface Handler extends EventHandler
    {
-      void onSelectMarkerResult(SelectMarkerResultEvent event);
+      void onSelectMarkerResult(SelectMarkerEvent event);
    }
    
    @Override
@@ -54,8 +54,13 @@ public class SelectMarkerResultEvent extends GwtEvent<SelectMarkerResultEvent.Ha
    @Override
    protected void dispatch(Handler handler)
    {
+      if (consumed_)
+         return;
+      
+      consumed_ = true;
       handler.onSelectMarkerResult(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   private boolean consumed_ = false;
 }
