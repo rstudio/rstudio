@@ -434,6 +434,13 @@
    .Call("rs_isTerminalBusy", id)
 })
 
+.rs.addApiFunction("isTerminalRunning", function(id) {
+   if (is.null(id) || !is.character(id))
+      stop("'id' must be a character vector")
+
+   .Call("rs_isTerminalRunning", id)
+})
+
 .rs.addApiFunction("getAllTerminals", function() {
    .Call("rs_getAllTerminals")
 })
@@ -445,22 +452,23 @@
    .Call("rs_getTerminalContext", id)
 })
 
-.rs.addApiFunction("showTerminal", function(id = NULL) {
+.rs.addApiFunction("activateTerminal", function(id = NULL, show = TRUE) {
    if (is.null(id))
       id <- ""
 
-   if (!is.character(id))
+   if (!is.character(id) || (length(id) != 1))
       stop("'id' must be NULL or a character vector of length one")
 
-   data <- list(id = .rs.scalar(id))
+   if (!is.logical(show))
+     stop("'show' must be TRUE or FALSE")
 
-   .rs.enqueClientEvent("activate_terminal", data)
-   invisible(data)
+   .Call("rs_activateTerminal", id, show)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = NULL) {
-   if (is.null(id) || !is.character(id))
-      stop("'id' must be a character vector")
+   if (is.null(id) || !is.character(id) || (length(id) != 1))
+      stop("'id' must be a single element character vector")
 
    if (is.null(stripAnsi) || !is.logical(stripAnsi))
       stop("'stripAnsi' must be a logical vector")
@@ -479,3 +487,15 @@
 .rs.addApiFunction("getVisibleTerminal", function() {
    .Call("rs_getVisibleTerminal")
 })
+
+options(terminal.manager = list(activateTerminal = .rs.api.activateTerminal,
+                                createTerminal = .rs.api.createTerminal,
+                                clearTerminal = .rs.api.clearTerminal,
+                                getAllTerminals = .rs.api.getAllTerminals,
+                                getTerminalContext = .rs.api.getTerminalContext,
+                                getTerminalBuffer = .rs.api.getTerminalBuffer,
+                                getVisibleTerminal = .rs.api.getVisibleTerminal,
+                                isTerminalBusy = .rs.api.isTerminalBusy,
+                                isTerminalRunning = .rs.api.isTerminalRunning,
+                                killTerminal = .rs.api.killTerminal,
+                                sendToTerminal = .rs.api.sendToTerminal))

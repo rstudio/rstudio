@@ -70,6 +70,16 @@ struct TerminalShell
    std::vector<std::string> args;
 
    core::json::Object toJson() const;
+
+   static TerminalShellType safeShellTypeFromInt(int shellTypeInt)
+   {
+      TerminalShellType shellType = static_cast<TerminalShellType>(shellTypeInt);
+      if (shellType < DefaultShell || shellType > TerminalShell::Max)
+      {
+         shellType = DefaultShell;
+      }
+      return shellType;
+   }
 };
 
 class AvailableTerminalShells

@@ -32,7 +32,6 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 
 #include <r/ROptions.hpp>
@@ -48,10 +47,6 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/RVersionSettings.hpp>
 #include <session/SessionTerminalShell.hpp>
-
-#include "SessionVCS.hpp"
-#include "SessionGit.hpp"
-#include "SessionSVN.hpp"
 
 #include "SessionSpelling.hpp"
 
@@ -622,24 +617,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    return Success();
 }
 
-template <typename T>
-void ammendShellPaths(T* pTarget)
-{
-   // non-path git bin dir
-   std::string gitBinDir = git::nonPathGitBinDir();
-   if (!gitBinDir.empty())
-      core::system::addToPath(pTarget, gitBinDir);
-
-   // non-path svn bin dir
-   std::string svnBinDir = svn::nonPathSvnBinDir();
-   if (!svnBinDir.empty())
-      core::system::addToPath(pTarget, svnBinDir);
-
-   // msys_ssh path
-   core::system::addToPath(pTarget,
-                           session::options().msysSshPath().absolutePath());
-}
-
 Error getTerminalOptions(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -889,7 +866,6 @@ Error startTerminal(const json::JsonRpcRequest& request,
    std::string termHandle; // empty if starting a new terminal
    std::string termCaption;
    std::string termTitle;
-   bool useWebsockets;
    int termSequence = kNoTerminal;
    
    Error error = json::readParams(request.params,
@@ -899,71 +875,29 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
-                                  &useWebsockets,
                                   &termSequence);
    if (error)
       return error;
 
    TerminalShell::TerminalShellType shellType =
-         static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
-   if (shellType < TerminalShell::DefaultShell || shellType > TerminalShell::Max)
+         TerminalShell::safeShellTypeFromInt(shellTypeInt);
+
+   if (termSequence == kNoTerminal)
    {
-       shellType = TerminalShell::DefaultShell;
-   }
-   
-   // configure environment for shell
-   core::system::Options shellEnv;
-   core::system::environment(&shellEnv);
-
-#ifndef _WIN32
-   // set xterm title to show current working directory after each command
-   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                        "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
-   
-   core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
-   core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
-#endif
-
-   if (termSequence != kNoTerminal)
-   {
-      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                           boost::lexical_cast<std::string>(termSequence));
-   }
-   
-   // ammend shell paths as appropriate
-   ammendShellPaths(&shellEnv);
-
-   // set options
-   core::system::ProcessOptions options;
-   options.workingDir = module_context::shellWorkingDirectory();
-   options.environment = shellEnv;
-   options.smartTerminal = true;
-   options.reportHasSubprocs = true;
-   options.cols = cols;
-   options.rows = rows;
-
-   // set path to shell
-   AvailableTerminalShells shells;
-   TerminalShell shell;
-   if (shells.getInfo(shellType, &shell))
-   {
-      options.shellPath = shell.path;
-      options.args = shell.args;
-   }
-
-   // last-ditch, use system shell
-   if (!options.shellPath.exists())
-   {
-      TerminalShell sysShell;
-      if (AvailableTerminalShells::getSystemShell(&sysShell))
-      {
-         options.shellPath = sysShell.path;
-         options.args = sysShell.args;
-      }
+      return systemError(boost::system::errc::invalid_argument,
+                         "Unsupported terminal sequence",
+                         ERROR_LOCATION);
    }
 
    if (termCaption.empty())
-      termCaption = "Shell";
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Empty terminal caption not supported",
+                         ERROR_LOCATION);
+   }
+
+   core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
+         shellType, cols, rows, termSequence);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
@@ -971,10 +905,8 @@ Error startTerminal(const json::JsonRpcRequest& request,
             console_process::Rpc, "" /*channelId*/,
             console_process::kDefaultTerminalMaxOutputLines);
 
-   // run process
-   bool websockets = session::options().allowTerminalWebsockets() && useWebsockets;
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(options, ptrProcInfo, websockets);
+               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
 
    ptrProc->onExit().connect(boost::bind(
                               &source_control::enqueueRefreshEvent));
