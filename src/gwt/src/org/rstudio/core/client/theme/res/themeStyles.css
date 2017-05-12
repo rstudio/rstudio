@@ -2222,7 +2222,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelContent,
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-default ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.windows .rstudio-themes-default ::-webkit-scrollbar-thumb {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
@@ -2255,7 +2255,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-default ::-webkit-scrollbar-track { 
+.rstudio-themes-flat.windows .rstudio-themes-default ::-webkit-scrollbar-track { 
    background: THEME_DEFAULT_MOST_INACTIVE;
 }
 
@@ -2272,7 +2272,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.windows .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
@@ -2305,7 +2305,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-dark-grey ::-webkit-scrollbar-track { 
+.rstudio-themes-flat.windows .rstudio-themes-dark-grey ::-webkit-scrollbar-track { 
    background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
@@ -2322,7 +2322,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-alternate ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.windows .rstudio-themes-alternate ::-webkit-scrollbar-thumb {
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
@@ -2355,7 +2355,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-alternate ::-webkit-scrollbar-track {  
+.rstudio-themes-flat.windows .rstudio-themes-alternate ::-webkit-scrollbar-track {  
    background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 
@@ -2383,17 +2383,17 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 /* RSTUDIO THEMES END */
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar {
+.rstudio-themes-flat.windows .rstudio-themes-dark ::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.windows .rstudio-themes-dark ::-webkit-scrollbar-thumb {
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-track-piece {
+.rstudio-themes-flat.windows .rstudio-themes-dark ::-webkit-scrollbar-track-piece {
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-track {
+.rstudio-themes-flat.windows .rstudio-themes-dark ::-webkit-scrollbar-track {
 }  
 
