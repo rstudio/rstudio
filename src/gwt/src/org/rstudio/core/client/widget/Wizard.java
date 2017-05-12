@@ -164,7 +164,6 @@ public class Wizard<I,T> extends ModalDialog<T>
       ImageResource2x bkImg = new ImageResource2x(res.wizardBackButton2x());
       backButton_ = new Label("Back");
       backButton_.addStyleName(styles.wizardBackButton());
-      backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       headerPanel_.add(backButton_);
       headerPanel_.setWidgetLeftWidth(backButton_,
                                       kTopMargin - 2, Unit.PX, 

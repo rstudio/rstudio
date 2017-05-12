@@ -38,7 +38,6 @@ public class EditableSnippets extends Composite
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel.add(icon);
       Label label = new Label(name);
-      label.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       label.getElement().getStyle().setMarginLeft(5, Unit.PX);
       panel.add(label);
       initWidget(panel);

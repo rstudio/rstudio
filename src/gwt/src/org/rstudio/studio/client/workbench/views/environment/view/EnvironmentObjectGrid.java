@@ -370,7 +370,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                         // no styling
                   }
                   
-                  className += " " + ThemeStyles.INSTANCE.handCursor();
                }
                if (rowValue.isPromise())
                {

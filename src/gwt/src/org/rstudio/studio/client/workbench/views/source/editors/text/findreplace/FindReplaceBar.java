@@ -147,7 +147,6 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.addRightWidget(btnClose_ = new Button());
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
-      btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       btnClose_.getElement().appendChild(
             new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 

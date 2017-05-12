@@ -160,8 +160,6 @@
 @url WARNINGDARK syntaxWarningDark2x;
 @url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor2x;
-
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn2x;
 
@@ -262,20 +260,6 @@ iframe {
 
 button {
    cursor: pointer;
-}
-.handCursor {
-	cursor: pointer;
-}
-
-@if rstudio.desktop true {
-.linux button {
-   cursor: HANDCURSOR 9 5, pointer;
-}
-
-.linux .handCursor {
-    
-   cursor: HANDCURSOR 9 5, pointer;
-}
 }
 
 textarea {

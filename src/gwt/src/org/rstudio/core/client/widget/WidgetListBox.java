@@ -191,8 +191,7 @@ public class WidgetListBox<T extends Widget>
                                                itemPaddingUnit_);
       
       panel.addStyleName(style_.anyItem());
-      panel.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-
+    
       // if it's the first item, select it
       if (options_.size() == 1)
          setSelectedIndex(0);

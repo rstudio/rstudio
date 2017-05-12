@@ -68,7 +68,6 @@ public class FancyButton extends FocusWidget
    {
       Binder binder = GWT.create(Binder.class);
       setElement(binder.createAndBindUi(this));
-      addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
    }
 
    public void setText(String text)

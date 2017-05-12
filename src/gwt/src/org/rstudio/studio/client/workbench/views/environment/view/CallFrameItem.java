@@ -53,7 +53,6 @@ public class CallFrameItem extends Composite
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      functionName.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       functionName.addClickHandler(this);
       if (!frame.isNavigable() || hidden)
       {

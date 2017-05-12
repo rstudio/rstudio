@@ -60,7 +60,6 @@ public class PathBreadcrumbWidget
          linkUp_.setTitle("Go to parent directory");
          linkUp_.setVisible(false);
          linkUp_.setStylePrimaryName(RES.styles().goUp());
-         linkUp_.addStyleName(ThemeStyles.INSTANCE.handCursor());
          Image image = new Image(new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x()));
          linkUp_.getElement().appendChild(image.getElement());
       }
@@ -110,7 +109,6 @@ public class PathBreadcrumbWidget
 
       Button browse = new Button("...");
       browse.setStyleName(STYLES.browse());
-      browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       browse.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -148,8 +146,6 @@ public class PathBreadcrumbWidget
       if (projDir != null)
       {
          Image projIcon = new Image(new ImageResource2x(RES.projectImage2x()));
-         projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-
          projIcon.addClickHandler(new ClickHandler()
          {
             public void onClick(ClickEvent event)
@@ -224,8 +220,6 @@ public class PathBreadcrumbWidget
       if (browseable || isHome)
       {
          Anchor anchor = new Anchor(text, false);
-         anchor.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-         
          anchor.addClickHandler(new ClickHandler()
          {
             public void onClick(ClickEvent event)

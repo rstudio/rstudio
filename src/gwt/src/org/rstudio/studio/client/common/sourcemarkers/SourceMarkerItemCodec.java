@@ -111,7 +111,6 @@ public class SourceMarkerItemCodec
          DivElement div = Document.get().createDivElement();
          div.setTitle("View error or warning within the log file");
          div.setClassName(resources_.styles().disclosure());
-         div.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
    
          td.appendChild(div);
          return td;

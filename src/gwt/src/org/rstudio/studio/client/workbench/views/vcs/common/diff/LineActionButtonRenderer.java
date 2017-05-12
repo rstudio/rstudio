@@ -112,8 +112,7 @@ public class LineActionButtonRenderer
       {
          builder.append(SafeHtmlUtil.createOpenTag(
                "div",
-               "class", resources_.styles().button() + " " +
-                        ThemeStyles.INSTANCE.handCursor(),
+               "class", resources_.styles().button(),
                "data-action", action));
          {
                builder.append(SafeHtmlUtil.createOpenTag(

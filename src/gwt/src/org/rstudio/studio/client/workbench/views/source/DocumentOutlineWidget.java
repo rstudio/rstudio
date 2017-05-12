@@ -133,7 +133,6 @@ public class DocumentOutlineWidget extends Composite
             label_.setText(text);
          
          label_.addStyleName(RES.styles().nodeLabel());
-         label_.addStyleName(ThemeStyles.INSTANCE.handCursor());
          
          label_.removeStyleName(RES.styles().nodeLabelChunk());
          label_.removeStyleName(RES.styles().nodeLabelSection());
