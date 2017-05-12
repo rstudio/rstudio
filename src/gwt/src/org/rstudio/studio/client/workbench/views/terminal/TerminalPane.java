@@ -37,6 +37,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -98,6 +99,8 @@ public class TerminalPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       terminalSessionsPanel_ = new DeckLayoutPanel();
+      terminalSessionsPanel_.setStyleName(ConsoleResources.INSTANCE.consoleStyles().console());
+      terminalSessionsPanel_.getElement().addClassName("ace_editor");
       return terminalSessionsPanel_;
    }
 
