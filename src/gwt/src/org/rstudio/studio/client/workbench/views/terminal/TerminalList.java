@@ -489,7 +489,7 @@ public class TerminalList implements Iterable<String>,
    {
       TerminalSession newSession = new TerminalSession(
             sequence, terminalHandle, caption, title, hasChildProcs, 
-            cols, rows, uiPrefs_.blinkingCursor().getValue(), shellType);
+            cols, rows, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, shellType);
       newSession.connect();
       updateTerminalBusyStatus();
    }

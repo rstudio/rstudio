@@ -157,12 +157,13 @@ public class XTermNative extends JavaScriptObject
     *  
     * @param container HTML element to attach to
     * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
+    * @param focus <code>true</code> to give terminal focus by default
     * 
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container, boolean blink) /*-{
+   public static native XTermNative createTerminal(Element container, boolean blink, boolean focus) /*-{
       var nativeTerm_ = new $wnd.Terminal({cursorBlink: blink});
-      nativeTerm_.open(container);
+      nativeTerm_.open(container, focus);
       return nativeTerm_;
    }-*/;
 } 
