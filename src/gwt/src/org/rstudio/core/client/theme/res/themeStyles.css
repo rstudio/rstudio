@@ -1185,6 +1185,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    max-height: 19px;
 }
 
+@if rstudio.desktop true {
+.linux.rstudio-themes-flat .toolbarSeparator {
+   margin-top: 2px;
+}
+}
+
 .rstudio-themes-flat .rstudio-themes-dark .toolbarSeparator {
    -webkit-filter: invert(100%);
       -moz-filter: invert(100%);
@@ -2119,6 +2125,12 @@ body.ubuntu_mono .searchBox {
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
    background: THEME_LIGHT_CONTROL_BACKGROUND;
+}
+
+@if rstudio.desktop true {
+.linux.rstudio-themes-flat .search {
+   top: 0px;
+}
 }
 
 .rstudio-themes-flat .tallerToolbarWrapper .search {
