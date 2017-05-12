@@ -66,6 +66,8 @@ public class TerminalSession extends XTermWidget
     * @param hasChildProcs does session have child processes
     * @param cols number of columns in terminal
     * @param rows number of rows in terminal
+    * @param cursorBlink should terminal cursor blink
+    * @param focus should terminal automatically get focus
     * @param shellType type of shell to run
     */
    public TerminalSession(int sequence,
@@ -76,9 +78,10 @@ public class TerminalSession extends XTermWidget
                           int cols,
                           int rows,
                           boolean cursorBlink,
+                          boolean focus,
                           int shellType)
    {
-      super(cursorBlink);
+      super(cursorBlink, focus);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
