@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
@@ -69,11 +70,28 @@ public class RStudioThemedFrame extends RStudioFrame
       {
          Document document = getWindow().getDocument();
          
-         if (customStyle != null) {
-            StyleElement style = document.createStyleElement();
-            style.setInnerHTML(customStyle);
-            document.getHead().appendChild(style);
-         }
+         if (customStyle == null) customStyle = "";
+         
+         customStyle += "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar {\n" +
+         "   background: #FFF;\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar-thumb,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar-thumb {\n" +
+         "   -webkit-border-radius: 10px;\n" +
+         "   background: " + ThemeColors.darkGreyBackground + ";\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar-track,\n" + 
+         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar-track {\n" + 
+         "   background: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
+         "}\n";
+         
+         StyleElement style = document.createStyleElement();
+         style.setInnerHTML(customStyle);
+         document.getHead().appendChild(style);
          
          if (urlStyle != null) {
             LinkElement styleLink = document.createLinkElement();
