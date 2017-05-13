@@ -363,7 +363,7 @@ context("websocket for interactive terminals")
       expect_true(pSocket->ensureServerRunning());
 
       shared_ptr<SocketConnection> pConnection =
-            make_shared<SocketConnection>(handle1, pSocket);
+            boost::make_shared<SocketConnection>(handle1, pSocket);
       expect_true(pConnection->listen());
 
       expect_true(pConnection->stopListening());
@@ -375,8 +375,8 @@ context("websocket for interactive terminals")
       shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
       expect_true(pSocket->ensureServerRunning());
 
-      shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
+      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
@@ -396,8 +396,8 @@ context("websocket for interactive terminals")
       shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
       expect_true(pSocket->ensureServerRunning());
 
-      shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
+      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
@@ -420,8 +420,8 @@ context("websocket for interactive terminals")
       shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
       expect_true(pSocket->ensureServerRunning());
 
-      shared_ptr<SocketConnection> pConnection = make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = make_shared<SocketClient>(handle1, pSocket->port());
+      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
@@ -447,9 +447,9 @@ context("websocket for interactive terminals")
 
       // ---- first connection ----
       shared_ptr<SocketConnection> pConnection1 =
-            make_shared<SocketConnection>(handle1, pSocket);
+            boost::make_shared<SocketConnection>(handle1, pSocket);
 
-      shared_ptr<SocketClient> pClient1 = make_shared<SocketClient>(handle1, pSocket->port());
+      shared_ptr<SocketClient> pClient1 = boost::make_shared<SocketClient>(handle1, pSocket->port());
       expect_true(pConnection1->listen());
       expect_true(pClient1->connectToServer());
 
@@ -461,9 +461,9 @@ context("websocket for interactive terminals")
 
       // ---- second connection ----
       shared_ptr<SocketConnection> pConnection2 =
-            make_shared<SocketConnection>(handle2, pSocket);
+            boost::make_shared<SocketConnection>(handle2, pSocket);
 
-      shared_ptr<SocketClient> pClient2 = make_shared<SocketClient>(handle2, pSocket->port());
+      shared_ptr<SocketClient> pClient2 = boost::make_shared<SocketClient>(handle2, pSocket->port());
       expect_true(pConnection2->listen());
       expect_true(pClient2->connectToServer());
 
