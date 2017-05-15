@@ -68,6 +68,9 @@ public class RStudioThemes
          parent.getStyle().setHeight(100, Unit.PX);
          parent.getStyle().setOverflow(Overflow.AUTO);
          parent.getStyle().setVisibility(Visibility.HIDDEN);
+         parent.getStyle().setPosition(Position.ABSOLUTE);
+         parent.getStyle().setLeft(-300, Unit.PX);
+         parent.getStyle().setTop(-300, Unit.PX);
    
          Element content = Document.get().createElement("div");
          content.getStyle().setWidth(100, Unit.PX);
