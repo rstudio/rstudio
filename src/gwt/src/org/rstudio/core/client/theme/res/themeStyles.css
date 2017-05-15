@@ -702,6 +702,9 @@ pre {
    top: 2px !important;
    right: 2px !important;
    bottom: 2px !important;
+
+   /* overflow-hidden with border-radius degrates under windows */
+   overflow: visible !important;
 }
 
 .rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame {
@@ -897,8 +900,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .gwt-TabLayoutPanelTab {
    float: left;
 }
-
-@def TABSTRIPHEIGHT 21px;
 
 /** Document tabs **/
 /*
