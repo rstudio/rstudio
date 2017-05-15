@@ -2394,12 +2394,14 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 .rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
-   width: 10px;
-   height: 10px;
 }
 
 .rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
    -webkit-border-radius: 10px;
+}
+
+.rstudio-themes-flat.rstudio-themes-scrollbars .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+   border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track-piece {

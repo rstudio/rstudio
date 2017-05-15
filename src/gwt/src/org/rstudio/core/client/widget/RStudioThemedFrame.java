@@ -76,8 +76,6 @@ public class RStudioThemedFrame extends RStudioFrame
          ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
          ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {\n" +
          "   background: #FFF;\n" +
-         "   width: 10px;\n" +
-         "   height: 10px;\n" +
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
@@ -91,6 +89,10 @@ public class RStudioThemedFrame extends RStudioFrame
          ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-corner,\n" +
          ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {\n" +
          "   background: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
+         "}\n" + 
+         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb{\n" +
+         "   border: solid 3px " + ThemeColors.darkGreyMostInactiveBackground + ";" +
          "}\n";
          
          StyleElement style = document.createStyleElement();
