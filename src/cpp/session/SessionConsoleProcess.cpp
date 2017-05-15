@@ -1420,7 +1420,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
             // to refresh itself; this does rely on the host performing a second
             // resize to the actual available size. Clumsy, but so far this is
             // the best I've come up with.
-            cp->resize(core::system::kDefaultCols / 2, system::kDefaultRows / 2);
+            cp->resize(core::system::kDefaultCols / 2, core::system::kDefaultRows / 2);
          }
       }
       else

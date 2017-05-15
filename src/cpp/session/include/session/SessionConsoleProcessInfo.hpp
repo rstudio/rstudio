@@ -71,7 +71,7 @@ public:
          int terminalSequence,
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
-         core::FilePath cwd,
+         const core::FilePath& cwd,
          int cols, int rows);
 
    // constructor for non-terminals

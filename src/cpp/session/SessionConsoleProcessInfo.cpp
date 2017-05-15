@@ -51,7 +51,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const int terminalSequence,
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
-         core::FilePath cwd,
+         const core::FilePath& cwd,
          int cols, int rows)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(true),
