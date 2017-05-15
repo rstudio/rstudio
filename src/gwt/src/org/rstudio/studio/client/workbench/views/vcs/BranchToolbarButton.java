@@ -114,6 +114,13 @@ public class BranchToolbarButton extends ToolbarButton
       rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
       
+      if (branches.length() == 0)
+      {
+         onBeforePopulateMenu(rootMenu);
+         populateEmptyMenu(rootMenu);
+         return;
+      }
+      
       // separate branches based on remote name
       Map<String, List<String>> branchMap = new LinkedHashMap<String, List<String>>();
       List<String> localBranches = new ArrayList<String>();
@@ -140,6 +147,21 @@ public class BranchToolbarButton extends ToolbarButton
       
       onBeforePopulateMenu(rootMenu);
       populateMenu(rootMenu, branchMap);
+   }
+   
+   private void populateEmptyMenu(final ToolbarPopupMenu menu)
+   {
+      menu.addSeparator(new CustomMenuItemSeparator()
+      {
+         @Override
+         public Widget createMainWidget()
+         {
+            Label label = new Label(NO_BRANCHES_AVAILABLE);
+            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+            return label;
+         }
+      });
    }
    
    private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
@@ -217,6 +239,7 @@ public class BranchToolbarButton extends ToolbarButton
 
    protected final Provider<GitState> pVcsState_;
 
-   private static final String NO_BRANCH = "(No branch)";
+   private static final String NO_BRANCH = "(no branch)";
+   private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
    private static final String LOCAL_BRANCHES = "(local branches)";
 }
