@@ -898,8 +898,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    float: left;
 }
 
-@def TABSTRIPHEIGHT 21px;
-
 /** Document tabs **/
 /*
 @def TABSTRIPHEIGHT 24px;
