@@ -73,21 +73,23 @@ public class RStudioThemedFrame extends RStudioFrame
          if (customStyle == null) customStyle = "";
          
          customStyle += "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar {\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {\n" +
          "   background: #FFF;\n" +
          "   width: 10px;\n" +
          "   height: 10px;\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar-thumb,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar-thumb {\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {\n" +
          "   -webkit-border-radius: 10px;\n" +
          "   background: " + ThemeColors.darkGreyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark::-webkit-scrollbar-track,\n" + 
-         ".rstudio-themes-flat.rstudio-themes-dark ::-webkit-scrollbar-track {\n" + 
+         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-track,\n" + 
+         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track,\n" + 
+         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-corner,\n" +
+         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {\n" +
          "   background: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
          "}\n";
          

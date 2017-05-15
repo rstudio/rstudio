@@ -40,7 +40,7 @@
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external rstudio-themes-background, rstudio-themes-inverts;
+@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars;
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
@@ -2233,8 +2233,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .rstudio-themes-default .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelContent,
-.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-default ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
@@ -2266,8 +2265,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 }
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-default ::-webkit-scrollbar-track { 
+.rstudio-themes-flat .rstudio-themes-default .minimizedWindowObject .center { 
    background: THEME_DEFAULT_MOST_INACTIVE;
 }
 
@@ -2284,7 +2282,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
@@ -2317,7 +2315,8 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-dark-grey ::-webkit-scrollbar-track { 
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track,
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-corner { 
    background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
@@ -2333,8 +2332,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel,
-.rstudio-themes-flat .rstudio-themes-alternate ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel {
    background: THEME_ALTERNATE_BACKGROUND;
 }
 
@@ -2366,8 +2364,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center,
-.rstudio-themes-flat .rstudio-themes-alternate ::-webkit-scrollbar-track {  
+.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center {  
    background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 
@@ -2395,17 +2392,23 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 /* RSTUDIO THEMES END */
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar {
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
+   width: 10px;
+   height: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-track-piece {
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track-piece {
 }
 
-.rstudio-themes-flat .rstudio-themes-dark ::-webkit-scrollbar-track {
+.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track {
 }  
 
+@external com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner;
+.rstudio-themes-flat.rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+   display: none;
+}
