@@ -15,10 +15,15 @@
 
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 
 public class RStudioThemes
 {
@@ -31,11 +36,17 @@ public class RStudioThemes
       element.removeClassName("rstudio-themes-default");
       element.removeClassName("rstudio-themes-dark-grey");
       element.removeClassName("rstudio-themes-alternate");
+      element.removeClassName("rstudio-themes-scrollbars");
       
-      if (themeName == "default" ||themeName == "dark-grey" || themeName == "alternate") {         
+      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
          document.getBody().addClassName("rstudio-themes-flat");
+         
          if (themeName.contains("dark")) {
             element.addClassName("rstudio-themes-dark");
+            
+            if (usesScrollbars()) {
+               document.getBody().addClassName("rstudio-themes-scrollbars");
+            }
          }
          element.addClassName("rstudio-themes-" + themeName);
       }
@@ -44,4 +55,38 @@ public class RStudioThemes
    public static boolean isFlat(UIPrefs prefs) {
       return prefs.getFlatTheme().getValue() != "classic"; 
    }
+   
+   private static boolean usesScrollbars() {
+      if (usesScrollbars_ != null) return usesScrollbars_;
+      
+      if (!BrowseCap.isMacintosh()) {
+         usesScrollbars_ = true;
+      }
+      else {
+         Element parent = Document.get().createElement("div");
+         parent.getStyle().setWidth(100, Unit.PX);
+         parent.getStyle().setHeight(100, Unit.PX);
+         parent.getStyle().setOverflow(Overflow.AUTO);
+         parent.getStyle().setVisibility(Visibility.HIDDEN);
+         parent.getStyle().setPosition(Position.FIXED);
+         parent.getStyle().setLeft(-300, Unit.PX);
+         parent.getStyle().setTop(-300, Unit.PX);
+   
+         Element content = Document.get().createElement("div");
+         content.getStyle().setWidth(100, Unit.PX);
+         content.getStyle().setHeight(200, Unit.PX);
+   
+         parent.appendChild(content);
+         Document.get().getBody().appendChild(parent);
+   
+         boolean hasScrollbars = parent.getOffsetWidth() - parent.getClientWidth() > 0;
+         parent.removeFromParent();
+         
+         usesScrollbars_ = hasScrollbars;
+      }
+      
+      return usesScrollbars_;
+   }
+   
+   private static Boolean usesScrollbars_ = null;
 }
