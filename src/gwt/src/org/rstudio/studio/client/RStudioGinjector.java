@@ -118,6 +118,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
@@ -235,6 +236,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TerminalInfoDialog infoDialog);
    void injectMembers(AceEditorMixins mixins);
    void injectMembers(RStudioThemedFrame frame);
+   void injectMembers(AceBackgroundHighlighter highlighter);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
