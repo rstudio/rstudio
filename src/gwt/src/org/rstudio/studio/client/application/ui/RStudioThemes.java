@@ -57,24 +57,33 @@ public class RStudioThemes
    }
    
    private static boolean usesScrollbars() {
-      if (!BrowseCap.isMacintosh()) return true;
+      if (usesScrollbars_ != null) return usesScrollbars_;
       
-      Element parent = Document.get().createElement("div");
-      parent.getStyle().setWidth(100, Unit.PX);
-      parent.getStyle().setHeight(100, Unit.PX);
-      parent.getStyle().setOverflow(Overflow.AUTO);
-      parent.getStyle().setVisibility(Visibility.HIDDEN);
-
-      Element content = Document.get().createElement("div");
-      content.getStyle().setWidth(100, Unit.PX);
-      content.getStyle().setHeight(200, Unit.PX);
-
-      parent.appendChild(content);
-      Document.get().getBody().appendChild(parent);
-
-      boolean hasScrollbars = parent.getOffsetWidth() - parent.getClientWidth() > 0;
-      //parent.removeFromParent();
+      if (!BrowseCap.isMacintosh()) {
+         usesScrollbars_ = true;
+      }
+      else {
+         Element parent = Document.get().createElement("div");
+         parent.getStyle().setWidth(100, Unit.PX);
+         parent.getStyle().setHeight(100, Unit.PX);
+         parent.getStyle().setOverflow(Overflow.AUTO);
+         parent.getStyle().setVisibility(Visibility.HIDDEN);
+   
+         Element content = Document.get().createElement("div");
+         content.getStyle().setWidth(100, Unit.PX);
+         content.getStyle().setHeight(200, Unit.PX);
+   
+         parent.appendChild(content);
+         Document.get().getBody().appendChild(parent);
+   
+         boolean hasScrollbars = parent.getOffsetWidth() - parent.getClientWidth() > 0;
+         parent.removeFromParent();
+         
+         usesScrollbars_ = hasScrollbars;
+      }
       
-      return hasScrollbars;
+      return usesScrollbars_;
    }
+   
+   private static Boolean usesScrollbars_ = null;
 }
