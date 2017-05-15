@@ -301,6 +301,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showInlineToolbarForRCodeChunks().setGlobalValue(
                newUiPrefs.showInlineToolbarForRCodeChunks().getGlobalValue());
          
+         // background highlighting
+         highlightCodeChunks().setGlobalValue(
+               newUiPrefs.highlightCodeChunks().getGlobalValue());
+         
          // save all before build
          saveAllBeforeBuild().setGlobalValue(
                              newUiPrefs.saveAllBeforeBuild().getGlobalValue());

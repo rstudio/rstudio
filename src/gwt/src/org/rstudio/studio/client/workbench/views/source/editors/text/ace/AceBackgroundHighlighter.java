@@ -25,13 +25,18 @@ import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class AceBackgroundHighlighter
       implements EditorModeChangedEvent.Handler,
@@ -66,6 +71,9 @@ public class AceBackgroundHighlighter
       
       private void work()
       {
+         if (!enabled_)
+            return;
+         
          // determine range to update
          int n = editor_.getRowCount();
          int startRow = row_;
@@ -157,6 +165,8 @@ public class AceBackgroundHighlighter
    
    public AceBackgroundHighlighter(AceEditor editor)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       editor_ = editor;
       session_ = editor.getSession();
       
@@ -172,8 +182,34 @@ public class AceBackgroundHighlighter
       markerIds_ = JavaScriptObject.createArray(n).cast();
       worker_ = new Worker();
       
+      enabled_ = prefs_.highlightCodeChunks().getGlobalValue();
+      prefs_.highlightCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            boolean value = event.getValue();
+            if (value)
+            {
+               enabled_ = true;
+               synchronizeFrom(0);
+            }
+            else
+            {
+               enabled_ = false;
+               clearMarkers();
+            }
+         }
+      });
+      
       activeModeId_ = editor.getSession().getMode().getId();
       refreshHighlighters();
+   }
+   
+   @Inject
+   private void initialize(UIPrefs prefs)
+   {
+      prefs_ = prefs;
    }
    
    // Handlers ----
@@ -315,6 +351,9 @@ public class AceBackgroundHighlighter
    
    private void synchronizeFrom(int startRow)
    {
+      if (!enabled_)
+         return;
+      
       // if this row has no state, then we need to look
       // back until we find a row with cached state
       while (startRow > 0 && !rowStates_.isSet(startRow - 1))
@@ -405,6 +444,7 @@ public class AceBackgroundHighlighter
    private final EditSession session_;
    private HighlightPattern activeHighlightPattern_;
    private String activeModeId_;
+   private boolean enabled_;
    private final List<HighlightPattern> highlightPatterns_;
    private final HandlerRegistrations handlers_;
    
@@ -417,6 +457,11 @@ public class AceBackgroundHighlighter
    private static final String MARKER_CLASS = "ace_foreign_line background_highlight";
    private static final String MARKER_TYPE = "fullLine";
    private static final Map<String, List<HighlightPattern>> HIGHLIGHT_PATTERN_REGISTRY;
+   
+   // Injected ----
+   private UIPrefs prefs_;
+   
+   // Static Members ----
    
    static {
       HIGHLIGHT_PATTERN_REGISTRY = new HashMap<String, List<HighlightPattern>>();
