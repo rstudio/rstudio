@@ -39,6 +39,8 @@ namespace system {
 
 extern const char* const kSmartTerm;
 extern const char* const kDumbTerm;
+extern const int kDefaultCols;
+extern const int kDefaultRows;
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -84,16 +86,16 @@ struct ProcessOptions
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
-        cols(80),
-        rows(25),
+        cols(kDefaultCols),
+        rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
         detachSession(false),
-        cols(80),
-        rows(25),
+        cols(kDefaultCols),
+        rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false)
 #endif

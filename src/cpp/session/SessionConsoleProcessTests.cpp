@@ -28,11 +28,13 @@ using namespace console_process;
 context("queue and fetch input")
 {
    core::system::ProcessOptions procOptions;
+   core::FilePath cwd("/usr/local");
 
    boost::shared_ptr<ConsoleProcessInfo> pCPI =
          boost::make_shared<ConsoleProcessInfo>(
             "test caption", "test title", "fakehandle", 9999 /*terminal*/,
-            TerminalShell::DefaultShell, console_process::Rpc, "");
+            TerminalShell::DefaultShell, false /*altBuffer*/, cwd,
+            core::system::kDefaultCols, core::system::kDefaultRows);
 
    boost::shared_ptr<ConsoleProcess> pCP =
          ConsoleProcess::createTerminalProcess(procOptions, pCPI, false /*enableWebsockets*/);
