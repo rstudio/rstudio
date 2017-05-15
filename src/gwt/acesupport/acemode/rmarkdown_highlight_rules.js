@@ -172,6 +172,10 @@ var RMarkdownHighlightRules = function() {
       token: ["string"],
       regex: makeDateRegex()
    });
+
+   this.$rules["yaml-start"].push({
+      defaultToken: "text.nospell"
+   });
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
