@@ -36,12 +36,14 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    @Inject
    public RemoteFileSystemContext(FilesServerOperations server,
                                   FileTypeRegistry fileTypeRegistry,
-                                  GlobalDisplay globalDisplay)
+                                  GlobalDisplay globalDisplay,
+                                  Session session)
    {
       super();
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       globalDisplay_ = globalDisplay;
+      session_ = session;
    }
 
    public MessageDisplay messageDisplay()
@@ -50,6 +52,28 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    }
 
    public void cd(String relativeOrAbsolutePath)
+   {
+      // form the fallback path
+      String fallbackPath;
+      FileSystemItem projectDir = 
+            session_.getSessionInfo().getActiveProjectDir();
+      if (projectDir == null)
+         fallbackPath = session_.getSessionInfo().getDefaultWorkingDir();
+      else
+         fallbackPath = projectDir.getPath();
+      
+      cd(relativeOrAbsolutePath, fallbackPath);
+   }
+
+   /**
+    * Moves into the given directory (relative or absolute) and lists
+    * the files in that directory.
+    * 
+    * @param relativeOrAbsolutePath Path to attempt to enter
+    * @param fallbackPath Fallback path to attempt if first path cannot be
+    *    entered
+    */
+   public void cd(String relativeOrAbsolutePath, final String fallbackPath)
    {
       final String newPath = combine(workingDir_, relativeOrAbsolutePath);
 
@@ -66,7 +90,12 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onError(ServerError error)
                {
-                  if (callbacks_ != null)
+                  if (fallbackPath != null)
+                  {
+                     // try fallback if supplied
+                     cd(fallbackPath, null);
+                  }
+                  else if (callbacks_ != null)
                      callbacks_.onError(error.getUserMessage());
                }
 
@@ -85,7 +114,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                }
             });
    }
-
+   
    public void refresh()
    {
       cd(workingDir_);
@@ -134,4 +163,5 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    private final FilesServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
 }
