@@ -1517,10 +1517,6 @@ body.ubuntu_mono .searchBox {
    background-size: 32px 15px;
 }
 
-.rstudio-themes-flat td.environmentHierarchicalCol {
-   background: none;
-}
-
 @sprite td.environmentDataFrameCol {
    width: 32px;
    height: 15px;
@@ -1539,10 +1535,6 @@ body.ubuntu_mono .searchBox {
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
-}
-
-.rstudio-themes-flat td.environmentFunctionCol {
-   background: none;
 }
 
 .odd {
