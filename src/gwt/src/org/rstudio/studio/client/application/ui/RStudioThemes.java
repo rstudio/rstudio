@@ -45,7 +45,7 @@ public class RStudioThemes
             element.addClassName("rstudio-themes-dark");
             
             if (usesScrollbars()) {
-               document.getBody().addClassName("rstudio-themes-scrollbars");
+               element.addClassName("rstudio-themes-scrollbars");
             }
          }
          element.addClassName("rstudio-themes-" + themeName);
