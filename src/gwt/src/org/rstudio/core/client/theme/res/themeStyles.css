@@ -1965,6 +1965,7 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.docTabIcon {
    padding-top: 1px;
+   max-height: 16px;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter div.docTabLabel {
