@@ -99,7 +99,6 @@ public class TerminalPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       terminalSessionsPanel_ = new DeckLayoutPanel();
-      terminalSessionsPanel_.setStyleName(ConsoleResources.INSTANCE.consoleStyles().console());
       terminalSessionsPanel_.getElement().addClassName("ace_editor");
       return terminalSessionsPanel_;
    }
