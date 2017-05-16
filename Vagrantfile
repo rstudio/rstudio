@@ -111,10 +111,23 @@ Vagrant.configure(2) do |config|
     config.vm.synced_folder ".", "/home/vagrant/rstudio"
   end
 
-  # define CentOS development box -- similar to primary box, but currently only
-  # operates in standalone mode
-  config.vm.define "centos", autostart: false do |c|
-    c.vm.box = "puphpet/centos65-x64"
+  # define CentOS development boxes -- similar to primary box, but each
+  # currently only operate in standalone mode
+  config.vm.define "centos6", autostart: false do |c|
+    c.vm.box = "centos/6"
+    c.vm.network "forwarded_port", guest: 8787, host: 8787, auto_correct: true
+    c.vm.provision :shell, path: "vagrant/bootstrap-centos.sh", args: 8787
+    c.vm.provision :shell, path: "vagrant/provision-primary.sh"
+    c.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
+
+    config.vm.synced_folder ".", "/rstudio"
+    config.vm.synced_folder ".", "/home/vagrant/rstudio"
+  end
+  config.vm.define "centos7", autostart: false do |c|
+    c.vm.box = "centos/7"
     c.vm.network "forwarded_port", guest: 8787, host: 8787, auto_correct: true
     c.vm.provision :shell, path: "vagrant/bootstrap-centos.sh", args: 8787
     c.vm.provision :shell, path: "vagrant/provision-primary.sh"
