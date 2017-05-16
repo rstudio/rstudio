@@ -222,6 +222,7 @@ public class TerminalSession extends XTermWidget
       consoleProcess_ = null;
       connected_ = false;
       connecting_ = false;
+      restartSequenceWritten_ = false;
    }
 
    @Override
@@ -425,7 +426,10 @@ public class TerminalSession extends XTermWidget
       
       // talk directly to the server so it will wake up if suspended and
       // clear its buffer cache
-      server_.processEraseBuffer(getHandle(), new SimpleRequestCallback<Void>("Clearing Buffer"));
+      server_.processEraseBuffer(
+            getHandle(), 
+            false /*lastLineOnly*/,
+            new SimpleRequestCallback<Void>("Clearing Buffer"));
    }
 
    /**
@@ -672,6 +676,10 @@ public class TerminalSession extends XTermWidget
                      {
                         fetchNextChunk(chunk.getChunkNumber() + 1);
                      }
+                     else
+                     {
+                        writeRestartSequence();
+                     }
                   }
 
                   @Override
@@ -685,6 +693,34 @@ public class TerminalSession extends XTermWidget
       });
    }
 
+   /**
+    * Write to terminal after a terminal has restarted (on the server). We
+    * use this to cleanup the current line, as a new prompt is typically
+    * output by the server upon reconnect.
+    */
+   public void writeRestartSequence()
+   {
+      if (consoleProcess_ != null && 
+            consoleProcess_.getProcessInfo().getRestarted() &&
+            !restartSequenceWritten_)
+      {
+         // Move cursor to first column and clear to end-of-line
+         final String sequence = AnsiCode.CSI + AnsiCode.CHA + AnsiCode.CSI + AnsiCode.EL;
+
+         // immediately clear line locally
+         write(sequence);
+         
+         // ask server to delete last line of saved buffer to prevent
+         // accumulation of prompts
+         server_.processEraseBuffer(
+               getHandle(), 
+               true /*lastLineOnly*/,
+               new SimpleRequestCallback<Void>("Clearing Final Line of Buffer"));
+
+         restartSequenceWritten_ = true;
+      }
+   }
+   
    /**
     * Set if connecting to a new terminal session.
     * @param isNew true if a new connection, false if a reconnect
@@ -706,6 +742,7 @@ public class TerminalSession extends XTermWidget
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
+   private boolean restartSequenceWritten_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;

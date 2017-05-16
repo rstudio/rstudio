@@ -32,10 +32,6 @@
 #include "session-config.h"
 #include "modules/SessionWorkbench.hpp"
 
-#ifdef RSTUDIO_SERVER
-#include <core/system/Crypto.hpp>
-#endif
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -281,6 +277,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    builder.add("rows", proc->getRows());
    builder.add("pid", static_cast<int>(proc->getPid()));
    builder.add("full_screen", proc->getAltBufferActive());
+   builder.add("restarted", proc->getWasRestarted());
 
    return r::sexp::create(builder, &protect);
 }
@@ -846,9 +843,9 @@ void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
    }
 }
 
-void ConsoleProcess::deleteLogFile() const
+void ConsoleProcess::deleteLogFile(bool lastLineOnly) const
 {
-   procInfo_->deleteLogFile();
+   procInfo_->deleteLogFile(lastLineOnly);
 }
 
 std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable) const
@@ -1224,9 +1221,11 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string handle;
+   bool lastLineOnly;
 
    Error error = json::readParams(request.params,
-                                  &handle);
+                                  &handle,
+                                  &lastLineOnly);
    if (error)
       return error;
 
@@ -1238,7 +1237,7 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 
-   proc->deleteLogFile();
+   proc->deleteLogFile(lastLineOnly);
    return Success();
 }
 
@@ -1381,6 +1380,8 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       bool enableWebsockets)
 {
    boost::shared_ptr<ConsoleProcess> cp;
+   procInfo->setRestarted(true); // only flip to false if we find an existing
+                                 // process for this terminal handle
 
    // Use websocket as preferred communication channel; it can fail
    // here if unable to establish the server-side of things, in which case
@@ -1415,6 +1416,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       if (proc != NULL && proc->isStarted())
       {
          cp = proc;
+         cp->procInfo_->setRestarted(false);
 
          if (proc->procInfo_->getAltBufferActive())
          {
@@ -1507,122 +1509,6 @@ void ConsoleProcess::onConnectionClosed()
 // websocket connection opened; called on different thread
 void ConsoleProcess::onConnectionOpened()
 {
-}
-
-void PasswordManager::attach(
-                  boost::shared_ptr<console_process::ConsoleProcess> pCP,
-                  bool showRememberOption)
-{
-   pCP->setPromptHandler(boost::bind(&PasswordManager::handlePrompt,
-                                       this,
-                                       pCP->handle(),
-                                       _1,
-                                       showRememberOption,
-                                       _2));
-
-   pCP->onExit().connect(boost::bind(&PasswordManager::onExit,
-                                       this,
-                                       pCP->handle(),
-                                       _1));
-}
-
-bool PasswordManager::handlePrompt(const std::string& cpHandle,
-                                   const std::string& prompt,
-                                   bool showRememberOption,
-                                   ConsoleProcess::Input* pInput)
-{
-   // is this a password prompt?
-   boost::smatch match;
-   if (regex_utils::match(prompt, match, promptPattern_))
-   {
-      // see if it matches any of our existing cached passwords
-      std::vector<CachedPassword>::const_iterator it =
-                  std::find_if(passwords_.begin(),
-                               passwords_.end(),
-                               boost::bind(&hasPrompt, _1, prompt));
-      if (it != passwords_.end())
-      {
-         // cached password
-         *pInput = ConsoleProcess::Input(it->password + "\n", false);
-      }
-      else
-      {
-         // prompt for password
-         std::string password;
-         bool remember;
-         if (promptHandler_(prompt, showRememberOption, &password, &remember))
-         {
-
-            // cache the password (but also set the remember flag so it
-            // will be removed from the cache when the console process
-            // exits if the user chose not to remember).
-            CachedPassword cachedPassword;
-            cachedPassword.cpHandle = cpHandle;
-            cachedPassword.prompt = prompt;
-            cachedPassword.password = password;
-            cachedPassword.remember = remember;
-            passwords_.push_back(cachedPassword);
-
-            // interactively entered password
-            *pInput = ConsoleProcess::Input(password + "\n", false);
-         }
-         else
-         {
-            // user cancelled
-            *pInput = ConsoleProcess::Input();
-         }
-      }
-
-      return true;
-   }
-   // not a password prompt so ignore
-   else
-   {
-      return false;
-   }
-}
-
-void PasswordManager::onExit(const std::string& cpHandle,
-                             int exitCode)
-{
-   // if a process exits with an error then remove any cached
-   // passwords which originated from that process
-   if (exitCode != EXIT_SUCCESS)
-   {
-      passwords_.erase(std::remove_if(passwords_.begin(),
-                                      passwords_.end(),
-                                      boost::bind(&hasHandle, _1, cpHandle)),
-                       passwords_.end());
-   }
-
-   // otherwise remove any cached password for this process which doesn't
-   // have its remember flag set
-   else
-   {
-      passwords_.erase(std::remove_if(passwords_.begin(),
-                                      passwords_.end(),
-                                      boost::bind(&forgetOnExit, _1, cpHandle)),
-                       passwords_.end());
-   }
-}
-
-
-bool PasswordManager::hasPrompt(const CachedPassword& cachedPassword,
-                                const std::string& prompt)
-{
-   return cachedPassword.prompt == prompt;
-}
-
-bool PasswordManager::hasHandle(const CachedPassword& cachedPassword,
-                                const std::string& cpHandle)
-{
-   return cachedPassword.cpHandle == cpHandle;
-}
-
-bool PasswordManager::forgetOnExit(const CachedPassword& cachedPassword,
-                                   const std::string& cpHandle)
-{
-   return hasHandle(cachedPassword, cpHandle) && !cachedPassword.remember;
 }
 
 core::json::Array processesAsJson()

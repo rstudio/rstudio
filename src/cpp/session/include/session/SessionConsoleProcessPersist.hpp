@@ -49,7 +49,7 @@ int getSavedBufferLineCount(const std::string& handle, int maxLines);
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer);
 
 // Delete the persisted saved buffer for the given ConsoleProcess
-void deleteLogFile(const std::string& handle);
+void deleteLogFile(const std::string& handle, bool lastLineOnly = false);
 
 // Clean up ConsoleProcess buffer cache
 // Takes a function to see if a given handle represents a known process.

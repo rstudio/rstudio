@@ -684,10 +684,12 @@ public class RemoteServer implements Server
 
    @Override
    public void processEraseBuffer(String handle,
+                                  boolean lastLineOnly,
                                   ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
+      params.set(1, JSONBoolean.getInstance(lastLineOnly));
       sendRequest(RPC_SCOPE, PROCESS_ERASE_BUFFER, params, requestCallback);   
    }
 

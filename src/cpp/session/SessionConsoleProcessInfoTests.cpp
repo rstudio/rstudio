@@ -44,6 +44,7 @@ const core::FilePath cwd("/usr/local");
 const core::FilePath altCwd("/usr/stuff");
 const int cols = core::system::kDefaultCols;
 const int rows = core::system::kDefaultRows;
+const bool restarted = false;
 
 const size_t maxLines = kDefaultTerminalMaxOutputLines;
 
@@ -71,7 +72,8 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getAltBufferActive() == second.getAltBufferActive() &&
            first.getCwd() == second.getCwd() &&
            first.getCols() == second.getCols() &&
-           first.getRows() == second.getRows());
+           first.getRows() == second.getRows() &&
+           first.getRestarted() == second.getRestarted());
 }
 
 } // anonymous namespace
@@ -102,6 +104,10 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(cpi.getCwd() == cwd);
       CHECK(cpi.getCols() == cols);
       CHECK(cpi.getRows() == rows);
+
+      CHECK_FALSE(cpi.getRestarted());
+      cpi.setRestarted(true);
+      CHECK(cpi.getRestarted());
    }
 
    SECTION("Generate a handle")

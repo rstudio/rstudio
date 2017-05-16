@@ -106,6 +106,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.rows;
    }-*/;
 
+   public final native boolean getRestarted() /*-{
+      return this.restarted;
+   }-*/;
+ 
    public static final int SEQUENCE_NO_TERMINAL = 0;
    
    public final native boolean isTerminal() /*-{

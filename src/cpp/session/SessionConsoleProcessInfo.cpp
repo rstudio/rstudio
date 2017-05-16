@@ -38,7 +38,8 @@ ConsoleProcessInfo::ConsoleProcessInfo()
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows)
+     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
+     restarted_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -59,7 +60,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      interactionMode_(InteractionAlways), maxOutputLines_(kDefaultTerminalMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(altBufferActive), shellType_(shellType),
-     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows)
+     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false)
 {
 }
 
@@ -71,7 +72,8 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows)
+     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
+     restarted_(false)
 {
 }
 
@@ -169,9 +171,9 @@ std::string ConsoleProcessInfo::bufferedOutput() const
    return result;
 }
 
-void ConsoleProcessInfo::deleteLogFile() const
+void ConsoleProcessInfo::deleteLogFile(bool lastLineOnly) const
 {
-   console_persist::deleteLogFile(handle_);
+   console_persist::deleteLogFile(handle_, lastLineOnly);
 }
 
 core::json::Object ConsoleProcessInfo::toJson() const
@@ -200,6 +202,7 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["cwd"] = module_context::createAliasedPath(cwd_);
    result["cols"] = cols_;
    result["rows"] = rows_;
+   result["restarted"] = restarted_;
 
    return result;
 }
@@ -255,6 +258,8 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
 
    pProc->cols_ = obj["cols"].get_int();
    pProc->rows_ = obj["rows"].get_int();
+
+   pProc->restarted_ = obj["restarted"].get_bool();
 
    return pProc;
 }

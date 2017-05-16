@@ -121,7 +121,7 @@ public:
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
    std::string getFullSavedBuffer() const;
    int getBufferLineCount() const;
-   void deleteLogFile() const;
+   void deleteLogFile(bool lastLineOnly = false) const;
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
@@ -163,6 +163,10 @@ public:
    int getCols() const { return cols_; }
    int getRows() const { return rows_; }
 
+   // Was terminal session restarted?
+   void setRestarted(bool restarted) { restarted_ = restarted; }
+   bool getRestarted() const { return restarted_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -189,6 +193,7 @@ private:
    core::FilePath cwd_;
    int cols_;
    int rows_;
+   bool restarted_;
 };
 
 } // namespace console_process

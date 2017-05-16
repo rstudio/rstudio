@@ -184,7 +184,7 @@ void appendToOutputBuffer(const std::string& handle, const std::string& buffer)
    }
 }
 
-void deleteLogFile(const std::string &handle)
+void deleteLogFile(const std::string &handle, bool lastLineOnly)
 {
    FilePath log;
    Error error = getLogFilePath(handle, &log);
@@ -193,11 +193,44 @@ void deleteLogFile(const std::string &handle)
       LOG_ERROR(error);
       return;
    }
-   error = log.removeIfExists();
-   if (error)
+
+   if (!lastLineOnly)
    {
-      LOG_ERROR(error);
-      return;
+      // blow away the file
+      error = log.removeIfExists();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+   else
+   {
+      // read the file, remove last line and rewrite buffer
+      std::string content;
+      error = core::readStringFromFile(log, &content);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      size_t lastNewline = content.find_last_of('\n');
+
+      // no complete line in buffer, just blow it away
+      if (lastNewline == std::string::npos)
+      {
+         deleteLogFile(handle, false);
+         return;
+      }
+
+      // erase everything after the final newline
+      content.erase(++lastNewline);
+      error = core::writeStringToFile(log, content);
+      if (error)
+      {
+          LOG_ERROR(error);
+      }
    }
 }
 
