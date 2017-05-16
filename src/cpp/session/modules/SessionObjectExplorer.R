@@ -304,7 +304,7 @@
       (is.recursive(object) && !is.primitive(object) && n > 0) ||
       
       # is this an S4 object with one or more slots?
-      (s4 && length(slotNames(object)) > 0) ||
+      (s4 && length(methods::slotNames(object)) > 0) ||
       
       # is this a named atomic vector?
       (is.atomic(object) && !is.null(names(object)) && n > 0) ||
@@ -650,10 +650,13 @@
    if (isS4(object))
    {
       package <- attr(class, "package")
-      desc <- if (is.null(package))
-         class
-      else
+      is_pkg_relevant <-
+         !is.null(package) &&
+         !identical(package, ".GlobalEnv")
+      desc <- if (is_pkg_relevant)
          paste(package, class, sep = "::")
+      else
+         class
    }
    else if (inherits(object, "R6"))
    {

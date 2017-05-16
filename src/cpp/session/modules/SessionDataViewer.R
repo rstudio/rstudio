@@ -595,11 +595,12 @@
    
    # if this is a (non-data.frame) list or environment,
    # delegate to object explorer
-   isListLike <-
+   isExplorable <-
+      isS4(x) ||
       (is.list(x) && !is.data.frame(x)) ||
       is.environment(x)
    
-   if (isListLike)
+   if (isExplorable)
    {
       view <- .rs.explorer.viewObject(x,
                                       title = title,

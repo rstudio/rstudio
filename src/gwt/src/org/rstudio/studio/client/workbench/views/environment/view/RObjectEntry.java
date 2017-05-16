@@ -142,7 +142,8 @@ public class RObjectEntry
       
       HIERARCHICAL_CLASSES.addAll(ListUtil.create(
             "list",
-            "environment"
+            "environment",
+            "S4"
       ));
       
    }

@@ -43,14 +43,18 @@ std::string iconData(const std::string& iconGroup,
 {
    if (iconPath.empty())
    {
+      // convert the icon name into the format of our shipped icons, which is
+      // all lowercase with no whitespace (e.g. "SQL Server" => "sqlserver.png")
+      std::string iconFilename(string_utils::toLower(iconName));
+      iconFilename = boost::regex_replace(iconFilename,
+            boost::regex("\\s"), "") + ".png";
+
       // the package did not supply an icon; see if there's one baked in
       FilePath path = options().rResourcesPath().childPath("connections")
          .childPath(iconGroup)
-         .childPath(string_utils::toLower(iconName) + ".png");
+         .childPath(iconFilename);
       if (path.exists())
-         return std::string("connections/") + iconGroup + "/" + 
-            string_utils::toLower(iconName) +
-            ".png";
+         return std::string("connections/") + iconGroup + "/" + iconFilename;
 
       // didn't find anything
       return std::string();

@@ -72,6 +72,7 @@ public class RWebContentFileType extends TextFileType
       result.add(commands.jumpToMatching());
       result.add(commands.goToHelp());
       result.add(commands.goToFunctionDefinition());
+      result.add(commands.insertRoxygenSkeleton());
       return result;
    }
 

@@ -172,8 +172,8 @@ void FileLock::log(const std::string& message)
    
    if (s_logFile.empty())
    {
-      // if we were constructed without a path, log to stderr
-      std::cerr << message;
+      // if we were constructed without a path, log to system logs
+      LOG_WARNING_MESSAGE(message);
    }
    else
    {
