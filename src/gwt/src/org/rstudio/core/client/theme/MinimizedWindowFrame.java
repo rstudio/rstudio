@@ -87,8 +87,7 @@ public class MinimizedWindowFrame
          inner.setCellWidth(extraWidget, "100%");
       }
 
-      HTML minimize = createDiv(themeStyles.minimize() + " " +
-                                ThemeStyles.INSTANCE.handCursor());
+      HTML minimize = createDiv(themeStyles.minimize());
       minimize.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -100,8 +99,7 @@ public class MinimizedWindowFrame
       });
       inner.add(minimize);
 
-      HTML maximize = createDiv(themeStyles.maximize() + " " + 
-                                themeStyles.handCursor());
+      HTML maximize = createDiv(themeStyles.maximize());
       maximize.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

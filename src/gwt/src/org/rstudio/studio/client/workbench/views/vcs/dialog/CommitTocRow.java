@@ -39,9 +39,7 @@ public class CommitTocRow extends Composite implements HasClickHandlers
       icon_ = new Image(
             RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFilename(
                                                                      filename));
-      icon_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       anchor_ = new Anchor(filename);
-      anchor_.addStyleName(ThemeStyles.INSTANCE.handCursor());
 
       initWidget(binder_.createAndBindUi(this));
    }

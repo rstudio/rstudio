@@ -33,7 +33,6 @@ public class HyperlinkLabel extends Label
       super(caption); 
       clickHandler_ = clickHandler ;
       this.setStyleName("rstudio-HyperlinkLabel");
-      this.addStyleName(ThemeStyles.INSTANCE.handCursor());
    }
    
    public HyperlinkLabel(String caption)

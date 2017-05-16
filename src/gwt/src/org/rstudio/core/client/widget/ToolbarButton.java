@@ -245,7 +245,6 @@ public class ToolbarButton extends FocusWidget
       setElement(binder.createAndBindUi(this));
 
       this.setStylePrimaryName(styles_.toolbarButton());
-      this.addStyleName(styles_.handCursor());
 
       setText(text);
       setInfoText(null);

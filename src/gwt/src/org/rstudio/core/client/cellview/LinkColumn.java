@@ -59,7 +59,6 @@ public abstract class LinkColumn<T> extends Column<T, String>
               StringBuilder div = new StringBuilder();
               div.append("<div class=\"");
               div.append(styles.link() + " ");
-              div.append(ThemeResources.INSTANCE.themeStyles().handCursor());
               if (alwaysUnderline)
                  div.append(" " + styles.linkUnderlined());
               div.append("\" title=\"" + value.asString() + "\">");

@@ -72,7 +72,6 @@ public class WarningBar extends Composite
    public WarningBar()
    {
       initWidget(binder.createAndBindUi(this));
-      dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       dismiss_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

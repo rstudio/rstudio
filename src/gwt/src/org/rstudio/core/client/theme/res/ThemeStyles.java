@@ -169,8 +169,6 @@ public interface ThemeStyles extends CssResource
    
    String dialogTabPanel();
    
-   String handCursor();
-   
    String borderedIFrame();
    
    String toolbarInfoLabel();

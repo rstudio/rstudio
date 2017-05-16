@@ -181,7 +181,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                String imageStyle = style_.expandIcon();
                if (object.canExpand())
                {
-                  imageStyle = imageStyle + " " + ThemeStyles.INSTANCE.handCursor();
                   ImageResource expandImage = 
                       object.isExpanding ? 
                          CoreResources.INSTANCE.progress() :
@@ -286,7 +285,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       private void buildExpandColumn(RObjectEntry rowValue, TableRowBuilder row)
       {
          TableCellBuilder expandCol = row.startTD();
-         expandCol.className(style_.expandCol() + " " + ThemeStyles.INSTANCE.handCursor());
+         expandCol.className(style_.expandCol());
          renderCell(expandCol, createContext(0), objectExpandColumn_, rowValue);
          expandCol.endTD();
       }
@@ -302,8 +301,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          
          if (isClickable)
          {
-            styleName += (" " + style_.clickableCol() + " " +
-                          ThemeStyles.INSTANCE.handCursor());
+            styleName += (" " + style_.clickableCol());
             
          }
          String size = rowValue.rObject.getSize() > 0 ?
@@ -344,8 +342,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          {
             descriptionStyle += (" " +
                                  style_.decoratedValueCol() + " " +
-                                 style_.clickableCol() + " " + 
-                                 ThemeStyles.INSTANCE.handCursor());
+                                 style_.clickableCol());
          }
          
          if (rowValue.getCategory() == RObjectEntry.Categories.Data)
