@@ -46,6 +46,6 @@ public class ThemeColors
    public static String darkControlBackground                      = "rgb(108,121,131)";
    public static String darkControlBorder                          = "rgb(45,60,75)";
 
-   public static String darkRowSelected                            = "rgba(255, 255, 255, 0.10)";
+   public static String darkRowSelected                            = "rgba(255, 255, 255, 0.15)";
    public static String darkRowFocused                             = "rgba(255, 255, 255, 0.20)";
 }
