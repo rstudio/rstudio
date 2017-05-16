@@ -1,6 +1,9 @@
 @external rstudio-themes-flat;
 @external editor_dark;
 
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
+
 .iconCell {
    vertical-align: top;
    width: 34px;
@@ -35,7 +38,7 @@
 }
 
 .rstudio-themes-flat.editor_dark  .selectedRow {
-   background-color: rgba(255, 255, 255, 0.10);
+   background-color: THEME_DARK_ROW_SELECTED;
 }
 
 *:focus .selectedRow {
@@ -43,7 +46,7 @@
 }
 
 .rstudio-themes-flat.editor_dark *:focus .selectedRow {
-   background-color: rgba(255, 255, 255, 0.20);
+   background-color: THEME_DARK_ROW_FOCUSED;
 }
 
 @if user.agent ie8 {
