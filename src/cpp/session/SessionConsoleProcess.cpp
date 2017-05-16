@@ -1427,6 +1427,11 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       else
       {
          // Create new process with previously used handle
+
+         // previous terminal session might have been killed while a full-screen
+         // program was running
+         procInfo->setAltBufferActive(false);
+
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
          s_procs[cp->handle()] = cp;
