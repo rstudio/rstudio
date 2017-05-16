@@ -2198,7 +2198,8 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts img {
+.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts img,
+.rstudio-themes-flat .rstudio-themes-dark img.rstudio-themes-inverts {
    -webkit-filter: invert(100%);
       -moz-filter: invert(100%);
        -ms-filter: invert(100%);
