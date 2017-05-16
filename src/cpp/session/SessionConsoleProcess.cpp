@@ -430,8 +430,8 @@ SEXP rs_activateTerminal(SEXP idSEXP, SEXP showSEXP)
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       TerminalShell::TerminalShellType shellType,
-      int cols, int rows, int termSequence)
-
+      int cols, int rows, int termSequence,
+      FilePath workingDir)
 {
    // configure environment for shell
    core::system::Options shellEnv;
@@ -461,7 +461,8 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = module_context::shellWorkingDirectory();
+   options.workingDir = workingDir.empty() ? module_context::shellWorkingDirectory() :
+                                             workingDir;
    options.environment = shellEnv;
    options.smartTerminal = true;
    options.reportHasSubprocs = true;
@@ -1460,7 +1461,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
 {
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             proc->procInfo_->getShellType(),
-            80, 25, proc->procInfo_->getTerminalSequence());
+            proc->procInfo_->getCols(), proc->procInfo_->getRows(),
+            proc->procInfo_->getTerminalSequence(),
+            proc->procInfo_->getCwd());
    return createTerminalProcess(options, proc->procInfo_);
 }
 

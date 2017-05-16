@@ -121,7 +121,8 @@ public:
    static core::system::ProcessOptions createTerminalProcOptions(
          TerminalShell::TerminalShellType shellType,
          int cols, int rows,
-         int termSequence);
+         int termSequence,
+         core::FilePath workingDir);
 
    virtual ~ConsoleProcess() {}
 

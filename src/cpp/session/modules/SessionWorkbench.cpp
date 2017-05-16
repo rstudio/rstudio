@@ -903,7 +903,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    FilePath cwd(currentDir);
 
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence);
+         shellType, cols, rows, termSequence, cwd);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(

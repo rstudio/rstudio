@@ -20,6 +20,7 @@
 #include <core/text/TermBufferParser.hpp>
 
 #include <session/SessionConsoleProcessPersist.hpp>
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -196,7 +197,7 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;
-   result["cwd"] = cwd_.absolutePath();
+   result["cwd"] = module_context::createAliasedPath(cwd_);
    result["cols"] = cols_;
    result["rows"] = rows_;
 
@@ -248,8 +249,9 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    pProc->channelId_ = obj["channel_id"].get_str();
    pProc->altBufferActive_ = obj["alt_buffer"].get_bool();
 
-   FilePath cwd(obj["cwd"].get_str());
-   pProc->cwd_ = cwd;
+   std::string cwd = obj["cwd"].get_str();
+   if (!cwd.empty())
+      pProc->cwd_ = module_context::resolveAliasedPath(obj["cwd"].get_str());
 
    pProc->cols_ = obj["cols"].get_int();
    pProc->rows_ = obj["rows"].get_int();
