@@ -279,6 +279,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    builder.add("cols", proc->getCols());
    builder.add("rows", proc->getRows());
    builder.add("pid", static_cast<int>(proc->getPid()));
+   builder.add("full_screen", proc->getAltBufferActive());
 
    return r::sexp::create(builder, &protect);
 }
@@ -493,7 +494,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
-     cols_(-1), rows_(-1), pid_(-1), childProcsSent_(false),
+     pid_(-1), childProcsSent_(false),
      lastInputSequence_(kIgnoreSequence), started_(false)
 {
    regexInit();
@@ -507,7 +508,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), cols_(-1), rows_(-1), pid_(-1),
+     interrupt_(false), newCols_(-1), newRows_(-1), pid_(-1),
      childProcsSent_(false), lastInputSequence_(kIgnoreSequence), started_(false)
 {
    commonInit();
@@ -518,7 +519,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), cols_(-1), rows_(-1), pid_(-1),
+     interrupt_(false), newCols_(-1), newRows_(-1), pid_(-1),
      childProcsSent_(false),
      lastInputSequence_(kIgnoreSequence), started_(false)
 {
@@ -541,8 +542,6 @@ void ConsoleProcess::commonInit()
 
    if (interactionMode() != InteractionNever)
    {
-      rows_ = options_.rows;
-      cols_ = options_.cols;
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
       // prompting works properly
@@ -613,7 +612,8 @@ void ConsoleProcess::commonInit()
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
-   procInfo_->appendToOutputBuffer('\n');
+   if (!options_.smartTerminal)
+      procInfo_->appendToOutputBuffer('\n');
 }
 
 std::string ConsoleProcess::bufferedOutput() const
@@ -787,10 +787,11 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    if (newCols_ != -1 && newRows_ != -1)
    {
       ops.ptySetSize(newCols_, newRows_);
-      rows_ = newRows_;
-      cols_ = newCols_;
+      procInfo_->setCols(newCols_);
+      procInfo_->setRows(newRows_);
       newCols_ = -1;
       newRows_ = -1;
+      saveConsoleProcesses();
    }
 
    pid_ = ops.getPid();
@@ -860,8 +861,13 @@ std::string ConsoleProcess::getBuffer() const
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
+   bool currentAltBufferStatus = procInfo_->getAltBufferActive();
+
    // copy to output buffer
    procInfo_->appendToOutputBuffer(output);
+
+   if (procInfo_->getAltBufferActive() != currentAltBufferStatus)
+      saveConsoleProcesses();
 
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
@@ -1406,12 +1412,16 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc = findProcByHandle(procInfo->getHandle());
       if (proc != NULL && proc->isStarted())
       {
-         // Jiggle the size of the pseudo-terminal, this will force the app
-         // to refresh itself; this does rely on the host performing a second
-         // resize to the actual available size. Clumsy, but so far this is
-         // the best I've come up with.
          cp = proc;
-         cp->resize(25, 5);
+
+         if (proc->procInfo_->getAltBufferActive())
+         {
+            // Jiggle the size of the pseudo-terminal, this will force the app
+            // to refresh itself; this does rely on the host performing a second
+            // resize to the actual available size. Clumsy, but so far this is
+            // the best I've come up with.
+            cp->resize(core::system::kDefaultCols / 2, core::system::kDefaultRows / 2);
+         }
       }
       else
       {

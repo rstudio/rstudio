@@ -498,6 +498,8 @@ public class RemoteServer implements Server
                      String caption,
                      String title,
                      int sequence,
+                     boolean altBufferActive,
+                     String cwd,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -508,6 +510,8 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(StringUtil.notNull(caption)));
       params.set(5, new JSONString(StringUtil.notNull(title)));
       params.set(6, new JSONNumber(sequence));
+      params.set(7, JSONBoolean.getInstance(altBufferActive));
+      params.set(8, new JSONString(StringUtil.notNull(cwd)));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,

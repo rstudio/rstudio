@@ -79,7 +79,9 @@ public class TerminalSession extends XTermWidget
                           int rows,
                           boolean cursorBlink,
                           boolean focus,
-                          int shellType)
+                          int shellType,
+                          boolean altBufferActive,
+                          String cwd)
    {
       super(cursorBlink, focus);
       
@@ -88,6 +90,11 @@ public class TerminalSession extends XTermWidget
       terminalHandle_ = handle;
       hasChildProcs_ = hasChildProcs;
       shellType_ = shellType;
+      cols_ = cols;
+      rows_ = rows;
+      altBufferActive_ = altBufferActive;
+      cwd_ = cwd;
+      
       setTitle(title);
       socket_ = new TerminalSessionSocket(this, this);
 
@@ -130,7 +137,7 @@ public class TerminalSession extends XTermWidget
 
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
-            getTitle(), getSequence(), 
+            getTitle(), getSequence(), getAltBufferActive(), getCwd(),
             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -553,6 +560,16 @@ public class TerminalSession extends XTermWidget
    {
       return rows_;
    }
+   
+   public boolean getAltBufferActive()
+   {
+      return altBufferActive_;
+   }
+   
+   public String getCwd()
+   {
+      return cwd_;
+   }
 
    /**
     * Forcibly terminate the process associated with this terminal session.
@@ -689,8 +706,10 @@ public class TerminalSession extends XTermWidget
    private StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
-   private int cols_ = ConsoleProcessInfo.DEFAULT_COLS;
-   private int rows_ = ConsoleProcessInfo.DEFAULT_ROWS;;
+   private int cols_;
+   private int rows_;
+   private boolean altBufferActive_;
+   private String cwd_; 
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

@@ -145,10 +145,13 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param caption caption associated with the terminal
     * @param title title associated with the terminal
     * @param sequence relative order of terminal creation (1-based)
+    * @param altBufferActive terminal showing alt-buffer (full-screen ncurses)
+    * @param cwd current working directory
     * @param requestCallback callback from server upon completion
     */
    void startTerminal(int shellType, int cols, int rows, String handle, 
                       String caption, String title, int sequence, 
+                      boolean altBufferActive, String cwd,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);

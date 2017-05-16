@@ -43,7 +43,9 @@ namespace console_persist {
 // 2017/03/21 - console02 -> console03
 //                Added channel type and channel ID to allow distinction of
 //                using non-RPC-based communication channel back to client
-#define kConsoleDir "console03"
+// 2017/05/15 - console03 -> console04
+//                Added current-working directory, alt-buffer, cols, rows
+#define kConsoleDir "console04"
 
 namespace {
 
