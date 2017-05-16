@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -42,18 +43,24 @@ public class TerminalInfoDialog extends ModalDialogBase
       boolean localEchoEnabled = uiPrefs_.terminalLocalEcho().getValue() && 
             !BrowseCap.isWindowsDesktop();
       
+      String cwd = session.getCwd();
+      if (StringUtil.isNullOrEmpty(cwd))
+         cwd = "Default";
+      
       StringBuilder diagnostics = new StringBuilder();
       diagnostics.append("Terminal Session Information\n----------------------------\n");
-      diagnostics.append("Caption:    '" + session.getCaption() + "'\n");
-      diagnostics.append("Title:      '" + session.getTitle() + "'\n");
-      diagnostics.append("Shell:      '" + TerminalShellInfo.getShellName(session.getShellType()) + "'\n");
-      diagnostics.append("Handle:     '" + session.getHandle() + "'\n");
-      diagnostics.append("Sequence:   '" + session.getSequence() + "'\n");
-      diagnostics.append("Busy:       '" + session.getHasChildProcs() + "'\n");
-      diagnostics.append("Alt-Buffer: '" + session.altBufferActive() + "'\n");
-      diagnostics.append("Local-echo: '" + localEchoEnabled + "'\n"); 
-      diagnostics.append("WebSockets: '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");
-      diagnostics.append("Report lag: '" + uiPrefs_.enableReportTerminalLag().getValue() + "'\n");
+      diagnostics.append("Caption:     '" + session.getCaption() + "'\n");
+      diagnostics.append("Title:       '" + session.getTitle() + "'\n");
+      diagnostics.append("Cols x Rows  '" + session.getCols() + " x " + session.getRows() + "'\n");
+      diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(session.getShellType()) + "'\n");
+      diagnostics.append("Handle:      '" + session.getHandle() + "'\n");
+      diagnostics.append("Sequence:    '" + session.getSequence() + "'\n");
+      diagnostics.append("Busy:        '" + session.getHasChildProcs() + "'\n");
+      diagnostics.append("Alt-Buffer:  '" + session.altBufferActive() + "'\n");
+      diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
+      diagnostics.append("Working Dir: '" + cwd + "'\n"); 
+      diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");
+      diagnostics.append("Report lag:  '" + uiPrefs_.enableReportTerminalLag().getValue() + "'\n");
 
       diagnostics.append("\nSystem Information\n------------------\n");
       diagnostics.append("Desktop:    '" + Desktop.isDesktop() + "'\n");

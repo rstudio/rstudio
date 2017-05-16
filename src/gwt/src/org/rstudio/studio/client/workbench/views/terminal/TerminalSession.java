@@ -157,6 +157,9 @@ public class TerminalSession extends XTermWidget
                disconnect();
                return;
             } 
+            
+            cols_ = consoleProcess_.getProcessInfo().getCols();
+            rows_ = consoleProcess_.getProcessInfo().getRows();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));

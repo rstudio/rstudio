@@ -900,7 +900,11 @@ Error startTerminal(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 
-   FilePath cwd(currentDir);
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
 
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
          shellType, cols, rows, termSequence, cwd);

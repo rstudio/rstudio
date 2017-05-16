@@ -271,6 +271,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
    builder.add("handle", proc->handle());
    builder.add("caption", proc->getCaption());
    builder.add("title", proc->getTitle());
+   builder.add("working_dir", module_context::createAliasedPath(proc->getCwd()));
    builder.add("running", proc->isStarted());
    builder.add("busy", proc->getIsBusy());
    builder.add("connection", proc->getChannelMode());

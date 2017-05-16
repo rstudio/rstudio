@@ -161,6 +161,7 @@ public:
    int getRows() const { return procInfo_->getRows(); }
    PidType getPid() const { return pid_; }
    bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
+   core::FilePath getCwd() const { return procInfo_->getCwd(); }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
