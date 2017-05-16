@@ -81,6 +81,8 @@
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
 * OS X: Always show project label on dock tiles
+* Remove 100 column limit in data viewer
+* Make columns in data viewer resizable
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
