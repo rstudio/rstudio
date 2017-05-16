@@ -194,6 +194,11 @@ select {
 input[type=text] {
    font-family: proportionalFont;
 }
+
+.rstudio-themes-flat input[type=text] {
+   padding-left: 4px;
+}
+
 input[type=text][disabled] {
    background-color: transparent;
 }
