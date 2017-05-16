@@ -1062,6 +1062,9 @@ public class DocTabLayoutPanel
          if (icon != null) {
             Image tabImage = imageForIcon(icon);
             tabImage.addStyleName(ThemeStyles.INSTANCE.tabIcon());
+            // Trivia: setDraggable(Element.DRAGGABLE_FALSE) sets
+            // "draggable" to "true".
+            tabImage.getElement().setAttribute("draggable", "false");
             contentPanel_.add(tabImage);
          }
 
