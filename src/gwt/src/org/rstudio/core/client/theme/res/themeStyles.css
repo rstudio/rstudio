@@ -1957,6 +1957,10 @@ body.ubuntu_mono .searchBox {
    filter: brightness(90%) saturate(90%);
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img.rstudio-themes-inverts {
+   filter: invert(100%) brightness(90%) saturate(90%);
+}
+
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td,
 .rstudio-themes-flat .minimizedWindowObject .gwt-TabLayoutPanelTabs .tabLayoutCenter td {
    vertical-align: top !important;
