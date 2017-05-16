@@ -115,6 +115,7 @@ public class StatusBarElementWidget extends FlowPanel
          {
             Resources res = GWT.create(Resources.class);
             arrows_ = new Image(new ImageResource2x(res.upDownArrow2x()));
+            arrows_.addStyleName("rstudio-themes-inverts");
             add(arrows_);
          }
          else
