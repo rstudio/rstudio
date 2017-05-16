@@ -40,7 +40,7 @@
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars;
+@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
@@ -1952,7 +1952,8 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon,
-.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img,
+.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-darkens {
    filter: brightness(90%) saturate(90%);
 }
 
