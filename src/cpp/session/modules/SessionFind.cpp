@@ -515,7 +515,11 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-   cmd << module_context::resolveAliasedPath(directory);
+   
+   // Filepaths received from the client will be UTF-8 encoded;
+   // convert to system encoding here.
+   FilePath dirPath = module_context::resolveAliasedPath(directory);
+   cmd << string_utils::utf8ToSystem(dirPath.absolutePath());
 
    // Clear existing results
    findResults().clear();
