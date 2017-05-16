@@ -650,10 +650,13 @@
    if (isS4(object))
    {
       package <- attr(class, "package")
-      desc <- if (is.null(package))
-         class
-      else
+      is_pkg_relevant <-
+         !is.null(package) &&
+         !identical(package, ".GlobalEnv")
+      desc <- if (is_pkg_relevant)
          paste(package, class, sep = "::")
+      else
+         class
    }
    else if (inherits(object, "R6"))
    {
