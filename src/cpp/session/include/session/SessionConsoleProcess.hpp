@@ -121,7 +121,8 @@ public:
    static core::system::ProcessOptions createTerminalProcOptions(
          TerminalShell::TerminalShellType shellType,
          int cols, int rows,
-         int termSequence);
+         int termSequence,
+         core::FilePath workingDir);
 
    virtual ~ConsoleProcess() {}
 
@@ -149,16 +150,19 @@ public:
    std::string getCaption() const { return procInfo_->getCaption(); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    std::string getTitle() const { return procInfo_->getTitle(); }
-   void deleteLogFile() const;
+   void deleteLogFile(bool lastLineOnly = false) const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
    bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
    bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
    std::string getChannelMode() const;
    int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
    int getBufferLineCount() const { return procInfo_->getBufferLineCount(); }
-   int getCols() const { return cols_; }
-   int getRows() const { return rows_; }
+   int getCols() const { return procInfo_->getCols(); }
+   int getRows() const { return procInfo_->getRows(); }
    PidType getPid() const { return pid_; }
+   bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
+   core::FilePath getCwd() const { return procInfo_->getCwd(); }
+   bool getWasRestarted() const { return procInfo_->getRestarted(); }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
@@ -213,10 +217,6 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
-   // Last known size of pseudo-tty
-   int cols_;
-   int rows_;
-
    // Last known PID of associated process
    PidType pid_;
 
@@ -240,62 +240,6 @@ private:
    // cached pointer to process options, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
    boost::mutex mutex_;
-};
-
-
-class PasswordManager : boost::noncopyable
-{
-public:
-   typedef boost::function<bool(const std::string&, bool, std::string*, bool*)>
-                                                               PromptHandler;
-
-   explicit PasswordManager(const boost::regex& promptPattern,
-                            const PromptHandler& promptHandler)
-      : promptPattern_(promptPattern), promptHandler_(promptHandler)
-   {
-   }
-   virtual ~PasswordManager() {}
-
-   // COPYING: boost::noncopyable
-
-public:
-   // NOTE: if you don't showRememberOption then passwords from that
-   // interaction will NOT be remembered after the parent console
-   // process exits
-   void attach(boost::shared_ptr<ConsoleProcess> pCP,
-               bool showRememberOption = true);
-
-
-private:
-   bool handlePrompt(const std::string& cpHandle,
-                     const std::string& prompt,
-                     bool showRememberOption,
-                     ConsoleProcess::Input* pInput);
-
-   void onExit(const std::string& cpHandle, int exitCode);
-
-   struct CachedPassword
-   {
-      CachedPassword() : remember(false) {}
-      std::string cpHandle;
-      std::string prompt;
-      std::string password;
-      bool remember;
-   };
-
-   static bool hasPrompt(const CachedPassword& cachedPassword,
-                         const std::string& prompt);
-
-   static bool hasHandle(const CachedPassword& cachedPassword,
-                         const std::string& cpHandle);
-
-   static bool forgetOnExit(const CachedPassword& cachedPassword,
-                            const std::string& cpHandle);
-
-private:
-   boost::regex promptPattern_;
-   PromptHandler promptHandler_;
-   std::vector<CachedPassword> passwords_;
 };
 
 core::json::Array processesAsJson();

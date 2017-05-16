@@ -451,6 +451,10 @@ public class TerminalPane extends WorkbenchPane
          terminalSessionsPanel_.showWidget(terminal);
          setFocusOnVisible();
       }
+      else
+      {
+         terminal.writeRestartSequence();
+      }
       creatingTerminal_ = false;
    }
    

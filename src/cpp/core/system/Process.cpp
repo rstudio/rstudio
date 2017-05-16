@@ -37,6 +37,10 @@ namespace system {
 const char* const kSmartTerm = "xterm-256color";
 const char* const kDumbTerm = "dumb";
 
+// default rows/columns for a pseudoterminal
+const int kDefaultCols = 80;
+const int kDefaultRows = 25;
+
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
                  const std::string& input,

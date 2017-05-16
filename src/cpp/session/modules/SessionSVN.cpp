@@ -40,6 +40,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionPasswordManager.hpp>
 
 #include <r/RExec.hpp>
 

@@ -18,6 +18,7 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
 #include <session/SessionTerminalShell.hpp>
@@ -69,9 +70,9 @@ public:
          const std::string& handle,
          int terminalSequence,
          TerminalShell::TerminalShellType shellType,
-         ChannelMode channelMode,
-         const std::string& channelId,
-         int maxOutputLines = kDefaultMaxOutputLines);
+         bool altBufferActive,
+         const core::FilePath& cwd,
+         int cols, int rows);
 
    // constructor for non-terminals
    ConsoleProcessInfo(
@@ -120,7 +121,7 @@ public:
    std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
    std::string getFullSavedBuffer() const;
    int getBufferLineCount() const;
-   void deleteLogFile() const;
+   void deleteLogFile(bool lastLineOnly = false) const;
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
@@ -148,6 +149,24 @@ public:
       channelId_ = channelId;
    }
 
+   // Is terminal showing alt-buffer (a full-screen ncurses program)?
+   void setAltBufferActive(bool altBufferActive) { altBufferActive_ = altBufferActive; }
+   bool getAltBufferActive() const { return altBufferActive_; }
+
+   // Last-known current working directory
+   void setCwd(core::FilePath cwd) { cwd_ = cwd; }
+   core::FilePath getCwd() const { return cwd_; }
+
+   // Last-known terminal dimensions
+   void setCols(int cols) { cols_ = cols; }
+   void setRows(int rows) { rows_ = rows; }
+   int getCols() const { return cols_; }
+   int getRows() const { return rows_; }
+
+   // Was terminal session restarted?
+   void setRestarted(bool restarted) { restarted_ = restarted; }
+   bool getRestarted() const { return restarted_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -171,6 +190,10 @@ private:
    TerminalShell::TerminalShellType shellType_;
    ChannelMode channelMode_;
    std::string channelId_;
+   core::FilePath cwd_;
+   int cols_;
+   int rows_;
+   bool restarted_;
 };
 
 } // namespace console_process

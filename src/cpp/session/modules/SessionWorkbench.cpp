@@ -867,6 +867,8 @@ Error startTerminal(const json::JsonRpcRequest& request,
    std::string termCaption;
    std::string termTitle;
    int termSequence = kNoTerminal;
+   bool altBufferActive;
+   std::string currentDir;
    
    Error error = json::readParams(request.params,
                                   &shellTypeInt,
@@ -875,7 +877,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
-                                  &termSequence);
+                                  &termSequence,
+                                  &altBufferActive,
+                                  &currentDir);
    if (error)
       return error;
 
@@ -896,14 +900,19 @@ Error startTerminal(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
+
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence);
+         shellType, cols, rows, termSequence, cwd);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
             termCaption, termTitle, termHandle, termSequence,  shellType,
-            console_process::Rpc, "" /*channelId*/,
-            console_process::kDefaultTerminalMaxOutputLines);
+            altBufferActive, cwd, cols, rows);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::createTerminalProcess(options, ptrProcInfo);

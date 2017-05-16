@@ -52,6 +52,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                             ServerRequestCallback<Void> requestCallback);
 
    void processEraseBuffer(String handle,
+                           boolean lastLineOnly,
                            ServerRequestCallback<Void> requestCallback);
 
    void processGetBufferChunk(String handle,

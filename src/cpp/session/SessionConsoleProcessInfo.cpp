@@ -15,10 +15,12 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/text/TermBufferParser.hpp>
 
 #include <session/SessionConsoleProcessPersist.hpp>
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -36,7 +38,8 @@ ConsoleProcessInfo::ConsoleProcessInfo()
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc)
+     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
+     restarted_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -49,15 +52,15 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& handle,
          const int terminalSequence,
          TerminalShell::TerminalShellType shellType,
-         ChannelMode channelMode,
-         const std::string& channelId,
-         int maxOutputLines)
+         bool altBufferActive,
+         const core::FilePath& cwd,
+         int cols, int rows)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(true),
-     interactionMode_(InteractionAlways), maxOutputLines_(maxOutputLines),
+     interactionMode_(InteractionAlways), maxOutputLines_(kDefaultTerminalMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(shellType),
-     channelMode_(channelMode), channelId_(channelId)
+     altBufferActive_(altBufferActive), shellType_(shellType),
+     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false)
 {
 }
 
@@ -69,7 +72,8 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc)
+     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
+     restarted_(false)
 {
 }
 
@@ -167,9 +171,9 @@ std::string ConsoleProcessInfo::bufferedOutput() const
    return result;
 }
 
-void ConsoleProcessInfo::deleteLogFile() const
+void ConsoleProcessInfo::deleteLogFile(bool lastLineOnly) const
 {
-   console_persist::deleteLogFile(handle_);
+   console_persist::deleteLogFile(handle_, lastLineOnly);
 }
 
 core::json::Object ConsoleProcessInfo::toJson() const
@@ -194,6 +198,11 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["shell_type"] = static_cast<int>(shellType_);
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
+   result["alt_buffer"] = altBufferActive_;
+   result["cwd"] = module_context::createAliasedPath(cwd_);
+   result["cols"] = cols_;
+   result["rows"] = rows_;
+   result["restarted"] = restarted_;
 
    return result;
 }
@@ -241,6 +250,16 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    int channelModeInt = obj["channel_mode"].get_int();
    pProc->channelMode_ = static_cast<ChannelMode>(channelModeInt);
    pProc->channelId_ = obj["channel_id"].get_str();
+   pProc->altBufferActive_ = obj["alt_buffer"].get_bool();
+
+   std::string cwd = obj["cwd"].get_str();
+   if (!cwd.empty())
+      pProc->cwd_ = module_context::resolveAliasedPath(obj["cwd"].get_str());
+
+   pProc->cols_ = obj["cols"].get_int();
+   pProc->rows_ = obj["rows"].get_int();
+
+   pProc->restarted_ = obj["restarted"].get_bool();
 
    return pProc;
 }

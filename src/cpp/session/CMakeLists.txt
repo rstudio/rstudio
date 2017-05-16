@@ -78,6 +78,7 @@ set (SESSION_SOURCE_FILES
    SessionModuleContext.cpp
    SessionOptions.cpp
    SessionOptionsOverlay.cpp
+   SessionPasswordManager.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionRUtil.cpp

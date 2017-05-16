@@ -57,7 +57,9 @@ public class TerminalList implements Iterable<String>,
                                boolean childProcs,
                                int cols,
                                int rows,
-                               int shellType)
+                               int shellType,
+                               boolean altBufferActive,
+                               String cwd)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
@@ -67,6 +69,8 @@ public class TerminalList implements Iterable<String>,
          cols_ = cols;
          rows_ = rows;
          shellType_ = shellType;
+         altBufferActive_ = altBufferActive;
+         cwd_ = cwd;
       }
 
       private TerminalMetadata(TerminalMetadata original,
@@ -79,7 +83,9 @@ public class TerminalList implements Iterable<String>,
               original.childProcs_,
               original.cols_,
               original.rows_,
-              original.shellType_);
+              original.shellType_,
+              original.altBufferActive_,
+              original.cwd_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -91,7 +97,9 @@ public class TerminalList implements Iterable<String>,
               procInfo.getHasChildProcs(),
               ConsoleProcessInfo.DEFAULT_COLS,
               ConsoleProcessInfo.DEFAULT_ROWS,
-              procInfo.getShellType()
+              procInfo.getShellType(),
+              procInfo.getAltBufferActive(),
+              procInfo.getCwd()
               );
       }
 
@@ -104,7 +112,9 @@ public class TerminalList implements Iterable<String>,
               term.getHasChildProcs(),
               term.getCols(),
               term.getRows(),
-              term.getShellType());
+              term.getShellType(),
+              term.getAltBufferActive(),
+              term.getCwd());
       }
 
       /**
@@ -136,6 +146,8 @@ public class TerminalList implements Iterable<String>,
       public int getCols() { return cols_; }
       public int getRows() { return rows_; }
       public int getShellType() { return shellType_; }
+      public boolean getAltBufferActive() { return altBufferActive_; }
+      public String getCwd() { return cwd_; }
 
       private String handle_;
       private String caption_;
@@ -145,6 +157,8 @@ public class TerminalList implements Iterable<String>,
       private int cols_;
       private int rows_;
       private int shellType_;
+      private boolean altBufferActive_;
+      private String cwd_;
    }
 
    protected TerminalList() 
@@ -227,7 +241,9 @@ public class TerminalList implements Iterable<String>,
                childProcs,
                current.cols_,
                current.rows_,
-               current.shellType_));
+               current.shellType_,
+               current.altBufferActive_,
+               current.cwd_));
          return true;
       }
       return false;
@@ -362,7 +378,10 @@ public class TerminalList implements Iterable<String>,
                     true,  // childProcs
                     ConsoleProcessInfo.DEFAULT_COLS,
                     ConsoleProcessInfo.DEFAULT_ROWS,
-                    TerminalShellInfo.SHELL_DEFAULT);
+                    TerminalShellInfo.SHELL_DEFAULT,
+                    false, // altBufferActive
+                    null // cwd
+            );
    }
 
    /**
@@ -391,7 +410,10 @@ public class TerminalList implements Iterable<String>,
                     true,  // childProcs
                     ConsoleProcessInfo.DEFAULT_COLS,
                     ConsoleProcessInfo.DEFAULT_ROWS,
-                    TerminalShellInfo.SHELL_DEFAULT);
+                    TerminalShellInfo.SHELL_DEFAULT,
+                    false, // altBufferActive
+                    null // cwd
+            );
       return true;
    }
 
@@ -415,7 +437,9 @@ public class TerminalList implements Iterable<String>,
                     existing.getChildProcs(),
                     existing.getCols(),
                     existing.getRows(),
-                    existing.getShellType());
+                    existing.getShellType(),
+                    existing.getAltBufferActive(),
+                    existing.getCwd());
       return true;
    }
 
@@ -485,11 +509,14 @@ public class TerminalList implements Iterable<String>,
                              boolean hasChildProcs,
                              int cols,
                              int rows,
-                             int shellType)
+                             int shellType,
+                             boolean altBufferActive,
+                             String cwd)
    {
       TerminalSession newSession = new TerminalSession(
             sequence, terminalHandle, caption, title, hasChildProcs, 
-            cols, rows, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, shellType);
+            cols, rows, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, shellType,
+            altBufferActive, cwd);
       newSession.connect();
       updateTerminalBusyStatus();
    }

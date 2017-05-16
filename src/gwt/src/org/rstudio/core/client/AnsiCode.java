@@ -29,6 +29,12 @@ public class AnsiCode
    // ANSI command constants
    public static final String CSI = "\33[";
    public static final String SGR = "m";
+   
+   // Move Cursor Horizontal Absolute
+   public static final String CHA = "G";
+   
+   // Erase in Line
+   public static final String EL = "K";
 
    public static final int RESET = 0;
    public static final int RESET_FOREGROUND = 39;

@@ -12,6 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#include <core/system/Process.hpp>
 #include <session/SessionConsoleProcessInfo.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -38,8 +39,14 @@ const InteractionMode mode = InteractionAlways;
 const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
 const ChannelMode channelMode = Rpc;
 const std::string channelId("some channel Id");
+const bool altActive = false;
+const core::FilePath cwd("/usr/local");
+const core::FilePath altCwd("/usr/stuff");
+const int cols = core::system::kDefaultCols;
+const int rows = core::system::kDefaultRows;
+const bool restarted = false;
 
-const size_t maxLines = 1000;
+const size_t maxLines = kDefaultTerminalMaxOutputLines;
 
 bool testHandle(const std::string& handle)
 {
@@ -61,7 +68,12 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getHasChildProcs() == second.getHasChildProcs() &&
            first.getShellType() == second.getShellType() &&
            first.getChannelMode() == second.getChannelMode() &&
-           !first.getChannelId().compare(second.getChannelId()));
+           !first.getChannelId().compare(second.getChannelId()) &&
+           first.getAltBufferActive() == second.getAltBufferActive() &&
+           first.getCwd() == second.getCwd() &&
+           first.getCols() == second.getCols() &&
+           first.getRows() == second.getRows() &&
+           first.getRestarted() == second.getRestarted());
 }
 
 } // anonymous namespace
@@ -72,7 +84,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             shellType, channelMode, channelId, maxLines);
+                             shellType, altActive, cwd, cols, rows);
 
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
@@ -86,8 +98,16 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK_FALSE(cpi.getExitCode());
       CHECK(cpi.getHasChildProcs());
       CHECK(cpi.getShellType() == shellType);
-      CHECK(cpi.getChannelMode() == channelMode);
-      CHECK(cpi.getChannelId() == channelId);
+      CHECK(cpi.getChannelMode() == Rpc);
+      CHECK(cpi.getChannelId().empty());
+      CHECK(cpi.getAltBufferActive() == altActive);
+      CHECK(cpi.getCwd() == cwd);
+      CHECK(cpi.getCols() == cols);
+      CHECK(cpi.getRows() == rows);
+
+      CHECK_FALSE(cpi.getRestarted());
+      cpi.setRestarted(true);
+      CHECK(cpi.getRestarted());
    }
 
    SECTION("Generate a handle")
@@ -104,7 +124,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Change properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, maxLines);
+                             altActive, cwd, cols, rows);
 
       std::string altCaption("other caption");
       CHECK(altCaption.compare(caption));
@@ -129,7 +149,7 @@ TEST_CASE("ConsoleProcessInfo")
       cpi.setInteractionMode(altMode);
       CHECK(altMode == cpi.getInteractionMode());
 
-      size_t altMax = maxLines + 1;
+      int altMax = maxLines + 1;
       cpi.setMaxOutputLines(altMax);
       CHECK(altMax == cpi.getMaxOutputLines());
 
@@ -146,12 +166,15 @@ TEST_CASE("ConsoleProcessInfo")
       cpi.setChannelMode(altChannelMode, altChannelModeId);
       CHECK(altChannelMode == cpi.getChannelMode());
       CHECK(!altChannelModeId.compare(cpi.getChannelId()));
+
+      cpi.setCwd(altCwd);
+      CHECK(altCwd == cpi.getCwd());
    }
 
    SECTION("Change exit code")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, maxLines);
+                             altActive, cwd, cols, rows);
 
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
@@ -174,9 +197,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Compare ConsoleProcInfos with different exit codes")
    {
       ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence, shellType,
-                                  channelMode, channelId, maxLines);
+                                  altActive, cwd, cols, rows);
       ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence, shellType,
-                                   channelMode, channelId, maxLines);
+                                   altActive, cwd, cols, rows);
 
       cpiFirst.setExitCode(1);
       cpiSecond.setExitCode(12);
@@ -186,7 +209,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore")
    {
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
-                                 channelMode, channelId, maxLines);
+                                  altActive, cwd, cols, rows);
 
       core::json::Object origJson = cpiOrig.toJson();
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -232,7 +255,7 @@ TEST_CASE("ConsoleProcessInfo")
       // in the JSON. Same comment on the leaky abstractions here as for
       // previous non-terminal test.
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, maxLines);
+                             altActive, cwd, cols, rows);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -268,7 +291,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore terminals with multiple chunks")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, maxLines);
+                             altActive, cwd, cols, rows);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -333,9 +356,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Delete unknown log files")
    {
       ConsoleProcessInfo cpiGood(caption, title, handle1, sequence, shellType,
-                                 channelMode, channelId, maxLines);
+                                 altActive, cwd, cols, rows);
       ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence, shellType,
-                                channelMode, channelId, maxLines);
+                                altActive, cwd, cols, rows);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
       CHECK(orig1.length() < kOutputBufferSize);
@@ -371,7 +394,8 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 5;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, smallMaxLines);
+                             altActive, cwd, cols, rows);
+      cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -412,7 +436,8 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 3;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, smallMaxLines);
+                             altActive, cwd, cols, rows);
+      cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -455,7 +480,8 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int lines = 10;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             channelMode, channelId, lines * 2);
+                             altActive, cwd, cols, rows);
+      cpi.setMaxOutputLines(lines * 2);
 
       // blow away anything that might have been left over from a previous
       // failed run
