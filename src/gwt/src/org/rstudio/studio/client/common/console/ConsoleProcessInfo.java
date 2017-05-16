@@ -89,6 +89,22 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public final native String getChannelId() /*-{
       return this.channel_id;
    }-*/;
+   
+   public final native boolean getAltBufferActive() /*-{
+      return this.alt_buffer;
+   }-*/;
+   
+   public final native String getCwd() /*-{
+      return this.cwd;
+   }-*/;
+   
+   public final native int getCols() /*-{
+      return this.cols;
+   }-*/;
+   
+   public final native int getRows() /*-{
+      return this.rows;
+   }-*/;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;
    
