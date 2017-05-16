@@ -1,5 +1,13 @@
+@external rstudio-themes-flat, rstudio-themes-dark;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+
 .dataGridHoveredRow {
   background: rgba(181, 213, 255, 0.5);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .dataGridHoveredRow {
+  background: THEME_DARK_ROW_SELECTED;
 }
 
 .dataGridCell {
@@ -8,7 +16,6 @@
 }
 
 .statusColumn {
-   color: #606060;
 }
 
 
