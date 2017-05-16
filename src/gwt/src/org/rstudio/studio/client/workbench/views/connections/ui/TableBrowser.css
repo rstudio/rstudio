@@ -1,6 +1,7 @@
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external rstudio-themes-flat;
 
 .cellTreeWidget {
 }
@@ -39,6 +40,10 @@
   font-weight: normal;
   margin-top: 0;
   padding: 2px 0px 2px 6px !important;
+}
+
+.rstudio-themes-flat .cellTreeTopItem {
+  color: inherit;
 }
 
 .cellTreeTopItemImage,
