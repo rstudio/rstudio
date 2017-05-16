@@ -786,10 +786,14 @@
       output <- paste(head(object, n), collapse = " ")
       more <- length(object) > n
    }
-   
    else if (isS4(object))
    {
       output <- sprintf("S4 object of class %s", class(object))
+      more <- FALSE
+   }
+   else if (inherits(object, "externalptr"))
+   {
+      output <- capture.output(print(unclass(object)))
       more <- FALSE
    }
    
