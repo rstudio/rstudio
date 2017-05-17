@@ -162,11 +162,6 @@
   border: selectionBorderWidth solid #ffffff;
 }
 
-.rstudio-themes-flat .dataGridOddRowCell,
-.rstudio-themes-flat .dataGridEvenRowCell {
-  border: none;
-}
-
 .dataGridHoveredRow {
   /* CHANGE: Disable hover effects */
   /* background: #eee; */
