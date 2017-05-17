@@ -31,22 +31,21 @@ function setupInstallLocation() {
   // Create the script frame, making sure it's invisible, but not
   // "display:none", which keeps some browsers from running code in it.
   var scriptFrame = $doc.createElement('iframe');
-  scriptFrame.src = 'javascript:""';
   scriptFrame.id = '__MODULE_NAME__';
   scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none; left: -1000px;'
     + ' top: -1000px;';
   scriptFrame.tabIndex = -1;
   $doc.body.appendChild(scriptFrame);
 
-  frameDoc = scriptFrame.contentDocument;
-  if (!frameDoc) {
-    frameDoc = scriptFrame.contentWindow.document;
-  }
+  frameDoc = scriptFrame.contentWindow.document;
 
-  // The missing content has been seen on Safari 3 and firebug will
-  // behave incorrectly on soft refresh unless we explicitly set the content
-  // of the frame. However, we don't want to do this when runAsync calls
-  // installCode, so we do it here when we create the iframe.
+  // The following code is needed for proper operation in Firefox, Safari, and
+  // Internet Explorer.
+  //
+  // In Firefox, this prevents the frame from re-loading asynchronously and
+  // throwing away the current document.
+  //
+  // In IE, it ensures that the <body> element is immediately available.
   frameDoc.open();
   var doctype = (document.compatMode == 'CSS1Compat') ? '<!doctype html>' : '';
   frameDoc.write(doctype + '<html><head></head><body></body></html>');
