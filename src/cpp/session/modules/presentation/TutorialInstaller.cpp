@@ -1,7 +1,7 @@
 /*
  * TutorialInstaller.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  */
 
