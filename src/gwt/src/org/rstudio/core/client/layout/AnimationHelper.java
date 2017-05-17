@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.layout;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -118,6 +119,8 @@ class AnimationHelper
 
    public void animate()
    {
+      Document.get().getBody().addClassName("rstudio-animating");
+      
       panel_.setSplitterVisible(false);
 
       if (startWidgetTop_ != animWidgetTop_)
@@ -172,6 +175,7 @@ class AnimationHelper
          setParentZindex(startWidgetBottom_, -10);
       setParentZindex(endWidgetBottom_, 0);
 
+      Document.get().getBody().removeClassName("rstudio-animating");
       panel_.onResize();
    }
 
