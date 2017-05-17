@@ -160,7 +160,8 @@
 @url WARNINGDARK syntaxWarningDark2x;
 @url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor2x;
+@url HANDCURSOR handCursor;
+@url HANDCURSOR2X handCursor2x;
 
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn2x;
@@ -275,11 +276,18 @@ button {
 @if rstudio.desktop true {
 .linux button {
    cursor: HANDCURSOR 9 5, pointer;
+   cursor: -webkit-image-set(
+      HANDCURSOR 1x,
+      HANDCURSOR2X 2x
+   ), pointer;
 }
 
 .linux .handCursor {
-    
    cursor: HANDCURSOR 9 5, pointer;
+   cursor: -webkit-image-set(
+      HANDCURSOR 9 5 1x,
+      HANDCURSOR2X 9 5 2x
+   ), pointer;
 }
 }
 

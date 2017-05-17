@@ -274,6 +274,9 @@ public interface ThemeResources extends ClientBundle
    @Source("radioButtonOn_2x.png")
    DataResource radioButtonOn2x();
 
+   @Source("handCursor.png")
+   DataResource handCursor();
+
    @Source("handCursor_2x.png")
    DataResource handCursor2x();
    
