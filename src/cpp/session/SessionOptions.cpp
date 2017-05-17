@@ -120,7 +120,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    options_description verify("verify");
    verify.add_options()
      (kVerifyInstallationSessionOption,
-     value<bool>(&verifyInstallation_)->default_value(false)->implicit_value(true),
+     value<bool>(&verifyInstallation_)->default_value(false),
      "verify the current installation");
 
    // program - name and execution
