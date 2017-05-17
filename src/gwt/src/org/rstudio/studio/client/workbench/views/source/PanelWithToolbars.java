@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 
 public class PanelWithToolbars extends ResizeComposite
@@ -45,8 +46,10 @@ public class PanelWithToolbars extends ResizeComposite
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.addNorth(toolbar, toolbar.getHeight());
       
-      if (secondaryToolbar != null)
+      if (secondaryToolbar != null) {
          panel_.addNorth(secondaryToolbar, secondaryToolbar.getHeight());
+         secondaryToolbar.getWrapper().addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
+      }
       
       if (statusBar != null)
          panel_.addSouth(statusBar.asWidget(), statusBar.getHeight());

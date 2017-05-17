@@ -98,6 +98,8 @@ public class ToolbarButton extends FocusWidget
            (ImageResource) null,
            (ClickHandler) null);
       
+      leftImageWidget_.addStyleName("rstudio-themes-inverts");
+      
       addMenuHandlers(menu, rightAlignMenu);
       
       addStyleName(styles_.toolbarButtonMenu());
@@ -135,6 +137,8 @@ public class ToolbarButton extends FocusWidget
                         boolean rightAlignMenu)
    {
       this(text, leftImage, new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), null);
+      
+      rightImageWidget_.addStyleName("rstudio-themes-inverts");
 
       addMenuHandlers(menu, rightAlignMenu);
       

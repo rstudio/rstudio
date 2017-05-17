@@ -2,6 +2,10 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external editor_dark;
+@external rstudio-themes-flat, rstudio-themes-dark;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
 
 .findOutput {
    width: 100%;
@@ -43,6 +47,14 @@
    .selectedRow {
       background-color: rgb(146, 193, 240)
    }
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .selectedRow {
+   background-color: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark *:focus .selectedRow {
+   background-color: THEME_DARK_ROW_FOCUSED;
 }
 
 .editor_dark .selectedRow {

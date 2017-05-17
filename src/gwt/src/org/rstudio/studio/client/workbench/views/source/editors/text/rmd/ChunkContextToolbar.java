@@ -113,6 +113,8 @@ public class ChunkContextToolbar extends Composite
       options_.setResource(new ImageResource2x(
          dark ? RES.chunkOptionsDark2x() :
          RES.chunkOptionsLight2x()));
+
+      options_.addStyleName("rstudio-themes-darkens");
       
       DOM.sinkEvents(options_.getElement(), Event.ONCLICK);
       DOM.setEventListener(options_.getElement(), new EventListener()

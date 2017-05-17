@@ -172,12 +172,6 @@ public class ConnectionsPane extends WorkbenchPane
                 }  
               },
               "Explore connection") {
-         
-         @Override
-         protected boolean showButton(Connection connection)
-         {
-            return connection.getId().getType().equals("Spark");
-         }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
       connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);

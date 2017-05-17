@@ -462,6 +462,8 @@ public class TextEditingTargetWidget
                }
             });
       
+      toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
+
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.
       new Timer()
