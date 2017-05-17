@@ -1,6 +1,8 @@
 @def MODIFIED_COLOUR #cdefcd;
 @def CUSTOM_COLOUR #EFF;
 
+@external rstudio-themes-flat;
+
 /* DataGrid styling / overrides */
 /* Avoid GWT's inset styling for selected cells */
 .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
@@ -77,4 +79,9 @@
 .icon:hover {
 	border-radius: 20px;
 	box-shadow: 0 0 4px #8BF;
+}
+
+.rstudio-themes-flat .dataGridOddRowCell,
+.rstudio-themes-flat .dataGridEvenRowCell {
+  border: none;
 }
