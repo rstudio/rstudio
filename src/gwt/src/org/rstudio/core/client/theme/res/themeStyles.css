@@ -2430,3 +2430,10 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
    display: none;
 }
+
+/* AnimationHelper requires background to be set at -10 */
+body.rstudio-themes-flat .rstudio-themes-default,
+body.rstudio-themes-flat .rstudio-themes-dark-grey,
+body.rstudio-themes-flat .rstudio-themes-alternate {
+   z-index: -10;
+}
