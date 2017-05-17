@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+
+.splitter {
+	position: absolute;
+	width: 6px;
+	height: 100%;
+	cursor: col-resize;
+	margin-left: -5px;
+	margin-top: -2px;
+}

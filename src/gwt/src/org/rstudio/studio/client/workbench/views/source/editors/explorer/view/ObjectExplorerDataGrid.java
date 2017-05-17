@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -330,14 +332,6 @@ public class ObjectExplorerDataGrid
       return generateExtractingRCode(data, handle_.getTitle());
    }
    
-   private static final int getParentLimit(Data data)
-   {
-      Data parent = data.getParentData();
-      if (parent == null)
-         return DEFAULT_ROW_LIMIT;
-      return parent.getMaximumChildRowsShown();
-   }
-   
    private class NameCell extends AbstractCell<Data>
    {
       public NameCell()
@@ -575,11 +569,11 @@ public class ObjectExplorerDataGrid
       setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
-      addColumn(typeColumn_, new TextHeader("Type"));
+      addColumn(typeColumn_, new ResizableHeader(this, "Type", 1));
       setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
-      addColumn(valueColumn_, new TextHeader("Value"));
+      addColumn(valueColumn_, new ResizableHeader(this, "Column", 2));
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
