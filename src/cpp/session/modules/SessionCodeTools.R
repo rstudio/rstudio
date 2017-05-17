@@ -1871,3 +1871,22 @@
    
    return(object[start:end])
 })
+
+.rs.addFunction("slotNames", function(object)
+{
+   # non-S4 objects don't have slot names
+   if (!isS4(object))
+      return(character())
+   
+   # try using the official API to retrieve slot names
+   slots <- methods::slotNames(object)
+   if (is.character(slots))
+      return(slots)
+   
+   # if that fails for some reason (e.g. the package that
+   # provides the associated class definition is not loaded)
+   # then fall back to using object attributes
+   slots <- names(attributes(object))
+   setdiff(slots, "class")
+ 
+})
