@@ -55,6 +55,7 @@
 
 .rstudio-themes-flat button.gwt-Button-DefaultDialogAction {
    font-weight: 600;
+   opacity: 0.8;
 }
 
 .rstudio-themes-flat button.gwt-Button-DefaultDialogAction > table:first-child {
