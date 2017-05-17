@@ -1,7 +1,9 @@
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 
 .cellTreeWidget {
 }
@@ -67,6 +69,10 @@
 
 .cellTreeKeyboardSelectedItem {
   background: white;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .cellTreeKeyboardSelectedItem {
+  background: THEME_DARK_ROW_SELECTED;
 }
 
 .fieldName {
