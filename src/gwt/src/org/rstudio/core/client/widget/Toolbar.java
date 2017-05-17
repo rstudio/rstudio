@@ -341,6 +341,7 @@ public class Toolbar extends Composite
       image.getElement().getStyle().setMarginLeft(5, Unit.PX);
       image.getElement().getStyle().setMarginRight(8, Unit.PX);
       image.getElement().getStyle().setMarginBottom(2, Unit.PX);
+      image.addStyleName("rstudio-themes-inverts");
       if (left)
          addLeftWidget(image);
       else

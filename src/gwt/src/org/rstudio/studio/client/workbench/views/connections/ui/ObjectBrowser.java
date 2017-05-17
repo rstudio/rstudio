@@ -164,7 +164,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
        * An image indicating that a node is loading.
        */
       @ImageOptions(flipRtl = true)
-      @Source("progress.gif")
+      @Source("ExpandingIcon_2x.png")
       ImageResource cellTreeLoading();
     
       @ImageOptions(flipRtl = true)

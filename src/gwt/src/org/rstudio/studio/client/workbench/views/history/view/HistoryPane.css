@@ -1,6 +1,9 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
+
 @external rstudio-themes-flat;
 @external editor_dark;
 
@@ -8,8 +11,8 @@
    background-color: #ccc;
 }
 
-.rstudio-themes-flat.editor_dark  .selected {
-   background-color: rgba(255, 255, 255, 0.10);
+.rstudio-themes-flat.editor_dark .selected {
+   background-color: THEME_DARK_ROW_SELECTED;
 }
 
 *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
@@ -17,7 +20,7 @@
 }
 
 .rstudio-themes-flat.editor_dark *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
-   background-color: rgba(255, 255, 255, 0.20);
+   background-color: THEME_DARK_ROW_FOCUSED;
 }
 
 @if user.agent ie8 {

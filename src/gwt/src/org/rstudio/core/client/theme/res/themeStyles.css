@@ -40,7 +40,7 @@
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars;
+@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
@@ -160,7 +160,8 @@
 @url WARNINGDARK syntaxWarningDark2x;
 @url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor2x;
+@url HANDCURSOR handCursor;
+@url HANDCURSOR2X handCursor2x;
 
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn2x;
@@ -194,6 +195,11 @@ select {
 input[type=text] {
    font-family: proportionalFont;
 }
+
+.rstudio-themes-flat input[type=text] {
+   padding-left: 4px;
+}
+
 input[type=text][disabled] {
    background-color: transparent;
 }
@@ -270,11 +276,18 @@ button {
 @if rstudio.desktop true {
 .linux button {
    cursor: HANDCURSOR 9 5, pointer;
+   cursor: -webkit-image-set(
+      HANDCURSOR 1x,
+      HANDCURSOR2X 2x
+   ), pointer;
 }
 
 .linux .handCursor {
-    
    cursor: HANDCURSOR 9 5, pointer;
+   cursor: -webkit-image-set(
+      HANDCURSOR 9 5 1x,
+      HANDCURSOR2X 9 5 2x
+   ), pointer;
 }
 }
 
@@ -1229,6 +1242,9 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    height: 21px !important;
 }
 
+.rstudio-themes-flat .secondaryToolbar img[src] {
+   visibility: hidden;
+}
 
 .tallerToolbarWrapper {
 
@@ -1512,10 +1528,6 @@ body.ubuntu_mono .searchBox {
    background-size: 32px 15px;
 }
 
-.rstudio-themes-flat td.environmentHierarchicalCol {
-   background: none;
-}
-
 @sprite td.environmentDataFrameCol {
    width: 32px;
    height: 15px;
@@ -1534,10 +1546,6 @@ body.ubuntu_mono .searchBox {
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
-}
-
-.rstudio-themes-flat td.environmentFunctionCol {
-   background: none;
 }
 
 .odd {
@@ -1952,8 +1960,13 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.tabLayoutCenter img.tabIcon,
-.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img {
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img,
+.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-darkens {
    filter: brightness(90%) saturate(90%);
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .toolbarButton img.rstudio-themes-inverts {
+   filter: invert(100%) brightness(90%) saturate(90%);
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter td,
@@ -1963,6 +1976,7 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.docTabIcon {
    padding-top: 1px;
+   max-height: 16px;
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter div.docTabLabel {
@@ -2148,7 +2162,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .search input::placeholder {
-   color: #EEE;
+   color: #CCC;
 }
 
 .rstudio-themes-flat .search .left {
@@ -2193,7 +2207,8 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts {
+.rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts img,
+.rstudio-themes-flat .rstudio-themes-dark img.rstudio-themes-inverts {
    -webkit-filter: invert(100%);
       -moz-filter: invert(100%);
        -ms-filter: invert(100%);
@@ -2283,7 +2298,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel,
-.rstudio-themes-flat.rstudio-themes-scrollbars .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
@@ -2316,8 +2331,8 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center,
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track,
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-corner { 
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track,
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-corner { 
    background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
@@ -2393,25 +2408,25 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 /* RSTUDIO THEMES END */
 
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat.rstudio-themes-scrollbars .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars .rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
    border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
 }
 
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track-piece {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track-piece {
 }
 
-.rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track {
 }  
 
 @external com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner;
-.rstudio-themes-flat.rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+.rstudio-themes-flat .rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
    display: none;
 }
