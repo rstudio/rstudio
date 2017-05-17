@@ -96,16 +96,19 @@ public class ProfilerEditingTargetWidget extends Composite
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
          ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.defaultBackground + ";\n" +
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
          ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
          "}\n" +
          "\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
          ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.alternateBackground + ";\n" +
          "}\n" +

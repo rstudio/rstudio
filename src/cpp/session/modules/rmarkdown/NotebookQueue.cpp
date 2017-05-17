@@ -164,7 +164,13 @@ public:
                return Success();
          }
          else
-            return executeCurrentUnit(mode);
+         {
+            // if unit is executing code, execute more code
+            if (!execUnit_->executingCode().empty())
+               return executeCurrentUnit(mode);
+            else
+               return Success();
+         }
       }
 
       return executeNextUnit(mode);

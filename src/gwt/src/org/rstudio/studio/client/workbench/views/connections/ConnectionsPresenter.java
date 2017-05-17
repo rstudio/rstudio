@@ -384,23 +384,38 @@ public class ConnectionsPresenter extends BasePresenter
       if (exploredConnection_ == null)
          return;
       
+      // protect the connection from interleaving actions while the dialog is up
+      final Connection removingConnection = exploredConnection_;
+      exploredConnection_ = null;
+      
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION,
          "Remove Connection",
          "Are you sure you want to remove this connection from the connection history?",
          new Operation() {
-
             @Override
             public void execute()
             {
                server_.removeConnection(
-                 exploredConnection_.getId(), new VoidServerRequestCallback()); 
-               disconnectConnection(false);
-               showAllConnections(true);
+                 removingConnection.getId(), 
+                 new VoidServerRequestCallback()
+                 {
+                    @Override
+                    protected void onSuccess()
+                    {
+                        exploredConnection_ = removingConnection;
+                        disconnectConnection(false);
+                        showAllConnections(true);
+                    }
+                    @Override
+                    protected void onFailure()
+                    {
+                        exploredConnection_ = removingConnection;
+                    }
+                 }); 
             }
          },
          true);
-     
    }
    
    @Handler

@@ -379,7 +379,7 @@ public class Files
       view_.showFilePicker(
                         "Choose Destination", 
                         fileSystemContext_,
-                        currentPath_,
+                        selectedFiles.get(0),
                         new ProgressOperationWithInput<FileSystemItem>() {
 
          public void execute(FileSystemItem targetFile,

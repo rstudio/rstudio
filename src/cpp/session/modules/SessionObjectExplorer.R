@@ -304,7 +304,7 @@
       (is.recursive(object) && !is.primitive(object) && n > 0) ||
       
       # is this an S4 object with one or more slots?
-      (s4 && length(methods::slotNames(object)) > 0) ||
+      (s4 && length(.rs.slotNames(object)) > 0) ||
       
       # is this a named atomic vector?
       (is.atomic(object) && !is.null(names(object)) && n > 0) ||
@@ -530,7 +530,7 @@
    children <- NULL
    if (context$recursive)
    {
-      slots <- methods::slotNames(object)
+      slots <- .rs.slotNames(object)
       children <- lapply(slots, function(slot) {
          name <- slot
          access <- sprintf("#@%s", name)
