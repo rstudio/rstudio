@@ -34,6 +34,9 @@ const milliseconds kResetRecentDelayExpired = milliseconds(110);
 const milliseconds kCheckSubprocDelay = milliseconds(25);
 const milliseconds kCheckSubprocDelayExpired = milliseconds(35);
 
+const milliseconds kCheckCwdDelay = milliseconds(35);
+const milliseconds kCheckCwdDelayExpired = milliseconds(45);
+
 void blockingwait(milliseconds ms)
 {
    boost::asio::io_service io;
@@ -46,7 +49,8 @@ class NoSubProcPollingFixture
 public:
    NoSubProcPollingFixture(PidType pid)
       :
-        poller_(pid, kResetRecentDelay, kCheckSubprocDelay, NULL)
+        poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
+                NULL, NULL)
    {}
 
    ChildProcessSubprocPoll poller_;
@@ -57,8 +61,9 @@ class SubProcPollingFixture
 public:
    SubProcPollingFixture(PidType pid)
       :
-        poller_(pid, kResetRecentDelay, kCheckSubprocDelay,
-                boost::bind(&SubProcPollingFixture::checkSubproc, this, _1)),
+        poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
+                boost::bind(&SubProcPollingFixture::checkSubproc, this, _1),
+                NULL),
         checkReturns_(false),
         callerPid_(0),
         checkCalled_(false)

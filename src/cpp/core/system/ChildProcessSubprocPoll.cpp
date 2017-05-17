@@ -32,18 +32,23 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
       PidType pid,
       boost::posix_time::milliseconds resetRecentDelay,
       boost::posix_time::milliseconds checkSubprocDelay,
-      boost::function<bool (PidType pid)> subProcCheck)
+      boost::posix_time::milliseconds checkCwdDelay,
+      boost::function<bool (PidType pid)> subProcCheck,
+      boost::function<core::FilePath (PidType pid)> cwdCheck)
    :
      pid_(pid),
      checkSubProcAfter_(boost::posix_time::not_a_date_time),
      resetRecentOutputAfter_(boost::posix_time::not_a_date_time),
+     checkCwdAfter_(boost::posix_time::not_a_date_time),
      hasSubprocess_(true),
      hasRecentOutput_(true),
      didThrottleSubprocCheck_(false),
      stopped_(false),
      resetRecentDelay_(resetRecentDelay),
      checkSubprocDelay_(checkSubprocDelay),
-     subProcCheck_(subProcCheck)
+     checkCwdDelay_(checkCwdDelay),
+     subProcCheck_(subProcCheck),
+     cwdCheck_(cwdCheck)
 {
 }
 

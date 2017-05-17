@@ -42,6 +42,8 @@ const boost::posix_time::milliseconds kResetRecentDelay =
                                          boost::posix_time::milliseconds(1000);
 const boost::posix_time::milliseconds kCheckSubprocDelay =
                                          boost::posix_time::milliseconds(200);
+const boost::posix_time::milliseconds kCheckCwdDelay =
+                                         boost::posix_time::milliseconds(500);
 
 std::string findOnPath(const std::string& exe,
                        const std::string& appendExt = "")
@@ -620,8 +622,9 @@ void AsyncChildProcess::poll()
       // setup for subprocess polling
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
-         kResetRecentDelay, kCheckSubprocDelay,
-         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL));
+         kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
+         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL,
+         options().trackCwd ? core::system::currentWorkingDir : NULL));
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
@@ -734,5 +737,3 @@ bool AsyncChildProcess::exited()
 } // namespace system
 } // namespace core
 } // namespace rstudio
-
-

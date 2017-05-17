@@ -464,6 +464,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.environment = shellEnv;
    options.smartTerminal = true;
    options.reportHasSubprocs = true;
+   options.trackCwd = true;
    options.cols = cols;
    options.rows = rows;
 
@@ -999,6 +1000,11 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
    }
 }
 
+void ConsoleProcess::reportCwd(const core::FilePath&)
+{
+
+}
+
 std::string ConsoleProcess::getChannelMode() const
 {
    switch(procInfo_->getChannelMode())
@@ -1040,6 +1046,10 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    if (options_.reportHasSubprocs)
    {
       cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
+   }
+   if (options_.trackCwd)
+   {
+      cb.reportCwd = boost::bind(&ConsoleProcess::reportCwd, ConsoleProcess::shared_from_this(), _1);
    }
    return cb;
 }

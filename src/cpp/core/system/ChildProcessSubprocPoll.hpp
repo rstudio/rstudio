@@ -25,12 +25,16 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-// Maintains and updates two polling-based flags for a process.
+// Tracks process state, via polling.
 //
 // hasSubprocess(): does the process have any child processes? This can be
 // fairly expensive to compute so we don't do it more often than specified by
 // "checkSubProcDelay". Can be turned off completely by passing a
 // NULL "subProcCheck" function.
+//
+// getCwd(): what is current working directory of the process? Updates no
+// more often than specified by "checkCwdDelay". Can be turned off completely
+// by passing a NULL "cwdCheck" function.
 //
 // hasRecentOutput(): did the process recently report receiving output? Recent
 // is controlled by "resetRecentDelay", i.e. if we've seen output within the
@@ -53,7 +57,9 @@ public:
          PidType pid,
          boost::posix_time::milliseconds resetRecentDelay,
          boost::posix_time::milliseconds checkSubprocDelay,
-         boost::function<bool (PidType pid)> subProcCheck);
+         boost::posix_time::milliseconds checkCwdDelay,
+         boost::function<bool (PidType pid)> subProcCheck,
+         boost::function<core::FilePath (PidType pid)> cwdCheck);
 
    virtual ~ChildProcessSubprocPoll() {}
 
@@ -64,22 +70,25 @@ public:
 
    bool hasSubprocess() const;
    bool hasRecentOutput() const;
+   core::FilePath getCwd() const;
 
   boost::posix_time::milliseconds getResetRecentDelay() const;
-
-   boost::posix_time::milliseconds getCheckSubprocDelay() const;
+  boost::posix_time::milliseconds getCheckSubprocDelay() const;
+  boost::posix_time::milliseconds getCwdDelay() const;
 
 private:
-   // process whose subprocesses we are tracking
+   // process being tracked
    PidType pid_;
 
    // when to next perform the checks
    boost::posix_time::ptime checkSubProcAfter_;
    boost::posix_time::ptime resetRecentOutputAfter_;
+   boost::posix_time::ptime checkCwdAfter_;
 
    // results of most recent checks
    bool hasSubprocess_;
    bool hasRecentOutput_;
+   core::FilePath cwd_;
 
    // misc. state
    bool didThrottleSubprocCheck_;
@@ -91,9 +100,16 @@ private:
    // what is the minimum length of time before we check for subprocesses?
    boost::posix_time::milliseconds checkSubprocDelay_;
 
+   // what is the minimum length of time before we update cwd?
+   boost::posix_time::milliseconds checkCwdDelay_;
+
    // function used to check for subprocesses; if NULL then subprocess
    // checking will not be done
    boost::function<bool (PidType pid)> subProcCheck_;
+
+   // function used to update current working directory; if NULL then cwd
+   // updating will not be done
+   boost::function<core::FilePath (PidType pid)> cwdCheck_;
 };
 
 } // namespace system
