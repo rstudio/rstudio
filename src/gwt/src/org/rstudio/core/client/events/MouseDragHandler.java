@@ -67,15 +67,15 @@ public abstract class MouseDragHandler
       public MouseCoordinates getMouseDelta()
       {
          return new MouseCoordinates(
-               lastCoordinates_.getMouseX() - event_.getClientX(),
-               lastCoordinates_.getMouseY() - event_.getClientY());
+               event_.getClientX() - lastCoordinates_.getMouseX(),
+               event_.getClientY() - lastCoordinates_.getMouseY());
       }
       
       public MouseCoordinates getTotalDelta()
       {
          return new MouseCoordinates(
-               initialCoordinates_.getMouseX() - event_.getClientX(),
-               initialCoordinates_.getMouseY() - event_.getClientY());
+               event_.getClientX() - initialCoordinates_.getMouseX(),
+               event_.getClientY() - initialCoordinates_.getMouseY());
       }
       
       public MouseCoordinates getInitialCoordinates()
@@ -103,17 +103,25 @@ public abstract class MouseDragHandler
       private final MouseCoordinates lastCoordinates_;
    }
    
-   // Must be overriden
+   // The action to take before a drag session begins.
+   // Return 'false' to cancel the drag request.
+   public abstract boolean beginDrag(MouseDownEvent event);
+   
+   // The action to take during drag (in response to
+   // mouse move events while the mouse button is held down)
    public abstract void onDrag(MouseDragEvent event);
    
-   // Optional to override
-   public void beginDrag(MouseDownEvent event) {}
-   public void endDrag() {}
+   // The action to take after the drag session has finished
+   // (after the user has released the mouse cursor).
+   public abstract void endDrag();
    
    // Privates ----
    
    private void beginDragImpl(MouseDownEvent event)
    {
+      if (!beginDrag(event))
+         return;
+      
       didDrag_ = false;
       
       initialCoordinates_ = lastCoordinates_ =
@@ -148,8 +156,6 @@ public abstract class MouseDragHandler
             }
          }
       });
-      
-      beginDrag(event);
    }
    
    private void addClickSuppressor()
