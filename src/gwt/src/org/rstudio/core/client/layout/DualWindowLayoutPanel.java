@@ -318,18 +318,19 @@ public class DualWindowLayoutPanel extends SimplePanel
       @Override
       protected JsObject getValue()
       {
+         NormalHeight currentHeight = normalHeight_;
          if (layout_.isSplitterVisible())
          {
-            normalHeight_ = new NormalHeight(layout_.getSplitterBottom(),
+            currentHeight = new NormalHeight(layout_.getSplitterBottom(),
                                              layout_.getOffsetHeight(),
                                              Window.getClientHeight());
          }
 
          State state = JsObject.createJsObject().cast();
-         state.setSplitterPos(normalHeight_.getHeight());
+         state.setSplitterPos(currentHeight.getHeight());
          state.setTopWindowState(windowA_.getState().toString());
-         state.setPanelHeight(normalHeight_.getContainerHeight(getOffsetHeight()));
-         state.setWindowHeight(normalHeight_.getWindowHeight(Window.getClientHeight()));
+         state.setPanelHeight(currentHeight.getContainerHeight(getOffsetHeight()));
+         state.setWindowHeight(currentHeight.getWindowHeight(Window.getClientHeight()));
          return state.cast();
       }
 
