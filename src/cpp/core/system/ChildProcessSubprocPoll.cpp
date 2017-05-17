@@ -26,6 +26,8 @@ boost::posix_time::ptime now()
    return boost::posix_time::microsec_clock::universal_time();
 }
 
+const int kThrottleSubProcFactor = 4;
+
 } // anonymous namespace
 
 ChildProcessSubprocPoll::ChildProcessSubprocPoll(
@@ -77,6 +79,13 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
       resetRecentOutputAfter_ = currentTime + resetRecentDelay_;
    }
 
+   bool didCheckSubProc = pollSubproc(currentTime);
+   bool didCheckCwd = pollCwd(currentTime);
+   return didCheckSubProc || didCheckCwd;
+}
+
+bool ChildProcessSubprocPoll::pollSubproc(boost::posix_time::ptime currentTime)
+{
    if (!subProcCheck_)
       return false;
 
@@ -87,7 +96,7 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
    // will always see output in the form of the command prompt.
    if (!hasRecentOutput() && !didThrottleSubprocCheck_)
    {
-      checkSubProcAfter_ = currentTime + checkSubprocDelay_ * 4;
+      checkSubProcAfter_ = currentTime + checkSubprocDelay_ * kThrottleSubProcFactor;
       didThrottleSubprocCheck_ = true;
       return false;
    }
@@ -109,6 +118,28 @@ bool ChildProcessSubprocPoll::poll(bool hadOutput)
    return true;
 }
 
+bool ChildProcessSubprocPoll::pollCwd(boost::posix_time::ptime currentTime)
+{
+   if (!cwdCheck_)
+      return false;
+
+   // Update state of "getCwd". We do this no more often than every
+   // "checkCwdDelay_" milliseconds.
+   if (checkCwdAfter_.is_not_a_date_time())
+   {
+      checkCwdAfter_ = currentTime + checkCwdDelay_;
+      return false;
+   }
+
+   if (currentTime <= checkCwdAfter_)
+      return false;
+
+   // Enough time has passed, query current working directory and restart timer
+   cwd_ = cwdCheck_(pid_);
+   checkCwdAfter_ = currentTime + checkCwdDelay_;
+   return true;
+}
+
 void ChildProcessSubprocPoll::stop()
 {
    stopped_ = true;
@@ -122,6 +153,11 @@ bool ChildProcessSubprocPoll::hasSubprocess() const
 bool ChildProcessSubprocPoll::hasRecentOutput() const
 {
    return hasRecentOutput_;
+}
+
+core::FilePath ChildProcessSubprocPoll::getCwd() const
+{
+   return cwd_;
 }
 
 } // namespace system

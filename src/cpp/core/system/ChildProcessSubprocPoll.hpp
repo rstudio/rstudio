@@ -63,7 +63,7 @@ public:
 
    virtual ~ChildProcessSubprocPoll() {}
 
-   // returns true if subprocess polling was done
+   // returns true if any checks were done
    bool poll(bool hadOutput);
 
    void stop();
@@ -77,6 +77,9 @@ public:
   boost::posix_time::milliseconds getCwdDelay() const;
 
 private:
+   bool pollSubproc(boost::posix_time::ptime currentTime);
+   bool pollCwd(boost::posix_time::ptime currentTime);
+
    // process being tracked
    PidType pid_;
 

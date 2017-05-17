@@ -1000,9 +1000,13 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
    }
 }
 
-void ConsoleProcess::reportCwd(const core::FilePath&)
+void ConsoleProcess::reportCwd(const core::FilePath& cwd)
 {
-
+   if (procInfo_->getCwd() != cwd)
+   {
+      procInfo_->setCwd(cwd);
+      saveConsoleProcesses();
+   }
 }
 
 std::string ConsoleProcess::getChannelMode() const

@@ -89,6 +89,38 @@ public:
    bool checkCalled_;
 };
 
+class CwdPollingFixture
+{
+public:
+   CwdPollingFixture(PidType pid)
+      :
+        poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
+                NULL,
+                boost::bind(&CwdPollingFixture::checkCwd, this, _1)),
+        callerPid_(0),
+        checkCalled_(false)
+   {}
+
+   core::FilePath checkCwd(PidType pid)
+   {
+      callerPid_ = pid;
+      checkCalled_ = true;
+      return checkReturns_;
+   }
+
+   void clearFlags()
+   {
+      callerPid_ = 0;
+      checkCalled_ = false;
+   }
+
+   ChildProcessSubprocPoll poller_;
+   core::FilePath checkReturns_;
+
+   PidType callerPid_;
+   bool checkCalled_;
+};
+
 } // anonymous namespace
 
 context("ChildProcess polling support class")
@@ -176,6 +208,15 @@ context("ChildProcess polling support class")
       expect_false(test.checkCalled_); // because of no recent output
       expect_false(test.poller_.hasRecentOutput());
       expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+   }
+
+   test_that("initial state for cwd polling matches expectations")
+   {
+      PidType pid = 12345;
+      CwdPollingFixture test(pid);
+
+      expect_true(test.poller_.hasRecentOutput());
+      expect_true(test.poller_.getCwd().empty());
    }
 }
 

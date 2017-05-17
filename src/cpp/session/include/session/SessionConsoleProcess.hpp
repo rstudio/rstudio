@@ -188,7 +188,7 @@ private:
                  const std::string& output);
    void onExit(int exitCode);
    void onHasSubprocs(bool hasSubProcs);
-   void reportCwd(const core::FilePath&);
+   void reportCwd(const core::FilePath& cwd);
    void processQueuedInput(core::system::ProcessOperations& ops);
 
    std::string bufferedOutput() const;
