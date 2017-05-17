@@ -42,6 +42,8 @@
 
 @external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
 
+@external rstudio-animating;
+
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
@@ -2429,4 +2431,11 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 @external com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner;
 .rstudio-themes-flat .rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
    display: none;
+}
+
+/* AnimationHelper requires background to be set at -10 */
+.rstudio-animating.rstudio-themes-flat .rstudio-themes-default,
+.rstudio-animating.rstudio-themes-flat .rstudio-themes-dark-grey,
+.rstudio-animating.rstudio-themes-flat .rstudio-themes-alternate {
+   z-index: -10;
 }

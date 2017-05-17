@@ -25,7 +25,7 @@
 }
 
 .rstudio-themes-flat.rstudio-themes-dark .profvis-table th {
-   background: rgba(255, 255, 255, 0.2);
+   background: rgba(255, 255, 255, 0.10);
    border-top: none;
    font-weight: 400;
 }
@@ -66,7 +66,7 @@
 }
 
 .rstudio-themes-flat.rstudio-themes-dark .profvis-treetable th {
-   background: rgba(255, 255, 255, 0.2);
+   color: #FFF;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-collapse > div > div {
@@ -107,4 +107,8 @@
 
 .rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell.highlighted.active .rect {
    fill: rgba(255,255,255,0.7);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-message div {
+   color: #FFF;
 }
