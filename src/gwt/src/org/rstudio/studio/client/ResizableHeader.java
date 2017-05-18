@@ -145,14 +145,20 @@ public class ResizableHeader extends Header<String>
             // discover the change in column widths
             int delta = event.getTotalDelta().getMouseX();
             
-            // update column widths
-            table_.setColumnWidth(
-                  index_ - 1,
-                  (columnWidths_.get(index_ - 1) + delta) + "px");
+            // compute the right column width
+            int leftWidth = columnWidths_.get(index_ - 1) + delta;
+            int rightWidth = columnWidths_.get(index_) - delta;
             
-            table_.setColumnWidth(
-                  index_,
-                  (columnWidths_.get(index_) - delta) + "px");
+            // avoid issues with resizing too small
+            if (leftWidth < 0)
+            {
+               rightWidth = rightWidth + leftWidth;
+               leftWidth = 0;
+            }
+            
+            // update column widths
+            table_.setColumnWidth(index_ - 1, leftWidth + "px");
+            table_.setColumnWidth(index_, rightWidth + "px");
          }
          
          @Override
