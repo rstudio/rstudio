@@ -454,7 +454,7 @@ options(connectionObserver = list(
 
    connectionNames <- sapply(connectionList, function(e) e$name)
    supportedNotInstsalled <- Filter(function(e) {
-      !e$name %in% connectionNames
+      !.rs.isPackageVersionInstalled(e$package, e$version)
    }, .rs.connectionSupportedPackages())
 
    connectionList <- c(connectionList, lapply(supportedNotInstsalled, function(supportedPackage) {
