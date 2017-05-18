@@ -24,6 +24,8 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 
 public class RStudioThemes
 {
@@ -54,6 +56,17 @@ public class RStudioThemes
 
    public static boolean isFlat(UIPrefs prefs) {
       return prefs.getFlatTheme().getValue() != "classic"; 
+   }
+
+   public static String suggestThemeFromAceTheme(String aceTheme) {
+      RegExp keyReg = RegExp.compile(
+         "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
+         "material|merbivore soft|merbivore|mono industrial|monokai|" +
+         "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
+         "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
+      
+      MatchResult result = keyReg.exec(aceTheme);
+      return result != null ? "dark-grey" : "default";
    }
    
    private static boolean usesScrollbars() {
