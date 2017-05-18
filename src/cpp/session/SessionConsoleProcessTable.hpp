@@ -35,7 +35,11 @@ namespace console_process {
 // Find a proc
 ConsoleProcessPtr findProcByHandle(const std::string& handle);
 ConsoleProcessPtr findProcByCaption(const std::string& caption);
+
+// Last-activated proc in the client
 ConsoleProcessPtr getVisibleProc();
+void clearVisibleProc();
+void setVisibleProc(const std::string& handle);
 
 // Build a list of all process captions (captions are used as unique IDs by
 // the Terminal R API)

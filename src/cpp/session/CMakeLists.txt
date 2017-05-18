@@ -64,6 +64,7 @@ set (SESSION_SOURCE_FILES
    SessionClientInit.cpp
    SessionConsoleInput.cpp
    SessionConsoleProcess.cpp
+   SessionConsoleProcessApi.cpp
    SessionConsoleProcessInfo.cpp
    SessionConsoleProcessPersist.cpp
    SessionConsoleProcessSocket.cpp
