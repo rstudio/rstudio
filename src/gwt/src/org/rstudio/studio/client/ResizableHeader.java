@@ -17,7 +17,6 @@ package org.rstudio.studio.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -92,8 +91,6 @@ public class ResizableHeader extends Header<String>
       table_ = table;
       text_ = text;
       index_ = table.getColumnCount();
-      
-      Debug.logToRConsole("Index: " + index_);
       
       MouseDragHandler.addHandler(table_, new MouseDragHandler()
       {
