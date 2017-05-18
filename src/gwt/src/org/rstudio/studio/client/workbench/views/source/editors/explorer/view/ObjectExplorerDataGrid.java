@@ -1103,8 +1103,8 @@ public class ObjectExplorerDataGrid
    
    private void initializeColumnWidths()
    {
-      setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
-      setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
+      setColumnWidth(nameColumn_, DEFAULT_NAME_COLUMN_WIDTH + "px");
+      setColumnWidth(typeColumn_, DEFAULT_TYPE_COLUMN_WIDTH + "px");
       setColumnWidth(valueColumn_, null);
    }
    
@@ -1290,8 +1290,8 @@ public class ObjectExplorerDataGrid
    private EventBus events_;
    
    // Static Members ----
-   private static final int NAME_COLUMN_WIDTH = 180;
-   private static final int TYPE_COLUMN_WIDTH = 180;
+   private static final int DEFAULT_NAME_COLUMN_WIDTH = 180;
+   private static final int DEFAULT_TYPE_COLUMN_WIDTH = 180;
    
    private static final int DEFAULT_ROW_LIMIT = 200;
    
