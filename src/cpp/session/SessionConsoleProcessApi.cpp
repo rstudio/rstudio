@@ -16,17 +16,16 @@
 #include "SessionConsoleProcessApi.hpp"
 
 #include <boost/foreach.hpp>
-#include <boost/range/adaptor/map.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
-#include <core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
+
+#include "modules/SessionWorkbench.hpp"
 
 using namespace rstudio::core;
 
@@ -50,9 +49,9 @@ ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
    return proc;
 }
 
-} // anonymous namespace
 
-namespace api { // R API
+
+// R APIs ---------------------------------------------------------------
 
 // Return vector of all terminal ids (captions)
 SEXP rs_getAllTerminals()
@@ -310,9 +309,7 @@ SEXP rs_activateTerminal(SEXP idSEXP, SEXP showSEXP)
    return R_NilValue;
 }
 
-} // namespace api ----------------
-
-namespace rpc { // RPC API
+// RPC APIs ---------------------------------------------------------------
 
 Error procStart(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
@@ -615,7 +612,41 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    return Success();
 }
 
-} // namespace rpc ----------------
+} // anonymous namespace
+
+Error initializeApi()
+{
+   using namespace module_context;
+
+   RS_REGISTER_CALL_METHOD(rs_activateTerminal, 2);
+   RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
+   RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
+   RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
+   RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
+   RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
+   RS_REGISTER_CALL_METHOD(rs_isTerminalRunning, 1);
+   RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
+   RS_REGISTER_CALL_METHOD(rs_sendToTerminal, 2);
+
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "process_start", procStart))
+      (bind(registerRpcMethod, "process_interrupt", procInterrupt))
+      (bind(registerRpcMethod, "process_reap", procReap))
+      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
+      (bind(registerRpcMethod, "process_set_size", procSetSize))
+      (bind(registerRpcMethod, "process_set_caption", procSetCaption))
+      (bind(registerRpcMethod, "process_set_title", procSetTitle))
+      (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
+      (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
+      (bind(registerRpcMethod, "process_test_exists", procTestExists))
+      (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
+      (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible));
+
+   return initBlock.execute();
+}
 
 } // namespace console_process
 } // namespace session

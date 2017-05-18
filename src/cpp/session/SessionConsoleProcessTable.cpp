@@ -18,12 +18,9 @@
 #include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
-#include <core/Algorithm.hpp>
-#include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include "SessionConsoleProcessApi.hpp"
 
@@ -242,35 +239,7 @@ Error internalInitialize()
 
    loadConsoleProcesses();
 
-   RS_REGISTER_CALL_METHOD(api::rs_activateTerminal, 2);
-   RS_REGISTER_CALL_METHOD(api::rs_createNamedTerminal, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_clearTerminal, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_getAllTerminals, 0);
-   RS_REGISTER_CALL_METHOD(api::rs_getTerminalContext, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_getTerminalBuffer, 2);
-   RS_REGISTER_CALL_METHOD(api::rs_getVisibleTerminal, 0);
-   RS_REGISTER_CALL_METHOD(api::rs_isTerminalBusy, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_isTerminalRunning, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_killTerminal, 1);
-   RS_REGISTER_CALL_METHOD(api::rs_sendToTerminal, 2);
-
-   // install rpc methods
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "process_start", rpc::procStart))
-      (bind(registerRpcMethod, "process_interrupt", rpc::procInterrupt))
-      (bind(registerRpcMethod, "process_reap", rpc::procReap))
-      (bind(registerRpcMethod, "process_write_stdin", rpc::procWriteStdin))
-      (bind(registerRpcMethod, "process_set_size", rpc::procSetSize))
-      (bind(registerRpcMethod, "process_set_caption", rpc::procSetCaption))
-      (bind(registerRpcMethod, "process_set_title", rpc::procSetTitle))
-      (bind(registerRpcMethod, "process_erase_buffer", rpc::procEraseBuffer))
-      (bind(registerRpcMethod, "process_get_buffer_chunk", rpc::procGetBufferChunk))
-      (bind(registerRpcMethod, "process_test_exists", rpc::procTestExists))
-      (bind(registerRpcMethod, "process_use_rpc", rpc::procUseRpc))
-      (bind(registerRpcMethod, "process_notify_visible", rpc::procNotifyVisible));
-
-   return initBlock.execute();
+   return initializeApi();
 }
 
 } // namespace console_process

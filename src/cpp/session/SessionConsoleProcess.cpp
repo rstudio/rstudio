@@ -15,18 +15,10 @@
 
 #include <session/SessionConsoleProcess.hpp>
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
-#include <boost/range/adaptor/map.hpp>
-
 #include <core/Algorithm.hpp>
-#include <core/text/AnsiCodeParser.hpp>
-#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
-#include "session-config.h"
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
 
