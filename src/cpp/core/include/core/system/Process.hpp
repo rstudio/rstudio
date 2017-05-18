@@ -90,7 +90,7 @@ struct ProcessOptions
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
-        trackCwd(false),
+        trackCwd(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
