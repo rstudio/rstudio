@@ -17,6 +17,7 @@ package org.rstudio.studio.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -35,43 +36,35 @@ import com.google.gwt.user.cellview.client.Header;
 
 public class ResizableHeader<T> extends Header<String>
 {
-   private static class ResizableHeaderCell extends AbstractCell<String>
+   private static class ResizableHeaderCell<U> extends AbstractCell<U>
    {
-      public ResizableHeaderCell(int index)
-      {
-         super();
-         index_ = index;
-      }
-      
       @Override
       public void render(Context context,
-                         String string,
+                         U content,
                          SafeHtmlBuilder builder)
       {
          SafeHtml splitter = SafeHtmlUtil.createOpenTag("div",
                "class", RES.styles().splitter(),
-               "data-index", "" + index_);
+               "data-index", "" + context.getColumn());
          
          builder
             .append(splitter)
             .appendHtmlConstant("</div>")
             .appendHtmlConstant("<div>")
-            .appendEscaped(string)
+            .appendEscaped(content.toString())
             .appendHtmlConstant("</div>");
       }
-      
-      private final int index_;
    }
    
-   public ResizableHeader(AbstractCellTable<T> table,
-                          String text,
-                          int index)
+   public ResizableHeader(AbstractCellTable<T> table, String text)
    {
-      super(new ResizableHeaderCell(index));
+      super(new ResizableHeaderCell<String>());
       
       table_ = table;
       text_ = text;
-      index_ = index;
+      index_ = table.getColumnCount();
+      
+      Debug.logToRConsole("Index: " + index_);
       
       MouseDragHandler.addHandler(table_, new MouseDragHandler()
       {
