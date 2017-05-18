@@ -12,6 +12,13 @@
 	border-right: 1px solid #FFF !important;
 }
 
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
+	border-top: 0px solid #FFF !important;
+	border-left: 0px solid #FFF !important;
+	border-right: 0px solid #FFF !important;
+}
+
 .dataGridKeyboardSelectedRowCell:first-child {
 	border-left: 2px solid #0AF !important;
 }
@@ -22,6 +29,10 @@
 
 .dataGridWidget > div {
 	min-height: 18px !important;
+}
+
+.rstudio-themes-flat .dataGridWidget thead > tr {
+	height: 18px;
 }
 
 .dataGridWidget td > div {
@@ -81,7 +92,31 @@
 	box-shadow: 0 0 4px #8BF;
 }
 
+.rstudio-themes-flat .dataGridWidget {
+	background: #FFF;
+}
+
 .rstudio-themes-flat .dataGridOddRowCell,
 .rstudio-themes-flat .dataGridEvenRowCell {
   border: none;
+}
+
+.rstudio-themes-flat .dataGridCell:first-child {
+	border-left: 2px solid #FFF;
+}
+
+.rstudio-themes-flat .dataGridCell:first-child div {
+	margin-left: -1px;
+}
+
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child, .dataGridKeyboardSelectedRowCell:first-child:active,
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child:hover, .dataGridKeyboardSelectedRowCell:first-child:focus {
+	border-left: 2px solid #0AF !important;
+}
+
+.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child div {
+}
+
+.rstudio-themes-flat .dataGridWidget {
+  border: 1px solid #ddd;
 }
