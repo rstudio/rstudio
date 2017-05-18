@@ -380,7 +380,9 @@ final class IntStreamImpl extends TerminatableStream<IntStreamImpl> implements I
     private boolean found;
 
     public FilterSpliterator(IntPredicate filter, Spliterator.OfInt original) {
-      super(original.estimateSize(), original.characteristics() & ~Spliterator.SIZED);
+      super(
+          original.estimateSize(),
+          original.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED));
       checkNotNull(filter);
       this.filter = filter;
       this.original = original;

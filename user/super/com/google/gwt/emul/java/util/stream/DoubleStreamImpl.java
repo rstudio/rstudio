@@ -367,7 +367,9 @@ final class DoubleStreamImpl extends TerminatableStream<DoubleStreamImpl> implem
     private boolean found;
 
     public FilterSpliterator(DoublePredicate filter, Spliterator.OfDouble original) {
-      super(original.estimateSize(), original.characteristics() & ~Spliterator.SIZED);
+      super(
+          original.estimateSize(),
+          original.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED));
       checkNotNull(filter);
       this.filter = filter;
       this.original = original;

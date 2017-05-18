@@ -165,6 +165,14 @@ public class DoubleStreamTest extends EmulTestBase {
     DoubleStream.of(1d, 2d, 3d).filter(i -> data[0] |= true);
     assertFalse(data[0]);
 
+    // Nothing's *defined* to care about the Spliterator characteristics, but the implementation
+    // can't actually know the size before executing, so we check the characteristics explicitly.
+    assertFalse(
+        DoubleStream.of(1d, 2d, 3d)
+            .filter(a -> a == 1d)
+            .spliterator()
+            .hasCharacteristics(Spliterator.SIZED | Spliterator.SUBSIZED));
+
     // one result
     assertEquals(
         new double[] {1d}, DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> a == 1).toArray());

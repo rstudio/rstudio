@@ -18,7 +18,6 @@ package java.lang;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import javaemul.internal.JsUtils;
-
 import jsinterop.annotations.JsMethod;
 
 /**

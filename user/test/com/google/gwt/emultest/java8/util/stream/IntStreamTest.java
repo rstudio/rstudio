@@ -178,6 +178,14 @@ public class IntStreamTest extends EmulTestBase {
     IntStream.of(1, 2, 3).filter(i -> data[0] |= true);
     assertFalse(data[0]);
 
+    // Nothing's *defined* to care about the Spliterator characteristics, but the implementation
+    // can't actually know the size before executing, so we check the characteristics explicitly.
+    assertFalse(
+        IntStream.of(1, 2, 3)
+            .filter(a -> a == 1)
+            .spliterator()
+            .hasCharacteristics(Spliterator.SIZED | Spliterator.SUBSIZED));
+
     // one result
     assertEquals(new int[] {1}, IntStream.of(1, 2, 3, 4, 3).filter(a -> a == 1).toArray());
     // zero results

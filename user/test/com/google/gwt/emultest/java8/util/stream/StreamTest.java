@@ -231,6 +231,14 @@ public class StreamTest extends EmulTestBase {
     Stream.of(1, 2, 3).filter(i -> data[0] |= true);
     assertFalse(data[0]);
 
+    // Nothing's *defined* to care about the Spliterator characteristics, but the implementation
+    // can't actually know the size before executing, so we check the characteristics explicitly.
+    assertFalse(
+        Stream.of("a", "b", "c", "d", "c")
+            .filter(a -> a.equals("a"))
+            .spliterator()
+            .hasCharacteristics(Spliterator.SIZED | Spliterator.SUBSIZED));
+
     // one result
     assertEquals(
         Collections.singletonList("a"),

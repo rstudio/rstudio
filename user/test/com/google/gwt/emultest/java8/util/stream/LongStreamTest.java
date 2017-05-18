@@ -177,6 +177,14 @@ public class LongStreamTest extends EmulTestBase {
     LongStream.of(1L, 2L, 3L).filter(i -> data[0] |= true);
     assertFalse(data[0]);
 
+    // Nothing's *defined* to care about the Spliterator characteristics, but the implementation
+    // can't actually know the size before executing, so we check the characteristics explicitly.
+    assertFalse(
+        LongStream.of(1L, 2L, 3L)
+            .filter(a -> a == 1L)
+            .spliterator()
+            .hasCharacteristics(Spliterator.SIZED | Spliterator.SUBSIZED));
+
     // one result
     assertEquals(new long[] {1L}, LongStream.of(1L, 2L, 3L, 4L, 3L).filter(a -> a == 1).toArray());
     // zero results

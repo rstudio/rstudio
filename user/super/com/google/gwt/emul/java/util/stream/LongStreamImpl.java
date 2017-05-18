@@ -372,7 +372,9 @@ final class LongStreamImpl extends TerminatableStream<LongStreamImpl> implements
     private boolean found;
 
     public FilterSpliterator(LongPredicate filter, Spliterator.OfLong original) {
-      super(original.estimateSize(), original.characteristics() & ~Spliterator.SIZED);
+      super(
+          original.estimateSize(),
+          original.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED));
       checkNotNull(filter);
       this.filter = filter;
       this.original = original;

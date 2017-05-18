@@ -403,7 +403,9 @@ final class StreamImpl<T> extends TerminatableStream<StreamImpl<T>> implements S
     private boolean found;
 
     public FilterSpliterator(Predicate<? super T> filter, Spliterator<T> original) {
-      super(original.estimateSize(), original.characteristics() & ~Spliterator.SIZED);
+      super(
+          original.estimateSize(),
+          original.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED));
       checkNotNull(filter);
       this.filter = filter;
       this.original = original;
