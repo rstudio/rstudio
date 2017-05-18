@@ -183,6 +183,27 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_removeUiPref(SEXP prefName)
+{
+   json::Value prefValue = json::Value();
+
+   // extract name of preference to write
+   std::string pref = r::sexp::safeAsString(prefName, "");
+   if (pref.empty())
+      return R_NilValue;
+   
+   json::Object uiPrefs = userSettings().uiPrefs();
+   json::Object::iterator it = uiPrefs.find(pref);
+   if (it != uiPrefs.end())
+   {
+      uiPrefs.erase(it);
+   }
+
+   userSettings().setUiPrefs(uiPrefs);
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
    
 UserSettings& userSettings()
@@ -214,17 +235,9 @@ Error UserSettings::initialize()
       return error;
 
    // register routines for reading/writing UI prefs from R code
-   R_CallMethodDef readUiPrefMethodDef ;
-   readUiPrefMethodDef.name = "rs_readUiPref";
-   readUiPrefMethodDef.fun = (DL_FUNC) rs_readUiPref;
-   readUiPrefMethodDef.numArgs = 1;
-   r::routines::addCallMethod(readUiPrefMethodDef);
-
-   R_CallMethodDef writeUiPrefMethodDef ;
-   writeUiPrefMethodDef.name = "rs_writeUiPref";
-   writeUiPrefMethodDef.fun = (DL_FUNC) rs_writeUiPref;
-   writeUiPrefMethodDef.numArgs = 2;
-   r::routines::addCallMethod(writeUiPrefMethodDef);
+   RS_REGISTER_CALL_METHOD(rs_readUiPref, 1);
+   RS_REGISTER_CALL_METHOD(rs_writeUiPref, 2);
+   RS_REGISTER_CALL_METHOD(rs_removeUiPref, 1);
 
    // make sure we have a context id
    if (contextId().empty())
