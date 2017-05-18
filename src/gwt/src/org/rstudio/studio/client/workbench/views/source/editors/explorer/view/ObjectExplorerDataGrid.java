@@ -566,14 +566,14 @@ public class ObjectExplorerDataGrid
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
-      setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
       addColumn(typeColumn_, new ResizableHeader(this, "Type"));
-      setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
       addColumn(valueColumn_, new ResizableHeader(this, "Column"));
+      
+      initializeColumnWidths();
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
@@ -602,6 +602,7 @@ public class ObjectExplorerDataGrid
    
    public void refresh()
    {
+      initializeColumnWidths();
       initializeRoot();
    }
    
@@ -1098,6 +1099,13 @@ public class ObjectExplorerDataGrid
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void initializeColumnWidths()
+   {
+      setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
+      setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
+      setColumnWidth(valueColumn_, null);
    }
    
    private void initializeRoot()
