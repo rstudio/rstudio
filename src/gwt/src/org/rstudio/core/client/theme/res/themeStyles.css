@@ -1244,7 +1244,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    height: 21px !important;
 }
 
-.rstudio-themes-flat .secondaryToolbar img[src] {
+.rstudio-themes-flat .secondaryToolbar img[src=""] {
    visibility: hidden;
 }
 
