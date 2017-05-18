@@ -32,19 +32,46 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.Header;
 
-public class ResizableHeader<T> extends Header<String>
+public class ResizableHeader extends Header<String>
 {
    private static class ResizableHeaderCell<U> extends AbstractCell<U>
    {
+      public ResizableHeaderCell(AbstractCellTable<?> table)
+      {
+         super();
+         table_ = table;
+      }
+      
       @Override
       public void render(Context context,
                          U content,
                          SafeHtmlBuilder builder)
       {
+         // If a 'sort' icon is being drawn, we need to re-adjust
+         // the left margin size to ensure the splitter is properly
+         // positioned.
+         boolean isSorted = false;
+         Column<?, ?> column = table_.getColumn(context.getColumn());
+         ColumnSortList sortList = table_.getColumnSortList();
+         if (sortList.size() > 0)
+         {
+            ColumnSortInfo info = sortList.get(0);
+            if (info.getColumn().equals(column))
+               isSorted = true;
+         }
+         
+         String marginLeft = isSorted
+               ? "-23px"
+               : "-7px";
+                  
          SafeHtml splitter = SafeHtmlUtil.createOpenTag("div",
                "class", RES.styles().splitter(),
+               "style", "margin-left: " + marginLeft + ";",
                "data-index", "" + context.getColumn());
          
          builder
@@ -54,11 +81,13 @@ public class ResizableHeader<T> extends Header<String>
             .appendEscaped(content.toString())
             .appendHtmlConstant("</div>");
       }
+      
+      private final AbstractCellTable<?> table_;
    }
    
-   public ResizableHeader(AbstractCellTable<T> table, String text)
+   public ResizableHeader(AbstractCellTable<?> table, String text)
    {
-      super(new ResizableHeaderCell<String>());
+      super(new ResizableHeaderCell<String>(table));
       
       table_ = table;
       text_ = text;
@@ -104,7 +133,7 @@ public class ResizableHeader<T> extends Header<String>
                Element childEl = rowEl.getChild(i).cast();
                int width = childEl.getOffsetWidth();
                columnWidths_.add(width);
-               table_.setColumnWidth(table_.getColumn(i), width + "px");
+               table_.setColumnWidth(i, width + "px");
             }
             
             return true;
@@ -118,11 +147,11 @@ public class ResizableHeader<T> extends Header<String>
             
             // update column widths
             table_.setColumnWidth(
-                  table_.getColumn(index_ - 1),
+                  index_ - 1,
                   (columnWidths_.get(index_ - 1) + delta) + "px");
             
             table_.setColumnWidth(
-                  table_.getColumn(index_),
+                  index_,
                   (columnWidths_.get(index_) - delta) + "px");
          }
          
@@ -140,7 +169,7 @@ public class ResizableHeader<T> extends Header<String>
       return text_;
    }
    
-   private final AbstractCellTable<T> table_;
+   private final AbstractCellTable<?> table_;
    private final String text_;
    private final int index_;
    

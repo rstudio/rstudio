@@ -569,11 +569,11 @@ public class ObjectExplorerDataGrid
       setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
-      addColumn(typeColumn_, new ResizableHeader<Data>(this, "Type"));
+      addColumn(typeColumn_, new ResizableHeader(this, "Type"));
       setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
-      addColumn(valueColumn_, new ResizableHeader<Data>(this, "Column"));
+      addColumn(valueColumn_, new ResizableHeader(this, "Column"));
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();

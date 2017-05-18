@@ -2,9 +2,8 @@
 
 .splitter {
 	position: absolute;
-	width: 6px;
-	height: 100%;
+	width: 7px;
+	height: 18px;
 	cursor: col-resize;
-	margin-left: -5px;
 	margin-top: -2px;
 }
