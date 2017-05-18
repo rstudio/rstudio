@@ -121,11 +121,15 @@ public:
    static ConsoleProcessPtr createTerminalProcess(
          ConsoleProcessPtr proc);
 
+   // Configure ProcessOptions for a terminal and return it. Also sets
+   // the output param pSelectedShellType to indicate which shell type
+   // was actually configured (e.g. what did 'default' get mapped to?).
    static core::system::ProcessOptions createTerminalProcOptions(
-         TerminalShell::TerminalShellType shellType,
+         TerminalShell::TerminalShellType desiredShellType,
          int cols, int rows,
          int termSequence,
-         core::FilePath workingDir);
+         core::FilePath workingDir,
+         TerminalShell::TerminalShellType *pSelectedShellType);
 
    virtual ~ConsoleProcess() {}
 
@@ -166,6 +170,11 @@ public:
    bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
    core::FilePath getCwd() const { return procInfo_->getCwd(); }
    bool getWasRestarted() const { return procInfo_->getRestarted(); }
+
+   std::string getShellName() const;
+   TerminalShell::TerminalShellType getShellType() const {
+      return procInfo_->getShellType();
+   }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();
