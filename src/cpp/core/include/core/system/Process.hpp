@@ -89,7 +89,8 @@ struct ProcessOptions
         cols(kDefaultCols),
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
-        reportHasSubprocs(false)
+        reportHasSubprocs(false),
+        trackCwd(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
@@ -97,7 +98,8 @@ struct ProcessOptions
         cols(kDefaultCols),
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
-        reportHasSubprocs(false)
+        reportHasSubprocs(false),
+        trackCwd(false)
 #endif
    {
    }
@@ -154,6 +156,9 @@ struct ProcessOptions
 
    // Periodically report if process has any child processes
    bool reportHasSubprocs;
+
+   // Periodically track process' current working directory
+   bool trackCwd;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -299,6 +304,9 @@ struct ProcessCallbacks
 
    // Called periodically to report if this process has subprocesses
    boost::function<void(bool)> onHasSubprocs;
+
+   // Called periodically to report current working directory of process
+   boost::function<void(const core::FilePath&)> reportCwd;
 };
 
 ProcessCallbacks createProcessCallbacks(

@@ -154,7 +154,7 @@ public:
    bool getAltBufferActive() const { return altBufferActive_; }
 
    // Last-known current working directory
-   void setCwd(core::FilePath cwd) { cwd_ = cwd; }
+   void setCwd(const core::FilePath& cwd) { cwd_ = cwd; }
    core::FilePath getCwd() const { return cwd_; }
 
    // Last-known terminal dimensions

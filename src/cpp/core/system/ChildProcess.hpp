@@ -72,6 +72,10 @@ public:
    // isn't configured to check for subprocesses.
    virtual bool hasSubprocess() const;
 
+   // What is current working directory of this process? Empty if unknown
+   // or not configured to track cwd.
+   virtual core::FilePath getCwd() const;
+
    // Has this process generated any recent output?
    virtual bool hasRecentOutput() const;
 
@@ -215,6 +219,7 @@ public:
    virtual Error terminate();
 
    virtual bool hasSubprocess() const;
+   virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
 
 private:

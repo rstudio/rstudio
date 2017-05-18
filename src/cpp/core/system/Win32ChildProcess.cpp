@@ -38,10 +38,18 @@ namespace system {
 
 namespace {
 
+// how long we keep "saw activity" state at true even if we haven't seen
+// new activity
 const boost::posix_time::milliseconds kResetRecentDelay =
                                          boost::posix_time::milliseconds(1000);
+
+// how often we update "has subprocesses" flag
 const boost::posix_time::milliseconds kCheckSubprocDelay =
                                          boost::posix_time::milliseconds(200);
+
+// how often we query and store current working directory of subprocess
+const boost::posix_time::milliseconds kCheckCwdDelay =
+                                         boost::posix_time::milliseconds(2000);
 
 std::string findOnPath(const std::string& exe,
                        const std::string& appendExt = "")
@@ -280,6 +288,12 @@ bool ChildProcess::hasSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return true;
+}
+
+core::FilePath ChildProcess::getCwd() const
+{
+   // base class doesn't support cwd-tracking; override to implement
+   return FilePath();
 }
 
 bool ChildProcess::hasRecentOutput() const
@@ -604,6 +618,14 @@ bool AsyncChildProcess::hasSubprocess() const
       return true;
 }
 
+core::FilePath AsyncChildProcess::getCwd() const
+{
+   if (pAsyncImpl_->pSubprocPoll_)
+      return pAsyncImpl_->pSubprocPoll_->getCwd();
+   else
+      return FilePath();
+}
+
 bool AsyncChildProcess::hasRecentOutput() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
@@ -620,8 +642,9 @@ void AsyncChildProcess::poll()
       // setup for subprocess polling
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
-         kResetRecentDelay, kCheckSubprocDelay,
-         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL));
+         kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
+         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL,
+         options().trackCwd ? core::system::currentWorkingDir : NULL));
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
@@ -723,6 +746,10 @@ void AsyncChildProcess::poll()
       {
          callbacks_.onHasSubprocs(hasSubprocess());
       }
+      if (callbacks_.reportCwd)
+      {
+         callbacks_.reportCwd(getCwd());
+      }
    }
 }
 
@@ -734,5 +761,3 @@ bool AsyncChildProcess::exited()
 } // namespace system
 } // namespace core
 } // namespace rstudio
-
-
