@@ -437,18 +437,21 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    # run the original function (f). setup condition handlers soley so that
    # we can correctly print the name of the function called in error
    # and warning messages -- otherwise R prints "original(...)"
-   withCallingHandlers(tryCatch(f(...), 
-                                error=function(e)
-                                {
-                                   cat("Error in ", name, " : ", e$message, 
-                                       "\n", sep="")
-                                }),
-                       warning=function(w)
-                       {
-                          cat("Warning in ", name, " :\n  ",  w$message, 
-                              "\n", sep="")
-                          invokeRestart("muffleWarning")
-                       })
+   withCallingHandlers(
+      tryCatch(
+         f(...),
+         error = function(e)
+         {
+            cat("Error in ", name, " : ", e$message, "\n", sep = "")
+         }
+      ),
+      warning = function(w)
+      {
+         if (getOption("warn") >= 0)
+            cat("Warning in ", name, " :\n  ",  w$message, "\n", sep = "")
+         invokeRestart("muffleWarning")
+      }
+   )
 })
 
 # replacing an internal R function

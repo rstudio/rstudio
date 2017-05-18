@@ -1234,6 +1234,14 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
    return Success();
 }
 
+bool isProcessRunning(pid_t pid)
+{
+   // the posix standard way of checking if a process
+   // is running is to send the 0 signal to it
+   int result = kill(pid, 0);
+   return result == 0;
+}
+
 #else
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 {

@@ -102,6 +102,8 @@ struct ProcessInfo
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo);
 
+bool isProcessRunning(pid_t pid);
+
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
 struct IpAddress

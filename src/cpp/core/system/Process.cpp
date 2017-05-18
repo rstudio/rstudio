@@ -1,7 +1,7 @@
 /*
  * Process.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -237,6 +237,7 @@ ProcessCallbacks createProcessCallbacks(
 
    // Not implemented for generic processes
    cb.onHasSubprocs = NULL;
+   cb.reportCwd = NULL;
 
    // return it
    return cb;
