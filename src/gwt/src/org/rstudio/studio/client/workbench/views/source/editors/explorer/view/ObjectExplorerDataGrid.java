@@ -569,11 +569,11 @@ public class ObjectExplorerDataGrid
       setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
-      addColumn(typeColumn_, new ResizableHeader(this, "Type", 1));
+      addColumn(typeColumn_, new ResizableHeader<Data>(this, "Type", 1));
       setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
-      addColumn(valueColumn_, new ResizableHeader(this, "Column", 2));
+      addColumn(valueColumn_, new ResizableHeader<Data>(this, "Column", 2));
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
@@ -817,6 +817,14 @@ public class ObjectExplorerDataGrid
       if (containingRowEl == null)
          return;
       
+      // compute the width of each table cell element minus last
+      int otherWidth = 0;
+      for (int i = 0, n = hoveredRow_.getChildCount() - 1; i < n; i++)
+      {
+         Element childEl = hoveredRow_.getChild(i).cast();
+         otherWidth += childEl.getScrollWidth();
+      }
+      
       // TODO: do a better job of automatically computing these widths,
       // rather than hard-coding them
       int buttonWidth = 0;
@@ -827,12 +835,7 @@ public class ObjectExplorerDataGrid
          buttonWidth = 48;
 
       int totalWidth = getOffsetWidth();
-      int remainingWidth =
-            totalWidth -
-            NAME_COLUMN_WIDTH -
-            TYPE_COLUMN_WIDTH -
-            buttonWidth -
-            20;
+      int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
       
       Element parentEl = valueDescEl.getParentElement();
       parentEl.getStyle().setPropertyPx("width", Math.max(0, remainingWidth));

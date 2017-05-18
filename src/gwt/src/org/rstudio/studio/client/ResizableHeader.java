@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -30,7 +33,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.Header;
 
-public class ResizableHeader extends Header<String>
+public class ResizableHeader<T> extends Header<String>
 {
    private static class ResizableHeaderCell extends AbstractCell<String>
    {
@@ -60,7 +63,7 @@ public class ResizableHeader extends Header<String>
       private final int index_;
    }
    
-   public ResizableHeader(AbstractCellTable<?> table,
+   public ResizableHeader(AbstractCellTable<T> table,
                           String text,
                           int index)
    {
@@ -72,8 +75,7 @@ public class ResizableHeader extends Header<String>
       
       MouseDragHandler.addHandler(table_, new MouseDragHandler()
       {
-         int leftColumnWidth_ = -1;
-         int rightColumnWidth_ = -1;
+         List<Integer> columnWidths_ = new ArrayList<Integer>();
          
          @Override
          public boolean beginDrag(MouseDownEvent event)
@@ -102,18 +104,33 @@ public class ResizableHeader extends Header<String>
             if (rowEl == null)
                return false;
             
-            // initialize column widths 
-            leftColumnWidth_  = rowEl.getChild(index_ - 1).<Element>cast().getOffsetWidth();
-            rightColumnWidth_ = rowEl.getChild(index_).<Element>cast().getOffsetWidth();
+            // initialize column widths
+            columnWidths_.clear();
+            for (int i = 0, n = rowEl.getChildCount(); i < n; i++)
+            {
+               Element childEl = rowEl.getChild(i).cast();
+               int width = childEl.getOffsetWidth();
+               columnWidths_.add(width);
+               table_.setColumnWidth(table_.getColumn(i), width + "px");
+            }
+            
             return true;
          }
          
          @Override
          public void onDrag(MouseDragEvent event)
          {
+            // discover the change in column widths
             int delta = event.getTotalDelta().getMouseX();
-            table_.setColumnWidth(index_ - 1, (leftColumnWidth_ + delta) + "px");
-            table_.setColumnWidth(index_, (rightColumnWidth_ - delta) + "px");
+            
+            // update column widths
+            table_.setColumnWidth(
+                  table_.getColumn(index_ - 1),
+                  (columnWidths_.get(index_ - 1) + delta) + "px");
+            
+            table_.setColumnWidth(
+                  table_.getColumn(index_),
+                  (columnWidths_.get(index_) - delta) + "px");
          }
          
          @Override
@@ -130,7 +147,7 @@ public class ResizableHeader extends Header<String>
       return text_;
    }
    
-   private final AbstractCellTable<?> table_;
+   private final AbstractCellTable<T> table_;
    private final String text_;
    private final int index_;
    
