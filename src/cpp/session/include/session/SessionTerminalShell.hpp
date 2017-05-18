@@ -80,6 +80,9 @@ struct TerminalShell
       }
       return shellType;
    }
+
+   // get a user-friendly name for the given shell type
+   static std::string getShellName(TerminalShellType type);
 };
 
 class AvailableTerminalShells

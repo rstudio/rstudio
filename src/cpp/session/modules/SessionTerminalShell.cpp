@@ -149,6 +149,32 @@ core::json::Object TerminalShell::toJson() const
    return resultJson;
 }
 
+// keep in sync with TerminalShellInfo::getShellName in client code
+std::string TerminalShell::getShellName(TerminalShellType type)
+{
+   switch (type)
+   {
+   case DefaultShell:
+      return "Default";
+   case GitBash:
+      return "Git Bash";
+   case WSLBash:
+      return "WSL";
+   case Cmd32:
+      return "Command Prompt (32-bit)";
+   case Cmd64:
+      return "Command Prompt (64-bit)";
+   case PS32:
+      return "PowerShell (32-bit)";
+   case PS64:
+      return "PowerShell (64-bit)";
+   case PosixBash:
+      return "Bash";
+   default:
+      return "Unknown";
+   }
+}
+
 AvailableTerminalShells::AvailableTerminalShells()
 {
    scanAvailableShells(&shells_);

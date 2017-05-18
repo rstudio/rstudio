@@ -42,13 +42,16 @@ bool useWebsockets()
 
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
-      TerminalShell::TerminalShellType shellType,
+      TerminalShell::TerminalShellType desiredShellType,
       int cols, int rows, int termSequence,
-      FilePath workingDir)
+      FilePath workingDir,
+      TerminalShell::TerminalShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
+
+   *pSelectedShellType = desiredShellType;
 
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
@@ -87,8 +90,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    AvailableTerminalShells shells;
    TerminalShell shell;
 
-   if (shells.getInfo(shellType, &shell))
+   if (shells.getInfo(desiredShellType, &shell))
    {
+      *pSelectedShellType = shell.type;
       options.shellPath = shell.path;
       options.args = shell.args;
    }
@@ -99,6 +103,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       TerminalShell sysShell;
       if (AvailableTerminalShells::getSystemShell(&sysShell))
       {
+         *pSelectedShellType = sysShell.type;
          options.shellPath = sysShell.path;
          options.args = sysShell.args;
       }
@@ -795,11 +800,14 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
 {
+   TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             proc->procInfo_->getShellType(),
             proc->procInfo_->getCols(), proc->procInfo_->getRows(),
             proc->procInfo_->getTerminalSequence(),
-            proc->procInfo_->getCwd());
+            proc->procInfo_->getCwd(),
+            &actualShellType);
+   proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);
 }
 
@@ -837,6 +845,11 @@ void ConsoleProcess::onConnectionClosed()
 // websocket connection opened; called on different thread
 void ConsoleProcess::onConnectionOpened()
 {
+}
+
+std::string ConsoleProcess::getShellName() const
+{
+   return TerminalShell::getShellName(procInfo_->getShellType());
 }
 
 core::json::Array processesAsJson()
