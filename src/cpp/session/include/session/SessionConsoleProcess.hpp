@@ -42,6 +42,9 @@ const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
 const int kAutoFlushLength = 20;
 
+class ConsoleProcess;
+typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
+
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
@@ -95,28 +98,28 @@ public:
    // Win32 because in order to implement the InteractionPossible/Always
    // modes we use the consoleio.exe proxy, which can only be invoked from
    // the runProgram codepath
-   static boost::shared_ptr<ConsoleProcess> create(
+   static ConsoleProcessPtr create(
          const std::string& command,
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
-   static boost::shared_ptr<ConsoleProcess> create(
+   static ConsoleProcessPtr create(
          const std::string& program,
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
-   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
+   static ConsoleProcessPtr createTerminalProcess(
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
          bool enableWebsockets);
 
-   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
+   static ConsoleProcessPtr createTerminalProcess(
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
-   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
-         boost::shared_ptr<ConsoleProcess> proc);
+   static ConsoleProcessPtr createTerminalProcess(
+         ConsoleProcessPtr proc);
 
    static core::system::ProcessOptions createTerminalProcOptions(
          TerminalShell::TerminalShellType shellType,
@@ -177,7 +180,7 @@ public:
    void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;
-   static boost::shared_ptr<ConsoleProcess> fromJson( core::json::Object& obj);
+   static ConsoleProcessPtr fromJson( core::json::Object& obj);
 
    void onReceivedInput(const std::string& input);
 

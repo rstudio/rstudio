@@ -65,7 +65,8 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("\nSystem Information\n------------------\n");
       diagnostics.append("Desktop:    '" + Desktop.isDesktop() + "'\n");
       diagnostics.append("Platform:   '" + BrowseCap.getPlatformName() + "'\n");
-      diagnostics.append("Browser:    '" + BrowseCap.getBrowserName() + "'\n");
+      if (!Desktop.isDesktop())
+         diagnostics.append("Browser:    '" + BrowseCap.getBrowserName() + "'\n");
 
       diagnostics.append("\nConnection Information\n----------------------\n");
       diagnostics.append(socket.getConnectionDiagnostics());
