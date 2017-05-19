@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -330,14 +332,6 @@ public class ObjectExplorerDataGrid
       return generateExtractingRCode(data, handle_.getTitle());
    }
    
-   private static final int getParentLimit(Data data)
-   {
-      Data parent = data.getParentData();
-      if (parent == null)
-         return DEFAULT_ROW_LIMIT;
-      return parent.getMaximumChildRowsShown();
-   }
-   
    private class NameCell extends AbstractCell<Data>
    {
       public NameCell()
@@ -572,14 +566,14 @@ public class ObjectExplorerDataGrid
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
-      setColumnWidth(nameColumn_, NAME_COLUMN_WIDTH + "px");
       
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
-      addColumn(typeColumn_, new TextHeader("Type"));
-      setColumnWidth(typeColumn_, TYPE_COLUMN_WIDTH + "px");
+      addColumn(typeColumn_, new ResizableHeader(this, "Type"));
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
-      addColumn(valueColumn_, new TextHeader("Value"));
+      addColumn(valueColumn_, new ResizableHeader(this, "Column"));
+      
+      initializeColumnWidths();
       
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
@@ -608,6 +602,7 @@ public class ObjectExplorerDataGrid
    
    public void refresh()
    {
+      initializeColumnWidths();
       initializeRoot();
    }
    
@@ -823,6 +818,14 @@ public class ObjectExplorerDataGrid
       if (containingRowEl == null)
          return;
       
+      // compute the width of each table cell element minus last
+      int otherWidth = 0;
+      for (int i = 0, n = hoveredRow_.getChildCount() - 1; i < n; i++)
+      {
+         Element childEl = hoveredRow_.getChild(i).cast();
+         otherWidth += childEl.getScrollWidth();
+      }
+      
       // TODO: do a better job of automatically computing these widths,
       // rather than hard-coding them
       int buttonWidth = 0;
@@ -833,12 +836,7 @@ public class ObjectExplorerDataGrid
          buttonWidth = 48;
 
       int totalWidth = getOffsetWidth();
-      int remainingWidth =
-            totalWidth -
-            NAME_COLUMN_WIDTH -
-            TYPE_COLUMN_WIDTH -
-            buttonWidth -
-            20;
+      int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
       
       Element parentEl = valueDescEl.getParentElement();
       parentEl.getStyle().setPropertyPx("width", Math.max(0, remainingWidth));
@@ -1103,6 +1101,13 @@ public class ObjectExplorerDataGrid
             });
    }
    
+   private void initializeColumnWidths()
+   {
+      setColumnWidth(nameColumn_, DEFAULT_NAME_COLUMN_WIDTH + "px");
+      setColumnWidth(typeColumn_, DEFAULT_TYPE_COLUMN_WIDTH + "px");
+      setColumnWidth(valueColumn_, null);
+   }
+   
    private void initializeRoot()
    {
       server_.explorerBeginInspect(
@@ -1285,8 +1290,8 @@ public class ObjectExplorerDataGrid
    private EventBus events_;
    
    // Static Members ----
-   private static final int NAME_COLUMN_WIDTH = 180;
-   private static final int TYPE_COLUMN_WIDTH = 180;
+   private static final int DEFAULT_NAME_COLUMN_WIDTH = 180;
+   private static final int DEFAULT_TYPE_COLUMN_WIDTH = 180;
    
    private static final int DEFAULT_ROW_LIMIT = 200;
    

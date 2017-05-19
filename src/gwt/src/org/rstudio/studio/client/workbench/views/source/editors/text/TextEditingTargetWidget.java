@@ -152,9 +152,10 @@ public class TextEditingTargetWidget
                double initialWidth_ = 0;
                
                @Override
-               public void beginDrag(MouseDownEvent event)
+               public boolean beginDrag(MouseDownEvent event)
                {
                   initialWidth_ = editorPanel_.getWidgetSize(docOutlineWidget_);
+                  return true;
                }
                
                @Override
@@ -162,7 +163,7 @@ public class TextEditingTargetWidget
                {
                   double initialWidth = initialWidth_;
                   double xDiff = event.getTotalDelta().getMouseX();
-                  double newSize = initialWidth + xDiff;
+                  double newSize = initialWidth - xDiff;
                   
                   // We allow an extra pixel here just to 'hide' the border
                   // if the outline is maximized, since the 'separator'
