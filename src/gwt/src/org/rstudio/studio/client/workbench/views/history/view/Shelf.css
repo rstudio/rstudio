@@ -33,6 +33,10 @@
    margin-left: 4px;
 }
 
+.rstudio-themes-flat .right button {
+   margin-top: 1px;
+}
+
 .rstudio-themes-flat .rstudio-themes-dark .shelf {
    color: #FFF;
 }
