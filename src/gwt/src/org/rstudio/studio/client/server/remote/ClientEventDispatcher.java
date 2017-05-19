@@ -166,6 +166,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTe
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -900,6 +901,11 @@ public class ClientEventDispatcher
          {
             ActivateNamedTerminalEvent.Data data = event.getData();
             eventBus_.fireEvent(new ActivateNamedTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.TerminalCwd))
+         {
+            TerminalCwdEvent.Data data = event.getData();
+            eventBus_.fireEvent(new TerminalCwdEvent(data));
          }
          else
          {
