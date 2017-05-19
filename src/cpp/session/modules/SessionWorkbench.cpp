@@ -906,12 +906,13 @@ Error startTerminal(const json::JsonRpcRequest& request,
       cwd = module_context::resolveAliasedPath(currentDir);
    }
 
+   TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence, cwd);
+         shellType, cols, rows, termSequence, cwd, &actualShellType);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence,  shellType,
+            termCaption, termTitle, termHandle, termSequence,  actualShellType,
             altBufferActive, cwd, cols, rows);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =

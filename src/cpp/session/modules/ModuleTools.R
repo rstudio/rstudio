@@ -270,13 +270,18 @@
   .Call("rs_readUiPref", prefName)
 })
 
-
 .rs.addFunction("writeUiPref", function(prefName, value) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
   invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value)))
+})
+
+.rs.addFunction("removeUiPref", function(prefName) {
+  if (missing(prefName) || is.null(prefName))
+    stop("No preference name supplied")
+  invisible(.Call("rs_removeUiPref", prefName))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {

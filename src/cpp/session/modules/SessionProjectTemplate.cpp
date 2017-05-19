@@ -562,10 +562,12 @@ private:
       
       // update global registry
       projectTemplateRegistry() = pRegistry_;
-      (*pPayload)["project_templates_registry"] = pRegistry_->toJson();
       
       // add known project templates
       addKnownProjectTemplates();
+      
+      // mark payload
+      (*pPayload)["project_templates_registry"] = pRegistry_->toJson();
       
       // execute any callbacks waiting for indexing to complete
       executeCallbacks();

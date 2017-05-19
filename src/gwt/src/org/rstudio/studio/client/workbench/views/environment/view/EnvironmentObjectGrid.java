@@ -296,7 +296,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       int start = 0;
       if (selectionEnabled())
       {
-         setColumnWidth(start++, "5%");
+         // Set the column width for the selection (checkbox) column.
+         setColumnWidth(start++, "20px");
       }
       else
       {

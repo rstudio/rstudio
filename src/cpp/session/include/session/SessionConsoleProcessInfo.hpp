@@ -132,10 +132,8 @@ public:
    bool getHasChildProcs() const { return childProcs_; }
 
    // What type of shell is this child process running in?
-   TerminalShell::TerminalShellType getShellType() const
-   {
-      return shellType_;
-   }
+   TerminalShell::TerminalShellType getShellType() const { return shellType_; }
+   void setShellType(TerminalShell::TerminalShellType type) { shellType_ = type; }
 
    // Type of channel for communicating input/output with client
    ChannelMode getChannelMode() const { return channelMode_; }
