@@ -242,17 +242,9 @@ Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
 {
    SEXP shinyBrowser = r::options::getOption("shiny.launch.browser");
    *pShinyViewerType = userSettings().shinyViewerType();
-
-   // If the user hasn't specified a value for the shiny.launch.browser
-   // preference, set it to the one specified in UI prefs. Note we only
-   // do this for shiny >= 0.8 since that is the  version which supports
-   // passing a function to shiny.launch.browser
-   if (module_context::isPackageVersionInstalled("shiny", "0.8"))
+   if (shinyBrowser == R_NilValue)
    {
-      if (shinyBrowser == R_NilValue)
-      {
-         setShinyViewerType(*pShinyViewerType);
-      }
+      setShinyViewerType(*pShinyViewerType);
    }
 
    return Success();
