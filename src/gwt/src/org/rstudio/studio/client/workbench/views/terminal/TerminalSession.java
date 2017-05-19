@@ -655,8 +655,31 @@ public class TerminalSession extends XTermWidget
       }
    }
 
+   private boolean shellSupportsReload()
+   {
+      if (consoleProcess_ == null)
+         return false;
+      
+      switch (consoleProcess_.getProcessInfo().getShellType())
+      {
+      // Windows command-prompt and PowerShell don't support buffer reloading
+      // due to limitations of how they work with WinPty.
+      case TerminalShellInfo.SHELL_CMD32:
+      case TerminalShellInfo.SHELL_CMD64:
+      case TerminalShellInfo.SHELL_PS32:
+      case TerminalShellInfo.SHELL_PS64:
+         return false;
+
+      default:
+         return true;
+      }
+   }
+   
    private void fetchNextChunk(final int chunkToFetch)
    {
+      if (!shellSupportsReload())
+         return;
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
