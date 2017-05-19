@@ -678,13 +678,7 @@ public class TerminalSession extends XTermWidget
    private void fetchNextChunk(final int chunkToFetch)
    {
       if (!shellSupportsReload())
-      {
-         server_.processEraseBuffer(
-               getHandle(), 
-               false /*lastLineOnly*/,
-               new SimpleRequestCallback<Void>("Clearing Buffer at reload"));
          return;
-      }
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {

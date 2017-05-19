@@ -771,6 +771,17 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
          addConsoleProcess(cp);
+
+         // Windows Command Prompt and PowerShell don't support reloading
+         // buffers, so delete the buffer before we start the new process.
+         if (cp->getShellType() == TerminalShell::Cmd32 ||
+             cp->getShellType() == TerminalShell::Cmd64 ||
+             cp->getShellType() == TerminalShell::PS32 ||
+             cp->getShellType() == TerminalShell::PS64)
+         {
+            cp->deleteLogFile();
+         }
+
          saveConsoleProcesses();
       }
    }
