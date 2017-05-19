@@ -547,6 +547,14 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = hasChildProcs;
    }
 
+   /**
+    * Update current-working-directory 
+    * @param cwd new directory
+    */
+   public void setCwd(String cwd)
+   {
+      cwd_ = cwd;
+   }
 
    /**
     * The sequence number of the terminal, used in creation of the default

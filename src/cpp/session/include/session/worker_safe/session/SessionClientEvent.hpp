@@ -174,6 +174,7 @@ extern const int kSendToTerminal;
 extern const int kClearTerminal;
 extern const int kCreateNamedTerminal;
 extern const int kActivateTerminal;
+extern const int kTerminalCwd;
 }
    
 class ClientEvent

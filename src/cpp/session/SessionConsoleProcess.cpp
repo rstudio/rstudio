@@ -625,6 +625,14 @@ void ConsoleProcess::reportCwd(const core::FilePath& cwd)
    if (procInfo_->getCwd() != cwd)
    {
       procInfo_->setCwd(cwd);
+
+      json::Object termCwd;
+      termCwd["handle"] = handle();
+      termCwd["cwd"] = module_context::createAliasedPath(cwd);
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kTerminalCwd, termCwd));
+      childProcsSent_ = true;
+
       saveConsoleProcesses();
    }
 }

@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
@@ -35,7 +36,8 @@ import com.google.inject.Provider;
  * available terminals and reconnect to them.
  */
 public class TerminalList implements Iterable<String>,
-                                     TerminalSubprocEvent.Handler
+                                     TerminalSubprocEvent.Handler,
+                                     TerminalCwdEvent.Handler
 {
    private static class TerminalMetadata
    {
@@ -165,6 +167,7 @@ public class TerminalList implements Iterable<String>,
    {
       RStudioGinjector.INSTANCE.injectMembers(this); 
       eventBus_.addHandler(TerminalSubprocEvent.TYPE, this);
+      eventBus_.addHandler(TerminalCwdEvent.TYPE, this);
    }
 
    @Inject
@@ -247,6 +250,33 @@ public class TerminalList implements Iterable<String>,
          return true;
       }
       return false;
+   }
+
+   /**
+    * update current working directory
+    * @param handle terminal handle
+    * @param cwd new directory
+    */
+   private void setCwd(String handle, String cwd)
+   {
+      TerminalMetadata current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+
+      if (current.getCwd() != cwd)
+      {
+         addTerminal(new TerminalMetadata(
+               current.handle_,
+               current.caption_,
+               current.title_,
+               current.sequence_,
+               current.childProcs_,
+               current.cols_,
+               current.rows_,
+               current.shellType_,
+               current.altBufferActive_,
+               cwd));
+      }
    }
 
    /**
@@ -543,6 +573,12 @@ public class TerminalList implements Iterable<String>,
    {
       setChildProcs(event.getHandle(), event.hasSubprocs());
       updateTerminalBusyStatus();
+   }
+
+   @Override
+   public void onTerminalCwd(TerminalCwdEvent event)
+   {
+      setCwd(event.getHandle(), event.getCwd());
    }
 
    /**

@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
@@ -70,7 +71,8 @@ public class TerminalPane extends WorkbenchPane
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
-                                     TerminalSubprocEvent.Handler
+                                     TerminalSubprocEvent.Handler,
+                                     TerminalCwdEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -90,6 +92,7 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
+      events_.addHandler(TerminalCwdEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -746,6 +749,16 @@ public class TerminalPane extends WorkbenchPane
       if (terminal != null)
       {
          terminal.setHasChildProcs(event.hasSubprocs());
+      }
+   }
+
+   @Override
+   public void onTerminalCwd(TerminalCwdEvent event)
+   {
+      TerminalSession terminal = loadedTerminalWithHandle(event.getHandle());
+      if (terminal != null)
+      {
+         terminal.setCwd(event.getCwd());
       }
    }
 
