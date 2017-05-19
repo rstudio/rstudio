@@ -30,6 +30,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,7 +52,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       eventBus_ = eventBus;
 
       VerticalPanel leftPanel = new VerticalPanel();
+      
+      infoBar_ = new InfoBar(InfoBar.WARNING);
+      infoBar_.setText("Relaunch RStudio to complete this change.");
+      infoBar_.addStyleName(res_.styles().themeInfobar());
 
+      final String originalTheme = uiPrefs_.getFlatTheme().getValue();
+      
       flatTheme_ = new SelectWidget("RStudio theme:",
                                 new String[]{"Classic", "Modern", "Sky"},
                                 new String[]{"classic", "modern", "alternate"},
@@ -62,6 +69,15 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          public void onChange(ChangeEvent event)
          {
+            preview_.setHeight(previewDefaultHeight_);
+            infoBar_.removeStyleName(res_.styles().themeInfobarShowing());
+            
+            if (originalTheme == "classic" && flatTheme_.getValue() != "classic" ||
+                flatTheme_.getValue() == "classic" && originalTheme != "classic")
+            {
+               preview_.setHeight("478px");
+               infoBar_.addStyleName(res_.styles().themeInfobarShowing());
+            }
          }
       });
 
@@ -184,9 +200,11 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(theme_);
 
       FlowPanel previewPanel = new FlowPanel();
+      previewPanel.add(infoBar_);
+      
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(CODE_SAMPLE);
-      preview_.setHeight("498px");
+      preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
@@ -281,12 +299,15 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
-   private AceEditorPreview preview_;
+   private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
-   private SelectWidget flatTheme_;
+   private final SelectWidget flatTheme_;
+   private EventBus eventBus_;
+   private final InfoBar infoBar_;
+   private static String previewDefaultHeight_ = "498px";
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
@@ -318,6 +339,4 @@ public class AppearancePreferencesPane extends PreferencesPane
          "  else \n" +
          "    UseMethod(\"plot\")\n" +
          "}\n";
-
-   EventBus eventBus_;
 }

@@ -52,6 +52,7 @@ import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -255,9 +256,11 @@ public class PaneManager
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
 
+      int splitterSize = RStudioThemes.isFlat(uiPrefs) ? 7 : 3;
+
       panes_ = createPanes(config);
-      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4);
-      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right", 0.6);
+      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4, splitterSize);
+      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right", 0.6, splitterSize);
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
@@ -909,7 +912,8 @@ public class PaneManager
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
                                                    LogicalWindow bottom,
                                                    String name,
-                                                   double bottomDefaultPct)
+                                                   double bottomDefaultPct,
+                                                   int splitterSize)
    {
       return new DualWindowLayoutPanel(
             eventBus_,
@@ -918,7 +922,8 @@ public class PaneManager
             session_,
             name,
             WindowState.NORMAL,
-            (int) (Window.getClientHeight()*bottomDefaultPct));
+            (int) (Window.getClientHeight()*bottomDefaultPct),
+            splitterSize);
    }
 
    private LogicalWindow createConsole()
