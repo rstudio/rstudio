@@ -53,12 +53,12 @@ class AnimationHelper
       }
       else if (top.getState() == WindowState.MINIMIZE)
       {
-         splitterPos = top.getMinimized().getDesiredHeight();
+         splitterPos = top.getMinimized().getDesiredHeight() - splitterHeight / 2;
          splitterPosFromTop = true;
       }
       else if (bottom.getState() == WindowState.MINIMIZE)
       {
-         splitterPos = bottom.getMinimized().getDesiredHeight();
+         splitterPos = bottom.getMinimized().getDesiredHeight() - splitterHeight / 2;
          splitterPosFromTop = false;
       }
       else
