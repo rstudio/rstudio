@@ -26,6 +26,7 @@ import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
@@ -223,7 +224,7 @@ public class FilesList extends Composite
          } 
       };  
       sizeColumn.setSortable(true);
-      filesDataGrid_.addColumn(sizeColumn, "Size");
+      filesDataGrid_.addColumn(sizeColumn, new ResizableHeader(filesDataGrid_, "Size"));
       filesDataGrid_.setColumnWidth(sizeColumn, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
       
       sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
@@ -251,7 +252,7 @@ public class FilesList extends Composite
          } 
       };  
       modColumn.setSortable(true);
-      filesDataGrid_.addColumn(modColumn, "Modified");
+      filesDataGrid_.addColumn(modColumn, new ResizableHeader(filesDataGrid_, "Modified"));
       filesDataGrid_.setColumnWidth(modColumn, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX); 
       
       sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {

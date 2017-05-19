@@ -90,6 +90,7 @@
 * Server Pro: Add user-defined session labels
 * Server Pro: Upgrade to nginx 1.12.0
 * Server Pro: Add support for NFSv4 Access Control Lists in Project Sharing
+* Server Pro: Add support for user-initiated session quit and force-terminate
 
 ### Bug Fixes
 

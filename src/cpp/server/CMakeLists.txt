@@ -125,7 +125,7 @@ include_directories(
 add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 # add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SELS")
+if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set_target_properties(rserver PROPERTIES
                          INSTALL_RPATH \$ORIGIN)
