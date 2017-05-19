@@ -49,3 +49,17 @@
    overflow-x: hidden;
    overflow-y: scroll;
 }
+
+.themeInfobar {
+   border: solid 1px #ccc;
+   border-bottom: none;
+   display: none;
+}
+
+.themeInfobar > div {
+   border: none;
+}
+
+.themeInfobarShowing {
+   display: block;
+}

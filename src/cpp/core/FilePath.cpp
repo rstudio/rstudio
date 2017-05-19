@@ -659,6 +659,14 @@ std::string FilePath::absolutePathNative() const
       return BOOST_FS_PATH2STRNATIVE(pImpl_->path) ;
 }
 
+std::string FilePath::canonicalPath() const
+{
+   if (empty())
+      return std::string();
+   else
+      return BOOST_FS_PATH2STR(boost::filesystem::canonical(pImpl_->path));
+}
+
 #if _WIN32
 std::wstring FilePath::absolutePathW() const
 {

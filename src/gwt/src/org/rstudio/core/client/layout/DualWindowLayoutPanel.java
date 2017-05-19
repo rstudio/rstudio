@@ -366,7 +366,8 @@ public class DualWindowLayoutPanel extends SimplePanel
                                 Session session,
                                 String clientStateKeyName,
                                 final WindowState topWindowDefaultState,
-                                final int defaultSplitterPos)
+                                final int defaultSplitterPos,
+                                final int splitterSize)
    {
       windowA_ = windowA;
       windowB_ = windowB;
@@ -374,7 +375,7 @@ public class DualWindowLayoutPanel extends SimplePanel
       setSize("100%", "100%");
       layout_ = new BinarySplitLayoutPanel(new Widget[] {
             windowA.getNormal(), windowA.getMinimized(),
-            windowB.getNormal(), windowB.getMinimized()}, 3);
+            windowB.getNormal(), windowB.getMinimized()}, splitterSize);
       layout_.setSize("100%", "100%");
 
       topWindowStateChangeManager_ = new WindowStateChangeManager(session);
