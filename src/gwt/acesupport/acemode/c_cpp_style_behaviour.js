@@ -143,9 +143,29 @@ var CStyleBehaviour = function(codeModel) {
          // If this line is an roxygen-style comment, continue that comment
          var match = /^(\s*\/\/'\s*)/.exec(line);
          if (match && col >= match[1].length)
+         {
             return {
                text: "\n" + match[1]
             };
+         }
+
+         // If we're inserting a newline within a newly constructed comment
+         // block, insert a '*'.
+         if (/^\s*\/\*/.test(line))
+         {
+            // Double-check that we haven't already closed this comment,
+            // or that this comment is continued on the next line.
+            if (line.indexOf("*/") !== -1 || !/^\s*\*/.test(session.getLine(row + 1)))
+            {
+               var indent = this.$getIndent(line);
+               var newIndent = indent + " * ";
+
+               return {
+                  text: "\n" + newIndent + "\n" + indent + " */",
+                  selection: [1, newIndent.length, 1, newIndent.length]
+               };
+            }
+         }
 
          // Comment indentation rules
          if (Utils.endsWith(state, "comment") ||
@@ -158,6 +178,15 @@ var CStyleBehaviour = function(codeModel) {
                line = line.substring(0, cursor.column);
             }
 
+            // If this is a comment start block, then insert appropriate indentation.
+            var startMatch = /^(\s*)(\/\*)/.exec(line);
+            if (startMatch)
+            {
+               return {
+                  text: '\n' + startMatch[1] + " * "
+               };
+            }
+
             // We want to insert stars and spaces to match the indentation of the line.
             // Make sure we trim up to the cursor when necessary.
             var styleMatch = /^(\s*\*+\s*)/.exec(line);
@@ -168,20 +197,6 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
             
-         }
-
-         // If we're inserting a newline within a newly constructed comment
-         // block, insert a '*'.
-         if (/^\s*\/\*/.test(line) &&
-             line.indexOf("*/") === -1)
-         {
-            var indent = this.$getIndent(line);
-            var newIndent = indent + " * ";
-            
-            return {
-               text: "\n" + newIndent + "\n" + indent + " */",
-               selection: [1, newIndent.length, 1, newIndent.length]
-            };
          }
 
          // Walk backwards over whitespace to find first non-whitespace char
