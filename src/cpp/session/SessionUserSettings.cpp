@@ -185,8 +185,6 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
 
 SEXP rs_removeUiPref(SEXP prefName)
 {
-   json::Value prefValue = json::Value();
-
    // extract name of preference to write
    std::string pref = r::sexp::safeAsString(prefName, "");
    if (pref.empty())
