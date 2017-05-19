@@ -810,3 +810,22 @@
 {
    format(object.size(object), units = "auto")
 })
+
+# Utility Functions ----
+
+.rs.addFunction("getRefCount", function(object)
+{
+   .Call("rs_getRefCount",
+         as.name("object"),
+         environment(),
+         PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("setRefCount", function(object, count)
+{
+   .Call("rs_setRefCount",
+         as.name("object"),
+         environment(),
+         as.integer(count),
+         PACKAGE = "(embedding)")
+})

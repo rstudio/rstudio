@@ -235,6 +235,29 @@ SEXP asNamespace(const std::string& name)
    return findNamespace(name);
 }
 
+SEXP forcePromise(SEXP objectSEXP)
+{
+   // if this isn't a promise, return it as-is
+   if (TYPEOF(objectSEXP) != PROMSXP)
+      return objectSEXP;
+   
+   // if we already have a forced value, return that
+   SEXP valueSEXP = PRVALUE(objectSEXP);
+   if (valueSEXP != R_UnboundValue)
+      return valueSEXP;
+   
+   // otherwise, evaluate the promise and return that result
+   r::sexp::Protect protect;
+   SEXP resultSEXP;
+   protect.add(resultSEXP = ::Rf_eval(PRCODE(objectSEXP), PRENV(objectSEXP)));
+   
+   // update the promise reference
+   SET_PRVALUE(objectSEXP, resultSEXP);
+   
+   // return the result
+   return resultSEXP;
+}
+
 SEXP findNamespace(const std::string& name)
 {
    if (name.empty())

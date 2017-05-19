@@ -53,6 +53,9 @@ SEXP asEnvironment(std::string name);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
+
+// promises
+SEXP forcePromise(SEXP objectSEXP);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable ;

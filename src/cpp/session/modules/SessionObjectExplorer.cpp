@@ -216,6 +216,29 @@ SEXP rs_objectClass(SEXP objectSEXP)
    return R_NilValue;
 }
 
+SEXP rs_getRefCount(SEXP nameSEXP, SEXP envirSEXP)
+{
+   SEXP objectSEXP = ::Rf_findVarInFrame(envirSEXP, nameSEXP);
+   if (objectSEXP == R_UnboundValue)
+      return R_NilValue;
+   objectSEXP = r::sexp::forcePromise(objectSEXP);
+      
+   r::sexp::Protect protect;
+   return r::sexp::create(NAMED(objectSEXP), &protect);
+}
+
+SEXP rs_setRefCount(SEXP nameSEXP, SEXP envirSEXP, SEXP countSEXP)
+{
+   SEXP objectSEXP = ::Rf_findVarInFrame(envirSEXP, nameSEXP);
+   if (objectSEXP == R_UnboundValue)
+      return R_NilValue;
+   objectSEXP = r::sexp::forcePromise(objectSEXP);
+   
+   int count = r::sexp::asInteger(countSEXP);
+   SET_NAMED(objectSEXP, count);
+   return countSEXP;
+}
+
 SEXP rs_objectAddress(SEXP objectSEXP)
 {
    std::stringstream ss;
@@ -249,6 +272,8 @@ core::Error initialize()
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    
+   RS_REGISTER_CALL_METHOD(rs_getRefCount, 2);
+   RS_REGISTER_CALL_METHOD(rs_setRefCount, 3);
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
    RS_REGISTER_CALL_METHOD(rs_objectAttributes, 1);
