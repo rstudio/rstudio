@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -32,6 +33,8 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -350,6 +353,7 @@ public class HelpPane extends WorkbenchPane
       {
          final SmallButton btnNext = new SmallButton("&gt;", true);
          btnNext.setTitle("Find next (Enter)");
+         btnNext.addStyleName(RES.styles().topicNavigationButton());
          btnNext.setVisible(false);
          btnNext.addClickHandler(new ClickHandler() {
             @Override
@@ -361,6 +365,7 @@ public class HelpPane extends WorkbenchPane
          
          final SmallButton btnPrev = new SmallButton("&lt;", true);
          btnPrev.setTitle("Find previous");
+         btnPrev.addStyleName(RES.styles().topicNavigationButton());
          btnPrev.setVisible(false);
          btnPrev.addClickHandler(new ClickHandler() {
             @Override
@@ -372,6 +377,7 @@ public class HelpPane extends WorkbenchPane
          
          
          findTextBox_ = new FindTextBox("Find in Topic");
+         findTextBox_.addStyleName(RES.styles().findTopicTextbox());
          findTextBox_.setOverrideWidth(90);
          toolbar.addLeftWidget(findTextBox_);
          findTextBox_.addKeyUpHandler(new KeyUpHandler() { 
@@ -707,6 +713,20 @@ public class HelpPane extends WorkbenchPane
    	 }, 0);
    }-*/;
 
+   public interface Styles extends CssResource
+   {
+      String findTopicTextbox();
+      String topicNavigationButton();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("HelpPane.css")
+      Styles styles();
+   }
+
+   private static final Resources RES = GWT.create(Resources.class);
+   static { RES.styles().ensureInjected(); }
 
    private final VirtualHistory navStack_ = new VirtualHistory() ;
    private final ToolbarLinkMenu history_ ;
