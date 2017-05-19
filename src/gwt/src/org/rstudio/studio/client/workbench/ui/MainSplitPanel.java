@@ -25,10 +25,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler
@@ -101,9 +103,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    @Inject
    public MainSplitPanel(EventBus events,
-                         Session session)
+                         Session session,
+                         UIPrefs uiPrefs)
    {
-      super(3, events);
+      super(
+         RStudioThemes.isFlat(uiPrefs) ? 7 : 3,
+         events);
+      
       session_ = session;
       addSplitterResizedHandler(this);
    }

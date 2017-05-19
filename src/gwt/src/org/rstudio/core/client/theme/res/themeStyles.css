@@ -35,6 +35,7 @@
 
 @external gwt-TabLayoutPanel;
 @external gwt-TabLayoutPanelTabInner;
+@external gwt-SplitLayoutPanel-Workbench;
 
 @external rstudio-themes-flat, rstudio-themes-dark;
 
@@ -713,22 +714,31 @@ pre {
 .rstudio-themes-flat .windowFrameObject > div:last-child {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
-   left: 2px !important;
-   top: 2px !important;
-   right: 2px !important;
-   bottom: 2px !important;
+   left: 0px !important;
+   top: 0px !important;
+   right: 0px !important;
+   bottom: 0px !important;
 
    /* overflow-hidden with border-radius degrates under windows */
    overflow: visible !important;
 }
 
+.gwt-SplitLayoutPanel-Workbench {
+   right: 2px !important;
+   left: 2px !important;
+   top: 2px !important;
+   bottom: 1px !important;
+   width: inherit !important;
+   height: inherit !important;
+}
+
 .rstudio-themes-flat .windowFrameObject.consoleOnlyWindowFrame {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
-   left: 2px !important;
-   top: 3px !important;
-   right: 2px !important;
-   bottom: 2px !important;
+   left: 0px !important;
+   top: 1px !important;
+   right: 0px !important;
+   bottom: 0px !important;
    overflow: hidden;
 }
 
