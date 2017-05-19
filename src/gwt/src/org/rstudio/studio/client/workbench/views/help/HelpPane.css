@@ -1,0 +1,9 @@
+@external rstudio-themes-flat;
+
+.rstudio-themes-flat .findTopicTextbox {
+   top: 0px !important;
+}
+
+.rstudio-themes-flat button.topicNavigationButton {
+   height: 18px;
+}

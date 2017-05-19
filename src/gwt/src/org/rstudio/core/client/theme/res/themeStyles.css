@@ -2113,36 +2113,36 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .minimizedWindowObject  > div:last-child {
-   left: 3px !important;
-   top: 2px !important;
-   right: 3px !important;
+   left: 1px !important;
+   top: 0px !important;
+   right: 1px !important;
    bottom: 0px !important;
-   height: 23px;
+   height: 24px;
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
    padding-top: 1px;
 }
 
 .rstudio-themes-flat .minimizedWindowObject .minimize {
-   padding-top: 0px;
+   padding-top: 3px;
    margin-top: 1px;
    width: 16px;
    margin-right: 0px;
 }
 
 .rstudio-themes-flat .moduleTabPanel.minimizedWindowObject .minimize {
-   padding-top: 6px;
+   padding-top: 10px;
 }
 
 .rstudio-themes-flat .minimizedWindowObject .maximize {
-   padding-top: 0px;
+   padding-top: 3px;
    margin-top: 1px;
    width: 20px;
-   margin-right: 4px;
+   margin-right: 6px;
 }
 
 .rstudio-themes-flat .moduleTabPanel.minimizedWindowObject .maximize {
-   padding-top: 6px;
+   padding-top: 10px;
 }
 
 .rstudio-themes-flat .minimizedWindowObject .primaryWindowFrameHeader {
