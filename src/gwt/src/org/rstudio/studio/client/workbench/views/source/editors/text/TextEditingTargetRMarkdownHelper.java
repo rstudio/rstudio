@@ -600,6 +600,19 @@ public class TextEditingTargetRMarkdownHelper
    public void setOutputFormat(String yaml, final String format, 
                                final CommandWithArg<String> onCompleted)
    {
+      // first check to see if the format is already in the YAML; if it is,
+      // we can re-order the formats without roundtripping (this is desirable
+      // because roundtripping goes through the yaml R package which can 
+      // introduce unwanted mutations)
+      YamlTree tree = new YamlTree(yaml);
+      List<String> formats = getOutputFormats(tree);
+      if (formats.contains(format))
+      {
+         tree.reorder(Arrays.asList(format));
+         onCompleted.execute(tree.toString());
+         return;
+      }
+
       convertFromYaml(yaml, new CommandWithArg<RmdYamlData>()
       {
          @Override
