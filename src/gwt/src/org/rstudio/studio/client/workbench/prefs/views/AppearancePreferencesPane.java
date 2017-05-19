@@ -18,8 +18,6 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.regexp.shared.MatchResult;
-import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -35,6 +33,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -271,14 +270,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       String themeName = flatTheme_.getValue();
       if (themeName == "modern") {
-         RegExp keyReg = RegExp.compile(
-            "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
-            "material|merbivore soft|merbivore|mono industrial|monokai|" +
-            "pastel on dark|solarized dark|tomorrow night bluw|tomorrow night bright|" +
-            "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
-         
-         MatchResult result = keyReg.exec(theme_.getValue());
-         themeName = result != null ? "dark-grey" : "default";
+         themeName = RStudioThemes.suggestThemeFromAceTheme(theme_.getValue());
       }
 
       uiPrefs_.getFlatTheme().setGlobalValue(themeName);  

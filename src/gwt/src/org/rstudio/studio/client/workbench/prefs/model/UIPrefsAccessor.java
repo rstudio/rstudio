@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.model;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -649,7 +650,8 @@ public class UIPrefsAccessor extends Prefs
 
    public PrefValue<String> getFlatTheme()
    {
-      return string("flat_theme", "classic");
+      String flatTheme = RStudioThemes.suggestThemeFromAceTheme(theme().getValue());
+      return string("flat_theme", flatTheme);
    }
    
    private String getDefaultPdfPreview()
