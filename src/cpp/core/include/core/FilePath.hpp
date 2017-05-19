@@ -119,6 +119,10 @@ public:
    // full filesystem absolute path in native format
    std::string absolutePathNative() const ;
 
+   // canonical path, which is the path with all symlinks
+   // and dot elements resolved
+   std::string canonicalPath() const;
+
 #if _WIN32
    std::wstring absolutePathW() const;
 #endif
