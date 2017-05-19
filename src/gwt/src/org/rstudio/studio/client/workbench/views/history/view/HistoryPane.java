@@ -583,8 +583,7 @@ public class HistoryPane extends WorkbenchPane
       {
          public void onSelectionCommit(SelectionCommitEvent<String> event)
          {
-            if (mode_ == Mode.SearchResults)
-               fireEvent(event);
+            fireEvent(event);
          }
       });
       searchWidget_.addFocusHandler(new FocusHandler()

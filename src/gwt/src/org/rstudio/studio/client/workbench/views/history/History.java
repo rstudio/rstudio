@@ -415,12 +415,9 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    public void onSelected()
    {
       super.onSelected();
+      view_.focusSearch();
       if (view_.getMode() == Mode.Recent)
-      {
          view_.scrollToBottom();
-         view_.focusSearch();
-      }
-      
    }
 
    private String getSelectedCommands()
