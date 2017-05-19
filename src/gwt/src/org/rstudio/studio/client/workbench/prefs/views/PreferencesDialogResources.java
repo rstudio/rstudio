@@ -29,6 +29,8 @@ public interface PreferencesDialogResources extends ClientBundle
       String usingVcsHelp();
       String newSection();
       String alwaysCompletePanel();
+      String themeInfobar();
+      String themeInfobarShowing();
    }
 
    @Source("PreferencesDialog.css")
