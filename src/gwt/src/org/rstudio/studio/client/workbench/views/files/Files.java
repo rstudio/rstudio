@@ -83,7 +83,7 @@ public class Files
       
       void setObserver(Observer observer);
            
-      
+      void resetColumnWidths();
       void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder);
       
       void listDirectory(FileSystemItem directory, 
@@ -314,6 +314,7 @@ public class Files
    @Handler
    void onRefreshFiles()
    {
+      view_.resetColumnWidths();
       view_.listDirectory(currentPath_, currentPathFilesDS_);
    }
 

@@ -114,6 +114,11 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    {
       filesList_.setColumnSortOrder(sortOrder);
    }
+   
+   public void resetColumnWidths()
+   {
+      filesList_.resetColumnWidths();
+   }
     
    public void listDirectory(final FileSystemItem directory, 
                              ServerDataSource<DirectoryListing> dataSource)

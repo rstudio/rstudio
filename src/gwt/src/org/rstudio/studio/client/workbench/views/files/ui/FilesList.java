@@ -106,7 +106,7 @@ public class FilesList extends Composite
          @Override
          public void onResize(ResizeEvent event)
          {
-            FilesList.this.onResize(event.getWidth(), event.getHeight());
+            FilesList.this.onResize(event.getWidth(), event.getHeight(), false);
          }
       });
    }
@@ -264,6 +264,11 @@ public class FilesList extends Composite
       });
       
       return modColumn;
+   }
+   
+   public void resetColumnWidths()
+   {
+      onResize(true);
    }
    
    private void addColumnSortHandler()
@@ -503,7 +508,7 @@ public class FilesList extends Composite
    
    public void redraw()
    {
-      onResize();
+      onResize(false);
       
       // deferred to ensure that browser has responded to our
       // resize request
@@ -517,18 +522,23 @@ public class FilesList extends Composite
       });
    }
    
-   public void onResize()
+   public void onResize(boolean forceResize)
    {
-      onResize(layoutPanel_.getOffsetWidth(), layoutPanel_.getOffsetHeight());
+      onResize(
+            layoutPanel_.getOffsetWidth(),
+            layoutPanel_.getOffsetHeight(),
+            forceResize);
    }
    
-   private void onResize(int width, int height)
+   private void onResize(int width,
+                         int height,
+                         boolean forceResize)
    {
       // Enforce a minimum column width on the name column.
       int newState = width < BOUNDARY_WIDTH_PIXELS ? STATE_SMALL : STATE_LARGE;
 
       // Avoid over-eager updating of column widths.
-      if (state_ == STATE_LARGE && state_ == newState)
+      if (!forceResize && state_ == STATE_LARGE && state_ == newState)
          return;
 
       state_ = newState;
