@@ -12,6 +12,10 @@
    height: 100%;
 }
 
+.rstudio-themes-flat .findOutput {
+   outline: none;
+}
+
 .findOutput tr {
    height: 20px;
 }
