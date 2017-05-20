@@ -344,7 +344,10 @@ public class HelpPane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar();
-      toolbar.addLeftPopupMenu(title_ = new Label(), history_.getMenu());
+
+      title_ = new Label();
+      title_.addStyleName(RES.styles().topicTitle());
+      toolbar.addLeftPopupMenu(title_, history_.getMenu());
 
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
@@ -717,6 +720,7 @@ public class HelpPane extends WorkbenchPane
    {
       String findTopicTextbox();
       String topicNavigationButton();
+      String topicTitle();
    }
    
    public interface Resources extends ClientBundle

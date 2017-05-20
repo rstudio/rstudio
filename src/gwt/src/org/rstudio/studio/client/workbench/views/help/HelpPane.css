@@ -1,9 +1,19 @@
 @external rstudio-themes-flat;
 
+.rstudio-themes-flat .topicTitle {
+   padding-top: 3px;
+   height: 15px;
+}
+
 .rstudio-themes-flat .findTopicTextbox {
-   top: 0px !important;
+   top: -1px !important;
 }
 
 .rstudio-themes-flat button.topicNavigationButton {
    height: 18px;
+   margin-top: 1px;
+}
+
+.rstudio-themes-flat button.topicNavigationButton td {
+   height: 16px;
 }
