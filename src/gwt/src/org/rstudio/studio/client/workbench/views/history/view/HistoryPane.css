@@ -101,8 +101,12 @@
    gwt-image: 'searchResultsContextButton22x';
    margin-top: 1px;
    background-size: 14px 15px;
+   width: 14px;
+   height: 15px;
 }
 @sprite .selected div.disclosure {
    gwt-image: 'searchResultsContextButton2x';
    background-size: 14px 15px;
+   width: 14px;
+   height: 15px;
 }
