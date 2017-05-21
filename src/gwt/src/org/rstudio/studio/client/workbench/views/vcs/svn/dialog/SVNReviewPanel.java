@@ -218,6 +218,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       initWidget(widget);
 
       topToolbar_.addStyleName(RES.styles().toolbar());
+      topToolbar_.getWrapper().addStyleName(RES.styles().toolbarInnerWrapper());
 
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
       switchViewButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
@@ -255,6 +256,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
+      diffToolbar_.getWrapper().addStyleName(RES.styles().diffToolbarInnerWrapper());
 
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(

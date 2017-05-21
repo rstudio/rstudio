@@ -42,7 +42,7 @@
       <g:center>
          <g:DockLayoutPanel>
             <g:north size="28">
-               <g:HorizontalPanel ui:field="toolbarWrapper_" styleName="{res.styles.toolbarWrapper}">
+               <g:HorizontalPanel ui:field="toolbarWrapper_" styleName="{res.styles.toolbarWrapper} {res.styles.diffToolbarWrapper}">
                   <g:FlowPanel ui:field="diffViewOptions_" styleName="{res.styles.diffViewOptions}">
                      <g:Label text="Show" styleName="{res.styles.stagedLabel}"/>
                      <g:RadioButton ui:field="stagedCheckBox_"

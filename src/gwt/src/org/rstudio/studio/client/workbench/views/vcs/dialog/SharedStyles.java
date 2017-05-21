@@ -24,5 +24,8 @@ public interface SharedStyles extends CssResource
    String whitebg();
 
    String toolbar();
+   String toolbarInnerWrapper();
+   String diffToolbarWrapper();
    String toolbarWrapper();
+   String diffToolbarInnerWrapper();
 }

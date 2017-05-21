@@ -229,6 +229,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       initWidget(widget);
 
       topToolbar_.addStyleName(RES.styles().toolbar());
+      topToolbar_.getWrapper().addStyleName(RES.styles().toolbarInnerWrapper());
 
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
       topToolbar_.addLeftWidget(switchViewButton_);
@@ -274,6 +275,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
   
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
+      diffToolbar_.getWrapper().addStyleName(RES.styles().diffToolbarInnerWrapper());
 
       toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
 
