@@ -670,11 +670,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       DESCRIPTION$Imports <- c(DESCRIPTION$Imports, rcppImportsStatement)
       DESCRIPTION$LinkingTo <- c(DESCRIPTION$LinkingTo, "Rcpp")
       
+      # Add .registration = TRUE for Rcpp >= 0.12.11
+      if (.rs.isPackageVersionInstalled("Rcpp", "0.12.11"))
+         registration <- ", .registration = TRUE"
+      else
+         registration <- ""
+      
       # Add an import from Rcpp, and also useDynLib
       NAMESPACE <- c(
          NAMESPACE,
          "importFrom(Rcpp, evalCpp)",
-         sprintf("useDynLib(%s)", packageName)
+         sprintf("useDynLib(%s%s)", packageName, registration)
       )
    }
    
