@@ -21,7 +21,7 @@
    
 }
 
-@sprite .leftLeft {
+@sprite tr .leftLeft {
    gwt-image: 'leftToggleLeftOff';
    width: auto;
    padding-left: 7px;
@@ -51,7 +51,7 @@
    gwt-image: 'rightToggleLeftOn';
 }
 
-@sprite .rightRight {
+@sprite tr .rightRight {
    gwt-image: 'rightToggleRightOff';
    background-position: top right;
    width: auto;
