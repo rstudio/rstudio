@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -122,8 +121,10 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          }
          else
          {
-            if (busySpinner_ != null)
-               busySpinner_.setVisible(false);
+            if (busySpinner_ != null) {
+               busySpinner_.removeFromParent();
+               busySpinner_ = null;
+            }
             closeButton_.setVisible(true);
          }
       }
