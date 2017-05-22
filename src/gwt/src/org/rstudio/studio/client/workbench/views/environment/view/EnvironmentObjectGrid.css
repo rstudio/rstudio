@@ -38,6 +38,7 @@ th.objectGridHeader
    padding: 0px;
    padding-left: 2px;
    padding-right: 2px;
+   height: 16px;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark th.objectGridHeader {

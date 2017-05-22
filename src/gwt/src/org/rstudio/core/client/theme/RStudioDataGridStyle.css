@@ -64,6 +64,7 @@
 .rstudio-themes-flat .dataGridHeader {
    border-top: none;
    border-left: none;
+   height: 16px;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .dataGridHeader {
