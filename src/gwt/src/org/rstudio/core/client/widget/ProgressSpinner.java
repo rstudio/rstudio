@@ -17,15 +17,37 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.Context2d.LineCap;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 
 public class ProgressSpinner extends Composite
 {
+   public ProgressSpinner(Element element)
+   {
+      this(colorFromStyle(element));
+   }
+   
+   private static int colorFromStyle(Element element)
+   {
+      Style style = DomUtils.getComputedStyles(element);
+      style.getBackgroundColor();
+      
+      ColorUtil.RGBColor bgColor = 
+         ColorUtil.RGBColor.fromCss(style.getBackgroundColor());
+      
+      return bgColor.isDark() ?
+         ProgressSpinner.COLOR_WHITE:
+         ProgressSpinner.COLOR_BLACK;
+   }
+   
    public ProgressSpinner(int color)
    {
       // compute sizes
