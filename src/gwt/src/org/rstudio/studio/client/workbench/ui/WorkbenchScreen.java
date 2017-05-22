@@ -85,6 +85,8 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
+
+
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
@@ -250,7 +252,7 @@ public class WorkbenchScreen extends Composite
    {
       // console width
       int consoleWidth = paneManager_.getConsole().getCharacterWidth();
-      
+
       // if the console is hidden then just use its last value. if there
       // has never been a valid value then then lastMetrics_ console width
       // will be 0, which the server will know to ignore
