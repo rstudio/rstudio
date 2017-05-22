@@ -1140,6 +1140,18 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+/**
+ * Safari does not render empty table cells with 0 padding correctly --
+ * strangely, they still take up space, and affect the sizing of other
+ * cells within the table. Fortunately, setting the padding to a small,
+ * non-zero number seems to work as expected.
+ */
+@if user.agent safari {
+	.toolbar td {
+		padding: 0.0001px;
+	}
+}
+
 .toolbarWrapper {
 
 }
