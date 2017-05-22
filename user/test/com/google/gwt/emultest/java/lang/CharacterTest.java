@@ -179,7 +179,7 @@ public class CharacterTest extends GWTTestCase {
   }
 
   public void testCharValue() {
-    assertEquals(new Character((char) 32).charValue(), (char) 32);
+    assertEquals((char) 32, new Character((char) 32).charValue());
   }
 
   public void testCodePoint() {

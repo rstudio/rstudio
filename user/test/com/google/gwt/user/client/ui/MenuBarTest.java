@@ -406,42 +406,42 @@ public class MenuBarTest extends WidgetTestBase {
 
     // Insert first item
     MenuItem item0 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 0);
-    assertEquals(bar.getItemIndex(item0), 0);
+    assertEquals(0, bar.getItemIndex(item0));
 
     // Insert item at 0
     MenuItem item1 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 0);
-    assertEquals(bar.getItemIndex(item1), 0);
-    assertEquals(bar.getItemIndex(item0), 1);
+    assertEquals(0, bar.getItemIndex(item1));
+    assertEquals(1, bar.getItemIndex(item0));
 
     // Insert item at end
     MenuItem item2 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 2);
-    assertEquals(bar.getItemIndex(item1), 0);
-    assertEquals(bar.getItemIndex(item0), 1);
-    assertEquals(bar.getItemIndex(item2), 2);
+    assertEquals(0, bar.getItemIndex(item1));
+    assertEquals(1, bar.getItemIndex(item0));
+    assertEquals(2, bar.getItemIndex(item2));
 
     // Insert a separator at 0
     MenuItemSeparator separator0 = bar.insertSeparator(0);
-    assertEquals(bar.getSeparatorIndex(separator0), 0);
-    assertEquals(bar.getItemIndex(item1), 1);
-    assertEquals(bar.getItemIndex(item0), 2);
-    assertEquals(bar.getItemIndex(item2), 3);
+    assertEquals(0, bar.getSeparatorIndex(separator0));
+    assertEquals(1, bar.getItemIndex(item1));
+    assertEquals(2, bar.getItemIndex(item0));
+    assertEquals(3, bar.getItemIndex(item2));
 
     // Insert a separator at end
     MenuItemSeparator separator1 = bar.insertSeparator(4);
-    assertEquals(bar.getSeparatorIndex(separator0), 0);
-    assertEquals(bar.getItemIndex(item1), 1);
-    assertEquals(bar.getItemIndex(item0), 2);
-    assertEquals(bar.getItemIndex(item2), 3);
-    assertEquals(bar.getSeparatorIndex(separator1), 4);
+    assertEquals(0, bar.getSeparatorIndex(separator0));
+    assertEquals(1, bar.getItemIndex(item1));
+    assertEquals(2, bar.getItemIndex(item0));
+    assertEquals(3, bar.getItemIndex(item2));
+    assertEquals(4, bar.getSeparatorIndex(separator1));
 
     // Insert a separator at middle
     MenuItemSeparator separator2 = bar.insertSeparator(2);
-    assertEquals(bar.getSeparatorIndex(separator0), 0);
-    assertEquals(bar.getItemIndex(item1), 1);
-    assertEquals(bar.getSeparatorIndex(separator2), 2);
-    assertEquals(bar.getItemIndex(item0), 3);
-    assertEquals(bar.getItemIndex(item2), 4);
-    assertEquals(bar.getSeparatorIndex(separator1), 5);
+    assertEquals(0, bar.getSeparatorIndex(separator0));
+    assertEquals(1, bar.getItemIndex(item1));
+    assertEquals(2, bar.getSeparatorIndex(separator2));
+    assertEquals(3, bar.getItemIndex(item0));
+    assertEquals(4, bar.getItemIndex(item2));
+    assertEquals(5, bar.getSeparatorIndex(separator1));
   }
 
   /**

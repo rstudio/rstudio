@@ -131,21 +131,21 @@ public class HashMapTest extends TestMap {
 
   public void testAddEqualKeys() {
     final HashMap<Number, Object> expected = new HashMap<Number, Object>();
-    assertEquals(expected.size(), 0);
+    assertEquals(0, expected.size());
     iterateThrough(expected);
     expected.put(new Long(45), new Object());
-    assertEquals(expected.size(), 1);
+    assertEquals(1, expected.size());
     iterateThrough(expected);
     expected.put(new Integer(45), new Object());
     assertNotSame(new Integer(45), new Long(45));
-    assertEquals(expected.size(), 2);
+    assertEquals(2, expected.size());
     iterateThrough(expected);
   }
 
   public void testAddWatch() {
     HashMap<String, String> m = new HashMap<String, String>();
     m.put("watch", "watch");
-    assertEquals(m.get("watch"), "watch");
+    assertEquals("watch", m.get("watch"));
   }
 
   /*
@@ -241,21 +241,21 @@ public class HashMapTest extends TestMap {
     // Check that the entry set looks right
     hashMap.put(KEY_TEST_ENTRY_SET, VALUE_TEST_ENTRY_SET_1);
     entrySet = hashMap.entrySet();
-    assertEquals(entrySet.size(), SIZE_ONE);
+    assertEquals(SIZE_ONE, entrySet.size());
     Iterator<Map.Entry<String, String>> itSet = entrySet.iterator();
     Map.Entry<String, String> entry = itSet.next();
-    assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
-    assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_1);
+    assertEquals(KEY_TEST_ENTRY_SET, entry.getKey());
+    assertEquals(VALUE_TEST_ENTRY_SET_1, entry.getValue());
     assertEmptyIterator(itSet);
 
     // Check that entries in the entrySet are update correctly on overwrites
     hashMap.put(KEY_TEST_ENTRY_SET, VALUE_TEST_ENTRY_SET_2);
     entrySet = hashMap.entrySet();
-    assertEquals(entrySet.size(), SIZE_ONE);
+    assertEquals(SIZE_ONE, entrySet.size());
     itSet = entrySet.iterator();
     entry = itSet.next();
-    assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
-    assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_2);
+    assertEquals(KEY_TEST_ENTRY_SET, entry.getKey());
+    assertEquals(VALUE_TEST_ENTRY_SET_2, entry.getValue());
     assertEmptyIterator(itSet);
 
     // Check that entries are updated on removes
@@ -328,8 +328,8 @@ public class HashMapTest extends TestMap {
     Map.Entry<String, String> bogus = dummy.entrySet().iterator().next();
     Set<Map.Entry<String, String>> entrySet = hashMap.entrySet();
     boolean removed = entrySet.remove(bogus);
-    assertEquals(removed, false);
-    assertEquals(hashMap.get("A"), "B");
+    assertEquals(false, removed);
+    assertEquals("B", hashMap.get("A"));
   }
 
   /*
@@ -515,7 +515,7 @@ public class HashMapTest extends TestMap {
 
     dstMap.remove(KEY_KEY);
     assertTrue(dstMap.isEmpty());
-    assertEquals(dstMap.size(), 0);
+    assertEquals(0, dstMap.size());
   }
 
   public void testKeysConflict() {
@@ -524,22 +524,22 @@ public class HashMapTest extends TestMap {
     hashMap.put(STRING_ZERO_KEY, STRING_ZERO_VALUE);
     hashMap.put(INTEGER_ZERO_KEY, INTEGER_ZERO_VALUE);
     hashMap.put(ODD_ZERO_KEY, ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(INTEGER_ZERO_KEY), INTEGER_ZERO_VALUE);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    assertEquals(INTEGER_ZERO_VALUE, hashMap.get(INTEGER_ZERO_KEY));
+    assertEquals(ODD_ZERO_VALUE, hashMap.get(ODD_ZERO_KEY));
+    assertEquals(STRING_ZERO_VALUE, hashMap.get(STRING_ZERO_KEY));
     hashMap.remove(INTEGER_ZERO_KEY);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    assertEquals(ODD_ZERO_VALUE, hashMap.get(ODD_ZERO_KEY));
+    assertEquals(STRING_ZERO_VALUE, hashMap.get(STRING_ZERO_KEY));
     assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
     hashMap.remove(ODD_ZERO_KEY);
     assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
     assertEquals(hashMap.get(ODD_ZERO_KEY), null);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    assertEquals(STRING_ZERO_VALUE, hashMap.get(STRING_ZERO_KEY));
     hashMap.remove(STRING_ZERO_KEY);
     assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
     assertEquals(hashMap.get(ODD_ZERO_KEY), null);
     assertEquals(hashMap.get(STRING_ZERO_KEY), null);
-    assertEquals(hashMap.size(), 0);
+    assertEquals(0, hashMap.size());
   }
 
   /*
@@ -597,9 +597,9 @@ public class HashMapTest extends TestMap {
     checkEmptyHashMapAssumptions(hashMap);
 
     assertNull(hashMap.put(KEY_TEST_PUT, VALUE_TEST_PUT_1));
-    assertEquals(hashMap.put(KEY_TEST_PUT, VALUE_TEST_PUT_2), VALUE_TEST_PUT_1);
+    assertEquals(VALUE_TEST_PUT_1, hashMap.put(KEY_TEST_PUT, VALUE_TEST_PUT_2));
     assertNull(hashMap.put(null, VALUE_TEST_PUT_1));
-    assertEquals(hashMap.put(null, VALUE_TEST_PUT_2), VALUE_TEST_PUT_1);
+    assertEquals(VALUE_TEST_PUT_1, hashMap.put(null, VALUE_TEST_PUT_2));
   }
 
   /**
@@ -648,9 +648,9 @@ public class HashMapTest extends TestMap {
 
     dstMap.putAll(srcMap);
     assertEquals(dstMap.size(), srcMap.size());
-    assertEquals(dstMap.get(KEY_1), VALUE_2);
-    assertEquals(dstMap.get(KEY_2), VALUE_3);
-    assertEquals(dstMap.get(KEY_3), VALUE_1);
+    assertEquals(VALUE_2, dstMap.get(KEY_1));
+    assertEquals(VALUE_3, dstMap.get(KEY_2));
+    assertEquals(VALUE_1, dstMap.get(KEY_3));
 
     // Check that a putAll does adds data but does not remove it
 
@@ -659,10 +659,10 @@ public class HashMapTest extends TestMap {
     assertEquals(dstMap.size(), srcMap.size());
     assertTrue(dstMap.containsKey(KEY_4));
     assertTrue(dstMap.containsValue(VALUE_4));
-    assertEquals(dstMap.get(KEY_1), VALUE_2);
-    assertEquals(dstMap.get(KEY_2), VALUE_3);
-    assertEquals(dstMap.get(KEY_3), VALUE_1);
-    assertEquals(dstMap.get(KEY_4), VALUE_4);
+    assertEquals(VALUE_2, dstMap.get(KEY_1));
+    assertEquals(VALUE_3, dstMap.get(KEY_2));
+    assertEquals(VALUE_1, dstMap.get(KEY_3));
+    assertEquals(VALUE_4, dstMap.get(KEY_4));
 
     dstMap.putAll(dstMap);
   }
@@ -679,7 +679,7 @@ public class HashMapTest extends TestMap {
     assertNotNull(hashMap.remove(null));
 
     hashMap.put(KEY_TEST_REMOVE, VALUE_TEST_REMOVE);
-    assertEquals(hashMap.remove(KEY_TEST_REMOVE), VALUE_TEST_REMOVE);
+    assertEquals(VALUE_TEST_REMOVE, hashMap.remove(KEY_TEST_REMOVE));
     assertNull(hashMap.remove(KEY_TEST_REMOVE));
   }
 
@@ -691,21 +691,21 @@ public class HashMapTest extends TestMap {
     checkEmptyHashMapAssumptions(hashMap);
 
     // Test size behavior on put
-    assertEquals(hashMap.size(), SIZE_ZERO);
+    assertEquals(SIZE_ZERO, hashMap.size());
     hashMap.put(KEY_1, VALUE_1);
-    assertEquals(hashMap.size(), SIZE_ONE);
+    assertEquals(SIZE_ONE, hashMap.size());
     hashMap.put(KEY_2, VALUE_2);
-    assertEquals(hashMap.size(), SIZE_TWO);
+    assertEquals(SIZE_TWO, hashMap.size());
     hashMap.put(KEY_3, VALUE_3);
-    assertEquals(hashMap.size(), SIZE_THREE);
+    assertEquals(SIZE_THREE, hashMap.size());
 
     // Test size behavior on remove
     hashMap.remove(KEY_1);
-    assertEquals(hashMap.size(), SIZE_TWO);
+    assertEquals(SIZE_TWO, hashMap.size());
     hashMap.remove(KEY_2);
-    assertEquals(hashMap.size(), SIZE_ONE);
+    assertEquals(SIZE_ONE, hashMap.size());
     hashMap.remove(KEY_3);
-    assertEquals(hashMap.size(), SIZE_ZERO);
+    assertEquals(SIZE_ZERO, hashMap.size());
 
     // Test size behavior on putAll
     hashMap.put(KEY_1, VALUE_1);
@@ -713,11 +713,11 @@ public class HashMapTest extends TestMap {
     hashMap.put(KEY_3, VALUE_3);
     HashMap<String, String> srcMap = new HashMap<String, String>(hashMap);
     hashMap.putAll(srcMap);
-    assertEquals(hashMap.size(), SIZE_THREE);
+    assertEquals(SIZE_THREE, hashMap.size());
 
     // Test size behavior on clear
     hashMap.clear();
-    assertEquals(hashMap.size(), SIZE_ZERO);
+    assertEquals(SIZE_ZERO, hashMap.size());
   }
 
   /**
@@ -744,11 +744,11 @@ public class HashMapTest extends TestMap {
 
     Collection<String> valColl = hashMap.values();
     assertNotNull(valColl);
-    assertEquals(valColl.size(), SIZE_ONE);
+    assertEquals(SIZE_ONE, valColl.size());
 
     Iterator<String> itVal = valColl.iterator();
     String val = itVal.next();
-    assertEquals(val, VALUE_VAL);
+    assertEquals(VALUE_VAL, val);
   }
 
   @SuppressWarnings("rawtypes")

@@ -69,17 +69,17 @@ public class WidgetCollectionTest extends GWTTestCase {
     wc.add(l1);
     wc.add(l2);
 
-    assertEquals(wc.size(), 3);
+    assertEquals(3, wc.size());
     assertEquals(wc.get(1), l1);
 
     wc.remove(l1);
-    assertEquals(wc.size(), 2);
+    assertEquals(2, wc.size());
     assertEquals(wc.get(1), l2);
     assertFalse(wc.contains(l1));
 
     wc.remove(0);
     assertFalse(wc.contains(l0));
-    assertEquals(wc.indexOf(l2), 0);
+    assertEquals(0, wc.indexOf(l2));
   }
 
   public void testIterator() {

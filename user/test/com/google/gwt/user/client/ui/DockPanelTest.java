@@ -90,17 +90,17 @@ public class DockPanelTest extends GWTTestCase {
     Element table = dock.getElement();
     Element tbody = DOM.getFirstChild(table);
 
-    assertEquals(DOM.getChildCount(tbody), 4);
+    assertEquals(4, DOM.getChildCount(tbody));
 
     Element tr0 = DOM.getChild(tbody, 0);
     Element tr1 = DOM.getChild(tbody, 1);
     Element tr2 = DOM.getChild(tbody, 2);
     Element tr3 = DOM.getChild(tbody, 3);
 
-    assertEquals(DOM.getChildCount(tr0), 1);
-    assertEquals(DOM.getChildCount(tr1), 1);
-    assertEquals(DOM.getChildCount(tr2), 3);
-    assertEquals(DOM.getChildCount(tr3), 1);
+    assertEquals(1, DOM.getChildCount(tr0));
+    assertEquals(1, DOM.getChildCount(tr1));
+    assertEquals(3, DOM.getChildCount(tr2));
+    assertEquals(1, DOM.getChildCount(tr3));
 
     assertTrue(l0.attachedWhenLoaded);
     assertTrue(l1.attachedWhenLoaded);

@@ -38,7 +38,7 @@ public class StringTest extends GWTTestCase {
   }
 
   public void testCharAt() {
-    assertEquals(hideFromCompiler("abc").charAt(1), 'b');
+    assertEquals('b', hideFromCompiler("abc").charAt(1));
   }
 
   public void testCodePoint() {
@@ -523,13 +523,13 @@ public class StringTest extends GWTTestCase {
 
   public void testIndexOf() {
     String haystack = "abcdefghi";
-    assertEquals(haystack.indexOf("q"), -1);
-    assertEquals(haystack.indexOf('q'), -1);
-    assertEquals(haystack.indexOf("a"), 0);
-    assertEquals(haystack.indexOf('a'), 0);
-    assertEquals(haystack.indexOf('a', 1), -1);
-    assertEquals(haystack.indexOf("bc"), 1);
-    assertEquals(haystack.indexOf(""), 0);
+    assertEquals(-1, haystack.indexOf("q"));
+    assertEquals(-1, haystack.indexOf('q'));
+    assertEquals(0, haystack.indexOf("a"));
+    assertEquals(0, haystack.indexOf('a'));
+    assertEquals(-1, haystack.indexOf('a', 1));
+    assertEquals(1, haystack.indexOf("bc"));
+    assertEquals(0, haystack.indexOf(""));
 
     try {
       returnNull().indexOf("");

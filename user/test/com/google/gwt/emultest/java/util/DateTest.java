@@ -166,21 +166,21 @@ public class DateTest extends GWTTestCase {
     Date accum0 = create();
     Date arg10 = create();
     int a0 = accum0.compareTo(arg10);
-    assertEquals(a0, 0);
+    assertEquals(0, a0);
     // /////////////////////////////
     // Past
     // /////////////////////////////
     Date accum1 = create();
     Date arg20 = create(PAST);
     int a1 = accum1.compareTo(arg20);
-    assertEquals(a1, 1);
+    assertEquals(1, a1);
     // /////////////////////////////
     // Future
     // /////////////////////////////
     Date accum2 = create();
     Date arg30 = create(FUTURE);
     int a2 = accum2.compareTo(arg30);
-    assertEquals(a2, -1);
+    assertEquals(-1, a2);
   }
 
   /** Testing for public int java.util.Date.getDate(). */
@@ -249,13 +249,13 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum1 = create(PAST);
     int a1 = accum1.getMinutes();
-    assertEquals(a1, 0);
+    assertEquals(0, a1);
     // /////////////////////////////
     // Future
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     int a2 = accum2.getMinutes();
-    assertEquals(a2, 4);
+    assertEquals(4, a2);
   }
 
   /** Testing for public int java.util.Date.getMonth(). */
@@ -342,7 +342,7 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum1 = create(PAST);
     int a1 = accum1.getYear();
-    assertEquals(a1, -20);
+    assertEquals(-20, a1);
 
     // /////////////////////////////
     // Future

@@ -75,9 +75,9 @@ public class CheckBoxTest extends GWTTestCase {
   @SuppressWarnings("deprecation")
   public void testAccessors() {
     cb.setHTML("test HTML");
-    assertEquals(cb.getHTML(), "test HTML");
+    assertEquals("test HTML", cb.getHTML());
     cb.setText("test Text");
-    assertEquals(cb.getText(), "test Text");
+    assertEquals("test Text", cb.getText());
 
     cb.setValue(true);
     assertTrue(cb.getValue());
@@ -99,10 +99,10 @@ public class CheckBoxTest extends GWTTestCase {
     assertTrue(cb.isEnabled());
 
     cb.setTabIndex(2);
-    assertEquals(cb.getTabIndex(), 2);
+    assertEquals(2, cb.getTabIndex());
 
     cb.setName("my name");
-    assertEquals(cb.getName(), "my name");
+    assertEquals("my name", cb.getName());
 
     cb.setFormValue("valuable");
     assertEquals("valuable", cb.getFormValue());
@@ -167,15 +167,15 @@ public class CheckBoxTest extends GWTTestCase {
     cb.addClickListener(r2);
 
     ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 2);
+    assertEquals(2, ListenerTester.fired);
 
     cb.removeClickListener(r1);
     ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 1);
+    assertEquals(1, ListenerTester.fired);
 
     cb.removeClickListener(r2);
     ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 0);
+    assertEquals(0, ListenerTester.fired);
   }
 
   public void testCheckboxClick() {

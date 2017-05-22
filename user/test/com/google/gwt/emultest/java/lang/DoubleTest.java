@@ -119,7 +119,7 @@ public class DoubleTest extends GWTTestCase {
   public void testEqualityNormalizer() {
     Double d = 0.0;
     if (d != null) {
-      assertEquals(d.doubleValue(), 0.0);
+      assertEquals(0.0, d.doubleValue());
     } else {
       fail("0.0 should not evaluate to null");
     }

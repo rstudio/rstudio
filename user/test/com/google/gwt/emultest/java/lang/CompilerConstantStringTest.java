@@ -36,13 +36,13 @@ public class CompilerConstantStringTest extends GWTTestCase {
   }
 
   public void testCharAt() {
-    assertEquals("abc".charAt(1), 'b');
+    assertEquals('b', "abc".charAt(1));
   }
 
   public void testConcat() {
     assertEquals("abcdef", "abc" + "def");
     assertEquals("abcdef", "abc".concat("def"));
-    assertEquals("".concat(""), "");
+    assertEquals("", "".concat(""));
     char c = 'd';
     String s = "abc";
     assertEquals("abcd", "abc" + 'd');
@@ -60,9 +60,9 @@ public class CompilerConstantStringTest extends GWTTestCase {
     assertEquals(new String(constant), constant);
     assertEquals(new String(chars), constant);
     assertEquals(new String(chars, 2, 3), shortString);
-    assertEquals(new String(""), "");
-    assertEquals(new String(new String(new String(new String("")))), "");
-    assertEquals(new String(new char[] {}), "");
+    assertEquals("", new String(""));
+    assertEquals("", new String(new String(new String(new String("")))));
+    assertEquals("", new String(new char[] {}));
   }
 
   public void testContains() {
@@ -148,13 +148,13 @@ public class CompilerConstantStringTest extends GWTTestCase {
 
   public void testIndexOf() {
     String haystack = "abcdefghi";
-    assertEquals(haystack.indexOf("q"), -1);
-    assertEquals(haystack.indexOf('q'), -1);
-    assertEquals(haystack.indexOf("a"), 0);
-    assertEquals(haystack.indexOf('a'), 0);
-    assertEquals(haystack.indexOf('a', 1), -1);
-    assertEquals(haystack.indexOf("bc"), 1);
-    assertEquals(haystack.indexOf(""), 0);
+    assertEquals(-1, haystack.indexOf("q"));
+    assertEquals(-1, haystack.indexOf('q'));
+    assertEquals(0, haystack.indexOf("a"));
+    assertEquals(0, haystack.indexOf('a'));
+    assertEquals(-1, haystack.indexOf('a', 1));
+    assertEquals(1, haystack.indexOf("bc"));
+    assertEquals(0, haystack.indexOf(""));
   }
 
   public void testLastIndexOf() {
@@ -202,8 +202,8 @@ public class CompilerConstantStringTest extends GWTTestCase {
   }
 
   public void testReplace() {
-    assertEquals("axax".replace('x', 'a'), "aaaa");
-    assertEquals("aaaa".replace('x', 'a'), "aaaa");
+    assertEquals("aaaa", "axax".replace('x', 'a'));
+    assertEquals("aaaa", "aaaa".replace('x', 'a'));
     for (char from = 32; from < 250; ++from) {
       char to = (char) (from + 5);
       assertEquals(toS(to), toS(from).replace(from, to));

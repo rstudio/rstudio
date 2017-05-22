@@ -70,7 +70,7 @@ public class DOMRtlTest extends GWTTestCase {
     // position to the new scroll position, but do not assume the absolute
     // position.
     outer.setScrollLeft(-50);
-    assertEquals(outer.getScrollLeft(), -50);
+    assertEquals(-50, outer.getScrollLeft());
     int absLeftScrolled = inner.getAbsoluteLeft();
     assertEquals(50, absLeftScrolled - absLeftStart);
 

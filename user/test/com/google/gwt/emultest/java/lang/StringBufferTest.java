@@ -106,7 +106,7 @@ public class StringBufferTest extends GWTTestCase {
    * This method tests <code>charAt</code>.
    */
   public void testCharAt() {
-    assertEquals(new StringBuffer("abc").charAt(1), 'b');
+    assertEquals('b', new StringBuffer("abc").charAt(1));
   }
 
   /**
@@ -115,7 +115,7 @@ public class StringBufferTest extends GWTTestCase {
   public void testContructor() {
     String constant = "abcdef";
     assertEquals(new StringBuffer(constant).toString(), constant);
-    assertEquals(new StringBuffer().toString(), "");
+    assertEquals("", new StringBuffer().toString());
     assertEquals(new StringBuffer((CharSequence) constant).toString(), constant);
   }
 
@@ -125,11 +125,11 @@ public class StringBufferTest extends GWTTestCase {
   public void testDelete() {
     StringBuffer haystack = new StringBuffer("abcdefghi");
     haystack.delete(2, 4);
-    assertEquals(haystack.toString(), "abefghi");
+    assertEquals("abefghi", haystack.toString());
     haystack.deleteCharAt(0);
-    assertEquals(haystack.toString(), "befghi");
+    assertEquals("befghi", haystack.toString());
     haystack.deleteCharAt(1);
-    assertEquals(haystack.toString(), "bfghi");
+    assertEquals("bfghi", haystack.toString());
   }
 
   /**
@@ -150,13 +150,13 @@ public class StringBufferTest extends GWTTestCase {
    */
   public void testIndexOf() {
     String haystack = "abcdefghi";
-    assertEquals(haystack.indexOf("q"), -1);
-    assertEquals(haystack.indexOf('q'), -1);
-    assertEquals(haystack.indexOf("a"), 0);
-    assertEquals(haystack.indexOf('a'), 0);
-    assertEquals(haystack.indexOf('a', 1), -1);
-    assertEquals(haystack.indexOf("bc"), 1);
-    assertEquals(haystack.indexOf(""), 0);
+    assertEquals(-1, haystack.indexOf("q"));
+    assertEquals(-1, haystack.indexOf('q'));
+    assertEquals(0, haystack.indexOf("a"));
+    assertEquals(0, haystack.indexOf('a'));
+    assertEquals(-1, haystack.indexOf('a', 1));
+    assertEquals(1, haystack.indexOf("bc"));
+    assertEquals(0, haystack.indexOf(""));
   }
 
   /**
@@ -217,7 +217,7 @@ public class StringBufferTest extends GWTTestCase {
     for (int i = 0; i < 10; i++) {
       x.delete(5, 15);
     }
-    assertEquals(x.toString(), "12345");
+    assertEquals("12345", x.toString());
   }
 
   /**
@@ -263,28 +263,28 @@ public class StringBufferTest extends GWTTestCase {
     }
     assertTrue("endwith1", x.toString().endsWith("0123456789"));
     assertTrue("startswith1", x.toString().startsWith("0123456789"));
-    assertEquals(x.length(), size);
+    assertEquals(size, x.length());
     x = new StringBuffer();
     for (int i = 0; i < size * 4; i++) {
       x.append("" + i % 10);
     }
     assertTrue("endswith2", x.toString().endsWith("0123456789"));
     assertTrue("startswith2", x.toString().startsWith("0123456789"));
-    assertEquals("length2", x.length(), size * 4);
+    assertEquals("length2", size * 4, x.length());
     x = new StringBuffer();
     for (int i = 0; i < size; i++) {
       x.insert(0, "" + i % 10);
     }
     assertTrue("endswith3", x.toString().endsWith("9876543210"));
     assertTrue("startswith3", x.toString().startsWith("9876543210"));
-    assertEquals("length3", x.length(), size);
+    assertEquals("length3", size, x.length());
     x = new StringBuffer();
     for (int i = 0; i < size * 4; i++) {
       x.insert(0, "" + i % 10);
     }
     assertTrue("endswith4", x.toString().endsWith("9876543210"));
     assertTrue("startswith4", x.toString().startsWith("9876543210"));
-    assertEquals("size4", x.length(), size * 4);
+    assertEquals("size4", size * 4, x.length());
   }
 
   /**
@@ -331,11 +331,11 @@ public class StringBufferTest extends GWTTestCase {
   public void testSetLength() {
     StringBuffer x = new StringBuffer("abcdefghi");
     x.setLength(20);
-    assertEquals(x.length(), 20);
-    assertEquals(x.toString(), x.toString(), "abcdefghi\0\0\0\0\0\0\0\0\0\0\0");
+    assertEquals(20, x.length());
+    assertEquals(x.toString(), "abcdefghi\0\0\0\0\0\0\0\0\0\0\0", x.toString());
     x.setLength(5);
-    assertEquals(x.length(), 5);
-    assertEquals(x.toString(), "abcde");
+    assertEquals(5, x.length());
+    assertEquals("abcde", x.toString());
   }
 
   /**

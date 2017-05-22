@@ -1666,7 +1666,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
     destMap.remove(keys[0]);
     assertTrue(destMap.isEmpty());
-    assertEquals(destMap.size(), 0);
+    assertEquals(0, destMap.size());
   }
 
   /**

@@ -80,7 +80,7 @@ public class CollectionsTest extends EmulTestBase {
     assertEquals(deque.getFirst(), o3);
     assertEquals(deque.element(), o3);
 
-    assertEquals(deque.size(), 3);
+    assertEquals(3, deque.size());
     assertEquals(deque.size(), queueView.size());
 
     assertEquals(deque.getFirst(), o3);

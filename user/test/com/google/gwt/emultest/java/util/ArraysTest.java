@@ -1390,7 +1390,7 @@ public class ArraysTest extends EmulTestBase {
     // empty array
     Object[] test = {};
     Arrays.sort(test);
-    assertEquals(test.length, 0);
+    assertEquals(0, test.length);
     // array with one element
     Integer[] test2 = {1};
     Arrays.sort(test2);

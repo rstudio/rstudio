@@ -905,7 +905,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
 
     destSet.remove(getKeys()[0]);
     assertTrue(destSet.isEmpty());
-    assertEquals(destSet.size(), 0);
+    assertEquals(0, destSet.size());
   }
 
   /**

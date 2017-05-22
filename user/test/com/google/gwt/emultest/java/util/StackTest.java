@@ -40,7 +40,7 @@ public class StackTest extends GWTTestCase {
     @SuppressWarnings("unchecked")
     Stack<Integer> cloned = (Stack<Integer>) large.clone();
     checkLargeStack(cloned, 0);
-    assertEquals(large.size(), TEST_SIZE);
+    assertEquals(TEST_SIZE, large.size());
   }
 
   /**
@@ -105,14 +105,14 @@ public class StackTest extends GWTTestCase {
             "Increasing search found", searchStack.search(theInt), searchStack.size() - theInt);
       }
       for (int theInt = stackSizeIncreasing; theInt < TEST_SEARCH_SIZE; theInt++) {
-        assertEquals("Increasing not found", searchStack.search(theInt), -1);
+        assertEquals("Increasing not found", -1, searchStack.search(theInt));
       }
       searchStack.push(stackSizeIncreasing);
     }
     for (int stackSizeDecreasing = TEST_SEARCH_SIZE - 1; stackSizeDecreasing >= 0;
         stackSizeDecreasing--) {
       for (int theInt = TEST_SEARCH_SIZE - 1; theInt > stackSizeDecreasing; theInt--) {
-        assertEquals("Search decreasing not found", searchStack.search(theInt), -1);
+        assertEquals("Search decreasing not found", -1, searchStack.search(theInt));
       }
       for (int theInt = stackSizeDecreasing; theInt >= 0; theInt--) {
         assertEquals(

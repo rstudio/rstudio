@@ -130,7 +130,7 @@ public class GridTest extends HTMLTableTestBase {
     assertEquals(3, r.getColumnCount());
 
     int index = r.insertRow(2);
-    assertEquals(index, 2);
+    assertEquals(2, index);
     assertEquals(5, r.getRowCount());
     assertEquals(3, r.getColumnCount());
     assertEquals(5, r.getDOMRowCount());

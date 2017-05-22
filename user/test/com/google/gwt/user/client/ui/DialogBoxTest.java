@@ -249,7 +249,7 @@ public class DialogBoxTest extends PopupTest {
     DialogBox dialogBox = new DialogBox(caption);
     caption.setText("text");
     Element td = dialogBox.getCellElement(0, 1);
-    assertEquals(dialogBox.getText(), "text");
+    assertEquals("text", dialogBox.getText());
     caption.setHTML("<b>text</b>");
     assertEquals("<b>text</b>", dialogBox.getHTML().toLowerCase(Locale.ROOT));
     dialogBox.show();

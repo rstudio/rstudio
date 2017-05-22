@@ -91,19 +91,24 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
     // Direction should not be affected when auto-dir is disabled.
     tb.setDirectionEstimator(false);
     tb.setText(rtlText);
-    assertEquals("Direction should not be affected when auto-dir is disabled",
-        tb.getDirection(), Direction.DEFAULT);
+    assertEquals(
+        "Direction should not be affected when auto-dir is disabled",
+        Direction.DEFAULT,
+        tb.getDirection());
 
     // Direction should be instantly updated as auto-dir is enabled.
     tb.setDirectionEstimator(true);
-    assertEquals("Direction should be instantly updated as auto-dir is enabled",
-        tb.getDirection(), Direction.RTL);
+    assertEquals(
+        "Direction should be instantly updated as auto-dir is enabled",
+        Direction.RTL,
+        tb.getDirection());
 
     // Direction should be updated on setText when auto-dir is enabled.
     tb.setText(ltrText);
     assertEquals(
         "Direction should be updated on setText when auto-dir is enabled",
-        tb.getDirection(), Direction.LTR);
+        Direction.LTR,
+        tb.getDirection());
   }
 
   /**

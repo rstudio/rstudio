@@ -66,7 +66,7 @@ public abstract class ListTestBase extends TestArrayList {
   public void testAddWatch() {
     List s = makeEmptyList();
     s.add("watch");
-    assertEquals(s.get(0), "watch");
+    assertEquals("watch", s.get(0));
   }
 
   public void testListIteratorAddInSeveralPositions() {

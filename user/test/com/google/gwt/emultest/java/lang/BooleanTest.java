@@ -107,7 +107,7 @@ public class BooleanTest extends GWTTestCase {
   public void testEqualityNormalizer() {
     Boolean b = false;
     if (b != null) {
-      assertEquals(b.booleanValue(), false);
+      assertEquals(false, b.booleanValue());
     } else {
       fail("false should not evaluate to null");
     }
