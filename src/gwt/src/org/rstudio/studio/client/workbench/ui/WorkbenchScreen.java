@@ -85,8 +85,8 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
-
-
+     
+      
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;

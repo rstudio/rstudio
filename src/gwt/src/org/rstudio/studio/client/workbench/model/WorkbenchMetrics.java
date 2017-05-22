@@ -55,7 +55,7 @@ public class WorkbenchMetrics extends JavaScriptObject
    public final native double getDevicePixelRatio() /*-{
       return this.devicePixelRatio;
    }-*/;
-
+   
    public final boolean equalTo(WorkbenchMetrics other)
    {  
       return (other != null &&
