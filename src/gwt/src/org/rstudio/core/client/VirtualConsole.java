@@ -41,7 +41,7 @@ import com.google.inject.Inject;
 public class VirtualConsole
 {
    // use preference to determine ANSI color behavior
-   private final static int ANSI_COLOR_UNSET = -1;
+   private final static int ANSI_COLOR_USE_PREF = -1;
 
    // don't do any processing of ANSI escape codes
    public final static int ANSI_COLOR_OFF = 0;
@@ -56,15 +56,25 @@ public class VirtualConsole
    {
       this(null);
    }
-   
+
+   public VirtualConsole(Element parent)
+   {
+      this(parent, ANSI_COLOR_USE_PREF);
+   }   
+
    /**
     * VirtualConsole constructor
     * @param parent parent element
+    * @param ansiColorMode ANSI_COLOR_OFF: don't process ANSI escapes,
+    * ANSI_COLOR_ON: translate ANSI escapes into css styles,
+    * ANSI_COLOR_STRIP: strip out ANSI escape sequences but don't apply styles, 
+    * ANSI_COLOR_USE_PREF: determine behavior from preference
     */
-   public VirtualConsole(Element parent)
+   public VirtualConsole(Element parent, int ansiColorMode)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       parent_ = parent;
+      ansiColorMode_ = ansiColorMode;
    }
     
    @Inject
@@ -365,11 +375,13 @@ public class VirtualConsole
      
       String currentClazz = clazz;
       
+      int ansiColorMode = (ansiColorMode_ == ANSI_COLOR_USE_PREF) ? 
+            prefs_.consoleAnsiMode().getValue() : ansiColorMode_;
+
       // If previously determined classes from ANSI codes are available,
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      int ansiColorMode = prefs_.consoleAnsiMode().getValue();
       if (ansiColorMode == ANSI_COLOR_ON && ansiCodeStyles_ != null)
       {
          if (clazz != null)
@@ -539,6 +551,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private String ansiCodeStyles_;
+   private int ansiColorMode_;
    
    // Injected ----
    private UIPrefs prefs_;
