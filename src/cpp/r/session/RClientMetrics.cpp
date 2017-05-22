@@ -1,7 +1,7 @@
 /*
  * RClientMetrics.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ namespace client_metrics {
 
 namespace {   
 const char * const kConsoleWidth = "r.session.client_metrics.console-width";
+const char * const kBuildConsoleWidth = "r.session.client_metrics.build-console-width";
 const char * const kGraphicsWidth = "r.session.client_metrics.graphics-width";
 const char * const kGraphicsHeight = "r.session.client_metrics.graphics-height";
 const char * const kDevicePixelRatio = "r.session.client_metrics.device-pixel-ratio";
@@ -43,6 +44,7 @@ RClientMetrics get()
 {
    RClientMetrics metrics ;
    metrics.consoleWidth = r::options::getOptionWidth();
+   metrics.buildConsoleWidth = r::options::getBuildOptionWidth();
    metrics.graphicsWidth = graphics::device::getWidth();
    metrics.graphicsHeight = graphics::device::getHeight();
    metrics.devicePixelRatio = graphics::device::devicePixelRatio();
@@ -55,7 +57,9 @@ void set(const RClientMetrics& metrics)
    // then an error will be thrown)
    if (metrics.consoleWidth >= 10 && metrics.consoleWidth <= 10000)
       r::options::setOptionWidth(metrics.consoleWidth);
-   
+   if (metrics.buildConsoleWidth >= 10 && metrics.buildConsoleWidth <= 10000)
+      r::options::setBuildOptionWidth(metrics.buildConsoleWidth);
+
    // set graphics size, however don't do anything if width or height is less
    // than or equal to 0) 
    // (means the graphics window is minimized)
@@ -87,6 +91,7 @@ void save(Settings* pSettings)
    // save them
    pSettings->beginUpdate();
    pSettings->set(kConsoleWidth, metrics.consoleWidth);
+   pSettings->set(kBuildConsoleWidth, metrics.buildConsoleWidth);
    pSettings->set(kGraphicsWidth, metrics.graphicsWidth);
    pSettings->set(kGraphicsHeight, metrics.graphicsHeight);
    pSettings->set(kDevicePixelRatio, metrics.devicePixelRatio);
@@ -99,7 +104,8 @@ void restore(const Settings& settings)
    RClientMetrics metrics ;
    metrics.consoleWidth = settings.getInt(kConsoleWidth, 
                                           r::options::kDefaultWidth);
-   
+   metrics.buildConsoleWidth = settings.getInt(kBuildConsoleWidth,
+                                          r::options::kDefaultWidth);
    metrics.graphicsWidth = settings.getInt(kGraphicsWidth,
                                            graphics::device::kDefaultWidth);
    

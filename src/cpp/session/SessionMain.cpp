@@ -1544,6 +1544,10 @@ int main (int argc, char * const argv[])
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
 
+      // Mirror the R getOptions("width") value in an environment variable
+      core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
+               safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
+
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to

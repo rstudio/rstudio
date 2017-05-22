@@ -1,7 +1,7 @@
 /*
  * ROptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,8 @@ namespace core {
 namespace rstudio {
 namespace r {
 namespace options {
-   
+
+
 core::Error saveOptions(const core::FilePath& filePath);  
 core::Error restoreOptions(const core::FilePath& filePath);
 
@@ -45,6 +46,10 @@ core::Error restoreOptions(const core::FilePath& filePath);
 extern const int kDefaultWidth;
 void setOptionWidth(int width);
 int getOptionWidth();
+
+// build console width
+void setBuildOptionWidth(int width);
+int getBuildOptionWidth();
 
 // generic get and set   
    

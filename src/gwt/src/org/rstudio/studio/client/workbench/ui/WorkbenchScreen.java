@@ -1,7 +1,7 @@
 /*
  * WorkbenchScreen.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
@@ -55,6 +56,7 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Shim;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
@@ -83,8 +85,6 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
-     
-      
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
@@ -250,12 +250,23 @@ public class WorkbenchScreen extends Composite
    {
       // console width
       int consoleWidth = paneManager_.getConsole().getCharacterWidth();
-
+      
       // if the console is hidden then just use its last value. if there
       // has never been a valid value then then lastMetrics_ console width
       // will be 0, which the server will know to ignore
       if (paneManager_.getConsole().getOffsetWidth() <= 0)
          consoleWidth = lastMetrics_.getConsoleWidth();
+
+      // build console width
+      WorkbenchTabPanel buildPane = paneManager_.getOwnerTabPanel(Tab.Build);
+      int buildConsoleWidth = DomUtils.getCharacterWidth(buildPane.getElement(), 
+            ConsoleResources.INSTANCE.consoleStyles().console());
+
+      // if the build console is hidden then just use its last value. if there
+      // has never been a valid value then then lastMetrics_ build console width
+      // will be 0, which the server will know to ignore
+      if (buildConsoleWidth <= 0)
+         buildConsoleWidth = lastMetrics_.getBuildConsoleWidth();
       
       // plots size (don't allow negative metrics)
       WorkbenchTabPanel plotPanel = paneManager_.getOwnerTabPanel(Tab.Plots);
@@ -271,6 +282,7 @@ public class WorkbenchScreen extends Composite
       if (BrowseCap.isMacintoshDesktop())
          devicePixelRatio = BrowseCap.devicePixelRatio();
       WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
+                                                         buildConsoleWidth,
                                                          plotsSize.width,
                                                          plotsSize.height,
                                                          devicePixelRatio);
@@ -388,7 +400,7 @@ public class WorkbenchScreen extends Composite
 
    private TimeBufferedCommand paneSizesChangedCommand_;
 
-   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,1.0);
+   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,0,1.0);
    
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
