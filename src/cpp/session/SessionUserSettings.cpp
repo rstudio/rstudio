@@ -23,6 +23,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -399,6 +400,8 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int terminalWebsockets = readPref<bool>(prefs, "terminal_websockets", true);
    pTerminalWebsockets_.reset(new bool(terminalWebsockets));
+
+   syncConsoleColorEnv();
 }
 
 
@@ -931,6 +934,32 @@ void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
    settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
 }
 
+void UserSettings::syncConsoleColorEnv()
+{
+   // Use rsession alias to avoid collision with 'session'
+   // object brought in by Catch
+   namespace rsession = rstudio::session;
+   using namespace rsession;
+
+   // Mirror ansi_color_mode user preference with RSTUDIO_CONSOLE_COLOR
+   // environment variable so it can be inherited by spawned R processes, such
+   // as package builds, which cannot query RStudio IDE settings.
+   if (userSettings().ansiConsoleMode() == core::text::AnsiColorOn)
+   {
+      core::system::setenv("RSTUDIO_CONSOLE_COLOR", "256");
+
+      if (rsession::options().defaultConsoleTerm().length() > 0)
+         core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
+      if (rsession::options().defaultCliColorForce())
+         core::system::setenv("CLICOLOR_FORCE", "1");
+   }
+   else
+   {
+      core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
+      core::system::unsetenv("TERM");
+      core::system::unsetenv("CLICOLOR_FORCE");
+   }
+}
 
 } // namespace session
 } // namespace rstudio

@@ -237,6 +237,8 @@ private:
       return *pPref;
    }
 
+   static void syncConsoleColorEnv();
+
 private:
    core::FilePath settingsFilePath_;
    core::Settings settings_;
