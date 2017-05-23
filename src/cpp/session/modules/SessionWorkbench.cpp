@@ -191,6 +191,7 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    r::session::RClientMetrics metrics ;
    Error error = json::readObjectParam(request.params, 0,
                                  "consoleWidth", &(metrics.consoleWidth),
+                                 "buildConsoleWidth", &(metrics.buildConsoleWidth),
                                  "graphicsWidth", &(metrics.graphicsWidth),
                                  "graphicsHeight", &(metrics.graphicsHeight),
                                  "devicePixelRatio", &(metrics.devicePixelRatio));

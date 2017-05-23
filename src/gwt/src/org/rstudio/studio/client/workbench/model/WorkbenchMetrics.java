@@ -1,7 +1,7 @@
 /*
  * WorkbenchMetrics.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,11 +23,13 @@ public class WorkbenchMetrics extends JavaScriptObject
    }
    
    public static final native WorkbenchMetrics create(int consoleWidth,
+                                                      int buildConsoleWidth,
                                                       int graphicsWidth,
                                                       int graphicsHeight,
                                                       double devicePixelRatio) /*-{
       var clientMetrics = new Object();
       clientMetrics.consoleWidth = consoleWidth ;
+      clientMetrics.buildConsoleWidth = buildConsoleWidth;
       clientMetrics.graphicsWidth = graphicsWidth ;
       clientMetrics.graphicsHeight = graphicsHeight ;
       clientMetrics.devicePixelRatio = devicePixelRatio;
@@ -38,6 +40,10 @@ public class WorkbenchMetrics extends JavaScriptObject
       return this.consoleWidth;
    }-*/;
 
+   public final native int getBuildConsoleWidth() /*-{
+      return this.buildConsoleWidth;
+   }-*/;
+   
    public final native int getGraphicsWidth() /*-{
       return this.graphicsWidth ;
    }-*/;
@@ -54,6 +60,7 @@ public class WorkbenchMetrics extends JavaScriptObject
    {  
       return (other != null &&
               getConsoleWidth() == other.getConsoleWidth() &&
+              getBuildConsoleWidth() == other.getBuildConsoleWidth() &&
               getGraphicsWidth() == other.getGraphicsWidth() && 
               getGraphicsHeight() == other.getGraphicsHeight() &&
               getDevicePixelRatio() == other.getDevicePixelRatio());
@@ -76,8 +83,11 @@ public class WorkbenchMetrics extends JavaScriptObject
       
       // if it's 0, 1, or 2 larger then it's close enough
       boolean consoleCloseEnough = newWidthOffset >= 0 && newWidthOffset <= 2;
+
+      int newBuildWidthOffset = getBuildConsoleWidth() - previous.getBuildConsoleWidth();
+      boolean buildConsoleCloseEnough = newBuildWidthOffset >= 0 && newBuildWidthOffset <= 2;
          
-      return (consoleCloseEnough &&
+      return (consoleCloseEnough && buildConsoleCloseEnough &&
               (getGraphicsWidth() == previous.getGraphicsWidth()) && 
               (getGraphicsHeight() == previous.getGraphicsHeight()) &&
               (getDevicePixelRatio() == previous.getDevicePixelRatio()));

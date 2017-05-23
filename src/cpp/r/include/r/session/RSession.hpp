@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,10 +44,12 @@ namespace session {
 struct RClientMetrics
 {   
    RClientMetrics() 
-      : consoleWidth(0), graphicsWidth(0), graphicsHeight(0), devicePixelRatio(1.0)
+      : consoleWidth(0), buildConsoleWidth(0), graphicsWidth(0),
+        graphicsHeight(0), devicePixelRatio(1.0)
    {
    }
    int consoleWidth ;
+   int buildConsoleWidth;
    int graphicsWidth ;
    int graphicsHeight;
    double devicePixelRatio;

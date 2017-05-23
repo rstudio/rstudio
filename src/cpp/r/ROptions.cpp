@@ -1,7 +1,7 @@
 /*
  * ROptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,8 @@
 
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 
@@ -28,7 +30,14 @@ using namespace rstudio::core ;
 namespace rstudio {
 namespace r {
 namespace options {
-      
+
+namespace {
+
+// last-known width of the build pane, in characters
+int s_buildWidth = -1;
+
+} // anonymous namespace
+
 Error saveOptions(const FilePath& filePath)
 {
    return exec::RFunction(".rs.saveOptions", filePath.absolutePath()).call();
@@ -43,6 +52,9 @@ const int kDefaultWidth = 80;
    
 void setOptionWidth(int width)
 {
+   core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
+                        core::safe_convert::numberToString(width));
+
    boost::format fmt("options(width=%1%)");
    Error error = r::exec::executeString(boost::str(fmt % width));
    if (error)
@@ -52,6 +64,16 @@ void setOptionWidth(int width)
 int getOptionWidth()
 {
    return getOption<int>("width", kDefaultWidth);
+}
+
+void setBuildOptionWidth(int width)
+{
+   s_buildWidth = width;
+}
+
+int getBuildOptionWidth()
+{
+   return s_buildWidth;
 }
 
 SEXP getOption(const std::string& name)

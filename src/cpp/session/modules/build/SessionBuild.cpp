@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@
 #endif
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSessionUtils.hpp>
@@ -271,15 +272,27 @@ private:
       core::system::ProcessOptions options;
       options.terminateChildren = true;
 
+      // notify build process of build-pane width
+      core::system::Options environment;
+      core::system::environment(&environment);
+      int buildWidth = r::options::getBuildOptionWidth();
+      if (buildWidth > 0)
+         core::system::setenv(&environment, "RSTUDIO_CONSOLE_WIDTH",
+                              safe_convert::numberToString(buildWidth));
+      else
+         core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
+
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (config.buildType == r_util::kBuildTypePackage)
       {
+         options.environment = environment;
          options.workingDir = buildTargetPath.parent();
          executePackageBuild(type, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeMakefile)
       {
+         options.environment = environment;
          options.workingDir = buildTargetPath;
          executeMakefileBuild(type, buildTargetPath, options, cb);
       }
@@ -288,8 +301,6 @@ private:
          options.workingDir = buildTargetPath;
          
          // pass along R_LIBS
-         core::system::Options environment;
-         core::system::environment(&environment);
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
             core::system::setenv(&environment, "R_LIBS", rLibs);
@@ -299,6 +310,7 @@ private:
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
+         options.environment = environment;
          options.workingDir = buildTargetPath.parent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
@@ -566,8 +578,11 @@ private:
       // make a copy of options so we can customize the environment
       core::system::ProcessOptions pkgOptions(options);
       core::system::Options childEnv;
-      core::system::environment(&childEnv);
-      
+      if (options.environment)
+         childEnv = *options.environment;
+      else
+         core::system::environment(&childEnv);
+
       // allow child process to inherit our R_LIBS
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
