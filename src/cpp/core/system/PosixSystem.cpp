@@ -1147,7 +1147,7 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, ProcessFilter filter)
 {
    // clear the existing process info
    pInfo->clear();
@@ -1196,8 +1196,14 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
          if (pos != std::string::npos)
             cmdline = cmdline.substr(0, pos);
 
+         // confirm the stat file exists for this pid
+         boost::format statFmt("/proc/%1%/stat");
+         FilePath statFile = FilePath(boost::str(statFmt % pDirent->d_name));
+         if (!statFile.exists())
+            continue;
+
          // check if this is the process we are filtering on
-         if (FilePath(cmdline).filename() == process)
+         if (process.empty() || FilePath(cmdline).filename() == process)
          {
             // stat the file to determine it's owner
             struct stat st;
@@ -1218,11 +1224,39 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
                continue;
             }
 
+            // read the stat fields for other relevant process infostd::string str;
+            std::string statStr;
+            error = core::readStringFromFile(statFile, &statStr);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            std::vector<std::string> statFields;
+            boost::algorithm::split(statFields, statStr,
+                                    boost::is_any_of(" "),
+                                    boost::algorithm::token_compress_on);
+
+            // get process parent id
+            std::string ppidStr = statFields[3];
+            pid_t ppid = safe_convert::stringTo<pid_t>(ppidStr, -1);
+
+            // get process group id
+            std::string pgrpStr = statFields[4];
+            pid_t pgrp = safe_convert::stringTo<pid_t>(pgrpStr, -1);
+
             // add a process info
             ProcessInfo pi;
             pi.pid = pid;
+            pi.ppid = ppid;
+            pi.pgrp = pgrp;
             pi.username = user.username;
-            pInfo->push_back(pi);
+
+            if (!filter || filter(pi))
+            {
+               pInfo->push_back(pi);
+            }
          }
       }
    }
@@ -1264,19 +1298,48 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, ProcessFilter filter)
 {
-   std::vector<PidType> pids;
-   Error error = pidof(process, &pids);
+   // use ps to capture process info
+   // output format
+   // USER:PID:PPID:PGID:PROCNAME
+   // we use a colon as the separator as it is not a valid path character in OSX
+   std::string cmd = process.empty() ? "ps acxj | awk '{OFS=\":\"; print $1,$2,$3,$4,$10}'"
+                                     : "ps acxj | awk '{OFS=\":\"; if ($10==\"" +
+                                        process + "\") print $1,$2,$3,$4,$10}'"
+
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(cmd,
+                                          core::system::ProcessOptions(),
+                                          &result);
    if (error)
       return error;
 
-   pInfo->clear();
-   BOOST_FOREACH(PidType pid, pids)
+   // parse into ProcessInfo
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines,
+                           result.stdOut,
+                           boost::algorithm::is_any_of("\n"));
+
+   BOOST_FOREACH(const std::string& line, lines)
    {
-      ProcessInfo pi;
-      pi.pid = pid;
-      pInfo->push_back(pi);
+      std::vector<std::string> lineInfo;
+      boost::algorithm::split(lineInfo,
+                              line,
+                              boost::algorithm::is_any_of(":"));
+
+      ProcessInfo procInfo;
+      procInfo.username = lineInfo[0];
+      procInfo.pid = safe_convert::stringTo<pid_t>(lineInfo[1], 0);
+      procInfo.ppid = safe_convert::stringTo<pid_t>(lineInfo[2], 0);
+      procInfo.pgrp = safe_convert::stringTo<pid_t>(lineInfo[3], 0);
+      procInfo.procname = lineInfo[4];
+
+      // check to see if this process info passes the filter criteria
+      if (!filter || filter(procInfo))
+      {
+         pInfo->push_back(procInfo);
+      }
    }
 
    return Success();

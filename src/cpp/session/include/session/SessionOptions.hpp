@@ -500,6 +500,11 @@ public:
 
    bool getBoolOverlayOption(const std::string& name);
 
+   bool quitChildProcessesOnExit() const
+   {
+      return quitChildProcessesOnExit_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -559,6 +564,7 @@ private:
    bool showUserHomePage_;
    std::string defaultConsoleTerm_;
    bool defaultCliColorForce_;
+   bool quitChildProcessesOnExit_;
 
    // r
    std::string coreRSourcePath_;

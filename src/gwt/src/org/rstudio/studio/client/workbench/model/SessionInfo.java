@@ -498,4 +498,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getSupportDriverLicensing() /*-{
       return this.drivers_support_licensing;
    }-*/;
+   
+   public final native boolean quitChildProcessesOnExit() /*-{
+      return this.quit_child_processes_on_exit;
+   }-*/;
 }

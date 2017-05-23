@@ -94,13 +94,17 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 
 struct ProcessInfo
 {
-   ProcessInfo() : pid(0) {}
+   ProcessInfo() : pid(0), ppid(0), pgrp(0) {}
    PidType pid;
+   PidType ppid;
+   PidType pgrp;
    std::string username;
 };
 
+typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 core::Error processInfo(const std::string& process,
-                        std::vector<ProcessInfo>* pInfo);
+                        std::vector<ProcessInfo>* pInfo,
+                        ProcessFilter filter = ProcessFilter());
 
 bool isProcessRunning(pid_t pid);
 

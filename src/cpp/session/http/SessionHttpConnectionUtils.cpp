@@ -32,6 +32,7 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
 
@@ -151,6 +152,9 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
       catch(...)
       {
       }
+
+      // kill child processes before going down
+      terminateAllChildProcesses();
 
       // abort
       ::abort();

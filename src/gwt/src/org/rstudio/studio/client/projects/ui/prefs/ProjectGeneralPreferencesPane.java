@@ -19,8 +19,11 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRVersion;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -29,20 +32,22 @@ import com.google.inject.Inject;
 public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectGeneralPreferencesPane()
+   public ProjectGeneralPreferencesPane(Session session)
    {        
-      Grid grid = new Grid(4, 2);
+      sessionInfo_ = session.getSessionInfo();
+
+      Grid grid = new Grid(5, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());
       grid.setCellSpacing(8);
-      
+
       Label infoLabel = new Label("Use (Default) to inherit the global default setting");
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
       grid.setWidget(0, 0, infoLabel);
-      
+
       // restore workspace
       grid.setWidget(1, 0, new Label("Restore .RData into workspace at startup"));
       grid.setWidget(1, 1, restoreWorkspace_ = new YesNoAskDefault(false));
-     
+
       // save workspace      
       grid.setWidget(2, 0, new Label("Save workspace to .RData on exit"));
       grid.setWidget(2, 1, saveWorkspace_ = new YesNoAskDefault(true));
@@ -50,10 +55,11 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       // always save history
       grid.setWidget(3, 0, new Label("Always save history (even if not saving .RData)"));
       grid.setWidget(3, 1, alwaysSaveHistory_ = new YesNoAskDefault(false));
-      
+
+      // quit child processes
+      grid.setWidget(4, 0, quitChildProcessesOnExit_ = new CheckBox("Quit child processes on exit"));
+
       add(grid);
-      
-      
    }
 
    @Override
@@ -77,6 +83,25 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       alwaysSaveHistory_.setSelectedIndex(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
       rVersion_ = config.getRVersion();
+      
+      // check or uncheck the checkbox for child processes based on the configuration value
+      // if default is specified, we need to use the current session setting
+      // otherwise, yes or no indicate the check state exactly
+      int quitChildProcessesOnExit = config.getQuitChildProcessesOnExit();
+      boolean quitChildProcessesChecked = sessionInfo_.quitChildProcessesOnExit();
+      
+      switch (quitChildProcessesOnExit)
+      {
+      case 1:
+         quitChildProcessesChecked = true; // yes
+         break;
+      case 2:
+         quitChildProcessesChecked = false; // no
+         break;
+      }
+      
+      quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
+      
    }
 
    @Override
@@ -88,6 +113,17 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedIndex());
       config.setTutorialPath(tutorialPath_);
       config.setRVersion(rVersion_);
+      
+      // turn the quit child processes checkbox from a boolean into the 
+      // YesNoAsk value that it should be in the configuration
+      boolean quitChildProcessesChecked = quitChildProcessesOnExit_.getValue();
+      int quitChildProcessesOnExit = 0;
+      if (quitChildProcessesChecked != sessionInfo_.quitChildProcessesOnExit())
+      {
+         quitChildProcessesOnExit = (quitChildProcessesChecked ? 1 : 2);
+      }
+      
+      config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       return false;
    }
    
@@ -123,6 +159,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
+   private CheckBox quitChildProcessesOnExit_;
+   private SessionInfo sessionInfo_;
    
    private String tutorialPath_;
    

@@ -210,7 +210,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "default TERM setting for R console")
       ("session-default-clicolor-force",
        value<bool>(&defaultCliColorForce_)->default_value(true),
-       "default CLICOLOR_FORCE setting for R console");
+       "default CLICOLOR_FORCE setting for R console")
+      ("session-quit-child-processes-on-exit",
+       value<bool>(&quitChildProcessesOnExit_)->default_value(false),
+       "quit child processes on session exit");
 
    // allow options
    options_description allow("allow");
