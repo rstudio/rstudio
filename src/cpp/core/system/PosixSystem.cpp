@@ -1771,7 +1771,7 @@ bool filterNonChildProcesses(pid_t pid, pid_t ppid, pid_t pgrp,
 Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses)
 {
    if (!pOutProcesses)
-      return;
+      return systemError(EINVAL, ERROR_LOCATION);
 
    // get the process group of this process
    pid_t pgrp = ::getpgrp();
