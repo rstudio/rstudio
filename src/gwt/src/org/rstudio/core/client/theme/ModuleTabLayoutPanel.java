@@ -30,6 +30,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
+import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
@@ -101,31 +102,36 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       {
          if (isBusy)
          {
-            if (busyImage_ == null)
+            if (busySpinner_ == null)
             {
-               busyImage_ = new Image(ThemeResources.INSTANCE.busyTab());
-               busyImage_.setHeight("9px");
-               busyImage_.setWidth("9px");
-               busyImage_.getElement().getStyle().setMarginLeft(4, Unit.PX);
-               busyImage_.getElement().getStyle().setMarginTop(6, Unit.PX);
                HorizontalPanel center = (HorizontalPanel)closeButton_.getParent();
+               
+               busySpinner_ = new ProgressSpinner(center.getElement());
+               
+               busySpinner_.setHeight("9px");
+               busySpinner_.setWidth("9px");
+               busySpinner_.getElement().getStyle().setMarginLeft(4, Unit.PX);
+               busySpinner_.getElement().getStyle().setMarginTop(6, Unit.PX);
+               
                if (center != null)
-                  center.add(busyImage_);
+                  center.add(busySpinner_);
             }
             closeButton_.setVisible(false);
-            busyImage_.setVisible(true);
+            busySpinner_.setVisible(true);
          }
          else
          {
-            if (busyImage_ != null)
-              busyImage_.setVisible(false);
+            if (busySpinner_ != null) {
+               busySpinner_.removeFromParent();
+               busySpinner_ = null;
+            }
             closeButton_.setVisible(true);
          }
       }
 
       private HorizontalPanel layoutPanel_;
       private Image closeButton_;
-      private Image busyImage_;
+      private ProgressSpinner busySpinner_;
    }
 
    public ModuleTabLayoutPanel(final WindowFrame owner)
