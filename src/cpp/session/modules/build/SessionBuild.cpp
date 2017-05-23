@@ -279,6 +279,8 @@ private:
       if (buildWidth > 0)
          core::system::setenv(&environment, "RSTUDIO_CONSOLE_WIDTH",
                               safe_convert::numberToString(buildWidth));
+      else
+         core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
