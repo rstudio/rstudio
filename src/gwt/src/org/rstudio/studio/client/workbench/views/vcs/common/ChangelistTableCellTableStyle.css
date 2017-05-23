@@ -76,3 +76,7 @@ span.status img:first-child {
 .rstudio-themes-flat.editor_dark .cellTableHoveredRow {
    background-color: THEME_DARK_ROW_HOVERED;
 }
+
+.rstudio-themes-flat.editor_dark .cellTableSelectedRow.cellTableHoveredRow {
+   background-color: THEME_DARK_ROW_SELECTED;
+}
