@@ -8,6 +8,9 @@
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
 
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_HOVERED org.rstudio.core.client.theme.ThemeColors.darkRowHovered;
+
 span.status {
    white-space: nowrap;
 }
@@ -64,4 +67,12 @@ span.status img:first-child {
 .rstudio-themes-flat .rstudio-themes-alternate .cellTableSortableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.rstudio-themes-flat.editor_dark .cellTableSelectedRow {
+   background-color: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-flat.editor_dark .cellTableHoveredRow {
+   background-color: THEME_DARK_ROW_HOVERED;
 }
