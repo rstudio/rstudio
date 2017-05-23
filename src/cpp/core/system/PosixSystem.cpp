@@ -1306,7 +1306,7 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
    // we use a colon as the separator as it is not a valid path character in OSX
    std::string cmd = process.empty() ? "ps acxj | awk '{OFS=\":\"; print $1,$2,$3,$4,$10}'"
                                      : "ps acxj | awk '{OFS=\":\"; if ($10==\"" +
-                                        process + "\") print $1,$2,$3,$4,$10}'"
+                                        process + "\") print $1,$2,$3,$4,$10}'";
 
    core::system::ProcessResult result;
    Error error = core::system::runCommand(cmd,
@@ -1323,6 +1323,8 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
 
    BOOST_FOREACH(const std::string& line, lines)
    {
+      if (line.empty()) continue;
+       
       std::vector<std::string> lineInfo;
       boost::algorithm::split(lineInfo,
                               line,
@@ -1333,7 +1335,6 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
       procInfo.pid = safe_convert::stringTo<pid_t>(lineInfo[1], 0);
       procInfo.ppid = safe_convert::stringTo<pid_t>(lineInfo[2], 0);
       procInfo.pgrp = safe_convert::stringTo<pid_t>(lineInfo[3], 0);
-      procInfo.procname = lineInfo[4];
 
       // check to see if this process info passes the filter criteria
       if (!filter || filter(procInfo))
