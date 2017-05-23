@@ -958,6 +958,41 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
    }
 }
 
+Error terminateChildProcesses()
+{
+   DWORD processId = GetCurrentProcessId();
+
+   PROCESSENTRY32 processEntry;
+   memset(&processEntry, 0, sizeof(PROCESSENTRY32));
+   processEntry.dwSize = sizeof(PROCESSENTRY32);
+
+   HANDLE hSnap = :: CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+   if (Process32First(hSnap, &processEntry))
+   {
+      BOOL moreProcesses = TRUE;
+
+      while (moreProcesses)
+      {
+          // kill child processes
+          if (processEntry.th32ParentProcessID == processId)
+          {
+              HANDLE hChildProc = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processEntry.th32ProcessID);
+
+              if (hChildProc)
+              {
+                  TerminateProcess(hChildProc, 1);
+                  CloseHandle(hChildProc);
+              }
+          }
+
+          moreProcesses = ::Process32Next(hSnap, &processEntry);
+      }
+   }
+
+   return Success();
+}
+
 
 } // namespace system
 } // namespace core

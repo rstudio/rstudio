@@ -51,7 +51,6 @@
 #include <core/LogWriter.hpp>
 #include <core/system/System.hpp>
 #include <core/ProgramStatus.hpp>
-#include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Request.hpp>
@@ -62,7 +61,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
-#include <core/system/PosixSystem.hpp>
+
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -199,64 +198,6 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
-#ifndef _WIN32
-// functions for killing child processes
-// not applicable on windows
-
-bool filterNonChildProcesses(pid_t pid, pid_t ppid, pid_t pgrp,
-                             const rstudio::core::system::ProcessInfo& process)
-{
-   // remove all but child processes of this session
-   // remove this processe's parent and remove
-   // processes not part of the group
-   if (process.pgrp != pgrp)
-   {
-      return false;
-   }
-
-   if (process.pid == ppid)
-   {
-      return false;
-   }
-
-   if (process.pid == pid)
-   {
-      return false;
-   }
-
-   return true;
-}
-
-void getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses)
-{
-   using namespace rstudio::core::system;
-
-   if (!pOutProcesses)
-      return;
-
-   // get the process group of this session process
-   pid_t pgrp = ::getpgrp();
-
-   // get the parent process of this session process
-   pid_t ppid = ::getppid();
-
-   // get this session's pid
-   pid_t pid = ::getpid();
-
-   // get all child processes
-   std::vector<ProcessInfo> processes;
-   Error error = processInfo("",
-                             pOutProcesses,
-                             boost::bind(&filterNonChildProcesses,
-                                         pid,
-                                         ppid,
-                                         pgrp,
-                                         boost::placeholders::_1));
-
-   if (error)
-      LOG_ERROR(error);
-}
-
 bool quitChildProcesses()
 {
    // allow project override
@@ -279,34 +220,17 @@ bool quitChildProcesses()
    return rsession::options().quitChildProcessesOnExit();
 }
 
-#endif // end kill child process functions
-
 // terminates all child processes, including those unknown to us
 // no waiting is done to ensure the children shutdown
 // this is merely a best effort to stop children
 void terminateAllChildProcesses()
 {
-   // on windows, all child processes are automatically killed
-   // when the parent stops
-#ifdef _WIN32
-   return;
-#endif
-
-   using namespace rstudio::core::system;
-
    if (!quitChildProcesses())
       return;
 
-   std::vector<ProcessInfo> childProcesses;
-   getChildProcesses(&childProcesses);
-
-   BOOST_FOREACH(const ProcessInfo& process, childProcesses)
-   {
-      if (::kill(process.pid, SIGTERM) != 0)
-      {
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      }
-   }
+   Error error = rstudio::core::system::terminateChildProcesses();
+   if (error)
+      LOG_ERROR(error);
 }
 
 namespace overlay {

@@ -163,7 +163,6 @@ private:
 };
 
 
-
 #endif
 
 void initHook();
@@ -283,6 +282,8 @@ bool hasSubprocesses(PidType pid);
 // Get current-working directory of a process; returns empty FilePath
 // if unable to determine cwd
 FilePath currentWorkingDir(PidType pid);
+
+Error terminateChildProcesses();
    
 } // namespace system
 } // namespace core 

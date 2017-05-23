@@ -1744,7 +1744,76 @@ Error launchChildProcess(std::string path,
    return Success() ;
 }
 
+bool filterNonChildProcesses(pid_t pid, pid_t ppid, pid_t pgrp,
+                             const rstudio::core::system::ProcessInfo& process)
+{
+   // remove all but child processes
+   // remove this process's parent and remove
+   // processes not part of the group
+   if (process.pgrp != pgrp)
+   {
+      return false;
+   }
 
+   if (process.pid == ppid)
+   {
+      return false;
+   }
+
+   if (process.pid == pid)
+   {
+      return false;
+   }
+
+   return true;
+}
+
+Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses)
+{
+   if (!pOutProcesses)
+      return;
+
+   // get the process group of this process
+   pid_t pgrp = ::getpgrp();
+
+   // get the parent process of this process
+   pid_t ppid = ::getppid();
+
+   // get this process' pid
+   pid_t pid = ::getpid();
+
+   // get all child processes
+   std::vector<ProcessInfo> processes;
+   Error error = processInfo("",
+                             pOutProcesses,
+                             boost::bind(&filterNonChildProcesses,
+                                         pid,
+                                         ppid,
+                                         pgrp,
+                                         boost::placeholders::_1));
+
+   return error;
+}
+
+Error terminateChildProcesses()
+{
+    std::vector<ProcessInfo> childProcesses;
+    Error error = getChildProcesses(&childProcesses);
+    if (error)
+       return error;
+
+    BOOST_FOREACH(const ProcessInfo& process, childProcesses)
+    {
+       if (::kill(process.pid, SIGTERM) != 0)
+       {
+          LOG_ERROR(systemError(errno, ERROR_LOCATION));
+       }
+    }
+
+    // the actual kill is best effort
+    // so return success regardless
+    return Success();
+}
 
 bool isUserNotFoundError(const Error& error)
 {

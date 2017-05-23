@@ -183,6 +183,8 @@ core::Error launchChildProcess(std::string path,
                                ProcessConfigFilter configFilter,
                                PidType* pProcessId ) ;
 
+Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+
 bool isUserNotFoundError(const core::Error& error);
 
 core::Error userBelongsToGroup(const user::User& user,
