@@ -77,7 +77,7 @@ public class RProjectConfig extends JavaScriptObject
       return this.quit_child_processes_on_exit;
    }-*/;  
    
-   public native final int setQuitChildProcessesOnExit(int quitChildProcessesOnExit) /*-{
+   public native final void setQuitChildProcessesOnExit(int quitChildProcessesOnExit) /*-{
       this.quit_child_processes_on_exit = quitChildProcessesOnExit;
    }-*/;  
    

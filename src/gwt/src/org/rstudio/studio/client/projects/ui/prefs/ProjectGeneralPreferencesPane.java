@@ -92,11 +92,11 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       switch (quitChildProcessesOnExit)
       {
-      case 1:
-         quitChildProcessesChecked = true; // yes
+      case YES_VALUE:
+         quitChildProcessesChecked = true;
          break;
-      case 2:
-         quitChildProcessesChecked = false; // no
+      case NO_VALUE:
+         quitChildProcessesChecked = false;
          break;
       }
       
@@ -120,7 +120,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       int quitChildProcessesOnExit = 0;
       if (quitChildProcessesChecked != sessionInfo_.quitChildProcessesOnExit())
       {
-         quitChildProcessesOnExit = (quitChildProcessesChecked ? 1 : 2);
+         quitChildProcessesOnExit = (quitChildProcessesChecked ? YES_VALUE : NO_VALUE);
       }
       
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
@@ -153,7 +153,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    
    private static final String USE_DEFAULT = "(Default)";
    private static final String YES = "Yes";
+   private static final int YES_VALUE = 1;
    private static final String NO = "No";
+   private static final int NO_VALUE = 2;
    private static final String ASK ="Ask";
    
    private YesNoAskDefault restoreWorkspace_;

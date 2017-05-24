@@ -960,13 +960,17 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
 
 Error terminateChildProcesses()
 {
-   DWORD processId = GetCurrentProcessId();
+   DWORD processId = ::GetCurrentProcessId();
 
    PROCESSENTRY32 processEntry;
    memset(&processEntry, 0, sizeof(PROCESSENTRY32));
    processEntry.dwSize = sizeof(PROCESSENTRY32);
 
-   HANDLE hSnap = :: CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   HANDLE hSnap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if (hSnap == INVALID_HANDLE_VALUE)
+   {
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   }
 
    if (Process32First(hSnap, &processEntry))
    {
@@ -978,11 +982,21 @@ Error terminateChildProcesses()
           if (processEntry.th32ParentProcessID == processId)
           {
               HANDLE hChildProc = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processEntry.th32ProcessID);
-
               if (hChildProc)
               {
-                  TerminateProcess(hChildProc, 1);
-                  CloseHandle(hChildProc);
+                  if (!::TerminateProcess(hChildProc, 1))
+                  {
+                      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+                  }
+
+                  if (!::CloseHandle(hChildProc))
+                  {
+                      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+                  }
+              }
+              else
+              {
+                  LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
               }
           }
 

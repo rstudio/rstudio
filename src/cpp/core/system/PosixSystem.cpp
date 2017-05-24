@@ -1224,7 +1224,7 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
                continue;
             }
 
-            // read the stat fields for other relevant process infostd::string str;
+            // read the stat fields for other relevant process info
             std::string statStr;
             error = core::readStringFromFile(statFile, &statStr);
             if (error)
@@ -1237,6 +1237,12 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
             boost::algorithm::split(statFields, statStr,
                                     boost::is_any_of(" "),
                                     boost::algorithm::token_compress_on);
+
+            if (statFields.size() < 5)
+            {
+               LOG_WARNING_MESSAGE("Expected at least 5 stat fields but read: " + safe_convert::numberToString<size_t>(statFields.size()));
+               continue;
+            }
 
             // get process parent id
             std::string ppidStr = statFields[3];
@@ -1329,6 +1335,12 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
       boost::algorithm::split(lineInfo,
                               line,
                               boost::algorithm::is_any_of(":"));
+
+      if (lineInfo.size() < 5)
+      {
+         LOG_WARNING_MESSAGE("Exepcted 5 items from ps output but received: " + safe_convert::numberToString<size_t>(lineInfo.size()));
+         continue;
+      }
 
       ProcessInfo procInfo;
       procInfo.username = lineInfo[0];
@@ -1745,7 +1757,7 @@ Error launchChildProcess(std::string path,
 }
 
 bool filterNonChildProcesses(pid_t pid, pid_t ppid, pid_t pgrp,
-                             const rstudio::core::system::ProcessInfo& process)
+                             const core::system::ProcessInfo& process)
 {
    // remove all but child processes
    // remove this process's parent and remove
