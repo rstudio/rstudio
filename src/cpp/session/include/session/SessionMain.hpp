@@ -19,6 +19,7 @@
 namespace rstudio {
 namespace session {
 
+void terminateAllChildProcesses();
 
 }
 }

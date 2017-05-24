@@ -295,6 +295,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["website_path"] = config.websitePath;
    configJson["custom_script_path"] = config.customScriptPath;
    configJson["tutorial_path"] = config.tutorialPath;
+   configJson["quit_child_processes_on_exit"] = config.quitChildProcessesOnExit;
+
    return configJson;
 }
 
@@ -472,7 +474,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "default_encoding", &(config.encoding),
                     "default_sweave_engine", &(config.defaultSweaveEngine),
                     "default_latex_program", &(config.defaultLatexProgram),
-                    "root_document", &(config.rootDocument));
+                    "root_document", &(config.rootDocument),
+                    "quit_child_processes_on_exit", &(config.quitChildProcessesOnExit));
    if (error)
       return error;
 

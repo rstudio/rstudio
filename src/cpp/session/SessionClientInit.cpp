@@ -383,6 +383,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
+   sessionInfo["quit_child_processes_on_exit"] = options.quitChildProcessesOnExit();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client

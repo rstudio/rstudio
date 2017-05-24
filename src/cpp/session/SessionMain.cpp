@@ -51,7 +51,6 @@
 #include <core/LogWriter.hpp>
 #include <core/system/System.hpp>
 #include <core/ProgramStatus.hpp>
-#include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Request.hpp>
@@ -62,6 +61,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -197,6 +197,42 @@ using namespace rsession::client_events;
 // forward-declare overlay methods
 namespace rstudio {
 namespace session {
+
+bool quitChildProcesses()
+{
+   // allow project override
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch(projContext.config().quitChildProcessesOnExit)
+      {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         // fall through
+         break;
+      }
+   }
+
+   // no project override
+   return rsession::options().quitChildProcessesOnExit();
+}
+
+// terminates all child processes, including those unknown to us
+// no waiting is done to ensure the children shutdown
+// this is merely a best effort to stop children
+void terminateAllChildProcesses()
+{
+   if (!quitChildProcesses())
+      return;
+
+   Error error = system::terminateChildProcesses();
+   if (error)
+      LOG_ERROR(error);
+}
+
 namespace overlay {
 Error initialize();
 } // namespace overlay
@@ -1057,6 +1093,10 @@ void rCleanup(bool terminatedNormally)
       // terminate known child processes
       terminateAllChildren(&module_context::processSupervisor(),
                            ERROR_LOCATION);
+
+      // terminate unknown child processes
+      // processes launched by means we do not control
+      terminateAllChildProcesses();
    }
    CATCH_UNEXPECTED_EXCEPTION
 
