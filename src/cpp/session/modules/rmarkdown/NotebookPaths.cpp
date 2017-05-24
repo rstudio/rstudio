@@ -42,7 +42,14 @@ std::time_t s_cacheWriteTime = 0;
 // in multiple sessions
 FileLock& nbPathLock()
 {
-   static boost::shared_ptr<FileLock> instance = FileLock::createDefault();
+   static boost::shared_ptr<FileLock> instance =
+#ifdef _WIN32
+         // always create advisory locks on Windows (link-based locks aren't
+         // supported)
+         FileLock::create(FileLock::LOCKTYPE_ADVISORY);
+#else
+         FileLock::createDefault();
+#endif
    return *instance;
 }
 
@@ -193,7 +200,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
    // lock and update the cache
    PathLockGuard guard;
    if (guard.error())
-      return error;
+      return guard.error();
 
    // insert the new ID and update caches
    s_idCache[path.absolutePath()] = id;
