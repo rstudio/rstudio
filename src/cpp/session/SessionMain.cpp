@@ -228,7 +228,7 @@ void terminateAllChildProcesses()
    if (!quitChildProcesses())
       return;
 
-   Error error = rstudio::core::system::terminateChildProcesses();
+   Error error = system::terminateChildProcesses();
    if (error)
       LOG_ERROR(error);
 }
