@@ -389,47 +389,36 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    private boolean output(String text,
                           String className,
-                          boolean addToTop)
+                          boolean ignoreLineCount)
    {
       if (text.indexOf('\f') >= 0)
          clearOutput();
 
       Element outEl = output_.getElement();
       
-      if (addToTop)
+      // create trailing output console if it doesn't already exist 
+      if (virtualConsole_ == null)
       {
-         SpanElement leading = Document.get().createSpanElement();
-         outEl.insertFirst(leading);
-         VirtualConsole console = new VirtualConsole(leading);
-         console.submit(text, className);
-         lines_ += DomUtils.countLines(leading, true);
-      }
-      else
-      {
-         // create trailing output console if it doesn't already exist 
-         if (virtualConsole_ == null)
-         {
-            SpanElement trailing = Document.get().createSpanElement();
-            outEl.appendChild(trailing);
-            virtualConsole_ = new VirtualConsole(trailing);
-         }
-
-         int oldLineCount = DomUtils.countLines(
-               virtualConsole_.getParent(), true);
-         virtualConsole_.submit(text, className);
-         int newLineCount = DomUtils.countLines(
-               virtualConsole_.getParent(), true);
-         lines_ += newLineCount - oldLineCount;
+         SpanElement trailing = Document.get().createSpanElement();
+         outEl.appendChild(trailing);
+         virtualConsole_ = new VirtualConsole(trailing);
       }
 
-      boolean result = !trimExcess();
+      int oldLineCount = DomUtils.countLines(
+            virtualConsole_.getParent(), true);
+      virtualConsole_.submit(text, className);
+      int newLineCount = DomUtils.countLines(
+            virtualConsole_.getParent(), true);
+      lines_ += newLineCount - oldLineCount;
+
+      boolean canContinue = ignoreLineCount ? true : !trimExcess();
 
       // if we're currently scrolled to the bottom, nudge the timer so that we
       // will keep up with output
       if (scrollPanel_.isScrolledToBottom())
          resizeCommand_.nudge();
       
-      return result;
+      return canContinue;
    }
 
    private String ensureNewLine(String s)
@@ -440,6 +429,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
          return s + '\n';
    }
 
+   private int excessLines(int lines)
+   {
+      if (lines > maxLines_)
+         return lines - maxLines_;
+      else
+         return 0;
+   }
+   
    private boolean trimExcess()
    {
       if (maxLines_ <= 0)
@@ -457,24 +454,60 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void playbackActions(final RpcObjectList<ConsoleAction> actions)
    {
+      // Server persists 1000 most recent ConsoleActions in a circular buffer.
+      //
+      // One ConsoleAction can generate multiple lines of output, and we want 
+      // to limit number of lines added to the console's DOM; see trimExcess().
+      //
+      // First walk through the actions in reverse, and determine how many 
+      // lines they will generate (without actually writing anything),
+      // then play-back in normal order. Finally, trim to the max-lines we support
+      // to catch any rounding from final chunk.
+      int lines = 0;
+      int excessLines = 0;
+      int revIndex = actions.length() - 1;
+      for (; revIndex >= 0; revIndex--)
+      {
+         ConsoleAction action = actions.get(revIndex);
+         
+         if (action.getType() == ConsoleAction.INPUT)
+            lines++;
+         
+         lines = lines + StringUtil.newlineCount(action.getData());
+         
+         excessLines = excessLines(lines);
+         if (excessLines > 0)
+         {
+            break;
+         }
+      }
+      if (revIndex < 0)
+         revIndex = 0;
+      
+      final int startIndex = revIndex;
+      final int endIndex = actions.length() - 1;
+      
       Scheduler.get().scheduleIncremental(new RepeatingCommand()
       {
-         private int i = actions.length() - 1;
+         private int i = startIndex;
          private int chunksize = 1000;
 
          public boolean execute()
          {
-            int end = i - chunksize;
+            boolean canContinue = false;
+            int end = i + chunksize;
             chunksize = 10;
-            for (; i > end && i >= 0; i--)
+            for (; i <= end && i <= endIndex; i++)
             {
                // User hit Ctrl+L at some point--we're done.
                if (cleared_)
-                  return false;
-
-               boolean canContinue = false;
+               {
+                  canContinue = false;
+                  break;
+               }
 
                ConsoleAction action = actions.get(i);
+               
                switch (action.getType())
                {
                   case ConsoleAction.INPUT:
@@ -499,12 +532,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
                      break;
                }
                if (!canContinue)
-                  return false;
+               {
+                  break;
+               }                  
             }
-            if (!DomUtils.selectionExists())
-               scrollPanel_.scrollToBottom();
-
-            return i >= 0;
+            
+            if (canContinue)
+            {
+               canContinue = (i <= endIndex);
+            }
+            
+            if (!canContinue)
+            {
+               trimExcess();
+            }
+            return canContinue;
          }
       });
    }

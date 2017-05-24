@@ -135,6 +135,21 @@ public class StringUtilTests extends GWTTestCase
 	   // MMM d, yyyy, h:mm AM
 	   assertTrue(result.length() >= 20);
    }
+   
+   public void testNewlineCount()
+   {
+      String input = "hello\nworld\n";
+      assertEquals(2, StringUtil.newlineCount(input));
+      
+      input = "nothing here";
+      assertEquals(0, StringUtil.newlineCount(input));
+      
+      input = "\n\n\nzoom\n";
+      assertEquals(4, StringUtil.newlineCount(input));
+      
+      input = "";
+      assertEquals(0, StringUtil.newlineCount(input));
+   }
 
    // -----------------------------------------------------------------------
 

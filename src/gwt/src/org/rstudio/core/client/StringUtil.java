@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1137,7 +1137,12 @@ public class StringUtil
 
       return ((crc ^ (-1)) >>> 0).toString(16);
    }-*/;
-   
+
+   // Count newlines in a string
+   public static native int newlineCount(String str) /*-{
+      return (str.match(/\n/g)||[]).length;
+   }-*/;
+    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
