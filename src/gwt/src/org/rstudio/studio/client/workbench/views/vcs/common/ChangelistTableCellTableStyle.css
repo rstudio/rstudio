@@ -69,14 +69,14 @@ span.status img:first-child {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
-.rstudio-themes-flat.editor_dark .cellTableSelectedRow {
+.rstudio-themes-flat.rstudio-themes-dark .cellTableSelectedRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
-.rstudio-themes-flat.editor_dark .cellTableHoveredRow {
+.rstudio-themes-flat.rstudio-themes-dark .cellTableHoveredRow {
    background-color: THEME_DARK_ROW_HOVERED;
 }
 
-.rstudio-themes-flat.editor_dark .cellTableSelectedRow.cellTableHoveredRow {
+.rstudio-themes-flat.rstudio-themes-dark .cellTableSelectedRow.cellTableHoveredRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
