@@ -239,8 +239,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       showMessagesInOutputCb_ = makeTriStateCheckBox(
             "Show messages",
             "message");
-      
       panel_.add(showMessagesInOutputCb_);
+
+      printTableAsTextCb_ = makeTriStateCheckBox(
+            "Use paged tables",
+            "paged.print");
+      panel_.add(printTableAsTextCb_);
       
       useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
@@ -562,6 +566,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
             if (has("message"))
                showMessagesInOutputCb_.setValue(getBoolean("message"));
+
+            if (has("paged.print"))
+               printTableAsTextCb_.setValue(getBoolean("paged.print"));
             
             if (has("engine.path"))
             {
@@ -659,6 +666,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final ThemedCheckBox useCustomFigureCheckbox_;
    protected final TriStateCheckBox showWarningsInOutputCb_;
    protected final TriStateCheckBox showMessagesInOutputCb_;
+   protected final TriStateCheckBox printTableAsTextCb_;
    
    protected String originalLine_;
    protected String chunkPreamble_;
