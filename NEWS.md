@@ -83,6 +83,8 @@
 * OS X: Always show project label on dock tiles
 * Remove 100 column limit in data viewer
 * Make columns in data viewer resizable
+* Add option to kill child processes when session exits
+* Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -113,5 +115,6 @@
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
 * Wait for index.lock file to clear before performing git operations (with recovery)
+* Color errors in the R console correctly when resuming a session
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 
