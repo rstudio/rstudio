@@ -489,7 +489,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                      break;
                   case ConsoleAction.ERROR:
                      canContinue = output(action.getData(),
-                                          styles_.error(),
+                                          getErrorClass(),
                                           true);
                      break;
                   case ConsoleAction.PROMPT:
