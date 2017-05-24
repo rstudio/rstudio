@@ -272,25 +272,18 @@ iframe {
 button {
    cursor: pointer;
 }
+
 .handCursor {
-	cursor: pointer;
+   cursor: pointer;
 }
 
 @if rstudio.desktop true {
 .linux button {
-   cursor: HANDCURSOR 9 5, pointer;
-   cursor: -webkit-image-set(
-      HANDCURSOR 1x,
-      HANDCURSOR2X 2x
-   ), pointer;
+   cursor: HANDCURSOR, pointer;
 }
 
 .linux .handCursor {
-   cursor: HANDCURSOR 9 5, pointer;
-   cursor: -webkit-image-set(
-      HANDCURSOR 9 5 1x,
-      HANDCURSOR2X 9 5 2x
-   ), pointer;
+   cursor: HANDCURSOR, pointer;
 }
 }
 
