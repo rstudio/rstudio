@@ -121,6 +121,15 @@ try {
             }
         }
         parallel parallel_containers
+
+        // trigger downstream pro-docs build if we're finished building the pro variants
+        if (env.JOB_NAME == 'IDE/pro') {
+          build job: 'IDE/pro-docs', parameters: ([string(name: 'RSTUDIO_VERSION_MAJOR', value: RSTUDIO_VERSION_MAJOR),
+                                                          string(name: 'RSTUDIO_VERSION_MINOR', value: RSTUDIO_VERSION_MINOR),
+                                                          string(name: 'RSTUDIO_VERSION_PATCH', value: RSTUDIO_VERSION_PATCH),
+                                                          string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)])
+        }
+
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
     }
 
