@@ -800,8 +800,22 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
 
 themes_static_rules <- function() {
   paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
-        "color: #FFF !important;",
-        "}")
+        "   color: #FFF !important;",
+        "}",
+        "",
+        ".ace_layer {",
+        "   z-index: 3;",
+        "}",
+        "",
+        # support for showing margin line over nodebook code chunks 
+        ".ace_layer.ace_print-margin-layer {",
+        "   z-index: 2;",
+        "}",
+        "",
+        ".ace_layer.ace_marker-layer {",
+        "   z-index: 1;",
+        "}",
+        sep = "\n")
 }
 
 ## Get the set of all theme .css files
