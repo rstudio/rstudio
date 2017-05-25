@@ -730,4 +730,18 @@
 .xtermBgColor254 { background-color: #e4e4e4; }
 .xtermColor255 { color: #eeeeee; }
 .xtermBgColor255 { background-color: #eeeeee; }
-.rstudio-themes-flat.editor_dark.ace_editor_theme a { color: #FFF !important; }
+.rstudio-themes-flat.editor_dark.ace_editor_theme a {
+   color: #FFF !important;
+}
+
+.ace_layer {
+   z-index: 3;
+}
+
+.ace_layer.ace_print-margin-layer {
+   z-index: 2;
+}
+
+.ace_layer.ace_marker-layer {
+   z-index: 1;
+}
