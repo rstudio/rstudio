@@ -1,7 +1,7 @@
 /*
  * ChunkOutputStream.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,7 +82,8 @@ public class ChunkOutputStream extends FlowPanel
       // flush any queued errors 
       flushQueuedErrors();
 
-      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT));
+      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT),
+            false /*isError*/);
    }
    
    @Override
@@ -121,11 +122,11 @@ public class ChunkOutputStream extends FlowPanel
             if (!queuedError_.isEmpty())
             {
                vconsole_.submit(queuedError_, classOfOutput(
-                     ChunkConsolePage.CONSOLE_ERROR));
+                     ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
                queuedError_ = "";
             }
 
-            vconsole_.submit(outputText, classOfOutput(outputType));
+            vconsole_.submit(outputText, classOfOutput(outputType), false /*isError*/);
          }
       }
    }
@@ -294,7 +295,7 @@ public class ChunkOutputStream extends FlowPanel
          if (idx > 0)
          {
             renderConsoleOutput(queuedError_.substring(0, idx), 
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
          // leave messages following the error in the queue
@@ -586,7 +587,7 @@ public class ChunkOutputStream extends FlowPanel
       {
          initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
          renderConsoleOutput(queuedError_, classOfOutput(
-               ChunkConsolePage.CONSOLE_ERROR));
+               ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
          queuedError_ = "";
       }
    }
@@ -643,10 +644,10 @@ public class ChunkOutputStream extends FlowPanel
       addWithOrdinal(console_, maxOrdinal_ + 1);
    }
    
-   private void renderConsoleOutput(String text, String clazz)
+   private void renderConsoleOutput(String text, String clazz, boolean isError)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submit(text, clazz);
+      vconsole_.submit(text, clazz, isError);
       onHeightChanged();
    }
    
