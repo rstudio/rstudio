@@ -357,7 +357,11 @@ var PagedTable = function (pagedTable) {
 
     me.calculateWidths = function(measures) {
       columns.forEach(function(column) {
-        var maxChars = column.label.toString().length;
+        var maxChars = Math.max(
+          column.label.toString().length,
+          column.type.toString().length
+        );
+
         for (var idxRow = 0; idxRow < Math.min(widthsLookAhead, data.length); idxRow++) {
           maxChars = Math.max(maxChars, data[idxRow][column.name.toString()].length);
         }

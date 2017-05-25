@@ -53,6 +53,7 @@
 * Fixed an issue where non-R chunk output could become duplicated
 * Added option to set notebook mode in the document's YAML header
 * Allow setting default chunk connection option to raw connection object
+* Added an 'Use paged tables' checkbox under chunk options popup
 
 ### Miscellaneous
 
@@ -117,4 +118,4 @@
 * Wait for index.lock file to clear before performing git operations (with recovery)
 * Color errors in the R console correctly when resuming a session
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
-
+* Fixed an issue in which notebook tables would not print data with lists of lists
