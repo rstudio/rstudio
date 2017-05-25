@@ -261,7 +261,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), false);
+      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/);
 
       // Pick up the last element emitted to the console. If we get extended
       // information for this error, we'll need to swap out the simple error
@@ -317,7 +317,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
-      output(output, styles_.output(), false);
+      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/);
    }
 
    public void consoleWriteInput(final String input, String console)
@@ -329,7 +329,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt_.setHTML("");
 
       clearPendingInput();
-      output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
+      output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/, 
+            false /*ignoreLineCount*/);
    }
    
    private void clearPendingInput()
@@ -340,7 +341,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void consoleWritePrompt(final String prompt)
    {
-      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
+      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
+            false /*ignoreLineCount*/);
       clearErrors_ = true;
    }
 
@@ -387,8 +389,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
              RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
    }
 
+   /**
+    * Send text to the console
+    * @param text Text to output
+    * @param className Text style
+    * @param isError Is this an error message?
+    * @param ignoreLineCount Output without checking buffer length?
+    * @return
+    */
    private boolean output(String text,
                           String className,
+                          boolean isError,
                           boolean ignoreLineCount)
    {
       if (text.indexOf('\f') >= 0)
@@ -406,7 +417,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       int oldLineCount = DomUtils.countLines(
             virtualConsole_.getParent(), true);
-      virtualConsole_.submit(text, className);
+      virtualConsole_.submit(text, className, isError);
       int newLineCount = DomUtils.countLines(
             virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
@@ -429,14 +440,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          return s + '\n';
    }
 
-   private int excessLines(int lines)
-   {
-      if (lines > maxLines_)
-         return lines - maxLines_;
-      else
-         return 0;
-   }
-   
    private boolean trimExcess()
    {
       if (maxLines_ <= 0)
@@ -464,7 +467,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // then play-back in normal order. Finally, trim to the max-lines we support
       // to catch any rounding from final chunk.
       int lines = 0;
-      int excessLines = 0;
       int revIndex = actions.length() - 1;
       for (; revIndex >= 0; revIndex--)
       {
@@ -475,11 +477,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          
          lines = lines + StringUtil.newlineCount(action.getData());
          
-         excessLines = excessLines(lines);
-         if (excessLines > 0)
-         {
+         if (lines > maxLines_)
             break;
-         }
       }
       if (revIndex < 0)
          revIndex = 0;
@@ -513,22 +512,26 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   case ConsoleAction.INPUT:
                      canContinue = output(action.getData() + "\n",
                                           styles_.command() + " " + KEYWORD_CLASS_NAME,
-                                          true);
+                                          false /*isError*/, 
+                                          true /*ignoreLineCount*/);
                      break;
                   case ConsoleAction.OUTPUT:
                      canContinue = output(action.getData(),
                                           styles_.output(),
-                                          true);
+                                          false /*isError*/,
+                                          true /*ignoreLineCount*/);
                      break;
                   case ConsoleAction.ERROR:
                      canContinue = output(action.getData(),
                                           getErrorClass(),
-                                          true);
+                                          true /*isError*/,
+                                          true /*ignoreLineCount*/);
                      break;
                   case ConsoleAction.PROMPT:
                      canContinue = output(action.getData(),
                                           styles_.prompt() + " " + KEYWORD_CLASS_NAME,
-                                          true);
+                                          false /*isError*/,
+                                          true /*ignoreLineCount*/);
                      break;
                }
                if (!canContinue)
