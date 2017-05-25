@@ -372,13 +372,9 @@ public class VirtualConsole
       {
          // short circuit common case in which we're just adding output
          if (cursor_ == output_.length() && !class_.isEmpty())
-         {
             appendText(text, clazz, forceNewRange);
-         }
          else
-         {
             insertText(new ClassRange(start, clazz, text));
-         }
       }
 
       output_.replace(start, end, text);
@@ -403,7 +399,7 @@ public class VirtualConsole
       }
      
       String currentClazz = clazz;
-            
+
       int ansiColorMode = (ansiColorMode_ == ANSI_COLOR_USE_PREF) ? 
             prefs_.consoleAnsiMode().getValue() : ansiColorMode_;
 
