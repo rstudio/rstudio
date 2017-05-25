@@ -2012,7 +2012,7 @@ body.ubuntu_mono .searchBox {
    padding-top: 4px;
 }
 
-.rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutCenter img.closeTabButton {
+.rstudio-themes-flat .moduleTabPanel.docTabPanel .gwt-TabLayoutPanelTabs .tabLayoutCenter img.closeTabButton {
    padding-top: 3px;
 }
 
