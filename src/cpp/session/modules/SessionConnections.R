@@ -249,7 +249,7 @@ options(connectionObserver = list(
       list(
          name = "Spark",
          package = "sparklyr",
-         version = "0.5.3-9004"
+         version = "0.5.5"
       )
    )
 })
@@ -487,10 +487,10 @@ options(connectionObserver = list(
 
 .rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package, name)
 {
-   if (package == "sparklyr" & packageVersion("sparklyr") <= "0.5.1") {
+   if (package == "sparklyr" & packageVersion("sparklyr") <= "0.5.4") {
       return(.rs.error(
          "sparklyr ", packageVersion("sparklyr"), " does not support this functionality. ",
-         "Please upgrade to sparklyr 0.5.2 or newer."
+         "Please upgrade to sparklyr 0.5.5 or newer."
       ))
    }
 
