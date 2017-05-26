@@ -292,6 +292,9 @@ public interface ThemeResources extends ClientBundle
    @Source("menuCheck_2x.png")
    ImageResource menuCheck2x();
    
+   @Source("menuCheckInverted_2x.png")
+   ImageResource menuCheckInverted2x();
+   
    @Source("user_2x.png")
    ImageResource user();
 }

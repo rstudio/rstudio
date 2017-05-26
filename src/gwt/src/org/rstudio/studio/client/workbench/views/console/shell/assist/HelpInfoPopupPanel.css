@@ -3,6 +3,8 @@
 @external gwt-Image, gwt-Label;
 @external fixedWidthFont;
 
+@external rstudio-themes-flat, rstudio-themes-dark-menus;
+
 .helpPopup {
    color: #000023;
    background-color: #ffffca;
@@ -21,4 +23,10 @@
 .snippetText {
    font-family: fixedWidthFont;
    white-space: pre-wrap;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .helpPopup {
+   color: #eaeaea;
+   background: #5e5e4e;
+   border: 1px solid #a3a89e;
 }

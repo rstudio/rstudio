@@ -798,8 +798,8 @@ create_xterm_color_rules <- function(background, foreground, isDark) {
       ".xtermBgColor255 { background-color: #eeeeee; }")
 }
 
-themes_static_rules <- function() {
-  paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
+themes_static_rules <- function(isDark) {
+   content <- paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
         "   color: #FFF !important;",
         "}",
         "",
@@ -816,6 +816,28 @@ themes_static_rules <- function() {
         "   z-index: 1;",
         "}",
         sep = "\n")
+
+   if (isDark) {
+      content <- c(
+         content,
+         paste(
+            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete {",
+            "   background: #2f3941;",                    # darkGreyMenuBackground
+            "   border: solid 1px #4e5c68 !important;",   # darkGreyMenuBorder
+            "   color: #f0f0f0;",
+            "}",
+            "",
+            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line,",
+            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {",
+            "   background: rgba(255, 255, 255, 0.15);",  # darkGreyMenuSelected 
+            "   border: none",
+            "}",
+            sep = "\n"
+         )
+      )
+   }
+
+   content
 }
 
 ## Get the set of all theme .css files
@@ -1065,7 +1087,7 @@ for (file in themeFiles) {
 
    # Theme rules
    content <- c(content,
-                themes_static_rules()) 
+                themes_static_rules(isDark)) 
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))
