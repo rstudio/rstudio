@@ -415,11 +415,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
          virtualConsole_ = new VirtualConsole(trailing);
       }
 
-      int oldLineCount = DomUtils.countLines(
-            virtualConsole_.getParent(), true);
-      virtualConsole_.submit(text, className, isError);
-      int newLineCount = DomUtils.countLines(
-            virtualConsole_.getParent(), true);
+      // Group Error's output under a single parent span so we can treat it as
+      // one element even if there are ANSI codes and/or newlines at play 
+      // (generating multiple spans as part of a single error message).
+      VirtualConsole outputVc = virtualConsole_;
+      if (isError)
+      {
+         SpanElement errorContainer = Document.get().createSpanElement();
+         virtualConsole_.getParent().appendChild(errorContainer);
+         outputVc = new VirtualConsole(errorContainer);
+      } 
+
+      int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
+      outputVc.submit(text, className);
+      int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
 
       boolean canContinue = ignoreLineCount ? true : !trimExcess();

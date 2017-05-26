@@ -85,14 +85,9 @@ public class VirtualConsole
    
    public void submit(String data)
    {
-      submit(data, null, false /*isError*/);
+      submit(data, null);
    }
 
-   public void submit(String data, String clazz)
-   {
-      submit(data, clazz, false /*isError*/);
-   }
-    
    public void clear()
    {
       formfeed();
@@ -185,14 +180,13 @@ public class VirtualConsole
     * 
     * @param text The text to append
     * @param clazz The content to append to the text.
-    * @param forceNewRange Start a new output range even if last range had
     * same output style as this one.
     */
-   private void appendText(String text, String clazz, boolean forceNewRange)
+   private void appendText(String text, String clazz)
    {
       Entry <Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
-      if (!forceNewRange && range.clazz == clazz)
+      if (range.clazz == clazz)
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
@@ -350,19 +344,13 @@ public class VirtualConsole
       }
    }
    
-   private void text(String text, String clazz)
-   {
-      text(text, clazz, false /*forceNewRange*/);
-   }
-
    /**
     * Write text to DOM
     * @param text text to write
     * @param clazz text style
-    * @param forceNewRange start a new range even if previously output styles
     *  match this one
     */
-   private void text(String text, String clazz, boolean forceNewRange)
+   private void text(String text, String clazz)
    {
       int start = cursor_;
       int end = cursor_ + text.length();
@@ -372,7 +360,7 @@ public class VirtualConsole
       {
          // short circuit common case in which we're just adding output
          if (cursor_ == output_.length() && !class_.isEmpty())
-            appendText(text, clazz, forceNewRange);
+            appendText(text, clazz);
          else
             insertText(new ClassRange(start, clazz, text));
       }
@@ -385,9 +373,8 @@ public class VirtualConsole
     * Submit text to console
     * @param data text to output
     * @param clazz text style
-    * @param isError is this an error message?
     */
-   public void submit(String data, String clazz, boolean isError)
+   public void submit(String data, String clazz)
    {
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
@@ -419,16 +406,12 @@ public class VirtualConsole
          }
       }
 
-      // If we are displaying an error message, we want it to be in its own
-      // output range even if previous output had same class.
-      boolean forceNewRange = isError;
-      
       Match match = (ansiColorMode == ANSI_COLOR_OFF) ?
             CONTROL.match(data, 0) :
             AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
       {
-         text(data, currentClazz, forceNewRange);
+         text(data, currentClazz);
          return;
       }
       
@@ -441,11 +424,7 @@ public class VirtualConsole
          // character, add it.
          if (tail != pos)
          {
-            text(data.substring(tail, pos), currentClazz, forceNewRange);
-            
-            // once we've forced a new range, rest of output for this submit
-            // call should share that range (e.g. a multi-line error msg)
-            forceNewRange = false;
+            text(data.substring(tail, pos), currentClazz);
          }
          
          tail = pos + 1;
@@ -497,7 +476,7 @@ public class VirtualConsole
                break;
             default:
                assert false : "Unknown control char, please check regex";
-               text(data.charAt(pos) + "", currentClazz, true /*forceNewRange*/);
+               text(data.charAt(pos) + "", currentClazz);
                break;
          }
 
@@ -506,7 +485,7 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
-         text(data.substring(tail), currentClazz, forceNewRange);
+         text(data.substring(tail), currentClazz);
    }
    
    private class ClassRange
