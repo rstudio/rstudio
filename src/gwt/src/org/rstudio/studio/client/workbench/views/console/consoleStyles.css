@@ -4,6 +4,11 @@
 @external popupContent;
 @external ace_sb, ace_cursor, ace_hidden, ace_tooltip;
 
+@external rstudio-themes-flat;
+@external rstudio-themes-dark-menus;
+
+@eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
+
 .console {
    font-family: fixedWidthFont;
    padding-left: 6px;
@@ -138,6 +143,14 @@
    background: #eaeaca;
    font-size: 9px;
    padding: 3px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .promptFullHelp {
+   background: #6f6f5f;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .selected {
+   background-color: THEME_DARKGREY_MENU_SELECTED;
 }
 
 .paddedOutput {

@@ -13,9 +13,14 @@
 @external gwt-MenuBar-vertical;
 
 @external rstudio-themes-flat;
+@external rstudio-themes-dark-menus;
+
 @external menuPopupTop, menuPopupBottom, menuPopupMiddle;
 @external popupTop, popupBottom, popupMiddle;
 @external gwt-DecoratedPopupPanel;
+
+@eval THEME_DARKGREY_MENU_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground;
+@eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
 .themedPopupPanel {
    margin: -6px;
@@ -101,4 +106,11 @@
 .rstudio-themes-flat .menuPopupBottom,
 .rstudio-themes-flat .popupBottom {
    display: none;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .menuPopupMiddleCenter,
+.rstudio-themes-flat.rstudio-themes-dark-menus .themedPopupPanel .popupMiddleCenter {
+   background: THEME_DARKGREY_MENU_BACKGROUND;
+   border: solid 1px THEME_DARKGREY_MENU_BORDER;
+   color: #f0f0f0;
 }

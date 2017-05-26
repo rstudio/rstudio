@@ -694,3 +694,14 @@
 .ace_layer.ace_marker-layer {
    z-index: 1;
 }
+.rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete {
+   background: #2f3941;
+   border: solid 1px #4e5c68 !important;
+   color: #f0f0f0;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line,
+.rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {
+   background: rgba(255, 255, 255, 0.15);
+   border: none
+}
