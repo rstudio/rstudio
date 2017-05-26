@@ -65,6 +65,9 @@ fi
 if [ "${IMAGE:0:6}" = "centos" ]; then
     PACKAGE=RPM
     INSTALLER=yum
+elif [ "${IMAGE:0:8}" = "opensuse" ]; then
+    PACKAGE=RPM
+    INSTALLER=zypper
 else
     PACKAGE=DEB
     INSTALLER=debian
