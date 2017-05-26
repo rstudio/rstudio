@@ -55,3 +55,7 @@
 .rstudio-themes-flat .dataGridKeyboardSelectedCell   {
   color: inherit;
 }
+
+.rstudio-themes-flat .dataGridCell input[type=checkbox] {
+  padding-left: 5px;
+}
