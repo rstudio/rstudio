@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
@@ -368,9 +369,16 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (isCheckable())
       {
-         return isChecked() ? 
-            new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
-            null;
+         if (RStudioThemes.isFlat() && RStudioThemes.isEditorDark()) {
+            return isChecked() ? 
+               new ImageResource2x(ThemeResources.INSTANCE.menuCheckInverted2x()) :
+               null;
+         }
+         else {
+            return isChecked() ? 
+               new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
+               null;
+         }
       } 
       else
       {
@@ -456,6 +464,20 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          String shortcut)
    {
       return formatMenuLabel(icon, label, false, shortcut);
+   }
+   
+   public static String formatMenuLabelWithStyle(ImageResource icon, 
+                                                 String label,
+                                                 String shortcut,
+                                                 String styleName)
+   {
+      return formatMenuLabel(icon, 
+            label, 
+            false,
+            shortcut, 
+            null, 
+            null,
+            null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 

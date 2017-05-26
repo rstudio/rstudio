@@ -15,8 +15,8 @@
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
 @external gwt-PopupPanelGlass;
 @external gwt-Label;
-@external gwt-MenuItem, gwt-MenuItem-selected, subMenuIcon, subMenuIcon-selected;
-@external gwt-MenuItemSeparator, menuSeparatorInner;
+@external gwt-MenuItem, gwt-MenuItem-selected, subMenuIcon, subMenuIcon-selected, gwt-MenuBarPopup;
+@external gwt-MenuItemSeparator, menuSeparatorInner, menuPopupMiddleCenter;
 @external gwt-MenuBar, gwt-MenuBar-vertical;
 @external gwt-SplitLayoutPanel-HDragger, gwt-SplitLayoutPanel-VDragger;
 @external gwt-SuggestBoxPopup, item-selected;
@@ -42,6 +42,7 @@
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
+@external rstudio-themes-dark-menus;
 
 @external rstudio-animating;
 
@@ -76,6 +77,9 @@
 @eval THEME_DEFAULT_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBodyBackground;
 @eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
 @eval THEME_ALTERNATE_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBodyBackground;
+
+@eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
+@eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -401,6 +405,10 @@ pre {
    width: 7px;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuBar .subMenuIcon img {
+   filter: invert(100%);
+}
+
 .gwt-MenuItem {
    padding: 4px;
    white-space: nowrap;
@@ -419,6 +427,10 @@ pre {
    margin-bottom: 2px;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItemSeparator .menuSeparatorInner{
+   border-color: THEME_DARKGREY_MENU_BORDER;
+}
+
 .scrollableMenuBar .gwt-MenuItem {
    padding-right: 20px;
 }
@@ -427,6 +439,12 @@ pre {
    cursor: pointer;
 }
 
+.menuCheckable {
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .menuCheckable img {
+   filter: inverts(100%);
+}
 
 .highlight {
    color: #900 !important;
@@ -604,6 +622,11 @@ pre {
 .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
    background-color: #D6E9F8;
 }
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
+   background-color: THEME_DARKGREY_MENU_SELECTED;
+}
+
 .mainMenu .gwt-MenuItem-selected, .mainMenu .subMenuIcon-selected {
    background-color: #79B7F1;
    color: white;

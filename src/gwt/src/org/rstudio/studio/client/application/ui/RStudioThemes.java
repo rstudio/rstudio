@@ -44,6 +44,7 @@ public class RStudioThemes
          document.getBody().addClassName("rstudio-themes-flat");
          
          if (themeName.contains("dark")) {
+            document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
             
             if (usesScrollbars()) {
@@ -56,6 +57,14 @@ public class RStudioThemes
 
    public static boolean isFlat(UIPrefs prefs) {
       return prefs.getFlatTheme().getValue() != "classic"; 
+   }
+   
+   public static boolean isFlat() {
+      return Document.get().getBody().hasClassName("rstudio-themes-flat");
+   }
+   
+   public static boolean isEditorDark() {
+      return Document.get().getBody().hasClassName("editor_dark");
    }
 
    public static String suggestThemeFromAceTheme(String aceTheme) {

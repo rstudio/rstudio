@@ -32,6 +32,10 @@ public class ThemeColors
    public static String darkGreyBorder                             = "rgb(12, 31, 48)";
    public static String darkGreyBodyBackground                     = "rgb(50, 76, 99)";
 
+   public static String darkGreyMenuBackground                     = darkGreyMostInactiveBackground;
+   public static String darkGreyMenuBorder                         = darkGreyBackground;
+   public static String darkGreyMenuSelected                       = "rgba(255, 255, 255, 0.15)";
+
    public static String alternateBackground                        = "rgb(210, 228, 237)";
    public static String alternateBackgroundTransparent             = "rgba(210, 228, 237, 0)";
    public static String alternateInactiveBackground                = "rgb(148, 180, 197)";

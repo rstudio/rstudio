@@ -200,4 +200,6 @@ public interface ThemeStyles extends CssResource
    String refreshToolbarButton();
 
    String tabIcon();
+   
+   String menuCheckable();
 }
