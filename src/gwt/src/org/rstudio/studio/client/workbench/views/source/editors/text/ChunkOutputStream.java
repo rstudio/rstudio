@@ -82,8 +82,7 @@ public class ChunkOutputStream extends FlowPanel
       // flush any queued errors 
       flushQueuedErrors();
 
-      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT),
-            false /*isError*/);
+      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT));
    }
    
    @Override
@@ -122,11 +121,11 @@ public class ChunkOutputStream extends FlowPanel
             if (!queuedError_.isEmpty())
             {
                vconsole_.submit(queuedError_, classOfOutput(
-                     ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
+                     ChunkConsolePage.CONSOLE_ERROR));
                queuedError_ = "";
             }
 
-            vconsole_.submit(outputText, classOfOutput(outputType), false /*isError*/);
+            vconsole_.submit(outputText, classOfOutput(outputType));
          }
       }
    }
@@ -295,7 +294,7 @@ public class ChunkOutputStream extends FlowPanel
          if (idx > 0)
          {
             renderConsoleOutput(queuedError_.substring(0, idx), 
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
+                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
          // leave messages following the error in the queue
@@ -587,7 +586,7 @@ public class ChunkOutputStream extends FlowPanel
       {
          initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
          renderConsoleOutput(queuedError_, classOfOutput(
-               ChunkConsolePage.CONSOLE_ERROR), true /*isError*/);
+               ChunkConsolePage.CONSOLE_ERROR));
          queuedError_ = "";
       }
    }
@@ -644,10 +643,10 @@ public class ChunkOutputStream extends FlowPanel
       addWithOrdinal(console_, maxOrdinal_ + 1);
    }
    
-   private void renderConsoleOutput(String text, String clazz, boolean isError)
+   private void renderConsoleOutput(String text, String clazz)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submit(text, clazz, isError);
+      vconsole_.submit(text, clazz);
       onHeightChanged();
    }
    

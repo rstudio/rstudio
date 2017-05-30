@@ -1,7 +1,7 @@
 /*
  * ConsoleError.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
@@ -25,9 +26,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ConsoleError extends Composite
@@ -54,8 +55,9 @@ public class ConsoleError extends Composite
       command_ = command;
       
       initWidget(uiBinder.createAndBindUi(this));
-   
-      errorMessage.setText(err.getErrorMessage().trim());
+      
+      VirtualConsole vc = new VirtualConsole(errorMessage.getElement());
+      vc.submit(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
       
       EventListener showHideTraceback = new EventListener()
@@ -116,7 +118,7 @@ public class ConsoleError extends Composite
    @UiField Anchor rerunText;
    @UiField Image rerunImage;
    @UiField HTMLPanel framePanel;
-   @UiField Label errorMessage;
+   @UiField HTML errorMessage;
    
    private Observer observer_;
    private boolean showingTraceback_ = false;

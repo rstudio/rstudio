@@ -89,7 +89,7 @@
            </g:Anchor>
         </g:HTMLPanel>
 	  </g:HTMLPanel>
-     <g:Label ui:field="errorMessage" styleName="{style.errorMessage}"></g:Label>
+     <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
 	  <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
 	  </g:HTMLPanel>
 	</g:HTMLPanel>
