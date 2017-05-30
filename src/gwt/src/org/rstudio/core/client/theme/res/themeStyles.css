@@ -623,7 +623,7 @@ pre {
    background-color: #D6E9F8;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItem.gwt-MenuItem-selected {
    background-color: THEME_DARKGREY_MENU_SELECTED;
 }
 
