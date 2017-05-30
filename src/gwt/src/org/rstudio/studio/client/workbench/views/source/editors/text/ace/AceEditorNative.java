@@ -601,6 +601,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.execCommand(commandName);
    }-*/;
    
+   public final native <T> void setOption(String key, T value) /*-{
+      this.setOption(key, value);
+   }-*/;
+   
    private static final native void initialize()
    /*-{
       // Remove the 'Return' keybinding associated with Emacs.
