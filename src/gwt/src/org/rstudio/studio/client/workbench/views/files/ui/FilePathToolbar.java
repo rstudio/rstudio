@@ -1,7 +1,7 @@
 /*
  * FilePathToolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,6 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.Files;
 
 public class FilePathToolbar extends Composite
@@ -68,8 +66,6 @@ public class FilePathToolbar extends Composite
 
    public FilePathToolbar(Files.Display.NavigationObserver navigationObserver)
    {
-      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-      
       LayoutPanel layout = new LayoutPanel();
       layout.setSize("100%", "21px");
 
