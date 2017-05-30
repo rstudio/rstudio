@@ -127,6 +127,57 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>Sample4</span>", ele.getInnerHTML());
    }
 
+   public void testCarriageReturnWithStyleChange()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+
+      vc.submit("World", "a");
+
+      // replace first character of line with green 'X', then change
+      // second character to red 'Y'
+      vc.submit("\r\033[32mX\033[31mY\033[0m", "a");
+      Assert.assertEquals(
+            "<span class=\"a xtermColor2\">X</span>" + 
+            "<span class=\"a xtermColor1\">Y</span>" +
+            "<span class=\"a\">rld</span>", 
+            ele.getInnerHTML());
+   }
+
+   public void testCarriageReturnWithStyleChange2()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+
+      vc.submit("Hello\nWorld", "a");
+
+      // replace first character of current line with green 'X', then change
+      // second character to red 'Y'
+      vc.submit("\r\033[32mX\033[31mY\033[0m", "a");
+      Assert.assertEquals(
+            "<span class=\"a\">Hello\n</span>" +
+            "<span class=\"a xtermColor2\">X</span>" + 
+            "<span class=\"a xtermColor1\">Y</span>" +
+            "<span class=\"a\">rld</span>", 
+            ele.getInnerHTML());
+   }
+
+   public void testCarriageReturnWithStyleChange3()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+
+      vc.submit("Hello\nWorld", "a");
+
+      vc.submit("\r\033[32m123\033[31m45\033[0m", "a");
+      Assert.assertEquals(
+            "<span class=\"a\">Hello\n</span>" +
+            "<span class=\"a xtermColor2\">123</span>" + 
+            "<span class=\"a\"></span>" +
+            "<span class=\"a xtermColor1\">45</span>",
+            ele.getInnerHTML());
+   }
+    
    public void testAnsiColorStyleHelper()
    {
       Assert.assertEquals("xtermColor0", 
