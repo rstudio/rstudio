@@ -90,8 +90,31 @@ public class AnsiCode
    public static final int BACKGROUND_EXT = 48;
    public static final int EXT_BY_INDEX = 5;
    public static final int EXT_BY_RGB = 2;
+   
+   public static final int DEFAULT_FONT = 10;
+   public static final int FONT_ONE = 11;
+   public static final int FONT_TWO = 12;
+   public static final int FONT_THREE = 13;
+   public static final int FONT_FOUR = 14;
+   public static final int FONT_FIVE = 15;
+   public static final int FONT_SIX = 16;
+   public static final int FONT_SEVEN = 17;
+   public static final int FONT_EIGHT = 18;
 
+   // Font-nine is used by RStudio to reduce spacing between lines
+   public static final int FONT_NINE = 19;
+   public static final String FONT_NINE_STYLE = "xtermFont9";
+   
    public static final String DEFAULTCOLORS = CSI + RESET + ";" + RESET + SGR;
+   
+   public static class AnsiClazzes
+   {
+      // span-level css classes
+      public String inlineClazzes = null;
+      
+      // block-level css classes
+      public String blockClazzes = null;
+   }
 
    public static class ForeColorNum
    {
@@ -217,9 +240,9 @@ public class AnsiCode
     * colors and visual appearance covered by SGR codes; other sequences 
     * such as cursor movement are ignored.
     * @param code escape sequence
-    * @return Clazzes or null if no color classes were applied
+    * @return AnsiClazzes, containing both span-level and block-level styles
     */
-   public String processCode(String code)
+   public AnsiClazzes processCode(String code)
    {
       if (code == null || code.length() < 2)
          return null;
@@ -228,6 +251,7 @@ public class AnsiCode
       if (code.length() == 2)
       {
          clazzes_.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
+         blockClazzes_.clear();
          return null;
       }
       
@@ -262,6 +286,7 @@ public class AnsiCode
                   // unknown extended color format; hard to recover so
                   // just reset back to defaults and return
                   clazzes_.clear();
+                  blockClazzes_.clear();
                   return null;
                }
             }
@@ -313,6 +338,7 @@ public class AnsiCode
             currentColor_.reset();
             currentBgColor_.reset();
             clazzes_.clear();
+            blockClazzes_.clear();
          }
          else if (codeVal == BOLD)
          {
@@ -425,12 +451,21 @@ public class AnsiCode
            extendedColor = codeVal;
            extendedMarkerSeen = false;
          }
+         else if (codeVal == FONT_NINE)
+         {
+            blockClazzes_.add(FONT_NINE_STYLE);
+         }
+         else if (codeVal == DEFAULT_FONT || 
+               (codeVal >= FONT_ONE && codeVal <= FONT_EIGHT))
+         {
+            blockClazzes_.remove(FONT_NINE_STYLE);
+         }
          else
          {
             // ignore all others
          }
       }
-      return getStyle();
+      return getStyles();
    }
    
    public static boolean partialSequence(String code)
@@ -468,23 +503,38 @@ public class AnsiCode
       return Color.clazzForColorIndex(index,  true /*background*/);
    }
    
-   private String getStyle()
+   private AnsiClazzes getStyles()
    {
-      if (clazzes_.isEmpty())
+      AnsiClazzes styles = new AnsiClazzes();
+      
+      if (!clazzes_.isEmpty())
       {
-         return null;
+         StringBuilder buildClazzes = new StringBuilder();
+         Iterator<String> itr = clazzes_.iterator();
+         while (itr.hasNext())
+         {
+            if (buildClazzes.length() > 0)
+               buildClazzes.append(" ");
+            buildClazzes.append(itr.next());
+         }
+         styles.inlineClazzes = buildClazzes.toString();
       }
       
-      // append current ANSI classes to the original class
-      StringBuilder buildClazzes = new StringBuilder();
-      Iterator<String> itr = clazzes_.iterator();
-      while (itr.hasNext())
+      if (!blockClazzes_.isEmpty())
       {
-         if (buildClazzes.length() > 0)
-            buildClazzes.append(" ");
-         buildClazzes.append(itr.next());
+         // block styles (line-height via font9)
+         StringBuilder buildClazzes = new StringBuilder();
+         Iterator<String> itr = blockClazzes_.iterator();
+         while (itr.hasNext())
+         {
+            if (buildClazzes.length() > 0)
+               buildClazzes.append(" ");
+            buildClazzes.append(itr.next());
+         }
+         styles.blockClazzes = buildClazzes.toString();
       }
-      return buildClazzes.toString();
+      
+      return styles;
    }
     
    /**
@@ -601,4 +651,5 @@ public class AnsiCode
    private boolean inverted_ = false;
    
    private Set<String> clazzes_ = new LinkedHashSet<String>();
+   private Set<String> blockClazzes_ = new LinkedHashSet<String>();
 }

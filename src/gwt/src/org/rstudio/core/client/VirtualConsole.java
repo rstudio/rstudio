@@ -179,8 +179,7 @@ public class VirtualConsole
     * Appends text to the end of the virtual console.
     * 
     * @param text The text to append
-    * @param clazz The content to append to the text.
-    * same output style as this one.
+    * @param clazz Style of the text to append
     */
    private void appendText(String text, String clazz)
    {
@@ -348,7 +347,6 @@ public class VirtualConsole
     * Write text to DOM
     * @param text text to write
     * @param clazz text style
-    *  match this one
     */
    private void text(String text, String clazz)
    {
@@ -394,15 +392,15 @@ public class VirtualConsole
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      if (ansiColorMode == ANSI_COLOR_ON && ansiCodeStyles_ != null)
+      if (ansiColorMode == ANSI_COLOR_ON && ansiCodeStyles_.inlineClazzes != null)
       {
          if (clazz != null)
          {
-            currentClazz = clazz + " " + ansiCodeStyles_;
+            currentClazz = clazz + " " + ansiCodeStyles_.inlineClazzes;
          }
          else
          {
-            currentClazz = ansiCodeStyles_;
+            currentClazz = ansiCodeStyles_.inlineClazzes;
          }
       }
 
@@ -465,11 +463,15 @@ public class VirtualConsole
                {
                   if (clazz != null)
                   {
-                     currentClazz = clazz + " " + ansiCodeStyles_;
+                     currentClazz = clazz;
+                     if (ansiCodeStyles_.inlineClazzes != null)
+                     {
+                        currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
+                     }
                   }
                   else
                   {
-                     currentClazz = ansiCodeStyles_;
+                     currentClazz = ansiCodeStyles_.inlineClazzes;
                   }
                }
                tail = pos + ansiMatch.getValue().length();
@@ -564,7 +566,7 @@ public class VirtualConsole
    private int cursor_ = 0;
    private AnsiCode ansi_;
    private String partialAnsiCode_;
-   private String ansiCodeStyles_;
+   private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private int ansiColorMode_;
    
    // Injected ----
