@@ -732,15 +732,14 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "RestoreWorkspace: %3%\n"
       "SaveWorkspace: %4%\n"
       "AlwaysSaveHistory: %5%\n"
-      "QuitChildProcessesOnExit: %6%\n"
       "\n"
-      "EnableCodeIndexing: %7%\n"
-      "UseSpacesForTab: %8%\n"
-      "NumSpacesForTab: %9%\n"
-      "Encoding: %10%\n"
+      "EnableCodeIndexing: %6%\n"
+      "UseSpacesForTab: %7%\n"
+      "NumSpacesForTab: %8%\n"
+      "Encoding: %9%\n"
       "\n"
-      "RnwWeave: %11%\n"
-      "LaTeX: %12%\n");
+      "RnwWeave: %10%\n"
+      "LaTeX: %11%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -748,7 +747,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
         yesNoAskValueToString(config.restoreWorkspace) %
         yesNoAskValueToString(config.saveWorkspace) %
         yesNoAskValueToString(config.alwaysSaveHistory) %
-        yesNoAskValueToString(config.quitChildProcessesOnExit) %
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
@@ -894,6 +892,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format tutorialFmt("\nTutorial: %1%\n");
       contents.append(boost::str(tutorialFmt % config.tutorialPath));
+   }
+
+   // add QuitChildProcessesOnExit if it's not the default
+   if (config.quitChildProcessesOnExit != DefaultValue)
+   {
+      boost::format quitChildProcFmt("\nQuitChildProcessesOnExit: %1%\n");
+      contents.append(boost::str(quitChildProcFmt % yesNoAskValueToString(config.quitChildProcessesOnExit)));
    }
 
    // write it
