@@ -56,6 +56,9 @@ std::string iconData(const std::string& iconGroup,
       if (path.exists())
          return std::string("connections/") + iconGroup + "/" + iconFilename;
 
+      if (iconGroup == "drivers")
+         return std::string("connections/drivers/odbc.png");
+
       // didn't find anything
       return std::string();
    }

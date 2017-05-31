@@ -56,6 +56,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToo
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -110,6 +112,20 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       panel_.setSize("100%", "100%");
       
       docDisplay_.setReadOnly(true);
+      
+      docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
+      {
+         @Override
+         public void onCommandClick(CommandClickEvent event)
+         {
+            // force cursor position
+            Position position = event.getEvent().getDocumentPosition();
+            docDisplay_.setCursorPosition(position);
+            
+            // go to definition
+            docDisplay_.goToFunctionDefinition();
+         }
+      });
        
       // setup custom completion manager for executing F1 and F2 actions
       docDisplay_.setFileType(FileTypeRegistry.R, new CompletionManager() {

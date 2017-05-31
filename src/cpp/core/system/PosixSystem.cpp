@@ -1818,7 +1818,15 @@ Error terminateChildProcesses()
     {
        if (::kill(process.pid, SIGTERM) != 0)
        {
-          LOG_ERROR(systemError(errno, ERROR_LOCATION));
+          // On the Mac some child processes exist as a side effect of the
+          // call to getChildProcesses (sh, ps, awk). This results in a
+          // regular stream of error messages at the dev console, so we
+          // suppress that particular error to prevent bogus error states.
+          Error error = systemError(errno, ERROR_LOCATION);
+#ifdef __APPLE__
+          if (error.code() != boost::system::errc::no_such_process)
+#endif
+            LOG_ERROR(error);
        }
     }
 
