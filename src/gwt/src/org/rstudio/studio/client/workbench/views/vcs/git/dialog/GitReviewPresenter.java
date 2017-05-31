@@ -18,12 +18,15 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -57,6 +60,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
@@ -87,6 +91,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
+      HasValue<Boolean> getIgnoreWhitespaceCheckBox();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -225,7 +230,27 @@ public class GitReviewPresenter implements ReviewPresenter
       vcsFileOpener_ = vcsFileOpener;
       
       binder.bind(commands, this);
+      
+      new BoolStateValue(
+            "git",
+            "ignoreWhitespace",
+            ClientState.PERSISTENT,
+            session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Boolean value)
+         {
+            if (value != null)
+               ignoreWhitespace_ = value;
+         }
 
+         @Override
+         protected Boolean getValue()
+         {
+            return ignoreWhitespace_;
+         }
+      };
+      
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
@@ -282,7 +307,16 @@ public class GitReviewPresenter implements ReviewPresenter
             });
          }
       };
-
+      
+      Window.addCloseHandler(new CloseHandler<Window>()
+      {
+         @Override
+         public void onClose(CloseEvent<Window> event)
+         {
+            session.persistClientState();
+         }
+      });
+      
       view_.getChangelistTable().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override
@@ -476,6 +510,7 @@ public class GitReviewPresenter implements ReviewPresenter
       });
       view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
+      
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
@@ -486,6 +521,19 @@ public class GitReviewPresenter implements ReviewPresenter
                      updateDiff(false);
                }
             });
+      
+      view_.getIgnoreWhitespaceCheckBox().setValue(ignoreWhitespace_);
+      view_.getIgnoreWhitespaceCheckBox().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  ignoreWhitespace_ = event.getValue();
+                  updateDiff(false);
+               }
+            });
+      
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
@@ -672,6 +720,7 @@ public class GitReviewPresenter implements ReviewPresenter
             patchMode,
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
+            ignoreWhitespace_,
             new SimpleRequestCallback<DiffResult>("Diff Error")
             {
                @Override
@@ -810,6 +859,7 @@ public class GitReviewPresenter implements ReviewPresenter
    private GitState gitState_;
    private final VCSFileOpener vcsFileOpener_;
    private boolean initialized_;
+   private boolean ignoreWhitespace_;
    private static final String MODULE_GIT = "vcs_git";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 

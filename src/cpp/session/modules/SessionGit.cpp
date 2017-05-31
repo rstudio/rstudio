@@ -978,12 +978,15 @@ public:
                           const FilePath* pCompareTo,
                           PatchMode mode,
                           int contextLines,
+                          bool ignoreWhitespace,
                           std::string* pOutput)
    {
       ShellArgs args = ShellArgs() << "diff";
       args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
+      if (ignoreWhitespace)
+         args << "-w";
       args << "--";
       if (pCompareTo)
          args << *pCompareTo;
@@ -995,9 +998,10 @@ public:
    core::Error diffFile(const FilePath& filePath,
                         PatchMode mode,
                         int contextLines,
+                        bool ignoreWhitespace,
                         std::string* pOutput)
    {
-      Error error = doDiffFile(filePath, NULL, mode, contextLines, pOutput);
+      Error error = doDiffFile(filePath, NULL, mode, contextLines, ignoreWhitespace, pOutput);
       if (error)
          return error;
 
@@ -1014,6 +1018,7 @@ public:
                                &(shell_utils::devnull()),
                                mode,
                                contextLines,
+                               ignoreWhitespace,
                                pOutput);
             if (error)
                return error;
@@ -1831,11 +1836,13 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    int mode;
    int contextLines;
    bool noSizeWarning;
+   bool ignoreWhitespace;
    Error error = json::readParams(request.params,
                                   &path,
                                   &mode,
                                   &contextLines,
-                                  &noSizeWarning);
+                                  &noSizeWarning,
+                                  &ignoreWhitespace);
    if (error)
       return error;
 
@@ -1845,10 +1852,12 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    splitRename(path, NULL, &path);
 
    std::string output;
-   error = s_git_.diffFile(resolveAliasedPath(path),
-                                 static_cast<PatchMode>(mode),
-                                 contextLines,
-                                 &output);
+   error = s_git_.diffFile(
+               resolveAliasedPath(path),
+               static_cast<PatchMode>(mode),
+               contextLines,
+               ignoreWhitespace,
+               &output);
    if (error)
       return error;
 

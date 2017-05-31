@@ -2435,6 +2435,7 @@ public class RemoteServer implements Server
                            PatchMode mode,
                            int contextLines,
                            boolean noSizeWarning,
+                           boolean ignoreWhitespace,
                            ServerRequestCallback<DiffResult> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2442,6 +2443,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(mode.getValue()));
       params.set(2, new JSONNumber(contextLines));
       params.set(3, JSONBoolean.getInstance(noSizeWarning));
+      params.set(4, JSONBoolean.getInstance(ignoreWhitespace));
       sendRequest(RPC_SCOPE, GIT_DIFF_FILE, params, requestCallback);
    }
 
