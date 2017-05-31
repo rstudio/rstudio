@@ -32,6 +32,7 @@
         }
         .optionsRightBlock {
             margin-left: auto;
+            padding-top: 2px;
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
