@@ -601,6 +601,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.execCommand(commandName);
    }-*/;
    
+   public final native void setCursorStyle(String style) /*-{
+      this.setOption("cursorStyle", style);
+   }-*/;
+   
    private static final native void initialize()
    /*-{
       // Remove the 'Return' keybinding associated with Emacs.
