@@ -83,11 +83,6 @@ public class VirtualConsole
       prefs_ = prefs;
    }
    
-   public void submit(String data)
-   {
-      submit(data, null);
-   }
-
    public void clear()
    {
       formfeed();
@@ -116,7 +111,7 @@ public class VirtualConsole
       while (cursor_ < output_.length() && output_.charAt(cursor_) != '\n')
          cursor_++;
       // Now we're either at the end of the buffer, or on top of a '\n'
-      text("\n", clazz);
+      text("\n", clazz, false/*forceNewRange*/);
    }
 
    private void formfeed()
@@ -180,12 +175,14 @@ public class VirtualConsole
     * 
     * @param text The text to append
     * @param clazz Style of the text to append
+    * @param forceNewRange start a new output range even if last range had same
+    * output style as this one
     */
-   private void appendText(String text, String clazz)
+   private void appendText(String text, String clazz, boolean forceNewRange)
    {
       Entry <Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
-      if (range.clazz == clazz)
+      if (!forceNewRange && range.clazz == clazz)
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
@@ -358,8 +355,10 @@ public class VirtualConsole
     * Write text to DOM
     * @param text text to write
     * @param clazz text style
+    * @param forceNewRange start a new range even if style matches previous
+    * range's style
     */
-   private void text(String text, String clazz)
+   private void text(String text, String clazz, boolean forceNewRange)
    {
       int start = cursor_;
       int end = cursor_ + text.length();
@@ -369,7 +368,7 @@ public class VirtualConsole
       {
          // short circuit common case in which we're just adding output
          if (cursor_ == output_.length() && !class_.isEmpty())
-            appendText(text, clazz);
+            appendText(text, clazz, forceNewRange);
          else
             insertText(new ClassRange(start, clazz, text));
       }
@@ -378,13 +377,32 @@ public class VirtualConsole
       cursor_ += text.length();
    }
    
+   public void submit(String data)
+   {
+      submit(data, null);
+   }
+
+   public void submit(String data, String clazz)
+   {
+      submit(data, clazz, false/*forceNewRange*/);
+   }
+
    /**
     * Submit text to console
     * @param data text to output
     * @param clazz text style
+    * @param forceNewRange force any output from this call to be in a new
+    * output range (span) even if style matches previous output
     */
-   public void submit(String data, String clazz)
+   public void submit(String data, String clazz, boolean forceNewRange)
    {
+      // Only capture new elements when dealing with error output, which
+      // is only place that sets forceNewRange to true. This is just an 
+      // optimization to avoid unnecessary overhead for large (non-error)
+      // output.
+      captureNewElements_ = forceNewRange;
+      newElements_.clear();
+      
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
@@ -420,7 +438,7 @@ public class VirtualConsole
             AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
       {
-         text(data, currentClazz);
+         text(data, currentClazz, forceNewRange);
          return;
       }
       
@@ -433,7 +451,11 @@ public class VirtualConsole
          // character, add it.
          if (tail != pos)
          {
-            text(data.substring(tail, pos), currentClazz);
+            text(data.substring(tail, pos), currentClazz, forceNewRange);
+            
+            // once we've started a new range, rest of output for this submit
+            // call should share that range (e.g. a multi-line error message)
+            forceNewRange = false;
          }
          
          tail = pos + 1;
@@ -489,7 +511,7 @@ public class VirtualConsole
                break;
             default:
                assert false : "Unknown control char, please check regex";
-               text(data.charAt(pos) + "", currentClazz);
+               text(data.charAt(pos) + "", currentClazz, false/*forceNewRange*/);
                break;
          }
 
@@ -498,9 +520,15 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
-         text(data.substring(tail), currentClazz);
+         text(data.substring(tail), currentClazz, forceNewRange);
    }
-   
+
+   // Elements added by last submit call; only captured if forceNewRange was true
+   public List<Element> getNewElements()
+   {
+      return newElements_;
+   }
+ 
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text)
@@ -512,6 +540,11 @@ public class VirtualConsole
          if (className != null)
             element.addClassName(clazz);
          element.setInnerText(text);
+         
+         if (captureNewElements_)
+         {
+            newElements_.add(element);
+         }
       }
       
       public void trimLeft(int delta)
@@ -579,6 +612,10 @@ public class VirtualConsole
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private int ansiColorMode_;
+   
+   // Elements added by last submit call (only if forceNewRange was true)
+   private boolean captureNewElements_ = false;
+   private List<Element> newElements_ = new ArrayList<Element>();
    
    // Injected ----
    private UIPrefs prefs_;

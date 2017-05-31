@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -263,26 +264,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearPendingInput();
       output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/);
 
-      // Pick up the last element emitted to the console. If we get extended
-      // information for this error, we'll need to swap out the simple error
-      // element for the extended error element. 
-      Element outputElement = output_.getElement();
-      if (outputElement.hasChildNodes())
+      // Pick up the elements emitted to the console by this call. If we get 
+      // extended information for this error, we'll need to swap out the simple 
+      // error elements for the extended error element. 
+      List<Element> newElements = virtualConsole_.getNewElements();
+      if (!newElements.isEmpty())
       {
-         // the last output group includes a <span> for each output type; pick
-         // up the one referring to the error we just emitted
-         Node lastNode = outputElement.getChild(
-               outputElement.getChildCount() - 1);
-         if (lastNode.hasChildNodes())
+         if (clearErrors_)
          {
-            Node errorNode = lastNode.getChild(lastNode.getChildCount() - 1);
-            if (clearErrors_)
-            {
-               errorNodes_.clear();
-               clearErrors_ = false;
-            }
-            errorNodes_.put(error, errorNode);
+            errorNodes_.clear();
+            clearErrors_ = false;
          }
+         errorNodes_.put(error, newElements);
       }
    }
    
@@ -292,7 +285,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       if (errorNodes_.containsKey(error))
       {
-         Node errorNode = errorNodes_.get(error);
+         List<Element> errorNodes = errorNodes_.get(error);
+         if (errorNodes.isEmpty())
+            return;
+         
          clearPendingInput();
          ConsoleError errorWidget = new ConsoleError(
                traceInfo, getErrorClass(), this, command);
@@ -300,9 +296,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
          if (expand)
             errorWidget.setTracebackVisible(true);
          
-         errorNode.getParentNode().replaceChild(errorWidget.getElement(),
-                                           errorNode);
-         
+         boolean replacedFirst = false;
+         for (Element element: errorNodes)
+         {
+            if (!replacedFirst)
+            {
+               // swap widget for first element
+               element.getParentNode().replaceChild(errorWidget.getElement(), element);
+               replacedFirst = true;
+            }
+            else
+            {
+               // and delete the rest of the elements
+               element.removeFromParent();
+            }
+         }
          scrollPanel_.onContentSizeChanged();
          errorNodes_.remove(error);
       }
@@ -395,7 +403,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
     * @param className Text style
     * @param isError Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
-    * @return
+    * @return was this output below the maximum buffer line count?
     */
    private boolean output(String text,
                           String className,
@@ -415,19 +423,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          virtualConsole_ = new VirtualConsole(trailing);
       }
 
-      // Group Error's output under a single parent span so we can treat it as
-      // one element even if there are ANSI codes and/or newlines at play 
-      // (generating multiple spans as part of a single error message).
-      VirtualConsole outputVc = virtualConsole_;
-      if (isError)
-      {
-         SpanElement errorContainer = Document.get().createSpanElement();
-         virtualConsole_.getParent().appendChild(errorContainer);
-         outputVc = new VirtualConsole(errorContainer);
-      } 
-
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      outputVc.submit(text, className);
+      virtualConsole_.submit(text, className, isError);
       int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
 
@@ -804,7 +801,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final EventBus events_;
    
    // A list of errors that have occurred between console prompts. 
-   private Map<String, Node> errorNodes_ = new TreeMap<String, Node>();
+   private Map<String, List<Element>> errorNodes_ = new TreeMap<String, List<Element>>();
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
