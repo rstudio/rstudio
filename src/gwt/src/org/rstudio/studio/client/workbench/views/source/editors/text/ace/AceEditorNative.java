@@ -601,8 +601,8 @@ public class AceEditorNative extends JavaScriptObject {
       this.execCommand(commandName);
    }-*/;
    
-   public final native <T> void setOption(String key, T value) /*-{
-      this.setOption(key, value);
+   public final native void setCursorStyle(String style) /*-{
+      this.setOption("cursorStyle", style);
    }-*/;
    
    private static final native void initialize()

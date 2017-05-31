@@ -2010,7 +2010,7 @@ public class AceEditor implements DocDisplay,
    public void setBlinkingCursor(boolean blinking)
    {
       String style = blinking ? "ace" : "wide";
-      widget_.getEditor().setOption("cursorStyle", style);
+      widget_.getEditor().setCursorStyle(style);
    }
 
    public void setShowPrintMargin(boolean on)
