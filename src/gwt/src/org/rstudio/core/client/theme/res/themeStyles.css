@@ -443,7 +443,11 @@ pre {
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-menus .menuCheckable img {
-   filter: inverts(100%);
+   -webkit-filter: invert(100%) brightness(120%);
+      -moz-filter: invert(100%) brightness(120%);
+       -ms-filter: invert(100%) brightness(120%);
+        -o-filter: invert(100%) brightness(120%);
+           filter: invert(100%) brightness(120%);
 }
 
 .highlight {
@@ -623,7 +627,9 @@ pre {
    background-color: #D6E9F8;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItem.gwt-MenuItem-selected {
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItem.gwt-MenuItem-selected,
+.rstudio-themes-flat.rstudio-themes-dark-menus .subMenuIcon-selected,
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-SuggestBoxPopup .item-selected {
    background-color: THEME_DARKGREY_MENU_SELECTED;
 }
 

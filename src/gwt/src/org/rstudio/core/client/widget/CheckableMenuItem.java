@@ -3,6 +3,7 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -43,11 +44,11 @@ public abstract class CheckableMenuItem extends MenuItem
    
    private String getHTMLContent()
    {
-      return AppCommand.formatMenuLabel(
+      return AppCommand.formatMenuLabelWithStyle(
             isChecked() ? 
                   new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
                   null,
-            getLabel(), "");
+            getLabel(), "", ThemeStyles.INSTANCE.menuCheckable());
       
    }
 }
