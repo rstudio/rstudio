@@ -18,6 +18,10 @@ import static com.google.gwt.emultest.java.lang.JsExceptionViolator.getBackingJs
 
 import com.google.gwt.testing.TestUtils;
 
+import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+
 /**
  * Unit tests for JsException behavior.
  */
@@ -37,21 +41,21 @@ public class JsExceptionTest extends ThrowableTestBase {
   }
 
   public void testCatchJava() {
-    Object jso = makeJSO();
-    Exception e = createJsException(jso);
-    assertJsException(jso, catchJava(createThrower(e)));
+    Object obj = new Object();
+    Exception e = createJsException(obj);
+    assertJsException(obj, catchJava(createThrower(e)));
   }
 
   public void testCatchNative() {
-    Object jso = makeJSO();
-    Exception e = createJsException(jso);
-    assertSame(jso, catchNative(createThrower(e)));
+    Object obj = new Object();
+    Exception e = createJsException(obj);
+    assertSame(obj, catchNative(createThrower(e)));
   }
 
   public void testCatchNativePropagatedFromFinally() {
-    Object jso = makeJSO();
-    Exception e = createJsException(jso);
-    assertSame(jso, catchNative(wrapWithFinally(createThrower(e))));
+    Object obj = new Object();
+    Exception e = createJsException(obj);
+    assertSame(obj, catchNative(wrapWithFinally(createThrower(e))));
     assertTrue(keepFinallyAlive);
   }
 
@@ -70,16 +74,13 @@ public class JsExceptionTest extends ThrowableTestBase {
   }
 
   public void testJavaNativeJavaSandwichCatch() {
-    Object jso = makeJSO();
-    Exception e = createJsException(jso);
-    assertJsException(jso, javaNativeJavaSandwich(e));
+    Object obj = new Object();
+    Exception e = createJsException(obj);
+    assertJsException(obj, javaNativeJavaSandwich(e));
   }
 
   public void testCatchThrowNative() {
     Object e;
-
-    e = makeJSO();
-    assertJsException(e, catchJava(createNativeThrower(e)));
 
     e = "testing";
     assertJsException(e, catchJava(createNativeThrower(e)));
@@ -94,9 +95,6 @@ public class JsExceptionTest extends ThrowableTestBase {
   // jsni throw -> java catch -> java throw -> jsni catch
   public void testNativeJavaNativeSandwichCatch() {
     Object e;
-
-    e = makeJSO();
-    assertSame(e, nativeJavaNativeSandwich(e));
 
     e = "testing";
     assertEquals(e, nativeJavaNativeSandwich(e));
@@ -125,12 +123,16 @@ public class JsExceptionTest extends ThrowableTestBase {
     }
   }
 
-  private static native void throwTypeError() /*-{
-    "dummy".notExistsWillThrowTypeError();
-  }-*/;
+  private static void throwTypeError() {
+    Object nullObject = null;
+    nullObject.toString();
+  }
 
-  private static void assertTypeError(RuntimeException e) {
-    assertInstanceOf("TypeError", getBackingJsObject(e));
+  @JsType(isNative = true, namespace = "<window>")
+  private static class TypeError { }
+
+  protected static void assertTypeError(RuntimeException e) {
+    assertTrue(getBackingJsObject(e) instanceof TypeError);
     assertTrue(e.toString().contains("TypeError"));
   }
 
@@ -143,26 +145,24 @@ public class JsExceptionTest extends ThrowableTestBase {
     }
   }
 
-  private static native void throwSvgError() /*-{
-    // In Firefox, this throws an object (not Error):
-    $doc.createElementNS("http://www.w3.org/2000/svg", "text").getBBox();
+  private static void throwSvgError() {
+    // In old Firefox, this throws an object (not Error):
+    createElementNS("http://www.w3.org/2000/svg", "text").getBBox();
 
     // For other browsers, make sure an exception is thrown to keep the test simple
-    throw new Error("NS_ERROR_FAILURE");
-  }-*/;
+    throw new RuntimeException("NS_ERROR_FAILURE");
+  }
+
+  @JsMethod(name = "document.createElementNS", namespace = JsPackage.GLOBAL)
+  private static native SVGElement createElementNS(String arg1, String arg2);
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL)
+  private interface SVGElement {
+    void getBBox();
+  }
 
   private static void assertJsException(Object expected, Throwable exception) {
     assertTrue(exception instanceof RuntimeException);
     assertEquals(expected, getBackingJsObject(exception));
   }
-
-  private static native Object makeJSO() /*-{
-    return {
-      toString : function() {
-        return "jso";
-      },
-      name : "myName",
-      message : "myDescription",
-    };
-  }-*/;
 }

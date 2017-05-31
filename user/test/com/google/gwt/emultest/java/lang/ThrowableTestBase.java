@@ -71,8 +71,4 @@ public abstract class ThrowableTestBase extends GWTTestCase {
   protected Throwable javaNativeJavaSandwich(Throwable e) {
     return catchJava(createNativeThrower(catchNative(createThrower(e))));
   }
-
-  protected static native void assertInstanceOf(String expectedType, Object e) /*-{
-    return e instanceof window[expectedType];
-  }-*/;
 }

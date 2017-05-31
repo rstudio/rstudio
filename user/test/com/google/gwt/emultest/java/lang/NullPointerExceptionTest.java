@@ -17,6 +17,8 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.testing.TestUtils;
 
+import jsinterop.annotations.JsType;
+
 /**
  * Unit tests for the GWT emulation of java.lang.NullPointerException class.
  */
@@ -27,6 +29,9 @@ public class NullPointerExceptionTest extends ThrowableTestBase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  @JsType(isNative = true, namespace = "<window>")
+  private static class TypeError { }
+
   public void testBackingJsObject() {
     // Do not run the test in JVM.
     if (TestUtils.isJvm()) {
@@ -34,7 +39,7 @@ public class NullPointerExceptionTest extends ThrowableTestBase {
     }
 
     Object caughtNative = catchNative(createThrower(new NullPointerException("<my msg>")));
-    assertInstanceOf("TypeError", caughtNative);
+    assertTrue(caughtNative instanceof TypeError);
     assertTrue(caughtNative.toString().startsWith("TypeError:"));
     assertTrue(caughtNative.toString().contains("<my msg>"));
     assertTrue(caughtNative.toString().contains(NullPointerException.class.getName()));

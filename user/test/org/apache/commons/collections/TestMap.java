@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
+
 /**
  * Tests base {@link java.util.Map} methods and contracts.
  * <p>
@@ -370,12 +373,11 @@ public abstract class TestMap extends TestObject{
       if (TestUtils.isJvm()) {
         return null;
       }
-      return getUndefined0();
+      return getUndefinedImpl();
     }
 
-    private static native Object getUndefined0() /*-{
-      return undefined;
-    }-*/;
+    @JsProperty(name = "undefined", namespace = JsPackage.GLOBAL)
+    private native static Object getUndefinedImpl();
 
     /**
      *  Test to ensure the test setup is working properly.  This method checks

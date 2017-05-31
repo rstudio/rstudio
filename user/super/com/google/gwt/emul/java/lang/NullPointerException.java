@@ -15,7 +15,6 @@
  */
 package java.lang;
 
-import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
@@ -41,7 +40,7 @@ public class NullPointerException extends JsException {
     return new NativeTypeError(msg);
   }
 
-  @JsType(isNative = true, name = "TypeError", namespace = JsPackage.GLOBAL)
+  @JsType(isNative = true, name = "TypeError", namespace = "<window>")
   private static class NativeTypeError {
     NativeTypeError(String msg) { }
   }

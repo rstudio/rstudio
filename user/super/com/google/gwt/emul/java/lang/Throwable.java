@@ -25,7 +25,6 @@ import java.io.Serializable;
 import javaemul.internal.JsUtils;
 import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsMethod;
-import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
@@ -297,11 +296,11 @@ public class Throwable implements Serializable {
     return e instanceof NativeTypeError ? new NullPointerException(e) : new JsException(e);
   }
 
-  @JsType(isNative = true, name = "Error", namespace = JsPackage.GLOBAL)
+  @JsType(isNative = true, name = "Error", namespace = "<window>")
   private static class NativeError {
     NativeError(String msg) { }
   }
 
-  @JsType(isNative = true, name = "TypeError", namespace = JsPackage.GLOBAL)
+  @JsType(isNative = true, name = "TypeError", namespace = "<window>")
   private static class NativeTypeError { }
 }

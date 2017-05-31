@@ -17,6 +17,8 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.testing.TestUtils;
 
+import jsinterop.annotations.JsType;
+
 /**
  * Unit tests for the GWT emulation of java.lang.Throwable class.
  */
@@ -72,7 +74,7 @@ public class ThrowableTest extends ThrowableTestBase {
     }
     Throwable e = new Throwable("<my msg>");
     Object caughtNative = catchNative(createThrower(e));
-    assertInstanceOf("Error", caughtNative);
+    assertTrue(caughtNative instanceof Error);
     assertTrue(caughtNative.toString().contains("<my msg>"));
     assertTrue(caughtNative.toString().contains(Throwable.class.getName()));
   }
@@ -89,7 +91,7 @@ public class ThrowableTest extends ThrowableTestBase {
     };
 
     Object caughtNative = catchNative(createThrower(e));
-    assertInstanceOf("Error", caughtNative);
+    assertTrue(caughtNative instanceof Error);
     assertTrue(caughtNative.toString().contains("<my msg>"));
     assertTrue(caughtNative.toString().contains(e.getClass().getName()));
   }
@@ -101,4 +103,7 @@ public class ThrowableTest extends ThrowableTestBase {
     Throwable e = new Throwable();
     assertSame(e, javaNativeJavaSandwich(e));
   }
+
+  @JsType(isNative = true, namespace = "<window>")
+  private static class Error { }
 }
