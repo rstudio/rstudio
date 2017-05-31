@@ -276,9 +276,19 @@ public class VirtualConsole
             }
             else
             {
-               // reduce the original range and add ours (if not present)
+               // reduce the original range and add ours
+               boolean needTrimmed = overlap.length > delta;
                overlap.trimLeft(delta);
+               
                insertions.add(range);
+
+               // If our new range is shorter than the existing one, need to 
+               // re-add the shortened range at its new start position 
+               // otherwise our new range stomps it and prevents any more 
+               // operations on it
+               if (needTrimmed)
+                  insertions.add(overlap);
+               
                if (parent_ != null)
                   parent_.insertBefore(range.element, overlap.element);
               
@@ -304,18 +314,19 @@ public class VirtualConsole
                String text = overlap.text();
 
                // trim the original range
-               overlap.trimRight(overlap.length - (start - l));
+               int amountTrimmed = overlap.length - (start - l);
+               overlap.trimRight(amountTrimmed);
                
                // insert the new range
                insertions.add(range);
                if (parent_ != null)
                   parent_.insertAfter(range.element, overlap.element);
                
-               // add the new range
+               // add back the remainder
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - range.length), 
+                     text.substring((text.length() - (amountTrimmed - range.length)), 
                                     text.length()));
                insertions.add(remainder);
                if (parent_ != null)
