@@ -105,6 +105,7 @@
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
 * Fix hang when replacing a misspelled word with word and punctuation
+* Fixed issue where cursor would begin blinking even when 'Blinking Cursor' preference disabled
 * Editor now responds correctly when renaming an open file using the Files pane
 * Fixed an issue that could cause the data viewer cache to contain orphaned entries
 * Fixed highlighting of Markdown text within Markdown blockquote
