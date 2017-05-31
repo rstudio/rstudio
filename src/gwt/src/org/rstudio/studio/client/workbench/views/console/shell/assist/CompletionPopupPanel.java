@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -43,6 +44,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
@@ -315,6 +317,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       int left = getAbsoluteLeft();
       int bottom = top + getOffsetHeight();
       int width = getOffsetWidth();
+      
+      if (RStudioThemes.isFlat())
+         bottom += 9;
       
       if (!help_.isShowing())
          help_.show();
