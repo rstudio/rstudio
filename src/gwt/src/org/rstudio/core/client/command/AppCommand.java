@@ -477,7 +477,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             shortcut, 
             null, 
             null,
-            null);
+            null,
+            styleName);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
@@ -510,7 +511,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                              shortcut, 
                              null, 
                              rightImage,
-                             rightImageDesc);
+                             rightImageDesc,
+                             null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
@@ -527,7 +529,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                         String shortcut, 
                                         Integer iconOffsetY)
    {
-      return formatMenuLabel(icon, label, html, shortcut, iconOffsetY, null, null);
+      return formatMenuLabel(icon, label, html, shortcut, iconOffsetY, null, null, null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
@@ -536,13 +538,21 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                          String shortcut, 
                                          Integer iconOffsetY,
                                          ImageResource rightImage,
-                                         String rightImageDesc)
+                                         String rightImageDesc,
+                                         String styleName)
    {
       StringBuilder text = new StringBuilder();
       int topOffset = -7;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
+      text.append("<table ");
+      
+      if (styleName != null)
+      {
+         text.append("class='" + styleName + "' ");
+      }
+      
+      text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
       text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
