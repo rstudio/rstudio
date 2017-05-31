@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -51,6 +52,7 @@ import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -74,6 +76,8 @@ import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GitReviewPresenter implements ReviewPresenter
 {
@@ -520,6 +524,95 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            // record the current selected paths (as a set)
+            final Set<String> selectedPaths = new HashSet<String>();
+            selectedPaths.addAll(view_.getSelectedPaths());
+            
+            // first, double-check the file sizes of any files that are going
+            // to be added or modified (help the user avoid committing large
+            // files to the repository)
+            server_.gitFullStatus(new ServerRequestCallback<JsArray<StatusAndPathInfo>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<StatusAndPathInfo> response)
+               {
+                  // if this failed for some reason just go ahead with the commit
+                  if (response == null)
+                  {
+                     onCommit();
+                     return;
+                  }
+                  
+                  // iterate through the files and check for large modifications
+                  for (int i = 0, n = response.length(); i < n; i++)
+                  {
+                     StatusAndPathInfo info = response.get(i);
+                     
+                     // skip if this isn't a currently selected file for add
+                     if (!selectedPaths.contains(info.getPath()))
+                        continue;
+                     
+                     String status = info.getStatus();
+                     if (status.charAt(0) != 'A')
+                        continue;
+                     
+                     // warn if we're trying to commit a file >10MB in size
+                     double size = info.getFileSize();
+                     if (size > 10 * 1024 * 1024)
+                     {
+                        onLargeFile();
+                        return;
+                     }
+                  }
+                  
+                  // no large files; proceed with commit as normal
+                  onCommit();
+                  return;
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
+         
+         private void onLargeFile()
+         {
+            String message =
+                  "Some of the files to be committed are quite large " +
+                  "(> 10MB in size). Are you sure you want to commit these files?";
+            
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Committing Large Files",
+                  message,
+                  false,
+                  new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        onCommit();
+                     }
+                  },
+                  new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        // no-op on cancel
+                     }
+                  },
+                  null,
+                  "Commit",
+                  "Cancel",
+                  true);
+         }
+         
+         private void onCommit()
+         {
             server_.gitCommit(
                   view_.getCommitMessage().getText(),
                   view_.getCommitIsAmend().getValue(),
@@ -562,6 +655,8 @@ public class GitReviewPresenter implements ReviewPresenter
                      }
                   });
          }
+         
+         
       });
 
       view_.getOverrideSizeWarningButton().addClickHandler(new ClickHandler()

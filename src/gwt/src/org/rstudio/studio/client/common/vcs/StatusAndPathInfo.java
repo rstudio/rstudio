@@ -44,6 +44,10 @@ public class StatusAndPathInfo extends JavaScriptObject
    public native final boolean isDirectory() /*-{
       return !!this.is_directory;
    }-*/;
+   
+   public native final double getFileSize() /*-{
+      return this.size || 0;
+   }-*/;
 
    public native static StatusAndPathInfo create(String status,
                                           String path,

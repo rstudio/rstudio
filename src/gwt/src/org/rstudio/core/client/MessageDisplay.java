@@ -36,7 +36,7 @@ public abstract class MessageDisplay
       public String input;
       public boolean extraOption;
    }
-
+   
    public abstract void promptForText(String title,
                                       String label,
                                       String initialValue,
@@ -276,7 +276,7 @@ public abstract class MessageDisplay
       dialog.setDefaultButton(defaultButton);
       dialog.showModal();
    }
-
+   
    public void showErrorMessage(String caption, String message)
    {
       createDialog(MSG_ERROR, caption, message).showModal();
