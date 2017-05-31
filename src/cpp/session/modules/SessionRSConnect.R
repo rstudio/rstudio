@@ -13,9 +13,9 @@
 #
 #
 
-# this is a clone of a function in the rsconnect package; we use it to detect
-# the condition in which rsconnect has state but the package itself isn't 
-# installed. 
+# this is a clone of 'applicationConfigDir' in the rsconnect package; we use it
+# to detect the condition in which rsconnect has state but the package itself
+# isn't installed. 
 .rs.addFunction("connectConfigDir", function(appName, subDir = NULL) {
 
   # get the home directory from the operating system (in case
@@ -438,9 +438,14 @@
 # cannot be used because the rsconnect package isn't installed
 .rs.addJsonRpcHandler("has_orphaned_accounts", function() {
   # get the folder in which we expect account data to exist
-  accountDir <- .rs.connectConfigDir("connect", "accounts")
+  accountDir <- .rs.connectConfigDir("rsconnect", "accounts")
 
-  # if the folder exists, list all regular files (not directories) inside it
+  # if this folder doesn't exist, check the old location
+  if (!file.exists(accountDir))
+    accountDir <- .rs.connectConfigDir("connect", "accounts")
+
+  # if we found a config folder, list all regular files (not directories) inside
+  # it
   if (file.exists(accountDir)) {
     files <- list.files(accountDir, recursive = TRUE, include.dirs = FALSE)
 
