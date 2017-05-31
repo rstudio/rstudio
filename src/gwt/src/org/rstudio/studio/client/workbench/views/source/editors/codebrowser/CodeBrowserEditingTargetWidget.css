@@ -1,7 +1,12 @@
+@external rstudio-themes-flat, rstudio-themes-dark;
 
 .captionLabel {
    font-weight: bold;
    color: #494949;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .captionLabel {
+   color: #FFF;
 }
 
 .menuElement {
@@ -18,8 +23,16 @@
    padding-right: 6px;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark .functionNamespace {
+   color: #DDD;
+}
+
 .dropDownImage {
    margin-bottom: 2px;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .dropDownImage {
+   filter: invert(100%) brightness(90%) saturate(90%);
 }
 
 .readOnly {
