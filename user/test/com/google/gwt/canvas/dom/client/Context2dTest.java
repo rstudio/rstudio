@@ -339,9 +339,9 @@ public class Context2dTest extends GWTTestCase {
     
     // test that edge cases don't blow up: fall off the CanvasPixelArray end
     int aPixel = clampArrayGet.get(9999);
-    assertEquals("CanvasPixelArray should return 0 for values off its end", aPixel, 0);
+    assertEquals("CanvasPixelArray should return 0 for values off its end", 0, aPixel);
     int bPixel = clampArrayGet.get(-9999);
-    assertEquals("CanvasPixelArray should return 0 for values off its end", bPixel, 0);
+    assertEquals("CanvasPixelArray should return 0 for values off its end", 0, bPixel);
   }
 
   public void testIsPointInPath() {

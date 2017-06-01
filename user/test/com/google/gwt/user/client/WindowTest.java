@@ -142,42 +142,42 @@ public class WindowTest extends GWTTestCase {
 
     // typical case
     map = Window.Location.buildListParamMap("?fuzzy=bunnies&foo=bar&num=42");
-    assertEquals(map.size(), 3);
-    assertEquals(map.get("foo").get(0), "bar");
-    assertEquals(map.get("fuzzy").get(0), "bunnies");
+    assertEquals(3, map.size());
+    assertEquals("bar", map.get("foo").get(0));
+    assertEquals("bunnies", map.get("fuzzy").get(0));
 
     // multiple values for the same parameter
     map = Window.Location.buildListParamMap(
         "?fuzzy=bunnies&foo=bar&num=42&foo=baz");
-    assertEquals(map.size(), 3);
-    assertEquals(map.get("foo").get(0), "bar");
-    assertEquals(map.get("foo").get(1), "baz");
+    assertEquals(3, map.size());
+    assertEquals("bar", map.get("foo").get(0));
+    assertEquals("baz", map.get("foo").get(1));
 
     // no query parameters.
     map = Window.Location.buildListParamMap("");
-    assertEquals(map.size(), 0);
+    assertEquals(0, map.size());
 
     // blank keys should be ignored, but blank values are OK. Also,
     // keys can contain whitespace. (but the browser may give whitespace
     // back as escaped).
     map = Window.Location.buildListParamMap("?&& &a&b=&c=c&d=d=d&=e&f=2&f=1&");
-    assertEquals(map.size(), 6);
-    assertEquals(map.get(" ").get(0), "");
-    assertEquals(map.get("a").get(0), "");
-    assertEquals(map.get("b").get(0), "");
-    assertEquals(map.get("c").get(0), "c");
-    assertEquals(map.get("d").get(0), "d=d");
-    assertEquals(map.get("f").get(0), "2");
-    assertEquals(map.get("f").get(1), "1");
+    assertEquals(6, map.size());
+    assertEquals("", map.get(" ").get(0));
+    assertEquals("", map.get("a").get(0));
+    assertEquals("", map.get("b").get(0));
+    assertEquals("c", map.get("c").get(0));
+    assertEquals("d=d", map.get("d").get(0));
+    assertEquals("2", map.get("f").get(0));
+    assertEquals("1", map.get("f").get(1));
 
     // Values escaped with hex codes should work too.
     map = Window.Location.buildListParamMap("?foo=bar%20baz%3aqux");
-    assertEquals(map.get("foo").get(0), "bar baz:qux");
+    assertEquals("bar baz:qux", map.get("foo").get(0));
 
     // Malformed URI sequence should not make the app break (issue #7741)
     map = Window.Location.buildListParamMap("?foo=%E4&bar=%3Aqux");
-    assertEquals(map.get("foo").get(0), "%E4");
-    assertEquals(map.get("bar").get(0), ":qux");
+    assertEquals("%E4", map.get("foo").get(0));
+    assertEquals(":qux", map.get("bar").get(0));
   }
 
   public void testNavigator() {
@@ -360,15 +360,15 @@ public class WindowTest extends GWTTestCase {
     Window.addWindowResizeListener(r2);
 
     ListenerTester.fire();
-    assertEquals(ListenerTester.resize, 2);
+    assertEquals(2, ListenerTester.resize);
 
     Window.removeWindowResizeListener(r1);
     ListenerTester.fire();
-    assertEquals(ListenerTester.resize, 1);
+    assertEquals(1, ListenerTester.resize);
 
     Window.removeWindowResizeListener(r2);
     ListenerTester.fire();
-    assertEquals(ListenerTester.resize, 0);
+    assertEquals(0, ListenerTester.resize);
   }
 
 }

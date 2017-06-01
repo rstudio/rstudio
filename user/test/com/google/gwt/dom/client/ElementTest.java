@@ -456,19 +456,19 @@ public class ElementTest extends GWTTestCase {
     assertEquals("div", div.getTagName().toLowerCase(Locale.ROOT));
 
     div.setClassName("myClass");
-    assertEquals(div.getClassName(), "myClass");
+    assertEquals("myClass", div.getClassName());
 
     div.setId("myId");
-    assertEquals(div.getId(), "myId");
+    assertEquals("myId", div.getId());
 
     div.setTitle("myTitle");
-    assertEquals(div.getTitle(), "myTitle");
+    assertEquals("myTitle", div.getTitle());
 
     div.setDir("rtl");
-    assertEquals(div.getDir(), "rtl");
+    assertEquals("rtl", div.getDir());
 
     div.setLang("fr-FR");
-    assertEquals(div.getLang(), "fr-FR");
+    assertEquals("fr-FR", div.getLang());
   }
 
   /**
@@ -554,8 +554,8 @@ public class ElementTest extends GWTTestCase {
     outer.setScrollTop(0);
 
     // Ensure that we are no longer scrolled.
-    assertEquals(outer.getScrollTop(), 0);
-    assertEquals(outer.getScrollLeft(), 0);
+    assertEquals(0, outer.getScrollTop());
+    assertEquals(0, outer.getScrollLeft());
   }
 
   /**

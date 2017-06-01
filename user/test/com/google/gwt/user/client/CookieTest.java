@@ -61,7 +61,7 @@ public class CookieTest extends GWTTestCase {
 
     // Differentiate null cookie from '' cookie.
     Cookies.setCookie("novalue", "", expires);
-    assertEquals(Cookies.getCookie("novalue"), "");
+    assertEquals("", Cookies.getCookie("novalue"));
     assertEquals(Cookies.getCookie("notpresent"), null);
   }
 
@@ -103,24 +103,25 @@ public class CookieTest extends GWTTestCase {
 
     delayTestFinish(7000);
     // Wait until the cookie expires before checking it
-    Timer timer = new Timer() {
-      @Override
-      public void run() {
-        // Verify that the early expiring cookie does NOT exist
-        assertNull(Cookies.getCookie(earlyCookie));
+    Timer timer =
+        new Timer() {
+          @Override
+          public void run() {
+            // Verify that the early expiring cookie does NOT exist
+            assertNull(Cookies.getCookie(earlyCookie));
 
-        // Verify that the late expiring cookie does exist
-        assertEquals(Cookies.getCookie(lateCookie), "late");
+            // Verify that the late expiring cookie does exist
+            assertEquals("late", Cookies.getCookie(lateCookie));
 
-        // Verify the session cookie doesn't expire
-        assertEquals(Cookies.getCookie(sessionCookie), "forever");
-        Cookies.removeCookie(sessionCookie);
-        assertNull(Cookies.getCookie(sessionCookie));
+            // Verify the session cookie doesn't expire
+            assertEquals("forever", Cookies.getCookie(sessionCookie));
+            Cookies.removeCookie(sessionCookie);
+            assertNull(Cookies.getCookie(sessionCookie));
 
-        // Finish the test
-        finishTest();
-      }
-    };
+            // Finish the test
+            finishTest();
+          }
+        };
     timer.schedule(6000);
   }
 

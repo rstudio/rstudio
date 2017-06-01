@@ -55,7 +55,7 @@ public class TextResourceTest extends GWTTestCase {
     final Resources r = GWT.create(Resources.class);
     String result = r.bigTextResource().getText();
     int length = result.length();
-    assertEquals(length, 12737792);
+    assertEquals(12737792, length);
   }
 
   public void testInline() {

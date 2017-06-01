@@ -84,6 +84,6 @@ public class UiSafeHtmlInterpreterTest extends TestCase {
     String interpretedValue = new UiSafeHtmlInterpreter(tester.writer)
       .interpretElement(tester.getElem(tester.wrapXML(s).toString(), "ui:safehtml"));
 
-    assertEquals(interpretedValue, "\" + \"--token--1--token--\" + \"");
+    assertEquals("\" + \"--token--1--token--\" + \"", interpretedValue);
   }
 }

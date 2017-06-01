@@ -215,18 +215,18 @@ public class HostedTest extends GWTTestCase {
    */
   public void testAutoBoxing() {
     JavaScriptObject bvo = getBoxedBooleanAsObject(true);
-    assertEquals(getJSOAsString(bvo), "true");
+    assertEquals("true", getJSOAsString(bvo));
     JavaScriptObject nvo = getBoxedNumberAsObject(42);
-    assertEquals(getJSOAsString(nvo), "42");
+    assertEquals("42", getJSOAsString(nvo));
   }
 
   public void testBasic() {
     int iv = getInt(14);
-    assertEquals(iv, -14);
+    assertEquals(-14, iv);
     double dv = getDouble(31.5);
     assertEquals(dv, -31.5, 0.0);
     String sv = getString("test");
-    assertEquals(sv, "testme");
+    assertEquals("testme", sv);
     Object oin = String.class;
     Object oout = getObject(oin);
     assertEquals(oin, oout);
@@ -443,83 +443,66 @@ public class HostedTest extends GWTTestCase {
     }
     Inner inner = new Inner();
 
-    assertEquals("nativeBoolean", inner.nativeBoolean(true), true);
-    assertEquals("nativeBoolean", inner.nativeBoolean(false), false);
+    assertEquals("nativeBoolean", true, inner.nativeBoolean(true));
+    assertEquals("nativeBoolean", false, inner.nativeBoolean(false));
 
-    assertEquals("nativeByte", inner.nativeByte((byte) 0), (byte) 0);
-    assertEquals("nativeByte", inner.nativeByte((byte) 1), (byte) 1);
-    assertEquals("nativeByte", inner.nativeByte((byte) -1), (byte) -1);
-    assertEquals("nativeByte", inner.nativeByte((byte) 127), (byte) 127);
-    assertEquals("nativeByte", inner.nativeByte((byte) -127), (byte) -127);
-    assertEquals("nativeByte", inner.nativeByte(Byte.MAX_VALUE), Byte.MAX_VALUE);
-    assertEquals("nativeByte", inner.nativeByte(Byte.MIN_VALUE), Byte.MIN_VALUE);
+    assertEquals("nativeByte", (byte) 0, inner.nativeByte((byte) 0));
+    assertEquals("nativeByte", (byte) 1, inner.nativeByte((byte) 1));
+    assertEquals("nativeByte", (byte) -1, inner.nativeByte((byte) -1));
+    assertEquals("nativeByte", (byte) 127, inner.nativeByte((byte) 127));
+    assertEquals("nativeByte", (byte) -127, inner.nativeByte((byte) -127));
+    assertEquals("nativeByte", Byte.MAX_VALUE, inner.nativeByte(Byte.MAX_VALUE));
+    assertEquals("nativeByte", Byte.MIN_VALUE, inner.nativeByte(Byte.MIN_VALUE));
 
-    assertEquals("nativeCharacter", inner.nativeCharacter((char) 0), (char) 0);
-    assertEquals("nativeCharacter", inner.nativeCharacter((char) 1), (char) 1);
-    assertEquals("nativeCharacter", inner.nativeCharacter((char) -1), (char) -1);
-    assertEquals("nativeCharacter", inner.nativeCharacter((char) 32767),
-        (char) 32767);
-    assertEquals("nativeCharacter", inner.nativeCharacter((char) -32767),
-        (char) -32767);
-    assertEquals("nativeCharacter", inner.nativeCharacter(Character.MAX_VALUE),
-        Character.MAX_VALUE);
-    assertEquals("nativeCharacter", inner.nativeCharacter(Character.MIN_VALUE),
-        Character.MIN_VALUE);
+    assertEquals("nativeCharacter", (char) 0, inner.nativeCharacter((char) 0));
+    assertEquals("nativeCharacter", (char) 1, inner.nativeCharacter((char) 1));
+    assertEquals("nativeCharacter", (char) -1, inner.nativeCharacter((char) -1));
+    assertEquals("nativeCharacter", (char) 32767, inner.nativeCharacter((char) 32767));
+    assertEquals("nativeCharacter", (char) -32767, inner.nativeCharacter((char) -32767));
+    assertEquals(
+        "nativeCharacter", Character.MAX_VALUE, inner.nativeCharacter(Character.MAX_VALUE));
+    assertEquals(
+        "nativeCharacter", Character.MIN_VALUE, inner.nativeCharacter(Character.MIN_VALUE));
 
-    assertEquals("nativeDouble", inner.nativeDouble(0.0), 0.0);
-    assertEquals("nativeDouble", inner.nativeDouble(1.0), 1.0);
-    assertEquals("nativeDouble", inner.nativeDouble(-1.0), -1.0);
-    assertEquals("nativeDouble", inner.nativeDouble(100000000000.0),
-        100000000000.0);
-    assertEquals("nativeDouble", inner.nativeDouble(-100000000000.0),
-        -100000000000.0);
-    assertEquals("nativeDouble MAX", inner.nativeDouble(Double.MAX_VALUE),
-        Double.MAX_VALUE);
-    assertEquals("nativeDouble MIN", inner.nativeDouble(Double.MIN_VALUE),
-        Double.MIN_VALUE);
+    assertEquals("nativeDouble", 0.0, inner.nativeDouble(0.0));
+    assertEquals("nativeDouble", 1.0, inner.nativeDouble(1.0));
+    assertEquals("nativeDouble", -1.0, inner.nativeDouble(-1.0));
+    assertEquals("nativeDouble", 100000000000.0, inner.nativeDouble(100000000000.0));
+    assertEquals("nativeDouble", -100000000000.0, inner.nativeDouble(-100000000000.0));
+    assertEquals("nativeDouble MAX", Double.MAX_VALUE, inner.nativeDouble(Double.MAX_VALUE));
+    assertEquals("nativeDouble MIN", Double.MIN_VALUE, inner.nativeDouble(Double.MIN_VALUE));
 
-    assertEquals("nativeFloat", inner.nativeFloat((float) 0.0), (float) 0.0);
-    assertEquals("nativeFloat", inner.nativeFloat((float) 1.0), (float) 1.0);
-    assertEquals("nativeFloat", inner.nativeFloat((float) -1.0), (float) -1.0);
-    assertEquals("nativeFloat", inner.nativeFloat((float) 1000000.0),
-        (float) 1000000.0);
-    assertEquals("nativeFloat", inner.nativeFloat((float) -1000000.0),
-        (float) -1000000.0);
-    assertEquals("nativeFloat", inner.nativeFloat(Float.MAX_VALUE),
-        Float.MAX_VALUE);
-    assertEquals("nativeFloat", inner.nativeFloat(Float.MIN_VALUE),
-        Float.MIN_VALUE);
+    assertEquals("nativeFloat", (float) 0.0, inner.nativeFloat((float) 0.0));
+    assertEquals("nativeFloat", (float) 1.0, inner.nativeFloat((float) 1.0));
+    assertEquals("nativeFloat", (float) -1.0, inner.nativeFloat((float) -1.0));
+    assertEquals("nativeFloat", (float) 1000000.0, inner.nativeFloat((float) 1000000.0));
+    assertEquals("nativeFloat", (float) -1000000.0, inner.nativeFloat((float) -1000000.0));
+    assertEquals("nativeFloat", Float.MAX_VALUE, inner.nativeFloat(Float.MAX_VALUE));
+    assertEquals("nativeFloat", Float.MIN_VALUE, inner.nativeFloat(Float.MIN_VALUE));
 
-    assertEquals("nativeInteger", inner.nativeInteger(0), 0);
-    assertEquals("nativeInteger", inner.nativeInteger(1), 1);
-    assertEquals("nativeInteger", inner.nativeInteger(-1), -1);
-    assertEquals("nativeInteger", inner.nativeInteger(2147483647), 2147483647);
-    assertEquals("nativeInteger", inner.nativeInteger(-2147483647), -2147483647);
-    assertEquals("nativeInteger MAX", inner.nativeInteger(Integer.MAX_VALUE),
-        Integer.MAX_VALUE);
-    assertEquals("nativeInteger MIN", inner.nativeInteger(Integer.MIN_VALUE),
-        Integer.MIN_VALUE);
+    assertEquals("nativeInteger", 0, inner.nativeInteger(0));
+    assertEquals("nativeInteger", 1, inner.nativeInteger(1));
+    assertEquals("nativeInteger", -1, inner.nativeInteger(-1));
+    assertEquals("nativeInteger", 2147483647, inner.nativeInteger(2147483647));
+    assertEquals("nativeInteger", -2147483647, inner.nativeInteger(-2147483647));
+    assertEquals("nativeInteger MAX", Integer.MAX_VALUE, inner.nativeInteger(Integer.MAX_VALUE));
+    assertEquals("nativeInteger MIN", Integer.MIN_VALUE, inner.nativeInteger(Integer.MIN_VALUE));
 
-    assertEquals("nativeLong", inner.nativeLong(0L), 0L);
-    assertEquals("nativeLong", inner.nativeLong(1L), 1L);
-    assertEquals("nativeLong", inner.nativeLong(-1L), -1L);
-    assertEquals("nativeLong", inner.nativeLong(9223372036854775807L),
-        9223372036854775807L);
-    assertEquals("nativeLong", inner.nativeLong(-9223372036854775807L),
-        -9223372036854775807L);
-    assertEquals("nativeLong", inner.nativeLong(Long.MAX_VALUE), Long.MAX_VALUE);
-    assertEquals("nativeLong", inner.nativeLong(Long.MIN_VALUE), Long.MIN_VALUE);
+    assertEquals("nativeLong", 0L, inner.nativeLong(0L));
+    assertEquals("nativeLong", 1L, inner.nativeLong(1L));
+    assertEquals("nativeLong", -1L, inner.nativeLong(-1L));
+    assertEquals("nativeLong", 9223372036854775807L, inner.nativeLong(9223372036854775807L));
+    assertEquals("nativeLong", -9223372036854775807L, inner.nativeLong(-9223372036854775807L));
+    assertEquals("nativeLong", Long.MAX_VALUE, inner.nativeLong(Long.MAX_VALUE));
+    assertEquals("nativeLong", Long.MIN_VALUE, inner.nativeLong(Long.MIN_VALUE));
 
-    assertEquals("nativeShort", inner.nativeShort((short) 0), (short) 0);
-    assertEquals("nativeShort", inner.nativeShort((short) 1), (short) 1);
-    assertEquals("nativeShort", inner.nativeShort((short) -1), (short) -1);
-    assertEquals("nativeShort", inner.nativeShort((short) 32767), (short) 32767);
-    assertEquals("nativeShort", inner.nativeShort((short) -32767),
-        (short) -32767);
-    assertEquals("nativeShort MAX", inner.nativeShort(Short.MAX_VALUE),
-        Short.MAX_VALUE);
-    assertEquals("nativeShort MIN", inner.nativeLong(Short.MIN_VALUE),
-        Short.MIN_VALUE);
+    assertEquals("nativeShort", (short) 0, inner.nativeShort((short) 0));
+    assertEquals("nativeShort", (short) 1, inner.nativeShort((short) 1));
+    assertEquals("nativeShort", (short) -1, inner.nativeShort((short) -1));
+    assertEquals("nativeShort", (short) 32767, inner.nativeShort((short) 32767));
+    assertEquals("nativeShort", (short) -32767, inner.nativeShort((short) -32767));
+    assertEquals("nativeShort MAX", Short.MAX_VALUE, inner.nativeShort(Short.MAX_VALUE));
+    assertEquals("nativeShort MIN", Short.MIN_VALUE, inner.nativeLong(Short.MIN_VALUE));
   }
 
   /**
@@ -593,7 +576,7 @@ public class HostedTest extends GWTTestCase {
    */
   public void testObjectReturns() {
     String str = (String) getStringAsObject();
-    assertEquals(str, "test");
+    assertEquals("test", str);
     try {
       getIntAsObject();
       // should have thrown an exception in Development Mode,

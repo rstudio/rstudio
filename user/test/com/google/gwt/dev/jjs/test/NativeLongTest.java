@@ -93,9 +93,9 @@ public class NativeLongTest extends GWTTestCase {
 
   public void testArrayInitializer() {
     long[] longs = new long[3];
-    assertEquals(longs[1], 0L);
+    assertEquals(0L, longs[1]);
     long[][] longs2 = new long[3][3];
-    assertEquals(longs2[1][1], 0L);
+    assertEquals(0L, longs2[1][1]);
   }
 
   public void testCasts() {

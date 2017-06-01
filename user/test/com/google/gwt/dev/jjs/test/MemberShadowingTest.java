@@ -89,7 +89,7 @@ public class MemberShadowingTest extends GWTTestCase {
     s1.setSuperclassA(1);
     s1.setSubclassA(2);
 
-    assertEquals(s1.getSuperclassA(), 1);
+    assertEquals(1, s1.getSuperclassA());
   }
 
   public void testMethodShadowing() {

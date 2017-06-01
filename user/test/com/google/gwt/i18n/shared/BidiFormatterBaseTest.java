@@ -81,17 +81,17 @@ public class BidiFormatterBaseTest extends TestCase {
       TestableBidiFormatterBase.getInstance(DEFAULT, true); // DEFAULT context
 
   public void testGetInstance() {
-    assertEquals(ltrFmt.getContextDir(), LTR);
-    assertEquals(rtlFmt.getContextDir(), RTL);
-    assertEquals(unkFmt.getContextDir(), DEFAULT);
+    assertEquals(LTR, ltrFmt.getContextDir());
+    assertEquals(RTL, rtlFmt.getContextDir());
+    assertEquals(DEFAULT, unkFmt.getContextDir());
     assertFalse(ltrFmt.getAlwaysSpan());
     assertFalse(rtlFmt.getAlwaysSpan());
     assertFalse(unkFmt.getAlwaysSpan());
 
     // Always-span formatters
-    assertEquals(ltrAlwaysSpanFmt.getContextDir(), LTR);
-    assertEquals(rtlAlwaysSpanFmt.getContextDir(), RTL);
-    assertEquals(unkAlwaysSpanFmt.getContextDir(), DEFAULT);
+    assertEquals(LTR, ltrAlwaysSpanFmt.getContextDir());
+    assertEquals(RTL, rtlAlwaysSpanFmt.getContextDir());
+    assertEquals(DEFAULT, unkAlwaysSpanFmt.getContextDir());
     assertTrue(ltrAlwaysSpanFmt.getAlwaysSpan());
     assertTrue(rtlAlwaysSpanFmt.getAlwaysSpan());
     assertTrue(unkAlwaysSpanFmt.getAlwaysSpan());

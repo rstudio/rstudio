@@ -309,7 +309,7 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
       cellTree.setKeyboardSelectedTreeNode(l3Node, 0, true);
       fail("should have thrown");
     } catch (IllegalStateException e) {
-      assertEquals(e.getMessage(), "TreeNode no longer exists.");
+      assertEquals("TreeNode no longer exists.", e.getMessage());
     }
 
     // Try to select a subtree node in closed subtree
@@ -317,7 +317,7 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
       cellTree.setKeyboardSelectedTreeNode(l2Node, 0, true);
       fail("should have thrown");
     } catch (IllegalStateException e) {
-      assertEquals(e.getMessage(), "TreeNode no longer exists.");
+      assertEquals("TreeNode no longer exists.", e.getMessage());
     }
 
     // Still ok to select closed subtree node
@@ -337,7 +337,7 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
       cellTree.setKeyboardSelectedTreeNode(l1Node, 0, true);
       fail("should have thrown");
     } catch (IllegalArgumentException e) {
-      assertEquals(e.getMessage(), "The tree node does not belong to the tree.");
+      assertEquals("The tree node does not belong to the tree.", e.getMessage());
     }
   }
 
@@ -347,11 +347,11 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
 
     // Open nodes: a and aj
     TreeNode l1Node = root.setChildOpen(0, true); // a
-    assertEquals(l1Node.getValue(), "a");
+    assertEquals("a", l1Node.getValue());
     TreeNode l2Node = l1Node.setChildOpen(9, true); // aj
-    assertEquals(l2Node.getValue(), "aj");
+    assertEquals("aj", l2Node.getValue());
     // To force tree structure changes (internal flush()).
-    assertEquals(l2Node.getChildCount(), 10);
+    assertEquals(10, l2Node.getChildCount());
 
     // CellTree structure with node 'a' and 'aj' opened.
     List<String> expectedNavigationPath = Arrays.asList("a",
@@ -360,7 +360,7 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
         "b", "c", "d", "e", "f", "g", "h", "i", "j");
 
     // Default KeyboardSelected is at "a"
-    assertEquals(cellTree.getKeyboardSelectedTreeNode().getValue(), "a");
+    assertEquals("a", cellTree.getKeyboardSelectedTreeNode().getValue());
 
     int steps = expectedNavigationPath.size() - 1;
     assertEquals(expectedNavigationPath, repeatKeyInTree(cellTree, KeyCodes.KEY_DOWN, steps));

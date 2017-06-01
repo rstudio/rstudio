@@ -353,12 +353,12 @@ public class CompilerTest extends GWTTestCase {
     Object[][] oaa;
     oaa = new Object[4][4];
     oaa[0][0] = "foo";
-    assertEquals(oaa[0][0], "foo");
+    assertEquals("foo", oaa[0][0]);
 
     oaa = new Object[4][];
     oaa[0] = new Object[4];
     oaa[0][0] = "bar";
-    assertEquals(oaa[0][0], "bar");
+    assertEquals("bar", oaa[0][0]);
 
     Apple[] apple = TRUE ? new Granny[3] : new Apple[3];
     Apple g = TRUE ? (Apple) new Granny() : (Apple) new Fuji();
@@ -952,31 +952,30 @@ public class CompilerTest extends GWTTestCase {
       int i;
       for (i = 0; i < 10; ++i) {
       }
-      assertEquals(i, 10);
+      assertEquals(10, i);
     }
     {
       int i, c;
       for (i = 0, c = 10; i < c; ++i) {
       }
-      assertEquals(i, 10);
-      assertEquals(c, 10);
+      assertEquals(10, i);
+      assertEquals(10, c);
     }
     {
       int j = 0;
       for (int i = 0; i < 10; ++i) {
         ++j;
       }
-      assertEquals(j, 10);
+      assertEquals(10, j);
     }
     {
       int j = 0;
       for (int i = 0, c = 10; i < c; ++i) {
         ++j;
       }
-      assertEquals(j, 10);
+      assertEquals(10, j);
     }
   }
-
 
   /**
    * Issue #615: Internal Compiler Error.
@@ -1178,7 +1177,7 @@ public class CompilerTest extends GWTTestCase {
       }
 
     }.toString();
-    assertEquals(result, "foofoofoofoo");
+    assertEquals("foofoofoofoo", result);
   }
 
   /**
@@ -1241,7 +1240,7 @@ public class CompilerTest extends GWTTestCase {
 
   public void testNullFlowArray() {
     UninstantiableType[] uta = new UninstantiableType[10];
-    assertEquals(uta.length, 10);
+    assertEquals(10, uta.length);
     assertEquals(uta[0], null);
     uta[1] = null;
     assertEquals(uta[1], null);
@@ -1289,9 +1288,9 @@ public class CompilerTest extends GWTTestCase {
         return;
       }
     }
-    assertEquals(new Foo(0).i, 0);
-    assertEquals(new Foo(1).i, 1);
-    assertEquals(new Foo(2).i, 2);
+    assertEquals(0, new Foo(0).i);
+    assertEquals(1, new Foo(1).i);
+    assertEquals(2, new Foo(2).i);
   }
 
   public void testStaticMethodResolution() {

@@ -15,7 +15,7 @@
  */
 package org.apache.commons.collections;
 
- import java.util.AbstractCollection;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
-
 
 /**
  * Tests base {@link java.util.List} methods and contracts.
@@ -377,11 +376,9 @@ public abstract class TestList extends TestCollection {
 
         assertTrue("Iterator shouldn't have previous", !iter.hasPrevious());
         int nextIndex = iter.nextIndex();
-        assertEquals("nextIndex should be 0, actual value: " + nextIndex,
-            nextIndex, 0);
+    assertEquals("nextIndex should be 0, actual value: " + nextIndex, 0, nextIndex);
         int prevIndex = iter.previousIndex();
-        assertEquals("previousIndex should be -1, actual value: " + prevIndex,
-            prevIndex, -1);
+    assertEquals("previousIndex should be -1, actual value: " + prevIndex, -1, prevIndex);
 
         try {
           iter.previous();
@@ -581,8 +578,7 @@ public abstract class TestList extends TestCollection {
 
         Object[] other = getOtherElements();
         for (int i = 0; i < other.length; i++) {
-            assertEquals("indexOf should return -1 for nonexistent element",
-              list1.indexOf(other[i]), -1);
+      assertEquals("indexOf should return -1 for nonexistent element", -1, list1.indexOf(other[i]));
             verify();
         }
     }
@@ -606,8 +602,10 @@ public abstract class TestList extends TestCollection {
 
         Object[] other = getOtherElements();
         for (int i = 0; i < other.length; i++) {
-            assertEquals("lastIndexOf should return -1 for nonexistent " +
-              "element", list1.lastIndexOf(other[i]), -1);
+      assertEquals(
+          "lastIndexOf should return -1 for nonexistent " + "element",
+          -1,
+          list1.lastIndexOf(other[i]));
             verify();
         }
     }

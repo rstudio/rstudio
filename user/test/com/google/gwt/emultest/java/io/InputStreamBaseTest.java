@@ -104,7 +104,7 @@ public abstract class InputStreamBaseTest extends GWTTestCase {
     final byte[] b = new byte[2];
     final int result = inputStream.read(b, 1, 1);
     assertEquals(1, result);
-    assertEquals(b[0], 0);
+    assertEquals(0, b[0]);
     assertEquals(b[1], TEST_BYTES[0]);
   }
 

@@ -549,8 +549,7 @@ public class CoverageTest extends CoverageBase {
 
       // StringLiteral
       s = "f'oo\b\t\n\f\r\"\\";
-      assertEquals(s, "f" + '\'' + 'o' + 'o' + '\b' + '\t' + '\n' + '\f' + '\r'
-          + '"' + '\\');
+      assertEquals("f" + '\'' + 'o' + 'o' + '\b' + '\t' + '\n' + '\f' + '\r' + '"' + '\\', s);
 
       // TrueLiteral
       assertTrue(true);

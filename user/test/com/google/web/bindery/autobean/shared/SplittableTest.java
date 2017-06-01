@@ -279,10 +279,10 @@ public class SplittableTest extends GWTTestCase {
     Splittable data = StringQuoter.split("[\"a\",\"b\",\"c\",\"d\"]");
     SplittableList<String> list =
         new SplittableList<String>(data, AutoBeanCodexImpl.valueCoder(String.class), testState);
-    assertEquals(list.size(), 4);
+    assertEquals(4, list.size());
     boolean removed = list.remove("b");
     assertTrue(removed);
-    assertEquals(list.size(), 3);
+    assertEquals(3, list.size());
     assertTrue(list.equals(Arrays.asList("a", "c", "d")));
     assertEquals("a", list.get(0));
     assertTrue(list.contains("a"));

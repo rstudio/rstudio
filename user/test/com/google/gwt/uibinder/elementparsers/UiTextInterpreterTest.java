@@ -84,6 +84,6 @@ public class UiTextInterpreterTest extends TestCase {
     String interpretedValue = new UiTextInterpreter(tester.writer)
       .interpretElement(tester.getElem(tester.wrapXML(s).toString(), "ui:text"));
 
-    assertEquals(interpretedValue, "\" + \"--token--1--token--\" + \"");
+    assertEquals("\" + \"--token--1--token--\" + \"", interpretedValue);
   }
 }

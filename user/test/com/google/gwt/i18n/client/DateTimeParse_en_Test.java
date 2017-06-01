@@ -648,17 +648,17 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     DateTimeFormat fmt = DateTimeFormat.getFormat("MM-dd-yyyy");
     Date dateActual = new Date(87, 10, 22);
     Date dateOnly = fmt.parse("11-22-1987");
-    assertEquals(dateOnly.getHours(), 0);
-    assertEquals(dateOnly.getMinutes(), 0);
-    assertEquals(dateOnly.getSeconds(), 0);
+    assertEquals(0, dateOnly.getHours());
+    assertEquals(0, dateOnly.getMinutes());
+    assertEquals(0, dateOnly.getSeconds());
     assertEquals(dateOnly.getTime(), dateActual.getTime());
 
     // Only specify a time, should use current date
     fmt = DateTimeFormat.getFormat("hha");
     dateOnly = fmt.parse("4PM");
-    assertEquals(dateOnly.getHours(), 16);
-    assertEquals(dateOnly.getMinutes(), 0);
-    assertEquals(dateOnly.getSeconds(), 0);
+    assertEquals(16, dateOnly.getHours());
+    assertEquals(0, dateOnly.getMinutes());
+    assertEquals(0, dateOnly.getSeconds());
   }
 
   public void testRFC3339() {

@@ -15,7 +15,8 @@
  */
 // MODIFIED BY GOOGLE
 package org.apache.commons.collections;
- import java.util.List;
+
+import java.util.List;
 
 /**
  * @author <a href="mailto:jvanzyl@apache.org">Jason van Zyl</a>
@@ -33,18 +34,15 @@ public abstract class TestArrayList extends TestList
     public void testNewArrayList()
     {
          assertTrue("New list is empty", list.isEmpty());
-        assertEquals("New list has size zero", list.size(), 0);
-
-      
-        
+    assertEquals("New list has size zero", 0, list.size());
     }
 
     public void testSearch()
     {
         list.add("First Item");
         list.add("Last Item");
-        assertEquals("First item is 'First Item'", list.get(0), "First Item");
-        assertEquals("Last Item is 'Last Item'", list.get(1), "Last Item");
+    assertEquals("First item is 'First Item'", "First Item", list.get(0));
+    assertEquals("Last Item is 'Last Item'", "Last Item", list.get(1));
     }
 
 }

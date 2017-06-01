@@ -144,7 +144,7 @@ public class XMLTest extends GWTTestCase {
     de.setAttribute("created", "true");
     assertEquals("true", de.getAttribute("created"));
     de.setAttribute("set", "toAValue");
-    assertEquals(de.getAttribute("set"), "toAValue");
+    assertEquals("toAValue", de.getAttribute("set"));
     assertTrue(de.getAttributeNode("set").getSpecified());
     assertEquals(de.getAttributeNode("unset"), null);
   }
@@ -196,9 +196,9 @@ public class XMLTest extends GWTTestCase {
   public void testDocument() {
     Document d = createTestDocument();
     NodeList e1Nodes = d.getElementsByTagName("e1");
-    assertEquals(e1Nodes.getLength(), 1);
+    assertEquals(1, e1Nodes.getLength());
     Node e1Node = e1Nodes.item(0);
-    assertEquals(((Element) e1Node).getTagName(), "e1");
+    assertEquals("e1", ((Element) e1Node).getTagName());
 
     // It used to be that XML nodes without a DTD would never be returned by getElementById().
     // In DOM 4, an Element's "id" attribute is always used as its id. [1]
@@ -227,9 +227,9 @@ public class XMLTest extends GWTTestCase {
     Document d = createTestDocument();
     Element top = d.getDocumentElement();
     NodeList el = top.getElementsByTagName("e1");
-    assertEquals(el.getLength(), 1);
+    assertEquals(1, el.getLength());
     NodeList deepNodes = top.getElementsByTagName("deep");
-    assertEquals(deepNodes.getLength(), 2);
+    assertEquals(2, deepNodes.getLength());
     Element d1 = (Element) deepNodes.item(0);
     assertTrue(d1.hasAttribute("depth"));
     assertFalse(d1.hasAttribute("height"));
@@ -267,8 +267,8 @@ public class XMLTest extends GWTTestCase {
   public void testNamedNodeMap() {
     Document d = createTestDocument();
     NamedNodeMap m = d.getDocumentElement().getAttributes();
-    assertEquals(((Attr) m.getNamedItem("fluffy")).getValue(), "true");
-    assertEquals(m.getLength(), 2);
+    assertEquals("true", ((Attr) m.getNamedItem("fluffy")).getValue());
+    assertEquals(2, m.getLength());
   }
 
   public void testNavigation() {
@@ -280,7 +280,7 @@ public class XMLTest extends GWTTestCase {
         d.getChildNodes().item(2));
     assertEquals("getDocumentElement", documentElement, d.getChildNodes().item(
         1));
-    assertEquals("getTagName", documentElement.getTagName(), "doc");
+    assertEquals("getTagName", "doc", documentElement.getTagName());
     NodeList documentElementChildNodes = documentElement.getChildNodes();
     int deChildNodesLength = documentElementChildNodes.getLength();
     assertEquals("getFirstChild", documentElement.getFirstChild(),
@@ -305,17 +305,17 @@ public class XMLTest extends GWTTestCase {
     top.appendChild(xxx);
     Text yyy = ns.createTextNode("yyy");
     top.appendChild(yyy);
-    assertEquals(xxx.getNodeValue(), "xxx");
+    assertEquals("xxx", xxx.getNodeValue());
     assertEquals(xxx.getParentNode(), top);
     xxx.setNodeValue("x");
-    assertEquals(xxx.getData(), "x");
+    assertEquals("x", xxx.getData());
     assertEquals(xxx.getOwnerDocument(), ns);
     top.removeChild(xxx);
-    assertEquals(top.getChildNodes().getLength(), 1);
+    assertEquals(1, top.getChildNodes().getLength());
     Comment commentNode = ns.createComment("comment ccc");
     top.replaceChild(commentNode, yyy);
     assertEquals(top.getFirstChild(), commentNode);
-    assertEquals(top.getChildNodes().getLength(), 1);
+    assertEquals(1, top.getChildNodes().getLength());
   }
 
   /**
@@ -353,19 +353,19 @@ public class XMLTest extends GWTTestCase {
         + "         xmlns:isbn=\'urn:ISBN:0-395-36341-6\'>\r\n"
         + "    <bk:title>Cheaper by the Dozen</bk:title>\r\n"
         + "    <isbn:number>1568491379</isbn:number>\r\n" + "</bk:book>");
-    assertEquals(d.getDocumentElement().getNodeName(), "bk:book");
-    assertEquals(d.getDocumentElement().getPrefix(), "bk");
-    assertEquals(d.getElementsByTagName("book").getLength(), 1);
+    assertEquals("bk:book", d.getDocumentElement().getNodeName());
+    assertEquals("bk", d.getDocumentElement().getPrefix());
+    assertEquals(1, d.getElementsByTagName("book").getLength());
     assertEquals(d.getElementsByTagName("book").item(0), d.getDocumentElement());
   }
 
   public void testProcessingInstruction() {
     Document d = createTestDocument();
     ProcessingInstruction pi = (ProcessingInstruction) d.getChildNodes().item(0);
-    assertEquals(pi.getTarget(), "target");
-    assertEquals(pi.getData(), "some data");
+    assertEquals("target", pi.getTarget());
+    assertEquals("some data", pi.getData());
     pi.setData("other data");
-    assertEquals(pi.getData(), "other data");
+    assertEquals("other data", pi.getData());
   }
 
   public void testText() {
@@ -434,22 +434,24 @@ public class XMLTest extends GWTTestCase {
     assertEquals("t and leftT parent equality", t.getParentNode(),
         rightT.getParentNode());
     assertEquals("leftT.getPreviousSibling", rightT.getPreviousSibling(), t);
-    assertEquals("t.length", t.getData().length(), 5);
-    assertEquals("leftT.length", rightT.getData().length(), 5);
-    assertEquals("t data", t.getData(), "01234");
-    assertEquals("LeftT data", rightT.getData(), "56789");
+    assertEquals("t.length", 5, t.getData().length());
+    assertEquals("leftT.length", 5, rightT.getData().length());
+    assertEquals("t data", "01234", t.getData());
+    assertEquals("LeftT data", "56789", rightT.getData());
     CDATASection cd = (CDATASection) d.getDocumentElement().getChildNodes().item(
         7);
     Text rightCD = cd.splitText(5);
     assertEquals("cd and leftCd parent equality", cd.getParentNode(),
         rightCD.getParentNode());
     assertEquals("leftCD.getPreviousSibling", rightCD.getPreviousSibling(), cd);
-    assertEquals("cd length", cd.getData().length(), 5);
-    assertEquals("leftCD.length", rightCD.getData().length(), 5);
-    assertEquals("cd data", cd.getData(), "klmno");
-    assertEquals("leftCD data", rightCD.getData(), "pqrst");
+    assertEquals("cd length", 5, cd.getData().length());
+    assertEquals("leftCD.length", 5, rightCD.getData().length());
+    assertEquals("cd data", "klmno", cd.getData());
+    assertEquals("leftCD data", "pqrst", rightCD.getData());
     d.getDocumentElement().normalize();
-    assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
-        3).toString(), "0123456789abcdefghij");
+    assertEquals(
+        "normalized t",
+        "0123456789abcdefghij",
+        d.getDocumentElement().getChildNodes().item(3).toString());
   }
 }

@@ -209,7 +209,7 @@ public class FilterInputStreamTest extends GWTTestCase {
   public void testAvailable() throws IOException {
     int available = filter.available();
     assertTrue(mockInputStream.getAvailableCalled());
-    assertEquals(available, MockInputStream.RETURNED_VALUE_FOR_AVAILABLE);
+    assertEquals(MockInputStream.RETURNED_VALUE_FOR_AVAILABLE, available);
   }
 
   public void testClose() throws IOException {
@@ -227,13 +227,13 @@ public class FilterInputStreamTest extends GWTTestCase {
   public void testMarkSupported() {
     boolean markSupported = filter.markSupported();
     assertTrue(mockInputStream.getMarkSupportedCalled());
-    assertEquals(markSupported, MockInputStream.RETURNED_VALUE_FOR_MARK_SUPPORTED);
+    assertEquals(MockInputStream.RETURNED_VALUE_FOR_MARK_SUPPORTED, markSupported);
   }
 
   public void testReadValue() throws IOException {
     int value = filter.read();
     assertTrue(mockInputStream.getReadByteCalled());
-    assertEquals(value, MockInputStream.RETURNED_VALUE_FOR_READ_BYTE);
+    assertEquals(MockInputStream.RETURNED_VALUE_FOR_READ_BYTE, value);
   }
 
   public void testReadArray() throws IOException {
@@ -243,7 +243,7 @@ public class FilterInputStreamTest extends GWTTestCase {
     assertEquals(b, mockInputStream.getRequestedReadBuffer());
     assertEquals(0, mockInputStream.getRequestedReadOffset());
     assertEquals(b.length, mockInputStream.getRequestedReadLength());
-    assertEquals(bytesRead, MockInputStream.RETURNED_VALUE_FOR_READ_BYTES);
+    assertEquals(MockInputStream.RETURNED_VALUE_FOR_READ_BYTES, bytesRead);
   }
 
   public void testReadArrayRange() throws IOException {
@@ -255,7 +255,7 @@ public class FilterInputStreamTest extends GWTTestCase {
     assertEquals(b, mockInputStream.getRequestedReadBuffer());
     assertEquals(offset, mockInputStream.getRequestedReadOffset());
     assertEquals(length, mockInputStream.getRequestedReadLength());
-    assertEquals(bytesRead, MockInputStream.RETURNED_VALUE_FOR_READ_BYTES);
+    assertEquals(MockInputStream.RETURNED_VALUE_FOR_READ_BYTES, bytesRead);
   }
 
   public void testReset() throws IOException {

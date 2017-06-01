@@ -186,8 +186,8 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
   public void testValueOfOverload() {
     BasicWithOverloadedValueOf valById1 = BasicWithOverloadedValueOf.valueOf(1);
     BasicWithOverloadedValueOf valById2 = BasicWithOverloadedValueOf.valueOf(2);
-    assertEquals(valById1.ordinal(),0);
-    assertEquals(valById2.ordinal(),1);
+    assertEquals(0, valById1.ordinal());
+    assertEquals(1, valById2.ordinal());
   }
 
   private <T extends Enum<T>> void enumValuesTest(Class<T> enumClass) {
