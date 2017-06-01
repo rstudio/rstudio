@@ -18,15 +18,12 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -289,15 +286,6 @@ public class GitReviewPresenter implements ReviewPresenter
             });
          }
       };
-      
-      Window.addCloseHandler(new CloseHandler<Window>()
-      {
-         @Override
-         public void onClose(CloseEvent<Window> event)
-         {
-            session.persistClientState();
-         }
-      });
       
       view_.getChangelistTable().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
