@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -47,7 +48,6 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -78,12 +78,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new PreWidget();
-      output_.setStylePrimaryName(styles_.output());
-      output_.addClickHandler(secondaryInputHandler);
+      output_ = new ConsoleOutputWriter();
+      output_.getWidget().setStylePrimaryName(styles_.output());
+      output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), 
                                  ElementIds.CONSOLE_OUTPUT);
-      output_.addPasteHandler(secondaryInputHandler);
+      output_.getWidget().addPasteHandler(secondaryInputHandler);
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -171,18 +171,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       inputLine_.setCellWidth(input_.asWidget(), "100%");
       inputLine_.setWidth("100%");
 
-      verticalPanel_ = new VerticalPanel() ;
+      verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       verticalPanel_.addStyleName("ace_text-layer");
       verticalPanel_.addStyleName("ace_line");
       FontSizer.applyNormalFontSize(verticalPanel_);
-      verticalPanel_.add(output_) ;
-      verticalPanel_.add(pendingInput_) ;
-      verticalPanel_.add(inputLine_) ;
-      verticalPanel_.setWidth("100%") ;
+      verticalPanel_.add(output_.getWidget());
+      verticalPanel_.add(pendingInput_);
+      verticalPanel_.add(inputLine_);
+      verticalPanel_.setWidth("100%");
 
-      scrollPanel_ = new ClickableScrollPanel() ;
-      scrollPanel_.setWidget(verticalPanel_) ;
+      scrollPanel_ = new ClickableScrollPanel();
+      scrollPanel_.setWidget(verticalPanel_);
       scrollPanel_.addStyleName("ace_editor");
       scrollPanel_.addStyleName("ace_scroller");
       scrollPanel_.addClickHandler(secondaryInputHandler);
@@ -267,7 +267,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // Pick up the elements emitted to the console by this call. If we get 
       // extended information for this error, we'll need to swap out the simple 
       // error elements for the extended error element. 
-      List<Element> newElements = virtualConsole_.getNewElements();
+      List<Element> newElements = output_.getNewElements();
       if (!newElements.isEmpty())
       {
          if (clearErrors_)
@@ -370,20 +370,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       input_.setPasswordMode(!showInput);
       clearErrors_ = true;
-      
-      // make sure we're starting on a new line
-      if (virtualConsole_ != null)
-      {
-         Node child = virtualConsole_.getParent().getLastChild();
-         if (child != null &&
-             child.getNodeType() == Node.ELEMENT_NODE &&
-             !Element.as(child).getInnerText().endsWith("\n"))
-         {
-            virtualConsole_.submit("\n");
-         }
-         // clear the virtual console so we start with a fresh slate
-         virtualConsole_ = null;
-      }
+      output_.ensureStartingOnNewLine();
    }
 
    public void ensureInputVisible()
@@ -410,25 +397,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
                           boolean isError,
                           boolean ignoreLineCount)
    {
-      if (text.indexOf('\f') >= 0)
-         clearOutput();
-
-      Element outEl = output_.getElement();
-      
-      // create trailing output console if it doesn't already exist 
-      if (virtualConsole_ == null)
-      {
-         SpanElement trailing = Document.get().createSpanElement();
-         outEl.appendChild(trailing);
-         virtualConsole_ = new VirtualConsole(trailing);
-      }
-
-      int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      virtualConsole_.submit(text, className, isError);
-      int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      lines_ += newLineCount - oldLineCount;
-
-      boolean canContinue = ignoreLineCount ? true : !trimExcess();
+      boolean canContinue = output_.outputToConsole(text, className, 
+                                                    isError, ignoreLineCount);
 
       // if we're currently scrolled to the bottom, nudge the timer so that we
       // will keep up with output
@@ -444,21 +414,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          return s;
       else
          return s + '\n';
-   }
-
-   private boolean trimExcess()
-   {
-      if (maxLines_ <= 0)
-         return false;  // No limit in effect
-
-      int linesToTrim = lines_ - maxLines_;
-      if (linesToTrim > 0)
-      {
-         lines_ -= DomUtils.trimLines(output_.getElement(), linesToTrim);
-         return true;
-      }
-
-      return false;
    }
 
    public void playbackActions(final RpcObjectList<ConsoleAction> actions)
@@ -483,7 +438,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          
          lines = lines + StringUtil.newlineCount(action.getData());
          
-         if (lines > maxLines_)
+         if (lines > output_.getMaxOutputLines())
             break;
       }
       if (revIndex < 0)
@@ -553,7 +508,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
             
             if (!canContinue)
             {
-               trimExcess();
+               output_.trimExcess();
             }
             return canContinue;
          }
@@ -666,11 +621,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void clearOutput()
    {
-      output_.setText("") ;
-      lines_ = 0;
+      output_.clearConsoleOutput();
       cleared_ = true;
-      trailingOutput_ = null;
-      virtualConsole_ = null;
    }
    
    public InputEditorDisplay getInputEditorDisplay()
@@ -754,13 +706,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public int getMaxOutputLines()
    {
-      return maxLines_;
+      return output_.getMaxOutputLines();
    }
    
    public void setMaxOutputLines(int maxLines)
    {
-      maxLines_ = maxLines;
-      trimExcess();
+      output_.setMaxOutputLines(maxLines);
    }
    
    @Override
@@ -781,15 +732,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.onContentSizeChanged();
    }
    
-   private int lines_ = 0;
-   private int maxLines_ = -1;
    private boolean cleared_ = false;
-   private final PreWidget output_ ;
+   private final ConsoleOutputWriter output_;
    private PreWidget pendingInput_ ;
-   // Save a reference to the most recent output text node in case the
-   // next bit of output contains \b or \r control characters
-   private PreWidget trailingOutput_ ;
-   private VirtualConsole virtualConsole_ ;
    private final HTML prompt_ ;
    protected final AceEditor input_ ;
    private final DockPanel inputLine_ ;

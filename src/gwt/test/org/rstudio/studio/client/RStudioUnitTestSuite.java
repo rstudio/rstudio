@@ -15,6 +15,7 @@
 package org.rstudio.studio.client;
 
 import org.rstudio.core.client.AnsiCodeTests;
+import org.rstudio.core.client.ConsoleOutputWriterTests;
 import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
@@ -33,6 +34,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
         GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
         suite.addTestSuite(RTokenizerTests.class);
         suite.addTestSuite(VirtualConsoleTests.class);
+        suite.addTestSuite(ConsoleOutputWriterTests.class);
         suite.addTestSuite(StringUtilTests.class);
         suite.addTestSuite(DomUtilsTests.class);
         suite.addTestSuite(AnsiCodeTests.class);
