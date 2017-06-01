@@ -62,7 +62,7 @@ public class ConsoleOutputWriter
       maxLines_ = maxLines;
       trimExcess();
    }
- 
+   
    /**
     * Send text to the console
     * @param text Text to output
@@ -136,6 +136,11 @@ public class ConsoleOutputWriter
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
       } 
+   }
+   
+   public int getCurrentLines()
+   {
+      return lines_;
    }
    
    private int maxLines_ = -1;
