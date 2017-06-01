@@ -278,6 +278,11 @@ public:
    {
       return core::FilePath(winptyPath_.c_str());
    }
+   
+   int gitCommitLargeFileSize() const
+   {
+      return gitCommitLargeFileSize_;
+   }
 
    core::FilePath hunspellDictionariesPath() const
    {
@@ -601,6 +606,9 @@ private:
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;
+   
+   // git
+   int gitCommitLargeFileSize_;
 
    // root directory for locating resources
    core::FilePath resourcePath_;

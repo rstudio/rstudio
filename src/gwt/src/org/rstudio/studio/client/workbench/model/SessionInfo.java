@@ -502,4 +502,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean quitChildProcessesOnExit() /*-{
       return this.quit_child_processes_on_exit;
    }-*/;
+   
+   public final native int getGitCommitLargeFileSize() /*-{
+      return this.git_commit_large_file_size;
+   }-*/;
 }

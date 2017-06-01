@@ -227,6 +227,7 @@ public class GitReviewPresenter implements ReviewPresenter
       globalDisplay_ = globalDisplay;
       gitState_ = gitState;
       vcsFileOpener_ = vcsFileOpener;
+      gitCommitLargeFileSize_ = session.getSessionInfo().getGitCommitLargeFileSize();
       
       binder.bind(commands, this);
 
@@ -558,7 +559,7 @@ public class GitReviewPresenter implements ReviewPresenter
                      
                      // warn if we're trying to commit a file >10MB in size
                      double size = info.getFileSize();
-                     if (size > 10 * 1024 * 1024)
+                     if (gitCommitLargeFileSize_ > 0 && size >= gitCommitLargeFileSize_)
                      {
                         onLargeFile();
                         return;
@@ -584,9 +585,10 @@ public class GitReviewPresenter implements ReviewPresenter
          
          private void onLargeFile()
          {
+            String prettySize = StringUtil.formatFileSize(gitCommitLargeFileSize_);
             String message =
                   "Some of the files to be committed are quite large " +
-                  "(> 10MB in size). Are you sure you want to commit these files?";
+                  "(>" + prettySize + " in size). Are you sure you want to commit these files?";
             
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
@@ -911,6 +913,7 @@ public class GitReviewPresenter implements ReviewPresenter
    private boolean initialized_;
    private static final String MODULE_GIT = "vcs_git";
    private static final String KEY_CONTEXT_LINES = "context_lines";
+   private final int gitCommitLargeFileSize_;
 
    private boolean overrideSizeWarning_ = false;
 }
