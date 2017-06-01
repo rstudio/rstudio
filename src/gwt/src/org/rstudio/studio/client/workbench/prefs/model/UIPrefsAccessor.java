@@ -654,6 +654,11 @@ public class UIPrefsAccessor extends Prefs
       return string("flat_theme", flatTheme);
    }
    
+   public PrefValue<Boolean> gitDiffIgnoreWhitespace()
+   {
+      return bool("git_diff_ignore_whitespace", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

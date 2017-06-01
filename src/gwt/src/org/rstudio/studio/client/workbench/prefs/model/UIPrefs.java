@@ -468,6 +468,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // show improved data import dialog
          useDataImport().setGlobalValue(
                newUiPrefs.useDataImport().getGlobalValue());
+         
+         // ignore whitespace in git diff
+         gitDiffIgnoreWhitespace().setGlobalValue(
+               newUiPrefs.gitDiffIgnoreWhitespace().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

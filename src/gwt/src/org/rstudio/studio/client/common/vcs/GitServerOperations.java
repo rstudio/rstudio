@@ -91,6 +91,7 @@ public interface GitServerOperations extends VCSServerOperations
                     PatchMode patchMode,
                     int contextLines,
                     boolean noSizeWarning,
+                    boolean ignoreWhitespace,
                     ServerRequestCallback<DiffResult> requestCallback);
 
    /**
