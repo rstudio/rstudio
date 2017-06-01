@@ -574,6 +574,10 @@ public class GitReviewPresenter implements ReviewPresenter
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  
+                  // although server errors here are unexpected,
+                  // make a best effort attempt to commit regardless
+                  onCommit();
                }
             });
          }
