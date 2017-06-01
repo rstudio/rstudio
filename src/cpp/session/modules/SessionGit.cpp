@@ -3044,6 +3044,7 @@ Error statusToJson(const core::FilePath &path,
    obj["raw_path"] = module_context::createAliasedPath(path);
    obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
    obj["is_directory"] = path.isDirectory();
+   obj["size"] = static_cast<double>(path.size());
    return Success();
 }
 

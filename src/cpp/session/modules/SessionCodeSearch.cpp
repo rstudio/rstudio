@@ -2176,6 +2176,25 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
             defJson["type"] = "data";
             defJson["data"] = "";
          }
+         else
+         {
+            // try finding in the completion database
+            using namespace r_util;
+            
+            BOOST_REVERSE_FOREACH(
+                     const std::string& package,
+                     RSourceIndex::getAllInferredPackages())
+            {
+               PackageInformation information = RSourceIndex::getPackageInformation(package);
+               if (information.functionInfo.count(token.name))
+               {
+                  defJson["type"] = "search_path_function";
+                  defJson["data"] = createFunctionDefinition(token.name, package);
+                  break;
+                  
+               }
+            }
+         }
       }
    }
 
