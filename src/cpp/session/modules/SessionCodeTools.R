@@ -149,7 +149,7 @@
    }
    else
    {
-     as.environment(namespaceName);
+     asNamespace(namespaceName)
    }
 
    tryCatch(eval(parse(text = name),
