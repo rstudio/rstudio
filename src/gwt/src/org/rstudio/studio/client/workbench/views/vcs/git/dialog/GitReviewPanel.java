@@ -112,6 +112,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       String commitButton();
 
       String splitPanelCommit();
+      String ignoreWhitespace();
    }
 
    @SuppressWarnings("unused")
@@ -516,6 +517,12 @@ public class GitReviewPanel extends ResizeComposite implements Display
    {
       return unstagedCheckBox_;
    }
+   
+   @Override
+   public HasValue<Boolean> getIgnoreWhitespaceCheckBox()
+   {
+      return ignoreWhitespaceCheckbox_;
+   }
 
    @Override
    public LineTablePresenter.Display getLineTableDisplay()
@@ -668,6 +675,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
    FlowPanel diffViewOptions_;
    @UiField
    HorizontalPanel toolbarWrapper_;
+   @UiField
+   CheckBox ignoreWhitespaceCheckbox_;
 
    private ListBoxAdapter listBoxAdapter_;
 

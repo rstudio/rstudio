@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
@@ -91,6 +92,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
+      HasValue<Boolean> getIgnoreWhitespaceCheckBox();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -219,6 +221,7 @@ public class GitReviewPresenter implements ReviewPresenter
                              final GitState gitState,
                              final Session session,
                              final GlobalDisplay globalDisplay,
+                             final UIPrefs uiPrefs,
                              VCSFileOpener vcsFileOpener)
    {
       gitPresenterCore_ = gitPresenterCore;
@@ -226,11 +229,12 @@ public class GitReviewPresenter implements ReviewPresenter
       view_ = view;
       globalDisplay_ = globalDisplay;
       gitState_ = gitState;
+      uiPrefs_ = uiPrefs;
       vcsFileOpener_ = vcsFileOpener;
       gitCommitLargeFileSize_ = session.getSessionInfo().getGitCommitLargeFileSize();
       
       binder.bind(commands, this);
-
+      
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
@@ -287,7 +291,7 @@ public class GitReviewPresenter implements ReviewPresenter
             });
          }
       };
-
+      
       view_.getChangelistTable().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override
@@ -481,6 +485,7 @@ public class GitReviewPresenter implements ReviewPresenter
       });
       view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
+      
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
@@ -491,6 +496,23 @@ public class GitReviewPresenter implements ReviewPresenter
                      updateDiff(false);
                }
             });
+      
+      view_.getIgnoreWhitespaceCheckBox().setValue(
+            uiPrefs_.gitDiffIgnoreWhitespace().getGlobalValue());
+      
+      view_.getIgnoreWhitespaceCheckBox().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  boolean value = event.getValue();
+                  uiPrefs_.gitDiffIgnoreWhitespace().setGlobalValue(value);
+                  uiPrefs_.writeUIPrefs();
+                  updateDiff(false);
+               }
+            });
+      
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
@@ -773,6 +795,7 @@ public class GitReviewPresenter implements ReviewPresenter
             patchMode,
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
+            uiPrefs_.gitDiffIgnoreWhitespace().getValue(),
             new SimpleRequestCallback<DiffResult>("Diff Error")
             {
                @Override
@@ -908,7 +931,8 @@ public class GitReviewPresenter implements ReviewPresenter
    // Hack to prevent us flipping to unstaged view when a line is unstaged
    // from staged view
    private boolean softModeSwitch_;
-   private GitState gitState_;
+   private final GitState gitState_;
+   private final UIPrefs uiPrefs_;
    private final VCSFileOpener vcsFileOpener_;
    private boolean initialized_;
    private static final String MODULE_GIT = "vcs_git";

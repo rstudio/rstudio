@@ -145,3 +145,11 @@
 .rstudio-themes-flat .commitButton {
    margin-right: 0;
 }
+
+.ignoreWhitespace {
+	margin-left: 10px;
+}
+
+.ignoreWhitespace label {
+	margin-left: 4px;
+}
