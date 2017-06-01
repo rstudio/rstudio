@@ -36,13 +36,13 @@ public class ThemeColors
    public static String darkGreyMenuBorder                         = darkGreyBackground;
    public static String darkGreyMenuSelected                       = "rgba(255, 255, 255, 0.15)";
 
-   public static String alternateBackground                        = "rgb(210, 228, 237)";
-   public static String alternateBackgroundTransparent             = "rgba(210, 228, 237, 0)";
-   public static String alternateInactiveBackground                = "rgb(182, 208, 222)";
-   public static String alternateMostInactiveBackground            = "rgb(165, 195, 212)";
-   public static String alternateMostInactiveTransparentBackground = "rgba(165, 195, 212, 0)";
+   public static String alternateBackground                        = "rgb(225, 239, 247)";
+   public static String alternateBackgroundTransparent             = "rgba(225, 239, 247, 0)";
+   public static String alternateInactiveBackground                = "rgb(209, 227, 236)";
+   public static String alternateMostInactiveBackground            = "rgb(192, 213, 224)";
+   public static String alternateMostInactiveTransparentBackground = "rgba(192, 213, 224, 0)";
    public static String alternateBorder                            = "rgb(148, 180, 197)";
-   public static String alternateBodyBackground                    = "rgb(193, 238, 246);";
+   public static String alternateBodyBackground                    = "rgb(222, 243, 247);";
 
    public static String lightControlBackground                     = "#FFF";
    public static String lightControlBorder                         = "#d6dadc";
