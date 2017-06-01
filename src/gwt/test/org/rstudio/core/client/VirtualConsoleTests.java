@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client;
+package org.rstudio.core.client;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.VirtualConsole;
