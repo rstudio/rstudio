@@ -357,6 +357,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-winpty-path",
         value<std::string>(&winptyPath_)->default_value("bin"),
          "Path to winpty binaries");
+   
+   // git options
+   options_description git("git");
+   git.add_options()
+         ("git-commit-large-file-size",
+          value<int>(&gitCommitLargeFileSize_)->default_value(5 * 1024 * 1024),
+          "warn when attempting to commit files larger than this size (in bytes; set 0 to disable)");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -402,6 +409,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.commandLine.add(r);
    optionsDesc.commandLine.add(limits);
    optionsDesc.commandLine.add(external);
+   optionsDesc.commandLine.add(git);
    optionsDesc.commandLine.add(user);
    optionsDesc.commandLine.add(overlay);
 

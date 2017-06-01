@@ -384,6 +384,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
    sessionInfo["quit_child_processes_on_exit"] = options.quitChildProcessesOnExit();
+   
+   sessionInfo["git_commit_large_file_size"] = options.gitCommitLargeFileSize();
 
    module_context::events().onSessionInfo(&sessionInfo);
 
