@@ -38,11 +38,11 @@ public class ThemeColors
 
    public static String alternateBackground                        = "rgb(210, 228, 237)";
    public static String alternateBackgroundTransparent             = "rgba(210, 228, 237, 0)";
-   public static String alternateInactiveBackground                = "rgb(148, 180, 197)";
-   public static String alternateMostInactiveBackground            = "rgb(158, 160, 187)";
-   public static String alternateMostInactiveTransparentBackground = "rgba(158, 160, 187, 0)";
-   public static String alternateBorder                            = "rgb(162, 197, 215)";
-   public static String alternateBodyBackground                    = "rgb(162, 197, 215)";
+   public static String alternateInactiveBackground                = "rgb(182, 208, 222)";
+   public static String alternateMostInactiveBackground            = "rgb(165, 195, 212)";
+   public static String alternateMostInactiveTransparentBackground = "rgba(165, 195, 212, 0)";
+   public static String alternateBorder                            = "rgb(148, 180, 197)";
+   public static String alternateBodyBackground                    = "rgb(193, 238, 246);";
 
    public static String lightControlBackground                     = "#FFF";
    public static String lightControlBorder                         = "#d6dadc";

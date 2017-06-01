@@ -623,6 +623,10 @@ pre {
    font-weight: 400;
 }
 
+.rstudio-themes-flat .rstudio-themes-alternate .mainMenu .gwt-MenuItem {
+   text-shadow: none;
+}
+
 .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
    background-color: #D6E9F8;
 }
@@ -2315,8 +2319,8 @@ body.rstudio-themes-flat .rstudio-themes-default {
    background: THEME_DEFAULT_BODY_BACKGROUND;
 }
 
-.rstudio-themes-flat .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-flat .gwt-SplitLayoutPanel-VDragger {
+.rstudio-themes-flat .rstudio-themes-default .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-flat .rstudio-themes-default .gwt-SplitLayoutPanel-VDragger {
    background: THEME_DEFAULT_BODY_BACKGROUND !important;
 }
 
@@ -2399,72 +2403,6 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 }
 
 /* RSTUDIO ALTERNATE THEME */
-
-.rstudio-themes-flat .rstudio-themes-alternate .rstudio-themes-background,
-.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelContent,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel {
-   background: THEME_ALTERNATE_BACKGROUND;
-}
-
-body.rstudio-themes-flat .rstudio-themes-alternate {
-   background: THEME_ALTERNATE_BODY_BACKGROUND;
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-VDragger {
-   background: THEME_ALTERNATE_BODY_BACKGROUND !important;
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate table.header > tbody > tr > td,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject > div:last-child,
-.rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject  > div:last-child,
-.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
-.rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame {
-   border-color: THEME_ALTERNATE_BORDER;
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject table.tabLayoutCenter {
-   background: THEME_ALTERNATE_INACTIVE;
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindowObject .center {  
-   background: THEME_ALTERNATE_MOST_INACTIVE;
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe .maximize,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe-maximized .maximize,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe-exclusive .maximize,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .minimize,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .maximize {
-   filter: brightness(0.7);
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe .minimize:hover,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe .maximize:hover,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe-maximized .maximize:hover,
-.rstudio-themes-flat .rstudio-themes-alternate .windowframe-exclusive .maximize:hover,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .minimize:hover,
-.rstudio-themes-flat .rstudio-themes-alternate .minimizedWindow .maximize:hover {
-   filter: brightness(0.4);
-}
-
-.rstudio-themes-flat .rstudio-themes-alternate .multiPodUtilityArea {
-   background: linear-gradient(to right, THEME_ALTERNATE_MOST_INACTIVE_TRANSPARENT, THEME_ALTERNATE_MOST_INACTIVE 13%);
-}
-
-/* RSTUDIO CYBERPUNK THEME */
 
 .rstudio-themes-flat .rstudio-themes-alternate .rstudio-themes-background,
 .rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
