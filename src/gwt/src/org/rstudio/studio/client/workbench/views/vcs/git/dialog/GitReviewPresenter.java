@@ -60,8 +60,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
@@ -220,6 +220,7 @@ public class GitReviewPresenter implements ReviewPresenter
                              final GitState gitState,
                              final Session session,
                              final GlobalDisplay globalDisplay,
+                             final UIPrefs uiPrefs,
                              VCSFileOpener vcsFileOpener)
    {
       gitPresenterCore_ = gitPresenterCore;
@@ -227,29 +228,10 @@ public class GitReviewPresenter implements ReviewPresenter
       view_ = view;
       globalDisplay_ = globalDisplay;
       gitState_ = gitState;
+      uiPrefs_ = uiPrefs;
       vcsFileOpener_ = vcsFileOpener;
       
       binder.bind(commands, this);
-      
-      new BoolStateValue(
-            "git",
-            "ignoreWhitespace",
-            ClientState.PERSISTENT,
-            session.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
-         {
-            if (value != null)
-               ignoreWhitespace_ = value;
-         }
-
-         @Override
-         protected Boolean getValue()
-         {
-            return ignoreWhitespace_;
-         }
-      };
       
       new WidgetHandlerRegistration(view.asWidget())
       {
@@ -522,14 +504,17 @@ public class GitReviewPresenter implements ReviewPresenter
                }
             });
       
-      view_.getIgnoreWhitespaceCheckBox().setValue(ignoreWhitespace_);
+      view_.getIgnoreWhitespaceCheckBox().setValue(
+            uiPrefs_.gitDiffIgnoreWhitespace().getValue());
+      
       view_.getIgnoreWhitespaceCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
-                  ignoreWhitespace_ = event.getValue();
+                  boolean value = event.getValue();
+                  uiPrefs_.gitDiffIgnoreWhitespace().setProjectValue(value);
                   updateDiff(false);
                }
             });
@@ -720,7 +705,7 @@ public class GitReviewPresenter implements ReviewPresenter
             patchMode,
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
-            ignoreWhitespace_,
+            uiPrefs_.gitDiffIgnoreWhitespace().getValue(),
             new SimpleRequestCallback<DiffResult>("Diff Error")
             {
                @Override
@@ -856,10 +841,10 @@ public class GitReviewPresenter implements ReviewPresenter
    // Hack to prevent us flipping to unstaged view when a line is unstaged
    // from staged view
    private boolean softModeSwitch_;
-   private GitState gitState_;
+   private final GitState gitState_;
+   private final UIPrefs uiPrefs_;
    private final VCSFileOpener vcsFileOpener_;
    private boolean initialized_;
-   private boolean ignoreWhitespace_;
    private static final String MODULE_GIT = "vcs_git";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 
