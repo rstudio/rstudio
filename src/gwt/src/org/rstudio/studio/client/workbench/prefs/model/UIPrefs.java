@@ -514,9 +514,6 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          // use roxygen
          useRoxygen().setProjectValue(newUiPrefs.useRoxygen().getValue());
-         
-         // ignore whitespace in git diff
-         gitDiffIgnoreWhitespace().setProjectValue(newUiPrefs.gitDiffIgnoreWhitespace().getValue());
       }
       else
       {

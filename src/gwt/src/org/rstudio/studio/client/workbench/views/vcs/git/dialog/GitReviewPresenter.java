@@ -505,7 +505,7 @@ public class GitReviewPresenter implements ReviewPresenter
             });
       
       view_.getIgnoreWhitespaceCheckBox().setValue(
-            uiPrefs_.gitDiffIgnoreWhitespace().getValue());
+            uiPrefs_.gitDiffIgnoreWhitespace().getGlobalValue());
       
       view_.getIgnoreWhitespaceCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
@@ -514,7 +514,7 @@ public class GitReviewPresenter implements ReviewPresenter
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
                   boolean value = event.getValue();
-                  uiPrefs_.gitDiffIgnoreWhitespace().setProjectValue(value);
+                  uiPrefs_.gitDiffIgnoreWhitespace().setGlobalValue(value);
                   uiPrefs_.writeUIPrefs();
                   updateDiff(false);
                }
