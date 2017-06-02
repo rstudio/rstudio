@@ -41,7 +41,7 @@ public class ThemeColors
    public static String alternateInactiveBackground                = "rgb(209, 227, 236)";
    public static String alternateMostInactiveBackground            = "rgb(192, 213, 224)";
    public static String alternateMostInactiveTransparentBackground = "rgba(192, 213, 224, 0)";
-   public static String alternateBorder                            = "rgb(148, 180, 197)";
+   public static String alternateBorder                            = "rgb(181, 210, 226)";
    public static String alternateBodyBackground                    = "rgb(222, 243, 247);";
 
    public static String lightControlBackground                     = "#FFF";
