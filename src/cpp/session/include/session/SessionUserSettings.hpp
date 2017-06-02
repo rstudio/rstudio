@@ -125,6 +125,7 @@ public:
    void setDefaultTerminalShellValue(console_process::TerminalShell::TerminalShellType shell);
 
    core::FilePath initialWorkingDirectory() const;
+   std::string initialWorkingDirectory(const std::string& defaultStr) const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
 
    bool alwaysSaveHistory() const;
