@@ -398,61 +398,61 @@
    if (is.null(value) || value != 1) FALSE else TRUE
 })
 
-.rs.addApiFunction("sendToTerminal", function(id, text) {
+.rs.addApiFunction("terminalSend", function(id, text) {
    if (!is.character(text))
       stop("'text' should be a character vector", call. = FALSE)
 
    if (is.null(id) || !is.character(id) || length(id) != 1)
       stop("'id' must be a character vector of length one")
 
-  .Call("rs_sendToTerminal", id, text)
+  .Call("rs_terminalSend", id, text)
    invisible(NULL)
 })
 
-.rs.addApiFunction("clearTerminal", function(id) {
+.rs.addApiFunction("terminalClear", function(id) {
    if (is.null(id) || !is.character(id) || length(id) != 1)
       stop("'id' must be a character vector of length one")
 
-  .Call("rs_clearTerminal", id)
+  .Call("rs_terminalClear", id)
   invisible(NULL)
 })
 
-.rs.addApiFunction("createTerminal", function(id = "") {
+.rs.addApiFunction("terminalCreate", function(id = "") {
    if (is.null(id))
       id <- ""
 
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
 
-   .Call("rs_createNamedTerminal", id)
+   .Call("rs_terminalCreate", id)
 })
 
-.rs.addApiFunction("isTerminalBusy", function(id) {
+.rs.addApiFunction("terminalBusy", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_isTerminalBusy", id)
+   .Call("rs_terminalBusy", id)
 })
 
-.rs.addApiFunction("isTerminalRunning", function(id) {
+.rs.addApiFunction("terminalRunning", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_isTerminalRunning", id)
+   .Call("rs_terminalRunning", id)
 })
 
-.rs.addApiFunction("getAllTerminals", function() {
-   .Call("rs_getAllTerminals")
+.rs.addApiFunction("terminalList", function() {
+   .Call("rs_terminalList")
 })
 
-.rs.addApiFunction("getTerminalContext", function(id) {
+.rs.addApiFunction("terminalContext", function(id) {
    if (is.null(id) || !is.character(id) || (length(id) != 1))
       stop("'id' must be a single element character vector")
 
-   .Call("rs_getTerminalContext", id)
+   .Call("rs_terminalContext", id)
 })
 
-.rs.addApiFunction("activateTerminal", function(id = NULL, show = TRUE) {
+.rs.addApiFunction("terminalActivate", function(id = NULL, show = TRUE) {
    if (is.null(id))
       id <- ""
 
@@ -462,40 +462,40 @@
    if (!is.logical(show))
      stop("'show' must be TRUE or FALSE")
 
-   .Call("rs_activateTerminal", id, show)
+   .Call("rs_terminalActivate", id, show)
    invisible(NULL)
 })
 
-.rs.addApiFunction("getTerminalBuffer", function(id, stripAnsi = TRUE) {
+.rs.addApiFunction("terminalBuffer", function(id, stripAnsi = TRUE) {
    if (is.null(id) || !is.character(id) || (length(id) != 1))
       stop("'id' must be a single element character vector")
 
    if (is.null(stripAnsi) || !is.logical(stripAnsi))
       stop("'stripAnsi' must be a logical vector")
 
-   .Call("rs_getTerminalBuffer", id, stripAnsi)
+   .Call("rs_terminalBuffer", id, stripAnsi)
 })
 
-.rs.addApiFunction("killTerminal", function(id) {
+.rs.addApiFunction("terminalKill", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_killTerminal", id)
+   .Call("rs_terminalKill", id)
    invisible(NULL)
 })
 
-.rs.addApiFunction("getVisibleTerminal", function() {
-   .Call("rs_getVisibleTerminal")
+.rs.addApiFunction("terminalVisible", function() {
+   .Call("rs_terminalVisible")
 })
 
-options(terminal.manager = list(activateTerminal = .rs.api.activateTerminal,
-                                createTerminal = .rs.api.createTerminal,
-                                clearTerminal = .rs.api.clearTerminal,
-                                getAllTerminals = .rs.api.getAllTerminals,
-                                getTerminalContext = .rs.api.getTerminalContext,
-                                getTerminalBuffer = .rs.api.getTerminalBuffer,
-                                getVisibleTerminal = .rs.api.getVisibleTerminal,
-                                isTerminalBusy = .rs.api.isTerminalBusy,
-                                isTerminalRunning = .rs.api.isTerminalRunning,
-                                killTerminal = .rs.api.killTerminal,
-                                sendToTerminal = .rs.api.sendToTerminal))
+options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
+                                terminalCreate = .rs.api.terminalCreate,
+                                terminalClear = .rs.api.terminalClear,
+                                terminalList = .rs.api.terminalList,
+                                terminalContext = .rs.api.terminalContext,
+                                terminalBuffer = .rs.api.terminalBuffer,
+                                terminalVisible = .rs.api.terminalVisible,
+                                terminalBusy = .rs.api.terminalBusy,
+                                terminalRunning = .rs.api.terminalRunning,
+                                terminalKill = .rs.api.terminalKill,
+                                terminalSend = .rs.api.terminalSend))
