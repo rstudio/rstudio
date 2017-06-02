@@ -124,14 +124,16 @@ public class TerminalPane extends WorkbenchPane
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
 
-      ToolbarButton clearButton = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
-      clearButton.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
-      toolbar.addRightWidget(clearButton);
-      
+      clearButton_ = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
+      clearButton_.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
+      toolbar.addRightWidget(clearButton_);
+
       interruptButton_ = commands_.interruptTerminal().createToolbarButton();
       toolbar.addRightWidget(interruptButton_);
+
       closeButton_ = commands_.closeTerminal().createToolbarButton();
       toolbar.addRightWidget(closeButton_);
+
       updateTerminalToolbar();
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
@@ -153,10 +155,12 @@ public class TerminalPane extends WorkbenchPane
          {
             boolean interruptable = false;
             boolean closable = false;
+            boolean clearable = false;
 
             final TerminalSession visibleTerminal = getSelectedTerminal();
             if (visibleTerminal != null)
             {
+               clearable = true;
                if (!visibleTerminal.getHasChildProcs())
                {
                   // nothing running in current terminal
@@ -180,6 +184,7 @@ public class TerminalPane extends WorkbenchPane
             }
             interruptButton_.setVisible(interruptable);
             closeButton_.setVisible(closable);
+            clearButton_.setVisible(clearable);
          }
       });
 
@@ -837,6 +842,7 @@ public class TerminalPane extends WorkbenchPane
    {
       registerChildProcsHandler(terminal);
       terminalSessionsPanel_.showWidget(terminal);
+      updateTerminalToolbar();
    }
    
    private void registerChildProcsHandler(TerminalSession terminal)
@@ -885,6 +891,7 @@ public class TerminalPane extends WorkbenchPane
    private boolean creatingTerminal_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
+   ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
 
    // Injected ----  
