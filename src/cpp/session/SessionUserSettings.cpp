@@ -604,6 +604,14 @@ core::FilePath UserSettings::initialWorkingDirectory() const
    return getWorkingDirectoryValue(kInitialWorkingDirectory);
 }
 
+std::string UserSettings::initialWorkingDirectory(const std::string& defaultStr) const
+{
+   if (!settings_.contains(kInitialWorkingDirectory))
+      return defaultStr;
+
+   return initialWorkingDirectory().absolutePath();
+}
+
 core::text::AnsiCodeMode UserSettings::ansiConsoleMode() const
 {
    return static_cast<core::text::AnsiCodeMode>(readUiPref<int>(pAnsiConsoleMode_));

@@ -94,6 +94,7 @@
 * Server Pro: Upgrade to nginx 1.12.0
 * Server Pro: Add support for NFSv4 Access Control Lists in Project Sharing
 * Server Pro: Add support for user-initiated session quit and force-terminate
+* Server Pro: Add support for admin-supplied notifications in R sessions
 
 ### Bug Fixes
 
@@ -118,5 +119,5 @@
 * Fixed issues arising from restoring a session suspended with a different R version
 * Wait for index.lock file to clear before performing git operations (with recovery)
 * Color errors in the R console correctly when resuming a session
-* Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 * Fixed an issue in which notebook tables would not print data with lists of lists
+* Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends

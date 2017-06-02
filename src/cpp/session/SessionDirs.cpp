@@ -31,10 +31,15 @@ FilePath getDefaultWorkingDirectory()
 {
    // calculate using user settings
    FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
+   FilePath sessionDefaultWorkingDir = FilePath(session::options().defaultWorkingDir());
 
-   // return it if it exists, otherwise use the default user home path
+   // return it if it exists, otherwise use the
+   // session specified value if it exists
+   // otherwise, use the default user home path
    if (defaultWorkingDir.exists() && defaultWorkingDir.isDirectory())
       return defaultWorkingDir;
+   else if (sessionDefaultWorkingDir.exists() && sessionDefaultWorkingDir.isDirectory())
+      return sessionDefaultWorkingDir;
    else
       return session::options().userHomePath();
 }
