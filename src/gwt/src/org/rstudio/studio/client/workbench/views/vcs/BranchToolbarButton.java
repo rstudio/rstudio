@@ -363,11 +363,6 @@ public class BranchToolbarButton extends ToolbarButton
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent preview)
          {
-            NativeEvent event = preview.getNativeEvent();
-            Element targetEl = event.getEventTarget().cast();
-            if (!DomUtils.isDescendant(targetEl, searchEl))
-               return;
-            
             switch (preview.getTypeInt())
             {
             case Event.ONCLICK:
@@ -385,6 +380,10 @@ public class BranchToolbarButton extends ToolbarButton
          private void onMouseEvent(NativePreviewEvent preview)
          {
             NativeEvent event = preview.getNativeEvent();
+            Element targetEl = event.getEventTarget().cast();
+            if (!DomUtils.isDescendant(targetEl, searchEl))
+               return;
+            
             event.stopPropagation();
             event.preventDefault();
             focusSearch();
@@ -392,6 +391,11 @@ public class BranchToolbarButton extends ToolbarButton
          
          private void onKeyEvent(NativePreviewEvent preview)
          {
+            NativeEvent event = preview.getNativeEvent();
+            Element targetEl = event.getEventTarget().cast();
+            if (!DomUtils.isDescendant(targetEl, searchEl))
+               return;
+            
             searchValue_ = searchWidget_.getValue();
             if (!searchValue_.equals(lastSearchValue_))
                searchValueChangeTimer_.schedule(200);
