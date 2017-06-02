@@ -81,7 +81,8 @@ public class Workbench implements BusyHandler,
                                   WorkbenchMetricsChangedHandler,
                                   InstallRtoolsEvent.Handler,
                                   ShinyGadgetDialogEvent.Handler,
-                                  ExecuteUserCommandEvent.Handler
+                                  ExecuteUserCommandEvent.Handler,
+                                  AdminNotificationHandler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -142,6 +143,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
       eventBus.addHandler(ShinyGadgetDialogEvent.TYPE, this);
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
+      eventBus.addHandler(AdminNotificationEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -489,6 +491,27 @@ public class Workbench implements BusyHandler,
             server_.userPromptCompleted(response, 
                                         new SimpleRequestCallback<Void>());
             
+         }
+      };
+   }
+   
+   public void onAdminNotification(AdminNotificationEvent event)
+   {
+      AdminNotification notification = event.getAdminNotification();
+      
+      // show dialog
+      globalDisplay_.showMessage(notification.getType(), 
+                                 "Admin Notification", 
+                                 notification.getMessage(),
+                                 adminNotificationAcknowledged(notification.getId()));
+   }
+   
+   private Operation adminNotificationAcknowledged(final String id)
+   {
+      return new Operation() {
+         public void execute()
+         {
+            server_.adminNotificationAcknowledged(id, new SimpleRequestCallback<Void>());
          }
       };
    }

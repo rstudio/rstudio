@@ -476,6 +476,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
    }
    
+   public void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, ADMIN_NOTIFICATION_ACKNOWLEDGED, id, requestCallback);
+   }
+   
    @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
@@ -5185,6 +5190,7 @@ public class RemoteServer implements Server
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
+   private static final String ADMIN_NOTIFICATION_ACKNOWLEDGED = "admin_notification_acknowledged";
    private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
    private static final String GET_TERMINAL_SHELLS = "get_terminal_shells";
    private static final String START_TERMINAL = "start_terminal";

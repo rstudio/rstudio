@@ -40,6 +40,22 @@ std::string format(const boost::posix_time::ptime& datetime,
 
 std::string millisecondsSinceEpochAsString(double ms);
 
+bool parseUtcTimeFromIsoString(const std::string& timeStr,
+                               boost::posix_time::ptime *pOutTime);
+
+bool parseUtcTimeFromFormatString(const std::string& timeStr,
+                                  const std::string& formatStr,
+                                  boost::posix_time::ptime *pOutTime);
+
+bool parseUtcTimeFromFormatStrings(const std::string& timeStr,
+                                   const std::vector<std::string>& formats,
+                                   boost::posix_time::ptime *pOutTime,
+                                   std::string *pMatchingFormat);
+
+boost::posix_time::time_duration getUtcOffset();
+
+std::string getUtcOffsetString();
+
 } // namespace date_time
 } // namespace core 
 } // namespace rstudio

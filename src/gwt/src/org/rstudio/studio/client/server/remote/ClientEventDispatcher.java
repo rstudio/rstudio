@@ -907,6 +907,11 @@ public class ClientEventDispatcher
             TerminalCwdEvent.Data data = event.getData();
             eventBus_.fireEvent(new TerminalCwdEvent(data));
          }
+         else if (type.equals(ClientEvent.AdminNotification))
+         {
+            AdminNotification notification = event.getData();
+            eventBus_.fireEvent(new AdminNotificationEvent(notification));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

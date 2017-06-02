@@ -174,6 +174,7 @@ const int kClearTerminal = 155;
 const int kCreateNamedTerminal = 156;
 const int kActivateTerminal = 157;
 const int kTerminalCwd = 158;
+const int kAdminNotification = 159;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -477,6 +478,8 @@ std::string ClientEvent::typeName() const
          return "activate_terminal";
       case client_events::kTerminalCwd:
          return "terminal_cwd";
+      case client_events::kAdminNotification:
+         return "admin_notification";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
