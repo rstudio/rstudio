@@ -14,25 +14,16 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
-import com.google.gwt.user.client.ui.Widget;
 
 public abstract class CustomMenuItemSeparator extends MenuItemSeparator
 {
-   // the actual widget to be used as a separator
-   public abstract Widget createMainWidget();
-   
-   public Widget getMainWidget()
-   {
-      return widget_;
-   }
+   public abstract Element createMainElement();
    
    public CustomMenuItemSeparator()
    {
-      widget_ = createMainWidget();
       getElement().removeAllChildren();
-      getElement().appendChild(widget_.getElement());
+      getElement().appendChild(createMainElement());
    }
-   
-   private final Widget widget_;
 }

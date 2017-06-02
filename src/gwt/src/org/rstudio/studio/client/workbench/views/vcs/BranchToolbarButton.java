@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -199,12 +200,12 @@ public class BranchToolbarButton extends ToolbarButton
       menu.addSeparator(new CustomMenuItemSeparator()
       {
          @Override
-         public Widget createMainWidget()
+         public Element createMainElement()
          {
             Label label = new Label(NO_BRANCHES_AVAILABLE);
             label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
             label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return separatorWithSearch(label);
+            return label.getElement();
          }
       });
    }
@@ -251,7 +252,7 @@ public class BranchToolbarButton extends ToolbarButton
             menu.addSeparator(new CustomMenuItemSeparator()
             {
                @Override
-               public Widget createMainWidget()
+               public Element createMainElement()
                {
                   String branchLabel = caption.equals(LOCAL_BRANCHES)
                         ? LOCAL_BRANCHES
@@ -259,12 +260,7 @@ public class BranchToolbarButton extends ToolbarButton
                   Label label = new Label(branchLabel);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  
-                  Widget mainWidget = (separatorCount_++ == 0)
-                        ? separatorWithSearch(label)
-                        : label;
-                  
-                  return mainWidget;
+                  return label.getElement();
                }
             });
             menu.addSeparator();
