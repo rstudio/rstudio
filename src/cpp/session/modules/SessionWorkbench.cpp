@@ -300,6 +300,15 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // detect if lastDotValue changed
    bool lastDotValueChanged = userSettings().showLastDotValue() != showLastDotValue;
 
+   // detect if initialWorkingDir changed
+   // we consider it changed if it has ever been written
+   // or if it has not been written and the value is different than the session default
+   bool initialWorkingDirChanged = false;
+   if (!userSettings().initialWorkingDirectory("").empty())
+      initialWorkingDirChanged = true;
+   else if (initialWorkingDir != session::options().defaultWorkingDir())
+      initialWorkingDirChanged = true;
+
    // update settings
    userSettings().beginUpdate();
    userSettings().setShowUserHomePage(showUserHomePage);
@@ -308,7 +317,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setLoadRData(loadRData);
    userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setShowLastDotValue(showLastDotValue);
-   userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   if (initialWorkingDirChanged)
+      userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 
    // refresh environment if lastDotValueChanged
