@@ -440,6 +440,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="previousTerminal"/>
             <cmd refid="nextTerminal"/>
             <separator/>
+            <cmd refid="interruptTerminal"/>
             <cmd refid="clearTerminalScrollbackBuffer"/>
             <cmd refid="closeTerminal"/>
           </menu>
@@ -2476,9 +2477,10 @@ well as menu structures (for main menu and popup menus).
         desc="Change terminal session name"/>
 
    <cmd id="closeTerminal"
+   	    buttonLabel=""
         label="Close Current Terminal"
         menuLabel="Cl_ose Current Terminal"
-        desc="Close terminal session"/>
+        desc="Close current terminal session"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
         buttonLabel=""
@@ -2503,6 +2505,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Terminal _Diagnostics..."
         desc="Show Info on Current Terminal"/>
+
+   <cmd id="interruptTerminal"
+        buttonLabel=""
+        label="Interrupt Current Terminal"
+        menuLabel="_Interrupt Current Terminal"
+        desc="Send Ctrl+C to Current Terminal"/>
  
    <cmd id="addinsMru0" visible="false" rebindable="false"/>
    <cmd id="addinsMru1" visible="false" rebindable="false"/>

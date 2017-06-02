@@ -113,8 +113,8 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 }
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
-   : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
-     pid_(-1), childProcsSent_(false),
+   : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
+     newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
      lastInputSequence_(kIgnoreSequence), started_(false)
 {
    regexInit();
@@ -128,8 +128,9 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), pid_(-1),
-     childProcsSent_(false), lastInputSequence_(kIgnoreSequence), started_(false)
+     interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
+     pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
+     started_(false)
 {
    commonInit();
 }
@@ -139,9 +140,9 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), pid_(-1),
-     childProcsSent_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false)
+     interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
+     pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
+     started_(false)
 {
    commonInit();
 }
@@ -377,6 +378,11 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
+void ConsoleProcess::interruptChild()
+{
+   interruptChild_ = true;
+}
+
 void ConsoleProcess::resize(int cols, int rows)
 {
    newCols_ = cols;
@@ -388,6 +394,15 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    // full stop interrupt if requested
    if (interrupt_)
       return false;
+
+   // send SIGINT to children of the shell
+   if (interruptChild_)
+   {
+      Error error = ops.ptyInterrupt();
+      if (error)
+         LOG_ERROR(error);
+      interruptChild_ = false;
+   }
 
    if (procInfo_->getChannelMode() == Rpc)
    {

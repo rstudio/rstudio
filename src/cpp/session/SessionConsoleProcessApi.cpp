@@ -353,6 +353,27 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
+Error procInterruptChild(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != NULL)
+   {
+      proc->interruptChild();
+      return Success();
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error interrupting consoleProc",
+                         ERROR_LOCATION);
+   }
+}
+
 Error procReap(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
@@ -644,7 +665,8 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
-      (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible));
+      (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))
+      (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild));
 
    return initBlock.execute();
 }

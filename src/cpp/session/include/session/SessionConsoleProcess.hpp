@@ -150,6 +150,7 @@ public:
    Input dequeInput();
    void enquePrompt(const std::string& prompt);
    void interrupt();
+   void interruptChild();
    void resize(int cols, int rows);
    void onSuspend();
    bool isStarted() const { return started_; }
@@ -225,6 +226,9 @@ private:
 
    // Whether the process should be stopped
    bool interrupt_;
+
+   // Whether to send pty interrupt
+   bool interruptChild_;
    
    // Whether the tty should be notified of a resize
    int newCols_; // -1 = no change

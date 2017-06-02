@@ -113,6 +113,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addItem(commands_.previousTerminal().createMenuItem(false));
          addItem(commands_.nextTerminal().createMenuItem(false));
          addSeparator();
+         addItem(commands_.interruptTerminal().createMenuItem(false));
          addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
          addItem(commands_.closeTerminal().createMenuItem(false));
       }
@@ -158,7 +159,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_.renameTerminal().setEnabled(haveActiveTerminal);
       commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
       commands_.showTerminalInfo().setEnabled(haveActiveTerminal);
-
+      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
       

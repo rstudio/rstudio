@@ -46,6 +46,9 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEv
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -123,17 +126,63 @@ public class TerminalPane extends WorkbenchPane
       ToolbarButton clearButton = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
       clearButton.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
       toolbar.addRightWidget(clearButton);
-
+      
+      interruptButton_ = commands_.interruptTerminal().createToolbarButton();
+      toolbar.addRightWidget(interruptButton_);
+      closeButton_ = commands_.closeTerminal().createToolbarButton();
+      toolbar.addRightWidget(closeButton_);
+      updateTerminalToolbar();
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
       commands_.renameTerminal().setEnabled(false);
-      commands_.closeTerminal().setEnabled(false);
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
       commands_.showTerminalInfo().setEnabled(false);
+      commands_.interruptTerminal().setEnabled(false);
 
       return toolbar;
    }
+   
+   private void updateTerminalToolbar()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            boolean interruptable = false;
+            boolean closable = false;
+
+            final TerminalSession visibleTerminal = getSelectedTerminal();
+            if (visibleTerminal != null)
+            {
+               if (!visibleTerminal.getHasChildProcs())
+               {
+                  // nothing running in current terminal
+                  closable = true;
+               }
+               else
+               {
+                  if (!visibleTerminal.altBufferActive())
+                  {
+                     // not running a full-screen program
+                     interruptable = true;
+                     closable = false;
+                  }
+                  else
+                  {
+                     // running a full-screen program
+                     closable = true;
+                     interruptable = false;
+                  }
+               }
+            }
+            interruptButton_.setVisible(interruptable);
+            closeButton_.setVisible(closable);
+         }
+      });
+
+    }
 
    @Override
    public void onSelected()
@@ -327,6 +376,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminalSessionsPanel_.remove(0);
       }
+      updateTerminalToolbar();
    }
 
    @Override
@@ -422,6 +472,17 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.showTerminalInfo();
    }
    
+   @Override
+   public void interruptTerminal()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+      visibleTerminal.interruptTerminal();
+   }
+   
    /**
     * Rename the currently visible terminal (client-side only).
     * 
@@ -456,7 +517,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminalSessionsPanel_.getWidgetIndex(terminal) == -1)
       {
          terminalSessionsPanel_.add(terminal);
-         terminalSessionsPanel_.showWidget(terminal);
+         showTerminalWidget(terminal);
          setFocusOnVisible();
       }
       else
@@ -464,6 +525,7 @@ public class TerminalPane extends WorkbenchPane
          terminal.writeRestartSequence();
       }
       creatingTerminal_ = false;
+      updateTerminalToolbar();
    }
    
    /**
@@ -502,6 +564,7 @@ public class TerminalPane extends WorkbenchPane
          activeTerminalToolbarButton_.setNoActiveTerminal();
          setTerminalTitle("");
       }
+      updateTerminalToolbar();
    }
 
    @Override
@@ -527,7 +590,7 @@ public class TerminalPane extends WorkbenchPane
       TerminalSession terminal = loadedTerminalWithHandle(handle);
       if (terminal != null)
       {
-         terminalSessionsPanel_.showWidget(terminal);
+         showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
          return;
@@ -769,11 +832,46 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
+   private void showTerminalWidget(TerminalSession terminal)
+   {
+      registerChildProcsHandler(terminal);
+      terminalSessionsPanel_.showWidget(terminal);
+   }
+   
+   private void registerChildProcsHandler(TerminalSession terminal)
+   {
+      unregisterChildProcsHandler();
+      if (terminal != null)
+      {
+         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
+               new ValueChangeHandler<Boolean>() 
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               updateTerminalToolbar();
+            }
+         });
+      }
+   }
+   
+   private void unregisterChildProcsHandler()
+   {
+      if (terminalHasChildProcsHandler_ != null)
+      {
+         terminalHasChildProcsHandler_.removeHandler();
+         terminalHasChildProcsHandler_ = null;
+      }
+   }
+
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
+   private ToolbarButton interruptButton_;
+   private ToolbarButton closeButton_;
+   private HandlerRegistration terminalHasChildProcsHandler_ = null;
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;
