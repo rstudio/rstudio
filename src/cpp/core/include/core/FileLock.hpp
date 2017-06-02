@@ -141,6 +141,38 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
 };
 
+// ScopedFileLock for acquiring a lock on construction
+// and ensuring the lock is released on destruction
+class ScopedFileLock : boost::noncopyable
+{
+public:
+   ScopedFileLock(const boost::shared_ptr<FileLock>& fileLock,
+                  const FilePath& filePath) :
+                  fileLock_(fileLock)
+   {
+      error_ = fileLock_->acquire(filePath);
+   }
+
+   ~ScopedFileLock()
+   {
+      if (!error_)
+      {
+         error_ = fileLock_->release();
+         if (error_)
+            LOG_ERROR(error_);
+      }
+   }
+
+   Error error()
+   {
+      return error_;
+   }
+
+private:
+   Error error_;
+   boost::shared_ptr<FileLock> fileLock_;
+};
+
 } // namespace core
 } // namespace rstudio
 

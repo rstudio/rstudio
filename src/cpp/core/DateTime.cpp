@@ -15,6 +15,10 @@
 
 #include <core/DateTime.hpp>
 
+#include "boost/date_time/c_local_time_adjustor.hpp"
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/foreach.hpp>
+
 namespace rstudio {
 namespace core {
 namespace date_time {   
@@ -96,6 +100,63 @@ std::string millisecondsSinceEpochAsString(double ms)
 
    return date_time::format(time, "%d %b %Y %H:%M:%S");
 }
+
+bool parseUtcTimeFromIsoString(const std::string& timeStr,
+                               boost::posix_time::ptime *pOutTime)
+{
+   return parseUtcTimeFromFormatString(timeStr,
+                                       "%Y-%m-%d %H:%M:%S %ZP",
+                                       pOutTime);
+}
+
+bool parseUtcTimeFromFormatString(const std::string& timeStr,
+                                  const std::string& formatStr,
+                                  boost::posix_time::ptime *pOutTime)
+{
+   using namespace boost::local_time;
+
+   std::stringstream ss(timeStr);
+   local_time_input_facet* ifc = new local_time_input_facet(formatStr);
+
+   ss.imbue(std::locale(ss.getloc(), ifc));
+
+   local_date_time ldt(not_a_date_time);
+
+   if (ss >> ldt)
+   {
+      *pOutTime = ldt.utc_time();
+      return true;
+   }
+
+   return false;
+}
+
+boost::posix_time::time_duration getUtcOffset()
+{
+   using namespace boost::posix_time;
+   typedef boost::date_time::c_local_adjustor<ptime> local_adj;
+
+   const ptime utc_now = second_clock::universal_time();
+   const ptime now = local_adj::utc_to_local(utc_now);
+
+   return now - utc_now;
+}
+
+std::string getUtcOffsetString()
+{
+   using namespace boost::posix_time;
+
+   std::stringstream out;
+
+   time_facet* tf = new time_facet();
+   tf->time_duration_format("%+%H:%M");
+   out.imbue(std::locale(out.getloc(), tf));
+
+   out << getUtcOffset();
+
+   return out.str();
+}
+
    
 } // namespace date_time
 } // namespace core 

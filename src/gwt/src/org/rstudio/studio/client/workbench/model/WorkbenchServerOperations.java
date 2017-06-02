@@ -119,6 +119,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void userPromptCompleted(int response, 
                             ServerRequestCallback<Void> requestCallback);
    
+   void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback);
+   
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
   
