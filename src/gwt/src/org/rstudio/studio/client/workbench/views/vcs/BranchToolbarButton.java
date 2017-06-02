@@ -21,6 +21,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -30,6 +31,7 @@ import com.google.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +92,29 @@ public class BranchToolbarButton extends ToolbarButton
                                                 BranchToolbarButton.this, true);
          }
       };
+      
+      menu_ = getMenu();
+      
+      menu_.setAutoHideRedundantSeparators(false);
+      menu_.setSearchEnabled(true);
+      menu_.addSearchValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            lastSearchValue_ = event.getValue();
+            searchValueChangeTimer_.schedule(200);
+         }
+      });
+      
+      searchValueChangeTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            onSearchValueChange();
+         }
+      };
    }
    
    public void setBranchCaption(String caption)
@@ -109,15 +134,18 @@ public class BranchToolbarButton extends ToolbarButton
    @Override
    public void onVcsRefresh(VcsRefreshEvent event)
    {
-      ToolbarPopupMenu rootMenu = getMenu();
-      rootMenu.setAutoHideRedundantSeparators(false);
-      rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
+      onRefresh(branches);
+   }
+   
+   private void onRefresh(JsArrayString branches)
+   {
+      menu_.clearItems();
       
       if (branches.length() == 0)
       {
-         onBeforePopulateMenu(rootMenu);
-         populateEmptyMenu(rootMenu);
+         onBeforePopulateMenu(menu_);
+         populateEmptyMenu(menu_);
          return;
       }
       
@@ -145,8 +173,11 @@ public class BranchToolbarButton extends ToolbarButton
          }
       }
       
-      onBeforePopulateMenu(rootMenu);
-      populateMenu(rootMenu, branchMap);
+      // record the branches used on first populate
+      initialBranchMap_ = branchMap;
+      
+      onBeforePopulateMenu(menu_);
+      populateMenu(menu_, branchMap);
    }
    
    private void populateEmptyMenu(final ToolbarPopupMenu menu)
@@ -231,13 +262,53 @@ public class BranchToolbarButton extends ToolbarButton
             }
          }
       });
+      
+      menu.selectFirst();
    }
 
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
    {
    }
+   
+   private void onSearchValueChange()
+   {
+      // fast path -- no query to use
+      String query = lastSearchValue_.trim();
+      if (query.isEmpty())
+      {
+         onBeforePopulateMenu(menu_);
+         populateMenu(menu_, initialBranchMap_);
+      }
+      
+      // iterate through initial branch map and copy branches
+      // matching the current query. TODO: should we re-order
+      // based on how 'close' a match we have?
+      Map<String, List<String>> branchMap = new HashMap<String, List<String>>();
+      for (String key : initialBranchMap_.keySet())
+      {
+         List<String> filteredBranches = new ArrayList<String>();
+         List<String> branches = initialBranchMap_.get(key);
+         for (String branch : branches)
+            if (branch.indexOf(query) != -1)
+               filteredBranches.add(branch);
+         
+         if (!filteredBranches.isEmpty())
+            branchMap.put(key, filteredBranches);
+      }
+      
+      // re-populate
+      menu_.clearItems();
+      onBeforePopulateMenu(menu_);
+      populateMenu(menu_, branchMap);
+   }
 
    protected final Provider<GitState> pVcsState_;
+   
+   private final ToolbarPopupMenu menu_;
+   private Map<String, List<String>> initialBranchMap_;
+   
+   private String lastSearchValue_;
+   private final Timer searchValueChangeTimer_;
 
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";

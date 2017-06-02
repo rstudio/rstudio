@@ -30,7 +30,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
-
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -73,6 +72,17 @@ public class SearchWidget extends Composite implements SearchDisplay
       }
    }
   
+   public SearchWidget()
+   {
+      this(new SuggestOracle()
+      {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no-op
+         }
+      });
+   }
 
    public SearchWidget(SuggestOracle oracle)
    {

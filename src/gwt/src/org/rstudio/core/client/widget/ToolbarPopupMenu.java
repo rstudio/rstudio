@@ -20,7 +20,9 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -30,6 +32,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.command.AppCommand;
@@ -47,11 +50,27 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       public void onPopupMenu(ToolbarPopupMenu menu);
    }
+   
+   public interface SearchHandler
+   {
+      public void onQuery(String query);
+   }
 
    public ToolbarPopupMenu()
    {
       super(true);
-      add(wrapMenuBar(menuBar_ = createMenuBar()));
+      
+      menuBar_ = createMenuBar();
+      searchWidget_ = new SearchWidget();
+      searchWidget_.getElement().getStyle().setWidth(99, Unit.PCT);
+      searchWidget_.setVisible(false);
+      
+      VerticalPanel container = new VerticalPanel();
+      container.add(searchWidget_);
+      container.add(menuBar_);
+      
+      Widget mainWidget = createMainWidget(container);
+      setWidget(mainWidget);
    }
    
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
@@ -65,16 +84,23 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return new ToolbarMenuBar(true);
    }
 
-   protected Widget wrapMenuBar(ToolbarMenuBar toolbarMenuBar)
+   protected Widget createMainWidget(Widget widget)
    {
-      return toolbarMenuBar;
+      return widget;
    }
 
    @Override
    protected void onUnload()
    {
       super.onUnload();
+      searchWidget_.setVisible(false);
+      searchWidget_.setValue("");
       menuBar_.selectItem(null);
+   }
+   
+   public void selectFirst()
+   {
+      menuBar_.selectFirst();
    }
 
    public void selectItem(MenuItem menuItem)
@@ -216,6 +242,9 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
             {
                if (e.getTypeInt() == Event.ONKEYDOWN)
                {
+                  if (handleSearchKey(e.getNativeEvent()))
+                     return;
+                  
                   switch (e.getNativeEvent().getKeyCode())
                   {
                      case KeyCodes.KEY_ESCAPE:
@@ -326,6 +355,44 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private HandlerRegistration nativePreviewReg_;
    }
    
+   public void setSearchEnabled(boolean enabled)
+   {
+      searchEnabled_ = enabled;
+   }
+   
+   public HandlerRegistration addSearchValueChangeHandler(ValueChangeHandler<String> handler)
+   {
+      return searchWidget_.addValueChangeHandler(handler);
+   }
+   
+   private boolean handleSearchKey(NativeEvent event)
+   {
+      if (!searchEnabled_)
+         return false;
+    
+      int keyCode = event.getKeyCode();
+      if (!Character.isLetterOrDigit((char) keyCode))
+         return false;
+      
+      if (searchWidget_.isVisible())
+         return false;
+      
+      event.stopPropagation();
+      event.preventDefault();
+      
+      String initialValue = String.valueOf((char) keyCode);
+      if (!event.getShiftKey())
+         initialValue = initialValue.toLowerCase();
+      searchWidget_.setValue(initialValue);
+      
+      searchWidget_.setVisible(true);
+      searchWidget_.focus();
+      
+      return true;
+   }
+   
    protected ToolbarMenuBar menuBar_;
+   protected SearchWidget searchWidget_;
+   private boolean searchEnabled_;
    private ToolbarPopupMenu parent_;
 }
