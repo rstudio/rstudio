@@ -498,8 +498,7 @@
    {
       ## Only closures have formals, not primitive functions.
       result <- tryCatch({
-         parsed <- suppressWarnings(parse(text = capture.output(print(object)))[[1L]])
-         names(parsed[[2]])
+        names(formals(args(object)))
       }, error = function(e) {
          character()
       })
