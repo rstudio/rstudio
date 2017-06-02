@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -22,6 +23,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,6 +45,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -72,22 +75,13 @@ public class BranchToolbarButton extends ToolbarButton
       private final String branchLabel_;
       private final String branchValue_;
    }
-   
-   private static class Menu extends ScrollableToolbarPopupMenu
-   {
-      @Override
-      public boolean isSearchEnabled()
-      {
-         return true;
-      }
-   }
 
    @Inject
    public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new Menu());
+            new ScrollableToolbarPopupMenu());
       pVcsState_ = pVcsState;
 
       setTitle("Switch branch");
@@ -103,10 +97,10 @@ public class BranchToolbarButton extends ToolbarButton
       };
       
       menu_ = getMenu();
-      
       menu_.setAutoHideRedundantSeparators(false);
-      menu_.setSearchEnabled(true);
-      menu_.addSearchValueChangeHandler(new ValueChangeHandler<String>()
+      
+      searchWidget_ = new SearchWidget();
+      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -189,6 +183,17 @@ public class BranchToolbarButton extends ToolbarButton
       populateMenu(menu_, branchMap);
    }
    
+   private Widget separatorWithSearch(Label label)
+   {
+      label.getElement().getStyle().setFloat(Style.Float.LEFT);
+      searchWidget_.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      
+      FlowPanel container = new FlowPanel();
+      container.add(label);
+      container.add(searchWidget_);
+      return container;
+   }
+   
    private void populateEmptyMenu(final ToolbarPopupMenu menu)
    {
       menu.addSeparator(new CustomMenuItemSeparator()
@@ -199,15 +204,23 @@ public class BranchToolbarButton extends ToolbarButton
             Label label = new Label(NO_BRANCHES_AVAILABLE);
             label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
             label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return label;
+            return separatorWithSearch(label);
          }
       });
    }
    
    private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
    {
+      if (branchMap.isEmpty())
+      {
+         populateEmptyMenu(menu);
+         return;
+      }
+      
       MapUtil.forEach(branchMap, new MapUtil.ForEachCommand<String, List<String>>()
       {
+         int separatorCount_ = 0;
+            
          @Override
          public void execute(final String caption, final List<String> branches)
          {
@@ -246,7 +259,12 @@ public class BranchToolbarButton extends ToolbarButton
                   Label label = new Label(branchLabel);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  return label;
+                  
+                  Widget mainWidget = (separatorCount_++ == 0)
+                        ? separatorWithSearch(label)
+                        : label;
+                  
+                  return mainWidget;
                }
             });
             menu.addSeparator();
@@ -271,8 +289,6 @@ public class BranchToolbarButton extends ToolbarButton
             }
          }
       });
-      
-      menu.selectFirst();
    }
 
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
@@ -314,6 +330,7 @@ public class BranchToolbarButton extends ToolbarButton
    protected final Provider<GitState> pVcsState_;
    
    private final ToolbarPopupMenu menu_;
+   private final SearchWidget searchWidget_;
    private Map<String, List<String>> initialBranchMap_;
    
    private String lastSearchValue_;
