@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -30,6 +32,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
+
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -118,7 +121,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       close_.setVisible(false);
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
-
+      
       suggestBox_.setStylePrimaryName(styles.searchBox());
       suggestBox_.setAutoSelectEnabled(false) ;
       addKeyDownHandler(new KeyDownHandler() {
@@ -338,6 +341,16 @@ public class SearchWidget extends Composite implements SearchDisplay
    public boolean isFocused()
    {
       return focusTracker_.isFocused();
+   }
+   
+   private Element getSearchElement()
+   {
+      return getElement().getFirstChildElement();
+   }
+   
+   public void setWidth(double value, Unit unit)
+   {
+      getSearchElement().getStyle().setWidth(value, unit);
    }
 
    @UiField(provided=true)

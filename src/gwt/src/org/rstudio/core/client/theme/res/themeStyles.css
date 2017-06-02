@@ -277,6 +277,10 @@ button {
    cursor: pointer;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-menus hr {
+	border-color: THEME_DARK_CONTROL_BACKGROUND;
+}
+
 .handCursor {
    cursor: pointer;
 }
@@ -2237,6 +2241,27 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat .search .right {
    display: none;
+}
+
+.rstudio-themes-flat .searchMagGlass {
+   top: 2px;
+}
+
+.rstudio-themes-flat .clearSearch {
+   top: 3px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .search {
+   border-color: THEME_DARK_CONTROL_BORDER;
+   background: THEME_DARK_CONTROL_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .search input {
+   color: white;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .search input::placeholder {
+   color: #CCC;
 }
 
 .rstudio-themes-flat .searchMagGlass {

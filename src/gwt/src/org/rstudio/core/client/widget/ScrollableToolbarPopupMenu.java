@@ -62,9 +62,9 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
    }
 
    @Override
-   protected Widget createMainWidget(Widget widget)
+   protected Widget createMainWidget()
    {
-      scrollPanel_ = new ScrollPanel(widget);
+      scrollPanel_ = new ScrollPanel(menuBar_);
       scrollPanel_.addStyleName(ThemeStyles.INSTANCE.scrollableMenuBar());
       scrollPanel_.getElement().getStyle().setOverflowY(Overflow.AUTO);
       scrollPanel_.getElement().getStyle().setOverflowX(Overflow.HIDDEN);

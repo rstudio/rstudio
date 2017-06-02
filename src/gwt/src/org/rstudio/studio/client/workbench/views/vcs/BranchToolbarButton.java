@@ -72,13 +72,22 @@ public class BranchToolbarButton extends ToolbarButton
       private final String branchLabel_;
       private final String branchValue_;
    }
+   
+   private static class Menu extends ScrollableToolbarPopupMenu
+   {
+      @Override
+      public boolean isSearchEnabled()
+      {
+         return true;
+      }
+   }
 
    @Inject
    public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ScrollableToolbarPopupMenu());
+            new Menu());
       pVcsState_ = pVcsState;
 
       setTitle("Switch branch");

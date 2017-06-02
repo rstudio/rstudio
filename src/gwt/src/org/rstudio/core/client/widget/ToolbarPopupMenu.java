@@ -29,6 +29,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
@@ -38,6 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class ToolbarPopupMenu extends ThemedPopupPanel
 {
@@ -62,15 +64,24 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       
       menuBar_ = createMenuBar();
       searchWidget_ = new SearchWidget();
-      searchWidget_.getElement().getStyle().setWidth(99, Unit.PCT);
-      searchWidget_.setVisible(false);
+      searchWidget_.addStyleName(ThemeStyles.INSTANCE.searchBox());
+      searchWidget_.setWidth(100, Unit.PCT);
+      searchWidget_.setVisible(isSearchEnabled());
       
-      VerticalPanel container = new VerticalPanel();
-      container.add(searchWidget_);
-      container.add(menuBar_);
+      Widget mainWidget = createMainWidget();
       
-      Widget mainWidget = createMainWidget(container);
-      setWidget(mainWidget);
+      if (isSearchEnabled())
+      {
+         VerticalPanel container = new VerticalPanel();
+         container.add(searchWidget_);
+         container.add(new HTML("<hr>"));
+         container.add(mainWidget);
+         setWidget(container);
+      }
+      else
+      {
+         setWidget(mainWidget);
+      }
    }
    
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
@@ -84,17 +95,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return new ToolbarMenuBar(true);
    }
 
-   protected Widget createMainWidget(Widget widget)
+   protected Widget createMainWidget()
    {
-      return widget;
+      return menuBar_;
+   }
+   
+   public boolean isSearchEnabled()
+   {
+      return false;
    }
 
    @Override
    protected void onUnload()
    {
       super.onUnload();
-      searchWidget_.setVisible(false);
-      searchWidget_.setValue("");
+      searchWidget_.setValue(null);
       menuBar_.selectItem(null);
    }
    
@@ -224,6 +239,24 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          super(vertical) ;
       }
+      
+      @Override
+      protected void onAttach()
+      {
+         super.onAttach();
+         
+         if (isSearchEnabled())
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  searchWidget_.focus();
+               }
+            });
+         }
+      }
 
       @Override
       protected void onUnload()
@@ -236,6 +269,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       protected void onLoad()
       {
          super.onLoad();
+         
          nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
          {
             public void onPreviewNativeEvent(NativePreviewEvent e)
