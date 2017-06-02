@@ -26,4 +26,5 @@ public abstract class CustomMenuItemSeparator extends MenuItemSeparator
       getElement().removeAllChildren();
       getElement().appendChild(createMainElement());
    }
+   
 }

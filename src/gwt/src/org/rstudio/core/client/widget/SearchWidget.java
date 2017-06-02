@@ -17,8 +17,6 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -343,16 +341,6 @@ public class SearchWidget extends Composite implements SearchDisplay
       return focusTracker_.isFocused();
    }
    
-   private Element getSearchElement()
-   {
-      return getElement().getFirstChildElement();
-   }
-   
-   public void setWidth(double value, Unit unit)
-   {
-      getSearchElement().getStyle().setWidth(value, unit);
-   }
-
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
    @UiField
