@@ -179,6 +179,7 @@ public class TerminalPane extends WorkbenchPane
                      // running a full-screen program
                      closable = true;
                      interruptable = false;
+                     clearable = false;
                   }
                }
             }
