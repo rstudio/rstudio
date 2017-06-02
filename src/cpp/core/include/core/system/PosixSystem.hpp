@@ -183,7 +183,22 @@ core::Error launchChildProcess(std::string path,
                                ProcessConfigFilter configFilter,
                                PidType* pProcessId ) ;
 
+// get this processes' child processes
 Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+
+
+// get the child processes of the specified process
+Error getChildProcesses(pid_t pid,
+                        std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+
+// no-signal version specified in System.hpp
+// but on posix we can send any signal we want
+// so we provide this function here
+Error terminateChildProcesses(int signal);
+
+// terminate child processes of the specified process
+Error terminateChildProcesses(pid_t pid,
+                              int signal);
 
 bool isUserNotFoundError(const core::Error& error);
 

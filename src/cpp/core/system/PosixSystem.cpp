@@ -1756,83 +1756,128 @@ Error launchChildProcess(std::string path,
    return Success() ;
 }
 
-bool filterNonChildProcesses(pid_t pid, pid_t ppid, pid_t pgrp,
-                             const core::system::ProcessInfo& process)
+// simple cass to encapsulate parent-child
+// relationship of processes
+struct ProcessTreeNode
 {
-   // remove all but child processes
-   // remove this process's parent and remove
-   // processes not part of the group
-   if (process.pgrp != pgrp)
+   boost::shared_ptr<ProcessInfo> data;
+   std::vector<boost::shared_ptr<ProcessTreeNode> > children;
+};
+
+// process tree, indexed by pid
+typedef std::map<pid_t, boost::shared_ptr<ProcessTreeNode> > ProcessTreeT;
+
+void createProcessTree(const std::vector<ProcessInfo>& processes,
+                       ProcessTreeT *pOutTree)
+{
+   // first pass, create the nodes in the tree
+   BOOST_FOREACH(const ProcessInfo& process, processes)
    {
-      return false;
+      ProcessTreeT::iterator iter = pOutTree->find(process.pid);
+      if (iter == pOutTree->end())
+      {
+         // process not found, so create a new entry for it
+         boost::shared_ptr<ProcessTreeNode> nodePtr = boost::shared_ptr<ProcessTreeNode>(
+                                                         new ProcessTreeNode());
+
+         nodePtr->data = boost::shared_ptr<ProcessInfo>(new ProcessInfo(process));
+
+         (*pOutTree)[process.pid] = nodePtr;
+      }
    }
 
-   if (process.pid == ppid)
+   // second pass, link the nodes together
+   BOOST_FOREACH(ProcessTreeT::value_type& element, *pOutTree)
    {
-      return false;
-   }
+      pid_t parent = element.second->data->ppid;
+      ProcessTreeT::iterator iter = pOutTree->find(parent);
 
-   if (process.pid == pid)
-   {
-      return false;
-   }
+      // if we cannot find the parent in the tree, move on
+      if (iter == pOutTree->end())
+         continue;
 
-   return true;
+      // add this node to its parent's children
+      iter->second->children.push_back(element.second);
+   }
 }
 
-Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses)
+void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
+                 std::vector<ProcessInfo> *pOutChildren)
+{
+   BOOST_FOREACH(const boost::shared_ptr<ProcessTreeNode>& child, node->children)
+   {
+      pOutChildren->push_back(*child->data.get());
+      getChildren(child, pOutChildren);
+   }
+}
+
+Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses)
+{
+   return getChildProcesses(::getpid(), pOutProcesses);
+}
+
+Error getChildProcesses(pid_t pid,
+                        std::vector<ProcessInfo> *pOutProcesses)
 {
    if (!pOutProcesses)
       return systemError(EINVAL, ERROR_LOCATION);
 
-   // get the process group of this process
-   pid_t pgrp = ::getpgrp();
-
-   // get the parent process of this process
-   pid_t ppid = ::getppid();
-
-   // get this process' pid
-   pid_t pid = ::getpid();
-
-   // get all child processes
+   // get all processes
    std::vector<ProcessInfo> processes;
-   Error error = processInfo("",
-                             pOutProcesses,
-                             boost::bind(&filterNonChildProcesses,
-                                         pid,
-                                         ppid,
-                                         pgrp,
-                                         boost::placeholders::_1));
+   Error error = processInfo("", &processes);
 
-   return error;
+   // build a process tree of the processes
+   ProcessTreeT tree;
+   createProcessTree(processes, &tree);
+
+   // return just the children of the specified process
+   ProcessTreeT::const_iterator iter = tree.find(pid);
+   if (iter == tree.end())
+      return Success();
+
+   const boost::shared_ptr<ProcessTreeNode>& rootNode = iter->second;
+   getChildren(rootNode, pOutProcesses);
+
+   return Success();
 }
 
 Error terminateChildProcesses()
 {
-    std::vector<ProcessInfo> childProcesses;
-    Error error = getChildProcesses(&childProcesses);
-    if (error)
-       return error;
+   return terminateChildProcesses(SIGTERM);
+}
 
-    BOOST_FOREACH(const ProcessInfo& process, childProcesses)
-    {
-       if (::kill(process.pid, SIGTERM) != 0)
-       {
-          // On the Mac some child processes exist as a side effect of the
-          // call to getChildProcesses (sh, ps, awk). This results in a
-          // regular stream of error messages at the dev console, so we
-          // suppress that particular error to prevent bogus error states.
-          Error error = systemError(errno, ERROR_LOCATION);
+Error terminateChildProcesses(int signal)
+{
+   return terminateChildProcesses(::getpid(), signal);
+}
+
+Error terminateChildProcesses(pid_t pid,
+                              int signal)
+{
+   std::vector<ProcessInfo> childProcesses;
+   Error error = getChildProcesses(pid, &childProcesses);
+   if (error)
+      return error;
+
+   BOOST_FOREACH(const ProcessInfo& process, childProcesses)
+   {
+      if (::kill(process.pid, signal) != 0)
+      {
+         // On the Mac some child processes exist as a side effect of the
+         // call to getChildProcesses (sh, ps, awk). This results in a
+         // regular stream of error messages at the dev console, so we
+         // suppress that particular error to prevent bogus error states.
+         Error error = systemError(errno, ERROR_LOCATION);
 #ifdef __APPLE__
-          if (error.code() != boost::system::errc::no_such_process)
+         if (error.code() != boost::system::errc::no_such_process)
 #endif
             LOG_ERROR(error);
-       }
-    }
+      }
+   }
 
-    // the actual kill is best effort
-    // so return success regardless
-    return Success();
+   // the actual kill is best effort
+   // so return success regardless
+   return Success();
 }
 
 bool isUserNotFoundError(const Error& error)
