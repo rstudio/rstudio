@@ -54,7 +54,7 @@ ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
 // R APIs ---------------------------------------------------------------
 
 // Return vector of all terminal ids (captions)
-SEXP rs_getAllTerminals()
+SEXP rs_terminalList()
 {
    r::sexp::Protect protect;
 
@@ -66,7 +66,7 @@ SEXP rs_getAllTerminals()
 
 // Create a terminal with given id (caption). If null, create with automatically
 // generated name. Returns resulting name in either case.
-SEXP rs_createNamedTerminal(SEXP typeSEXP)
+SEXP rs_terminalCreate(SEXP typeSEXP)
 {
    r::sexp::Protect protect;
 
@@ -91,7 +91,7 @@ SEXP rs_createNamedTerminal(SEXP typeSEXP)
 
 // Returns busy state of a terminal (i.e. does the shell have any child
 // processes?)
-SEXP rs_isTerminalBusy(SEXP terminalsSEXP)
+SEXP rs_terminalBusy(SEXP terminalsSEXP)
 {
    r::sexp::Protect protect;
 
@@ -114,7 +114,7 @@ SEXP rs_isTerminalBusy(SEXP terminalsSEXP)
 }
 
 // Returns running state of a terminal (i.e. does the shell have a shell process?)
-SEXP rs_isTerminalRunning(SEXP terminalsSEXP)
+SEXP rs_terminalRunning(SEXP terminalsSEXP)
 {
    r::sexp::Protect protect;
 
@@ -137,7 +137,7 @@ SEXP rs_isTerminalRunning(SEXP terminalsSEXP)
 }
 
 // Returns bunch of metadata about a terminal instance.
-SEXP rs_getTerminalContext(SEXP terminalSEXP)
+SEXP rs_terminalContext(SEXP terminalSEXP)
 {
    r::sexp::Protect protect;
 
@@ -170,7 +170,7 @@ SEXP rs_getTerminalContext(SEXP terminalSEXP)
 }
 
 // Return buffer for a terminal, optionally stripping out Ansi codes.
-SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
+SEXP rs_terminalBuffer(SEXP idSEXP, SEXP stripSEXP)
 {
    r::sexp::Protect protect;
 
@@ -190,7 +190,7 @@ SEXP rs_getTerminalBuffer(SEXP idSEXP, SEXP stripSEXP)
 }
 
 // Kill terminal and its processes.
-SEXP rs_killTerminal(SEXP terminalsSEXP)
+SEXP rs_terminalKill(SEXP terminalsSEXP)
 {
    std::vector<std::string> terminalIds;
    if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
@@ -208,7 +208,7 @@ SEXP rs_killTerminal(SEXP terminalsSEXP)
    return R_NilValue;
 }
 
-SEXP rs_getVisibleTerminal()
+SEXP rs_terminalVisible()
 {
    r::sexp::Protect protect;
 
@@ -222,7 +222,7 @@ SEXP rs_getVisibleTerminal()
    return r::sexp::create(proc->getCaption(), &protect);
 }
 
-SEXP rs_clearTerminal(SEXP idSEXP)
+SEXP rs_terminalClear(SEXP idSEXP)
 {
    std::string terminalId = r::sexp::asString(idSEXP);
 
@@ -245,7 +245,7 @@ SEXP rs_clearTerminal(SEXP idSEXP)
 }
 
 // Send text to the terminal
-SEXP rs_sendToTerminal(SEXP idSEXP, SEXP textSEXP)
+SEXP rs_terminalSend(SEXP idSEXP, SEXP textSEXP)
 {
    std::string terminalId = r::sexp::asString(idSEXP);
    std::string text = r::sexp::asString(textSEXP);
@@ -265,7 +265,7 @@ SEXP rs_sendToTerminal(SEXP idSEXP, SEXP textSEXP)
 }
 
 // Activate a terminal to ensure it is running (and optionally visible).
-SEXP rs_activateTerminal(SEXP idSEXP, SEXP showSEXP)
+SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
 {
    std::string terminalId = r::sexp::asString(idSEXP);
    bool show = r::sexp::asLogical(showSEXP);
@@ -619,17 +619,17 @@ Error initializeApi()
 {
    using namespace module_context;
 
-   RS_REGISTER_CALL_METHOD(rs_activateTerminal, 2);
-   RS_REGISTER_CALL_METHOD(rs_createNamedTerminal, 1);
-   RS_REGISTER_CALL_METHOD(rs_clearTerminal, 1);
-   RS_REGISTER_CALL_METHOD(rs_getAllTerminals, 0);
-   RS_REGISTER_CALL_METHOD(rs_getTerminalContext, 1);
-   RS_REGISTER_CALL_METHOD(rs_getTerminalBuffer, 2);
-   RS_REGISTER_CALL_METHOD(rs_getVisibleTerminal, 0);
-   RS_REGISTER_CALL_METHOD(rs_isTerminalBusy, 1);
-   RS_REGISTER_CALL_METHOD(rs_isTerminalRunning, 1);
-   RS_REGISTER_CALL_METHOD(rs_killTerminal, 1);
-   RS_REGISTER_CALL_METHOD(rs_sendToTerminal, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalClear, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalList, 0);
+   RS_REGISTER_CALL_METHOD(rs_terminalContext, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalBuffer, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalVisible, 0);
+   RS_REGISTER_CALL_METHOD(rs_terminalBusy, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalRunning, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalKill, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalSend, 2);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
