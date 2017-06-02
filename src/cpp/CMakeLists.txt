@@ -210,7 +210,7 @@ if(WIN32)
         set(WINPTY_ARCH "32")
      endif()
 
-     set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.2-msys2-2.6.0")
+     set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.3-msys2-2.7.0")
      set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/${WINPTY_ARCH}/include")
      set(WINPTY_BINDIR_32 "${WINPTY_ROOT}/32/bin")
      set(WINPTY_BINDIR_64 "${WINPTY_ROOT}/64/bin")
