@@ -365,28 +365,12 @@ public class BranchToolbarButton extends ToolbarButton
          {
             switch (preview.getTypeInt())
             {
-            case Event.ONCLICK:
-            case Event.ONMOUSEUP:
-               onMouseEvent(preview);
-               break;
             case Event.ONKEYDOWN:
             case Event.ONKEYPRESS:
             case Event.ONKEYUP:
                onKeyEvent(preview);
                break;
             }
-         }
-         
-         private void onMouseEvent(NativePreviewEvent preview)
-         {
-            NativeEvent event = preview.getNativeEvent();
-            Element targetEl = event.getEventTarget().cast();
-            if (!DomUtils.isDescendant(targetEl, searchEl))
-               return;
-            
-            event.stopPropagation();
-            event.preventDefault();
-            focusSearch();
          }
          
          private void onKeyEvent(NativePreviewEvent preview)
