@@ -276,6 +276,30 @@ public class DomUtils
    {
       impl.focus(element, alwaysDriveSelection);
    }
+   
+   public static boolean isFocusable(Element element) 
+   {
+      // If it has a non-negative tab index, it can be focused
+      if (element.getTabIndex() >= 0)
+         return true;
+      
+      // Otherwise, determine whether an item can be focused based
+      // on its tag name.
+      String tagName = element.getTagName().toLowerCase();
+      if (tagName.equals("a"))
+      {
+         return element.hasAttribute("href");
+      }
+      else if (tagName.equals("input") || tagName.equals("select") ||
+               tagName.equals("textarea") || tagName.equals("button"))
+      {
+         return !element.hasAttribute("disabled");
+      }
+      else
+      {
+         return false;
+      }
+   }
 
    public static native boolean hasFocus(Element element) /*-{
       return element === $doc.activeElement;

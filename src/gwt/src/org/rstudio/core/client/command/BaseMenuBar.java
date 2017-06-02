@@ -14,11 +14,15 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -58,6 +62,52 @@ public class BaseMenuBar extends MenuBar
       // subclasses are instantiated using generated code--don't feel
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
+   }
+   
+   @Override
+   public void onBrowserEvent(Event event)
+   {
+      if (event.getTypeInt() == Event.ONCLICK)
+      {
+         // By default, GWT handles click events by sending focus
+         // to the menu bar instance, even when the target of the
+         // click was not a menu item (e.g. it was a separator).
+         // We want to avoid this behavior and so suppress click
+         // handling when the click target is not a menu item.
+         MenuItem targetItem = null;
+         Element targetEl = DOM.eventGetTarget(event);
+         for (MenuItem item : getItems())
+         {
+            if (item.getElement().isOrHasChild(targetEl))
+            {
+               targetItem = item;
+               break;
+            }
+         }
+         
+         // If we found a menu item, let super handle the event.
+         if (targetItem != null)
+         {
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         // Further verify that the element click is actually
+         // focusable, just to ensure that e.g. clicking on
+         // non-editable HTML entries in the menu still do
+         // focus on the menu.
+         if (!DomUtils.isFocusable(targetEl))
+         {
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         // Explicitly disallow superclass from handling click.
+      }
+      else
+      {
+         super.onBrowserEvent(event);
+      }
    }
 
    @Override
