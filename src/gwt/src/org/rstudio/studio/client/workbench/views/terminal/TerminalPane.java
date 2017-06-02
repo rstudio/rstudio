@@ -262,35 +262,42 @@ public class TerminalPane extends WorkbenchPane
       final TerminalSession visibleTerminal = getSelectedTerminal();
       if (visibleTerminal != null)
       {
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-               "Close " + visibleTerminal.getTitle(),
-               "Are you sure you want to exit the terminal named \"" +
-               visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
-               false,
-               new Operation()
+         if (visibleTerminal.getHasChildProcs())
+         {
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                  "Close " + visibleTerminal.getTitle(),
+                  "Are you sure you want to exit the terminal named \"" +
+                        visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
+                        false,
+                        new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     visibleTerminal.terminate();
-                  }
-               },
-               new Operation()
+                  visibleTerminal.terminate();
+               }
+            },
+            new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     setFocusOnVisible();
-                  }
-               },
-               new Operation()
+                  setFocusOnVisible();
+               }
+            },
+            new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     setFocusOnVisible();
-                  }
-               }, "Terminate", "Cancel", true);
+                  setFocusOnVisible();
+               }
+            }, "Terminate", "Cancel", true);
+         }
+         else
+         {
+            visibleTerminal.terminate();
+         }
       }
    }
 
