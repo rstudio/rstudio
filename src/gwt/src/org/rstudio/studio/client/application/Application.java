@@ -739,6 +739,11 @@ public class Application implements ApplicationEventHandlers
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
 
+      if (BrowseCap.isWindowsDesktop())
+      {
+         commands_.interruptTerminal().remove();
+      }
+
       if (!sessionInfo.getAllowShell())
       {
          commands_.showShellDialog().remove();

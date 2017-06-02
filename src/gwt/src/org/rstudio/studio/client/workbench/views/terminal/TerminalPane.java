@@ -49,6 +49,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -849,7 +850,20 @@ public class TerminalPane extends WorkbenchPane
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event)
             {
-               updateTerminalToolbar();
+               // When terminal reports that there are child procs, there can
+               // be a lag before it (potentially) enters a full-screen program, 
+               // and our toolbar controls use both bits of information to 
+               // set state. We don't get a notification on full-screen terminal
+               // mode, we can only poll it. So, delay just a bit to improve
+               // chances of it being current.
+               Timer timer = new Timer()
+               {
+                  public void run() 
+                  {
+                     updateTerminalToolbar();
+                  }
+               };
+               timer.schedule(200);
             }
          });
       }
@@ -871,7 +885,7 @@ public class TerminalPane extends WorkbenchPane
    private boolean creatingTerminal_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
-   private HandlerRegistration terminalHasChildProcsHandler_ = null;
+   private HandlerRegistration terminalHasChildProcsHandler_;
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;
