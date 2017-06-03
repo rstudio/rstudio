@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -45,7 +46,9 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.inject.Inject;
 
 /**
@@ -88,7 +91,7 @@ public class TerminalSession extends XTermWidget
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
       terminalHandle_ = handle;
-      hasChildProcs_ = hasChildProcs;
+      hasChildProcs_ = new Value<Boolean>(hasChildProcs);
       shellType_ = shellType;
       cols_ = cols;
       rows_ = rows;
@@ -371,7 +374,7 @@ public class TerminalSession extends XTermWidget
       return 
             uiPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop() && 
-            !hasChildProcs_ &&
+            !hasChildProcs_.getValue() &&
             !altBufferActive() &&
             cursorAtEOL();
    }
@@ -438,6 +441,15 @@ public class TerminalSession extends XTermWidget
    public void showTerminalInfo()
    {
       new TerminalInfoDialog(this, socket_).showModal();
+   }
+   
+   /**
+    * Send an interrupt (SIGINT) to the terminal's child process
+    */
+   public void interruptTerminal()
+   {
+      server_.processInterruptChild(getHandle(), 
+            new SimpleRequestCallback<Void>("Interrupting child"));
    }
    
    private int getInteractionMode()
@@ -535,7 +547,7 @@ public class TerminalSession extends XTermWidget
     */
    public boolean getHasChildProcs()
    {
-      return hasChildProcs_;
+      return hasChildProcs_.getValue();
    }
 
    /**
@@ -544,7 +556,12 @@ public class TerminalSession extends XTermWidget
     */
    public void setHasChildProcs(boolean hasChildProcs)
    {
-      hasChildProcs_ = hasChildProcs;
+      hasChildProcs_.setValue(hasChildProcs, true);
+   }
+
+   public HandlerRegistration addHasChildProcsChangeHandler(ValueChangeHandler<Boolean> handler)
+   {
+      return hasChildProcs_.addValueChangeHandler(handler);
    }
 
    /**
@@ -768,7 +785,7 @@ public class TerminalSession extends XTermWidget
    private String title_;
    private final int sequence_;
    private String terminalHandle_;
-   private boolean hasChildProcs_;
+   private final HasValue<Boolean> hasChildProcs_;
    private int shellType_;
    private boolean connected_;
    private boolean connecting_;

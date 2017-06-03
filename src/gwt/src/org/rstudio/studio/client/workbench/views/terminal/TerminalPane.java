@@ -46,6 +46,10 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEv
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -120,20 +124,72 @@ public class TerminalPane extends WorkbenchPane
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
 
-      ToolbarButton clearButton = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
-      clearButton.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
-      toolbar.addRightWidget(clearButton);
+      clearButton_ = commands_.clearTerminalScrollbackBuffer().createToolbarButton();
+      clearButton_.addStyleName(ThemeStyles.INSTANCE.terminalClearButton());
+      toolbar.addRightWidget(clearButton_);
 
+      interruptButton_ = commands_.interruptTerminal().createToolbarButton();
+      toolbar.addRightWidget(interruptButton_);
+
+      closeButton_ = commands_.closeTerminal().createToolbarButton();
+      toolbar.addRightWidget(closeButton_);
+
+      updateTerminalToolbar();
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
       commands_.renameTerminal().setEnabled(false);
-      commands_.closeTerminal().setEnabled(false);
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
       commands_.showTerminalInfo().setEnabled(false);
+      commands_.interruptTerminal().setEnabled(false);
 
       return toolbar;
    }
+   
+   private void updateTerminalToolbar()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            boolean interruptable = false;
+            boolean closable = false;
+            boolean clearable = false;
+
+            final TerminalSession visibleTerminal = getSelectedTerminal();
+            if (visibleTerminal != null)
+            {
+               clearable = true;
+               if (!visibleTerminal.getHasChildProcs())
+               {
+                  // nothing running in current terminal
+                  closable = true;
+               }
+               else
+               {
+                  if (!visibleTerminal.altBufferActive())
+                  {
+                     // not running a full-screen program
+                     interruptable = true;
+                     closable = false;
+                  }
+                  else
+                  {
+                     // running a full-screen program
+                     closable = true;
+                     interruptable = false;
+                     clearable = false;
+                  }
+               }
+            }
+            interruptButton_.setVisible(interruptable);
+            closeButton_.setVisible(closable);
+            clearButton_.setVisible(clearable);
+         }
+      });
+
+    }
 
    @Override
    public void onSelected()
@@ -262,35 +318,42 @@ public class TerminalPane extends WorkbenchPane
       final TerminalSession visibleTerminal = getSelectedTerminal();
       if (visibleTerminal != null)
       {
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-               "Close " + visibleTerminal.getTitle(),
-               "Are you sure you want to exit the terminal named \"" +
-               visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
-               false,
-               new Operation()
+         if (visibleTerminal.getHasChildProcs())
+         {
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                  "Close " + visibleTerminal.getTitle(),
+                  "Are you sure you want to exit the terminal named \"" +
+                        visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
+                        false,
+                        new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     visibleTerminal.terminate();
-                  }
-               },
-               new Operation()
+                  visibleTerminal.terminate();
+               }
+            },
+            new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     setFocusOnVisible();
-                  }
-               },
-               new Operation()
+                  setFocusOnVisible();
+               }
+            },
+            new Operation()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     setFocusOnVisible();
-                  }
-               }, "Terminate", "Cancel", true);
+                  setFocusOnVisible();
+               }
+            }, "Terminate", "Cancel", true);
+         }
+         else
+         {
+            visibleTerminal.terminate();
+         }
       }
    }
 
@@ -320,6 +383,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminalSessionsPanel_.remove(0);
       }
+      updateTerminalToolbar();
    }
 
    @Override
@@ -415,6 +479,17 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.showTerminalInfo();
    }
    
+   @Override
+   public void interruptTerminal()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+      visibleTerminal.interruptTerminal();
+   }
+   
    /**
     * Rename the currently visible terminal (client-side only).
     * 
@@ -449,7 +524,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminalSessionsPanel_.getWidgetIndex(terminal) == -1)
       {
          terminalSessionsPanel_.add(terminal);
-         terminalSessionsPanel_.showWidget(terminal);
+         showTerminalWidget(terminal);
          setFocusOnVisible();
       }
       else
@@ -457,6 +532,7 @@ public class TerminalPane extends WorkbenchPane
          terminal.writeRestartSequence();
       }
       creatingTerminal_ = false;
+      updateTerminalToolbar();
    }
    
    /**
@@ -495,6 +571,7 @@ public class TerminalPane extends WorkbenchPane
          activeTerminalToolbarButton_.setNoActiveTerminal();
          setTerminalTitle("");
       }
+      updateTerminalToolbar();
    }
 
    @Override
@@ -520,7 +597,7 @@ public class TerminalPane extends WorkbenchPane
       TerminalSession terminal = loadedTerminalWithHandle(handle);
       if (terminal != null)
       {
-         terminalSessionsPanel_.showWidget(terminal);
+         showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
          return;
@@ -762,11 +839,61 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
+   private void showTerminalWidget(TerminalSession terminal)
+   {
+      registerChildProcsHandler(terminal);
+      terminalSessionsPanel_.showWidget(terminal);
+      updateTerminalToolbar();
+   }
+   
+   private void registerChildProcsHandler(TerminalSession terminal)
+   {
+      unregisterChildProcsHandler();
+      if (terminal != null)
+      {
+         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
+               new ValueChangeHandler<Boolean>() 
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               // When terminal reports that there are child procs, there can
+               // be a lag before it (potentially) enters a full-screen program, 
+               // and our toolbar controls use both bits of information to 
+               // set state. We don't get a notification on full-screen terminal
+               // mode, we can only poll it. So, delay just a bit to improve
+               // chances of it being current.
+               Timer timer = new Timer()
+               {
+                  public void run() 
+                  {
+                     updateTerminalToolbar();
+                  }
+               };
+               timer.schedule(200);
+            }
+         });
+      }
+   }
+   
+   private void unregisterChildProcsHandler()
+   {
+      if (terminalHasChildProcsHandler_ != null)
+      {
+         terminalHasChildProcsHandler_.removeHandler();
+         terminalHasChildProcsHandler_ = null;
+      }
+   }
+
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
+   private ToolbarButton interruptButton_;
+   private ToolbarButton closeButton_;
+   ToolbarButton clearButton_;
+   private HandlerRegistration terminalHasChildProcsHandler_;
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;

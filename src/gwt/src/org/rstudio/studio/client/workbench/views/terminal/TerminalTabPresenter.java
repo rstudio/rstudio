@@ -95,6 +95,11 @@ public class TerminalTabPresenter extends BusyPresenter
       void sendToTerminal(String text, String caption);
       
       /**
+       * Send SIGINT to child process of the terminal shell.
+       */
+      void interruptTerminal();
+      
+      /**
        * Create a new terminal with given caption.
        * @param caption requested terminal caption, or null to autogenerate
        * caption
@@ -169,6 +174,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onShowTerminalInfo()
    {
       view_.showTerminalInfo();
+   }
+   
+   @Handler
+   public void onInterruptTerminal()
+   {
+      view_.interruptTerminal();
    }
 
    public void initialize()
