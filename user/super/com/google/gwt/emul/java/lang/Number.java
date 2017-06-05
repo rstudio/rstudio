@@ -195,9 +195,8 @@ public abstract class Number implements Serializable {
     return parseFloat(s);
   }
 
-  private static native double parseFloat(String str) /*-{
-    return parseFloat(str);
-  }-*/;
+  @JsMethod(namespace = "<window>")
+  private static native double parseFloat(String str);
 
   /**
    * @skip
@@ -340,14 +339,12 @@ public abstract class Number implements Serializable {
    */
   private static boolean __isValidDouble(String str) {
     if (floatRegex == null) {
-      floatRegex = createFloatRegex();
+      floatRegex =
+          new NativeRegExp(
+              "^\\s*[+-]?(NaN|Infinity|((\\d+\\.?\\d*)|(\\.\\d+))([eE][+-]?\\d+)?[dDfF]?)\\s*$");
     }
     return floatRegex.test(str);
   }
-
-  private static native NativeRegExp createFloatRegex() /*-{
-    return /^\s*[+-]?(NaN|Infinity|((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?[dDfF]?)\s*$/;
-  }-*/;
 
   // CHECKSTYLE_ON
 

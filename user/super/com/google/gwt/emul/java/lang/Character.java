@@ -226,42 +226,45 @@ public final class Character implements Comparable<Character>, Serializable {
     return codePoint >= MIN_VALUE && codePoint <= MAX_VALUE;
   }
 
+  private static NativeRegExp digitRegex;
+
   /*
    * TODO: correct Unicode handling.
    */
   public static boolean isDigit(char c) {
-    return digitRegex().test(String.valueOf(c));
+    if (digitRegex == null) {
+      digitRegex = new NativeRegExp("\\d");
+    }
+    return digitRegex.test(String.valueOf(c));
   }
-
-  private static native NativeRegExp digitRegex() /*-{
-    return /\d/;
-  }-*/;
 
   public static boolean isHighSurrogate(char ch) {
     return ch >= MIN_HIGH_SURROGATE && ch <= MAX_HIGH_SURROGATE;
   }
 
+  private static NativeRegExp leterRegex;
+
   /*
    * TODO: correct Unicode handling.
    */
   public static boolean isLetter(char c) {
-    return leterRegex().test(String.valueOf(c));
+    if (leterRegex == null) {
+      leterRegex = new NativeRegExp("[A-Z]", "i");
+    }
+    return leterRegex.test(String.valueOf(c));
   }
 
-  private static native NativeRegExp leterRegex() /*-{
-    return /[A-Z]/i;
-  }-*/;
+  private static NativeRegExp isLeterOrDigitRegex;
 
   /*
    * TODO: correct Unicode handling.
    */
   public static boolean isLetterOrDigit(char c) {
-    return leterOrDigitRegex().test(String.valueOf(c));
+    if (isLeterOrDigitRegex == null) {
+      isLeterOrDigitRegex = new NativeRegExp("[A-Z\\d]", "i");
+    }
+    return isLeterOrDigitRegex.test(String.valueOf(c));
   }
-
-  private static native NativeRegExp leterOrDigitRegex() /*-{
-    return /[A-Z\d]/i;
-  }-*/;
 
   /*
    * TODO: correct Unicode handling.
@@ -296,18 +299,27 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public static boolean isWhitespace(char ch) {
-    return whitespaceRegex().test(String.valueOf(ch));
+    return isWhitespace(String.valueOf(ch));
   }
 
   public static boolean isWhitespace(int codePoint) {
-    return whitespaceRegex().test(String.fromCodePoint(codePoint));
+    return isWhitespace(String.fromCodePoint(codePoint));
   }
 
-  // The regex would just be /\s/, but browsers handle non-breaking spaces inconsistently. Also,
-  // the Java definition includes separators.
-  private static native NativeRegExp whitespaceRegex() /*-{
-    return /[\t-\r \u1680\u180E\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000\uFEFF]|[\x1C-\x1F]/;
-  }-*/;
+  private static NativeRegExp whitespaceRegex;
+
+  private static boolean isWhitespace(String ch) {
+    if (whitespaceRegex == null) {
+      // The regex would just be /\s/, but browsers handle non-breaking spaces inconsistently. Also,
+      // the Java definition includes separators.
+      whitespaceRegex =
+          new NativeRegExp(
+              "[\\u1680\\u180E\\u2000-\\u2006\\u2008-\\u200A\\u2028\\u2029\\u205F\\u3000\\uFEFF]"
+                  + "|[\\t-\\r ]"
+                  + "|[\\x1C-\\x1F]");
+    }
+    return whitespaceRegex.test(ch);
+  }
 
   public static boolean isSupplementaryCodePoint(int codePoint) {
     return codePoint >= MIN_SUPPLEMENTARY_CODE_POINT && codePoint <= MAX_CODE_POINT;

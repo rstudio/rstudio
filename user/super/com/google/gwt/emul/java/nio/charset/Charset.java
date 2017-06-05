@@ -57,16 +57,12 @@ public abstract class Charset implements Comparable<Charset> {
       return EmulatedCharset.UTF_8;
     }
 
-    if (!createLegalCharsetNameRegex().test(charsetName)) {
-      throw new IllegalCharsetNameException(charsetName);
-    } else {
+    if (new NativeRegExp("^[A-Za-z0-9][\\w-:\\.\\+]*$").test(charsetName)) {
       throw new UnsupportedCharsetException(charsetName);
+    } else {
+      throw new IllegalCharsetNameException(charsetName);
     }
   }
-
-  private static native NativeRegExp createLegalCharsetNameRegex() /*-{
-    return /^[A-Za-z0-9][\w-:\.\+]*$/;
-  }-*/;
 
   private final String name;
 

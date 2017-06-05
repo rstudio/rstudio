@@ -142,7 +142,8 @@ public final class MathContext implements Serializable {
   public MathContext(String val) {
     checkNotNull(val, "null string");
 
-    String[] extractedValues = createParseRegexp().exec(val);
+    String[] extractedValues =
+        new NativeRegExp("^precision=(\\d+)\\ roundingMode=(\\w+)$").exec(val);
     if (extractedValues == null || extractedValues.length != 3) {
       throw new IllegalArgumentException("bad string format");
     }
@@ -158,10 +159,6 @@ public final class MathContext implements Serializable {
 
     checkCriticalArgument(this.precision >= 0, "Digits < 0");
   }
-
-  private static native NativeRegExp createParseRegexp() /*-{
-    return /^precision=(\d+)\ roundingMode=(\w+)$/;
-  }-*/;
 
   /* Public Methods */
 
