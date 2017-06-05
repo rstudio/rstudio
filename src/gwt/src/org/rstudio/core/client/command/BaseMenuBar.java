@@ -14,11 +14,16 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -58,6 +63,84 @@ public class BaseMenuBar extends MenuBar
       // subclasses are instantiated using generated code--don't feel
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
+   }
+   
+   private MenuItem getTargetedMenuItem(Event event)
+   {
+      Element targetEl = DOM.eventGetTarget(event);
+      if (targetEl == null)
+         return null;
+      
+      for (MenuItem item : getItems())
+         if (item.getElement().isOrHasChild(targetEl))
+            return item;
+      
+      return null;
+   }
+   
+   @Override
+   public void onBrowserEvent(Event event)
+   {
+      if (event.getTypeInt() == Event.ONKEYDOWN ||
+          event.getTypeInt() == Event.ONKEYPRESS ||
+          event.getTypeInt() == Event.ONKEYUP)
+      {
+         // For 'left' and 'right' keypresses, if an input
+         // element is focused, we want to allow the default
+         // browser behavior for the keypress -- therefore,
+         // don't allow superclass handling of event in such
+         // a case.
+         int keyCode = event.getKeyCode();
+         switch (keyCode)
+         {
+         case KeyCodes.KEY_LEFT:
+         case KeyCodes.KEY_RIGHT:
+            break;
+         default:
+            // For other keypresses, allow superclass to handle
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         Element activeEl = DomUtils.getActiveElement();
+         if (activeEl.hasTagName("input"))
+            return;
+         
+         super.onBrowserEvent(event);
+      }
+      else if (event.getTypeInt() == Event.ONCLICK)
+      {
+         // By default, GWT handles click events by sending focus
+         // to the menu bar instance, even when the target of the
+         // click was not a menu item (e.g. it was a separator).
+         // We want to avoid this behavior and so suppress click
+         // handling when the click target is not a menu item.
+         // If we found a menu item, let super handle the event.
+         MenuItem targetItem = getTargetedMenuItem(event);
+         if (targetItem != null)
+         {
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         // Further verify that the element click is actually
+         // focusable, just to ensure that e.g. clicking on
+         // non-editable HTML entries in the menu still do
+         // focus on the menu.
+         Element targetEl = DOM.eventGetTarget(event);
+         if (!DomUtils.isFocusable(targetEl))
+         {
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         // Don't forward browser event to superclass, effectively
+         // hiding this event from the GWT MenuBar class.
+      }
+      else
+      {
+         super.onBrowserEvent(event);
+      }
    }
 
    @Override
