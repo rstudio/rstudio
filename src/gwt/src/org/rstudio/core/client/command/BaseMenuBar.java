@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -80,10 +81,34 @@ public class BaseMenuBar extends MenuBar
    @Override
    public void onBrowserEvent(Event event)
    {
-      if (event.getTypeInt() == Event.ONCLICK ||
-          event.getTypeInt() == Event.ONKEYDOWN ||
+      if (event.getTypeInt() == Event.ONKEYDOWN ||
           event.getTypeInt() == Event.ONKEYPRESS ||
           event.getTypeInt() == Event.ONKEYUP)
+      {
+         // For 'left' and 'right' keypresses, if an input
+         // element is focused, we want to allow the default
+         // browser behavior for the keypress -- therefore,
+         // don't allow superclass handling of event in such
+         // a case.
+         int keyCode = event.getKeyCode();
+         switch (keyCode)
+         {
+         case KeyCodes.KEY_LEFT:
+         case KeyCodes.KEY_RIGHT:
+            break;
+         default:
+            // For other keypresses, allow superclass to handle
+            super.onBrowserEvent(event);
+            return;
+         }
+         
+         Element activeEl = DomUtils.getActiveElement();
+         if (activeEl.hasTagName("input"))
+            return;
+         
+         super.onBrowserEvent(event);
+      }
+      else if (event.getTypeInt() == Event.ONCLICK)
       {
          // By default, GWT handles click events by sending focus
          // to the menu bar instance, even when the target of the
