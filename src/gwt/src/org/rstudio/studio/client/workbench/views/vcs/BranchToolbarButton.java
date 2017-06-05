@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -28,6 +29,8 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -349,8 +352,9 @@ public class BranchToolbarButton extends ToolbarButton
       
       labelEl.getStyle().setFloat(Style.Float.LEFT);
       searchEl.getStyle().setFloat(Style.Float.RIGHT);
-      searchEl.getStyle().setMarginLeft(10, Unit.PX);
-      searchEl.getStyle().setMarginTop(-2, Unit.PX);
+      
+      if (!searchEl.hasClassName(RES.styles().searchWidget()))
+         searchEl.addClassName(RES.styles().searchWidget());
       
       Element container = DOM.createDiv();
       container.appendChild(labelEl);
@@ -470,6 +474,17 @@ public class BranchToolbarButton extends ToolbarButton
       return tableNode.<Element>cast();
    }
 
+   public interface Styles extends CssResource
+   {
+      String searchWidget();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("BranchToolbarButton.css")
+      Styles styles();
+   }
+
    protected final Provider<GitState> pVcsState_;
    
    private final ToolbarPopupMenu menu_;
@@ -486,4 +501,10 @@ public class BranchToolbarButton extends ToolbarButton
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
    private static final String LOCAL_BRANCHES = "(local branches)";
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
 }
