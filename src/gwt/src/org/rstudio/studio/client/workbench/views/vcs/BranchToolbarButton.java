@@ -136,6 +136,16 @@ public class BranchToolbarButton extends ToolbarButton
                   }
                });
             }
+            else
+            {
+               if (previewHandler_ != null)
+               {
+                  previewHandler_.removeHandler();
+                  previewHandler_ = null;
+               }
+               
+               searchEl_ = null;
+            }
          }
       });
       
@@ -347,17 +357,19 @@ public class BranchToolbarButton extends ToolbarButton
       container.appendChild(labelEl);
       container.appendChild(searchEl);
       
+      searchEl_ = searchEl;
+      
+      // For some reason any attempts to click within the search box (when it
+      // lives as a separator in the menu) end up losing focus immediately after
+      // clicking, so we use a preview handler just to ensure focus doesn't leave
+      // the search widget on click events.
+      
       if (previewHandler_ != null)
       {
          previewHandler_.removeHandler();
          previewHandler_ = null;
       }
       
-      // For some reason any attempts to click within the search box (when it
-      // lives as a separator in the menu) end up losing focus immediately after
-      // clicking, so we use a preview handler just to ensure focus doesn't leave
-      // the search widget on click events.
-      searchEl_ = searchEl;
       previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
