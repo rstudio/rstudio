@@ -64,28 +64,34 @@ public class BaseMenuBar extends MenuBar
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
    }
    
+   private MenuItem getTargetedMenuItem(Event event)
+   {
+      Element targetEl = DOM.eventGetTarget(event);
+      if (targetEl == null)
+         return null;
+      
+      for (MenuItem item : getItems())
+         if (item.getElement().isOrHasChild(targetEl))
+            return item;
+      
+      return null;
+   }
+   
    @Override
    public void onBrowserEvent(Event event)
    {
-      if (event.getTypeInt() == Event.ONCLICK)
+      if (event.getTypeInt() == Event.ONCLICK ||
+          event.getTypeInt() == Event.ONKEYDOWN ||
+          event.getTypeInt() == Event.ONKEYPRESS ||
+          event.getTypeInt() == Event.ONKEYUP)
       {
          // By default, GWT handles click events by sending focus
          // to the menu bar instance, even when the target of the
          // click was not a menu item (e.g. it was a separator).
          // We want to avoid this behavior and so suppress click
          // handling when the click target is not a menu item.
-         MenuItem targetItem = null;
-         Element targetEl = DOM.eventGetTarget(event);
-         for (MenuItem item : getItems())
-         {
-            if (item.getElement().isOrHasChild(targetEl))
-            {
-               targetItem = item;
-               break;
-            }
-         }
-         
          // If we found a menu item, let super handle the event.
+         MenuItem targetItem = getTargetedMenuItem(event);
          if (targetItem != null)
          {
             super.onBrowserEvent(event);
@@ -96,13 +102,15 @@ public class BaseMenuBar extends MenuBar
          // focusable, just to ensure that e.g. clicking on
          // non-editable HTML entries in the menu still do
          // focus on the menu.
+         Element targetEl = DOM.eventGetTarget(event);
          if (!DomUtils.isFocusable(targetEl))
          {
             super.onBrowserEvent(event);
             return;
          }
          
-         // Explicitly disallow superclass from handling click.
+         // Don't forward browser event to superclass, effectively
+         // hiding this event from the GWT MenuBar class.
       }
       else
       {

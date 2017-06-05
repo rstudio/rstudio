@@ -120,7 +120,6 @@ public class BranchToolbarButton extends ToolbarButton
                if (initialBranchMap_ != null)
                {
                   searchWidget_.setValue("");
-                  searchValue_ = "";
                   onSearchValueChange();
                }
                
@@ -392,8 +391,8 @@ public class BranchToolbarButton extends ToolbarButton
             if (!DomUtils.isDescendant(targetEl, searchEl))
                return;
             
-            searchValue_ = searchWidget_.getValue();
-            if (!searchValue_.equals(lastSearchValue_))
+            String searchValue = StringUtil.notNull(searchWidget_.getValue());
+            if (!searchValue.equals(lastSearchValue_))
                searchValueChangeTimer_.schedule(200);
          }
       });
@@ -403,11 +402,10 @@ public class BranchToolbarButton extends ToolbarButton
    
    private void onSearchValueChange()
    {
-      // update last search value
-      lastSearchValue_ = searchValue_;
+      lastSearchValue_ = searchWidget_.getValue();
       
       // fast path -- no query to use
-      String query = StringUtil.notNull(searchValue_).trim();
+      String query = StringUtil.notNull(lastSearchValue_).trim();
       if (query.isEmpty())
       {
          onBeforePopulateMenu(menu_);
@@ -482,7 +480,6 @@ public class BranchToolbarButton extends ToolbarButton
    private Element searchEl_;
    private HandlerRegistration previewHandler_;
    
-   private String searchValue_;
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;
 
