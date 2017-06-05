@@ -54,7 +54,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       DependencyRequest(
             String progressCaptionIn,
             String userActionIn,
-            CommandWith2Args<String,Command> userPromptIn,
+            CommandWith2Args<String,CommandWithArg<Boolean>> userPromptIn,
             Dependency[] dependenciesIn,
             boolean silentEmbeddedUpdateIn,
             CommandWithArg<Boolean> onCompleteIn)
@@ -68,7 +68,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       }
       String progressCaption;
       String userAction;
-      CommandWith2Args<String,Command> userPrompt;
+      CommandWith2Args<String,CommandWithArg<Boolean>> userPrompt;
       Dependency[] dependencies;
       boolean silentEmbeddedUpdate;
       CommandWithArg<Boolean> onComplete;
@@ -89,10 +89,10 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    }
    
    public void withDependencies(String progressCaption,
-                                CommandWith2Args<String,Command> userPrompt,
-                                Dependency[] dependencies, 
-                                boolean silentEmbeddedUpdate,
-                                CommandWithArg<Boolean> onComplete)
+        CommandWith2Args<String,CommandWithArg<Boolean>> userPrompt,
+        Dependency[] dependencies, 
+        boolean silentEmbeddedUpdate,
+        CommandWithArg<Boolean> onComplete)
    {
       withDependencies(progressCaption,
                        null,
@@ -138,7 +138,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    
    public void withRSConnect(String userAction, 
          boolean requiresRmarkdown,
-         CommandWith2Args<String, Command> userPrompt, 
+         CommandWith2Args<String, CommandWithArg<Boolean>> userPrompt, 
          final CommandWithArg<Boolean> onCompleted)
    {
       // build dependency array
@@ -230,22 +230,32 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withShiny(final String userAction, final Command command)
    {
       // create user prompt command
-      CommandWith2Args<String, Command> userPrompt =
-            new CommandWith2Args<String, Command>() {
+      CommandWith2Args<String, CommandWithArg<Boolean>> userPrompt =
+            new CommandWith2Args<String, CommandWithArg<Boolean>>() {
          @Override
-         public void execute(final String unmetDeps, final Command yesCommand)
+         public void execute(final String unmetDeps, 
+                             final CommandWithArg<Boolean> responseCommand)
          {
             globalDisplay_.showYesNoMessage(
               MessageDialog.QUESTION,
               "Install Shiny Package", 
               userAction + " requires installation of an updated version " +
               "of the shiny package.\n\nDo you want to install shiny now?",
-                  new Operation() {
-
+                  false, // include cancel
+                  new Operation() 
+                  {
                      @Override
                      public void execute()
                      {
-                        yesCommand.execute();
+                        responseCommand.execute(true);
+                     }
+                  },
+                  new Operation() 
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        responseCommand.execute(false);
                      }
                   },
                   true);
@@ -653,11 +663,11 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    }
    
    private void withDependencies(String progressCaption,
-                                 final String userAction,
-                                 final CommandWith2Args<String,Command> userPrompt,
-                                 Dependency[] dependencies, 
-                                 final boolean silentEmbeddedUpdate,
-                                 final CommandWithArg<Boolean> onComplete)
+         final String userAction,
+         final CommandWith2Args<String,CommandWithArg<Boolean>> userPrompt,
+         Dependency[] dependencies, 
+         final boolean silentEmbeddedUpdate,
+         final CommandWithArg<Boolean> onComplete)
    {
       // add the request to the queue rather than processing it right away; 
       // this frees us of the burden of trying to de-dupe requests for the
@@ -807,12 +817,12 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                if (req.userPrompt != null)
                {
                   req.userPrompt.execute(describeDepPkgs(unsatisfiedDeps), 
-                         new Command()
+                         new CommandWithArg<Boolean>()
                          {
                            @Override
-                           public void execute()
+                           public void execute(Boolean arg)
                            {
-                              installCommand.execute(true);
+                              installCommand.execute(arg);
                            }
                          });
                }
