@@ -1825,6 +1825,7 @@ Error getChildProcesses(pid_t pid,
    // get all processes
    std::vector<ProcessInfo> processes;
    Error error = processInfo("", &processes);
+   if (error) return error;
 
    // build a process tree of the processes
    ProcessTreeT tree;
