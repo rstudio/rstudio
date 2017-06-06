@@ -34,9 +34,10 @@ void addShell(const core::FilePath& expectedPath,
               TerminalShell::TerminalShellType type,
               const std::string& title,
               std::vector<std::string> args,
-              std::vector<TerminalShell>* pShells)
+              std::vector<TerminalShell>* pShells,
+              bool checkPathExists = true)
 {
-   if (expectedPath.exists())
+   if (!checkPathExists || expectedPath.exists())
       pShells->push_back(TerminalShell(type, title, expectedPath, args));
 }
 
@@ -137,6 +138,15 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
          addShell(sysShell.path, sysShell.type, sysShell.name, sysShell.args, pShells);
       }
    }
+
+   // Add user-selectable shell command option
+   TerminalShell customShell;
+   if (AvailableTerminalShells::getCustomShell(&customShell))
+   {
+      addShell(customShell.path, customShell.type, customShell.name,
+               customShell.args, pShells,
+               false /*checkPathExists*/);
+   }
 }
 
 } // anonymous namespace
@@ -170,6 +180,8 @@ std::string TerminalShell::getShellName(TerminalShellType type)
       return "PowerShell (64-bit)";
    case PosixBash:
       return "Bash";
+   case CustomShell:
+      return "Custom";
    default:
       return "Unknown";
    }
@@ -251,6 +263,18 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->args.push_back("bash");
    pShellInfo->args.push_back("-l"); // act like a login shell
 #endif
+   return true;
+}
+
+bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
+{
+   pShellInfo->name = "Custom";
+   pShellInfo->type = TerminalShell::CustomShell;
+   pShellInfo->path = userSettings().customShellCommand();
+   std::vector<std::string> args;
+   if (!userSettings().customShellOptions().empty())
+      args.push_back(userSettings().customShellOptions());
+   pShellInfo->args = args;
    return true;
 }
 

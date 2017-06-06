@@ -124,6 +124,12 @@ public:
    console_process::TerminalShell::TerminalShellType defaultTerminalShellValue() const;
    void setDefaultTerminalShellValue(console_process::TerminalShell::TerminalShellType shell);
 
+   core::FilePath customShellCommand() const;
+   void setCustomShellCommand(const std::string& commandPath);
+
+   std::string customShellOptions() const;
+   void setCustomShellOptions(const std::string& options);
+
    core::FilePath initialWorkingDirectory() const;
    std::string initialWorkingDirectory(const std::string& defaultStr) const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
