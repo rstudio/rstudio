@@ -880,9 +880,24 @@
          if (paren != -1)
             signature <- substring(signature, paren)
       }
-      return (.rs.scalar(signature))
+      return(.rs.scalar(signature))
    }
-
+   
+   # if we're getting arguments for 'write.csv', infer arguments
+   # based on 'write.table'
+   isUtils <-
+      identical(src, "package:utils") ||
+      identical(src, "utils")
+   
+   if (isUtils)
+   {
+      if (identical(name, "write.csv") ||
+          identical(name, "write.csv2"))
+      {
+         name <- "write.table"
+      }
+   }
+      
    if (identical(src, ""))
       src <- .GlobalEnv
    
