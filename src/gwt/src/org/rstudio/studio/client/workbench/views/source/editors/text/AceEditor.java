@@ -1678,7 +1678,7 @@ public class AceEditor implements DocDisplay,
 
       while (curRow < getSession().getLength())
       {
-         String line = getSession().getLine(curRow);
+         String line = getSession().getLine(curRow).trim();
          if (line.length() == 0)
          {
             getSession().getSelection().moveCursorTo(curRow, 0, false);

@@ -16,14 +16,18 @@ properties([
                 ])
 ])
 
-def resolve_deps(type, arch) {
-  def linux_bin = (arch=='i386') ? 'linux32' : '' // only required in centos-land.
+def resolve_deps(type, arch, variant) {
+  def linux_bin = (arch == 'i386') ? 'linux32' : '' // only required in centos-land.
   switch ( type ) {
       case "DEB":
         sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
         break
       case "RPM":
-        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
+        if (variant == 'SLES') {
+          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-zypper --exclude-qt-sdk && cd ../.."
+        } else {
+          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
+        }
         break
   }
 }
@@ -107,7 +111,7 @@ try {
                     }
                     container.inside() {
                         stage('resolve deps'){
-                            resolve_deps(get_type_from_os(current_container.os), current_container.arch)
+                            resolve_deps(get_type_from_os(current_container.os), current_container.arch, current_container.variant)
                         }
                         stage('compile package') {
                             compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)

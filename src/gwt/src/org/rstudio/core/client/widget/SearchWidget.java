@@ -73,6 +73,17 @@ public class SearchWidget extends Composite implements SearchDisplay
       }
    }
   
+   public SearchWidget()
+   {
+      this(new SuggestOracle()
+      {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no-op
+         }
+      });
+   }
 
    public SearchWidget(SuggestOracle oracle)
    {
@@ -108,7 +119,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       close_.setVisible(false);
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
-
+      
       suggestBox_.setStylePrimaryName(styles.searchBox());
       suggestBox_.setAutoSelectEnabled(false) ;
       addKeyDownHandler(new KeyDownHandler() {
@@ -329,7 +340,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       return focusTracker_.isFocused();
    }
-
+   
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
    @UiField

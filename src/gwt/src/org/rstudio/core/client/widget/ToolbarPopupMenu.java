@@ -51,7 +51,9 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public ToolbarPopupMenu()
    {
       super(true);
-      add(wrapMenuBar(menuBar_ = createMenuBar()));
+      menuBar_ = createMenuBar();
+      Widget mainWidget = createMainWidget();
+      setWidget(mainWidget);
    }
    
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
@@ -65,16 +67,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return new ToolbarMenuBar(true);
    }
 
-   protected Widget wrapMenuBar(ToolbarMenuBar toolbarMenuBar)
+   protected Widget createMainWidget()
    {
-      return toolbarMenuBar;
+      return menuBar_;
    }
-
+   
    @Override
    protected void onUnload()
    {
       super.onUnload();
       menuBar_.selectItem(null);
+   }
+   
+   public void selectFirst()
+   {
+      menuBar_.selectFirst();
    }
 
    public void selectItem(MenuItem menuItem)
@@ -198,7 +205,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          super(vertical) ;
       }
-
+      
       @Override
       protected void onUnload()
       {
@@ -210,6 +217,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       protected void onLoad()
       {
          super.onLoad();
+         
          nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
          {
             public void onPreviewNativeEvent(NativePreviewEvent e)

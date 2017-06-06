@@ -14,22 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +53,13 @@ import java.util.Map;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -90,6 +109,58 @@ public class BranchToolbarButton extends ToolbarButton
                                                 BranchToolbarButton.this, true);
          }
       };
+      
+      menu_ = getMenu();
+      menu_.setAutoHideRedundantSeparators(false);
+      menu_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               // force a re-draw if necessary
+               if (initialBranchMap_ != null)
+               {
+                  searchWidget_.setValue("");
+                  onSearchValueChange();
+               }
+               
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     focusSearch();
+                     Element tableEl = getMenuTableElement();
+                     if (tableEl != null)
+                        menuWidth_ = tableEl.getOffsetWidth();
+                  }
+               });
+            }
+            else
+            {
+               if (previewHandler_ != null)
+               {
+                  previewHandler_.removeHandler();
+                  previewHandler_ = null;
+               }
+               
+               searchEl_ = null;
+            }
+         }
+      });
+      
+      searchWidget_ = new SearchWidget();
+      
+      searchValueChangeTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            onSearchValueChange();
+         }
+      };
    }
    
    public void setBranchCaption(String caption)
@@ -109,15 +180,18 @@ public class BranchToolbarButton extends ToolbarButton
    @Override
    public void onVcsRefresh(VcsRefreshEvent event)
    {
-      ToolbarPopupMenu rootMenu = getMenu();
-      rootMenu.setAutoHideRedundantSeparators(false);
-      rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
+      onRefresh(branches);
+   }
+   
+   private void onRefresh(JsArrayString branches)
+   {
+      menu_.clearItems();
       
       if (branches.length() == 0)
       {
-         onBeforePopulateMenu(rootMenu);
-         populateEmptyMenu(rootMenu);
+         onBeforePopulateMenu(menu_);
+         populateEmptyMenu(menu_);
          return;
       }
       
@@ -145,8 +219,11 @@ public class BranchToolbarButton extends ToolbarButton
          }
       }
       
-      onBeforePopulateMenu(rootMenu);
-      populateMenu(rootMenu, branchMap);
+      // record the branches used on first populate
+      initialBranchMap_ = branchMap;
+      
+      onBeforePopulateMenu(menu_);
+      populateMenu(menu_, branchMap);
    }
    
    private void populateEmptyMenu(final ToolbarPopupMenu menu)
@@ -154,20 +231,28 @@ public class BranchToolbarButton extends ToolbarButton
       menu.addSeparator(new CustomMenuItemSeparator()
       {
          @Override
-         public Widget createMainWidget()
+         public Element createMainElement()
          {
             Label label = new Label(NO_BRANCHES_AVAILABLE);
             label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
             label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-            return label;
+            return createSearchSeparator(label);
          }
       });
    }
    
    private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
    {
+      if (branchMap.isEmpty())
+      {
+         populateEmptyMenu(menu);
+         return;
+      }
+      
       MapUtil.forEach(branchMap, new MapUtil.ForEachCommand<String, List<String>>()
       {
+         int separatorCount_ = 0;
+            
          @Override
          public void execute(final String caption, final List<String> branches)
          {
@@ -198,7 +283,7 @@ public class BranchToolbarButton extends ToolbarButton
             menu.addSeparator(new CustomMenuItemSeparator()
             {
                @Override
-               public Widget createMainWidget()
+               public Element createMainElement()
                {
                   String branchLabel = caption.equals(LOCAL_BRANCHES)
                         ? LOCAL_BRANCHES
@@ -206,7 +291,11 @@ public class BranchToolbarButton extends ToolbarButton
                   Label label = new Label(branchLabel);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  return label;
+                  
+                  Element mainEl = (separatorCount_++ == 0)
+                        ? createSearchSeparator(label)
+                        : label.getElement();
+                  return mainEl;
                }
             });
             menu.addSeparator();
@@ -231,15 +320,191 @@ public class BranchToolbarButton extends ToolbarButton
             }
          }
       });
+      
+      if (menuWidth_ != 0)
+      {
+         Element tableEl = getMenuTableElement();
+         if (tableEl != null)
+            tableEl.getStyle().setWidth(menuWidth_, Unit.PX);
+      }
+      
+      menu.selectFirst();
    }
-
+   
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
    {
+      menu_.clearItems();
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            focusSearch();
+         }
+      });
+   }
+   
+   private Element createSearchSeparator(Label label)
+   {
+      final Element searchEl = searchWidget_.getElement();
+      final Element labelEl = label.getElement();
+      
+      labelEl.getStyle().setFloat(Style.Float.LEFT);
+      searchEl.getStyle().setFloat(Style.Float.RIGHT);
+      
+      if (!searchEl.hasClassName(RES.styles().searchWidget()))
+         searchEl.addClassName(RES.styles().searchWidget());
+      
+      Element container = DOM.createDiv();
+      container.appendChild(labelEl);
+      container.appendChild(searchEl);
+      
+      searchEl_ = searchEl;
+      
+      // For some reason any attempts to click within the search box (when it
+      // lives as a separator in the menu) end up losing focus immediately after
+      // clicking, so we use a preview handler just to ensure focus doesn't leave
+      // the search widget on click events.
+      
+      if (previewHandler_ != null)
+      {
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
+      }
+      
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            switch (preview.getTypeInt())
+            {
+            case Event.ONKEYDOWN:
+            case Event.ONKEYPRESS:
+            case Event.ONKEYUP:
+               onKeyEvent(preview);
+               break;
+            }
+         }
+         
+         private void onKeyEvent(NativePreviewEvent preview)
+         {
+            NativeEvent event = preview.getNativeEvent();
+            Element targetEl = event.getEventTarget().cast();
+            if (!DomUtils.isDescendant(targetEl, searchEl))
+               return;
+            
+            String searchValue = StringUtil.notNull(searchWidget_.getValue());
+            if (!searchValue.equals(lastSearchValue_))
+               searchValueChangeTimer_.schedule(200);
+         }
+      });
+      
+      return container;
+   }
+   
+   private void onSearchValueChange()
+   {
+      lastSearchValue_ = searchWidget_.getValue();
+      
+      // fast path -- no query to use
+      String query = StringUtil.notNull(lastSearchValue_).trim();
+      if (query.isEmpty())
+      {
+         onBeforePopulateMenu(menu_);
+         populateMenu(menu_, initialBranchMap_);
+         return;
+      }
+      
+      // iterate through initial branch map and copy branches
+      // matching the current query. TODO: should we re-order
+      // based on how 'close' a match we have?
+      Map<String, List<String>> branchMap = new HashMap<String, List<String>>();
+      for (String key : initialBranchMap_.keySet())
+      {
+         List<String> filteredBranches = new ArrayList<String>();
+         List<String> branches = initialBranchMap_.get(key);
+         for (String branch : branches)
+            if (branch.indexOf(query) != -1)
+               filteredBranches.add(branch);
+         
+         if (!filteredBranches.isEmpty())
+            branchMap.put(key, filteredBranches);
+      }
+      
+      // re-populate
+      menu_.clearItems();
+      onBeforePopulateMenu(menu_);
+      populateMenu(menu_, branchMap);
+   }
+   
+   private void focusSearch()
+   {
+      if (searchEl_ == null)
+         return;
+      
+      NodeList<Element> inputEls = searchEl_.getElementsByTagName("input");
+      if (inputEls == null || inputEls.getLength() != 1)
+         return;
+      
+      Element inputEl = inputEls.getItem(0);
+      inputEl.focus();
+   }
+   
+   Element getMenuTableElement()
+   {
+      Element menuEl = menu_.getWidget().getElement();
+      Node tableNode = DomUtils.findNode(menuEl, true, true, new NodePredicate()
+      {
+         @Override
+         public boolean test(Node node)
+         {
+            if (!(node instanceof Element))
+               return false;
+
+            Element el = (Element) node;
+            return el.hasTagName("table");
+         }
+      });
+      
+      if (tableNode == null)
+         return null;
+      
+      return tableNode.<Element>cast();
+   }
+
+   public interface Styles extends CssResource
+   {
+      String searchWidget();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("BranchToolbarButton.css")
+      Styles styles();
    }
 
    protected final Provider<GitState> pVcsState_;
+   
+   private final ToolbarPopupMenu menu_;
+   private int menuWidth_ = 0;
+   private final SearchWidget searchWidget_;
+   private Map<String, List<String>> initialBranchMap_;
+   
+   private Element searchEl_;
+   private HandlerRegistration previewHandler_;
+   
+   private String lastSearchValue_;
+   private final Timer searchValueChangeTimer_;
 
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
    private static final String LOCAL_BRANCHES = "(local branches)";
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
 }

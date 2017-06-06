@@ -55,11 +55,15 @@
 * Allow setting default chunk connection option to raw connection object
 * Added an 'Use paged tables' checkbox under chunk options popup
 
+### Version Control
+
+* Add support for creating new Git branches and setting upstream remotes
+* Type to search/select Git branches by name
+
 ### Miscellaneous
 
 * ANSI escape code support in console for colored output
 * Add support for custom, user-provided project templates
-* Add support for creating new Git branches and adding remotes
 * Add support for middle-click pasting using X11 global selection (Linux Desktop only)
 * Document cursor position is now saved and restored between RStudio sessions
 * Add support for changing editor tabs with the mouse wheel
