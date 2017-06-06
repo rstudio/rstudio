@@ -114,6 +114,11 @@ public class BottomScrollPanel extends ScrollPanel
 
       setHorizontalScrollPosition(hScroll_);
    }
+   
+   public boolean hasSavedScrollPosition()
+   {
+      return vScroll_ != null;
+   }
 
    private boolean scrolledToBottom_;
    private boolean scrolling_;
