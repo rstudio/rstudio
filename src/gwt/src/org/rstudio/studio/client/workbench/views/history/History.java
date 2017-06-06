@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.history.History.Display.Mode;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
@@ -416,8 +415,6 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    {
       super.onSelected();
       view_.focusSearch();
-      if (view_.getMode() == Mode.Recent)
-         view_.scrollToBottom();
    }
 
    private String getSelectedCommands()

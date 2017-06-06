@@ -113,7 +113,10 @@ public class HistoryPane extends WorkbenchPane
          @Override
          public void execute()
          {
-            recentScrollPanel_.restoreScrollPosition();
+            if (recentScrollPanel_.hasSavedScrollPosition())
+            {
+               recentScrollPanel_.restoreScrollPosition();
+            }
          }
       });
    }
