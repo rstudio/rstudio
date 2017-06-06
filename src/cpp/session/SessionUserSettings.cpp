@@ -69,6 +69,8 @@ const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
 const char * const kLineEndings = "lineEndingConversion";
 const char * const kUseNewlineInMakefiles = "newlineInMakefiles";
 const char * const kDefaultTerminalShell = "defaultTerminalShell";
+const char * const kCustomShellCommand = "customShellCommand";
+const char * const kCustomShellOptions = "customShellOptions";
 
 template <typename T>
 T readPref(const json::Object& prefs,
@@ -597,6 +599,26 @@ void UserSettings::setDefaultTerminalShellValue(
       console_process::TerminalShell::TerminalShellType shell)
 {
    settings_.set(kDefaultTerminalShell, static_cast<int>(shell));
+}
+
+core::FilePath UserSettings::customShellCommand() const
+{
+   return core::FilePath(settings_.get(kCustomShellCommand, ""));
+}
+
+void UserSettings::setCustomShellCommand(const std::string& commandPath)
+{
+   settings_.set(kCustomShellCommand, commandPath);
+}
+
+std::string UserSettings::customShellOptions() const
+{
+   return settings_.get(kCustomShellOptions, "");
+}
+
+void UserSettings::setCustomShellOptions(const std::string& options)
+{
+   settings_.set(kCustomShellOptions, options);
 }
 
 core::FilePath UserSettings::initialWorkingDirectory() const

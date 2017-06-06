@@ -13,7 +13,6 @@
  *
  */
 
-
 #include "SessionWorkbench.hpp"
 
 #include <algorithm>
@@ -470,13 +469,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and update terminal prefs
    int defaultTerminalShell;
+   std::string customShellPath;
+   std::string customShellOptions;
    error = json::readObject(terminalPrefs,
-                            "default_shell", &defaultTerminalShell);
+                            "default_shell", &defaultTerminalShell,
+                            "shell_exe_path", &customShellPath,
+                            "shell_exe_options", &customShellOptions);
    if (error)
       return error;
    userSettings().beginUpdate();
    userSettings().setDefaultTerminalShellValue(
       static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
+   userSettings().setCustomShellCommand(customShellPath);
+   userSettings().setCustomShellOptions(customShellOptions);
    userSettings().endUpdate();
 
    // set ui prefs
@@ -600,7 +605,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                   module_context::createAliasedPath(rsaSshKeyPath);
    sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
 
-
    // get compile pdf prefs
    json::Object compilePdfPrefs;
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
@@ -609,6 +613,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    // get terminal prefs
    json::Object terminalPrefs;
    terminalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
+   terminalPrefs["shell_exe_path"] = userSettings().customShellCommand().absolutePath();
+   terminalPrefs["shell_exe_options"] = userSettings().customShellOptions();
 
    // initialize and set result object
    json::Object result;

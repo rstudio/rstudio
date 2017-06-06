@@ -43,6 +43,7 @@ struct TerminalShell
       PS64         = 6, // Win32: PowerShell (64-bit)
 
       PosixBash    = 7, // Posix: Bash
+      CustomShell  = 8, // User-specified shell command
 
       Max          = PosixBash
    };
@@ -101,6 +102,9 @@ public:
 
    // Get a standard system shell
    static bool getSystemShell(TerminalShell* pShellInfo);
+
+   // Get user-customizable shell
+   static bool getCustomShell(TerminalShell* pShellInfo);
 
 private:
    std::vector<TerminalShell> shells_;
