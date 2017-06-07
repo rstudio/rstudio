@@ -393,6 +393,18 @@
    .Call("rs_getPersistentValue", name)
 })
 
+.rs.addApiFunction("documentSave", function(id = NULL) {
+   if (is.null(id)) {
+      context <- .rs.api.getActiveDocumentContext()
+      id <- context$id
+   }
+   .Call("rs_requestDocumentSave", id, PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("documentSaveAll", function() {
+   .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE

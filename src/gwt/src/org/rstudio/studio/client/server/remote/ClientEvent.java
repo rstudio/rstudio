@@ -167,6 +167,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ActivateTerminal = "activate_terminal";
    public static final String TerminalCwd = "terminal_cwd";
    public static final String AdminNotification = "admin_notification";
+   public static final String RequestDocumentSave = "request_document_save";
    
    protected ClientEvent()
    {

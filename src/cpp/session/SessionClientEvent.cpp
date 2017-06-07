@@ -175,6 +175,8 @@ const int kCreateNamedTerminal = 156;
 const int kActivateTerminal = 157;
 const int kTerminalCwd = 158;
 const int kAdminNotification = 159;
+const int kRequestDocumentSave = 160;
+const int kRequestDocumentSaveCompleted = 161;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -480,6 +482,10 @@ std::string ClientEvent::typeName() const
          return "terminal_cwd";
       case client_events::kAdminNotification:
          return "admin_notification";
+      case client_events::kRequestDocumentSave:
+         return "request_document_save";
+      case client_events::kRequestDocumentSaveCompleted:
+         return "request_document_save_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

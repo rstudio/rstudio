@@ -61,10 +61,15 @@ public class JSONArrayBuilder
    
    public final JSONArrayBuilder add(JsArrayString value)
    {
+      if (value == null)
+         return appendNull();
+      
       JSONArray array = new JSONArray();
-      for (int i = 0, n = value.length(); i < n; i++)
-         array.set(i, fromString(value.get(i)));
+      if (value != null)
+         for (int i = 0, n = value.length(); i < n; i++)
+            array.set(i, fromString(value.get(i)));
       append(array);
+      
       return this;
    }
    
@@ -73,6 +78,12 @@ public class JSONArrayBuilder
       return (value == null)
             ? JSONNull.getInstance()
             : new JSONString(value);
+   }
+   
+   private final JSONArrayBuilder appendNull()
+   {
+      append(JSONNull.getInstance());
+      return this;
    }
    
    private final void append(JSONValue value)

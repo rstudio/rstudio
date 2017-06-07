@@ -53,6 +53,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -93,6 +94,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.FileMRUList;
@@ -187,7 +189,8 @@ public class Source implements InsertSourceHandler,
                              OpenObjectExplorerEvent.Handler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
-                             GetEditorContextEvent.Handler
+                             GetEditorContextEvent.Handler,
+                             RequestDocumentSaveEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -582,6 +585,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(GetEditorContextEvent.TYPE, this);
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
+      events.addHandler(RequestDocumentSaveEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -4228,6 +4232,87 @@ public class Source implements InsertSourceHandler,
    public void onOpenProfileEvent(OpenProfileEvent event)
    {
       onShowProfiler(event);
+   }
+   
+   @Override
+   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   {
+      final JsArrayString ids = event.getData().getDocumentIds();
+      
+      // we use a timer that fires the document save completed event,
+      // just to ensure the server receives a response even if something
+      // goes wrong during save or some client-side code throws. unfortunately
+      // the current save code is wired up in such a way that it's difficult
+      // to distinguish a success from failure, so we just make sure the
+      // server receives a response after 5s (defaulting to failure)
+      final Mutable<Boolean> savedSuccessfully = new Mutable<Boolean>(false);
+      final Timer completedTimer = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            server_.requestDocumentSaveCompleted(
+                  savedSuccessfully.get(),
+                  new VoidServerRequestCallback());
+         }
+      };
+      completedTimer.schedule(5000);
+      
+      final Command onCompleted = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            savedSuccessfully.set(true);
+            completedTimer.schedule(0);
+         }
+      };
+      
+      if (ids == null)
+      {
+         // a null IDs vector signals we should save all source documents
+         saveAllUnsaved(onCompleted);
+      }
+      else
+      {
+         // generate a serialized command queue, and wire up sequential
+         // save events, culminating in the final server request indicating
+         // we've finished saving documents
+         SerializedCommandQueue queue = new SerializedCommandQueue();
+         for (final String id : JsUtil.asIterable(ids))
+         {
+            queue.addCommand(new SerializedCommand()
+            {
+               @Override
+               public void onExecute(Command continuation)
+               {
+                  EditingTarget target = getEditingTargetForId(id);
+                  completedTimer.schedule(5000);
+                  
+                  if (target instanceof TextEditingTarget)
+                  {
+                     ((TextEditingTarget) target).save(continuation);
+                  }
+                  else
+                  {
+                     continuation.execute();
+                  }
+               }
+            });
+         }
+         
+         // finally, run our onCompleted command
+         queue.addCommand(new SerializedCommand()
+         {
+            @Override
+            public void onExecute(Command continuation)
+            {
+               onCompleted.execute();
+               if (continuation != null)
+                  continuation.execute();
+            }
+         });
+      }
    }
    
    private void inEditorForPath(String path, 

@@ -240,4 +240,7 @@ public interface SourceServerOperations extends FilesServerOperations,
          ServerRequestCallback<SourceDocumentResult> requestCallback);
 
    public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback);
+   
+   public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
+                                            ServerRequestCallback<Void> requestCallback);
 }
