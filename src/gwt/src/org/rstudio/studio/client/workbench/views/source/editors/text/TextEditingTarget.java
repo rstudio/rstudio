@@ -3964,6 +3964,9 @@ public class TextEditingTarget implements
          finalOutput.deleteCharAt(finalOutput.length()-1);
 
       String reflowed = finalOutput.toString();
+      
+      // Remove trailing whitespace that might have leaked in earlier
+      reflowed = reflowed.replaceAll("\\s+\\n", "\n");
 
       docDisplay_.setSelection(selection);
       if (!reflowed.equals(code))
