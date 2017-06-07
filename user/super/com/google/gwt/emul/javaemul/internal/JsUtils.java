@@ -15,6 +15,7 @@
  */
 package javaemul.internal;
 
+import javaemul.internal.annotations.DoNotAutobox;
 import javaemul.internal.annotations.UncheckedCast;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsProperty;
@@ -56,7 +57,7 @@ public class JsUtils {
   }-*/;
 
   @UncheckedCast
-  public static native <T> T uncheckedCast(Object o) /*-{
+  public static native <T> T uncheckedCast(@DoNotAutobox Object o) /*-{
     return o;
   }-*/;
 

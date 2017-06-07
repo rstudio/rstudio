@@ -114,16 +114,12 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Boolean.
   protected static Boolean $create(boolean x) {
-    return createNative(x);
+    return JsUtils.uncheckedCast(x);
   }
 
   protected static Boolean $create(String x) {
-    return createNative(Boolean.parseBoolean(x));
+    return JsUtils.uncheckedCast(Boolean.parseBoolean(x));
   }
-
-  private static native Boolean createNative(boolean x) /*-{
-    return x;
-  }-*/;
 
   @JsMethod
   protected static boolean $isInstance(Object instance) {

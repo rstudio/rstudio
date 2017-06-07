@@ -41,6 +41,8 @@ import java.io.Serializable;
 import javaemul.internal.JsUtils;
 import javaemul.internal.NativeRegExp;
 
+import jsinterop.annotations.JsType;
+
 /**
  * This class represents immutable arbitrary precision decimal numbers. Each
  * {@code BigDecimal} instance is represented with a unscaled arbitrary
@@ -491,13 +493,18 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
    * Convert a double to a string with {@code digits} precision.  The resulting
    * string may still be in exponential notation.
    *
-   * @param d double value
    * @param digits number of digits of precision to include
    * @return non-localized string representation of {@code d}
    */
-  private static native String toPrecision(double d, int digits) /*-{
-    return d.toPrecision(digits);
-  }-*/;
+  private static String toPrecision(double value, int digits) {
+    NativeNumber number = JsUtils.uncheckedCast(value);
+    return number.toPrecision(digits);
+  }
+
+  @JsType(isNative = true, name = "Number", namespace = "<window>")
+  private interface NativeNumber {
+    String toPrecision(int digits);
+  }
 
   private static BigDecimal valueOf(double smallValue, double scale) {
     return new BigDecimal(smallValue, scale);

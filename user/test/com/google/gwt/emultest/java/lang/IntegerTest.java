@@ -292,18 +292,20 @@ public class IntegerTest extends GWTTestCase {
     assertEquals("-2147483648", Integer.toString(Integer.MIN_VALUE));
     assertEquals("0", Integer.toString(0));
 
-    assertEquals("17777777777", Integer.toString(2147483647, 8));
-    assertEquals("7fffffff", Integer.toString(2147483647, 16));
-    assertEquals("1111111111111111111111111111111", Integer.toString(2147483647, 2));
-    assertEquals("2147483647", Integer.toString(2147483647, 10));
-    assertEquals("-17777777777", Integer.toString(-2147483647, 8));
-    assertEquals("-7fffffff", Integer.toString(-2147483647, 16));
-    assertEquals("-1111111111111111111111111111111", Integer.toString(-2147483647, 2));
-    assertEquals("-2147483647", Integer.toString(-2147483647, 10));
-    assertEquals("-20000000000", Integer.toString(-2147483648, 8));
-    assertEquals("-80000000", Integer.toString(-2147483648, 16));
-    assertEquals("-10000000000000000000000000000000", Integer.toString(-2147483648, 2));
-    assertEquals("-2147483648", Integer.toString(-2147483648, 10));
+    assertEquals("7fffffff", Integer.toString(Integer.MAX_VALUE, 16));
+    assertEquals("2147483647", Integer.toString(Integer.MAX_VALUE, 10));
+    assertEquals("17777777777", Integer.toString(Integer.MAX_VALUE, 8));
+    assertEquals("1111111111111111111111111111111", Integer.toString(Integer.MAX_VALUE, 2));
+
+    assertEquals("-7fffffff", Integer.toString(-Integer.MAX_VALUE, 16));
+    assertEquals("-2147483647", Integer.toString(-Integer.MAX_VALUE, 10));
+    assertEquals("-17777777777", Integer.toString(-Integer.MAX_VALUE, 8));
+    assertEquals("-1111111111111111111111111111111", Integer.toString(-Integer.MAX_VALUE, 2));
+
+    assertEquals("-80000000", Integer.toString(Integer.MIN_VALUE, 16));
+    assertEquals("-2147483648", Integer.toString(Integer.MIN_VALUE, 10));
+    assertEquals("-20000000000", Integer.toString(Integer.MIN_VALUE, 8));
+    assertEquals("-10000000000000000000000000000000", Integer.toString(Integer.MIN_VALUE, 2));
   }
 
   public void testValueOf() {

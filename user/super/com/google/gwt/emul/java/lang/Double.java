@@ -379,16 +379,12 @@ public final class Double extends Number implements Comparable<Double> {
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Double.
   protected static Double $create(double x) {
-    return createNative(x);
+    return JsUtils.uncheckedCast(x);
   }
 
   protected static Double $create(String s) {
-    return createNative(Double.parseDouble(s));
+    return JsUtils.uncheckedCast(Double.parseDouble(s));
   }
-
-  private static native Double createNative(double x) /*-{
-    return x;
-  }-*/;
 
   @JsMethod
   protected static boolean $isInstance(Object instance) {

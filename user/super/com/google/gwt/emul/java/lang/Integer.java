@@ -15,6 +15,9 @@
  */
 package java.lang;
 
+import javaemul.internal.JsUtils;
+import jsinterop.annotations.JsType;
+
 /**
  * Wraps a primitive <code>int</code> as an object.
  */
@@ -206,16 +209,24 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static String toBinaryString(int value) {
-    return toUnsignedRadixString(value, 2);
+    return toUnsignedString(value, 2);
   }
 
   public static String toHexString(int value) {
-    return toUnsignedRadixString(value, 16);
+    return toUnsignedString(value, 16);
   }
 
   public static String toOctalString(int value) {
-    return toUnsignedRadixString(value, 8);
+    return toUnsignedString(value, 8);
   }
+
+  private static String toUnsignedString(int value, int radix) {
+    return toRadixString(toUnsigned(value), radix);
+  }
+
+  private static native int toUnsigned(int value) /*-{
+    return (value >>> 0);
+  }-*/;
 
   public static String toString(int value) {
     return String.valueOf(value);
@@ -226,6 +237,16 @@ public final class Integer extends Number implements Comparable<Integer> {
       return String.valueOf(value);
     }
     return toRadixString(value, radix);
+  }
+
+  private static String toRadixString(double value, int radix) {
+    NativeNumber number = JsUtils.uncheckedCast(value);
+    return number.toString(radix);
+  }
+
+  @JsType(isNative = true, name = "Number", namespace = "<window>")
+  private interface NativeNumber {
+    String toString(int radix);
   }
 
   public static Integer valueOf(int i) {
@@ -248,15 +269,6 @@ public final class Integer extends Number implements Comparable<Integer> {
       throws NumberFormatException {
     return Integer.valueOf(Integer.parseInt(s, radix));
   }
-
-  private static native String toRadixString(int value, int radix) /*-{
-    return value.toString(radix);
-  }-*/;
-
-  private static native String toUnsignedRadixString(int value, int radix) /*-{
-    // ">>> 0" converts the value to unsigned number.
-    return (value >>> 0).toString(radix);
-  }-*/;
 
   private final transient int value;
 

@@ -19,7 +19,9 @@ import java.io.Serializable;
 
 import javaemul.internal.JsUtils;
 import javaemul.internal.NativeRegExp;
+
 import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsType;
 
 /**
  * Abstract base class for numeric wrapper classes.
@@ -127,15 +129,13 @@ public abstract class Number implements Serializable {
     }
   }
 
+  @JsType(isNative = true, name = "Number$impl", namespace = "java.lang")
+  private static class JavaLangNumber { }
+
   @JsMethod
   private static boolean $isInstance(Object instance) {
-    return "number".equals(JsUtils.typeOf(instance)) || instanceOfJavaLangNumber(instance);
+    return "number".equals(JsUtils.typeOf(instance)) || instance instanceof JavaLangNumber;
   }
-
-  private static native boolean instanceOfJavaLangNumber(Object instance) /*-{
-    // Note: The instanceof Number here refers to java.lang.Number in j2cl.
-    return instance instanceof Number;
-  }-*/;
 
   /**
    * @skip
