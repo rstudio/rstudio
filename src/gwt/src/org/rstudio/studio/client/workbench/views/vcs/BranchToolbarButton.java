@@ -95,7 +95,8 @@ public class BranchToolbarButton extends ToolbarButton
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ScrollableToolbarPopupMenu());
+            new ScrollableToolbarPopupMenu(),
+            true);
       pVcsState_ = pVcsState;
 
       setTitle("Switch branch");
