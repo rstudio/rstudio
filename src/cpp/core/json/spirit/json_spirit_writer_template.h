@@ -58,6 +58,12 @@ namespace json_spirit
             case '\t': s += to_str< String_type >( "\\t"  ); return true;
         }
 
+        // https://www.codeproject.com/Messages/5256071/Escaping-of-control-characters.aspx
+        const wint_t unsigned_c((c >= 0) ? c : 256 + c);
+        if (c < 0x20) {
+            s += non_printable_to_string< String_type >(unsigned_c);
+            return true;
+        }
         return false;
     }
 
