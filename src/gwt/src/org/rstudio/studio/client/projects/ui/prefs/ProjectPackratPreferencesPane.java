@@ -110,11 +110,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         spaced(chkUsePackrat_);
         add(chkUsePackrat_);
         
-        chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
-        chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
-        lessSpaced(chkAutoSnapshot_);
-        add(chkAutoSnapshot_);
-        
         String vcsName = session_.getSessionInfo().getVcsName();
         chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
         chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
@@ -173,7 +168,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       boolean vcsActive = !session_.getSessionInfo().getVcsName().equals("");
       
-      chkAutoSnapshot_.setVisible(packified);
       chkUseCache_.setVisible(packified);
       panelExternalPackages_.setVisible(packified);
       widgetLocalRepos_.setVisible(packified);
@@ -186,7 +180,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       RProjectPackratOptions packratOptions = options.getPackratOptions();
       packratOptions.setUsePackrat(chkUsePackrat_.getValue());
-      packratOptions.setAutoSnapshot(chkAutoSnapshot_.getValue());
+      packratOptions.setAutoSnapshot(false);
       packratOptions.setVcsIgnoreLib(chkVcsIgnoreLib_.getValue());
       packratOptions.setVcsIgnoreSrc(chkVcsIgnoreSrc_.getValue());
       packratOptions.setUseCache(chkUseCache_.getValue());
@@ -322,7 +316,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private final DependencyManager dependencyManager_;
    
    private CheckBox chkUsePackrat_;
-   private CheckBox chkAutoSnapshot_;
    private CheckBox chkUseCache_;
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;

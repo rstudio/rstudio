@@ -55,7 +55,7 @@ using namespace rstudio::core;
 #define kPackratActionSnapshot "snapshot"
 
 #define kAutoSnapshotName "auto.snapshot"
-#define kAutoSnapshotDefault true
+#define kAutoSnapshotDefault false
 
 #define kInvalidHashValue "--------"
 
@@ -403,21 +403,13 @@ void pendingSnapshot(PendingSnapshotAction action)
 }
 
 
-// Checks Packrat options to see whether auto-snapshotting is enabled 
+// Checks Packrat options to see whether auto-snapshotting is enabled.
+// (In previous versions of the RStudio IDE, users could opt-in to
+// automatic snapshots -- we now disable this explicitly as this proved
+// too confusing and led to too many irreconcilable states)
 bool isAutoSnapshotEnabled()
 {
-   bool enabled = kAutoSnapshotDefault;
-   r::sexp::Protect rProtect;
-   SEXP optionsSEXP;
-   Error error = modules::packrat::getPackratOptions(&optionsSEXP, &rProtect);
-   if (!error)
-   {
-      error = r::sexp::getNamedListElement(optionsSEXP,
-                                           kAutoSnapshotName,
-                                           &enabled,
-                                           kAutoSnapshotDefault);
-   }
-   return enabled;
+   return false;
 }
 
 // Performs an automatic snapshot of the Packrat library, either immediately
