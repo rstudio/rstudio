@@ -17,10 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.FileChooserTextBox;
-import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.Server;
@@ -39,10 +36,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
@@ -80,41 +74,21 @@ public class TerminalPreferencesPane extends PreferencesPane
          }
       });
 
-      // custom shell path chooser  
-      Command onShellPathChosen = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            if (BrowseCap.isWindowsDesktop())
-            {
-               String exePath = customShellPathChooser_.getText();
-               if (!exePath.endsWith(".exe"))
-               {
-                  String message = "The program '" + exePath + "'" +
-                     " is unlikely to be a valid shell executable.\n" +
-                     "Please select an executable ending in '.exe'.";
 
-                  globalDisplay.showMessage(
-                        GlobalDisplay.MSG_WARNING,
-                        "Invalid Shell Executable",
-                        message);
-               }
-            }
-         }
-      };
-
-      customShellPathChooser_ = new FileChooserTextBox("",
-                                                  "(Default)",
-                                                  null,
-                                                  onShellPathChosen);
+      String textboxWidth = "250px";
       customShellPathLabel_ = new Label("Custom shell binary:");
-      addTextBoxChooser(customShellPathLabel_, null, null, customShellPathChooser_);
+      add(spacedBefore(customShellPathLabel_));
+      customShellPath_ = new TextBox();
+      customShellPath_.getElement().setAttribute("spellcheck", "false");
+      customShellPath_.setWidth(textboxWidth);
+      add(customShellPath_);
+      customShellPath_.setEnabled(false);
+
       customShellOptionsLabel_ = new Label("Custom shell command-line options:");
       add(spacedBefore(customShellOptionsLabel_));
       customShellOptions_ = new TextBox();
       customShellOptions_.getElement().setAttribute("spellcheck", "false");
-      customShellOptions_.setWidth("75%");
+      customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
       add(customShellOptions_);
 
@@ -147,8 +121,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       helpLink.addStyleName(res_.styles().newSection()); 
       // TODO (gary) -- uncomment once we've published the support article
       //add(helpLink);
-
-      customShellPathChooser_.setEnabled(false);
    }
 
    @Override
@@ -183,9 +155,13 @@ public class TerminalPreferencesPane extends PreferencesPane
 
                   TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
 
+                  boolean hasCustom = false;
+
                   for (int i = 0; i < shells.length(); i++)
                   {
                      TerminalShellInfo info = shells.get(i);
+                     if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
+                        hasCustom = true;
                      TerminalPreferencesPane.this.terminalShell_.addChoice(
                            info.getShellName(), Integer.toString(info.getShellType()));
                      if (info.getShellType() == currentShell)
@@ -197,11 +173,14 @@ public class TerminalPreferencesPane extends PreferencesPane
                      TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
                   }
 
-                  customShellPathChooser_.setText(
-                        terminalPrefs.getCustomTerminalShellPath());
-                  customShellPathChooser_.setEnabled(true);
-                  customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
-                  customShellOptions_.setEnabled(true);
+                  if (hasCustom)
+                  {
+                     customShellPath_.setText(
+                           terminalPrefs.getCustomTerminalShellPath());
+                     customShellPath_.setEnabled(true);
+                     customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
+                     customShellOptions_.setEnabled(true);
+                  }
                   manageControlVisibility();
                }
 
@@ -218,7 +197,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       boolean restartRequired = super.onApply(rPrefs);
 
       TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
-            customShellPathChooser_.getText(),
+            customShellPath_.getText(),
             customShellOptions_.getText());
       rPrefs.setTerminalPrefs(terminalPrefs);
 
@@ -235,39 +214,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       return session_.getSessionInfo().getAllowTerminalWebsockets();
    }
 
-   private void addTextBoxChooser(Label captionLabel, HyperlinkLabel link,
-         String captionPanelStyle, TextBoxWithButton chooser)
-   {
-      String textWidth = "250px";
-
-      HorizontalPanel captionPanel = new HorizontalPanel();
-      captionPanel.setWidth(textWidth);
-      nudgeRight(captionPanel);
-      if (captionPanelStyle != null)
-         captionPanel.addStyleName(captionPanelStyle);
-
-      captionPanel.add(captionLabel);
-      captionPanel.setCellHorizontalAlignment(captionLabel,
-            HasHorizontalAlignment.ALIGN_LEFT);
-
-      if (link != null)
-      {
-         HorizontalPanel linkPanel = new HorizontalPanel();
-         linkPanel.add(link);
-         captionPanel.add(linkPanel);
-         captionPanel.setCellHorizontalAlignment(linkPanel,
-               HasHorizontalAlignment.ALIGN_RIGHT);
-
-      }
-
-      add(tight(captionPanel));
-
-      chooser.setTextWidth(textWidth);
-      nudgeRight(chooser);
-      textBoxWithChooser(chooser);
-      add(chooser);
-   }
-
    private int selectedShellType()
    {
       int idx = terminalShell_.getListBox().getSelectedIndex();
@@ -279,14 +225,14 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
       customShellPathLabel_.setVisible(customEnabled);
-      customShellPathChooser_.setVisible(customEnabled);
+      customShellPath_.setVisible(customEnabled);
       customShellOptionsLabel_.setVisible(customEnabled);
       customShellOptions_.setVisible(customEnabled);
    }
  
    private SelectWidget terminalShell_;
    private Label customShellPathLabel_;
-   private TextBoxWithButton customShellPathChooser_;
+   private TextBox customShellPath_;
    private Label customShellOptionsLabel_;
    private TextBox customShellOptions_;
 
