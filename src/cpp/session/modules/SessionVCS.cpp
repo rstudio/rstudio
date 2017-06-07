@@ -184,7 +184,16 @@ FilePath getTrueHomeDir()
 #if _WIN32
    // On Windows, R's idea of "$HOME" is not, by default, the same as
    // $USERPROFILE, which is what we want for ssh purposes
-   return FilePath(string_utils::systemToUtf8(core::system::getenv("USERPROFILE")));
+   // However, it may not be the suitable path when home is on a share,
+   // in which case we use $HOMEDRIVE + $HOMEPATH
+   std::string homeShare = core::system::getenv("HOMESHARE");
+   std::string homeDrive = core::system::getenv("HOMEDRIVE");
+   std::string homePath = core::system::getenv("HOMEPATH");
+   if (!homeShare.empty() && !homeDrive.empty() && !homePath.empty()) {
+      return FilePath(string_utils::systemToUtf8(homeDrive + homePath));
+   } else {
+      return FilePath(string_utils::systemToUtf8(core::system::getenv("USERPROFILE")));
+   }
 #else
    return FilePath(string_utils::systemToUtf8(core::system::getenv("HOME")));
 #endif

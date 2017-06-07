@@ -323,7 +323,7 @@ FilePath currentCSIDLPersonalHomePath()
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_WARNING_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -346,7 +346,7 @@ FilePath defaultCSIDLPersonalHomePath()
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_WARNING_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -430,7 +430,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    std::wstring appNameWide(appName.begin(), appName.end());
    HRESULT hr = ::SHGetFolderPathAndSubDirW(
          NULL,
-         CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE,
+         CSIDL_APPDATA | CSIDL_FLAG_CREATE,
          NULL,
          SHGFP_TYPE_CURRENT,
          appNameWide.c_str(),
@@ -438,7 +438,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
 
    if (hr != S_OK)
    {
-      LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                         safe_convert::numberToString(hr));
       return FilePath();
    }
