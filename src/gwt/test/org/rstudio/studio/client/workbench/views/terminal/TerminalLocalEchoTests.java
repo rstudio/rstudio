@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringSink;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -48,6 +49,7 @@ public class TerminalLocalEchoTests extends GWTTestCase
       private String output_ = "";
    }
    
+   // local echo a string, one character at a time
    private void echoString(TerminalLocalEcho echo, String output)
    {
       for (char c : output.toCharArray()) 
@@ -231,7 +233,8 @@ public class TerminalLocalEchoTests extends GWTTestCase
       
       echo.write(read);
       Assert.assertTrue(echo.isEmpty());
-      Assert.assertEquals(expected, output.getOutput());
+      Assert.assertEquals(AnsiCode.prettyPrint(expected), 
+            AnsiCode.prettyPrint(output.getOutput()));
    }
 
    public void testDELChar()
@@ -272,17 +275,18 @@ public class TerminalLocalEchoTests extends GWTTestCase
    {
       OutputCatcher output = new OutputCatcher();
       TerminalLocalEcho echo = new TerminalLocalEcho(output);
-      
+
       String written = "The Quick Brown\r\n Ferret";
-      String read = "The Q\bui\177ck\7 Brown\r\n \7Ferret";
-      String expected = "\b\177\7\r\n\7";
+      String read = "The Qui\177ck\7 Brown\r\n \7Ferret";
+      String expected = "\177\7\r\n\7";
       
       echoString(echo, written);
       output.clear();
       
       echo.write(read);
       Assert.assertTrue(echo.isEmpty());
-      Assert.assertEquals(expected, output.getOutput());
+      Assert.assertEquals(AnsiCode.prettyPrint(expected), 
+            AnsiCode.prettyPrint(output.getOutput()));
    }
 
    public void testAnsiColorSequence()
@@ -335,4 +339,28 @@ public class TerminalLocalEchoTests extends GWTTestCase
       Assert.assertTrue(output.isEmpty());
    }
 
+   public void testBackspaceOverPreviousOutput() 
+   {
+      OutputCatcher output = new OutputCatcher();
+      TerminalLocalEcho echo = new TerminalLocalEcho(output);
+
+      // zsh does this:
+      // type "ls" right after prompt and it echoes back the 'l',
+      // then echoes back '\bls'; we should be local-echoing both 'l' and 's'
+      // and then fixing up the screen output so it is correct
+      echoString(echo, "l");
+      Assert.assertEquals("l", output.getOutput());
+      echo.write("l");
+      Assert.assertTrue(echo.isEmpty());
+      Assert.assertEquals("l", output.getOutput());
+
+      echoString(echo, "s");
+      Assert.assertFalse(echo.isEmpty());
+      Assert.assertEquals("ls", output.getOutput());
+
+      echo.write("\bls");
+      Assert.assertTrue(echo.isEmpty());
+      Assert.assertEquals(AnsiCode.prettyPrint("ls\b\bls"), 
+            AnsiCode.prettyPrint(output.getOutput()));
+   }
 }
