@@ -33,9 +33,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.source.events.SelectMarkerEvent;
 
 import java.util.ArrayList;
 
@@ -45,11 +47,23 @@ public class FindOutputPane extends WorkbenchPane
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
-   public FindOutputPane(Commands commands)
+   public FindOutputPane(Commands commands,
+                         EventBus events)
    {
       super("Find Results");
       commands_ = commands;
+      events_ = events;
       ensureWidget();
+      
+      events_.addHandler(SelectMarkerEvent.TYPE, new SelectMarkerEvent.Handler()
+      {
+         @Override
+         public void onSelectMarker(SelectMarkerEvent event)
+         {
+            if (active_)
+               table_.onSelectMarker(event);
+         }
+      });
    }
 
    @Override
@@ -173,10 +187,18 @@ public class FindOutputPane extends WorkbenchPane
    {
       super.onSelected();
       
+      active_ = true;
       table_.focus();
       ArrayList<Integer> indices = table_.getSelectedRowIndexes();
       if (indices.isEmpty())
          table_.selectNextRow();
+   }
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      active_ = false;
    }
 
    @Override
@@ -273,6 +295,7 @@ public class FindOutputPane extends WorkbenchPane
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
+   private final EventBus events_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
    private SimplePanel container_;
@@ -280,6 +303,7 @@ public class FindOutputPane extends WorkbenchPane
    private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
+   private boolean active_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
