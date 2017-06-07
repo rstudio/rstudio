@@ -93,6 +93,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.FileMRUList;
@@ -187,7 +188,8 @@ public class Source implements InsertSourceHandler,
                              OpenObjectExplorerEvent.Handler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
-                             GetEditorContextEvent.Handler
+                             GetEditorContextEvent.Handler,
+                             RequestDocumentSaveEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -582,6 +584,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(GetEditorContextEvent.TYPE, this);
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
+      events.addHandler(RequestDocumentSaveEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -4228,6 +4231,14 @@ public class Source implements InsertSourceHandler,
    public void onOpenProfileEvent(OpenProfileEvent event)
    {
       onShowProfiler(event);
+   }
+   
+   @Override
+   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   {
+      // TODO: save all documents, then fire document save completed
+      // event. need to report whether the saves succeeded or were
+      // canceled.
    }
    
    private void inEditorForPath(String path, 
