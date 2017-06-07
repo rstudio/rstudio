@@ -99,7 +99,6 @@ public class TerminalLocalEcho
             // server as some sort of output optimization. In both cases we
             // remove the backspace from the localEcho buffer so matching
             // doesn't break at this point.
-            // handling here.
             String popped = localEcho_.pop();
             if (!popped.equals("\b"))
             {
