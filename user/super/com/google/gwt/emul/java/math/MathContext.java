@@ -143,7 +143,7 @@ public final class MathContext implements Serializable {
     checkNotNull(val, "null string");
 
     String[] extractedValues =
-        new NativeRegExp("^precision=(\\d+)\\ roundingMode=(\\w+)$").exec(val);
+        new NativeRegExp("^precision=(\\d+)\\ roundingMode=(\\w+)$").exec(val).asArray();
     if (extractedValues == null || extractedValues.length != 3) {
       throw new IllegalArgumentException("bad string format");
     }

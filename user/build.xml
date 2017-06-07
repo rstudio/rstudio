@@ -98,7 +98,7 @@
   <target name="compile" description="Compile all class files"
           unless="compile.complete">
     <mkdir dir="${javac.out}"/>
-    <gwt.javac excludes="**/EmulatedCharset.java,**/HashCodes.java,**/ConsoleLogger.java,**/SuperDevModeLogger.java">
+    <gwt.javac excludes="**/EmulatedCharset.java,**/HashCodes.java,**/ConsoleLogger.java,**/NativeRegExp.java,**/SuperDevModeLogger.java">
       <src path="super/com/google/gwt/emul/javaemul/internal"/>
       <compilerarg value="-Xep:MissingCasesInEnumSwitch:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>
       <compilerarg value="-Xep:SelfComparison:OFF" compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"/>

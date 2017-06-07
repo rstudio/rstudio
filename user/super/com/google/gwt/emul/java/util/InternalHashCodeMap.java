@@ -21,6 +21,8 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Map.Entry;
 
 import javaemul.internal.ArrayHelper;
+import javaemul.internal.JsUtils;
+import javaemul.internal.NativeArray;
 
 /**
  * A simple wrapper around JavaScriptObject to provide {@link java.util.Map}-like semantics for any
@@ -117,7 +119,7 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
         InternalJsMap.IteratorEntry<?> current = chains.next();
         if (!current.isDone()) {
           // Move to the beginning of next chain
-          chain = unsafeCastToArray(current.getValue());
+          chain = JsUtils.uncheckedCast(current.getValue());
           itemIndex = 0;
           return true;
         }
@@ -142,17 +144,13 @@ class InternalHashCodeMap<K, V> implements Iterable<Entry<K, V>> {
   }
 
   private Entry<K, V>[] getChainOrEmpty(int hashCode) {
-    Entry<K, V>[] chain = unsafeCastToArray(backingMap.get(hashCode));
+    Entry<K, V>[] chain = JsUtils.uncheckedCast(backingMap.get(hashCode));
     return chain == null ? newEntryChain() : chain;
   }
 
-  private native Entry<K, V>[] newEntryChain() /*-{
-    return [];
-  }-*/;
-
-  private native Entry<K, V>[] unsafeCastToArray(Object arr) /*-{
-    return arr;
-  }-*/;
+  private Entry<K, V>[] newEntryChain() {
+    return JsUtils.uncheckedCast(new NativeArray());
+  }
 
   /**
    * Returns hash code of the key as calculated by {@link AbstractHashMap#getHashCode(Object)} but

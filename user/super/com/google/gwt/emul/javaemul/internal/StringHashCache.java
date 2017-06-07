@@ -24,7 +24,7 @@ class StringHashCache {
   /**
    * The "old" cache; it will be dumped when front is full.
    */
-  private static Object back = createNativeObject();
+  private static Object back = new Object();
   /**
    * Tracks the number of entries in front.
    */
@@ -32,7 +32,7 @@ class StringHashCache {
   /**
    * The "new" cache; it will become back when it becomes full.
    */
-  private static Object front = createNativeObject();
+  private static Object front = new Object();
   /**
    * Pulled this number out of thin air.
    */
@@ -44,17 +44,17 @@ class StringHashCache {
     String key = ":" + str;
 
     // Check the front store.
-    Object result = getProperty(front, key);
-    if (!JsUtils.isUndefined(result)) {
-      return unsafeCastToInt(result);
+    Double result = JsUtils.getProperty(front, key);
+    if (result != null) {
+      return result.intValue();
     }
     // Check the back store.
-    result = getProperty(back, key);
-    int hashCode = JsUtils.isUndefined(result) ? compute(str) : unsafeCastToInt(result);
+    result = JsUtils.getProperty(back, key);
+    int hashCode = result == null ? compute(str) : result.intValue();
     // Increment can trigger the swap/flush; call after checking back but
     // before writing to front.
     increment();
-    JsUtils.setIntProperty(front, key, hashCode);
+    JsUtils.setProperty(front, key, (double) hashCode);
 
     return hashCode;
   }
@@ -89,21 +89,9 @@ class StringHashCache {
   private static void increment() {
     if (count == MAX_CACHE) {
       back = front;
-      front = createNativeObject();
+      front = new Object();
       count = 0;
     }
     ++count;
   }
-
-  private static native Object getProperty(Object map, String key) /*-{
-    return map[key];
-  }-*/;
-
-  private static native Object createNativeObject() /*-{
-    return {};
-  }-*/;
-
-  private static native int unsafeCastToInt(Object o) /*-{
-    return o;
-  }-*/;
 }

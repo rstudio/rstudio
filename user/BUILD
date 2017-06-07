@@ -94,6 +94,7 @@ java_library(
             "**/SuperDevModeLogger.java",  # relies on ConsoleLogger
             "**/EmulatedCharset.java",
             "**/HashCodes.java",  # relies on java8 only APIs
+            "**/NativeRegExp.java",  # has default method
             "**/RunStyleSelenium.java",
         ] + JSINTEROP_SRCS,
     ),

@@ -16,7 +16,10 @@
 package java.util;
 
 import javaemul.internal.InternalPreconditions;
-import javaemul.internal.JsUtils;
+
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * A helper to detect concurrent modifications to collections. This is implemented as a helper
@@ -26,32 +29,41 @@ class ConcurrentModificationDetector {
 
   private static final boolean API_CHECK = InternalPreconditions.isApiChecked();
 
-  private static final String MOD_COUNT_PROPERTY = "_gwt_modCount";
-
-  public static void structureChanged(Object map) {
+  public static void structureChanged(Object host) {
     if (!API_CHECK) {
       return;
     }
+
+    ModCountable modCountable = (ModCountable) host;
     // Ensure that modCount is initialized if it is not already.
-    int modCount = JsUtils.getIntProperty(map, MOD_COUNT_PROPERTY) | 0;
-    JsUtils.setIntProperty(map, MOD_COUNT_PROPERTY, modCount + 1);
+    int modCount = modCountable.getModCount() | 0;
+    modCountable.setModCount(modCount + 1);
   }
 
   public static void recordLastKnownStructure(Object host, Iterator<?> iterator) {
     if (!API_CHECK) {
       return;
     }
-    int modCount = JsUtils.getIntProperty(host, MOD_COUNT_PROPERTY);
-    JsUtils.setIntProperty(iterator, MOD_COUNT_PROPERTY, modCount);
+
+    ((ModCountable) iterator).setModCount(((ModCountable) host).getModCount());
   }
 
   public static void checkStructuralChange(Object host, Iterator<?> iterator) {
     if (!API_CHECK) {
       return;
     }
-    if (JsUtils.getIntProperty(iterator, MOD_COUNT_PROPERTY)
-        != JsUtils.getIntProperty(host, MOD_COUNT_PROPERTY)) {
+
+    if (((ModCountable) iterator).getModCount() != ((ModCountable) host).getModCount()) {
       throw new ConcurrentModificationException();
     }
+  }
+
+  @JsType(isNative = true, name = "*", namespace = JsPackage.GLOBAL)
+  private interface ModCountable {
+    @JsProperty(name = "$modCount")
+    void setModCount(int modCount);
+
+    @JsProperty(name = "$modCount")
+    int getModCount();
   }
 }

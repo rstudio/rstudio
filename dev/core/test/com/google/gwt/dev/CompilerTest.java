@@ -2754,7 +2754,8 @@ public class CompilerTest extends ArgProcessorTestBase {
         "java.lang.Throwable",
         "java.lang.Throwable$NativeError",
         "java.lang.Throwable$NativeTypeError",
-        "javaemul.internal.NativeRegExp"));
+        "javaemul.internal.NativeRegExp",
+        "javaemul.internal.NativeRegExp$Match"));
     return staleTypeNames;
   }
 

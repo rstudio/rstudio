@@ -15,6 +15,8 @@
  */
 package javaemul.internal;
 
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -25,6 +27,20 @@ public class NativeRegExp {
   public int lastIndex;
   public NativeRegExp(String regex) { }
   public NativeRegExp(String regex, String mode) { }
-  public native String[] exec(String value);
+  public native Match exec(String value);
   public native boolean test(String value);
+
+  /**
+   * Contract of the instance returned by {@code RegExp.prototype.exec}.
+   */
+  @JsType(isNative = true, name = "Array", namespace = "<window>")
+  public interface Match {
+    @JsProperty
+    int getIndex();
+
+    @JsOverlay
+    default String[] asArray() {
+      return JsUtils.uncheckedCast(this);
+    }
+  }
 }

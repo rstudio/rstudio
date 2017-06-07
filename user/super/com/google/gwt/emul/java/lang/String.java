@@ -596,10 +596,6 @@ public final class String implements Comparable<String>, CharSequence,
     return asNativeString().replace(jsRegEx, replace);
   }
 
-  private static int getMatchIndex(String[] matchObject) {
-    return JsUtils.getIntProperty(matchObject, "index");
-  }
-
   /**
    * Regular expressions vary from the standard implementation. The
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
@@ -635,14 +631,14 @@ public final class String implements Comparable<String>, CharSequence,
     while (true) {
       // None of the information in the match returned are useful as we have no
       // subgroup handling
-      String[] matchObj = compiled.exec(trail);
+      NativeRegExp.Match matchObj = compiled.exec(trail);
       if (matchObj == null || trail == "" || (count == (maxMatch - 1) && maxMatch > 0)) {
         out[count] = trail;
         break;
       } else {
-        out[count] = trail.substring(0, getMatchIndex(matchObj));
-        trail =
-            trail.substring(getMatchIndex(matchObj) + matchObj[0].length(), trail.length());
+        int matchIndex = matchObj.getIndex();
+        out[count] = trail.substring(0, matchIndex);
+        trail = trail.substring(matchIndex + matchObj.asArray()[0].length(), trail.length());
         // Force the compiled pattern to reset internal state
         compiled.lastIndex = 0;
         // Only one zero length match per character to ensure termination
