@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
@@ -24,6 +23,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -230,39 +230,12 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(paneLayoutButton);
       
       // addins menu
-      ToolbarPopupMenu addinsMenu = new ToolbarPopupMenu();
-      addinsMenu.addItem(commands_.addinsMru0().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru1().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru2().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru3().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru4().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru5().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru6().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru7().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru8().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru9().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru10().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru11().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru12().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru13().createMenuItem(false));
-      addinsMenu.addItem(commands_.addinsMru14().createMenuItem(false));
-      addinsMenu.addSeparator();
-      addinsMenu.addItem(commands_.browseAddins().createMenuItem(false));
-      addLeftSeparator();
-      ToolbarButton addinsButton = new ToolbarButton(
-           "Addins", CoreResources.INSTANCE.iconEmpty(), addinsMenu);
-      addLeftWidget(addinsButton);
-      
-      
+      addLeftWidget(new AddinsToolbarButton());
       
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
-      
-     
-      
-      
    }
    
    @Override

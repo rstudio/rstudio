@@ -14,7 +14,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -102,14 +101,12 @@ public class Addins
                               EventBus events,
                               GlobalDisplay globalDisplay,
                               WorkbenchContext workbenchContext,
-                              AddinsMRUList mruList,
                               DependencyManager dependencyManager)
       {
          server_ = server;
          events_ = events;
          globalDisplay_ = globalDisplay;
          workbenchContext_ = workbenchContext;
-         mruList_ = mruList;
          dependencyManager_ = dependencyManager;
       }
       
@@ -155,8 +152,6 @@ public class Addins
                   addin.getId(),
                   new SimpleRequestCallback<Void>("Error Executing Addin", true));
          }
-         
-         mruList_.add(addin);
       }
       
       private boolean injected_ = false;
@@ -166,7 +161,6 @@ public class Addins
       private EventBus events_;
       private GlobalDisplay globalDisplay_;
       private WorkbenchContext workbenchContext_;
-      private AddinsMRUList mruList_;
       private DependencyManager dependencyManager_;
    }
    

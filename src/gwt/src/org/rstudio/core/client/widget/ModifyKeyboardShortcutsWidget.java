@@ -82,7 +82,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
@@ -495,8 +494,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                           AddinsServerOperations addinsServer,
                           Commands commands,
                           GlobalDisplay globalDisplay,
-                          EventBus events,
-                          AddinsMRUList mruAddins)
+                          EventBus events)
    {
       editorCommands_ = editorCommands;
       appCommands_ = appCommands;
@@ -505,7 +503,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
-      mruAddins_ = mruAddins;
    }
    
    private void addColumns()
@@ -1453,7 +1450,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Commands commands_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private AddinsMRUList mruAddins_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
