@@ -802,6 +802,21 @@
          class(object) <- oldClass
       }
    }
+   else if (is.double(object))
+   {
+      if (length(object) > 1)
+      {
+         header <- head(object, n)
+         formatted <- format(header, digits = 3)
+         output <- paste(formatted, collapse = " ")
+         more <- length(object) > n
+      }
+      else
+      {
+         output <- format(object)
+         more <- FALSE
+      }
+   }
    else if (is.atomic(object))
    {
       output <- paste(head(object, n), collapse = " ")
