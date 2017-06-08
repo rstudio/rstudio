@@ -76,7 +76,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
 
       String textboxWidth = "250px";
-      customShellPathLabel_ = new Label("Custom shell binary:");
+      customShellPathLabel_ = new Label("Custom shell binary (fully qualified path):");
       add(spacedBefore(customShellPathLabel_));
       customShellPath_ = new TextBox();
       customShellPath_.getElement().setAttribute("spellcheck", "false");
