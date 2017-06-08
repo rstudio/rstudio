@@ -133,3 +133,15 @@
 	background-color: #e6e6e6;
 	cursor: pointer;
 }
+
+.rstudio-themes-dark .clickableIcon:hover {
+	border-radius: 2px;
+	background-color: #444;
+	cursor: pointer;
+}
+
+.rstudio-themes-dark .clickableIcon:active {
+	border-radius: 2px;
+	background-color: #555;
+	cursor: pointer;
+}
