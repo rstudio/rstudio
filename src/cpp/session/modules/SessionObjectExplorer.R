@@ -84,10 +84,19 @@
 .rs.addFunction("objectType", function(object)
 {
    type <- typeof(object)
+   
    if (type %in% "closure")
       type <- "function"
    else if (type %in% c("builtin", "special"))
       type <- "function (primitive)"
+   
+   dimensions <- dim(object)
+   if (!is.null(dimensions))
+   {
+      dimtext <- paste(dimensions, collapse = " x ")
+      type <- paste(type, sprintf("[%s]", dimtext), sep = "")
+   }
+   
    type
 })
 
@@ -746,6 +755,18 @@
    else if (is.symbol(object))
    {
       output <- .rs.surround(object, with = "`")
+      more <- FALSE
+   }
+   else if (is.data.frame(object))
+   {
+      fmt <- "A %s with %s rows and %s columns"
+    
+      name <- if (inherits(object, "tbl"))
+         "tibble"
+      else
+         "data.frame"
+      
+      output <- sprintf(fmt, name, nrow(object), ncol(object))
       more <- FALSE
    }
    else if (is.list(object))
