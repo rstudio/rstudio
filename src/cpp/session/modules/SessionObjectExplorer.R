@@ -94,7 +94,13 @@
    if (!is.null(dimensions))
    {
       dimtext <- paste(dimensions, collapse = " x ")
-      type <- paste(type, sprintf("[%s]", dimtext), sep = "")
+      type <- paste(type, sprintf("[%s]", dimtext))
+   }
+   else if (is.character(object) || is.numeric(object) ||
+            is.raw(object) || is.complex(object) ||
+            is.list(object) || is.environment(object))
+   {
+      type <- paste(type, sprintf("[%s]", length(object)))
    }
    
    type
