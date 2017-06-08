@@ -139,6 +139,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       }
    }
 
+#ifndef _WIN32
    // Add user-selectable shell command option
    TerminalShell customShell;
    if (AvailableTerminalShells::getCustomShell(&customShell))
@@ -147,6 +148,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
                customShell.args, pShells,
                false /*checkPathExists*/);
    }
+#endif // !_WIN32
 }
 
 } // anonymous namespace
