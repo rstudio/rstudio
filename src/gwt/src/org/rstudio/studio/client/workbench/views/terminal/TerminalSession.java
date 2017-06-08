@@ -72,6 +72,9 @@ public class TerminalSession extends XTermWidget
     * @param cursorBlink should terminal cursor blink
     * @param focus should terminal automatically get focus
     * @param shellType type of shell to run
+    * @param cwd current working directory
+    * @param autoCloseMode should terminal close when process exits
+    * @param zombie is session just showing buffer for terminated process
     */
    public TerminalSession(int sequence,
                           String handle,
@@ -84,7 +87,9 @@ public class TerminalSession extends XTermWidget
                           boolean focus,
                           int shellType,
                           boolean altBufferActive,
-                          String cwd)
+                          String cwd,
+                          int autoCloseMode,
+                          boolean zombie)
    {
       super(cursorBlink, focus);
       
@@ -97,6 +102,8 @@ public class TerminalSession extends XTermWidget
       rows_ = rows;
       altBufferActive_ = altBufferActive;
       cwd_ = cwd;
+      autoCloseMode_ = autoCloseMode;
+      zombie_ = zombie;
       
       setTitle(title);
       socket_ = new TerminalSessionSocket(this, this);
@@ -140,7 +147,8 @@ public class TerminalSession extends XTermWidget
 
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
-            getTitle(), getSequence(), getAltBufferActive(), getCwd(),
+            getTitle(), getSequence(), getAltBufferActive(), getCwd(), 
+            getZombie(),
             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -150,14 +158,14 @@ public class TerminalSession extends XTermWidget
             if (consoleProcess_ == null)
             {
                writeError("No ConsoleProcess received from server");
-               disconnect();
+               disconnect(false);
                return;
             }
 
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
                writeError("Unsupported ConsoleProcess interaction mode");
-               disconnect();
+               disconnect(false);
                return;
             } 
             
@@ -187,7 +195,7 @@ public class TerminalSession extends XTermWidget
                      @Override
                      public void onError(ServerError error)
                      {
-                        disconnect();
+                        disconnect(false);
                         writeError(error.getUserMessage());
                      }
                   });
@@ -198,7 +206,7 @@ public class TerminalSession extends XTermWidget
                public void onError(String errorMsg)
                {
                   writeError(errorMsg);
-                  disconnect();
+                  disconnect(false);
                   return;
                }
             });
@@ -207,25 +215,30 @@ public class TerminalSession extends XTermWidget
          @Override
          public void onError(ServerError error)
          {
-            disconnect();
+            disconnect(false);
             writeError(error.getUserMessage());
          }
 
       });
    }
-
+   
    /**
-    * Disconnect a connected terminal. Allows for reconnection.
+    * Disconnect a terminal.
+    * @param permanent If true, the connection cannot be reopened.
     */
-   private void disconnect()
+   public void disconnect(boolean permanent)
    {
       inputQueue_.setLength(0);
-      socket_.disconnect();
+      socket_.disconnect(permanent);
       registrations_.removeHandler();
       consoleProcess_ = null;
       connected_ = false;
       connecting_ = false;
       restartSequenceWritten_ = false;
+      if (permanent)
+      {
+         zombie_ = true;
+      }
    }
 
    @Override
@@ -488,7 +501,7 @@ public class TerminalSession extends XTermWidget
    protected void onDetach()
    {
       super.onDetach();
-      disconnect();
+      disconnect(false);
       unregisterHandlers();
    }
 
@@ -651,7 +664,7 @@ public class TerminalSession extends XTermWidget
       switch(event.getAction().getType())
       {
       case SessionSerializationAction.SUSPEND_SESSION:
-         disconnect();
+         disconnect(false);
          break;
       }
    }
@@ -727,6 +740,8 @@ public class TerminalSession extends XTermWidget
                      else
                      {
                         writeRestartSequence();
+                        if (zombie_)
+                           showZombieMessage();
                      }
                   }
 
@@ -739,6 +754,11 @@ public class TerminalSession extends XTermWidget
             }
          }
       });
+   }
+   
+   public void showZombieMessage()
+   {
+      writeln("[Process completed]");
    }
 
    /**
@@ -777,7 +797,31 @@ public class TerminalSession extends XTermWidget
    {
       newTerminal_ = isNew;
    }
-
+   
+   public int getAutoCloseMode()
+   {
+      if (consoleProcess_ == null)
+      {
+         return autoCloseMode_;
+      }
+      autoCloseMode_ = consoleProcess_.getProcessInfo().getAutoCloseMode();
+      return autoCloseMode_;
+   }
+   
+   /**
+    * @return true if session represents a terminal whose process has exited,
+    * but terminal output remains visible; cannot be reconnected
+    */
+   public boolean getZombie()
+   {
+      if (consoleProcess_ == null)
+      {
+         return zombie_;
+      }
+      zombie_ = consoleProcess_.getProcessInfo().getZombie();
+      return zombie_;
+   }
+   
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
@@ -798,6 +842,8 @@ public class TerminalSession extends XTermWidget
    private int rows_;
    private boolean altBufferActive_;
    private String cwd_; 
+   private int autoCloseMode_;
+   private boolean zombie_; // process closed but UI kept alive
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

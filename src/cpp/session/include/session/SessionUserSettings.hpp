@@ -105,6 +105,7 @@ public:
    bool enableRSConnectUI() const;
    core::text::AnsiCodeMode ansiConsoleMode() const;
    bool terminalWebsockets() const;
+   bool terminalAutoclose() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -264,7 +265,8 @@ private:
    mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
    mutable boost::scoped_ptr<int> pAnsiConsoleMode_;
    mutable boost::scoped_ptr<bool> pTerminalWebsockets_;
-   
+   mutable boost::scoped_ptr<bool> pTerminalAutoclose_;
+
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;
    mutable boost::scoped_ptr<bool> pCheckArgumentsToRFunctionCalls_;
@@ -272,7 +274,7 @@ private:
    mutable boost::scoped_ptr<bool> pWarnIfVariableDefinedButNotUsed_;
    mutable boost::scoped_ptr<bool> pEnableStyleDiagnostics_;
 };
-   
+
 } // namespace session
 } // namespace rstudio
 

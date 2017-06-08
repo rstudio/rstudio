@@ -116,6 +116,16 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       perfLabel.setVisible(showPerfLabel);
 
+      Label miscLabel = headerLabel("Miscellaneous");
+      miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(miscLabel);
+      miscLabel.setVisible(true);
+
+      CheckBox chkTerminalAutoClose = checkboxPref("Close terminal when shell exits",
+            prefs_.terminalAutoClose(),
+            "Deselect this option to keep terminal pane open after shell exits.");
+      add(chkTerminalAutoClose);
+
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
       helpLink.addStyleName(res_.styles().newSection()); 

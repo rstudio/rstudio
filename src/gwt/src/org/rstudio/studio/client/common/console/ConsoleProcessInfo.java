@@ -117,6 +117,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public final native int getAutoCloseMode() /*-{
       return this.autoclose;
    }-*/;
+   
+   public final native boolean getZombie() /*-{
+      return this.zombie;
+   }-*/;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;
    

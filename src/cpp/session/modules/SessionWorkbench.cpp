@@ -886,6 +886,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    int termSequence = kNoTerminal;
    bool altBufferActive;
    std::string currentDir;
+   bool zombie;
    
    Error error = json::readParams(request.params,
                                   &shellTypeInt,
@@ -896,7 +897,8 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termTitle,
                                   &termSequence,
                                   &altBufferActive,
-                                  &currentDir);
+                                  &currentDir,
+                                  &zombie);
    if (error)
       return error;
 
@@ -928,9 +930,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
          shellType, cols, rows, termSequence, cwd, &actualShellType);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
-         boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence,  actualShellType,
-            altBufferActive, cwd, cols, rows);
+         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
+            termCaption, termTitle, termHandle, termSequence, actualShellType,
+            altBufferActive, cwd, cols, rows, zombie));
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::createTerminalProcess(options, ptrProcInfo);

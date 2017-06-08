@@ -45,6 +45,7 @@ const core::FilePath altCwd("/usr/stuff");
 const int cols = core::system::kDefaultCols;
 const int rows = core::system::kDefaultRows;
 const bool restarted = false;
+const bool zombie = false;
 
 const size_t maxLines = kDefaultTerminalMaxOutputLines;
 
@@ -74,7 +75,8 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getCols() == second.getCols() &&
            first.getRows() == second.getRows() &&
            first.getRestarted() == second.getRestarted() &&
-           first.getAutoClose() == second.getAutoClose());
+           first.getAutoClose() == second.getAutoClose() &&
+           first.getZombie() == second.getZombie());
 }
 
 } // anonymous namespace
@@ -85,7 +87,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             shellType, altActive, cwd, cols, rows);
+                             shellType, altActive, cwd, cols, rows, zombie);
 
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
@@ -113,6 +115,8 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(cpi.getAutoClose() == DefaultAutoClose);
       cpi.setAutoClose(NeverAutoClose);
       CHECK(cpi.getAutoClose() == NeverAutoClose);
+
+      CHECK(cpi.getZombie() == zombie);
    }
 
    SECTION("Generate a handle")
@@ -129,7 +133,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Change properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
 
       std::string altCaption("other caption");
       CHECK(altCaption.compare(caption));
@@ -177,12 +181,15 @@ TEST_CASE("ConsoleProcessInfo")
 
       cpi.setAutoClose(AlwaysAutoClose);
       CHECK(cpi.getAutoClose() == AlwaysAutoClose);
+
+      cpi.setZombie(true);
+      CHECK(cpi.getZombie());
    }
 
    SECTION("Change exit code")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
 
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
@@ -205,9 +212,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Compare ConsoleProcInfos with different exit codes")
    {
       ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence, shellType,
-                                  altActive, cwd, cols, rows);
+                                  altActive, cwd, cols, rows, zombie);
       ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence, shellType,
-                                   altActive, cwd, cols, rows);
+                                   altActive, cwd, cols, rows, zombie);
 
       cpiFirst.setExitCode(1);
       cpiSecond.setExitCode(12);
@@ -217,7 +224,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore")
    {
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
-                                  altActive, cwd, cols, rows);
+                                  altActive, cwd, cols, rows, zombie);
 
       core::json::Object origJson = cpiOrig.toJson();
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -263,7 +270,7 @@ TEST_CASE("ConsoleProcessInfo")
       // in the JSON. Same comment on the leaky abstractions here as for
       // previous non-terminal test.
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -299,7 +306,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore terminals with multiple chunks")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -364,9 +371,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Delete unknown log files")
    {
       ConsoleProcessInfo cpiGood(caption, title, handle1, sequence, shellType,
-                                 altActive, cwd, cols, rows);
+                                 altActive, cwd, cols, rows, zombie);
       ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence, shellType,
-                                altActive, cwd, cols, rows);
+                                altActive, cwd, cols, rows, zombie);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
       CHECK(orig1.length() < kOutputBufferSize);
@@ -402,7 +409,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 5;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
       cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
@@ -444,7 +451,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 3;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
       cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
@@ -488,7 +495,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int lines = 10;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows);
+                             altActive, cwd, cols, rows, zombie);
       cpi.setMaxOutputLines(lines * 2);
 
       // blow away anything that might have been left over from a previous

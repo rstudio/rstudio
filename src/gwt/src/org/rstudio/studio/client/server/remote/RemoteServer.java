@@ -505,6 +505,7 @@ public class RemoteServer implements Server
                      int sequence,
                      boolean altBufferActive,
                      String cwd,
+                     boolean zombie,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -517,6 +518,7 @@ public class RemoteServer implements Server
       params.set(6, new JSONNumber(sequence));
       params.set(7, JSONBoolean.getInstance(altBufferActive));
       params.set(8, new JSONString(StringUtil.notNull(cwd)));
+      params.set(9, JSONBoolean.getInstance(zombie));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,

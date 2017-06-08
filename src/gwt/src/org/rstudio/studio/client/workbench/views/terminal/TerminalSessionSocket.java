@@ -183,6 +183,13 @@ public class TerminalSessionSocket
                        final ConnectCallback callback)
    {
       consoleProcess_ = consoleProcess;
+      
+      if (consoleProcess.getProcessInfo().getZombie())
+      {
+         diagnostic("Zombie, not reconnecting");
+         callback.onConnected();
+         return;
+      }
 
       // We keep this handler connected after a disconnect so
       // user input sent via RPC can wake up a suspended session
@@ -381,12 +388,16 @@ public class TerminalSessionSocket
       }
    }
 
-   public void disconnect()
+   public void disconnect(boolean permanent)
    {
-      diagnostic("Disconnected");
+      diagnostic(permanent ? "Permanently Disconnected" : "Disconnected");
       socket_.close();
       socket_ = null;
       registrations_.removeHandler();
+      if (permanent)
+      {
+         unregisterHandlers(); // gets rid of keyboard handler
+      }
    }
    
    public void resetDiagnostics()

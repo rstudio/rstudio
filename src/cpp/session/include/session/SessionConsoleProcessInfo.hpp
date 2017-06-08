@@ -79,7 +79,7 @@ public:
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
-         int cols, int rows);
+         int cols, int rows, bool zombie);
 
    // constructor for non-terminals
    ConsoleProcessInfo(
@@ -176,6 +176,10 @@ public:
    void setAutoClose(AutoCloseMode autoClose) { autoClose_ = autoClose; }
    AutoCloseMode getAutoClose() const { return autoClose_; }
 
+   // Is terminal session a zombie (process exited but keeping buffer)
+   void setZombie(bool zombie) { zombie_ = zombie; }
+   bool getZombie() const { return zombie_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -204,6 +208,7 @@ private:
    int rows_;
    bool restarted_;
    AutoCloseMode autoClose_;
+   bool zombie_;
 };
 
 } // namespace console_process
