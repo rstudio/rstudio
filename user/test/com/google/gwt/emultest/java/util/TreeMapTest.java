@@ -2306,7 +2306,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   public void testPut_ComparableKey() {
     final boolean java6CompatibleSources =
         !TestUtils.isJvm() || TestUtils.getJdkVersion() < 7;
-    TreeMap<String, Object> map = new TreeMap<String, Object>();
+    TreeMap map = new TreeMap();
     ConflictingKey conflictingKey = new ConflictingKey("conflictingKey");
     try {
       TreeMap untypedMap = map;
@@ -3501,7 +3501,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   protected void verifyMap() {
     if (!TestUtils.isJvm()) {
       // Verify red-black correctness in our implementation
-      TreeMapViolator.callAssertCorrectness(map);
+      TreeMapViolator.callAssertCorrectness((TreeMap) map);
     }
     super.verifyMap();
   }

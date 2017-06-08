@@ -15,7 +15,7 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Used to delay referencing methods only present in the emulated JRE until they
@@ -24,7 +24,7 @@ import java.util.Map;
 public class TreeMapViolator {
   // Use JSNI to call a special method on our implementation of TreeMap.
   @SuppressWarnings("unchecked") // raw Map
-  public static native void callAssertCorrectness(Map map) /*-{
+  public static native void callAssertCorrectness(TreeMap map) /*-{
     map.@java.util.TreeMap::assertCorrectness()();
   }-*/;
 }
