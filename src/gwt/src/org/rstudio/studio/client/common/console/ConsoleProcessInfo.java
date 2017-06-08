@@ -30,6 +30,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int CHANNEL_WEBSOCKET = 1;
    public static final int CHANNEL_PIPE = 2;
    
+   public static final int AUTOCLOSE_DEFAULT = 0;
+   public static final int AUTOCLOSE_ALWAYS = 1;
+   public static final int AUTOCLOSE_NEVER = 0;
+   
    protected ConsoleProcessInfo() {}
 
    public final native String getHandle() /*-{
@@ -109,7 +113,11 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public final native boolean getRestarted() /*-{
       return this.restarted;
    }-*/;
- 
+
+   public final native int getAutoCloseMode() /*-{
+      return this.autoclose;
+   }-*/;
+
    public static final int SEQUENCE_NO_TERMINAL = 0;
    
    public final native boolean isTerminal() /*-{
