@@ -19,13 +19,19 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
+                             implements KeyDownHandler
 {
    public static class Input
    {
@@ -63,6 +69,9 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       tbName_ = textBox();
       tbUrl_ = textBox();
       
+      tbName_.addKeyDownHandler(this);
+      tbUrl_.addKeyDownHandler(this);
+      
       tbUrl_.setValue(StringUtil.notNull(defaultUrl));
       
       container_.add(lblName_);
@@ -71,6 +80,8 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       container_.add(lblUrl_);
       container_.add(tbUrl_);
       container_.add(new VerticalSpacer("6px"));
+      
+      synchronize();
    }
 
    @Override
@@ -84,6 +95,28 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    {
       super.showModal();
       tbName_.setFocus(true);
+   }
+   
+   @Override
+   public void onKeyDown(KeyDownEvent event)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            synchronize();
+         }
+      });
+   }
+   
+   private void synchronize()
+   {
+      boolean isValidState =
+            !StringUtil.isNullOrEmpty(tbName_.getValue()) &&
+            !StringUtil.isNullOrEmpty(tbUrl_.getValue());
+      
+      enableOkButton(isValidState);
    }
    
    private TextBox textBox()
