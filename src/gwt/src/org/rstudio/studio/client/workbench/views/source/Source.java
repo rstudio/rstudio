@@ -4365,9 +4365,11 @@ public class Source implements InsertSourceHandler,
    private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)
    {
       JsArray<ReplacementData> data = event.getData().getReplacementData();
-      for (int i = 0; i < data.length(); i++)
+      
+      int n = data.length();
+      for (int i = 0; i < n; i++)
       {
-         ReplacementData el = data.get(i);
+         ReplacementData el = data.get(n - i - 1);
          Range range = el.getRange();
          String text = el.getText();
          
