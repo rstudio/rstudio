@@ -60,7 +60,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       
       flatTheme_ = new SelectWidget("RStudio theme:",
                                 new String[]{"Classic", "Modern", "Sky"},
-                                new String[]{"classic", "modern", "alternate"},
+                                new String[]{"classic", "default", "alternate"},
                                 false);
       flatTheme_.addStyleName(res.styles().themeChooser());
       flatTheme_.getListBox().setWidth("95%");
@@ -81,7 +81,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
 
       String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
-      if (themeAlias == "default" || themeAlias ==  "dark-grey") themeAlias = "modern";
       flatTheme_.setValue(themeAlias);
 
       leftPanel.add(flatTheme_);
@@ -269,9 +268,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       }
 
       String themeName = flatTheme_.getValue();
-      if (themeName == "modern") {
-         themeName = RStudioThemes.suggestThemeFromAceTheme(theme_.getValue());
-      }
 
       uiPrefs_.getFlatTheme().setGlobalValue(themeName);  
       ThemeChangedEvent themeChangedEvent = new ThemeChangedEvent(flatTheme_.getValue());

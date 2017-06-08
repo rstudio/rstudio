@@ -620,7 +620,7 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getValue(),
+      RStudioThemes.initializeThemes(uiPrefs_.get(),
                                      Document.get(),
                                      rootPanel_.getElement());
    }
@@ -717,7 +717,7 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getValue(),
+      RStudioThemes.initializeThemes(uiPrefs_.get(),
                                      Document.get(),
                                      rootPanel_.getElement());
 
