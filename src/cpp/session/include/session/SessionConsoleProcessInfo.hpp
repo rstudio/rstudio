@@ -47,6 +47,13 @@ enum ChannelMode
    NamedPipe = 2,
 };
 
+enum AutoCloseMode
+{
+   DefaultAutoClose = 0, // obey user preference
+   AlwaysAutoClose = 1, // always auto-close
+   NeverAutoClose = 2, // never auto-close
+};
+
 extern const int kDefaultMaxOutputLines;
 extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
@@ -165,6 +172,10 @@ public:
    void setRestarted(bool restarted) { restarted_ = restarted; }
    bool getRestarted() const { return restarted_; }
 
+   // Close terminal session after process exits?
+   void setAutoClose(AutoCloseMode autoClose) { autoClose_ = autoClose; }
+   AutoCloseMode getAutoClose() const { return autoClose_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -192,6 +203,7 @@ private:
    int cols_;
    int rows_;
    bool restarted_;
+   AutoCloseMode autoClose_;
 };
 
 } // namespace console_process

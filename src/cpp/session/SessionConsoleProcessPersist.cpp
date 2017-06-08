@@ -45,7 +45,9 @@ namespace console_persist {
 //                using non-RPC-based communication channel back to client
 // 2017/05/15 - console03 -> console04
 //                Added current-working directory, alt-buffer, cols, rows
-#define kConsoleDir "console04"
+// 2017/06/8  - console04 -> console05
+//                Added autoClose
+#define kConsoleDir "console05"
 
 namespace {
 

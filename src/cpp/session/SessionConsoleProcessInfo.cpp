@@ -39,7 +39,7 @@ ConsoleProcessInfo::ConsoleProcessInfo()
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
      channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false)
+     restarted_(false), autoClose_(DefaultAutoClose)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -60,7 +60,8 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      interactionMode_(InteractionAlways), maxOutputLines_(kDefaultTerminalMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(altBufferActive), shellType_(shellType),
-     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false)
+     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false),
+     autoClose_(DefaultAutoClose)
 {
 }
 
@@ -73,7 +74,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
      channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false)
+     restarted_(false), autoClose_(DefaultAutoClose)
 {
 }
 
@@ -203,6 +204,7 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["cols"] = cols_;
    result["rows"] = rows_;
    result["restarted"] = restarted_;
+   result["autoclose"] = static_cast<int>(autoClose_);
 
    return result;
 }
@@ -260,6 +262,8 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    pProc->rows_ = obj["rows"].get_int();
 
    pProc->restarted_ = obj["restarted"].get_bool();
+   int autoCloseInt = obj["autoclose"].get_int();
+   pProc->autoClose_ = static_cast<AutoCloseMode>(autoCloseInt);
 
    return pProc;
 }

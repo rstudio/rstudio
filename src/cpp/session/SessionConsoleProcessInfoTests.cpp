@@ -73,7 +73,8 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getCwd() == second.getCwd() &&
            first.getCols() == second.getCols() &&
            first.getRows() == second.getRows() &&
-           first.getRestarted() == second.getRestarted());
+           first.getRestarted() == second.getRestarted() &&
+           first.getAutoClose() == second.getAutoClose());
 }
 
 } // anonymous namespace
@@ -108,6 +109,10 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK_FALSE(cpi.getRestarted());
       cpi.setRestarted(true);
       CHECK(cpi.getRestarted());
+
+      CHECK(cpi.getAutoClose() == DefaultAutoClose);
+      cpi.setAutoClose(NeverAutoClose);
+      CHECK(cpi.getAutoClose() == NeverAutoClose);
    }
 
    SECTION("Generate a handle")
@@ -169,6 +174,9 @@ TEST_CASE("ConsoleProcessInfo")
 
       cpi.setCwd(altCwd);
       CHECK(altCwd == cpi.getCwd());
+
+      cpi.setAutoClose(AlwaysAutoClose);
+      CHECK(cpi.getAutoClose() == AlwaysAutoClose);
    }
 
    SECTION("Change exit code")
