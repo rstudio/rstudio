@@ -87,17 +87,6 @@ public class RStudioThemes
       return result != null ? "dark-grey" : rstudioTheme;
    }
 
-   public static String suggestThemeFromAceTheme(String aceTheme) {
-      RegExp keyReg = RegExp.compile(
-         "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
-         "material|merbivore soft|merbivore|mono industrial|monokai|" +
-         "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
-         "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
-      
-      MatchResult result = keyReg.exec(aceTheme);
-      return result != null ? "dark-grey" : "default";
-   }
-
    public static String getThemeFromUiPrefs(UIPrefs prefs) {
       return suggestThemeFromAceTheme(
         prefs.theme().getGlobalValue(),
