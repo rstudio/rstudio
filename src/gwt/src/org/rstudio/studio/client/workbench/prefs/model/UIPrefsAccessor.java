@@ -655,8 +655,7 @@ public class UIPrefsAccessor extends Prefs
 
    public PrefValue<String> getFlatTheme()
    {
-      String flatTheme = RStudioThemes.suggestThemeFromAceTheme(theme().getValue());
-      return string("flat_theme", flatTheme);
+      return string("flat_theme", "default");
    }
    
    public PrefValue<Boolean> gitDiffIgnoreWhitespace()
