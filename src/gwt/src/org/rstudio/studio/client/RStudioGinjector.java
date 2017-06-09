@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
+import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
@@ -237,6 +238,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditorMixins mixins);
    void injectMembers(RStudioThemedFrame frame);
    void injectMembers(AceBackgroundHighlighter highlighter);
+   void injectMembers(AddinsToolbarButton button);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

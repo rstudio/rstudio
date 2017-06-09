@@ -20,8 +20,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -54,7 +52,6 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CustomMenuItemSeparator;
@@ -133,7 +130,7 @@ public class BranchToolbarButton extends ToolbarButton
                   public void execute()
                   {
                      focusSearch();
-                     Element tableEl = getMenuTableElement();
+                     Element tableEl = menu_.getMenuTableElement();
                      if (tableEl != null)
                         menuWidth_ = tableEl.getOffsetWidth();
                   }
@@ -146,8 +143,6 @@ public class BranchToolbarButton extends ToolbarButton
                   previewHandler_.removeHandler();
                   previewHandler_ = null;
                }
-               
-               searchEl_ = null;
             }
          }
       });
@@ -324,7 +319,7 @@ public class BranchToolbarButton extends ToolbarButton
       
       if (menuWidth_ != 0)
       {
-         Element tableEl = getMenuTableElement();
+         Element tableEl = menu_.getMenuTableElement();
          if (tableEl != null)
             tableEl.getStyle().setWidth(menuWidth_, Unit.PX);
       }
@@ -360,8 +355,6 @@ public class BranchToolbarButton extends ToolbarButton
       Element container = DOM.createDiv();
       container.appendChild(labelEl);
       container.appendChild(searchEl);
-      
-      searchEl_ = searchEl;
       
       // For some reason any attempts to click within the search box (when it
       // lives as a separator in the menu) end up losing focus immediately after
@@ -442,39 +435,9 @@ public class BranchToolbarButton extends ToolbarButton
    
    private void focusSearch()
    {
-      if (searchEl_ == null)
-         return;
-      
-      NodeList<Element> inputEls = searchEl_.getElementsByTagName("input");
-      if (inputEls == null || inputEls.getLength() != 1)
-         return;
-      
-      Element inputEl = inputEls.getItem(0);
-      inputEl.focus();
+      searchWidget_.getInputElement().focus();
    }
    
-   Element getMenuTableElement()
-   {
-      Element menuEl = menu_.getWidget().getElement();
-      Node tableNode = DomUtils.findNode(menuEl, true, true, new NodePredicate()
-      {
-         @Override
-         public boolean test(Node node)
-         {
-            if (!(node instanceof Element))
-               return false;
-
-            Element el = (Element) node;
-            return el.hasTagName("table");
-         }
-      });
-      
-      if (tableNode == null)
-         return null;
-      
-      return tableNode.<Element>cast();
-   }
-
    public interface Styles extends CssResource
    {
       String searchWidget();
@@ -493,7 +456,6 @@ public class BranchToolbarButton extends ToolbarButton
    private final SearchWidget searchWidget_;
    private Map<String, List<String>> initialBranchMap_;
    
-   private Element searchEl_;
    private HandlerRegistration previewHandler_;
    
    private String lastSearchValue_;
