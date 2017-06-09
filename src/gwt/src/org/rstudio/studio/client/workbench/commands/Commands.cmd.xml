@@ -761,7 +761,7 @@ well as menu structures (for main menu and popup menus).
        -->
       <shortcutgroup name="Not Displayed">
          <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
-         <shortcut refid="layoutZoomConsolePane" value="Ctrl+Shift+2"/>
+         <shortcut refid="layoutZoomConsole" value="Ctrl+Shift+2"/>
          <shortcut refid="layoutZoomHelp" value="Ctrl+Shift+3"/>
          <shortcut refid="layoutZoomHistory" value="Ctrl+Shift+4"/>
          <shortcut refid="layoutZoomFiles" value="Ctrl+Shift+5"/>
