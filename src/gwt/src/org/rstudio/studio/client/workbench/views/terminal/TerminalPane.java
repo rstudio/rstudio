@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -82,12 +83,14 @@ public class TerminalPane extends WorkbenchPane
    protected TerminalPane(EventBus events,
                           GlobalDisplay globalDisplay,
                           Commands commands,
+                          UIPrefs uiPrefs,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
       events_ = events;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      uiPrefs_ = uiPrefs;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -538,8 +541,9 @@ public class TerminalPane extends WorkbenchPane
    /**
     * Cleanup after process with given handle has terminated.
     * @param handle identifier for process that exited
+    * @param processExited true if process exited on server
     */
-   private void cleanupAfterTerminate(String handle)
+   private void cleanupAfterTerminate(String handle, boolean processExited)
    {
       if (terminals_.indexOfTerminal(handle) == -1)
       {
@@ -547,14 +551,39 @@ public class TerminalPane extends WorkbenchPane
          // to the Terminal pane.
          return;
       }
+      
+      // determine if terminal should remain loaded in UI even though process
+      // has exited
+      if (processExited)
+      {
+         int autoCloseMode = terminals_.autoCloseForHandle(handle);
+         if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_DEFAULT)
+         {
+            if (uiPrefs_.terminalAutoClose().getValue())
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
+            else
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
+         }
 
+         if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_NEVER)
+         {
+            TerminalSession terminal = loadedTerminalWithHandle(handle);
+            if (terminal != null)
+            {
+               terminal.showZombieMessage();
+               terminal.disconnect(true /*permanent*/);
+            }
+            return;
+         }
+      }
+      
       // Figure out which terminal to switch to, send message to do so.
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
          events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
       }
-
+      
       // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
       server_.processReap(handle, new VoidServerRequestCallback());
@@ -578,14 +607,14 @@ public class TerminalPane extends WorkbenchPane
    public void onServerProcessExit(ServerProcessExitEvent event)
    {
       // Notification from server that a process exited.
-      cleanupAfterTerminate(event.getProcessHandle());
+      cleanupAfterTerminate(event.getProcessHandle(), true);
    }
 
    @Override
    public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
    {
       // Notification from a TerminalSession that it is being forcibly closed.
-      cleanupAfterTerminate(event.getTerminalWidget().getHandle());
+      cleanupAfterTerminate(event.getTerminalWidget().getHandle(), false);
    }
 
    @Override
@@ -900,4 +929,5 @@ public class TerminalPane extends WorkbenchPane
    private EventBus events_;
    private Commands commands_;
    private WorkbenchServerOperations server_;
+   private UIPrefs uiPrefs_;
 }

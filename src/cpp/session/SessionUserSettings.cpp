@@ -431,6 +431,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int terminalWebsockets = readPref<bool>(prefs, "terminal_websockets", true);
    pTerminalWebsockets_.reset(new bool(terminalWebsockets));
 
+   bool terminalAutoclose = readPref<bool>(prefs, "terminal_autoclose", true);
+   pTerminalAutoclose_.reset(new bool(terminalAutoclose));
+
    syncConsoleColorEnv();
 }
 
@@ -642,6 +645,11 @@ core::text::AnsiCodeMode UserSettings::ansiConsoleMode() const
 bool UserSettings::terminalWebsockets() const
 {
    return readUiPref<bool>(pTerminalWebsockets_);
+}
+
+bool UserSettings::terminalAutoclose() const
+{
+   return readUiPref<bool>(pTerminalAutoclose_);
 }
 
 CRANMirror UserSettings::cranMirror() const

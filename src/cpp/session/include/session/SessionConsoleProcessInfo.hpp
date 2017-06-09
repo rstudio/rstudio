@@ -47,6 +47,13 @@ enum ChannelMode
    NamedPipe = 2,
 };
 
+enum AutoCloseMode
+{
+   DefaultAutoClose = 0, // obey user preference
+   AlwaysAutoClose = 1, // always auto-close
+   NeverAutoClose = 2, // never auto-close
+};
+
 extern const int kDefaultMaxOutputLines;
 extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
@@ -72,7 +79,7 @@ public:
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
-         int cols, int rows);
+         int cols, int rows, bool zombie);
 
    // constructor for non-terminals
    ConsoleProcessInfo(
@@ -165,6 +172,14 @@ public:
    void setRestarted(bool restarted) { restarted_ = restarted; }
    bool getRestarted() const { return restarted_; }
 
+   // Close terminal session after process exits?
+   void setAutoClose(AutoCloseMode autoClose) { autoClose_ = autoClose; }
+   AutoCloseMode getAutoClose() const { return autoClose_; }
+
+   // Is terminal session a zombie (process exited but keeping buffer)
+   void setZombie(bool zombie) { zombie_ = zombie; }
+   bool getZombie() const { return zombie_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -192,6 +207,8 @@ private:
    int cols_;
    int rows_;
    bool restarted_;
+   AutoCloseMode autoClose_;
+   bool zombie_;
 };
 
 } // namespace console_process

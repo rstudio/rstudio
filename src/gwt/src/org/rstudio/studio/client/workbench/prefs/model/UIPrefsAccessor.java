@@ -616,6 +616,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("terminal_websockets", true);
    }
    
+   public PrefValue<Boolean> terminalAutoClose()
+   {
+      return bool("terminal_autoclose", true);
+   }
+
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

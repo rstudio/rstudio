@@ -31,10 +31,11 @@ context("queue and fetch input")
    core::FilePath cwd("/usr/local");
 
    boost::shared_ptr<ConsoleProcessInfo> pCPI =
-         boost::make_shared<ConsoleProcessInfo>(
+         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
             "test caption", "test title", "fakehandle", 9999 /*terminal*/,
             TerminalShell::DefaultShell, false /*altBuffer*/, cwd,
-            core::system::kDefaultCols, core::system::kDefaultRows);
+            core::system::kDefaultCols, core::system::kDefaultRows,
+            false /*zombie*/));
 
    boost::shared_ptr<ConsoleProcess> pCP =
          ConsoleProcess::createTerminalProcess(procOptions, pCPI, false /*enableWebsockets*/);

@@ -253,7 +253,7 @@ void ConsoleProcess::setPromptHandler(
 
 Error ConsoleProcess::start()
 {
-   if (started_)
+   if (started_ || procInfo_->getZombie())
       return Success();
 
    Error error;
@@ -609,6 +609,19 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 void ConsoleProcess::onExit(int exitCode)
 {
    procInfo_->setExitCode(exitCode);
+
+   AutoCloseMode autoClose = procInfo_->getAutoClose();
+   if (autoClose == DefaultAutoClose)
+   {
+      if (session::userSettings().terminalAutoclose())
+         autoClose = AlwaysAutoClose;
+      else
+         autoClose = NeverAutoClose;
+   }
+
+   if (autoClose == NeverAutoClose)
+      procInfo_->setZombie(true);
+
    saveConsoleProcesses();
 
    json::Object data;

@@ -51,6 +51,10 @@ public class TerminalList implements Iterable<String>,
        * @param cols number of columns in pseudoterminal
        * @param rows number of rows in pseudoterminal
        * @param shellType type of shell to run
+       * @param altBufferActive is terminal showing a full-screen app?
+       * @param cwd current working directory, if known
+       * @param autoCloseMode terminal's auto-close mode
+       * @param zombie is terminal a zombie (buffer but no process)?
        */
       private TerminalMetadata(String handle,
                                String caption,
@@ -61,7 +65,9 @@ public class TerminalList implements Iterable<String>,
                                int rows,
                                int shellType,
                                boolean altBufferActive,
-                               String cwd)
+                               String cwd,
+                               int autoCloseMode,
+                               boolean zombie)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
@@ -73,6 +79,8 @@ public class TerminalList implements Iterable<String>,
          shellType_ = shellType;
          altBufferActive_ = altBufferActive;
          cwd_ = cwd;
+         autoCloseMode_ = autoCloseMode;
+         zombie_ = zombie;
       }
 
       private TerminalMetadata(TerminalMetadata original,
@@ -87,7 +95,9 @@ public class TerminalList implements Iterable<String>,
               original.rows_,
               original.shellType_,
               original.altBufferActive_,
-              original.cwd_);
+              original.cwd_,
+              original.autoCloseMode_,
+              original.zombie_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -101,7 +111,9 @@ public class TerminalList implements Iterable<String>,
               ConsoleProcessInfo.DEFAULT_ROWS,
               procInfo.getShellType(),
               procInfo.getAltBufferActive(),
-              procInfo.getCwd()
+              procInfo.getCwd(),
+              procInfo.getAutoCloseMode(),
+              procInfo.getZombie()
               );
       }
 
@@ -116,7 +128,9 @@ public class TerminalList implements Iterable<String>,
               term.getRows(),
               term.getShellType(),
               term.getAltBufferActive(),
-              term.getCwd());
+              term.getCwd(),
+              term.getAutoCloseMode(),
+              term.getZombie());
       }
 
       /**
@@ -150,6 +164,8 @@ public class TerminalList implements Iterable<String>,
       public int getShellType() { return shellType_; }
       public boolean getAltBufferActive() { return altBufferActive_; }
       public String getCwd() { return cwd_; }
+      public int getAutoCloseMode() { return autoCloseMode_; }
+      public boolean getZombie() { return zombie_; }
 
       private String handle_;
       private String caption_;
@@ -161,6 +177,8 @@ public class TerminalList implements Iterable<String>,
       private int shellType_;
       private boolean altBufferActive_;
       private String cwd_;
+      private int autoCloseMode_;
+      private boolean zombie_;
    }
 
    protected TerminalList() 
@@ -246,7 +264,9 @@ public class TerminalList implements Iterable<String>,
                current.rows_,
                current.shellType_,
                current.altBufferActive_,
-               current.cwd_));
+               current.cwd_,
+               current.autoCloseMode_,
+               current.zombie_));
          return true;
       }
       return false;
@@ -275,7 +295,9 @@ public class TerminalList implements Iterable<String>,
                current.rows_,
                current.shellType_,
                current.altBufferActive_,
-               cwd));
+               cwd,
+               current.autoCloseMode_,
+               current.zombie_));
       }
    }
 
@@ -385,6 +407,20 @@ public class TerminalList implements Iterable<String>,
       }
       return null;
    }
+   
+   /**
+    * Obtain autoclose mode for a given terminal handle.
+    * @param handle handle to query
+    * @return autoclose mode; if terminal not in list, returns AUTOCLOSE_DEFAULT
+    */
+   public int autoCloseForHandle(String handle)
+   {
+      TerminalMetadata meta = getMetadataForHandle(handle);
+      if (meta == null)
+         return ConsoleProcessInfo.AUTOCLOSE_DEFAULT;
+      else
+         return meta.autoCloseMode_;
+   }
 
    /**
     * Get metadata for terminal with given handle.
@@ -410,7 +446,9 @@ public class TerminalList implements Iterable<String>,
                     ConsoleProcessInfo.DEFAULT_ROWS,
                     TerminalShellInfo.SHELL_DEFAULT,
                     false, // altBufferActive
-                    null // cwd
+                    null, // cwd
+                    ConsoleProcessInfo.AUTOCLOSE_DEFAULT,
+                    false // zombie
             );
    }
 
@@ -442,7 +480,9 @@ public class TerminalList implements Iterable<String>,
                     ConsoleProcessInfo.DEFAULT_ROWS,
                     TerminalShellInfo.SHELL_DEFAULT,
                     false, // altBufferActive
-                    null // cwd
+                    null, // cwd
+                    ConsoleProcessInfo.AUTOCLOSE_DEFAULT,
+                    false // zombie
             );
       return true;
    }
@@ -469,7 +509,9 @@ public class TerminalList implements Iterable<String>,
                     existing.getRows(),
                     existing.getShellType(),
                     existing.getAltBufferActive(),
-                    existing.getCwd());
+                    existing.getCwd(),
+                    existing.getAutoCloseMode(),
+                    existing.getZombie());
       return true;
    }
 
@@ -541,12 +583,14 @@ public class TerminalList implements Iterable<String>,
                              int rows,
                              int shellType,
                              boolean altBufferActive,
-                             String cwd)
+                             String cwd,
+                             int autoCloseMode,
+                             boolean zombie)
    {
       TerminalSession newSession = new TerminalSession(
             sequence, terminalHandle, caption, title, hasChildProcs, 
             cols, rows, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, shellType,
-            altBufferActive, cwd);
+            altBufferActive, cwd, autoCloseMode, zombie);
       newSession.connect();
       updateTerminalBusyStatus();
    }
