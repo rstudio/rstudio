@@ -90,8 +90,6 @@ java_library(
         ],
         exclude = [
             "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
-            "**/ConsoleLogger.java",  # relies on internal APIs
-            "**/SuperDevModeLogger.java",  # relies on ConsoleLogger
             "**/EmulatedCharset.java",
             "**/HashCodes.java",  # relies on java8 only APIs
             "**/NativeRegExp.java",  # has default method

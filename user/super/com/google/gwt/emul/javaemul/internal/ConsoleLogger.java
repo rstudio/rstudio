@@ -15,22 +15,22 @@
  */
 package javaemul.internal;
 
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
+
 /**
  * A helper to print log messages to console.
  * <p> Note that, this is not a public API and can change/disappear in any release.
  */
 public class ConsoleLogger {
   public static ConsoleLogger createIfSupported() {
-    return isSupported() ? new ConsoleLogger() : null;
+    return getConsole() != null ? new ConsoleLogger() : null;
   }
 
-  private static native boolean isSupported() /*-{
-    return !!window.console;
-  }-*/;
-
-  public native void log(String level, String message) /*-{
-    console[level](message);
-  }-*/;
+  public void log(String level, String message) {
+    LogFn logFn = JsUtils.getProperty(getConsole(), level);
+    logFn.call(getConsole(), message);
+  }
 
   public void log(String level, Throwable t) {
     log(level, t, "Exception: ", true);
@@ -38,7 +38,7 @@ public class ConsoleLogger {
 
   private void log(String level, Throwable t, String label, boolean expanded) {
     groupStart(label + t.toString(), expanded);
-    log(level, getBackingError(t, t.getBackingJsObject()));
+    log(level, getBackingErrorStack(t));
     Throwable cause = t.getCause();
     if (cause != null) {
       log(level, cause, "Caused by: ", false);
@@ -49,18 +49,30 @@ public class ConsoleLogger {
     groupEnd();
   }
 
-  private native void groupStart(String msg, boolean expanded) /*-{
+  private void groupStart(String msg, boolean expanded) {
+    getGroupStartFn(expanded).call(getConsole(), msg);
+  }
+
+  private LogFn getGroupStartFn(boolean expanded) {
     // Not all browsers support grouping:
-    var groupStart = (!expanded && console.groupCollapsed) || console.group || console.log;
-    groupStart.call(console, msg);
-  }-*/;
+    if (!expanded && getConsole().groupCollapsed != null) {
+      return getConsole().groupCollapsed;
+    } else if (getConsole().group != null) {
+      return getConsole().group;
+    } else {
+      return getConsole().log;
+    }
+  }
 
-  private native void groupEnd() /*-{
-    var groupEnd = console.groupEnd || function(){};
-    groupEnd.call(console);
-  }-*/;
+  private void groupEnd() {
+    if (getConsole().groupEnd != null) {
+      getConsole().groupEnd.call(getConsole());
+    }
+  }
 
-  private native String getBackingError(Throwable t, Object backingError) /*-{
+  private static native String getBackingErrorStack(Throwable t) /*-{
+    var backingError = t.@Throwable::backingJsObject;
+
     // Converts CollectorLegacy (IE8/IE9/Safari5) function stack to something readable.
     function stringify(fnStack) {
       if (!fnStack || fnStack.length == 0) {
@@ -71,4 +83,20 @@ public class ConsoleLogger {
 
     return backingError && (backingError.stack || stringify(t["fnStack"]));
   }-*/;
+
+  @JsType(isNative = true, namespace = "<window>", name = "Function")
+  private interface LogFn {
+    void call(Console objThis, Object... args);
+  }
+
+  @JsType(isNative = true, namespace = "<window>")
+  private static class Console {
+    public LogFn log;
+    public LogFn group;
+    public LogFn groupCollapsed;
+    public LogFn groupEnd;
+  }
+
+  @JsProperty(namespace = "<window>")
+  private static native Console getConsole();
 }
