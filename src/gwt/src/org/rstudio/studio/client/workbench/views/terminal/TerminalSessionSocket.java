@@ -391,7 +391,8 @@ public class TerminalSessionSocket
    public void disconnect(boolean permanent)
    {
       diagnostic(permanent ? "Permanently Disconnected" : "Disconnected");
-      socket_.close();
+      if (socket_ != null)
+         socket_.close();
       socket_ = null;
       registrations_.removeHandler();
       if (permanent)
