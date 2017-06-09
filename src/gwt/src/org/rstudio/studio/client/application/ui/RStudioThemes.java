@@ -29,6 +29,14 @@ import com.google.gwt.regexp.shared.RegExp;
 
 public class RStudioThemes
 {
+   public static void initializeThemes(UIPrefs uiPrefs,
+                                       Document document,
+                                       Element element)
+   {
+      String themeName = getThemeFromUiPrefs(uiPrefs);
+      initializeThemes(themeName, document, element);
+   }
+
    public static void initializeThemes(String themeName,
                                        Document document,
                                        Element element)
@@ -68,7 +76,7 @@ public class RStudioThemes
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(String aceTheme) {
+   public static String suggestThemeFromAceTheme(String aceTheme, String rstudioTheme) {
       RegExp keyReg = RegExp.compile(
          "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
          "material|merbivore soft|merbivore|mono industrial|monokai|" +
@@ -76,7 +84,14 @@ public class RStudioThemes
          "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
       
       MatchResult result = keyReg.exec(aceTheme);
-      return result != null ? "dark-grey" : "default";
+      return result != null ? "dark-grey" : rstudioTheme;
+   }
+
+   public static String getThemeFromUiPrefs(UIPrefs prefs) {
+      return suggestThemeFromAceTheme(
+        prefs.theme().getGlobalValue(),
+        prefs.getFlatTheme().getGlobalValue()
+      );
    }
    
    private static boolean usesScrollbars() {
