@@ -110,6 +110,7 @@
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
+* Fixed issue where keybinding changes were not reflected in popped-out windows
 * Fix hang when replacing a misspelled word with word and punctuation
 * Fixed issue where cursor would begin blinking even when 'Blinking Cursor' preference disabled
 * Editor now responds correctly when renaming an open file using the Files pane
