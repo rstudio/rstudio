@@ -750,7 +750,7 @@
    else if (is.character(object))
    {
       header <- head(object, n)
-      output <- paste(.rs.surround(header, with = "\""), collapse = " ")
+      output <- paste(encodeString(header, quote = "'"), collapse = " ")
       more <- length(object) > n
    }
    else if (is.call(object))

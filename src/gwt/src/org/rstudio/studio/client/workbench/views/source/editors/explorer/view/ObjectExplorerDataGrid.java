@@ -571,7 +571,7 @@ public class ObjectExplorerDataGrid
       addColumn(typeColumn_, new ResizableHeader(this, "Type"));
       
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
-      addColumn(valueColumn_, new ResizableHeader(this, "Column"));
+      addColumn(valueColumn_, new ResizableHeader(this, "Value"));
       
       initializeColumnWidths();
       
