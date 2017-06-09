@@ -56,8 +56,12 @@ public class AppearancePreferencesPane extends PreferencesPane
       infoBar_.setText("Relaunch RStudio to complete this change.");
       infoBar_.addStyleName(res_.styles().themeInfobar());
 
+      // dark-grey theme used to be derived from default, now also applies to sky
+      if (uiPrefs_.getFlatTheme().getValue() == "dark-grey")
+        uiPrefs_.getFlatTheme().setGlobalValue("default");
+
       final String originalTheme = uiPrefs_.getFlatTheme().getValue();
-      
+
       flatTheme_ = new SelectWidget("RStudio theme:",
                                 new String[]{"Classic", "Modern", "Sky"},
                                 new String[]{"classic", "default", "alternate"},
