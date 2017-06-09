@@ -32,7 +32,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
    
    public static final int AUTOCLOSE_DEFAULT = 0;
    public static final int AUTOCLOSE_ALWAYS = 1;
-   public static final int AUTOCLOSE_NEVER = 0;
+   public static final int AUTOCLOSE_NEVER = 2;
    
    protected ConsoleProcessInfo() {}
 
