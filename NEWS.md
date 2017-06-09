@@ -66,6 +66,7 @@
 * Add support for custom, user-provided project templates
 * Add support for middle-click pasting using X11 global selection (Linux Desktop only)
 * Document cursor position is now saved and restored between RStudio sessions
+* Addins are now fully searchable in dropdown toolbar menu
 * Add support for changing editor tabs with the mouse wheel
 * Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
