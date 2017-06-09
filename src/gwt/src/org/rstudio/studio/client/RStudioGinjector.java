@@ -77,6 +77,7 @@ import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -272,4 +273,5 @@ public interface RStudioGinjector extends Ginjector
    ChunkWindowManager getChunkWindowManager();
    ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
    AceThemes getAceThemes();
+   AddinsCommandManager getAddinsCommandManager();
 }

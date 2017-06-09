@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.satellite;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
@@ -233,6 +234,9 @@ public class Satellite implements HasCloseHandlers<Satellite>
    // called by main window to initialize sessionInfo
    private void setSessionInfo(JavaScriptObject si)
    {
+      // hack to ensure addins command manager initialized
+      RStudioGinjector.INSTANCE.getAddinsCommandManager();
+      
       // get the session info and set it
       SessionInfo sessionInfo = si.<SessionInfo>cast();
       session_.setSessionInfo(sessionInfo);

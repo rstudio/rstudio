@@ -480,7 +480,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void execute(EditorKeyBindings bindings)
          {
-            events_.fireEvent(new AddinsKeyBindingsChangedEvent(bindings));
+            events_.fireEventToAllSatellites(new AddinsKeyBindingsChangedEvent(bindings));
          }
       });
       
