@@ -55,10 +55,13 @@
 * Allow setting default chunk connection option to raw connection object
 * Added an 'Use paged tables' checkbox under chunk options popup
 
-### Version Control
+### Git Integration
 
 * Add support for creating new Git branches and setting upstream remotes
-* Type to search/select Git branches by name
+* Git branch list is now searchable
+* RStudio warns when attempting to commit large files (>10 MB)
+* Implemented 'ignore whitespace' option for Git Diff view
+* Wait for index.lock file to clear before performing git operations (with recovery)
 
 ### Miscellaneous
 
@@ -124,7 +127,6 @@
 * Fixed startup crashes associated with Boost regular expressions
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
-* Wait for index.lock file to clear before performing git operations (with recovery)
 * Color errors in the R console correctly when resuming a session
 * Fixed an issue in which notebook tables would not print data with lists of lists
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
