@@ -147,9 +147,11 @@ public class ToolbarButton extends FocusWidget
    
    
    private void addMenuHandlers(final ToolbarPopupMenu popupMenu, 
-                                final boolean rightAlign)
+                                final boolean rightAlignMenu)
    {
       menu_ = popupMenu;
+      rightAlignMenu_ = rightAlignMenu;
+      
       /*
        * We want clicks on this button to toggle the visibility of the menu,
        * as well as having the menu auto-hide itself as it normally does.
@@ -184,7 +186,7 @@ public class ToolbarButton extends FocusWidget
                   }
                   else
                   {
-                     if (rightAlign)
+                     if (rightAlignMenu_)
                      {
                         menu.setPopupPositionAndShow(new PositionCallback() 
                         {
@@ -428,6 +430,11 @@ public class ToolbarButton extends FocusWidget
    {
       return StringUtil.notNull(label_.getInnerText());
    }
+   
+   public void setRightAlignMenu(boolean rightAlignMenu)
+   {
+      rightAlignMenu_ = rightAlignMenu;
+   }
 
    private boolean down_;
    
@@ -436,6 +443,7 @@ public class ToolbarButton extends FocusWidget
    interface Binder extends UiBinder<Element, ToolbarButton> { }
 
    private ToolbarPopupMenu menu_;
+   private boolean rightAlignMenu_;
    private static final Binder binder = GWT.create(Binder.class);
 
    private static final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
