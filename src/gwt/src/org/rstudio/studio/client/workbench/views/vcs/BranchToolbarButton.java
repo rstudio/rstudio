@@ -92,8 +92,8 @@ public class BranchToolbarButton extends ToolbarButton
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
-            new ScrollableToolbarPopupMenu(),
-            true);
+            new ScrollableToolbarPopupMenu());
+      
       pVcsState_ = pVcsState;
 
       setTitle("Switch branch");
@@ -288,7 +288,11 @@ public class BranchToolbarButton extends ToolbarButton
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
                   
-                  Element mainEl = (separatorCount_++ == 0)
+                  boolean useSearch =
+                        (separatorCount_++ == 0) &&
+                        (menu_.getItemCount() == 0);
+                  
+                  Element mainEl = (useSearch)
                         ? createSearchSeparator(label)
                         : label.getElement();
                   return mainEl;

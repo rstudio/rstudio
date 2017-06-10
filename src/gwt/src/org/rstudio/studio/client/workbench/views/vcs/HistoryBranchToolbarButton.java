@@ -46,6 +46,8 @@ public class HistoryBranchToolbarButton extends BranchToolbarButton
    @Override
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
    {
+      super.onBeforePopulateMenu(rootMenu);
+      
       String label = "(all branches)";
       rootMenu.addItem(
             new MenuItem(label, new SwitchBranchCommand(label, "--all")));
