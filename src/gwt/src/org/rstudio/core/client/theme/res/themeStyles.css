@@ -2384,9 +2384,14 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-dark-grey .secondaryToolbar,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelContent,
-.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+@if user.agent safari {
 .rstudio-themes-flat .rstudio-themes-scrollbars.rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
    background: THEME_DARKGREY_BACKGROUND;
+}
 }
 
 body.rstudio-themes-flat .rstudio-themes-dark-grey {
@@ -2417,10 +2422,15 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center,
+.rstudio-themes-flat .rstudio-themes-dark-grey .minimizedWindowObject .center { 
+   background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+@if user.agent safari {
 .rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track,
 .rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-corner { 
    background: THEME_DARKGREY_MOST_INACTIVE;
+}
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .multiPodUtilityArea {
@@ -2495,6 +2505,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 /* RSTUDIO THEMES END */
 
+@if user.agent safari {
 .rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
 }
@@ -2511,11 +2522,12 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 .rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track {
-}  
+}
 
 @external com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner;
 .rstudio-themes-flat .rstudio-themes-scrollbars .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
    display: none;
+}
 }
 
 /* AnimationHelper requires background to be set at -10 */
