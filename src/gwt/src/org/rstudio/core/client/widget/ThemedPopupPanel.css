@@ -83,6 +83,10 @@
    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+.rstudio-themes-flat .gwt-SuggestBoxPopup {
+   margin-top: 3px;
+}
+
 .rstudio-themes-flat .menuPopupMiddleCenter,
 .rstudio-themes-flat .popupMiddleCenter {
    padding: 4px;
