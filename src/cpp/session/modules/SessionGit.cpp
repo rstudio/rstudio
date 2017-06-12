@@ -1229,11 +1229,23 @@ public:
       size_t graphLineIndex = 0;
       int skipped = 0;
       CommitInfo currentCommit;
+      
+      // are we currently parsing a GPG signature?
+      bool isPgpSignature = false;
 
       for (std::vector<std::string>::const_iterator it = outLines.begin();
            it != outLines.end() && pOutput->size() < static_cast<size_t>(maxentries);
            it++)
       {
+         // if we're within the body of a PGP signature, check for
+         // the end marker
+         if (isPgpSignature)
+         {
+            const char* endMarker = "-----END PGP SIGNATURE-----";
+            isPgpSignature = it->find(endMarker) == std::string::npos;
+            continue;
+         }
+         
          boost::smatch smatch;
          if (regex_utils::search(*it, smatch, kvregex))
          {
@@ -1279,6 +1291,14 @@ public:
                   currentCommit.parent.push_back(' ');
                currentCommit.parent.append(value, 0, 8);
             }
+            else if (key == "gpgsig")
+            {
+               isPgpSignature = value == "-----BEGIN PGP SIGNATURE-----";
+            }
+            else
+            {
+               // explicitly ignore other keys (e.g. 'tree')
+            }
          }
          else if (boost::starts_with(*it, "    "))
          {
@@ -1291,6 +1311,7 @@ public:
          }
          else if (it->length() == 0)
          {
+            // ignore empty lines
          }
          else
          {
