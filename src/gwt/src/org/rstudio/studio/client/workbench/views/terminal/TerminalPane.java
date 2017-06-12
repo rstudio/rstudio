@@ -135,6 +135,7 @@ public class TerminalPane extends WorkbenchPane
       toolbar.addRightWidget(interruptButton_);
 
       closeButton_ = commands_.closeTerminal().createToolbarButton();
+      closeButton_.addStyleName("rstudio-themes-inverts");
       toolbar.addRightWidget(closeButton_);
 
       updateTerminalToolbar();
