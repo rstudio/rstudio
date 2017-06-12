@@ -438,6 +438,66 @@ Error executeSqlEngineChunk(const std::string& docId,
    return Success();
 }
 
+Error executePythonEngineChunk(const std::string& docId,
+                               const std::string& chunkId,
+                               const std::string& nbCtxId,
+                               const std::string& code,
+                               const std::map<std::string, std::string>& options)
+{
+   // forward declare error
+   Error error;
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   // prepare cache output file (use tempfile on failure)
+   FilePath targetPath = module_context::tempFile("rcpp-cache", "");
+   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
+   if (error)
+      LOG_ERROR(error);
+   
+   // capture console output, error
+   boost::signals::scoped_connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(chunkConsoleOutputHandler,
+                        _1,
+                        _2,
+                        targetPath));
+
+   // write input code to cache
+   error = appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            targetPath);
+   
+   if (error)
+      LOG_ERROR(error);
+   
+   // execute code (output captured on success; on failure we
+   // explicitly forward the error message returned)
+   error = r::exec::RFunction(".rs.reticulate.execute")
+         .addParam(code)
+         .call();
+   
+   if (error)
+   {
+      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
+                                r::endUserErrorMessage(error),
+                                targetPath);
+   }
+
+   // forward success / failure to chunk
+   enqueueChunkOutput(
+            docId,
+            chunkId,
+            nbCtxId,
+            0, // no ordinal needed
+            ChunkOutputText,
+            targetPath);
+   
+   return error;
+}
+
 Error interruptEngineChunk(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -487,6 +547,8 @@ Error executeAlternateEngineChunk(const std::string& docId,
       error = executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "sql")
       error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+   else if (engine == "python")
+      error = executePythonEngineChunk(docId, chunkId, nbCtxId, code, options);
    else
       runChunk(docId, chunkId, nbCtxId, engine, code, options);
 
