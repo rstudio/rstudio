@@ -39,148 +39,6 @@ public class TerminalList implements Iterable<String>,
                                      TerminalSubprocEvent.Handler,
                                      TerminalCwdEvent.Handler
 {
-   private static class TerminalMetadata
-   {
-      /**
-       * Create a TerminalMetadata object
-       * @param handle terminal handle, unique key
-       * @param caption terminal caption, shown in terminal picker
-       * @param title terminal title, shown in toolbar above active terminal
-       * @param sequence terminal sequence number
-       * @param childProcs is terminal busy
-       * @param cols number of columns in pseudoterminal
-       * @param rows number of rows in pseudoterminal
-       * @param shellType type of shell to run
-       * @param altBufferActive is terminal showing a full-screen app?
-       * @param cwd current working directory, if known
-       * @param autoCloseMode terminal's auto-close mode
-       * @param zombie is terminal a zombie (buffer but no process)?
-       */
-      private TerminalMetadata(String handle,
-                               String caption,
-                               String title,
-                               int sequence,
-                               boolean childProcs,
-                               int cols,
-                               int rows,
-                               int shellType,
-                               boolean altBufferActive,
-                               String cwd,
-                               int autoCloseMode,
-                               boolean zombie)
-      {
-         handle_ = StringUtil.notNull(handle);
-         caption_ = StringUtil.notNull(caption);
-         title_ = StringUtil.notNull(title);
-         sequence_ = sequence;
-         childProcs_ = childProcs;
-         cols_ = cols;
-         rows_ = rows;
-         shellType_ = shellType;
-         altBufferActive_ = altBufferActive;
-         cwd_ = cwd;
-         autoCloseMode_ = autoCloseMode;
-         zombie_ = zombie;
-      }
-
-      private TerminalMetadata(TerminalMetadata original,
-                               String newTitle)
-      {
-         this(original.handle_,
-              original.caption_,
-              newTitle,
-              original.sequence_,
-              original.childProcs_,
-              original.cols_,
-              original.rows_,
-              original.shellType_,
-              original.altBufferActive_,
-              original.cwd_,
-              original.autoCloseMode_,
-              original.zombie_);
-      }
-
-      private TerminalMetadata(ConsoleProcessInfo procInfo)
-      {
-         this(procInfo.getHandle(),
-              procInfo.getCaption(),
-              procInfo.getTitle(),
-              procInfo.getTerminalSequence(),
-              procInfo.getHasChildProcs(),
-              ConsoleProcessInfo.DEFAULT_COLS,
-              ConsoleProcessInfo.DEFAULT_ROWS,
-              procInfo.getShellType(),
-              procInfo.getAltBufferActive(),
-              procInfo.getCwd(),
-              procInfo.getAutoCloseMode(),
-              procInfo.getZombie()
-              );
-      }
-
-      private TerminalMetadata(TerminalSession term)
-      {
-         this(term.getHandle(),
-              term.getCaption(),
-              term.getTitle(),
-              term.getSequence(),
-              term.getHasChildProcs(),
-              term.getCols(),
-              term.getRows(),
-              term.getShellType(),
-              term.getAltBufferActive(),
-              term.getCwd(),
-              term.getAutoCloseMode(),
-              term.getZombie());
-      }
-
-      /**
-       * @return unique identifier for terminal
-       */
-      public String getHandle() { return handle_; }
-
-      /**
-       * @return caption for terminal, shown in terminal picker
-       */
-      public String getCaption() { return caption_; }
-
-      /**
-       * @return title for terminal, shown above the terminal pane
-       */
-      public String getTitle() { return title_; }
-
-      /**
-       * @return relative order of terminal creation, used to pick number for
-       * unique default terminal caption, e.g. "Terminal 3"
-       */
-      public int getSequence() { return sequence_; }
-
-      /**
-       * @return true if terminal shell has child processes
-       */
-      public boolean getChildProcs() { return childProcs_; }
-      
-      public int getCols() { return cols_; }
-      public int getRows() { return rows_; }
-      public int getShellType() { return shellType_; }
-      public boolean getAltBufferActive() { return altBufferActive_; }
-      public String getCwd() { return cwd_; }
-      public int getAutoCloseMode() { return autoCloseMode_; }
-      public boolean getZombie() { return zombie_; }
-
-      private String handle_;
-      private String caption_;
-      private String title_;
-      private int sequence_;
-      private boolean childProcs_;
-      private int cols_;
-      private int rows_;
-      private int shellType_;
-      private boolean altBufferActive_;
-      private String cwd_;
-      private int autoCloseMode_;
-      private boolean zombie_;
-   }
-
    protected TerminalList() 
    {
       RStudioGinjector.INSTANCE.injectMembers(this); 
@@ -202,9 +60,21 @@ public class TerminalList implements Iterable<String>,
     * Add metadata from supplied TerminalSession
     * @param terminal terminal to add
     */
-   public void addTerminal(TerminalSession terminal)
+   public void addTerminal(TerminalSession term)
    {
-      addTerminal(new TerminalMetadata(terminal));
+      addTerminal(ConsoleProcessInfo.createTerminalMetadata(
+            term.getHandle(),
+            term.getCaption(),
+            term.getTitle(),
+            term.getSequence(),
+            term.getHasChildProcs(),
+            term.getCols(),
+            term.getRows(),
+            term.getShellType(),
+            term.getAltBufferActive(),
+            term.getCwd(),
+            term.getAutoCloseMode(),
+            term.getZombie()));
    }
 
    /**
@@ -213,7 +83,9 @@ public class TerminalList implements Iterable<String>,
     */
    public void addTerminal(ConsoleProcessInfo procInfo)
    {
-      addTerminal(new TerminalMetadata(procInfo));
+      terminals_.put(procInfo.getHandle(), procInfo);
+      updateTerminalBusyStatus();
+
    }
 
    /**
@@ -224,7 +96,7 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean retitleTerminal(String handle, String title)
    {
-      TerminalMetadata current = getMetadataForHandle(handle);
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
       if (current == null)
       {
          return false;
@@ -232,7 +104,7 @@ public class TerminalList implements Iterable<String>,
 
       if (!current.getTitle().equals(title))
       {
-         addTerminal(new TerminalMetadata(current, title));
+         current.setTitle(title);
          return true;
       }
       return false;
@@ -246,27 +118,15 @@ public class TerminalList implements Iterable<String>,
     */
    private boolean setChildProcs(String handle, boolean childProcs)
    {
-      TerminalMetadata current = getMetadataForHandle(handle);
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
       if (current == null)
       {
          return false;
       }
 
-      if (current.getChildProcs() != childProcs)
+      if (current.getHasChildProcs() != childProcs)
       {
-         addTerminal(new TerminalMetadata(
-               current.handle_,
-               current.caption_,
-               current.title_,
-               current.sequence_,
-               childProcs,
-               current.cols_,
-               current.rows_,
-               current.shellType_,
-               current.altBufferActive_,
-               current.cwd_,
-               current.autoCloseMode_,
-               current.zombie_));
+         current.setHasChildProcs(childProcs);
          return true;
       }
       return false;
@@ -279,25 +139,13 @@ public class TerminalList implements Iterable<String>,
     */
    private void setCwd(String handle, String cwd)
    {
-      TerminalMetadata current = getMetadataForHandle(handle);
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
       if (current == null)
          return;
 
       if (current.getCwd() != cwd)
       {
-         addTerminal(new TerminalMetadata(
-               current.handle_,
-               current.caption_,
-               current.title_,
-               current.sequence_,
-               current.childProcs_,
-               current.cols_,
-               current.rows_,
-               current.shellType_,
-               current.altBufferActive_,
-               cwd,
-               current.autoCloseMode_,
-               current.zombie_));
+         current.setCwd(cwd);
       }
    }
 
@@ -317,7 +165,7 @@ public class TerminalList implements Iterable<String>,
     */
    void terminateAll()
    {
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
          pConsoleProcessFactory_.get().interruptAndReap(item.getValue().getHandle());
       }
@@ -342,7 +190,7 @@ public class TerminalList implements Iterable<String>,
    public int indexOfTerminal(String handle)
    {
       int i = 0;
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
          if (item.getValue().getHandle().equals(handle))
          {
@@ -362,7 +210,7 @@ public class TerminalList implements Iterable<String>,
    public String terminalHandleAtIndex(int i)
    {
       int j = 0;
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
          if (i == j)
          {
@@ -380,7 +228,7 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean isCaptionAvailable(String caption)
    {
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
          if (item.getValue().getCaption().equals(caption))
          {
@@ -398,7 +246,7 @@ public class TerminalList implements Iterable<String>,
     */
    public String handleForCaption(String caption)
    {
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
          if (item.getValue().getCaption().equals(caption))
          {
@@ -415,11 +263,11 @@ public class TerminalList implements Iterable<String>,
     */
    public int autoCloseForHandle(String handle)
    {
-      TerminalMetadata meta = getMetadataForHandle(handle);
+      ConsoleProcessInfo meta = getMetadataForHandle(handle);
       if (meta == null)
          return ConsoleProcessInfo.AUTOCLOSE_DEFAULT;
       else
-         return meta.autoCloseMode_;
+         return meta.getAutoCloseMode();
    }
 
    /**
@@ -427,7 +275,7 @@ public class TerminalList implements Iterable<String>,
     * @param handle handle of terminal of interest
     * @return terminal metadata or null if not found
     */
-   private TerminalMetadata getMetadataForHandle(String handle)
+   private ConsoleProcessInfo getMetadataForHandle(String handle)
    {
       return terminals_.get(handle);
    }
@@ -437,19 +285,9 @@ public class TerminalList implements Iterable<String>,
     */
    public void createNewTerminal()
    {
-      startTerminal(nextTerminalSequence(),
-                    null,  // handle
-                    null,  // caption
-                    null,  // title
-                    true,  // childProcs
-                    ConsoleProcessInfo.DEFAULT_COLS,
-                    ConsoleProcessInfo.DEFAULT_ROWS,
-                    TerminalShellInfo.SHELL_DEFAULT,
-                    false, // altBufferActive
-                    null, // cwd
-                    ConsoleProcessInfo.AUTOCLOSE_DEFAULT,
-                    false // zombie
-            );
+      ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
+            nextTerminalSequence());
+      startTerminal(info);
    }
 
    /**
@@ -471,19 +309,10 @@ public class TerminalList implements Iterable<String>,
          return false;
       }
       
-      startTerminal(nextTerminalSequence(),
-                    null,  // handle
-                    caption,  // caption
-                    null,  // title
-                    true,  // childProcs
-                    ConsoleProcessInfo.DEFAULT_COLS,
-                    ConsoleProcessInfo.DEFAULT_ROWS,
-                    TerminalShellInfo.SHELL_DEFAULT,
-                    false, // altBufferActive
-                    null, // cwd
-                    ConsoleProcessInfo.AUTOCLOSE_DEFAULT,
-                    false // zombie
-            );
+      ConsoleProcessInfo info = ConsoleProcessInfo.createNamedTerminalInfo(
+            nextTerminalSequence(), caption);
+
+      startTerminal(info);
       return true;
    }
 
@@ -494,24 +323,14 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean reconnectTerminal(String handle)
    {
-      TerminalMetadata existing = getMetadataForHandle(handle);
+      ConsoleProcessInfo existing = getMetadataForHandle(handle);
       if (existing == null)
       {
          return false;
       }
 
-      startTerminal(existing.getSequence(),
-                    handle,
-                    existing.getCaption(),
-                    existing.getTitle(),
-                    existing.getChildProcs(),
-                    existing.getCols(),
-                    existing.getRows(),
-                    existing.getShellType(),
-                    existing.getAltBufferActive(),
-                    existing.getCwd(),
-                    existing.getAutoCloseMode(),
-                    existing.getZombie());
+      existing.setHandle(handle);
+      startTerminal(existing);
       return true;
    }
 
@@ -521,12 +340,12 @@ public class TerminalList implements Iterable<String>,
     */
    public String getCaption(String handle)
    {
-      TerminalMetadata data = getMetadataForHandle(handle);
+      ConsoleProcessInfo data = getMetadataForHandle(handle);
       if (data == null)
       {
          return null;
       }
-      return data.caption_;
+      return data.getCaption();
    }
 
    /**
@@ -535,12 +354,12 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean getHasSubprocs(String handle)
    {
-      TerminalMetadata data = getMetadataForHandle(handle);
+      ConsoleProcessInfo data = getMetadataForHandle(handle);
       if (data == null)
       {
          return true;
       }
-      return data.childProcs_;
+      return data.getHasChildProcs();
    }
 
    /**
@@ -548,9 +367,9 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean haveSubprocs()
    {
-      for (final TerminalMetadata item : terminals_.values())
+      for (final ConsoleProcessInfo item : terminals_.values())
       {
-         if (item.childProcs_)
+         if (item.getHasChildProcs())
          {
             return true;
          }
@@ -567,37 +386,18 @@ public class TerminalList implements Iterable<String>,
    private int nextTerminalSequence()
    {
       int maxNum = ConsoleProcessInfo.SEQUENCE_NO_TERMINAL;
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
       {
-         maxNum = Math.max(maxNum, item.getValue().getSequence());
+         maxNum = Math.max(maxNum, item.getValue().getTerminalSequence());
       }
       return maxNum + 1;
    }
 
-   private void startTerminal(int sequence,
-                             String terminalHandle,
-                             String caption,
-                             String title,
-                             boolean hasChildProcs,
-                             int cols,
-                             int rows,
-                             int shellType,
-                             boolean altBufferActive,
-                             String cwd,
-                             int autoCloseMode,
-                             boolean zombie)
+   private void startTerminal(ConsoleProcessInfo info)
    {
       TerminalSession newSession = new TerminalSession(
-            sequence, terminalHandle, caption, title, hasChildProcs, 
-            cols, rows, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, shellType,
-            altBufferActive, cwd, autoCloseMode, zombie);
+            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/);
       newSession.connect();
-      updateTerminalBusyStatus();
-   }
-
-   private void addTerminal(TerminalMetadata terminal)
-   {
-      terminals_.put(terminal.getHandle(), terminal);
       updateTerminalBusyStatus();
    }
 
@@ -629,8 +429,8 @@ public class TerminalList implements Iterable<String>,
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, TerminalMetadata> terminals_ = 
-                new LinkedHashMap<String, TerminalMetadata>();
+   private LinkedHashMap<String, ConsoleProcessInfo> terminals_ = 
+                new LinkedHashMap<String, ConsoleProcessInfo>();
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

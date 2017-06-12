@@ -61,57 +61,35 @@ public class TerminalSession extends XTermWidget
                                         SessionSerializationHandler
 {
    /**
-    * 
-    * @param sequence number used as part of default terminal title
-    * @param handle terminal handle if reattaching, null if new terminal
-    * @param caption terminal caption if reattaching, null if new terminal
-    * @param title widget title
-    * @param hasChildProcs does session have child processes
-    * @param cols number of columns in terminal
-    * @param rows number of rows in terminal
+    * @param info terminal metadata
     * @param cursorBlink should terminal cursor blink
     * @param focus should terminal automatically get focus
-    * @param shellType type of shell to run
-    * @param cwd current working directory
-    * @param autoCloseMode should terminal close when process exits
-    * @param zombie is session just showing buffer for terminated process
     */
-   public TerminalSession(int sequence,
-                          String handle,
-                          String caption,
-                          String title,
-                          boolean hasChildProcs,
-                          int cols,
-                          int rows,
-                          boolean cursorBlink,
-                          boolean focus,
-                          int shellType,
-                          boolean altBufferActive,
-                          String cwd,
-                          int autoCloseMode,
-                          boolean zombie)
+   public TerminalSession(ConsoleProcessInfo info, 
+                          boolean cursorBlink, 
+                          boolean focus)
    {
       super(cursorBlink, focus);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-      sequence_ = sequence;
-      terminalHandle_ = handle;
-      hasChildProcs_ = new Value<Boolean>(hasChildProcs);
-      shellType_ = shellType;
-      cols_ = cols;
-      rows_ = rows;
-      altBufferActive_ = altBufferActive;
-      cwd_ = cwd;
-      autoCloseMode_ = autoCloseMode;
-      zombie_ = zombie;
+      sequence_ = info.getTerminalSequence();
+      terminalHandle_ = info.getHandle();
+      hasChildProcs_ = new Value<Boolean>(info.getHasChildProcs());
+      shellType_ = info.getShellType();
+      cols_ = info.getCols();
+      rows_ = info.getRows();
+      altBufferActive_ = info.getAltBufferActive();
+      cwd_ = info.getCwd();
+      autoCloseMode_ = info.getAutoCloseMode();
+      zombie_ = info.getZombie();
       
-      setTitle(title);
+      setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(this, this);
 
-      if (StringUtil.isNullOrEmpty(caption))
+      if (StringUtil.isNullOrEmpty(info.getCaption()))
          caption_ = "Terminal " + sequence_;
       else
-         caption_ = caption;
+         caption_ = info.getCaption();
 
       setHeight("100%");
    }
@@ -387,7 +365,7 @@ public class TerminalSession extends XTermWidget
       return 
             uiPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop() && 
-            !hasChildProcs_.getValue() &&
+            !getHasChildProcs() &&
             !altBufferActive() &&
             cursorAtEOL();
    }
