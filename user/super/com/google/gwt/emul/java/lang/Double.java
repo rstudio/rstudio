@@ -200,17 +200,15 @@ public final class Double extends Number implements Comparable<Double> {
     return (int) d;
   }
 
-  public static boolean isFinite(double x) {
-    return JsUtils.isFinite(x);
-  }
+  @JsMethod(namespace = "<window>")
+  public static native boolean isFinite(double x);
 
   public static boolean isInfinite(double x) {
     return !isNaN(x) && !isFinite(x);
   }
 
-  public static boolean isNaN(double x) {
-    return JsUtils.isNaN(x);
-  }
+  @JsMethod(namespace = "<window>")
+  public static native boolean isNaN(double x);
 
   public static double longBitsToDouble(long bits) {
     long ihi = (long) (bits >> 32);

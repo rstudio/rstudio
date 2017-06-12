@@ -18,7 +18,6 @@ package javaemul.internal;
 import javaemul.internal.annotations.DoNotAutobox;
 import javaemul.internal.annotations.UncheckedCast;
 import jsinterop.annotations.JsMethod;
-import jsinterop.annotations.JsProperty;
 
 /**
  * Provides an interface for simple JavaScript idioms that can not be expressed in Java.
@@ -29,24 +28,11 @@ public class JsUtils {
   public static native double getTime();
 
   @JsMethod(namespace = "<window>")
-  public static native boolean isFinite(double d);
-
-  @JsMethod(namespace = "<window>")
-  public static native boolean isNaN(double d);
-
-  @JsMethod(namespace = "<window>")
   public static native int parseInt(String s, int radix);
 
-  @JsProperty(namespace = "<window>")
-  public static native Object getUndefined();
-
-  public static boolean isUndefined(Object value) {
-    return isSame(value, getUndefined());
-  }
-
-  public static native boolean isSame(Object x, Object y) /*-{
-    return x === y;
-   }-*/;
+  public static native boolean isUndefined(Object value) /*-{
+    return value === undefined;
+  }-*/;
 
   public static native double unsafeCastToDouble(Object number) /*-{
    return number;
