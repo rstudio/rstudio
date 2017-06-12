@@ -171,7 +171,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       @Source("CollapseIcon_2x.png")
       ImageResource cellTreeOpenItem();
       
-      @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
+      @Source({CellTree.Style.DEFAULT_CSS, "ObjectBrowser.css"})
       public Style cellTreeStyle();   
       
       public interface Style extends CellTree.Style

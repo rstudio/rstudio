@@ -78,6 +78,7 @@
 .fieldName {
   float: left;
   margin-right: 7px;
+  margin-left: -5px;
 }
 
 .fieldType {
@@ -96,4 +97,17 @@
    cursor: pointer;
 }
 
+/* GWT computes indent levels based on the size of the images; this winds up
+ * creating indents that are too large, so we push them to the left here */
 
+.cellTreeWidget div[aria-level="2"] {
+   margin-left: -5px;
+}
+
+.cellTreeWidget div[aria-level="3"] {
+   margin-left: -10px;
+}
+
+.cellTreeWidget div[aria-level="4"] {
+   margin-left: -15px;
+}
