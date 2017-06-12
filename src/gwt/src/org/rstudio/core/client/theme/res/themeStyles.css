@@ -2389,7 +2389,8 @@ body.rstudio-themes-flat .rstudio-themes-default {
 }
 
 @if user.agent safari {
-.rstudio-themes-flat .rstudio-themes-scrollbars.rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-thumb,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar-thumb {
    background: THEME_DARKGREY_BACKGROUND;
 }
 }
@@ -2428,7 +2429,9 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 @if user.agent safari {
 .rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-track,
-.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-corner { 
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-corner,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar-track,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar-corner { 
    background: THEME_DARKGREY_MOST_INACTIVE;
 }
 }
@@ -2506,15 +2509,18 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 /* RSTUDIO THEMES END */
 
 @if user.agent safari {
-.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-thumb,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar-thumb {
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars.rstudio-themes-dark-grey ::-webkit-scrollbar-thumb {
+.rstudio-themes-flat .rstudio-themes-scrollbars ::-webkit-scrollbar-thumb,
+.rstudio-themes-flat .rstudio-themes-scrollbars::-webkit-scrollbar-thumb {
    border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
 }
 
