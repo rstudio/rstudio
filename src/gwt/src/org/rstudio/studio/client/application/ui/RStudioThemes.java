@@ -77,6 +77,8 @@ public class RStudioThemes
    }
 
    public static String suggestThemeFromAceTheme(String aceTheme, String rstudioTheme) {
+      if (rstudioTheme == "classic") return rstudioTheme;
+
       RegExp keyReg = RegExp.compile(
          "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
          "material|merbivore soft|merbivore|mono industrial|monokai|" +
