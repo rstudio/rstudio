@@ -114,5 +114,5 @@ platform () {
 	fi
 
 	echo "Unrecognized platform detected" >&2
-	return 0
+	return 1
 }
