@@ -67,6 +67,8 @@ then
    # required for Qt
    sudo yum install -y libxslt-devel
    sudo yum install -y mesa-libGL-devel
+   sudo yum install -y gstreamer-devel
+   sudo yum install -y gstreamer-plugins-base-devel
 
    # install Qt SDK
    ./install-qt-sdk
