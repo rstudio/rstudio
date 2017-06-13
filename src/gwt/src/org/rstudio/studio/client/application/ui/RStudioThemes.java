@@ -96,7 +96,7 @@ public class RStudioThemes
       );
    }
    
-   private static boolean usesScrollbars() {
+   public static boolean usesScrollbars() {
       if (usesScrollbars_ != null) return usesScrollbars_;
       
       if (!BrowseCap.isMacintosh()) {
