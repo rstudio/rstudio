@@ -463,12 +463,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-      # when producing a SUSE Linux Enterpise build, we want to install the 
-      # static Pandoc binaries (see dependencies/common/install-pandoc)
-      set(PANDOC_EXTENSION_DIR "/static")
-   endif()
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.19.2.1${PANDOC_EXTENSION_DIR}")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.19.2.1")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE

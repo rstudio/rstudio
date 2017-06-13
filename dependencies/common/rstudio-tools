@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+#
+# rstudio-tools -- Bash toolkit used in dependency scripts
+#
+# Copyright (C) 2017 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+# Generic Tools ----
+
+pushd () {
+	command pushd "$@" > /dev/null
+}
+
+popd () {
+	command popd "$@" > /dev/null
+}
+
+has-command () {
+	command -v "$1" &> /dev/null
+}
+
+download () {
+
+	if [ "$#" -eq 0 ]; then
+		echo "Usage: download src [dst]"
+		return 1
+	fi
+
+	# Compute source path
+	local SRC
+	SRC="$1"
+
+	# Compute destination path
+	local DST
+	if [ "$#" -eq 1 ]; then
+		DST="$(basename "$SRC")"
+	else
+		DST="$2"
+	fi
+
+	# Invoke downloader
+	if has-command curl; then
+		curl -L -f "$SRC" > "$DST"
+	elif has-command wget; then
+		wget "$SRC" -O "$DST"
+	else
+		echo "no downloader detected on this system (requires 'curl' or 'wget')"
+		return 1
+	fi
+
+}
+
+# Platform Detection ----
+
+is-darwin () {
+	test "$(uname)" = "Darwin"
+}
+
+is-linux () {
+	test "$(uname)" = "Linux"
+}
+
+is-ubuntu () {
+	[ "$(. /etc/os-release; echo "${ID}")" = "ubuntu" ]
+}
+
+is-redhat () {
+	[ -f /etc/redhat-release ]
+}
+
+is-centos () {
+	grep -siq "centos" /etc/redhat-release
+}
+
+is-fedora () {
+	grep -siq "fedora" /etc/redhat-release
+}
+
+is-opensuse () {
+	[ "$(. /etc/os-release; echo "${ID}")" = "opensuse" ]
+}
+
+platform () {
+
+	# Detect macOS variants
+	if [ "$(uname)" = "Darwin" ]; then
+		echo "darwin"
+		return 0
+	fi
+
+	# Detect platform ID using /etc/os-release when available
+	if [ -f /etc/os-release ]; then
+		PLATFORM="$(. /etc/os-release; echo "${ID}")"
+		echo "${PLATFORM}"
+		return 0
+	fi
+
+	# Detect platform using /etc/redhat-release when available
+	if [ -f /etc/redhat-release ]; then
+		# Detect CentOS
+		if grep -siq "centos" /etc/redhat-release; then
+			echo "centos"
+			return 0
+		fi
+	fi
+
+	echo "Unrecognized platform detected" >&2
+	return 1
+}

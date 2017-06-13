@@ -17,62 +17,106 @@
 
 set -e
 
-# install dir
-INSTALL_DIR=`pwd`
+source rstudio-tools
 
-# determine platform
-PLATFORM=`uname`
+# variables that control download + installation process
+PANDOC_URL_BASE=https://s3.amazonaws.com/rstudio-buildtools/pandoc/1.19.2.1
+PANDOC_VERSION=1.19.2.1-1
+PANDOC_VERSION_MACOS=1.19.2.1
+PANDOC_CITEPROC_VERSION=0.10.4-1
+PANDOC_CITEPROC_VERSION_MACOS=0.10.4
 
-# use curl or wget as appropriate
-download()
-{
-  if [ "$PLATFORM" == "Darwin" ]
-  then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
-  else
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
-  fi
-}
-
-# get pandoc
-PANDOC_VERSION=1.19.2.1
-PANDOC_DIR=pandoc/$PANDOC_VERSION
-if [ -d "$PANDOC_DIR" ]
-then
-   echo "pandoc ${PANDOC_VERSION} already installed"
+if is-darwin; then
+  PANDOC_DIR="pandoc/${PANDOC_VERSION_MACOS}"
 else
-   PANDOC_NAME=pandoc-${PANDOC_VERSION}
-   PANDOC_ZIP=${PANDOC_NAME}.zip
-   download $PANDOC_ZIP
-   unzip -q $PANDOC_ZIP
-   mkdir -p ${PANDOC_DIR}
-   if [ "$PLATFORM" == "Darwin" ]
-   then
-      cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
-   else
-      BITNESS=`getconf LONG_BIT`
-      case "$BITNESS" in
-          32) ARCH='i686' ;;
-          64) ARCH='x86_64' ;;
-      esac
-      # copy binaries for appropriate distro/arch. 
-      if grep -q -i -s "release 6" /etc/redhat-release
-      then
-         BINARY_TYPE=rpm
-
-         # centos 6 itself won't use these, but we also build for sles on this
-         # platform
-         PANDOC_STATIC_DIR=${PANDOC_DIR}/static
-         mkdir -p ${PANDOC_STATIC_DIR}
-         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_STATIC_DIR}
-      else 
-         BINARY_TYPE=debian
-      fi
-      cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
-   fi
-   rm $PANDOC_ZIP
-   rm -rf $PANDOC_NAME
+  PANDOC_DIR="pandoc/${PANDOC_VERSION}"
 fi
 
-# back to install dir
-cd $INSTALL_DIR
+# remove patch version from pandoc directory (just for
+# ease-of-use with CMake installer scripts)
+PANDOC_DIR="$(echo "${PANDOC_DIR}" | cut -d"-" -f1)"
+
+# exit early if pandoc already downloaded and installed
+if [ -d "${PANDOC_DIR}" ]; then
+  echo "Pandoc ${PANDOC_VERSION} already installed"
+  exit 0
+fi
+
+# construct download URL based on platform
+case "$(platform)" in
+
+  "centos|opensuse")
+    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/centos6"
+    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
+    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
+  ;;
+
+  "ubuntu")
+    UBUNTU_VERSION="$(. /etc/os-release; echo "${VERSION_ID}")"
+    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/ubuntu-${UBUNTU_VERSION}/amd64"
+    PANDOC_FILE="pandoc_${PANDOC_VERSION}_amd64.deb"
+    PANDOC_CITEPROC_FILE="pandoc-citeproc_${PANDOC_CITEPROC_VERSION}_amd64.deb"
+  ;;
+
+  "darwin")
+    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/macos"
+    PANDOC_FILE="pandoc-${PANDOC_VERSION_MACOS}.zip"
+    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION_MACOS}.zip"
+  ;;
+
+  *)
+    echo "Unrecognized platform $(platform); exiting now"
+    exit 1
+
+esac
+
+# construct pandoc download URLs
+PANDOC_URL="${PANDOC_URL_ARCH}/${PANDOC_FILE}"
+PANDOC_CITEPROC_URL="${PANDOC_URL_ARCH}/${PANDOC_CITEPROC_FILE}"
+
+# enter pandoc directory
+mkdir -p "${PANDOC_DIR}"
+pushd "${PANDOC_DIR}"
+
+# download pandoc
+download "${PANDOC_URL}"
+download "${PANDOC_CITEPROC_URL}"
+
+# extract pandoc (delegate based on extension)
+case "${PANDOC_FILE}" in
+  *.rpm)
+
+    rpm2cpio "${PANDOC_FILE}" | cpio -idmv
+    rpm2cpio "${PANDOC_CITEPROC_FILE}" | cpio -idmv
+    cp usr/bin/pandoc .
+    cp usr/bin/pandoc-citeproc .
+    rm -rf usr
+  ;;
+
+  *.deb)
+
+    dpkg -x "${PANDOC_FILE}" .
+    dpkg -x "${PANDOC_CITEPROC_FILE}" .
+    cp usr/bin/pandoc .
+    cp usr/bin/pandoc-citeproc .
+    rm -rf usr
+  ;;
+
+  *.zip)
+    unzip -o "${PANDOC_FILE}"
+    unzip -o "${PANDOC_CITEPROC_FILE}"
+  ;;
+
+  *)
+    echo "Unrecognized download file format ${PANDOC_FILE}"
+    exit 1
+  ;;
+
+esac
+
+# clean up downloaded archives
+rm "${PANDOC_FILE}"
+rm "${PANDOC_CITEPROC_FILE}"
+
+# return home
+popd
