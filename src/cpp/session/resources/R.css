@@ -66,6 +66,11 @@ h6 {
    color: inherit;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-grey *::selection,
+.rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
+   background: rgba(255, 255, 255, 0.15);
+   color: #FFF;
+}
 
 img.toplogo {
    max-width: 4em;
