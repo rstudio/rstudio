@@ -34,6 +34,10 @@ else
   PANDOC_DIR="pandoc/${PANDOC_VERSION}"
 fi
 
+# remove patch version from pandoc directory (just for
+# ease-of-use with CMake installer scripts)
+PANDOC_DIR="$(echo "${PANDOC_DIR}" | cut -d"-" -f1)"
+
 # exit early if pandoc already downloaded and installed
 if [ -d "${PANDOC_DIR}" ]; then
   echo "Pandoc ${PANDOC_VERSION} already installed"
