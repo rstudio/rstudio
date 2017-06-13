@@ -78,6 +78,9 @@ if [ -n "$VERSION" ]; then
     ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]} RSTUDIO_VERSION_PATCH=${SPLIT[2]}"
 fi
 
-# run compile step
-docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE clean $VARIANT"
+if [ "${VARIANT}" = "server" ]; then
+    EXCLUDE_QT_SDK="--exclude-qt-sdk"
+fi
+
+docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER ${EXCLUDE_QT_SDK} && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE clean $VARIANT"
 
