@@ -20,13 +20,11 @@ set -e
 source rstudio-tools
 
 # variables that control download + installation process
+PANDOC_URL_BASE=https://s3.amazonaws.com/rstudio-buildtools/pandoc/1.19.2.1
 PANDOC_VERSION=1.19.2.1-1
-PANDOC_CITEPROC_VERSION=0.10.4-1
-
 PANDOC_VERSION_MACOS=1.19.2.1
+PANDOC_CITEPROC_VERSION=0.10.4-1
 PANDOC_CITEPROC_VERSION_MACOS=0.10.4
-
-PANDOC_URL_BASE=https://s3.amazonaws.com/rstudio-buildtools/pandoc
 
 if is-darwin; then
   PANDOC_DIR="pandoc/${PANDOC_VERSION_MACOS}"
