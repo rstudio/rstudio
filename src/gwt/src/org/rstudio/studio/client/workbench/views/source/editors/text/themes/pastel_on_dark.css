@@ -135,7 +135,7 @@
   border: 0 !important;
   background-color: rgba(128, 128, 128, 0.5);
 }
-.ace_editor {
+.ace_editor, rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   color: #EAEAEA !important;
 }
 .ace_marker-layer .ace_foreign_line {

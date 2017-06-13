@@ -1004,7 +1004,13 @@ for (file in themeFiles) {
       foreground <- "#EAEAEA"
       content <- add_content(
          content,
-         ".ace_editor {",
+         paste(
+            ".ace_editor, ",
+            "rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, ",
+            ".rstudio-themes-flat.ace_editor_theme, ", 
+            ".rstudio-themes-flat .ace_editor_theme {",
+            sep = ""
+         ),
          "  color: %s !important;",
          "}",
          replace = foreground
