@@ -528,6 +528,32 @@ public class StringUtil
       
    }
    
+   /**
+    * Given a URL, attempt to infer and return the hostname from the URL. The URL is always 
+    * presumed to have a hostname (if it doesn't, the first component of the path will be treated
+    * as the host name
+    * 
+    * @param url URL to parse
+    * @return Host name and port, as a string.
+    */
+   public static String getHostFromUrl(String url)
+   {
+      // no work to do
+      if (url.indexOf('/') == -1)
+         return url;
+      
+      // presume no protocol; if present, skip those slashes
+      int slashes = 0;
+      if (url.contains("://"))
+         slashes += 2;
+      
+      // split on slashes and return first component
+      String[] parts = url.split("/");
+      if (parts.length < slashes)
+         return url;
+      return parts[slashes];
+   }
+    
    public static String ensureSurroundedWith(String string, char chr)
    {
       if (isNullOrEmpty(string))
@@ -1142,7 +1168,7 @@ public class StringUtil
    public static native int newlineCount(String str) /*-{
       return (str.match(/\n/g)||[]).length;
    }-*/;
-    
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
