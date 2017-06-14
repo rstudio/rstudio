@@ -194,6 +194,8 @@ public:
 
    void onReceivedInput(const std::string& input);
 
+   void setZombie();
+
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
    bool onContinue(core::system::ProcessOperations& ops);
