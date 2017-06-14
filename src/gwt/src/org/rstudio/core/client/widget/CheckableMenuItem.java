@@ -7,6 +7,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.MenuItem;
 
 // A menu item that can be checked or unchecked--appears similarly to a
@@ -15,13 +16,19 @@ public abstract class CheckableMenuItem extends MenuItem
 {
    public CheckableMenuItem()
    {
-      this("");
+      this("", false);
    }
 
    public CheckableMenuItem(String label)
    {
-      super(label, false, (Scheduler.ScheduledCommand)null);
-      setHTML(getHTMLContent());
+      this (label, false);
+   }
+
+   public CheckableMenuItem(String label, boolean html)
+   {
+      super(label, html, (Scheduler.ScheduledCommand)null);
+      if (!html)
+         setHTML(getHTMLContent());
       setScheduledCommand(new ScheduledCommand()
       {
          @Override
@@ -30,7 +37,6 @@ public abstract class CheckableMenuItem extends MenuItem
             onInvoked();
          }
       });
-      
    }
 
    public void onStateChanged()
@@ -42,7 +48,7 @@ public abstract class CheckableMenuItem extends MenuItem
    public abstract boolean isChecked();
    public abstract void onInvoked();
    
-   private String getHTMLContent()
+   public String getHTMLContent()
    {
       return AppCommand.formatMenuLabelWithStyle(
             isChecked() ? 

@@ -542,7 +542,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                          String styleName)
    {
       StringBuilder text = new StringBuilder();
-      int topOffset = -7;
+      int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       text.append("<table ");
@@ -554,7 +554,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       
       text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
-      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: " +
+      text.append("<td width=\"25\" style=\"vertical-align: top\">" +
+                  "<div style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {
