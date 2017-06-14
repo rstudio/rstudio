@@ -45,8 +45,16 @@ fi
 # construct download URL based on platform
 case "$(platform)" in
 
-  "centos|opensuse")
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/centos6"
+  "centos")
+    CENTOS_VERSION="$(cat /etc/redhat-release | grep -oE '[0-9]+\.[0-9]+')"
+    CENTOS_VERSION_MAJOR="$(echo "${CENTOS_VERSION}" | cut -d"." -f1)"
+    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/centos${CENTOS_VERSION_MAJOR}"
+    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
+    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
+  ;;
+
+  "opensuse")
+    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/opensuse-tumbleweed"
     PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
     PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
   ;;
