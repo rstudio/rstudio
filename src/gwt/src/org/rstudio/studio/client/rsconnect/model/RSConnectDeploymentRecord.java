@@ -87,6 +87,14 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
       return this.url;
    }-*/;
    
+   public final native String getUsername() /*-{
+      return this.username;
+   }-*/;
+   
+   public final native String getHostUrl() /*-{
+      return this.hostUrl;
+   }-*/;
+   
    public final RSConnectAccount getAccount()
    {
       return RSConnectAccount.create(getAccountName(), getServer());

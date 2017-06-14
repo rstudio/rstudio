@@ -119,6 +119,10 @@
        rpubsDeployment[col] = TRUE
      else if (col == "when") 
        rpubsDeployment[col] = 0
+     else if (col == "hostUrl")
+       rpubsDeployment[col] = "rpubs.com"
+     else if (col == "username")
+       rpubsDeployment[col] = "rpubs"
      else 
        rpubsDeployment[col] = NA
    }
