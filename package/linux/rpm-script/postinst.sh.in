@@ -1,11 +1,25 @@
 #!/bin/sh
 
 # errors shouldn't cause script to exit
-set +e 
+set +e
 
 # add rserver user account
 useradd -r rstudio-server
 groupadd -r rstudio-server
+
+# symlink pandoc binary based on OS version
+VERSION="$(grep -oE '[0-9]+(\.[0-9]+)+')"
+VERSION_MAJOR="$(echo "${VERSION}" | cut -d'.' -f1)"
+PANDOC_DIR="${CMAKE_INSTALL_PREFIX}/bin/pandoc"
+
+if [ "${VERSION_MAJOR}" = "6" ]; then
+    PANDOC_SUBDIR=centos6
+else
+    PANDOC_SUBDIR=centos7
+fi
+
+ln -fs "${PANDOC_DIR}/${PANDOC_SUBDIR}/pandoc" "${PANDOC_DIR}/pandoc"
+ln -fs "${PANDOC_DIR}/${PANDOC_SUBDIR}/pandoc-citeproc" "${PANDOC_DIR}/pandoc-citeproc"
 
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server

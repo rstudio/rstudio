@@ -40,7 +40,7 @@ is-verbose () {
 download () {
 
 	if [ "$#" -eq 0 ]; then
-		echo "Usage: download src [dst]"
+		echo "usage: download src [dst]"
 		return 1
 	fi
 
@@ -97,6 +97,10 @@ extract () {
 			tar -xf "${FILE}"
 		;;
 
+		*.gz)
+			gunzip -k "${FILE}"
+		;;
+
 		*.zip)
 			unzip -o "${FILE}"
 		;;
@@ -111,10 +115,6 @@ extract () {
 
 # Platform Detection ----
 
-os-release-field () {
-	echo "$(. /etc/os-release; echo "$1")"
-}
-
 platform () {
 
 	# Detect macOS variants
@@ -125,7 +125,7 @@ platform () {
 
 	# Detect platform ID using /etc/os-release when available
 	if [ -f /etc/os-release ]; then
-		local ID="$(os-release-field ID)"
+		local ID="$(. /etc/os-release; echo "$ID")"
 		if [ -n "${ID}" ]; then
 			echo "${ID}"
 			return 0
@@ -148,17 +148,17 @@ platform () {
 		fi
 
 		# Warn about other RedHat flavors we don't yet recognize
-		echo "Unrecognized redhat variant '$(cat /etc/redhat-release)'"
+		echo "unrecognized redhat variant '$(cat /etc/redhat-release)'"
 		return 1
 	fi
 
-	echo "Unrecognized platform detected" >&2
+	echo "unrecognized platform detected"
 	return 1
 }
 
 ubuntu-codename () {
 	# try reading codename from /etc/os-release
-	local CODENAME="$(os-release-field UBUNTU_CODENAME)"
+	local CODENAME="$(. /etc/os-release; echo "${UBUNTU_CODENAME}")"
 	if [ -n "${CODENAME}" ]; then
 		echo "${CODENAME}"
 		return 0
@@ -187,7 +187,8 @@ ubuntu-codename () {
 os-version () {
 
 	if [ -f /etc/os-release ]; then
-		local VERSION_ID="$(os-release-field VERSION_ID)"
+		local VERSION_ID
+		VERSION_ID="$(. /etc/os-release; echo "${VERSION_ID}")"
 		if [ -n "${VERSION_ID}" ]; then
 			echo "${VERSION_ID}"
 			return 0
@@ -195,7 +196,7 @@ os-version () {
 	fi
 
 	if [ -f /etc/redhat-release ]; then
-		grep -oE "[0-9]+\.[0-9]+" /etc/redhat-release
+		grep -oE "[0-9]+([_.-][0-9]+)*" /etc/redhat-release
 		return 0
 	fi
 
@@ -204,14 +205,14 @@ os-version () {
 		return 0
 	fi
 
-	echo "Don't know how to infer OS version for platform '$(platform)'"
+	echo "don't know how to infer OS version for platform '$(platform)'"
 	return 1
 
 }
 
 os-version-part () {
 	local VERSION
-	VERSION="$(echo "$(os-version)" | cut -d"." -f"$1")"
+	VERSION="$(os-version | cut -d"." -f"$1")"
 
 	if [ -n "${VERSION}" ]; then
 		echo "${VERSION}"
@@ -261,16 +262,6 @@ is-fedora () {
 
 is-opensuse () {
 	[ "$(platform)" = "opensuse" ]
-}
-
-is-debian () {
-	FIELDS=("ID" "ID_LIKE")
-	for FIELD in "${FIELDS[@]}"; do
-		if [ "${FIELD}" = "debian" ]; then
-			return 0
-		fi
-	done
-	return 1
 }
 
 is-ubuntu () {
