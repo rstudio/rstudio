@@ -78,17 +78,43 @@
      bundleId = character(0),
      appId = character(0),
      asStatic = logical(0),
+     hostUrl = character(0),
+     username = character(0),
      when = numeric(0))
    deployments <- list()
+   servers <- data.frame(
+     name = character(0),
+     url = character(0))
      
    # attempt to populate the list from rsconnect; this can throw if e.g. the
    # package is not installed. in the case of any error we'll safely return 
    # an empty list, or a stored RPubs upload ID if one was given (below)
    tryCatch({
-     deploymentsFrame <- rsconnect::deployments(path)
+     # included "orphaned" deployments; we will filter later
+     deploymentsFrame <- rsconnect::deployments(path, excludeOrphaned = FALSE)
      deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+
+     # create the list of servers and accounts (for later filtering)
+     servers <- rsconnect::servers()
+     accounts <- rsconnect::accounts()
    }, error = function(e) { })
 
+   # cross-reference registered servers against the list of deployments, so the
+   # client knows without issuing a separate RPC which deployments don't have
+   # registered servers
+   if (nrow(deploymentsFrame) > 0) {
+     urls <- as.character(servers[["url"]])
+     names <- as.character(servers[["name"]])
+     # note that this differs from the definition of "orphaned" used by the
+     # rsconnect package in that it considers only the server (not the account)
+     deploymentsFrame <- cbind(deploymentsFrame, list(
+       serverRegistered = as.character(deploymentsFrame[["server"]]) %in% names |
+                          as.character(deploymentsFrame[["hostUrl"]]) %in% urls))
+
+     # rebuild list with additional metadata
+     deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+   }
+   
    # no RPubs upload IDs to consider
    if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {
      return(deployments)

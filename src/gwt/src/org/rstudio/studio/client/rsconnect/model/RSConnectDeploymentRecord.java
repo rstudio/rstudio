@@ -99,6 +99,10 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
       return this.hostUrl;
    }-*/;
    
+   public final native boolean isServerRegistered() /*-{
+      return this.serverRegistered;
+   }-*/;
+   
    public final RSConnectAccount getAccount()
    {
       return RSConnectAccount.create(getAccountName(), getServer());

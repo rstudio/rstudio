@@ -448,6 +448,27 @@ public class RSConnectPublishButton extends Composite
    
    private void onPublishRecordClick(final RSConnectDeploymentRecord previous)
    {
+      // preflight check: if this deployment record belongs to a server that isn't registered,
+      // display a friendly message
+      if (previous != null && !previous.isServerRegistered())
+      {
+         // compute the host/server name to display; use the server alias by default, but pick up
+         // the host name instead if it's been recorded (older releases of rsconnect didn't
+         // save this information)
+         String host = previous.getServer();
+         if (!StringUtil.isNullOrEmpty(previous.getHostUrl()))
+            host = StringUtil.getHostFromUrl(previous.getHostUrl());
+
+         display_.showMessage(GlobalDisplay.MSG_WARNING, 
+               host + " Not Registered", 
+               "This copy of the content has been published to the server " +
+               "'" + host + "', " +
+               "but you currently do not have any accounts registered on that server. \n\n" +
+               "Connect an account on the server " +
+               "'" + host + "' " + 
+               "to update the application, or publish the content to a different server.");
+      }
+      
       switch (contentType_)
       {
       case RSConnect.CONTENT_TYPE_HTML:
