@@ -4242,7 +4242,7 @@ public class RemoteServer implements Server
    @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
-         String server, String appName, String appTitle,
+         String server, String appName, String appTitle, String appId,
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
@@ -4253,6 +4253,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(server));
       params.set(4, new JSONString(appName));
       params.set(5, new JSONString(StringUtil.notNull(appTitle)));
+      params.set(6, new JSONString(StringUtil.notNull(appId)));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,

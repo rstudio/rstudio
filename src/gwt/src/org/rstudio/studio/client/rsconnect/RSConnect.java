@@ -817,6 +817,7 @@ public class RSConnect implements SessionInitHandler,
                              event.getRecord().getServer(),
                              event.getRecord().getName(), 
                              event.getRecord().getTitle(),
+                             event.getRecord().getAppId(),
                              event.getSettings(),
       new ServerRequestCallback<Boolean>()
       {
