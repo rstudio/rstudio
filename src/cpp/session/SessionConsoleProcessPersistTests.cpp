@@ -73,7 +73,7 @@ TEST_CASE("ConsoleProcess Persistence")
       console_persist::saveConsoleProcesses(orig);
 
       std::string loaded = console_persist::loadConsoleProcessMetadata();
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
    }
 
    SECTION("Save and restore empty Console Process metadata")
@@ -82,7 +82,7 @@ TEST_CASE("ConsoleProcess Persistence")
       console_persist::saveConsoleProcesses(orig);
 
       std::string loaded = console_persist::loadConsoleProcessMetadata();
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
    }
 
    SECTION("Try to load a non-existent buffer")
@@ -100,7 +100,7 @@ TEST_CASE("ConsoleProcess Persistence")
       console_persist::appendToOutputBuffer(handle1, orig);
 
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
 
       console_persist::deleteLogFile(handle1);
       loaded = console_persist::getSavedBuffer(handle1, maxLines);
@@ -112,7 +112,7 @@ TEST_CASE("ConsoleProcess Persistence")
       std::string orig("hello how are you?");
       console_persist::appendToOutputBuffer(handle1, orig);
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
    }
 
    SECTION("Write and load a buffer with one newline")
@@ -120,7 +120,7 @@ TEST_CASE("ConsoleProcess Persistence")
       std::string orig("hello how are you?\n");
       console_persist::appendToOutputBuffer(handle1, orig);
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
    }
 
    SECTION("Write and load several lines")
@@ -128,7 +128,7 @@ TEST_CASE("ConsoleProcess Persistence")
       std::string orig("hello how are you?\nthat is good\nhave a nice day");
       console_persist::appendToOutputBuffer(handle1, orig);
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
-      CHECK(loaded.compare(orig) == 0);
+      CHECK((loaded.compare(orig) == 0));
    }
 
    SECTION("Write more lines than maxLines then read it")
@@ -146,7 +146,7 @@ TEST_CASE("ConsoleProcess Persistence")
       std::string orig = ss.str();
       console_persist::appendToOutputBuffer(handle2, orig);
       std::string loaded = console_persist::getSavedBuffer(handle2, maxLines);
-      CHECK(loaded.compare(expect) == 0);
+      CHECK((loaded.compare(expect) == 0));
    }
 
    SECTION("Write more lines than maxLines then read it without trimming")
@@ -161,7 +161,7 @@ TEST_CASE("ConsoleProcess Persistence")
       std::string orig = ss.str();
       console_persist::appendToOutputBuffer(handle2, orig);
       std::string loaded = console_persist::getSavedBuffer(handle2, 0);
-      CHECK(loaded.compare(expect) == 0);
+      CHECK((loaded.compare(expect) == 0));
    }
 
    SECTION("Delete unknown log files")
@@ -177,9 +177,9 @@ TEST_CASE("ConsoleProcess Persistence")
       console_persist::appendToOutputBuffer(bogusHandle2, bogus2);
 
       std::string loaded = console_persist::getSavedBuffer(bogusHandle1, maxLines);
-      CHECK(loaded.compare(bogus1) == 0);
+      CHECK((loaded.compare(bogus1) == 0));
       loaded = console_persist::getSavedBuffer(bogusHandle2, maxLines);
-      CHECK(loaded.compare(bogus2) == 0);
+      CHECK((loaded.compare(bogus2) == 0));
 
       console_persist::deleteOrphanedLogs(testHandle);
       loaded = console_persist::getSavedBuffer(bogusHandle1, maxLines);
@@ -187,9 +187,9 @@ TEST_CASE("ConsoleProcess Persistence")
       loaded = console_persist::getSavedBuffer(bogusHandle2, maxLines);
       CHECK(loaded.empty());
       loaded = console_persist::getSavedBuffer(handle1, maxLines);
-      CHECK(loaded.compare(orig1) == 0);
+      CHECK((loaded.compare(orig1) == 0));
       loaded = console_persist::getSavedBuffer(handle2, maxLines);
-      CHECK(loaded.compare(orig2) == 0);
+      CHECK((loaded.compare(orig2) == 0));
    }
 }
 
