@@ -13,11 +13,16 @@
 #
 #
 
+cmake_minimum_required(VERSION 2.6)
+project (RStudio)
+
+set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
 # set compiler
 include(CMakeCompiler.txt)
 
-cmake_minimum_required(VERSION 2.6)
-project (RStudio)
+# detect platform
+include(CMakePlatform.txt)
 
 # project globals
 include(CMakeGlobals.txt)

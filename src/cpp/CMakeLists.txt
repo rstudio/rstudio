@@ -13,18 +13,19 @@
 #
 #
 
-# set compiler
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
-
 # set minimum version
 cmake_minimum_required(VERSION 2.6)
-
 project (RSTUDIO_CPP)
 
-# include globals. normally these are included at the root but we also
-# include them here to support configuring at the src level (i.e. for
-# cpp-development-configurations)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
+# include top-level configuration (support configuring at src level, for
+# cpp-development configurations)
+if (NOT PROJECT_ROOT_DIR)
+   set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+endif()
+
+include("${PROJECT_ROOT_DIR}/CMakeGlobals.txt")
+include("${PROJECT_ROOT_DIR}/CMakeCompiler.txt")
+include("${PROJECT_ROOT_DIR}/CMakePlatform.txt")
 
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)

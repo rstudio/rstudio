@@ -104,5 +104,14 @@ for SUBDIR in "${PANDOC_SUBDIR[@]}"; do
   popd
 done
 
+# if we're not on CentOS, then we can just move the pandoc
+# binaries to the root folder (out of the subdirectory)
+# (on CentOS we package both pandoc binaries)
+if ! is-centos; then
+  mv "${PANDOC_SUBDIR}"/pandoc* .
+  rm -rf "${PANDOC_SUBDIR}"
+fi
+
 # return home
 popd
+
