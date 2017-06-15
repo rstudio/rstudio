@@ -128,6 +128,13 @@ then
       sudo mv "$src" "$tgt"
    done
 
+   # fix up symlinks
+   for file in *.so; do
+      src="$file"
+      tgt="${file}.${BOOST_VERSION_NUMBER}"
+      sudo ln -fs "$src" "$tgt"
+   done
+
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
    sudo rm -rf $BOOST_BUILD_DIR
