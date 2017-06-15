@@ -1068,6 +1068,9 @@ void rCleanup(bool terminatedNormally)
          Error error = module_context::activeSession().destroy();
          if (error)
             LOG_ERROR(error);
+
+         // fire destroy event to modules
+         module_context::events().onDestroyed();
       }
       
       // clean up locks
@@ -1532,8 +1535,14 @@ int main (int argc, char * const argv[])
       s_printCharsetWarning = !ensureUtf8Charset();
       
       // read program options
+      std::ostringstream osWarnings;
       Options& options = rsession::options();
-      ProgramStatus status = options.read(argc, argv) ;
+      ProgramStatus status = options.read(argc, argv, osWarnings) ;
+      std::string optionsWarnings = osWarnings.str();
+
+      if (!optionsWarnings.empty())
+         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
+
       if (status.exit())
          return status.exitCode() ;
 

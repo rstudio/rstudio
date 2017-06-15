@@ -25,7 +25,7 @@ void Options::addOverlayOptions(
 {
 }
 
-bool Options::validateOverlayOptions(std::string* pErrMsg)
+bool Options::validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings)
 {
    return true;
 }
