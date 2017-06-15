@@ -198,7 +198,7 @@ os-version () {
 	fi
 
 	if [ -f /etc/redhat-release ]; then
-		grep -oE "[0-9]+\.[0-9]+" /etc/redhat-release
+		grep -oE "[0-9]+([_.-][0-9]+)+" /etc/redhat-release
 		return 0
 	fi
 
