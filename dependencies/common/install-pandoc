@@ -17,6 +17,7 @@
 
 set -e
 
+VERBOSE=1
 source rstudio-tools
 
 # variables that control download + installation process
@@ -42,89 +43,82 @@ if [ -d "${PANDOC_DIR}" ]; then
   exit 0
 fi
 
-# construct download URL based on platform
 case "$(platform)" in
 
-  "centos")
-    CENTOS_VERSION="$(cat /etc/redhat-release | grep -oE '[0-9]+\.[0-9]+')"
-    CENTOS_VERSION_MAJOR="$(echo "${CENTOS_VERSION}" | cut -d"." -f1)"
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/centos${CENTOS_VERSION_MAJOR}"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
-  ;;
+"centos")
+  PANDOC_SUBDIR=("centos6" "centos7")
+  PANDOC_FILES=(
+    "pandoc-${PANDOC_VERSION}.x86_64.rpm"
+    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
+  )
+;;
 
-  "opensuse")
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/opensuse-tumbleweed"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
-  ;;
+"opensuse")
+  PANDOC_SUBDIR=("opensuse-tumbleweed")
+  PANDOC_FILES=(
+    "pandoc-${PANDOC_VERSION}.x86_64.rpm"
+    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
+  )
+;;
 
-  "ubuntu")
-    UBUNTU_VERSION="$(. /etc/os-release; echo "${VERSION_ID}")"
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/ubuntu-${UBUNTU_VERSION}/amd64"
-    PANDOC_FILE="pandoc_${PANDOC_VERSION}_amd64.deb"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc_${PANDOC_CITEPROC_VERSION}_amd64.deb"
-  ;;
+"ubuntu")
+  PANDOC_SUBDIR=("ubuntu-$(os-version)")
+  PANDOC_FILES=(
+    "pandoc_${PANDOC_VERSION}_amd64.deb"
+    "pandoc-citeproc_${PANDOC_CITEPROC_VERSION}_amd64.deb"
+  )
+;;
 
-  "darwin")
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/macos"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION_MACOS}.zip"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION_MACOS}.zip"
-  ;;
+"darwin")
+  PANDOC_SUBDIR=("macos")
+  PANDOC_FILES=(
+    "pandoc-${PANDOC_VERSION_MACOS}.zip"
+    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION_MACOS}.zip"
+  )
+;;
 
-  *)
-    echo "Unrecognized platform $(platform); exiting now"
-    exit 1
+*)
+  echo "Unrecognized platform $(platform); exiting now"
+  exit 1
 
 esac
-
-# construct pandoc download URLs
-PANDOC_URL="${PANDOC_URL_ARCH}/${PANDOC_FILE}"
-PANDOC_CITEPROC_URL="${PANDOC_URL_ARCH}/${PANDOC_CITEPROC_FILE}"
 
 # enter pandoc directory
 mkdir -p "${PANDOC_DIR}"
 pushd "${PANDOC_DIR}"
 
-# download pandoc
-download "${PANDOC_URL}"
-download "${PANDOC_CITEPROC_URL}"
+# download and extract pandoc
+for SUBDIR in "${PANDOC_SUBDIR[@]}"; do
+  mkdir -p "${SUBDIR}"
 
-# extract pandoc (delegate based on extension)
-case "${PANDOC_FILE}" in
-  *.rpm)
+  # enter sub-directory and download + extract files
+  pushd "${SUBDIR}"
+  for FILE in "${PANDOC_FILES[@]}"; do
+    download "${PANDOC_URL_BASE}/${SUBDIR}/${FILE}" "${FILE}"
+    extract "${FILE}"
+    rm "${FILE}"
+  done
 
-    rpm2cpio "${PANDOC_FILE}" | cpio -idmv
-    rpm2cpio "${PANDOC_CITEPROC_FILE}" | cpio -idmv
-    cp usr/bin/pandoc .
-    cp usr/bin/pandoc-citeproc .
+  # .deb and .rpm will extract to 'usr/bin' in this folder;
+  # pull the binaries out and clean up that folder
+  if ! is-darwin; then
+    cp usr/bin/pandoc* .
     rm -rf usr
-  ;;
+  fi
 
-  *.deb)
+  # leave the sub-directory
+  popd
 
-    dpkg -x "${PANDOC_FILE}" .
-    dpkg -x "${PANDOC_CITEPROC_FILE}" .
-    cp usr/bin/pandoc .
-    cp usr/bin/pandoc-citeproc .
-    rm -rf usr
-  ;;
+done
 
-  *.zip)
-    unzip -o "${PANDOC_FILE}"
-    unzip -o "${PANDOC_CITEPROC_FILE}"
-  ;;
-
-  *)
-    echo "Unrecognized download file format ${PANDOC_FILE}"
-    exit 1
-  ;;
-
-esac
-
-# clean up downloaded archives
-rm "${PANDOC_FILE}"
-rm "${PANDOC_CITEPROC_FILE}"
+# if we're not on CentOS, then we can just move the pandoc
+# binaries to the root folder (out of the subdirectory)
+# (on CentOS we package both pandoc binaries)
+if ! is-centos; then
+  mv "${PANDOC_SUBDIR}"/pandoc* .
+  rm -rf "${PANDOC_SUBDIR}"
+fi
 
 # return home
 popd
+

@@ -1,10 +1,24 @@
 #!/bin/sh
 
 # errors shouldn't cause script to exit
-set +e 
+set +e
+
+# symlink pandoc binary based on OS version
+VERSION="$(grep -oE '[0-9]+(\.[0-9]+)+' /etc/redhat-release)"
+VERSION_MAJOR="$(echo "${VERSION}" | cut -d'.' -f1)"
+PANDOC_DIR="${CMAKE_INSTALL_PREFIX}/bin/pandoc"
+
+if [ "${VERSION_MAJOR}" = "6" ]; then
+    PANDOC_SUBDIR=centos6
+else
+    PANDOC_SUBDIR=centos7
+fi
+
+ln -fs "${PANDOC_DIR}/${PANDOC_SUBDIR}/pandoc" "${PANDOC_DIR}/pandoc"
+ln -fs "${PANDOC_DIR}/${PANDOC_SUBDIR}/pandoc-citeproc" "${PANDOC_DIR}/pandoc-citeproc"
 
 # create softlink to rstudio in /usr/bin
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio /usr/bin/rstudio
+ln -f -s "${CMAKE_INSTALL_PREFIX}"/bin/rstudio /usr/bin/rstudio
 
 # update mime database
 update-mime-database /usr/share/mime
