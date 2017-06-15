@@ -1,0 +1,37 @@
+#
+# CMakePlatform.txt
+#
+# Copyright (C) 2009-17 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+if (NOT WIN32)
+
+  # detect the operating system's name
+  if(NOT OS_NAME)
+    execute_process(
+      COMMAND "bash" "-c" "source ${PROJECT_ROOT_DIR}/dependencies/common/rstudio-tools; echo \$(platform)"
+      OUTPUT_VARIABLE OS_NAME
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    set(OS_NAME "${OS_NAME}" CACHE STRING "Operating system name")
+  endif()
+
+  # detect the operating system version
+  if(NOT OS_VERSION)
+    execute_process(
+      COMMAND "bash" "-c" "source ${PROJECT_ROOT_DIR}/dependencies/common/rstudio-tools; echo \$(os-version)"
+      OUTPUT_VARIABLE OS_VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(OS_VERSION "${OS_VERSION}" CACHE STRING "Operating system version")
+  endif()
+
+endif()
