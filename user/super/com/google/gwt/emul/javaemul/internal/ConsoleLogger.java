@@ -97,6 +97,6 @@ public class ConsoleLogger {
     public LogFn groupEnd;
   }
 
-  @JsProperty(namespace = "<window>")
+  @JsProperty(namespace = "<window>", name = "window.console")
   private static native Console getConsole();
 }
