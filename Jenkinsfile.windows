@@ -1,0 +1,31 @@
+pipeline {
+  agent { label 'windows' }
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '100'))
+  }
+  parameters {
+      string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version')
+      string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version')
+      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'SLACK_CHANNEL', defaultValue: '@steve', description: 'Slack channel to publish build message.')
+  }
+
+  stages {
+    stage('container') {
+      steps {
+        script {
+          def image_tag = "windows-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
+          container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.windows", image_tag: image_tag)
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}
