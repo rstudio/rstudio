@@ -742,7 +742,7 @@ public class RSConnect implements SessionInitHandler,
                result.getSettings().getAsStatic(),
                launchBrowser, 
                RSConnectDeploymentRecord.create(result.getAppName(), 
-                     result.getAppTitle(), result.getAccount(), ""));
+                     result.getAppTitle(), result.getAppId(), result.getAccount(), ""));
 
          // we can't raise the main window if we aren't in desktop mode, so show
          // a dialog to guide the user there
@@ -762,7 +762,7 @@ public class RSConnect implements SessionInitHandler,
                result.getSettings(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(), 
-                     result.getAppTitle(), result.getAccount(), "")));
+                     result.getAppTitle(), result.getAppId(), result.getAccount(), "")));
       }
    }
    

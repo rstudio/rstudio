@@ -653,7 +653,7 @@ public class RSConnectPublishButton extends Composite
                      events_.fireEvent(
                            new RSConnectDeployInitiatedEvent(source, settings, 
                                  true, RSConnectDeploymentRecord.create(
-                                       plot.name, null, plot.account, 
+                                       plot.name, null, null, plot.account, 
                                        plot.server)));
                   }
                });
