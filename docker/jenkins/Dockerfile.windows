@@ -1,0 +1,52 @@
+FROM microsoft/windowsservercore
+
+# install chocolatey
+RUN powershell -Command \
+  iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+# install some deps via chocolatey
+RUN powershell -Command \
+  choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
+  choco install -y jdk8 ant
+
+# install aws cli
+# awscli bug where cp65001 is not understood by internal python.
+RUN powershell -Command \
+  choco install -y awscli ;\
+  cp 'C:\Program Files\Amazon\AWSCLI\encodings\utf_8.pyc' 'C:\Program Files\Amazon\AWSCLI\encodings\cp65001.pyc'
+
+# we use "R" for its real purpose, remove the Invoke-History powershell alias
+RUN powershell -Command \
+  "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
+
+# install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
+RUN powershell -Command \
+  $ErrorActionPreference = 'Stop' ;\
+  $ProgressPreference = 'SilentlyContinue' ;\
+  Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe -OutFile c:\R-3.0.3-win.exe ;\
+  Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;\
+  Remove-Item c:\R-3.0.3-win.exe -Force
+
+# add R to path
+RUN powershell -Command \
+  $env:path += ';C:\R\R-3.0.3\bin\i386\' ;\
+  [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
+
+# install nsis (version on chocolatey is too new)
+RUN powershell -Command \
+  Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile C:\nsis-2.50-setup.exe ;\
+  Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;\
+  Remove-Item c:\nsis-2.50-setup.exe
+
+# install qt
+COPY docker/jenkins/windows/qt-noninteractive-install.qs c:\qt-noninteractive-install.qs
+RUN powershell -Command \
+  $ErrorActionPreference = 'Stop'; \
+  $ProgressPreference = 'SilentlyContinue' ;\
+  Invoke-WebRequest http://download.qt.io/archive/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe -OutFile c:\qt.exe ;\
+  Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install.qs' ;\
+  Remove-Item c:\qt.exe -Force
+
+# cpack (an alias from chocolatey) and cmake's cpack conflict.
+RUN powershell -Command \
+  Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
