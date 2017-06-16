@@ -86,7 +86,8 @@ struct RProjectConfig
         websitePath(),
         customScriptPath(),
         tutorialPath(),
-        quitChildProcessesOnExit(DefaultValue)
+        quitChildProcessesOnExit(DefaultValue),
+        defaultOpenDocs()
    {
    }
 
@@ -118,6 +119,7 @@ struct RProjectConfig
    std::string customScriptPath;
    std::string tutorialPath;
    int quitChildProcessesOnExit;
+   std::string defaultOpenDocs;
 };
 
 

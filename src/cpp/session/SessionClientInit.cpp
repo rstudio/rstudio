@@ -208,6 +208,25 @@ void handleClientInit(const boost::function<void()>& initFunction,
        module_context::createAliasedPath(
              dirs::getProjectUserDataDir(ERROR_LOCATION));
 
+      std::string defaultOpenDocs = projects::projectContext().config().defaultOpenDocs;
+      if (!defaultOpenDocs.empty())
+      {
+         // convert the array of default docs from relative to absolute paths
+         std::vector<std::string> docs;
+         json::Array docsArray;
+
+         boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
+         BOOST_FOREACH(const std::string& doc, docs)
+         {
+            FilePath docPath = projects::projectContext().directory().complete(doc);
+            if (docPath.exists())
+            {
+               docsArray.push_back(docPath.absolutePath());
+            }
+         }
+
+         sessionInfo["project_default_open_docs"] = docsArray;
+      }
    }
    else
    {

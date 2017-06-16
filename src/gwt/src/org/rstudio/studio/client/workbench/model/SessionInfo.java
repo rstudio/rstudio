@@ -256,6 +256,12 @@ public class SessionInfo extends JavaScriptObject
       return this.project_open_docs;
    }-*/;
    
+   public final native JsArrayString getProjectDefaultOpenDocs() /*-{
+      if (!this.project_default_open_docs)
+         this.project_default_open_docs = {};
+      return this.project_default_open_docs;
+   }-*/;
+   
    public final native boolean projectSupportsSharing() /*-{
       return !!this.project_supports_sharing;
    }-*/;

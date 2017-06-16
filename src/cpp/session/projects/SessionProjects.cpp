@@ -479,6 +479,30 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // get the default_open_files options
+   // this is currently not writeable by the UI
+   // so we need to make sure we persist the current value
+   bool providedDefaults;
+   std::string userErrMsg;
+   r_util::RProjectConfig existingConfig;
+   error = r_util::readProjectFile(s_projectContext.file(),
+                                         ProjectContext::defaultConfig(),
+                                         ProjectContext::buildDefaults(),
+                                         &existingConfig,
+                                         &providedDefaults,
+                                         &userErrMsg);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      if (!existingConfig.defaultOpenDocs.empty())
+      {
+         config.defaultOpenDocs = existingConfig.defaultOpenDocs;
+      }
+   }
+
    error = json::readObject(
                     configJson,
                     "auto_append_newline", &(config.autoAppendNewline),

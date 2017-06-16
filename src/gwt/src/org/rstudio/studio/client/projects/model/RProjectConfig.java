@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RProjectConfig extends JavaScriptObject
 {
@@ -75,11 +76,21 @@ public class RProjectConfig extends JavaScriptObject
    
    public native final int getQuitChildProcessesOnExit() /*-{
       return this.quit_child_processes_on_exit;
-   }-*/;  
+   }-*/;
    
    public native final void setQuitChildProcessesOnExit(int quitChildProcessesOnExit) /*-{
       this.quit_child_processes_on_exit = quitChildProcessesOnExit;
-   }-*/;  
+   }-*/;
+   
+   public native final JsArrayString getDefaultOpenDocs() /*-{
+      if (!this.default_open_docs)
+         this.default_open_docs = {};
+      return this.default_open_docs;
+   }-*/;
+   
+   public native final void setDefaultOpenDocs(JsArrayString defaultOpenDocs) /*-{
+      this.default_open_docs = defaultOpenDocs;
+   }-*/;
    
    public native final boolean getEnableCodeIndexing() /*-{
       return this.enable_code_indexing;

@@ -843,6 +843,39 @@ public class Source implements InsertSourceHandler,
    {
       final JsArray<SourceDocument> docs =
             session.getSessionInfo().getSourceDocuments();
+      
+      // if we have default project docs to open but no documents to restore, open them
+      JsArrayString projectDefaultOpenDocs = session.getSessionInfo().getProjectDefaultOpenDocs();
+      if (docs.length() == 0 && projectDefaultOpenDocs.length() != 0)
+      {
+         // create a continuation for opening the source docs
+         SerializedCommandQueue openCommands = new SerializedCommandQueue();
+         
+         for (int i=0; i< projectDefaultOpenDocs.length(); i++)
+         {
+            String doc = projectDefaultOpenDocs.get(i);
+            final FileSystemItem fsi = FileSystemItem.createFile(doc);
+              
+            openCommands.addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  openFile(fsi, 
+                           fileTypeRegistry_.getTextTypeForFile(fsi), 
+                           new CommandWithArg<EditingTarget>() {
+                              @Override
+                              public void execute(EditingTarget arg)
+                              {  
+                                 continuation.execute();
+                              }
+                           });
+               }
+            });
+         }
+         
+         return;
+      }
 
       for (int i = 0; i < docs.length(); i++)
       {
