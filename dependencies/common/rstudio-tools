@@ -61,9 +61,9 @@ download () {
 
 	# Invoke downloader
 	if has-command curl; then
-		curl -L -f "$SRC" > "$DST"
+		curl -L -f -C - "$SRC" > "$DST"
 	elif has-command wget; then
-		wget "$SRC" -O "$DST"
+		wget -c "$SRC" -O "$DST"
 	else
 		echo "no downloader detected on this system (requires 'curl' or 'wget')"
 		return 1
@@ -187,8 +187,7 @@ ubuntu-codename () {
 os-version () {
 
 	if [ -f /etc/os-release ]; then
-		local VERSION_ID
-		VERSION_ID="$(. /etc/os-release; echo "${VERSION_ID}")"
+		local VERSION_ID="$(. /etc/os-release; echo "${VERSION_ID}")"
 		if [ -n "${VERSION_ID}" ]; then
 			echo "${VERSION_ID}"
 			return 0
@@ -211,8 +210,7 @@ os-version () {
 }
 
 os-version-part () {
-	local VERSION
-	VERSION="$(os-version | cut -d"." -f"$1")"
+	local VERSION="$(os-version | cut -d"." -f"$1")"
 
 	if [ -n "${VERSION}" ]; then
 		echo "${VERSION}"
