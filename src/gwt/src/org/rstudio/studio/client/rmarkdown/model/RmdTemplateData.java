@@ -111,7 +111,7 @@ public class RmdTemplateData
             },
             {
             option_name: "df_print",
-            option_ui_name: "Print dataframes as:",
+            option_ui_name: "Print dataframes as",
             option_format: "html_document",
             option_type: "choice", 
             option_nullable: false,
