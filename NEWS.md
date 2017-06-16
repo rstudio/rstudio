@@ -62,6 +62,7 @@
 * RStudio warns when attempting to commit large files (>10 MB)
 * Implemented 'ignore whitespace' option for Git Diff view
 * Wait for index.lock file to clear before performing git operations (with recovery)
+* Improve handling of paths containing special characters
 
 ### Miscellaneous
 
