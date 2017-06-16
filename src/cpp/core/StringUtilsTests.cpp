@@ -37,6 +37,16 @@ context("String splitting")
       expect_true(splat[1] == "b");
       expect_true(splat[2] == "c");
    }
+   
+   test_that("raw delimiters containing null bytes can be split")
+   {
+      std::string text("a\0b\0c", 5);
+      std::vector<std::string> splat = split(text, "\0");
+      expect_true(splat.size() == 3);
+      expect_true(splat[0] == "a");
+      expect_true(splat[1] == "b");
+      expect_true(splat[2] == "c");
+   }
 }
 
 context("isSubsequence")

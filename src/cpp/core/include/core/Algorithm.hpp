@@ -202,7 +202,8 @@ void append(ContainerType* pContainer, const ContainerType& other)
             other.end());
 }
 
-inline std::vector<std::string> split(const std::string& string, const std::string& delim)
+inline std::vector<std::string> split(const std::string& string,
+                                      const std::string& delim)
 {
    std::vector<std::string> result;
    
@@ -232,6 +233,13 @@ inline std::vector<std::string> split(const std::string& string, const std::stri
    
    // And return!
    return result;
+}
+
+template <std::size_t N>
+inline std::vector<std::string> split(const std::string& string,
+                                      const char (&delim)[N])
+{
+   return split(string, std::string(delim, N - 1));
 }
 
 inline std::string join(const std::vector<std::string>& container, const std::string& delim)
