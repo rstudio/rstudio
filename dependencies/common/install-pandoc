@@ -74,6 +74,9 @@ popd
 # remove transient download folder
 rm -rf "${SUBDIR}"
 
+# make pandoc executable
+chmod 755 pandoc*
+
 # and we're done!
 popd
 
