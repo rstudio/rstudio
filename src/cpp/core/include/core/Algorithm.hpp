@@ -23,6 +23,7 @@
 #include <boost/type_traits.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <core/Macros.hpp>
 #include <core/StringUtils.hpp>
 #include <core/type_traits/TypeTraits.hpp>
 
@@ -204,6 +205,15 @@ void append(ContainerType* pContainer, const ContainerType& other)
 inline std::vector<std::string> split(const std::string& string, const std::string& delim)
 {
    std::vector<std::string> result;
+   
+   if (UNLIKELY(delim.size() == 0))
+   {
+      std::size_t n = string.size();
+      result.reserve(n);
+      for (std::string::size_type i = 0; i < n; ++i)
+         result.push_back(std::string(string[i], 1));
+      return result;
+   }
    
    std::string::size_type start = 0;
    std::string::size_type end   = string.find(delim, start);
