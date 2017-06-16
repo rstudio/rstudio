@@ -85,6 +85,9 @@
    servers <- data.frame(
      name = character(0),
      url = character(0))
+   accounts <- data.frame(
+     name = character(0),
+     server = character(0))
      
    # attempt to populate the list from rsconnect; this can throw if e.g. the
    # package is not installed. in the case of any error we'll safely return 
@@ -103,10 +106,18 @@
    # client knows without issuing a separate RPC which deployments don't have
    # registered servers
    if (nrow(deploymentsFrame) > 0) {
+     # filter the list of servers by those that actually have accounts
+     # registered 
+     servers <- servers[
+         as.character(servers$name) %in% as.character(accounts$server),]
+
+     # extract names and URLs from the remaining servers
      urls <- as.character(servers[["url"]])
      names <- as.character(servers[["name"]])
-     # note that this differs from the definition of "orphaned" used by the
-     # rsconnect package in that it considers only the server (not the account)
+
+     # compute whether the deployment is orphaned; note that this differs from
+     # the definition of "orphaned" used by the rsconnect package in that it
+     # considers only the server (not the account)
      deploymentsFrame <- cbind(deploymentsFrame, list(
        serverRegistered = as.character(deploymentsFrame[["server"]]) %in% names |
                           as.character(deploymentsFrame[["hostUrl"]]) %in% urls))
