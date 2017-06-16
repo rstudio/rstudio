@@ -581,7 +581,7 @@ void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
 void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
                                          const std::string& prompt)
 {
-   // if there is a custom prmopt handler then give it a chance to
+   // if there is a custom prompt handler then give it a chance to
    // handle the prompt first
    if (onPrompt_)
    {

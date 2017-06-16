@@ -35,7 +35,7 @@ context("queue and fetch input")
             "test caption", "test title", "fakehandle", 9999 /*terminal*/,
             TerminalShell::DefaultShell, false /*altBuffer*/, cwd,
             core::system::kDefaultCols, core::system::kDefaultRows,
-            false /*zombie*/));
+            false /*zombie*/, false /*trackEnv*/));
 
    boost::shared_ptr<ConsoleProcess> pCP =
          ConsoleProcess::createTerminalProcess(procOptions, pCPI, false /*enableWebsockets*/);

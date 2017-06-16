@@ -887,7 +887,12 @@ Error startTerminal(const json::JsonRpcRequest& request,
    bool altBufferActive;
    std::string currentDir;
    bool zombie;
-   
+#if defined(_WIN32)
+   bool trackEnv = false;
+#else
+   bool trackEnv = true;
+#endif
+
    Error error = json::readParams(request.params,
                                   &shellTypeInt,
                                   &cols,
@@ -932,7 +937,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
             termCaption, termTitle, termHandle, termSequence, actualShellType,
-            altBufferActive, cwd, cols, rows, zombie));
+            altBufferActive, cwd, cols, rows, zombie, trackEnv));
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::createTerminalProcess(options, ptrProcInfo);

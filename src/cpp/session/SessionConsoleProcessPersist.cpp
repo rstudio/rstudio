@@ -47,7 +47,9 @@ namespace console_persist {
 //                Added current-working directory, alt-buffer, cols, rows
 // 2017/06/8  - console04 -> console05
 //                Added autoClose, zombie
-#define kConsoleDir "console05"
+// 2017/06/16 - console05 -> console06
+//                Added trackEnv
+#define kConsoleDir "console06"
 
 namespace {
 

@@ -58,6 +58,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("Busy:        '" + session.getHasChildProcs() + "'\n");
       diagnostics.append("Alt-Buffer:  '" + session.altBufferActive() + "'\n");
       diagnostics.append("Zombie:      '" + session.getZombie() + "'\n");
+      diagnostics.append("Track Env    '" + session.getTrackEnv() + "'\n");
       diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
       diagnostics.append("Working Dir: '" + cwd + "'\n"); 
       diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");

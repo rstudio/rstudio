@@ -800,6 +800,15 @@ public class TerminalSession extends XTermWidget
       return zombie_;
    }
    
+   public boolean getTrackEnv()
+   {
+      if (consoleProcess_ == null)
+      {
+         return true;
+      }
+      return consoleProcess_.getProcessInfo().getTrackEnv();
+   }
+   
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;

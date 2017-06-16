@@ -79,7 +79,7 @@ public:
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
-         int cols, int rows, bool zombie);
+         int cols, int rows, bool zombie, bool trackEnv);
 
    // constructor for non-terminals
    ConsoleProcessInfo(
@@ -180,6 +180,10 @@ public:
    void setZombie(bool zombie) { zombie_ = zombie; }
    bool getZombie() const { return zombie_; }
 
+   // Track terminal session's environment?
+   void setTrackEnv(bool trackEnv) { trackEnv_ = trackEnv; }
+   bool getTrackEnv() const { return trackEnv_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -209,6 +213,7 @@ private:
    bool restarted_;
    AutoCloseMode autoClose_;
    bool zombie_;
+   bool trackEnv_;
 };
 
 } // namespace console_process
