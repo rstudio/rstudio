@@ -333,6 +333,7 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
+   boost::signal<void ()>                    onDestroyed;
    boost::signal<void (const std::vector<std::string>&)>
                                              onLibPathsChanged;
    boost::signal<void (const std::string&)>  onPackageLoaded;

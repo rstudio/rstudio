@@ -1509,10 +1509,29 @@ r_util::ActiveSession& activeSession()
          pSession = activeSessions().get(id);
       else
       {
-         // if no active session, create one and use the launcher token as a
-         // synthetic session ID
-         pSession = activeSessions().emptySession(
-               options().launcherToken());
+         // if no scope was specified, we are in singleton session mode
+         // check to see if there is an existing active session, and use that
+         std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
+               activeSessions().list(userHomePath(), options().projectSharingEnabled());
+         if (sessions.size() == 1)
+         {
+            // there is only one session, so this must be singleton session mode
+            // reopen that session
+            pSession = sessions.front();
+         }
+         else
+         {
+            // create a new session entry
+            // this should not really run because in single session mode there will
+            // only be one session but we'll create one here just in case for safety
+            std::string sessionId;
+
+            // pass ~ as the default working directory
+            // this is resolved deeper in the code in SessionClientInit to turn into
+            // the actual user preference or session default directory that it should be
+            activeSessions().create(options().sessionScope().project(), "~", &sessionId);
+            pSession = activeSessions().get(sessionId);
+         }
       }
    }
    return *pSession;

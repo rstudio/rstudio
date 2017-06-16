@@ -196,6 +196,9 @@ void deleteLogFile(const std::string &handle, bool lastLineOnly)
       return;
    }
 
+   if (!log.exists())
+      return;
+
    if (!lastLineOnly)
    {
       // blow away the file

@@ -207,6 +207,42 @@ boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(
    return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
+std::vector<boost::shared_ptr<GlobalActiveSession> >
+GlobalActiveSessions::list() const
+{
+   std::vector<boost::shared_ptr<GlobalActiveSession> > sessions;
+
+   // get all active sessions for the system
+   FilePath activeSessionsDir = rootPath_;
+   if (!activeSessionsDir.exists())
+      return sessions; // no active sessions exist
+
+   std::vector<FilePath> sessionFiles;
+   Error error = activeSessionsDir.children(&sessionFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return sessions;
+   }
+
+   BOOST_FOREACH(const FilePath& sessionFile, sessionFiles)
+   {
+      sessions.push_back(boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile)));
+   }
+
+   return sessions;
+}
+
+boost::shared_ptr<GlobalActiveSession>
+GlobalActiveSessions::get(const std::string& id) const
+{
+   FilePath sessionFile = rootPath_.childPath(id);
+   if (!sessionFile.exists())
+      return boost::shared_ptr<GlobalActiveSession>();
+
+   return boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile));
+}
+
 
 namespace {
 
