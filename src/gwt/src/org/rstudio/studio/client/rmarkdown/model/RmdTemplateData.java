@@ -38,7 +38,7 @@ public class RmdTemplateData
             format_extension: "html",
             format_options: [ "toc", "toc_depth", "highlight", "theme", "css", "fig_width", 
                               "fig_height", "fig_caption", "number_sections",
-                              "smart", "self_contained", "keep_md" ],
+                              "smart", "self_contained", "keep_md", "df_print" ],
             format_notes: "Recommended format for authoring (you can switch to PDF or Word output anytime)."
             },
             {
@@ -108,6 +108,16 @@ public class RmdTemplateData
             option_default: "default",
             option_list: [ "default", "tango", "pygments", "kate", "monochrome",
                            "espresso", "zenburn", "haddock", "textmate" ]
+            },
+            {
+            option_name: "df_print",
+            option_ui_name: "Print dataframes as:",
+            option_format: "html_document",
+            option_type: "choice", 
+            option_nullable: false,
+            option_default: "paged",
+            option_list: [ "default", "kable", "paged", "tibble" ],
+            option_add_header: true
             },
             {
             option_name: "smart",

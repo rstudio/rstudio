@@ -1015,12 +1015,19 @@ public class TextEditingTargetRMarkdownHelper
       RmdFrontMatterOutputOptions result = RmdFrontMatterOutputOptions.create();
 
       // loop over each option applicable to the new format; if it's
-      // transferable, try to find it in one of the other formats 
+      // transferable, try to find it in one of the other formats. If
+      // it should be added to the header, add it.
       JsArrayString options = template.getFormat(format).getOptions();
       for (int i = 0; i < options.length(); i++)
       {
          String optionName = options.get(i);
          RmdTemplateFormatOption option = template.getOption(optionName);
+
+         if (option.isAddHeader()) {
+            String val = option.getDefaultValue();
+            result.setOptionValue(option, val);
+         }
+
          if (!option.isTransferable())
             continue;
          
