@@ -29,6 +29,7 @@ public class ConsoleLogger {
 
   public void log(String level, String message) {
     LogFn logFn = JsUtils.getProperty(getConsole(), level);
+    // Older Firefox versions expect console instance as 'this'
     logFn.call(getConsole(), message);
   }
 
@@ -50,26 +51,29 @@ public class ConsoleLogger {
   }
 
   private void groupStart(String msg, boolean expanded) {
+    // Older Firefox versions expect console instance as 'this'
     getGroupStartFn(expanded).call(getConsole(), msg);
   }
 
   private LogFn getGroupStartFn(boolean expanded) {
     // Not all browsers support grouping:
-    if (!expanded && getConsole().groupCollapsed != null) {
-      return getConsole().groupCollapsed;
-    } else if (getConsole().group != null) {
-      return getConsole().group;
+    if (!expanded && Console.groupCollapsed != null) {
+      return Console.groupCollapsed;
+    } else if (Console.group != null) {
+      return Console.group;
     } else {
-      return getConsole().log;
+      return Console.log;
     }
   }
 
   private void groupEnd() {
-    if (getConsole().groupEnd != null) {
-      getConsole().groupEnd.call(getConsole());
+    if (Console.groupEnd != null) {
+      // Older Firefox versions expect console instance as 'this'
+      Console.groupEnd.call(getConsole());
     }
   }
 
+  @SuppressWarnings("unusable-by-js")
   private static native String getBackingErrorStack(Throwable t) /*-{
     var backingError = t.@Throwable::backingJsObject;
 
@@ -89,12 +93,12 @@ public class ConsoleLogger {
     void call(Console objThis, Object... args);
   }
 
-  @JsType(isNative = true, namespace = "<window>")
+  @JsType(isNative = true, namespace = "<window>", name = "console")
   private static class Console {
-    public LogFn log;
-    public LogFn group;
-    public LogFn groupCollapsed;
-    public LogFn groupEnd;
+    public static LogFn log;
+    public static LogFn group;
+    public static LogFn groupCollapsed;
+    public static LogFn groupEnd;
   }
 
   @JsProperty(namespace = "<window>", name = "window.console")
