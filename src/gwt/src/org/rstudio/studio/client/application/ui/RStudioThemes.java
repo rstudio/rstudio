@@ -48,7 +48,9 @@ public class RStudioThemes
       element.removeClassName("rstudio-themes-dark-grey");
       element.removeClassName("rstudio-themes-alternate");
       element.removeClassName("rstudio-themes-scrollbars");
+
       document.getBody().removeClassName("rstudio-themes-dark-menus");
+      document.getBody().removeClassName("rstudio-themes-dark-menus-disabled");
       
       if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
          document.getBody().addClassName("rstudio-themes-flat");
