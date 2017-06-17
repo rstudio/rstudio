@@ -198,6 +198,7 @@ public:
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
+   bool privateCommandLoop(core::system::ProcessOperations& ops);
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
@@ -245,6 +246,7 @@ private:
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_;
+   boost::mutex inputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
@@ -256,9 +258,30 @@ private:
    // is the underlying process started?
    bool started_;
 
-   // cached pointer to process options, for use in websocket thread callbacks
+   // cached pointer to process operations, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
-   boost::mutex mutex_;
+   boost::mutex procOpsMutex_;
+   bool haveProcOps_;
+
+   // Are we in private command mode? Has to be thread-safe because websocket input callback
+   // reads this from separate thread. This should be a C++11 std::atomic<bool>.
+   core::thread::ThreadsafeValue<bool> privateCommandLoop_;
+
+   // When did we last perform a private command?
+   boost::posix_time::ptime lastPrivateCommand_;
+
+   // When did user last hit Enter at the end of a line of input? Protect with inputQueueMutex_.
+   boost::posix_time::ptime lastEnterTime_;
+
+   // Is there a partially-typed command? Protect with inputQueueMutex_.
+   bool pendingCommand_;
+
+   // Command used to snapshot environment
+   std::string captureEnvironmentCommand_;
+
+   // Strings to bracket output of a private command
+   std::string privateOutputBOM_;
+   std::string privateOutputEOM_;
 };
 
 core::json::Array processesAsJson();

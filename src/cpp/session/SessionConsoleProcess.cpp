@@ -32,6 +32,17 @@ namespace {
 
 ConsoleProcessSocket s_terminalSocket;
 
+// minimum delay between private command executions
+const boost::posix_time::milliseconds kPrivateCommandDelay = boost::posix_time::milliseconds(3000);
+
+// how long after a command is started do we delay before considering running a private command
+const boost::posix_time::milliseconds kWaitForCommandDelay = boost::posix_time::milliseconds(1500);
+
+boost::posix_time::ptime now()
+{
+   return boost::posix_time::microsec_clock::universal_time();
+}
+
 bool useWebsockets()
 {
    return session::options().allowTerminalWebsockets() &&
@@ -115,7 +126,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
      newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false)
+     lastInputSequence_(kIgnoreSequence), started_(false), haveProcOps_(false),
+     privateCommandLoop_(false),
+     lastPrivateCommand_(boost::posix_time::not_a_date_time),
+     lastEnterTime_(boost::posix_time::not_a_date_time),
+     pendingCommand_(true)
 {
    regexInit();
 
@@ -130,7 +145,11 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false)
+     started_(false), haveProcOps_(false), privateCommandLoop_(false),
+     lastPrivateCommand_(boost::posix_time::not_a_date_time),
+     lastEnterTime_(boost::posix_time::not_a_date_time),
+     pendingCommand_(true)
+
 {
    commonInit();
 }
@@ -142,7 +161,10 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false)
+     started_(false), haveProcOps_(false), privateCommandLoop_(false),
+     lastPrivateCommand_(boost::posix_time::not_a_date_time),
+     lastEnterTime_(boost::posix_time::not_a_date_time),
+     pendingCommand_(true)
 {
    commonInit();
 }
@@ -157,6 +179,15 @@ void ConsoleProcess::commonInit()
 {
    regexInit();
    procInfo_->ensureHandle();
+
+   privateOutputBOM_ = core::system::generateUuid(false);
+   privateOutputEOM_ = core::system::generateUuid(true);
+
+   captureEnvironmentCommand_ =  "echo ";
+   captureEnvironmentCommand_ += privateOutputBOM_;
+   captureEnvironmentCommand_ += "\n/usr/bin/env && echo ";
+   captureEnvironmentCommand_ += privateOutputEOM_;
+   captureEnvironmentCommand_ += "\n";
 
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -230,7 +261,6 @@ void ConsoleProcess::commonInit()
 #endif
    }
 
-
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    if (!options_.smartTerminal)
@@ -279,40 +309,47 @@ Error ConsoleProcess::start()
 
 void ConsoleProcess::enqueInput(const Input& input)
 {
-   if (input.sequence == kIgnoreSequence)
+   LOCK_MUTEX(inputQueueMutex_)
    {
-      inputQueue_.push_back(input);
-      return;
-   }
+      if (input.sequence == kIgnoreSequence)
+      {
+         inputQueue_.push_back(input);
+         return;
+      }
 
-   if (input.sequence == kFlushSequence)
-   {
-      inputQueue_.push_back(input);
+      if (input.sequence == kFlushSequence)
+      {
+         inputQueue_.push_back(input);
 
-      // set everything in queue to "ignore" so it will be pulled from
-      // queue as-is, even with gaps
+         // set everything in queue to "ignore" so it will be pulled from
+         // queue as-is, even with gaps
+         for (std::deque<Input>::iterator it = inputQueue_.begin();
+              it != inputQueue_.end(); it++)
+         {
+            (*it).sequence = kIgnoreSequence;
+         }
+         lastInputSequence_ = kIgnoreSequence;
+         return;
+      }
+
+      // insert in order by sequence
       for (std::deque<Input>::iterator it = inputQueue_.begin();
            it != inputQueue_.end(); it++)
       {
-         (*it).sequence = kIgnoreSequence;
+         if (input.sequence < (*it).sequence)
+         {
+            inputQueue_.insert(it, input);
+            return;
+         }
       }
-      lastInputSequence_ = kIgnoreSequence;
-      return;
+      inputQueue_.push_back(input);
    }
-
-   // insert in order by sequence
-   for (std::deque<Input>::iterator it = inputQueue_.begin();
-        it != inputQueue_.end(); it++)
-   {
-      if (input.sequence < (*it).sequence)
-      {
-         inputQueue_.insert(it, input);
-         return;
-      }
-   }
-   inputQueue_.push_back(input);
+   END_LOCK_MUTEX
 }
 
+// Do not call directly, needs to be within the inputQueueMutex_ for safety in
+// presence of multithreaded calls (via websockets). This is handled by
+// processQueuedInput.
 ConsoleProcess::Input ConsoleProcess::dequeInput()
 {
    // Pull next available Input from queue; return an empty Input
@@ -389,6 +426,69 @@ void ConsoleProcess::resize(int cols, int rows)
    newRows_ = rows;
 }
 
+bool ConsoleProcess::privateCommandLoop(core::system::ProcessOperations& ops)
+{
+   if (!procInfo_->getTrackEnv() || procInfo_->getHasChildProcs())
+      return false;
+
+   boost::posix_time::ptime currentTime = now();
+   if (privateCommandLoop_.get())
+   {
+      // TODO (gary)
+      // safeguard timeout here to exit private command loop if parsing fails after
+      // a couple of seconds!
+
+      return true;
+   }
+   else
+   {
+      LOCK_MUTEX(inputQueueMutex_)
+      {
+         // We don't start a private command if something is being typed, or a command has never
+         // been run.
+         if (pendingCommand_ || lastEnterTime_.is_not_a_date_time())
+            return false;
+
+         if (currentTime - kWaitForCommandDelay <= lastEnterTime_)
+         {
+            // not enough time has elapsed since last command was submitted
+            return false;
+         }
+
+         if (!lastPrivateCommand_.is_not_a_date_time() &&
+             currentTime - kPrivateCommandDelay <= lastPrivateCommand_)
+         {
+            // not enough time has elapsed since last private command ran
+            return false;
+         }
+
+         if (!lastPrivateCommand_.is_not_a_date_time() &&
+             lastPrivateCommand_ > lastEnterTime_)
+         {
+            // Hasn't been a new command executed since our last private command, no need
+            // to run it.
+            return false;
+         }
+      }
+      END_LOCK_MUTEX
+
+      lastPrivateCommand_ = currentTime;
+      privateCommandLoop_.set(true);
+
+      // send the command
+      Error error = ops.writeToStdin(captureEnvironmentCommand_, false);
+      if (error)
+      {
+         LOG_ERROR(error);
+         privateCommandLoop_.set(false);
+         lastPrivateCommand_ = boost::posix_time::pos_infin; // disable private commands
+         return false;
+      }
+      return true;
+   }
+   return false;
+}
+
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
    // full stop interrupt if requested
@@ -404,19 +504,29 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       interruptChild_ = false;
    }
 
-   if (procInfo_->getChannelMode() == Rpc)
-   {
-      processQueuedInput(ops);
-   }
-   else
+   // opportunity to execute a private commmand (send a command-line to the shell and
+   // capture the output for special processing, but end-user doesn't see it)
+   if (privateCommandLoop(ops))
+      return true;
+
+   // For RPC-based communication, this is where input is always dispatched; for websocket
+   // communication, it is normally dispatched inside onReceivedInput, but this call is needed
+   // to deal with input built-up during a privateCommandLoop.
+   processQueuedInput(ops);
+
+   if (procInfo_->getChannelMode() == Websocket)
    {
       // capture weak reference to the callbacks so websocket callback
-      // can use them
-      LOCK_MUTEX(mutex_)
+      // can use them; only need to capture the first time
+      if (!haveProcOps_)
       {
-         pOps_ = ops.weak_from_this();
+         LOCK_MUTEX(procOpsMutex_)
+         {
+            pOps_ = ops.weak_from_this();
+            haveProcOps_ = true;
+         }
+         END_LOCK_MUTEX
       }
-      END_LOCK_MUTEX
    }
 
    if (newCols_ != -1 && newRows_ != -1)
@@ -437,46 +547,59 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
 {
-   // process input queue
-   Input input = dequeInput();
-   while (!input.empty())
+   LOCK_MUTEX(inputQueueMutex_)
    {
-      // pty interrupt
-      if (input.interrupt)
+      // process input queue
+      Input input = dequeInput();
+      while (!input.empty())
       {
-         Error error = ops.ptyInterrupt();
-         if (error)
-            LOG_ERROR(error);
+         pendingCommand_ = true;
 
-         if (input.echoInput)
-            procInfo_->appendToOutputBuffer("^C");
-      }
-
-      // text input
-      else
-      {
-         std::string inputText = input.text;
-#ifdef _WIN32
-         if (!options_.smartTerminal)
+         // pty interrupt
+         if (input.interrupt)
          {
-            string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
-         }
-#endif
-         Error error = ops.writeToStdin(inputText, false);
-         if (error)
-            LOG_ERROR(error);
+            Error error = ops.ptyInterrupt();
+            if (error)
+               LOG_ERROR(error);
 
-         if (!options_.smartTerminal) // smart terminal does echo via pty
-         {
             if (input.echoInput)
-               procInfo_->appendToOutputBuffer(inputText);
-            else
-               procInfo_->appendToOutputBuffer("\n");
+               procInfo_->appendToOutputBuffer("^C");
          }
-      }
 
-      input = dequeInput();
+         // text input
+         else
+         {
+            std::string inputText = input.text;
+
+            if (!inputText.empty() && *inputText.rbegin() == '\r')
+            {
+               lastEnterTime_ = now();
+               pendingCommand_ = false;
+            }
+
+#ifdef _WIN32
+            if (!options_.smartTerminal)
+            {
+               string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
+            }
+#endif
+            Error error = ops.writeToStdin(inputText, false);
+            if (error)
+               LOG_ERROR(error);
+
+            if (!options_.smartTerminal) // smart terminal does echo via pty
+            {
+               if (input.echoInput)
+                  procInfo_->appendToOutputBuffer(inputText);
+               else
+                  procInfo_->appendToOutputBuffer("\n");
+            }
+         }
+
+         input = dequeInput();
+      }
    }
+   END_LOCK_MUTEX
 }
 
 void ConsoleProcess::deleteLogFile(bool lastLineOnly) const
@@ -496,6 +619,15 @@ std::string ConsoleProcess::getBuffer() const
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
+   if (privateCommandLoop_.get())
+   {
+// TODO (gary)
+// capture results of a private command
+//      return;
+      privateCommandLoop_.set(false);
+   }
+
+   // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
 
    // copy to output buffer
@@ -867,13 +999,14 @@ ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSock
 // rstudioapi, may be called on different thread
 void ConsoleProcess::onReceivedInput(const std::string& input)
 {
-   LOCK_MUTEX(mutex_)
+   enqueInput(Input(input));
+   LOCK_MUTEX(procOpsMutex_)
    {
-      enqueInput(Input(input));
       boost::shared_ptr<core::system::ProcessOperations> ops = pOps_.lock();
       if (ops)
       {
-         processQueuedInput(*ops);
+         if (!privateCommandLoop_.get())
+            processQueuedInput(*ops);
       }
    }
    END_LOCK_MUTEX
