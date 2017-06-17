@@ -89,8 +89,6 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
-
-      RStudioThemes.disableDarkMenus();
    }
 
    @Override
@@ -118,6 +116,8 @@ public abstract class ModalDialogBase extends DialogBox
       catch (Throwable e)
       {
       }
+
+      RStudioThemes.disableDarkMenus();
    }
 
    @Override
