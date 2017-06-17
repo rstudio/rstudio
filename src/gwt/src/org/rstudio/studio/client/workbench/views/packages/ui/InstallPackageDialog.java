@@ -28,7 +28,6 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -73,8 +72,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       defaultInstallOptions_ = defaultInstallOptions;
       server_ = server;
       globalDisplay_ = globalDisplay;
-
-      RStudioThemes.disableDarkMenus();
 
       setOkButtonCaption("Install");
 }
@@ -384,13 +381,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
-   }
-
-   @Override
-   protected void onUnload()
-   {
-      super.onUnload();
-      RStudioThemes.enableDarkMenus();
    }
    
    private final PackageInstallContext installContext_;

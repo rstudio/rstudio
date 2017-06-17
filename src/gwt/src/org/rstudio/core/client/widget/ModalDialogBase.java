@@ -35,6 +35,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import java.util.ArrayList;
 
@@ -88,6 +89,8 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      RStudioThemes.disableDarkMenus();
    }
 
    @Override
@@ -125,6 +128,8 @@ public abstract class ModalDialogBase extends DialogBox
       shortcutDisableHandle_ = null;
 
       ModalDialogTracker.onHide(this);
+
+      RStudioThemes.enableDarkMenus();
 
       super.onUnload();
    }
