@@ -22,6 +22,7 @@ import jsinterop.annotations.JsMethod;
 /**
  * Provides an interface for simple JavaScript idioms that can not be expressed in Java.
  */
+@SuppressWarnings("unusable-by-js")
 public class JsUtils {
 
   @JsMethod(namespace = "<window>", name = "Date.now")

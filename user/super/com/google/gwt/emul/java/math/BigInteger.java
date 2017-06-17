@@ -240,6 +240,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    * @param val
    * @return val as an unsigned int
    */
+  @SuppressWarnings("unusable-by-js")
   private static native int toUnsignedInt(double val) /*-{
     return val | 0;
   }-*/;

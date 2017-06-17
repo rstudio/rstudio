@@ -120,6 +120,7 @@ public class Throwable implements Serializable {
     return new NativeError(msg);
   }
 
+  @SuppressWarnings("unusable-by-js")
   private static native Object fixIE(Object e) /*-{
     // In IE -unlike every other browser-, the stack property is not defined until you throw it.
     if (!("stack" in e)) {
@@ -128,6 +129,7 @@ public class Throwable implements Serializable {
     return e;
   }-*/;
 
+  @SuppressWarnings("unusable-by-js")
   private native void captureStackTrace() /*-{
     @com.google.gwt.core.client.impl.StackTraceCreator::captureStackTrace(*)(this);
   }-*/;
@@ -212,6 +214,7 @@ public class Throwable implements Serializable {
     return stackTrace;
   }
 
+  @SuppressWarnings("unusable-by-js")
   private native StackTraceElement[] constructJavaStackTrace() /*-{
     return @com.google.gwt.core.client.impl.StackTraceCreator::constructJavaStackTrace(*)(this);
   }-*/;

@@ -224,7 +224,9 @@ public final class Integer extends Number implements Comparable<Integer> {
     return toRadixString(toUnsigned(value), radix);
   }
 
-  private static native int toUnsigned(int value) /*-{
+  @SuppressWarnings("unusable-by-js")
+  private static native double toUnsigned(int value) /*-{
+    // Might return a number that is larger than int32
     return (value >>> 0);
   }-*/;
 
