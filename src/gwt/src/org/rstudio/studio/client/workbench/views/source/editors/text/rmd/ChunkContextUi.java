@@ -229,9 +229,9 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       
       String engine = getEngine(row);
       if (!engine.toLowerCase().equals("r"))
-         return new CustomEngineChunkOptionsPopupPanel();
+         return new CustomEngineChunkOptionsPopupPanel(engine_);
       
-      return new DefaultChunkOptionsPopupPanel();
+      return new DefaultChunkOptionsPopupPanel(engine_);
    }
 
    private final TextEditingTarget target_;
