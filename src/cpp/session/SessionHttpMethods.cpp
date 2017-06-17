@@ -81,18 +81,14 @@ boost::posix_time::ptime timeoutTimeFromNow()
    }
 }
 
-void processDesktopGuiEvents()
+void processEvents()
 {
-   // keep R gui alive when we are in destkop mode
-   if (options().programMode() == kSessionProgramModeDesktop)
-   {
-      // execute safely since this can call arbitrary R code (and
-      // (can also cause jump_to_top if an interrupt is pending)
-      Error error = rstudio::r::exec::executeSafely(
-                        rstudio::r::session::event_loop::processEvents);
-      if (error)
-         LOG_ERROR(error);
-   }
+    // execute safely since this can call arbitrary R code (and
+    // (can also cause jump_to_top if an interrupt is pending)
+    Error error = rstudio::r::exec::executeSafely(
+                rstudio::r::session::event_loop::processEvents);
+    if (error)
+        LOG_ERROR(error);
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -410,8 +406,8 @@ bool waitForMethod(const std::string& method,
       // perform background processing (true for isIdle)
       module_context::onBackgroundProcessing(true);
 
-      // process pending events in desktop mode
-      processDesktopGuiEvents();
+      // process pending events
+      processEvents();
 
       if (ptrConnection)
       {
