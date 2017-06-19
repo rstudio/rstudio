@@ -143,11 +143,18 @@
    if (!file.exists(filePath)) {
       stop(filePath, " does not exist.")
    }
+   
+   # transform numeric line, column values to integer
+   if (is.numeric(line))
+      line <- as.integer(line)
+   
+   if (is.numeric(col))
+      col <- as.integer(col)
 
    # validate line/col arguments
    if (!is.integer(line) || length(line) != 1 ||
        !is.integer(col)  || length(col) != 1) {
-      stop("line and column must be integer values.")
+      stop("line and column must be numeric values.")
    }
 
    # expand and alias for client
