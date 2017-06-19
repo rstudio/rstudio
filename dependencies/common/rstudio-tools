@@ -98,7 +98,7 @@ extract () {
 		;;
 
 		*.gz)
-			gunzip -k "${FILE}"
+			gunzip "${FILE}"
 		;;
 
 		*.zip)
