@@ -25,6 +25,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/system/Process.hpp>
+#include <core/terminal/PrivateCommand.hpp>
 
 #include <session/SessionConsoleProcessSocket.hpp>
 
@@ -40,7 +41,7 @@ namespace console_process {
 
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
-const int kAutoFlushLength = 20;
+const size_t kAutoFlushLength = 20;
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
@@ -51,7 +52,7 @@ class ConsoleProcess : boost::noncopyable,
 private:
    // This constructor is only for resurrecting orphaned processes (i.e. for
    // suspend/resume scenarios)
-   ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo);
+   explicit ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    ConsoleProcess(
          const std::string& command,
@@ -198,7 +199,6 @@ public:
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
-   bool privateCommandLoop(core::system::ProcessOperations& ops);
    bool onContinue(core::system::ProcessOperations& ops);
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
@@ -263,25 +263,8 @@ private:
    boost::mutex procOpsMutex_;
    bool haveProcOps_;
 
-   // Are we in private command mode? Has to be thread-safe because websocket input callback
-   // reads this from separate thread. This should be a C++11 std::atomic<bool>.
-   core::thread::ThreadsafeValue<bool> privateCommandLoop_;
-
-   // When did we last perform a private command?
-   boost::posix_time::ptime lastPrivateCommand_;
-
-   // When did user last hit Enter at the end of a line of input? Protect with inputQueueMutex_.
-   boost::posix_time::ptime lastEnterTime_;
-
-   // Is there a partially-typed command? Protect with inputQueueMutex_.
-   bool pendingCommand_;
-
-   // Command used to snapshot environment
-   std::string captureEnvironmentCommand_;
-
-   // Strings to bracket output of a private command
-   std::string privateOutputBOM_;
-   std::string privateOutputEOM_;
+   // private command handler, used to capture environment variables during terminal idle time
+   core::terminal::PrivateCommand privateCmd_;
 };
 
 core::json::Array processesAsJson();
