@@ -40,7 +40,7 @@ namespace console_process {
 
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
-const int kAutoFlushLength = 20;
+const size_t kAutoFlushLength = 20;
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
