@@ -62,6 +62,7 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
+import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
@@ -917,6 +918,11 @@ public class ClientEventDispatcher
          {
             RequestDocumentSaveEvent.Data data = event.getData();
             eventBus_.fireEvent(new RequestDocumentSaveEvent(data));
+         }
+         else if (type.equals(ClientEvent.RequestOpenProject))
+         {
+            RequestOpenProjectEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RequestOpenProjectEvent(data));
          }
          else
          {

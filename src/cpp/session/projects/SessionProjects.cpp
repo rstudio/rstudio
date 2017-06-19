@@ -771,17 +771,35 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
    return R_NilValue;
 }
 
+SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
+{
+   std::string projectFile = r::sexp::asString(projectFileSEXP);
+   bool newSession = r::sexp::asLogical(newSessionSEXP);
+   
+   // opening projects in a new session is only supported in desktop, RSP
+   if (newSession &&
+       options().programMode() == kSessionProgramModeServer &&
+       !options().multiSession())
+   {
+      newSession = false;
+   }
+   
+   json::Object data;
+   data["project_file"] = projectFile;
+   data["new_session"] = newSession;
+   
+   ClientEvent event(client_events::kRequestOpenProject, data);
+   module_context::enqueClientEvent(event);
+   
+   return R_NilValue;
+}
+
 Error initialize()
 {
-   r::routines::registerCallMethod(
-            "rs_writeProjectFile",
-            (DL_FUNC) rs_writeProjectFile,
-            1);
-   
-   r::routines::registerCallMethod(
-            "rs_addFirstRunDoc",
-            (DL_FUNC) rs_addFirstRunDoc,
-            2);
+   // register R methods
+   RS_REGISTER_CALL_METHOD(rs_writeProjectFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc, 2);
+   RS_REGISTER_CALL_METHOD(rs_requestOpenProject, 2);
    
    // call project-context initialize
    Error error = s_projectContext.initialize();
