@@ -30,7 +30,8 @@ mkdir -p "${PANDOC_SUBDIR}"
 pushd "${PANDOC_SUBDIR}"
 
 # determine sub-directory based on platform
-case "$(uname)-$(getconf LONG_BIT)" in
+PLATFORM="$(uname)-$(getconf LONG_BIT)"
+case "${PLATFORM}" in
 
 "Darwin-64")
   SUBDIR="macos"
@@ -41,7 +42,7 @@ case "$(uname)-$(getconf LONG_BIT)" in
   ;;
 
 "Linux-64")
-  SUBDIR="linux-64t"
+  SUBDIR="linux-64"
   FILES=(
     "pandoc.gz"
     "pandoc-citeproc.gz"
@@ -49,7 +50,6 @@ case "$(uname)-$(getconf LONG_BIT)" in
   ;;
 
 *)
-  PLATFORM="$(platform)-$(getconf LONG_BIT)"
   echo "Pandoc binaries not available for platform '${PLATFORM}'."
   exit 0
   ;;

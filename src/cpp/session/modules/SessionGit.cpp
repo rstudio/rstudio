@@ -493,8 +493,7 @@ public:
          return error;
       
       // split and parse each line of status output
-      std::vector<std::string> lines;
-      boost::algorithm::split(lines, output, boost::is_any_of("\0"));
+      std::vector<std::string> lines = core::algorithm::split(output, "\0");
 
       for (std::vector<std::string>::iterator it = lines.begin();
            it != lines.end();
