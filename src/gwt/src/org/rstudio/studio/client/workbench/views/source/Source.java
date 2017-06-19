@@ -2595,7 +2595,14 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget target)
          {
-            if (position != null)
+            // the rstudioapi package can use the proxy (-1, -1) position to
+            // indicate that source navigation should not occur; ie, we should
+            // preserve whatever position was used in the document earlier
+            boolean navigateToPosition =
+                  position != null &&
+                  (position.getLine() != -1 && position.getColumn() != -1);
+            
+            if (navigateToPosition)
             {
                SourcePosition endPosition = null;
                if (isDebugNavigation)
