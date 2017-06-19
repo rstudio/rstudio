@@ -2600,7 +2600,7 @@ public class Source implements InsertSourceHandler,
             // preserve whatever position was used in the document earlier
             boolean navigateToPosition =
                   position != null &&
-                  (position.getLine() != -1 && position.getColumn() != -1);
+                  (position.getLine() != -1 || position.getColumn() != -1);
             
             if (navigateToPosition)
             {
