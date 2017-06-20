@@ -662,7 +662,7 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 }  // anonymous namespace
 
 
-void startup()
+void startup(const std::string& firstProjectPath)
 {
    // register suspend handler
    using namespace module_context;
@@ -674,6 +674,9 @@ void startup()
    // alias some project context data
    projects::ProjectsSettings projSettings(options().userScratchPath());
    std::string nextSessionProject = projSettings.nextSessionProject();
+   if (!firstProjectPath.empty())
+      nextSessionProject = firstProjectPath;
+
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 

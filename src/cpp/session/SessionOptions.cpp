@@ -213,7 +213,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "default CLICOLOR_FORCE setting for R console")
       ("session-quit-child-processes-on-exit",
        value<bool>(&quitChildProcessesOnExit_)->default_value(false),
-       "quit child processes on session exit");
+       "quit child processes on session exit")
+      ("session-first-project-template-path",
+       value<std::string>(&firstProjectTemplatePath_)->default_value(""),
+       "first project template path");
 
    // allow options
    options_description allow("allow");

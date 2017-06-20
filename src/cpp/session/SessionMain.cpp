@@ -1667,11 +1667,51 @@ int main (int argc, char * const argv[])
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.absolutePath()));
 
-      // ensure that the user scratch path exists
+      // determine if this is a new user and get the first project path if so
+      std::string firstProjectPath = "";
+      bool newUser = false;
+
       FilePath userScratchPath = options.userScratchPath();
-      error = userScratchPath.ensureDirectory();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
+      if (userScratchPath.exists())
+      {
+         std::vector<FilePath> scratchChildren;
+         userScratchPath.children(&scratchChildren);
+
+         if (scratchChildren.size() == 0)
+            newUser = true;
+      }
+      else
+      {
+         // create the scratch path
+         error = userScratchPath.ensureDirectory();
+         if (error)
+            return sessionExitFailure(error, ERROR_LOCATION);
+
+         newUser = true;
+      }
+
+      if (newUser)
+      {
+         // this is a brand new user
+         // check to see if there is a first project template
+         if (!options.firstProjectTemplatePath().empty())
+         {
+            // copy the project template to the user's home dir
+            FilePath templatePath = FilePath(options.firstProjectTemplatePath());
+            if (templatePath.exists())
+            {
+               error = templatePath.copyDirectoryRecursive(options.userHomePath().childPath(templatePath.filename()));
+               if (error)
+                  LOG_ERROR(error);
+               else
+               {
+                  FilePath firstProjPath = options.userHomePath().childPath(templatePath.filename()).childPath(templatePath.filename() + ".Rproj");
+                  if (firstProjPath.exists())
+                     firstProjectPath = firstProjPath.absolutePath();
+               }
+            }
+         }
+      }
 
       // initialize user settings
       error = userSettings().initialize();
@@ -1680,7 +1720,7 @@ int main (int argc, char * const argv[])
 
       // startup projects -- must be after userSettings is initialized
       // but before persistentState and setting working directory
-      projects::startup();
+      projects::startup(firstProjectPath);
 
       // initialize persistent state
       error = rsession::persistentState().initialize();
