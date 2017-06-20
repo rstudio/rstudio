@@ -15,17 +15,21 @@ pipeline {
   stages {
     stage('dependencies') {
       steps {
-        bat 'cd dependencies/windows && ./install-dependencies.cmd && cd ../..'
+        bat 'cd dependencies/windows && install-dependencies.cmd && cd ../..'
       }
     }
-    //stage('build'){
-    //  steps {
-    //    script {
-    //      def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
-    //      sh 'cd package/win32 && ${env} ./make-package clean && cd ../..'
-    //    }
-    //  }
-    //}
+    stage('build'){
+      environment {
+        RSTUDIO_VERSION_MAJOR = RSTUDIO_VERSION_MAJOR
+        RSTUDIO_VERSION_MINOR = RSTUDIO_VERSION_MINOR
+        RSTUDIO_VERSION_PATCH = RSTUDIO_VERSION_PATCH
+      }
+      steps {
+        script {
+          bat 'cd package/win32 && make-package.bat clean && cd ../..'
+        }
+      }
+    }
     //stage('upload') {
     //  steps {
     //    script {
@@ -40,7 +44,7 @@ pipeline {
 
   post {
     always {
-      deleteDir()
+      //deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
