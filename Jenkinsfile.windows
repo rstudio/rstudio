@@ -19,11 +19,6 @@ pipeline {
       }
     }
     stage('build'){
-      environment {
-        RSTUDIO_VERSION_MAJOR = RSTUDIO_VERSION_MAJOR
-        RSTUDIO_VERSION_MINOR = RSTUDIO_VERSION_MINOR
-        RSTUDIO_VERSION_PATCH = RSTUDIO_VERSION_PATCH
-      }
       steps {
         script {
           bat 'cd package/win32 && make-package.bat clean && cd ../..'
