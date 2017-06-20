@@ -39,9 +39,9 @@ public class RequestDocumentSaveEvent extends GwtEvent<RequestDocumentSaveEvent.
       data_ = data;
    }
    
-   public Data getData()
+   public JsArrayString getDocumentIds()
    {
-      return data_;
+      return data_.getDocumentIds();
    }
    
    private final Data data_;

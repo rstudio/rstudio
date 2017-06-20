@@ -162,6 +162,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -2282,6 +2283,11 @@ public class Source implements InsertSourceHandler,
                                    null);
       
    }
+  
+   public interface EditingTargetPredicate
+   {
+      public boolean accept(EditingTarget target, int type);
+   }
    
    private boolean isUnsavedTarget(EditingTarget target, int type)
    {
@@ -2293,6 +2299,24 @@ public class Source implements InsertSourceHandler,
    
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type)
    {
+      return getUnsavedChanges(type,  null);
+   }
+   
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type,
+                                                            EditingTargetPredicate predicate)
+   {
+      if (predicate == null)
+      {
+         predicate = new EditingTargetPredicate()
+         {
+            @Override
+            public boolean accept(EditingTarget target, int type)
+            {
+               return isUnsavedTarget(target, type);
+            }
+         };
+      }
+      
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
 
@@ -2304,26 +2328,32 @@ public class Source implements InsertSourceHandler,
       }
 
       for (EditingTarget target : editors_)
-         if (isUnsavedTarget(target, type))
+         if (predicate.accept(target, type))
             targets.add(target);
       
       return targets;
    }
    
-   public void saveAllUnsaved(final Command onCompleted)
+   public void saveUnsavedDocuments(final Command onCompleted)
+   {
+      saveUnsavedDocuments(null, onCompleted);
+   }
+   
+   public void saveUnsavedDocuments(final EditingTargetPredicate predicate,
+                                    final Command onCompleted)
    {
       Command saveAllLocal = new Command()
       {
          @Override
          public void execute()
          {
-            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED), onCompleted);
+            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, predicate), onCompleted);
          }
       };
-
+      
       // if this is the main source window, save all files in satellites first
       if (SourceWindowManager.isMainSourceWindow())
-         windowManager_.saveAllUnsaved(saveAllLocal);
+         windowManager_.saveUnsavedDocuments(predicate, saveAllLocal);
       else
          saveAllLocal.execute();
    }
@@ -4237,7 +4267,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onRequestDocumentSave(RequestDocumentSaveEvent event)
    {
-      final JsArrayString ids = event.getData().getDocumentIds();
+      final JsArrayString ids = event.getDocumentIds();
       
       // we use a timer that fires the document save completed event,
       // just to ensure the server receives a response even if something
@@ -4251,9 +4281,12 @@ public class Source implements InsertSourceHandler,
          @Override
          public void run()
          {
-            server_.requestDocumentSaveCompleted(
-                  savedSuccessfully.get(),
-                  new VoidServerRequestCallback());
+            if (SourceWindowManager.isMainSourceWindow())
+            {
+               server_.requestDocumentSaveCompleted(
+                     savedSuccessfully.get(),
+                     new VoidServerRequestCallback());
+            }
          }
       };
       completedTimer.schedule(5000);
@@ -4268,50 +4301,27 @@ public class Source implements InsertSourceHandler,
          }
       };
       
-      if (ids == null)
+      if (ids == null || ids.length() == 0)
       {
-         // a null IDs vector signals we should save all source documents
-         saveAllUnsaved(onCompleted);
+         saveUnsavedDocuments(onCompleted);
       }
       else
       {
-         // generate a serialized command queue, and wire up sequential
-         // save events, culminating in the final server request indicating
-         // we've finished saving documents
-         SerializedCommandQueue queue = new SerializedCommandQueue();
-         for (final String id : JsUtil.asIterable(ids))
-         {
-            queue.addCommand(new SerializedCommand()
-            {
-               @Override
-               public void onExecute(Command continuation)
-               {
-                  EditingTarget target = getEditingTargetForId(id);
-                  completedTimer.schedule(5000);
-                  
-                  if (target instanceof TextEditingTarget)
-                  {
-                     ((TextEditingTarget) target).save(continuation);
-                  }
-                  else
-                  {
-                     continuation.execute();
-                  }
-               }
-            });
-         }
+         final Set<String> idSet = new HashSet<String>();
+         for (String id : JsUtil.asIterable(ids))
+            idSet.add(id);
          
-         // finally, run our onCompleted command
-         queue.addCommand(new SerializedCommand()
+         final EditingTargetPredicate predicate = new EditingTargetPredicate()
          {
             @Override
-            public void onExecute(Command continuation)
+            public boolean accept(EditingTarget target, int type)
             {
-               onCompleted.execute();
-               if (continuation != null)
-                  continuation.execute();
+               return isUnsavedTarget(target, type) &&
+                      idSet.contains(target.getId());
             }
-         });
+         };
+         
+         saveUnsavedDocuments(predicate, onCompleted);
       }
    }
    

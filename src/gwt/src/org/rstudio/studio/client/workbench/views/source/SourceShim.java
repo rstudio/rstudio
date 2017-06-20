@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.Source.EditingTargetPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 
@@ -264,12 +265,18 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
    
-   public void saveAllUnsaved(Command onCompleted)
+   public void saveUnsavedDocuments(EditingTargetPredicate predicate,
+                                    Command onCompleted)
    {
       if (source_ != null)
       {
-         source_.saveAllUnsaved(onCompleted);
+         source_.saveUnsavedDocuments(predicate, onCompleted);
       }
+   }
+   
+   public void saveUnsavedDocuments(Command onCompleted)
+   {
+      saveUnsavedDocuments(null, onCompleted);
    }
    
    public void closeAllSourceDocs(String caption, Command onCompleted)

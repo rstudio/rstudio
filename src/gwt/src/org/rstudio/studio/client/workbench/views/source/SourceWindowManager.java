@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.views.source.Source.EditingTargetPredicate;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -356,15 +357,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
    }
    
-   public void saveAllUnsaved(Command onCompleted)
+   public void saveUnsavedDocuments(final EditingTargetPredicate predicate,
+                                    final Command onCompleted)
    {
       doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override
-         public void execute(String windowId, WindowEx window,
-               Command continuation)
+         public void execute(String windowId,
+                             WindowEx window,
+                             Command continuation)
          {
-            saveAllUnsaved(window, continuation);
+            saveUnsavedDocuments(window, predicate, continuation);
          }
       }, onCompleted);
    }
@@ -944,9 +947,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       satellite.rstudioSaveWithPrompt(item, onCompleted);
    }-*/;
 
-   private final native void saveAllUnsaved(WindowEx satellite, 
-         Command onCompleted) /*-{
-      satellite.rstudioSaveAllUnsaved(onCompleted);
+   private final native void saveUnsavedDocuments(WindowEx satellite,
+                                                  EditingTargetPredicate predicate,
+                                                  Command onCompleted)
+   /*-{
+      satellite.rstudioSaveUnsavedDocuments(predicate, onCompleted);
    }-*/;
    
    
