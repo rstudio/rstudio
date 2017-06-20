@@ -27,10 +27,21 @@ namespace rstudio {
 namespace core {
 namespace terminal {
 
+/*
+ * The PrivateCommand class is used by terminal to silently run a command in the terminal
+ * without the user seeing the input or output. Current use case is to grab the terminal's
+ * environment so we can persist it. So, we don't run the private command until after the user
+ * has run a command in the terminal (otherwise the terminal's environment hasn't changed). To
+ * generalize this class for other private command scenarios, need to make this behavior
+ * optional so the private command runs even if user hasn't entered a new command.
+ */
 class PrivateCommand : boost::noncopyable
 {
 public:
-   PrivateCommand(const std::string& command);
+   PrivateCommand(const std::string& command,
+                  int privateCommandDelayMs = 3000, // min delay between private commands
+                  int waitAfterCommandDelayMs = 1500, // min delay after user command
+                  int privateCommandTimeoutMs = 1000); // timeout for private command
 
    // Give private command opportunity to capture terminal; returns true if it does (or already did).
    bool onTryCapture(core::system::ProcessOperations& ops, bool hasChildProcs);
@@ -42,6 +53,17 @@ public:
 
    // returns true if private command parser consumed the output
    bool output(const std::string& output);
+
+   // get output of last private command
+   std::string getPrivateOutput() const;
+
+   // force exit of private capture
+   void endCapture();
+
+   // following are aids for testing; hate to have these but alternatives were uglier
+   std::string getFullCommand() const { return fullCommand_; }
+   std::string getBOM() const { return outputBOM_; }
+   std::string getEOM() const { return outputEOM_; }
 
 private:
    std::string command_;
@@ -65,8 +87,17 @@ private:
    std::string commandAfter_;
    std::string fullCommand_;
 
+   // Text output by the private command
    std::string privateCommandOutput_;
 
+   // minimum delay between private command executions
+   boost::posix_time::milliseconds privateCommandDelay_;
+
+   // how long after a command is started do we delay before considering running a private command
+   boost::posix_time::milliseconds waitForCommandDelay_;
+
+   // how long after a private command is started do we allow for the result to be delivered?
+   boost::posix_time::milliseconds privateCommandTimeout_;
 };
 
 } // namespace terminal

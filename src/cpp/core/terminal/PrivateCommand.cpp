@@ -21,15 +21,6 @@ namespace rstudio {
 namespace core {
 namespace terminal {
 
-// minimum delay between private command executions
-const boost::posix_time::milliseconds kPrivateCommandDelay = boost::posix_time::milliseconds(3000);
-
-// how long after a command is started do we delay before considering running a private command
-const boost::posix_time::milliseconds kWaitForCommandDelay = boost::posix_time::milliseconds(1500);
-
-// how long after a private command is started do we allow for the result to be delivered?
-const boost::posix_time::milliseconds kPrivateCommandMaxDuration = boost::posix_time::milliseconds(1000);
-
 namespace {
 
 boost::posix_time::ptime now()
@@ -39,14 +30,19 @@ boost::posix_time::ptime now()
 
 } // anonymous namespace
 
-PrivateCommand::PrivateCommand(const std::string& command)
+PrivateCommand::PrivateCommand(const std::string& command,
+                               int privateCommandDelayMs,
+                               int waitAfterCommandDelayMs,
+                               int privateCommandTimeoutMs)
    :
      command_(command),
      privateCommandLoop_(false),
      lastPrivateCommand_(boost::posix_time::not_a_date_time),
      lastEnterTime_(boost::posix_time::not_a_date_time),
-     pendingCommand_(true)
-
+     pendingCommand_(true),
+     privateCommandDelay_(privateCommandDelayMs),
+     waitForCommandDelay_(waitAfterCommandDelayMs),
+     privateCommandTimeout_(privateCommandTimeoutMs)
 {
    outputBOM_ = core::system::generateUuid(false);
    outputEOM_ = core::system::generateUuid(true);
@@ -84,14 +80,14 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
          return false;
       }
 
-      if (currentTime - kWaitForCommandDelay <= lastEnterTime_)
+      if (currentTime - waitForCommandDelay_ <= lastEnterTime_)
       {
          // not enough time has elapsed since last command was submitted
          return false;
       }
 
       if (!lastPrivateCommand_.is_not_a_date_time() &&
-          currentTime - kPrivateCommandDelay <= lastPrivateCommand_)
+          currentTime - privateCommandDelay_ <= lastPrivateCommand_)
       {
          // not enough time has elapsed since last private command ran
          return false;
@@ -150,6 +146,17 @@ bool PrivateCommand::output(const std::string& output)
 
    privateCommandOutput_.append(output);
    return true;
+}
+
+std::string PrivateCommand::getPrivateOutput() const
+{
+   return privateCommandOutput_;
+}
+
+void PrivateCommand::endCapture()
+{
+   privateCommandLoop_ = false;
+   privateCommandOutput_.clear();
 }
 
 } // namespace terminal
