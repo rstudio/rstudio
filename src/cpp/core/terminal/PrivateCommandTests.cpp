@@ -38,6 +38,10 @@ context("Private Terminal Command Tests")
    class OpsHarness : public system::ProcessOperations
    {
    public:
+      OpsHarness() : colsSet(0), rowsSet(0), ptyInterrupted(false), terminated(false), pid(0)
+      {
+      }
+
       virtual Error writeToStdin(const std::string& input, bool eof)
       {
          writes.push_back(input);
@@ -47,30 +51,35 @@ context("Private Terminal Command Tests")
 
       virtual Error ptySetSize(int cols, int rows)
       {
-         return systemError(boost::system::errc::invalid_argument,
-                            ERROR_LOCATION);
+         colsSet = cols;
+         rowsSet = rows;
+         return Success();
       }
 
       virtual Error ptyInterrupt()
       {
-         return systemError(boost::system::errc::invalid_argument,
-                            ERROR_LOCATION);
+         ptyInterrupted = true;
+         return Success();
       }
 
       virtual Error terminate()
       {
-         return systemError(boost::system::errc::invalid_argument,
-                            ERROR_LOCATION);
+         terminated = true;
+         return Success();
       }
 
       virtual PidType getPid()
       {
-         return -1;
+         return pid;
       }
 
-      // capture data from calls to writeToStdin
+      int colsSet;
+      int rowsSet;
       std::vector<std::string> writes;
       std::vector<bool> writesEof;
+      bool ptyInterrupted;
+      bool terminated;
+      int pid;
 
    } ops;
 
@@ -203,6 +212,22 @@ context("Private Terminal Command Tests")
       boost::this_thread::sleep(milliseconds(kPrivate * 2));
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
       expect_true(cmd.hasCaptured());
+   }
+
+   test_that("private command terminated if taking too long")
+   {
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout);
+
+      expect_false(cmd.hasCaptured());
+      cmd.userInput("user command\n");
+      boost::this_thread::sleep(milliseconds(kUser * 2));
+
+      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
+
+      boost::this_thread::sleep(milliseconds(kTimeout * 2));
+      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
+      expect_true(ops.ptyInterrupted);
+      expect_false(cmd.hasCaptured());
    }
 }
 

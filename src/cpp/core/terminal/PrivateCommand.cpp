@@ -60,13 +60,13 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
    boost::posix_time::ptime currentTime = now();
    if (privateCommandLoop_)
    {
-      // already running private command
-
-      // TODO (gary)
-      // safeguard timeout here to exit private command loop if parsing fails after
-      // a couple of seconds!
-
-      return true;
+      // try to prevent private command from getting stuck
+      if (currentTime - lastPrivateCommand_ > privateCommandTimeout_)
+      {
+         endCapture();
+         ops.ptyInterrupt();
+         return false;
+      }
    }
    else
    {
