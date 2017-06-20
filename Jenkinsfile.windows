@@ -13,18 +13,34 @@ pipeline {
   }
 
   stages {
-    stage('container') {
+    stage('dependencies') {
       steps {
-        script {
-          def image_tag = "windows-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
-          container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.windows", image_tag: image_tag)
-        }
+        bat 'cd dependencies/windows && ./install-dependencies.cmd && cd ../..'
       }
     }
+    //stage('build'){
+    //  steps {
+    //    script {
+    //      def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
+    //      sh 'cd package/win32 && ${env} ./make-package clean && cd ../..'
+    //    }
+    //  }
+    //}
+    //stage('upload') {
+    //  steps {
+    //    script {
+    //      // this job is going to run on a macOS slave, which cannot use an instance-profile
+    //      withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+    //        sh 'aws s3 cp package/win32/build/RStudio-* s3://rstudio-ide-build/desktop/windows/'
+    //      }
+    //    }
+    //  }
+    //}
   }
 
   post {
     always {
+      deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
