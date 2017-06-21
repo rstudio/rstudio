@@ -603,3 +603,40 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalSend = .rs.api.terminalSend))
 
 
+.rs.addApiFunction("openFile", function(
+   caption = "Open File",
+   path = .rs.getProjectDirectory(),
+   filter = NULL)
+{
+   .Call("rs_openFileDialog",
+         1L,
+         caption,
+         path,
+         filter,
+         PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("openFolder", function(
+   caption = "Open Folder",
+   path = .rs.getProjectDirectory())
+{
+   .Call("rs_openFileDialog",
+         2L,
+         caption,
+         path,
+         NULL,
+         PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("saveFile", function(
+   caption = "Save File",
+   path = .rs.getProjectDirectory())
+{
+   .Call("rs_openFileDialog",
+         3L,
+         caption,
+         path,
+         NULL,
+         PACKAGE = "(embedding)")
+})
+

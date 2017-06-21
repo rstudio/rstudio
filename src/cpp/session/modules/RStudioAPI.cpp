@@ -35,9 +35,10 @@ namespace modules {
 namespace rstudioapi {
 
 namespace {
-}
-
 module_context::WaitForMethodFunction s_waitForShowDialog;
+module_context::WaitForMethodFunction s_waitForOpenFileDialog;
+} // end anonymous namespace
+
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
@@ -128,15 +129,51 @@ SEXP rs_showDialog(SEXP titleSEXP,
    return R_NilValue;
 }
 
+SEXP rs_openFileDialog(SEXP typeSEXP,
+                       SEXP captionSEXP,
+                       SEXP pathSEXP,
+                       SEXP filterSEXP)
+{
+   // extract components
+   int type = r::sexp::asInteger(typeSEXP);
+   std::string caption = r::sexp::asString(captionSEXP);
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP, ""));
+   std::string filter = r::sexp::asString(filterSEXP);
+   
+   json::Object data;
+   data["type"] = type;
+   data["caption"] = caption;
+   data["file"] = module_context::createFileSystemItem(path);
+   data["filter"] = filter;
+   ClientEvent event(client_events::kOpenFileDialog, data);
+   
+   json::JsonRpcRequest request;
+   if (!s_waitForOpenFileDialog(&request, event))
+      return R_NilValue;
+   
+   std::string selection;
+   Error error = json::readParams(request.params, &selection);
+   if (error)
+       LOG_ERROR(error);
+
+   if (selection.empty())
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(selection, &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
    // register waitForMethod handler
-   s_waitForShowDialog = module_context::registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForShowDialog     = registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
 
    RS_REGISTER_CALL_METHOD(rs_showDialog, 8);
+   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 4);
 
    return Success();
 }
