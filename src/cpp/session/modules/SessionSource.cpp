@@ -64,6 +64,8 @@ using namespace session::source_database;
 
 namespace {
 
+module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
+
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                     core::json::Object* pDocJson)
 {
@@ -1168,6 +1170,33 @@ SEXP rs_fileEdit(SEXP fileSEXP)
    return R_NilValue;
 }
 
+SEXP rs_requestDocumentSave(SEXP idsSEXP)
+{
+   r::sexp::Protect protect;
+   
+   json::Object jsonData;
+   
+   jsonData["ids"] = json::Value();
+   if (TYPEOF(idsSEXP) == STRSXP)
+   {
+      std::vector<std::string> ids;
+      r::sexp::fillVectorString(idsSEXP, &ids);
+      jsonData["ids"] = json::toJsonArray(ids);
+   }
+   
+   json::JsonRpcRequest request;
+   ClientEvent event(client_events::kRequestDocumentSave, jsonData);
+   if (!s_waitForRequestDocumentSave(&request, event))
+      return r::sexp::create(false, &protect);
+   
+   bool success = false;
+   Error error = json::readParams(request.params, &success);
+   if (error)
+      LOG_ERROR(error);
+   
+   return r::sexp::create(success, &protect);
+}
+
 } // anonymous namespace
 
 Error clientInitDocuments(core::json::Array* pJsonDocs)
@@ -1218,13 +1247,13 @@ Error initialize()
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+   
+   // register waitfor methods
+   s_waitForRequestDocumentSave =
+         module_context::registerWaitForMethod("request_document_save_completed");
 
-   // register fileEdit method
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_fileEdit" ;
-   methodDef.fun = (DL_FUNC) rs_fileEdit ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
+   RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
 
    // install rpc methods
    using boost::bind;

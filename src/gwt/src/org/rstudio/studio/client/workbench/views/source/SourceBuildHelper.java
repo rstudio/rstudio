@@ -57,7 +57,7 @@ public class SourceBuildHelper
    {     
       if (uiPrefs_.saveAllBeforeBuild().getValue())
       {
-         sourceShim_.saveAllUnsaved(command);
+         sourceShim_.saveUnsavedDocuments(command);
       }
       else
       {
