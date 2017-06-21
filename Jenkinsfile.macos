@@ -1,0 +1,59 @@
+pipeline {
+  agent { label 'macos' }
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '100'))
+  }
+  parameters {
+      string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version')
+      string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version')
+      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'SLACK_CHANNEL', defaultValue: '@steve', description: 'Slack channel to publish build message.')
+  }
+  environment {
+    PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+  }
+
+  stages {
+    stage('dependencies') {
+      environment {
+        // boost won't compile without the brew version of openssl.
+        // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
+        PATH = '/usr/local/opt/openssl/bin:/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+      }
+      steps {
+        sh 'cd dependencies/osx && ./install-dependencies-osx && cd ../..'
+      }
+    }
+    stage('build'){
+      steps {
+        script {
+          // unlock keychain to ensure build gets signed.
+          withCredentials([string(credentialsId: 'ide-keychain-passphrase', variable: 'KEYCHAIN_PASSPHRASE')]){
+            sh 'security unlock-keychain -p $KEYCHAIN_PASSPHRASE && security set-keychain-settings' // turn off timeout
+          }
+          def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
+          sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
+        }
+      }
+    }
+    stage('upload') {
+      steps {
+        script {
+          // this job is going to run on a macOS slave, which cannot use an instance-profile
+          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+            sh 'aws s3 cp package/osx/build/RStudio-* s3://rstudio-ide-build/desktop/macos/'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      deleteDir()
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}

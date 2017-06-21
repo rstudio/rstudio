@@ -371,6 +371,50 @@ private:
    core::FilePath storagePath_;
 };
 
+// active session as tracked by rserver processes
+// these are stored in a common location per rserver
+// so that the server process can keep track of all
+// active sessions, regardless of users running them
+class GlobalActiveSession : boost::noncopyable
+{
+public:
+   explicit GlobalActiveSession(const FilePath& path) : filePath_(path)
+   {
+      settings_.initialize(filePath_);
+   }
+
+   virtual ~GlobalActiveSession() {}
+
+   std::string sessionId() { return settings_.get("sessionId", ""); }
+   void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
+
+   std::string username() { return settings_.get("username", ""); }
+   void setUsername(const std::string& username) { settings_.set("username", username); }
+
+   std::string userHomeDir() { return settings_.get("userHomeDir", ""); }
+   void setUserHomeDir(const std::string& userHomeDir) { settings_.set("userHomeDir", userHomeDir); }
+
+   int sessionTimeoutKillHours() { return settings_.getInt("sessionTimeoutKillHours", 0); }
+   void setSessionTimeoutKillHours(int val) { settings_.set("sessionTimeoutKillHours", val); }
+
+   core::Error destroy() { return filePath_.removeIfExists(); }
+
+private:
+   core::Settings settings_;
+   core::FilePath filePath_;
+};
+
+class GlobalActiveSessions : boost::noncopyable
+{
+public:
+   explicit GlobalActiveSessions(const FilePath& rootPath) : rootPath_(rootPath) {}
+   std::vector<boost::shared_ptr<GlobalActiveSession> > list() const;
+   boost::shared_ptr<GlobalActiveSession> get(const std::string& id) const;
+
+private:
+   core::FilePath rootPath_;
+};
+
 void trackActiveSessionCount(const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,

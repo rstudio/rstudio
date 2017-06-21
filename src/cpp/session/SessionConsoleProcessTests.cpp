@@ -150,7 +150,7 @@ context("queue and fetch input")
 
       // intentionally skipping item "0" to prevent pulling from queueA
       int lastAdded = kIgnoreSequence;
-      for (int i = 1; i < kAutoFlushLength + 5; i++)
+      for (size_t i = 1; i < kAutoFlushLength + 5; i++)
       {
          std::string item = boost::lexical_cast<std::string>(i);
          expected += item;

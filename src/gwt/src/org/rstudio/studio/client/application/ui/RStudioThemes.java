@@ -18,6 +18,7 @@ package org.rstudio.studio.client.application.ui;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -47,7 +48,9 @@ public class RStudioThemes
       element.removeClassName("rstudio-themes-dark-grey");
       element.removeClassName("rstudio-themes-alternate");
       element.removeClassName("rstudio-themes-scrollbars");
+
       document.getBody().removeClassName("rstudio-themes-dark-menus");
+      document.getBody().removeClassName("rstudio-themes-dark-menus-disabled");
       
       if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
          document.getBody().addClassName("rstudio-themes-flat");
@@ -96,7 +99,7 @@ public class RStudioThemes
       );
    }
    
-   private static boolean usesScrollbars() {
+   public static boolean usesScrollbars() {
       if (usesScrollbars_ != null) return usesScrollbars_;
       
       if (!BrowseCap.isMacintosh()) {
@@ -126,6 +129,24 @@ public class RStudioThemes
       }
       
       return usesScrollbars_;
+   }
+   
+   public static void disableDarkMenus()
+   {
+      BodyElement body = Document.get().getBody();
+      if (body.hasClassName("rstudio-themes-dark-menus")) {
+         body.removeClassName("rstudio-themes-dark-menus");
+         body.addClassName("rstudio-themes-dark-menus-disabled");
+      }
+   }
+   
+   public static void enableDarkMenus()
+   {
+      BodyElement body = Document.get().getBody();
+      if (body.hasClassName("rstudio-themes-dark-menus-disabled")) {
+         body.removeClassName("rstudio-themes-dark-menus-disabled");
+         body.addClassName("rstudio-themes-dark-menus");
+      }
    }
    
    private static Boolean usesScrollbars_ = null;

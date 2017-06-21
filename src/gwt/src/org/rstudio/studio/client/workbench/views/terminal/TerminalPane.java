@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -101,6 +102,23 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
       events_.addHandler(TerminalCwdEvent.TYPE, this);
 
+      events.addHandler(RestartStatusEvent.TYPE, 
+                          new RestartStatusEvent.Handler()
+      {
+         @Override
+         public void onRestartStatus(RestartStatusEvent event)
+         {
+            if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+            {
+               isRestartInProgress_ = true;
+            }
+            else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+            {
+               isRestartInProgress_ = false;
+            }
+         }
+      });
+ 
       ensureWidget();
    }
 
@@ -307,7 +325,7 @@ public class TerminalPane extends WorkbenchPane
                           "already loaded. Ignoring.");
          return;
       }
-
+      
       // add terminal to the dropdown's cache; terminals aren't actually
       // connected until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
@@ -542,7 +560,7 @@ public class TerminalPane extends WorkbenchPane
    /**
     * Cleanup after process with given handle has terminated.
     * @param handle identifier for process that exited
-    * @param processExited true if process exited on server
+    * @param processExited true if process exited on server; false if client-side is forcing exit
     */
    private void cleanupAfterTerminate(String handle, boolean processExited)
    {
@@ -552,7 +570,12 @@ public class TerminalPane extends WorkbenchPane
          // to the Terminal pane.
          return;
       }
-      
+
+      if (isRestartInProgress_)
+      {
+         return;
+      }
+
       // determine if terminal should remain loaded in UI even though process
       // has exited
       if (processExited)
@@ -573,6 +596,7 @@ public class TerminalPane extends WorkbenchPane
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
+               server_.processSetZombie(handle,  new VoidServerRequestCallback());
             }
             return;
          }
@@ -924,7 +948,8 @@ public class TerminalPane extends WorkbenchPane
    private ToolbarButton closeButton_;
    ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
-
+   private boolean isRestartInProgress_;
+   
    // Injected ----  
    private GlobalDisplay globalDisplay_;
    private EventBus events_;

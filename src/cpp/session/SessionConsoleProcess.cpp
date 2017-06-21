@@ -609,18 +609,7 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 void ConsoleProcess::onExit(int exitCode)
 {
    procInfo_->setExitCode(exitCode);
-
-   AutoCloseMode autoClose = procInfo_->getAutoClose();
-   if (autoClose == DefaultAutoClose)
-   {
-      if (session::userSettings().terminalAutoclose())
-         autoClose = AlwaysAutoClose;
-      else
-         autoClose = NeverAutoClose;
-   }
-
-   if (autoClose == NeverAutoClose)
-      procInfo_->setZombie(true);
+   procInfo_->setHasChildProcs(false);
 
    saveConsoleProcesses();
 
@@ -682,6 +671,13 @@ void ConsoleProcess::setRpcMode()
 {
    s_terminalSocket.stopListening(handle());
    procInfo_->setChannelMode(Rpc, "");
+}
+
+void ConsoleProcess::setZombie()
+{
+   procInfo_->setZombie(true);
+   procInfo_->setHasChildProcs(false);
+   saveConsoleProcesses();
 }
 
 core::json::Object ConsoleProcess::toJson() const

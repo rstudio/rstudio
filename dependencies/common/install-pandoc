@@ -17,62 +17,66 @@
 
 set -e
 
-# install dir
-INSTALL_DIR=`pwd`
+source rstudio-tools
 
-# determine platform
-PLATFORM=`uname`
+# variables that control download + installation process
+PANDOC_VERSION="1.19.2.1"
+PANDOC_CITEPROC_VERSION="0.10.4"
+PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
+PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 
-# use curl or wget as appropriate
-download()
-{
-  if [ "$PLATFORM" == "Darwin" ]
-  then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
-  else
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
-  fi
-}
+# enter pandoc subdirectory
+mkdir -p "${PANDOC_SUBDIR}"
+pushd "${PANDOC_SUBDIR}"
 
-# get pandoc
-PANDOC_VERSION=1.19.2.1
-PANDOC_DIR=pandoc/$PANDOC_VERSION
-if [ -d "$PANDOC_DIR" ]
-then
-   echo "pandoc ${PANDOC_VERSION} already installed"
-else
-   PANDOC_NAME=pandoc-${PANDOC_VERSION}
-   PANDOC_ZIP=${PANDOC_NAME}.zip
-   download $PANDOC_ZIP
-   unzip -q $PANDOC_ZIP
-   mkdir -p ${PANDOC_DIR}
-   if [ "$PLATFORM" == "Darwin" ]
-   then
-      cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
-   else
-      BITNESS=`getconf LONG_BIT`
-      case "$BITNESS" in
-          32) ARCH='i686' ;;
-          64) ARCH='x86_64' ;;
-      esac
-      # copy binaries for appropriate distro/arch. 
-      if grep -q -i -s "release 6" /etc/redhat-release
-      then
-         BINARY_TYPE=rpm
+# determine sub-directory based on platform
+PLATFORM="$(uname)-$(getconf LONG_BIT)"
+case "${PLATFORM}" in
 
-         # centos 6 itself won't use these, but we also build for sles on this
-         # platform
-         PANDOC_STATIC_DIR=${PANDOC_DIR}/static
-         mkdir -p ${PANDOC_STATIC_DIR}
-         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_STATIC_DIR}
-      else 
-         BINARY_TYPE=debian
-      fi
-      cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
-   fi
-   rm $PANDOC_ZIP
-   rm -rf $PANDOC_NAME
-fi
+"Darwin-64")
+  SUBDIR="macos"
+  FILES=(
+    "pandoc-${PANDOC_VERSION}.zip"
+    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.zip"
+  )
+  ;;
 
-# back to install dir
-cd $INSTALL_DIR
+"Linux-64")
+  SUBDIR="linux-64"
+  FILES=(
+    "pandoc.gz"
+    "pandoc-citeproc.gz"
+  )
+  ;;
+
+*)
+  echo "Pandoc binaries not available for platform '${PLATFORM}'."
+  exit 0
+  ;;
+
+esac
+
+# enter sub-directory
+mkdir -p "${SUBDIR}"
+pushd "${SUBDIR}"
+
+# download and extract files
+for FILE in "${FILES[@]}"; do
+  download "${PANDOC_URL_BASE}/${SUBDIR}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+done
+
+# copy pandoc binaries to parent folder
+cp pandoc* ..
+popd
+
+# remove transient download folder
+rm -rf "${SUBDIR}"
+
+# make pandoc executable
+chmod 755 pandoc*
+
+# and we're done!
+popd
+

@@ -51,7 +51,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos')) {
+  if (os.contains('centos') || os.contains('suse')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -78,6 +78,14 @@ def prepareWorkspace(){ // accessory to clean workspace and checkout
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
+def trigger_external_build(build_name, wait = false) {
+  // triggers downstream job passing along the important params from this build
+  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR', value: RSTUDIO_VERSION_MAJOR),
+                                                  string(name: 'RSTUDIO_VERSION_MINOR', value: RSTUDIO_VERSION_MINOR),
+                                                  string(name: 'RSTUDIO_VERSION_PATCH', value: RSTUDIO_VERSION_PATCH),
+                                                  string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
+}
+
 // make a nicer slack message
 rstudioVersion = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}"
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
@@ -95,7 +103,9 @@ try {
           [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
           [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial']
+          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
+          [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
+          [os: 'xenial',   arch: 'i386',   flavor: 'server', variant: 'xenial']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]
@@ -123,14 +133,15 @@ try {
                 }
             }
         }
+        // trigger macos build if we're in open-source repo
+        if (env.JOB_NAME == 'IDE/open-source') {
+          trigger_external_build('IDE/macos')
+        }
         parallel parallel_containers
 
         // trigger downstream pro-docs build if we're finished building the pro variants
         if (env.JOB_NAME == 'IDE/pro') {
-          build job: 'IDE/pro-docs', parameters: ([string(name: 'RSTUDIO_VERSION_MAJOR', value: RSTUDIO_VERSION_MAJOR),
-                                                          string(name: 'RSTUDIO_VERSION_MINOR', value: RSTUDIO_VERSION_MINOR),
-                                                          string(name: 'RSTUDIO_VERSION_PATCH', value: RSTUDIO_VERSION_PATCH),
-                                                          string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)])
+          trigger_external_build('IDE/pro-docs')
         }
 
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"

@@ -306,6 +306,11 @@ th:focus {
     position: relative;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFF;
+}
+
 .autoSize .numberCell, .autoSize .textCell {
     max-width: 300px; 
 }

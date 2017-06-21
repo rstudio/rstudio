@@ -77,7 +77,7 @@ Options& options()
    return instance ;
 }
    
-core::ProgramStatus Options::read(int argc, char * const argv[])
+core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& osWarnings)
 {
    using namespace boost::program_options ;
    
@@ -447,7 +447,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // call overlay hooks
    resolveOverlayOptions();
    std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
+   if (!validateOverlayOptions(&errMsg, osWarnings))
    {
       program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();

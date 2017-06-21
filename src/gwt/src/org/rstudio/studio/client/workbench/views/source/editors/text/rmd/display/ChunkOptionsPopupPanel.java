@@ -245,6 +245,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             "Use paged tables",
             "paged.print");
       panel_.add(printTableAsTextCb_);
+      printTableAsTextCb_.setVisible(false);
       
       useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());

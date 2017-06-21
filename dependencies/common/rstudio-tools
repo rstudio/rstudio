@@ -1,0 +1,268 @@
+#!/usr/bin/env bash
+
+#
+# rstudio-tools -- Bash toolkit used in dependency scripts
+#
+# Copyright (C) 2017 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+# Generic Tools ----
+
+# Aliases over 'pushd' and 'popd' just to suppress printing of
+# the directory stack on stdout
+pushd () {
+	command pushd "$@" > /dev/null
+}
+
+popd () {
+	command popd "$@" > /dev/null
+}
+
+# Detect whether a command is available (e.g. program on the PATH,
+# Bash builtin, or otherwise)
+has-command () {
+	command -v "$1" &> /dev/null
+}
+
+is-verbose () {
+	[ -n "${VERBOSE}" ] && [ "${VERBOSE}" != "0" ]
+}
+
+# Download a single file
+download () {
+
+	if [ "$#" -eq 0 ]; then
+		echo "usage: download src [dst]"
+		return 1
+	fi
+
+	# Compute source path
+	local SRC="$1"
+
+	# Compute destination path
+	local DST
+	if [ "$#" -eq 1 ]; then
+		DST="$(basename "$SRC")"
+	else
+		DST="$2"
+	fi
+
+	if is-verbose; then
+		echo -e "Downloading:\n- '$SRC' -> '$DST'"
+	fi
+
+	# Invoke downloader
+	if has-command curl; then
+		curl -L -f -C - "$SRC" > "$DST"
+	elif has-command wget; then
+		wget -c "$SRC" -O "$DST"
+	else
+		echo "no downloader detected on this system (requires 'curl' or 'wget')"
+		return 1
+	fi
+
+}
+
+# Extract an archive
+extract () {
+	local FILE="$1"
+
+	if is-verbose; then
+		echo "Extracting '$FILE' ..."
+	fi
+
+	case "${FILE}" in
+
+		*.deb)
+			dpkg -x "${FILE}"
+		;;
+
+		*.rpm)
+			rpm2cpio "${FILE}" | cpio -idmv
+		;;
+
+		*.tar.gz)
+			tar -xf "${FILE}"
+		;;
+
+		*.tar.xz)
+			tar -xf "${FILE}"
+		;;
+
+		*.gz)
+			gunzip "${FILE}"
+		;;
+
+		*.zip)
+			unzip -o "${FILE}"
+		;;
+
+		*)
+			echo "Don't know how to extract file '${FILE}'"
+			return 1
+		;;
+
+	esac
+}
+
+# Platform Detection ----
+
+platform () {
+
+	# Detect macOS variants
+	if [ "$(uname)" = "Darwin" ]; then
+		echo "darwin"
+		return 0
+	fi
+
+	# Detect platform ID using /etc/os-release when available
+	if [ -f /etc/os-release ]; then
+		local ID="$(. /etc/os-release; echo "$ID")"
+		if [ -n "${ID}" ]; then
+			echo "${ID}"
+			return 0
+		fi
+	fi
+
+	# Detect platform using /etc/redhat-release when available
+	if [ -f /etc/redhat-release ]; then
+
+		# Detect CentOS
+		if grep -siq "centos" /etc/redhat-release; then
+			echo "centos"
+			return 0
+		fi
+
+		# Detect Fedora
+		if grep -siq "fedora" /etc/redhat-release; then
+			echo "fedora"
+			return 0
+		fi
+
+		# Warn about other RedHat flavors we don't yet recognize
+		echo "unrecognized redhat variant '$(cat /etc/redhat-release)'"
+		return 1
+	fi
+
+	echo "unrecognized platform detected"
+	return 1
+}
+
+ubuntu-codename () {
+	# try reading codename from /etc/os-release
+	local CODENAME="$(. /etc/os-release; echo "${UBUNTU_CODENAME}")"
+	if [ -n "${CODENAME}" ]; then
+		echo "${CODENAME}"
+		return 0
+	fi
+
+	# hard-coded values for older Ubuntu
+	case "$(os-version)" in
+
+	12.04) echo "precise" ;;
+	12.10) echo "quantal" ;;
+	13.04) echo "raring"  ;;
+	13.10) echo "saucy"   ;;
+	14.04) echo "trusty"  ;;
+	14.10) echo "utopic"  ;;
+	15.04) echo "vivid"   ;;
+	15.10) echo "wily"    ;;
+	16.04) echo "xenial"  ;;
+	*)     echo "unknown"; return 1 ;;
+
+	esac
+
+	return 0
+}
+
+# Get the operating system version (as a number)
+os-version () {
+
+	if [ -f /etc/os-release ]; then
+		local VERSION_ID="$(. /etc/os-release; echo "${VERSION_ID}")"
+		if [ -n "${VERSION_ID}" ]; then
+			echo "${VERSION_ID}"
+			return 0
+		fi
+	fi
+
+	if [ -f /etc/redhat-release ]; then
+		grep -oE "[0-9]+([_.-][0-9]+)*" /etc/redhat-release
+		return 0
+	fi
+
+	if has-command sw_vers; then
+		sw_vers -productVersion
+		return 0
+	fi
+
+	echo "don't know how to infer OS version for platform '$(platform)'"
+	return 1
+
+}
+
+os-version-part () {
+	local VERSION="$(os-version | cut -d"." -f"$1")"
+
+	if [ -n "${VERSION}" ]; then
+		echo "${VERSION}"
+		return 0
+	fi
+
+	echo "0"
+	return 0
+}
+
+os-version-major () {
+	os-version-part 1
+}
+
+os-version-minor () {
+	os-version-part 2
+}
+
+os-version-patch () {
+	os-version-part 3
+}
+
+# Helper functions for quickly checking paltform types
+is-mac () {
+	[ "$(uname)" = "Darwin" ]
+}
+
+is-darwin () {
+	[ "$(uname)" = "Darwin" ]
+}
+
+is-linux () {
+	[ "$(uname)" = "Linux" ]
+}
+
+is-redhat () {
+	[ -f /etc/redhat-release ]
+}
+
+is-centos () {
+	[ "$(platform)" = "centos" ]
+}
+
+is-fedora () {
+	[ "$(platform)" = "fedora" ]
+}
+
+is-opensuse () {
+	[ "$(platform)" = "opensuse" ]
+}
+
+is-ubuntu () {
+	[ "$(platform)" = "ubuntu" ]
+}
+

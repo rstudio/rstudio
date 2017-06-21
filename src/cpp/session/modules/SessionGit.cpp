@@ -485,13 +485,7 @@ public:
       // build shell arguments
       ShellArgs arguments;
       
-      // on some platforms, git will return paths which contain characters
-      // not in the ASCII set with a so-called 'quoted octal encoding'.
-      // this is controlled by the 'core.quotepath' configuration option;
-      // by setting this to off we ensure that git will return us a
-      // plain UTF-8 encoded path which requires no further processing
-      arguments << "-c" << "core.quotepath=off"
-                << "status" << "--porcelain" << "--" << dir;
+      arguments << "status" << "-z" << "--porcelain" << "--" << dir;
       
       std::string output;
       Error error = runGit(arguments, &output);
@@ -499,7 +493,7 @@ public:
          return error;
       
       // split and parse each line of status output
-      std::vector<std::string> lines = split(output);
+      std::vector<std::string> lines = core::algorithm::split(output, "\0");
 
       for (std::vector<std::string>::iterator it = lines.begin();
            it != lines.end();
@@ -1229,11 +1223,23 @@ public:
       size_t graphLineIndex = 0;
       int skipped = 0;
       CommitInfo currentCommit;
+      
+      // are we currently parsing a GPG signature?
+      bool isPgpSignature = false;
 
       for (std::vector<std::string>::const_iterator it = outLines.begin();
            it != outLines.end() && pOutput->size() < static_cast<size_t>(maxentries);
            it++)
       {
+         // if we're within the body of a PGP signature, check for
+         // the end marker
+         if (isPgpSignature)
+         {
+            const char* endMarker = "-----END PGP SIGNATURE-----";
+            isPgpSignature = it->find(endMarker) == std::string::npos;
+            continue;
+         }
+         
          boost::smatch smatch;
          if (regex_utils::search(*it, smatch, kvregex))
          {
@@ -1279,6 +1285,14 @@ public:
                   currentCommit.parent.push_back(' ');
                currentCommit.parent.append(value, 0, 8);
             }
+            else if (key == "gpgsig")
+            {
+               isPgpSignature = value == "-----BEGIN PGP SIGNATURE-----";
+            }
+            else
+            {
+               // explicitly ignore other keys (e.g. 'tree')
+            }
          }
          else if (boost::starts_with(*it, "    "))
          {
@@ -1291,6 +1305,7 @@ public:
          }
          else if (it->length() == 0)
          {
+            // ignore empty lines
          }
          else
          {

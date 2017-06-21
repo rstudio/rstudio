@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.studio.client.application.ui.RStudioThemes;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -75,6 +77,9 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
    private void commonInit(Resources res)
    {
       addStyleName(res.styles().themedPopupPanel());
+
+      if (RStudioThemes.usesScrollbars())
+         addStyleName("rstudio-themes-scrollbars");
    }
 
    private static Resources RES = GWT.create(Resources.class);
