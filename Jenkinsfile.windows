@@ -40,8 +40,8 @@ pipeline {
         script {
           // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-            bat 'aws s3 cp package/win32/build/RStudio-*.exe s3://rstudio-ide-build/desktop/windows/'
-            bat 'aws s3 cp package/win32/build/RStudio-*.zip s3://rstudio-ide-build/desktop/windows/'
+            bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe s3://rstudio-ide-build/desktop/windows/'
+            bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.zip s3://rstudio-ide-build/desktop/windows/'
           }
         }
       }
