@@ -27,6 +27,17 @@ if(EXISTS "/etc/redhat-release")
    endif()
 endif()
 
+# detect Xenial (Ubuntu 16)
+set(IS_XENIAL "OFF")
+find_program(LSB_RELEASE_EXEC lsb_release)
+if(LSB_RELEASE_EXEC)
+    exec_program(lsb_release -r OUTPUT_VARIABLE UBUNTU_VER)
+    string(FIND "${UBUNTU_VER}" "16.04" UBUNTU_VER_POS)
+    if (UBUNTU_VER_POS GREATER 0)
+       set(IS_XENIAL "ON")
+    endif()
+endif()
+
 # configuration specific
 if(RSTUDIO_SERVER)
 
@@ -90,6 +101,8 @@ if(RSTUDIO_SERVER)
    # target first
    if(RSTUDIO_PACKAGE_BUILD_SLES)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
+   elseif(IS_XENIAL)
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}xenial-")
    elseif(IS_RHEL_5)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
    elseif(IS_RHEL) 
