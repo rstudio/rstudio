@@ -18,7 +18,7 @@
       # ... and it's not a directory, bail
       if (!utils::file_test("-d", path))
       {
-         fmt <- "can't create project at path '%s'"
+         fmt <- "file '%s' exists and is not a directory"
          stop(sprintf(fmt, .rs.createAliasedPath(path)))
       }
    }
