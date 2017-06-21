@@ -150,7 +150,6 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
-import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
@@ -2298,21 +2297,8 @@ public class Source implements InsertSourceHandler,
       return getUnsavedChanges(type,  null);
    }
    
-   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type,
-                                                            EditingTargetSavePredicate predicate)
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
-      if (predicate == null)
-      {
-         predicate = new EditingTargetSavePredicate()
-         {
-            @Override
-            public boolean accept(EditingTarget target, int type)
-            {
-               return isUnsavedTarget(target, type);
-            }
-         };
-      }
-      
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
 
@@ -2324,8 +2310,18 @@ public class Source implements InsertSourceHandler,
       }
 
       for (EditingTarget target : editors_)
-         if (predicate.accept(target, type))
-            targets.add(target);
+      {
+         // no need to save targets which are up-to-date
+         if (!isUnsavedTarget(target, type))
+            continue;
+         
+         // if we've requested the save of specific documents, screen
+         // out documents not within the requested id set
+         if (ids != null && !ids.contains(target.getId()))
+            continue;
+         
+         targets.add(target);
+      }
       
       return targets;
    }
@@ -2335,7 +2331,7 @@ public class Source implements InsertSourceHandler,
       saveUnsavedDocuments(null, onCompleted);
    }
    
-   public void saveUnsavedDocuments(final EditingTargetSavePredicate predicate,
+   public void saveUnsavedDocuments(final Set<String> ids,
                                     final Command onCompleted)
    {
       Command saveAllLocal = new Command()
@@ -2343,13 +2339,13 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, predicate), onCompleted);
+            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, ids), onCompleted);
          }
       };
       
       // if this is the main source window, save all files in satellites first
       if (SourceWindowManager.isMainSourceWindow())
-         windowManager_.saveUnsavedDocuments(predicate, saveAllLocal);
+         windowManager_.saveUnsavedDocuments(ids, saveAllLocal);
       else
          saveAllLocal.execute();
    }
@@ -4297,7 +4293,7 @@ public class Source implements InsertSourceHandler,
          }
       };
       
-      if (ids == null || ids.length() == 0)
+      if (ids == null)
       {
          saveUnsavedDocuments(onCompleted);
       }
@@ -4307,18 +4303,7 @@ public class Source implements InsertSourceHandler,
          for (String id : JsUtil.asIterable(ids))
             idSet.add(id);
          
-         final EditingTargetSavePredicate predicate =
-               new EditingTargetSavePredicate()
-         {
-            @Override
-            public boolean accept(EditingTarget target, int type)
-            {
-               return isUnsavedTarget(target, type) &&
-                      idSet.contains(target.getId());
-            }
-         };
-         
-         saveUnsavedDocuments(predicate, onCompleted);
+         saveUnsavedDocuments(idSet, onCompleted);
       }
    }
    

@@ -511,3 +511,5 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalRunning = .rs.api.terminalRunning,
                                 terminalKill = .rs.api.terminalKill,
                                 terminalSend = .rs.api.terminalSend))
+
+

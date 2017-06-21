@@ -1174,12 +1174,15 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
 {
    r::sexp::Protect protect;
    
-   std::vector<std::string> ids;
-   if (TYPEOF(idsSEXP) == STRSXP)
-       r::sexp::fillVectorString(idsSEXP, &ids);
-   
    json::Object jsonData;
-   jsonData["ids"] = json::toJsonArray(ids);
+   
+   jsonData["ids"] = json::Value();
+   if (TYPEOF(idsSEXP) == STRSXP)
+   {
+      std::vector<std::string> ids;
+      r::sexp::fillVectorString(idsSEXP, &ids);
+      jsonData["ids"] = json::toJsonArray(ids);
+   }
    
    json::JsonRpcRequest request;
    ClientEvent event(client_events::kRequestDocumentSave, jsonData);

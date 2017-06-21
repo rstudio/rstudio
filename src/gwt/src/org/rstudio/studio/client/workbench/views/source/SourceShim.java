@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -45,7 +46,6 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 
 @Singleton
 public class SourceShim extends Composite
@@ -265,12 +265,12 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
    
-   public void saveUnsavedDocuments(EditingTargetSavePredicate predicate,
+   public void saveUnsavedDocuments(Set<String> ids,
                                     Command onCompleted)
    {
       if (source_ != null)
       {
-         source_.saveUnsavedDocuments(predicate, onCompleted);
+         source_.saveUnsavedDocuments(ids, onCompleted);
       }
    }
    

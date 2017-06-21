@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
@@ -53,12 +54,12 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -357,9 +358,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
    }
    
-   public void saveUnsavedDocuments(final EditingTargetSavePredicate predicate,
+   public void saveUnsavedDocuments(final Set<String> ids,
                                     final Command onCompleted)
    {
+      
       doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override
@@ -367,7 +369,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                              WindowEx window,
                              Command continuation)
          {
-            saveUnsavedDocuments(window, predicate, continuation);
+            JsArrayString idArray = null;
+            if (ids != null)
+            {
+               idArray = JavaScriptObject.createArray().cast();
+               for (String id : ids)
+                  idArray.push(id);
+            }
+            
+            saveUnsavedDocuments(window, idArray, continuation);
          }
       }, onCompleted);
    }
@@ -948,10 +958,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }-*/;
 
    private final native void saveUnsavedDocuments(WindowEx satellite,
-                                                  EditingTargetSavePredicate predicate,
+                                                  JsArrayString ids,
                                                   Command onCompleted)
    /*-{
-      satellite.rstudioSaveUnsavedDocuments(predicate, onCompleted);
+      satellite.rstudioSaveUnsavedDocuments(ids, onCompleted);
    }-*/;
    
    
