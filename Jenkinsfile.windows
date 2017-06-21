@@ -50,7 +50,7 @@ pipeline {
 
   post {
     always {
-      //deleteDir()
+      deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
