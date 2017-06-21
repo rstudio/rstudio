@@ -65,9 +65,8 @@ public class JSONArrayBuilder
          return appendNull();
       
       JSONArray array = new JSONArray();
-      if (value != null)
-         for (int i = 0, n = value.length(); i < n; i++)
-            array.set(i, fromString(value.get(i)));
+      for (int i = 0, n = value.length(); i < n; i++)
+         array.set(i, fromString(value.get(i)));
       append(array);
       
       return this;
