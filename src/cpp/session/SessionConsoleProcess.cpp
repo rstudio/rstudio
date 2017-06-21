@@ -38,6 +38,7 @@ bool useWebsockets()
                      session::userSettings().terminalWebsockets();
 }
 
+// Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
 } // anonymous namespace
@@ -118,7 +119,7 @@ ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
      newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
      lastInputSequence_(kIgnoreSequence), started_(false), haveProcOps_(false),
-     privateCmd_(kEnvCommand)
+     envCaptureCmd_(kEnvCommand)
 {
    regexInit();
 
@@ -133,7 +134,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), haveProcOps_(false), privateCmd_(kEnvCommand)
+     started_(false), haveProcOps_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -145,7 +146,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), haveProcOps_(false), privateCmd_(kEnvCommand)
+     started_(false), haveProcOps_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -413,11 +414,15 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       interruptChild_ = false;
    }
 
-   // opportunity to execute a private commmand (send a command-line to the shell and
-   // capture the output for special processing, but end-user doesn't see it)
-   // TODO (gary)
-   //if (procInfo_->getTrackEnv() && privateCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
-   //   return true;
+   if (procInfo_->getTrackEnv())
+   {
+      // try to capture and persist the environment
+      if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
+         return true;
+
+      // TODO (gary) process and persist the environment
+      std::string env = envCaptureCmd_.getPrivateOutput();
+   }
 
    // For RPC-based communication, this is where input is always dispatched; for websocket
    // communication, it is normally dispatched inside onReceivedInput, but this call is needed
@@ -479,7 +484,7 @@ void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
          {
             std::string inputText = input.text;
 
-            privateCmd_.userInput(inputText);
+            envCaptureCmd_.userInput(inputText);
 
 #ifdef _WIN32
             if (!options_.smartTerminal)
@@ -523,7 +528,7 @@ std::string ConsoleProcess::getBuffer() const
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
-   if (privateCmd_.output(output))
+   if (envCaptureCmd_.output(output))
       return;
 
    // normal output processing
@@ -904,7 +909,7 @@ void ConsoleProcess::onReceivedInput(const std::string& input)
       boost::shared_ptr<core::system::ProcessOperations> ops = pOps_.lock();
       if (ops)
       {
-         if (!privateCmd_.hasCaptured())
+         if (!envCaptureCmd_.hasCaptured())
             processQueuedInput(*ops);
       }
    }

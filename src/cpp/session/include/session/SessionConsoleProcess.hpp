@@ -264,7 +264,7 @@ private:
    bool haveProcOps_;
 
    // private command handler, used to capture environment variables during terminal idle time
-   core::terminal::PrivateCommand privateCmd_;
+   core::terminal::PrivateCommand envCaptureCmd_;
 };
 
 core::json::Array processesAsJson();
