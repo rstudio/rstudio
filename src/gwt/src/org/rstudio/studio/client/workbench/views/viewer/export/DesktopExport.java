@@ -28,7 +28,21 @@ import com.google.gwt.user.client.Command;
 public class DesktopExport
 {
    private static final native double getSafariZoomFactor() /*-{
-      return $doc.width / $doc.body.clientWidth;
+      
+      // use outerWidth, innerWidth when available
+      var outerWidth = $wnd.outerWidth;
+      var innerWidth = $wnd.innerWidth;
+      if (outerWidth && innerWidth)
+         return outerWidth / innerWidth;
+         
+      // fall back to document width
+      var docWidth = $doc.width;
+      var clientWidth = $doc.body.clientWidth;
+      if (docWidth && clientWidth)
+         return docWidth / clientWidth;
+         
+      // assume no zoom if we failed to discover
+      return 1;
    }-*/;
    
    public static void export(final ExportPlotSizeEditor sizeEditor,

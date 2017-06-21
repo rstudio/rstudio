@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Functional;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -28,12 +29,16 @@ import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -90,10 +95,28 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       super(caption, onCreateBranch);
       
       setOkButtonCaption("Create");
+      enableOkButton(false);
       
       container_ = new VerticalPanel();
+      
       tbBranch_ = textBox();
       tbBranch_.getElement().setAttribute("placeholder", "Branch name");
+      tbBranch_.addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  String text = tbBranch_.getValue();
+                  enableOkButton(!StringUtil.isNullOrEmpty(text));
+               }
+            });
+         }
+      });
       
       sbRemote_ = new SelectWidget("Remote:");
       sbRemote_.addChangeHandler(new ChangeHandler()

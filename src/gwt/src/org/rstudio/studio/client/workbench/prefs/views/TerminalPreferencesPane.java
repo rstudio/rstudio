@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -31,9 +32,13 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
 public class TerminalPreferencesPane extends PreferencesPane
@@ -43,6 +48,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    public TerminalPreferencesPane(UIPrefs prefs,
                                   PreferencesDialogResources res,
                                   Session session,
+                                  final GlobalDisplay globalDisplay,
                                   final Server server)
    {
       prefs_ = prefs;
@@ -51,20 +57,53 @@ public class TerminalPreferencesPane extends PreferencesPane
       server_ = server;
 
       add(spaced(new Label("Use the terminal to run system commands, execute data-processing jobs, and more.")));
-      
-      if (haveTerminalShellPref())
-      {
-         terminalShell_ = new SelectWidget("Default terminal shell:");
-         spaced(terminalShell_);
-         add(terminalShell_);
-         terminalShell_.setEnabled(false);
-      }
+
+      Label shellLabel = headerLabel("Shell");
+      shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(shellLabel);
+
+      terminalShell_ = new SelectWidget("New terminals open with:");
+      spaced(terminalShell_);
+      add(terminalShell_);
+      terminalShell_.setEnabled(false);
+      terminalShell_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageControlVisibility();
+         }
+      });
+
+
+      String textboxWidth = "250px";
+      customShellPathLabel_ = new Label("Custom shell binary (fully qualified path):");
+      add(spacedBefore(customShellPathLabel_));
+      customShellPath_ = new TextBox();
+      customShellPath_.getElement().setAttribute("spellcheck", "false");
+      customShellPath_.setWidth(textboxWidth);
+      add(customShellPath_);
+      customShellPath_.setEnabled(false);
+
+      customShellOptionsLabel_ = new Label("Custom shell command-line options:");
+      add(spacedBefore(customShellOptionsLabel_));
+      customShellOptions_ = new TextBox();
+      customShellOptions_.getElement().setAttribute("spellcheck", "false");
+      customShellOptions_.setWidth(textboxWidth);
+      customShellOptions_.setEnabled(false);
+      add(customShellOptions_);
+
+      Label perfLabel = headerLabel("Connection");
+      perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(perfLabel);
+ 
+      boolean showPerfLabel = false;
       if (haveLocalEchoPref())
       {
          CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
                prefs_.terminalLocalEcho(), 
-               "Local echo is more responsive but may get out of sync with some line-editing modes.");
+               "Local echo is more responsive but may get out of sync with some line-editing modes or custom shells.");
          add(chkTerminalLocalEcho);
+         showPerfLabel = true;
       }
       if (haveWebsocketPref())
       {
@@ -72,8 +111,21 @@ public class TerminalPreferencesPane extends PreferencesPane
                prefs_.terminalUseWebsockets(), 
                "WebSockets are generally more responsive; try turning off if terminal won't connect.");
          add(chkTerminalWebsocket);
+         showPerfLabel = true;
       }
-      
+
+      perfLabel.setVisible(showPerfLabel);
+
+      Label miscLabel = headerLabel("Miscellaneous");
+      miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(miscLabel);
+      miscLabel.setVisible(true);
+
+      CheckBox chkTerminalAutoClose = checkboxPref("Close terminal when shell exits",
+            prefs_.terminalAutoClose(),
+            "Deselect this option to keep terminal pane open after shell exits.");
+      add(chkTerminalAutoClose);
+
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
       helpLink.addStyleName(res_.styles().newSection()); 
@@ -98,81 +150,101 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       final TerminalPrefs terminalPrefs = prefs.getTerminalPrefs();
 
-      if (terminalShell_ != null)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         @Override
+         public void execute()
          {
-            @Override
-            public void execute()
+            server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
             {
-               server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
+               @Override
+               public void onResponseReceived(JsArray<TerminalShellInfo> shells)
                {
-                  @Override
-                  public void onResponseReceived(JsArray<TerminalShellInfo> shells)
+                  int currentShell = terminalPrefs.getDefaultTerminalShellValue();
+                  int currentShellIndex = 0;
+
+                  TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
+
+                  boolean hasCustom = false;
+
+                  for (int i = 0; i < shells.length(); i++)
                   {
-                     int currentShell = terminalPrefs.getDefaultTerminalShellValue();
-                     int currentShellIndex = 0;
-
-                     TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
-
-                     for (int i = 0; i < shells.length(); i++)
-                     {
-                        TerminalShellInfo info = shells.get(i);
-                        TerminalPreferencesPane.this.terminalShell_.addChoice(
-                              info.getShellName(), Integer.toString(info.getShellType()));
-                        if (info.getShellType() == currentShell)
-                           currentShellIndex = i;
-                     }
-                     if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
-                     {
-                        TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
-                        TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
-                     }
+                     TerminalShellInfo info = shells.get(i);
+                     if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
+                        hasCustom = true;
+                     TerminalPreferencesPane.this.terminalShell_.addChoice(
+                           info.getShellName(), Integer.toString(info.getShellType()));
+                     if (info.getShellType() == currentShell)
+                        currentShellIndex = i;
+                  }
+                  if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
+                  {
+                     TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
+                     TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
                   }
 
-                  @Override
-                  public void onError(ServerError error) { }
-               });
-            }
-         });
-      }
+                  if (hasCustom)
+                  {
+                     customShellPath_.setText(
+                           terminalPrefs.getCustomTerminalShellPath());
+                     customShellPath_.setEnabled(true);
+                     customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
+                     customShellOptions_.setEnabled(true);
+                  }
+                  manageControlVisibility();
+               }
+
+               @Override
+               public void onError(ServerError error) { }
+            });
+         }
+      });
    }
 
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
-      
-      int defaultShell = TerminalShellInfo.SHELL_DEFAULT;
-      if (terminalShell_ != null && terminalShell_.isEnabled())
-      {
-         int idx = terminalShell_.getListBox().getSelectedIndex();
-         String valStr = terminalShell_.getListBox().getValue(idx);
-         defaultShell = StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
-      }
 
-      TerminalPrefs terminalPrefs = TerminalPrefs.create(defaultShell);
+      TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
+            customShellPath_.getText(),
+            customShellOptions_.getText());
       rPrefs.setTerminalPrefs(terminalPrefs);
 
       return restartRequired;
-   }
-
-   private boolean haveTerminalShellPref()
-   {
-      return BrowseCap.isWindowsDesktop();
    }
 
    private boolean haveLocalEchoPref()
    {
       return !BrowseCap.isWindowsDesktop();
    }
-   
+
    private boolean haveWebsocketPref()
    {
       return session_.getSessionInfo().getAllowTerminalWebsockets();
    }
+
+   private int selectedShellType()
+   {
+      int idx = terminalShell_.getListBox().getSelectedIndex();
+      String valStr = terminalShell_.getListBox().getValue(idx);
+      return StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
+   }
+
+   private void manageControlVisibility()
+   {
+      boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
+      customShellPathLabel_.setVisible(customEnabled);
+      customShellPath_.setVisible(customEnabled);
+      customShellOptionsLabel_.setVisible(customEnabled);
+      customShellOptions_.setVisible(customEnabled);
+   }
  
    private SelectWidget terminalShell_;
+   private Label customShellPathLabel_;
+   private TextBox customShellPath_;
+   private Label customShellOptionsLabel_;
+   private TextBox customShellOptions_;
 
    // Injected ----  
    private final UIPrefs prefs_;

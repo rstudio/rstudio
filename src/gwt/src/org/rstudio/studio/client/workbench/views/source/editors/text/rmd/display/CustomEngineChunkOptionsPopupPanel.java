@@ -16,9 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.displa
 
 public class CustomEngineChunkOptionsPopupPanel extends DefaultChunkOptionsPopupPanel
 {
-   public CustomEngineChunkOptionsPopupPanel()
+   public CustomEngineChunkOptionsPopupPanel(String engine)
    {
-      super();
+      super(engine);
       
       showWarningsInOutputCb_.setVisible(false);
       showMessagesInOutputCb_.setVisible(false);

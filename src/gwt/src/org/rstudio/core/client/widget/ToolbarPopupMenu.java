@@ -19,7 +19,9 @@ import java.util.List;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -35,6 +37,8 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
 public class ToolbarPopupMenu extends ThemedPopupPanel
 {
@@ -51,7 +55,9 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public ToolbarPopupMenu()
    {
       super(true);
-      add(wrapMenuBar(menuBar_ = createMenuBar()));
+      menuBar_ = createMenuBar();
+      Widget mainWidget = createMainWidget();
+      setWidget(mainWidget);
    }
    
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
@@ -65,16 +71,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return new ToolbarMenuBar(true);
    }
 
-   protected Widget wrapMenuBar(ToolbarMenuBar toolbarMenuBar)
+   protected Widget createMainWidget()
    {
-      return toolbarMenuBar;
+      return menuBar_;
    }
-
+   
    @Override
    protected void onUnload()
    {
       super.onUnload();
       menuBar_.selectItem(null);
+   }
+   
+   public void selectFirst()
+   {
+      menuBar_.selectFirst();
    }
 
    public void selectItem(MenuItem menuItem)
@@ -198,7 +209,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          super(vertical) ;
       }
-
+      
       @Override
       protected void onUnload()
       {
@@ -210,6 +221,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       protected void onLoad()
       {
          super.onLoad();
+         
          nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
          {
             public void onPreviewNativeEvent(NativePreviewEvent e)
@@ -324,6 +336,29 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
 
       private HandlerRegistration nativePreviewReg_;
+   }
+   
+   public Element getMenuTableElement()
+   {
+      Element menuEl = getWidget().getElement();
+      Node tableNode = DomUtils.findNode(menuEl, true, true, new NodePredicate()
+      {
+         @Override
+         public boolean test(Node node)
+         {
+            if (!(node instanceof Element))
+               return false;
+
+            Element el = (Element) node;
+            return el.hasTagName("table");
+         }
+      });
+      
+      if (tableNode == null)
+         return null;
+      
+      return tableNode.<Element>cast();
+      
    }
    
    protected ToolbarMenuBar menuBar_;

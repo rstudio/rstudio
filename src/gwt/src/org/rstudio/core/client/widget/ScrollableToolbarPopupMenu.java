@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -62,9 +63,9 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
    }
 
    @Override
-   protected Widget wrapMenuBar(ToolbarMenuBar menuBar)
+   protected Widget createMainWidget()
    {
-      scrollPanel_ = new ScrollPanel(menuBar);
+      scrollPanel_ = new ScrollPanel(menuBar_);
       scrollPanel_.addStyleName(ThemeStyles.INSTANCE.scrollableMenuBar());
       scrollPanel_.getElement().getStyle().setOverflowY(Overflow.AUTO);
       scrollPanel_.getElement().getStyle().setOverflowX(Overflow.HIDDEN);

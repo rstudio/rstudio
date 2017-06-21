@@ -18,7 +18,7 @@ project (SESSION)
 add_subdirectory(workers)
 
 # verify that install-dictionaries, install-mathjax, install-pandoc,
-# and install-rmarkdown have been run
+# and install-rmarkdown have been run as required
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
@@ -28,9 +28,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
-  message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
-endif()
+# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
+#   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
+# endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 endif()
@@ -463,21 +463,16 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-      # when producing a SUSE Linux Enterpise build, we want to install the 
-      # static Pandoc binaries (see dependencies/common/install-pandoc)
-      set(PANDOC_EXTENSION_DIR "/static")
-   endif()
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.19.2.1${PANDOC_EXTENSION_DIR}")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.19.2.1")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install rmarkdown package
-   file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
-   install(FILES ${RMARKDOWN_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+   # file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
+   # install(FILES ${RMARKDOWN_PACKAGE}
+   #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install rsconnect package
    file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")

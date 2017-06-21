@@ -13,7 +13,7 @@
  *
  */
 
- package org.rstudio.studio.client.workbench.prefs.model;
+package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -21,13 +21,25 @@ public class TerminalPrefs extends JavaScriptObject
 {
    protected TerminalPrefs() {}
 
-   public static final native TerminalPrefs create(int defaultShell) /*-{
+   public static final native TerminalPrefs create(int defaultShell, 
+                                                   String customShellPath,
+                                                   String customShellOptions) /*-{
       var prefs = new Object();
       prefs.default_shell = defaultShell;
+      prefs.shell_exe_path = customShellPath;
+      prefs.shell_exe_options = customShellOptions;
       return prefs;
    }-*/;
 
    public native final int getDefaultTerminalShellValue() /*-{
       return this.default_shell;
+   }-*/;
+
+   public native final String getCustomTerminalShellPath() /*-{
+      return this.shell_exe_path;
+   }-*/;
+
+   public native final String getCustomTerminalShellOptions() /*-{
+      return this.shell_exe_options;
    }-*/;
 }

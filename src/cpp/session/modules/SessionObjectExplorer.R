@@ -84,10 +84,25 @@
 .rs.addFunction("objectType", function(object)
 {
    type <- typeof(object)
+   
    if (type %in% "closure")
       type <- "function"
    else if (type %in% c("builtin", "special"))
       type <- "function (primitive)"
+   
+   dimensions <- dim(object)
+   if (!is.null(dimensions))
+   {
+      dimtext <- paste(dimensions, collapse = " x ")
+      type <- paste(type, sprintf("[%s]", dimtext))
+   }
+   else if (is.character(object) || is.numeric(object) ||
+            is.raw(object) || is.complex(object) ||
+            is.list(object) || is.environment(object))
+   {
+      type <- paste(type, sprintf("[%s]", length(object)))
+   }
+   
    type
 })
 
@@ -735,7 +750,7 @@
    else if (is.character(object))
    {
       header <- head(object, n)
-      output <- paste(.rs.surround(header, with = "\""), collapse = " ")
+      output <- paste(encodeString(header, quote = "'"), collapse = " ")
       more <- length(object) > n
    }
    else if (is.call(object))
@@ -746,6 +761,18 @@
    else if (is.symbol(object))
    {
       output <- .rs.surround(object, with = "`")
+      more <- FALSE
+   }
+   else if (is.data.frame(object))
+   {
+      fmt <- "A %s with %s rows and %s columns"
+    
+      name <- if (inherits(object, "tbl"))
+         "tibble"
+      else
+         "data.frame"
+      
+      output <- sprintf(fmt, name, nrow(object), ncol(object))
       more <- FALSE
    }
    else if (is.list(object))
@@ -779,6 +806,21 @@
             more <- FALSE
          }, error = identity)
          class(object) <- oldClass
+      }
+   }
+   else if (is.double(object))
+   {
+      if (length(object) > 1)
+      {
+         header <- head(object, n)
+         formatted <- format(header, digits = 3)
+         output <- paste(formatted, collapse = " ")
+         more <- length(object) > n
+      }
+      else
+      {
+         output <- format(object)
+         more <- FALSE
       }
    }
    else if (is.atomic(object))

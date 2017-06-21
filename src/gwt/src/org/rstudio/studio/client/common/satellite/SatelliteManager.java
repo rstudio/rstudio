@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
@@ -474,7 +475,7 @@ public class SatelliteManager implements CloseHandler<Window>
 
       // set themes
       events_.fireEventToSatellite(new ThemeChangedEvent(
-         pUIPrefs_.get().getFlatTheme().getGlobalValue()),
+         RStudioThemes.getThemeFromUiPrefs(pUIPrefs_.get())),
          satelliteWnd);
    }
    

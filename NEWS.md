@@ -55,13 +55,22 @@
 * Allow setting default chunk connection option to raw connection object
 * Added an 'Use paged tables' checkbox under chunk options popup
 
+### Git Integration
+
+* Add support for creating new Git branches and setting upstream remotes
+* Git branch list is now searchable
+* RStudio warns when attempting to commit large files (>10 MB)
+* Implemented 'ignore whitespace' option for Git Diff view
+* Wait for index.lock file to clear before performing git operations (with recovery)
+* Improve handling of paths containing special characters
+
 ### Miscellaneous
 
 * ANSI escape code support in console for colored output
-* Add support for custom, user-provided project templates
-* Add support for creating new Git branches and adding remotes
+* Add support for custom, user-provided [project templates](https://rstudio.github.io/rstudio-extensions/rstudio_project_templates.html)
 * Add support for middle-click pasting using X11 global selection (Linux Desktop only)
 * Document cursor position is now saved and restored between RStudio sessions
+* Addins are now fully searchable in dropdown toolbar menu
 * Add support for changing editor tabs with the mouse wheel
 * Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
@@ -81,7 +90,7 @@
 * Show disambiguation in overflow list when two editor tabs have the same filename
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
-* OS X: Always show project label on dock tiles
+* macOS: Always show project label on dock tiles
 * Remove 100 column limit in data viewer
 * Make columns in data viewer resizable
 * Add option to kill child processes when session exits
@@ -94,6 +103,8 @@
 * Server Pro: Upgrade to nginx 1.12.0
 * Server Pro: Add support for NFSv4 Access Control Lists in Project Sharing
 * Server Pro: Add support for user-initiated session quit and force-terminate
+* Server Pro: Add support for admin-supplied notifications in R sessions
+* Server Pro: New session-timeout-kill-hours option to expire and cleanly remove old R sessions
 
 ### Bug Fixes
 
@@ -104,6 +115,8 @@
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
+* Fixed issue where 'Copy Plot to Clipboard' from Viewer failed with macOS Sierra
+* Fixed issue where keybinding changes were not reflected in popped-out windows
 * Fix hang when replacing a misspelled word with word and punctuation
 * Fixed issue where cursor would begin blinking even when 'Blinking Cursor' preference disabled
 * Editor now responds correctly when renaming an open file using the Files pane
@@ -116,7 +129,8 @@
 * Fixed startup crashes associated with Boost regular expressions
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
-* Wait for index.lock file to clear before performing git operations (with recovery)
 * Color errors in the R console correctly when resuming a session
-* Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 * Fixed an issue in which notebook tables would not print data with lists of lists
+* Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
+* Server Pro: Fix issue with using multiple R versions feature when multi-session is off
+

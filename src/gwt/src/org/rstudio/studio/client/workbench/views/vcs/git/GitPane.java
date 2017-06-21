@@ -87,6 +87,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addRightSeparator();
       
       toolbar.addRightWidget(switchBranchToolbarButton_);
+      switchBranchToolbarButton_.setRightAlignMenu(true);
       
       toolbar.addRightSeparator();
       

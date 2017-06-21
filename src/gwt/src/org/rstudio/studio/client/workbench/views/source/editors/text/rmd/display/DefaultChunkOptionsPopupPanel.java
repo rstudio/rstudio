@@ -16,10 +16,11 @@ import java.util.Map;
 
 public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
-   public DefaultChunkOptionsPopupPanel()
+   public DefaultChunkOptionsPopupPanel(String engine)
    {
       super(true);
       
+      engine_ = engine;
       enginePanel_.setVisible(false);
    }
    
@@ -30,6 +31,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       parseChunkHeader(originalLine_, originalChunkOptions_);
       for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
          chunkOptions_.put(pair.getKey(), pair.getValue());
+
+      if (engine_ == "r") printTableAsTextCb_.setVisible(true);
+
       afterInit.execute();
    }
    
@@ -220,6 +224,5 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       while (cursor.moveToNextCharacter());
    }
    
-   
-
+   private String engine_;
 }

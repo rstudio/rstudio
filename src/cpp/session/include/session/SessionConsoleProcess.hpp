@@ -40,7 +40,7 @@ namespace console_process {
 
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
-const int kAutoFlushLength = 20;
+const size_t kAutoFlushLength = 20;
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
@@ -150,6 +150,7 @@ public:
    Input dequeInput();
    void enquePrompt(const std::string& prompt);
    void interrupt();
+   void interruptChild();
    void resize(int cols, int rows);
    void onSuspend();
    bool isStarted() const { return started_; }
@@ -193,6 +194,8 @@ public:
 
    void onReceivedInput(const std::string& input);
 
+   void setZombie();
+
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
    bool onContinue(core::system::ProcessOperations& ops);
@@ -225,6 +228,9 @@ private:
 
    // Whether the process should be stopped
    bool interrupt_;
+
+   // Whether to send pty interrupt
+   bool interruptChild_;
    
    // Whether the tty should be notified of a resize
    int newCols_; // -1 = no change

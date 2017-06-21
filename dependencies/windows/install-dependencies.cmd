@@ -20,7 +20,7 @@ set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
-set WINPTY_FILES=winpty-0.4.2-msys2-2.6.0.zip
+set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 
 set PANDOC_VERSION=1.19.2.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -92,7 +92,7 @@ if not exist winutils\1.0 (
   del "%WINUTILS_FILE%"
 )
 
-if not exist winpty-0.4.2-msys2-2.6.0 (
+if not exist winpty-0.4.3-msys2-2.7.0 (
   wget %WGET_ARGS% "%BASEURL%%WINPTY_FILES%"
   echo Unzipping %WINPTY_FILES%
   unzip %UNZIP_ARGS% "%WINPTY_FILES%"

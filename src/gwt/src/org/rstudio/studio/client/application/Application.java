@@ -620,7 +620,7 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getValue(),
+      RStudioThemes.initializeThemes(uiPrefs_.get(),
                                      Document.get(),
                                      rootPanel_.getElement());
    }
@@ -717,7 +717,7 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get().getFlatTheme().getValue(),
+      RStudioThemes.initializeThemes(uiPrefs_.get(),
                                      Document.get(),
                                      rootPanel_.getElement());
 
@@ -738,6 +738,11 @@ public class Application implements ApplicationEventHandlers
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
+
+      if (BrowseCap.isWindowsDesktop())
+      {
+         commands_.interruptTerminal().remove();
+      }
 
       if (!sessionInfo.getAllowShell())
       {
@@ -987,6 +992,7 @@ public class Application implements ApplicationEventHandlers
       commands_.previousTerminal().remove();
       commands_.nextTerminal().remove();
       commands_.showTerminalInfo().remove();
+      commands_.interruptTerminal().remove();
    }
 
    private final ApplicationView view_ ;

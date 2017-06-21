@@ -51,6 +51,10 @@ public class RmdTemplateFormatOption extends JavaScriptObject
       return this.option_transferable || false;
    }-*/;
 
+   public final native boolean isAddHeader() /*-{
+      return this.option_add_header || false;
+   }-*/;
+
    public final native boolean isNullable() /*-{
       return this.option_nullable || false;
    }-*/;

@@ -64,8 +64,13 @@ cd ../linux
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
 then
-   # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
-   # not conflict with any other installed versions of Qt on the system)
+   # required for Qt
+   sudo yum install -y libxslt-devel
+   sudo yum install -y mesa-libGL-devel
+   sudo yum install -y gstreamer-devel
+   sudo yum install -y gstreamer-plugins-base-devel
+
+   # install Qt SDK
    ./install-qt-sdk
 fi
 

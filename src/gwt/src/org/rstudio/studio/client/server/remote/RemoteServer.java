@@ -476,6 +476,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
    }
    
+   public void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, ADMIN_NOTIFICATION_ACKNOWLEDGED, id, requestCallback);
+   }
+   
    @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
@@ -500,6 +505,7 @@ public class RemoteServer implements Server
                      int sequence,
                      boolean altBufferActive,
                      String cwd,
+                     boolean zombie,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -512,6 +518,7 @@ public class RemoteServer implements Server
       params.set(6, new JSONNumber(sequence));
       params.set(7, JSONBoolean.getInstance(altBufferActive));
       params.set(8, new JSONString(StringUtil.notNull(cwd)));
+      params.set(9, JSONBoolean.getInstance(zombie));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
@@ -714,6 +721,15 @@ public class RemoteServer implements Server
    }
 
    @Override 
+   public void processInterruptChild(String handle,
+                                     ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_INTERRUPT_CHILD, params, requestCallback);   
+   }
+
+   @Override 
    public void processTestExists(String handle,
                                  ServerRequestCallback<Boolean> requestCallback)
    {
@@ -731,6 +747,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);   
    }
 
+   @Override 
+   public void processSetZombie(String handle,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_SET_ZOMBIE, params, requestCallback);   
+   }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
@@ -5185,6 +5209,7 @@ public class RemoteServer implements Server
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
+   private static final String ADMIN_NOTIFICATION_ACKNOWLEDGED = "admin_notification_acknowledged";
    private static final String GET_TERMINAL_OPTIONS = "get_terminal_options";
    private static final String GET_TERMINAL_SHELLS = "get_terminal_shells";
    private static final String START_TERMINAL = "start_terminal";
@@ -5220,6 +5245,8 @@ public class RemoteServer implements Server
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";
+   private static final String PROCESS_INTERRUPT_CHILD = "process_interrupt_child";
+   private static final String PROCESS_SET_ZOMBIE = "process_set_zombie";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

@@ -113,7 +113,10 @@ public class HistoryPane extends WorkbenchPane
          @Override
          public void execute()
          {
-            recentScrollPanel_.restoreScrollPosition();
+            if (recentScrollPanel_.hasSavedScrollPosition())
+            {
+               recentScrollPanel_.restoreScrollPosition();
+            }
          }
       });
    }
@@ -576,14 +579,20 @@ public class HistoryPane extends WorkbenchPane
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            getActiveHistory().getKeyTarget().fireEvent(event);
-         }
-      });
-      searchWidget_.addSelectionCommitHandler(new SelectionCommitHandler<String>()
-      {
-         public void onSelectionCommit(SelectionCommitEvent<String> event)
-         {
-            fireEvent(event);
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.stopPropagation();
+               event.preventDefault();
+               
+               if (event.isShiftKeyDown())
+                  commands_.historySendToSource().execute();
+               else
+                  commands_.historySendToConsole().execute();
+            }
+            else
+            {
+               getActiveHistory().getKeyTarget().fireEvent(event);
+            }
          }
       });
       searchWidget_.addFocusHandler(new FocusHandler()

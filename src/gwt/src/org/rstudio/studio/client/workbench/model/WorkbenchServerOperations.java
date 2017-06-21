@@ -119,6 +119,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void userPromptCompleted(int response, 
                             ServerRequestCallback<Void> requestCallback);
    
+   void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback);
+   
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
   
@@ -147,11 +149,12 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param sequence relative order of terminal creation (1-based)
     * @param altBufferActive terminal showing alt-buffer (full-screen ncurses)
     * @param cwd current working directory
+    * @param zombie if true, terminal buffer reloaded but no process created
     * @param requestCallback callback from server upon completion
     */
    void startTerminal(int shellType, int cols, int rows, String handle, 
                       String caption, String title, int sequence, 
-                      boolean altBufferActive, String cwd,
+                      boolean altBufferActive, String cwd, boolean zombie,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);

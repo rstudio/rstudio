@@ -58,7 +58,7 @@ private:
 
 public:
    // read options  
-   core::ProgramStatus read(int argc, char * const argv[]);   
+   core::ProgramStatus read(int argc, char * const argv[], std::ostream& osWarnings);
    virtual ~Options() {}
    
    bool runTests() const
@@ -520,7 +520,7 @@ private:
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
-   bool validateOverlayOptions(std::string* pErrMsg);
+   bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
 

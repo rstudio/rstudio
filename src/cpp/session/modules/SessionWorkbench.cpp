@@ -13,7 +13,6 @@
  *
  */
 
-
 #include "SessionWorkbench.hpp"
 
 #include <algorithm>
@@ -300,6 +299,15 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // detect if lastDotValue changed
    bool lastDotValueChanged = userSettings().showLastDotValue() != showLastDotValue;
 
+   // detect if initialWorkingDir changed
+   // we consider it changed if it has ever been written
+   // or if it has not been written and the value is different than the session default
+   bool initialWorkingDirChanged = false;
+   if (!userSettings().initialWorkingDirectory("").empty())
+      initialWorkingDirChanged = true;
+   else if (initialWorkingDir != session::options().defaultWorkingDir())
+      initialWorkingDirChanged = true;
+
    // update settings
    userSettings().beginUpdate();
    userSettings().setShowUserHomePage(showUserHomePage);
@@ -308,7 +316,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setLoadRData(loadRData);
    userSettings().setRprofileOnResume(rProfileOnResume);
    userSettings().setShowLastDotValue(showLastDotValue);
-   userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   if (initialWorkingDirChanged)
+      userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 
    // refresh environment if lastDotValueChanged
@@ -460,13 +469,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and update terminal prefs
    int defaultTerminalShell;
+   std::string customShellPath;
+   std::string customShellOptions;
    error = json::readObject(terminalPrefs,
-                            "default_shell", &defaultTerminalShell);
+                            "default_shell", &defaultTerminalShell,
+                            "shell_exe_path", &customShellPath,
+                            "shell_exe_options", &customShellOptions);
    if (error)
       return error;
    userSettings().beginUpdate();
    userSettings().setDefaultTerminalShellValue(
       static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
+   userSettings().setCustomShellCommand(customShellPath);
+   userSettings().setCustomShellOptions(customShellOptions);
    userSettings().endUpdate();
 
    // set ui prefs
@@ -590,7 +605,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                   module_context::createAliasedPath(rsaSshKeyPath);
    sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
 
-
    // get compile pdf prefs
    json::Object compilePdfPrefs;
    compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
@@ -599,6 +613,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    // get terminal prefs
    json::Object terminalPrefs;
    terminalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
+   terminalPrefs["shell_exe_path"] = userSettings().customShellCommand().absolutePath();
+   terminalPrefs["shell_exe_options"] = userSettings().customShellOptions();
 
    // initialize and set result object
    json::Object result;
@@ -870,6 +886,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    int termSequence = kNoTerminal;
    bool altBufferActive;
    std::string currentDir;
+   bool zombie;
    
    Error error = json::readParams(request.params,
                                   &shellTypeInt,
@@ -880,7 +897,8 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termTitle,
                                   &termSequence,
                                   &altBufferActive,
-                                  &currentDir);
+                                  &currentDir,
+                                  &zombie);
    if (error)
       return error;
 
@@ -912,9 +930,9 @@ Error startTerminal(const json::JsonRpcRequest& request,
          shellType, cols, rows, termSequence, cwd, &actualShellType);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
-         boost::make_shared<ConsoleProcessInfo>(
-            termCaption, termTitle, termHandle, termSequence,  actualShellType,
-            altBufferActive, cwd, cols, rows);
+         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
+            termCaption, termTitle, termHandle, termSequence, actualShellType,
+            altBufferActive, cwd, cols, rows, zombie));
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::createTerminalProcess(options, ptrProcInfo);

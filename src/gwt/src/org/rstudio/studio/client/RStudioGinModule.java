@@ -97,7 +97,6 @@ import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
-import org.rstudio.studio.client.workbench.AddinsMRUList;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -276,7 +275,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(UserCommandManager.class).in(Singleton.class);
       bind(ApplicationCommandManager.class).in(Singleton.class);
       bind(CodeSearchLauncher.class).in(Singleton.class);
-      bind(AddinsMRUList.class).asEagerSingleton();
       bind(AceEditorCommandDispatcher.class).asEagerSingleton();
       bind(DataImportPresenter.class).in(Singleton.class);
       bind(MathJaxLoader.class).asEagerSingleton();

@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -44,6 +45,9 @@ public class HelpInfoPopupPanel extends PopupPanel
       setWidget(outer) ;
       setVisible(false);
       setStylePrimaryName(RES.styles().helpPopup());
+      
+      if (RStudioThemes.usesScrollbars())
+         addStyleName("rstudio-themes-scrollbars");
       
       timer_ = new Timer() {
          public void run()

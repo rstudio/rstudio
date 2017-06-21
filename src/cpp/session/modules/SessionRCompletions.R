@@ -2150,10 +2150,6 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (i in seq_along(string))
       {
-         discardFirst <-
-            (dropFirstArgument) ||
-            (type[[i]] == .rs.acContextTypes$FUNCTION && chainObjectName != "")
-         
          completions <- .rs.appendCompletions(
             completions,
             .rs.getRCompletions(token,
@@ -2161,7 +2157,7 @@ assign(x = ".rs.acCompletionTypes",
                                 type[[i]],
                                 numCommas[[i]],
                                 functionCall,
-                                discardFirst,
+                                dropFirstArgument,
                                 documentId,
                                 envir)
          )

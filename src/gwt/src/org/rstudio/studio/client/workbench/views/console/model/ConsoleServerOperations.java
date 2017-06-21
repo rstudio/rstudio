@@ -105,4 +105,21 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processSetTitle(String handle,
                         String title,
                         ServerRequestCallback<Void> requestCallback);
+
+   /**
+    * Send SIGINT to child process of the terminal shell.
+    * @param handle
+    * @param requestCallback
+    */
+   void processInterruptChild(String handle,
+                              ServerRequestCallback<Void> requestCallback);
+
+   /**
+    * Set zombie flag on a process. Server will keep this process's metadata and 
+    * buffer around, but won't restart the process.
+    * @param handle process handle
+    * @param requestCallback
+    */
+   void processSetZombie(String handle,
+                         ServerRequestCallback<Void> requestCallback);
 }

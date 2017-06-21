@@ -498,8 +498,7 @@
    {
       ## Only closures have formals, not primitive functions.
       result <- tryCatch({
-         parsed <- suppressWarnings(parse(text = capture.output(print(object)))[[1L]])
-         names(parsed[[2]])
+        names(formals(args(object)))
       }, error = function(e) {
          character()
       })
@@ -881,9 +880,24 @@
          if (paren != -1)
             signature <- substring(signature, paren)
       }
-      return (.rs.scalar(signature))
+      return(.rs.scalar(signature))
    }
-
+   
+   # if we're getting arguments for 'write.csv', infer arguments
+   # based on 'write.table'
+   isUtils <-
+      identical(src, "package:utils") ||
+      identical(src, "utils")
+   
+   if (isUtils)
+   {
+      if (identical(name, "write.csv") ||
+          identical(name, "write.csv2"))
+      {
+         name <- "write.table"
+      }
+   }
+      
    if (identical(src, ""))
       src <- .GlobalEnv
    

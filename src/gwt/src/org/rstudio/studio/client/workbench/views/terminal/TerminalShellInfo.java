@@ -35,6 +35,7 @@ public class TerminalShellInfo extends JavaScriptObject
    // -- End Windows-only	
    
    public static final int SHELL_POSIX_BASH = 7;
+   public static final int SHELL_CUSTOM = 8;
 
    protected TerminalShellInfo() {}
 
@@ -66,9 +67,10 @@ public class TerminalShellInfo extends JavaScriptObject
          return "PowerShell (64-bit)";
       case SHELL_POSIX_BASH:
          return "Bash";
+      case SHELL_CUSTOM:
+         return "Custom";
       default:
          return "Unknown";
       }
    }
-   
 }
