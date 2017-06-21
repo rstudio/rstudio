@@ -711,6 +711,17 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract default open docs
+   it = dcfFields.find("DefaultOpenDocs");
+   if (it != dcfFields.end())
+   {
+      pConfig->defaultOpenDocs = it->second;
+   }
+   else
+   {
+      pConfig->defaultOpenDocs = "";
+   }
+
    return Success();
 }
 
@@ -899,6 +910,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format quitChildProcFmt("\nQuitChildProcessesOnExit: %1%\n");
       contents.append(boost::str(quitChildProcFmt % yesNoAskValueToString(config.quitChildProcessesOnExit)));
+   }
+
+   // add default open docs if it's present
+   if (!config.defaultOpenDocs.empty())
+   {
+      boost::format docsFmt("\nDefaultOpenDocs: %1%\n");
+      contents.append(boost::str(docsFmt % config.defaultOpenDocs));
    }
 
    // write it
