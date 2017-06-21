@@ -1,0 +1,57 @@
+pipeline {
+  agent { label 'windows' }
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '100'))
+  }
+  parameters {
+      string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version')
+      string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version')
+      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'SLACK_CHANNEL', defaultValue: '#rstudio', description: 'Slack channel to publish build message.')
+  }
+
+  stages {
+    stage('dependencies') {
+      steps {
+        bat 'cd dependencies/windows && install-dependencies.cmd && cd ../..'
+      }
+    }
+    stage('build'){
+      steps {
+        script {
+          bat 'cd package/win32 && make-package.bat clean && cd ../..'
+        }
+      }
+    }
+    stage('sign') {
+      steps {
+        script {
+          withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
+            bat '"C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1\\Bin\\signtool" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe'
+            bat '"C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1\\Bin\\signtool" verify /v /kp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe'
+          }
+        }
+      }
+    }
+    stage('upload') {
+      steps {
+        script {
+          // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+            bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.exe s3://rstudio-ide-build/desktop/windows/'
+            bat 'aws s3 cp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%.zip s3://rstudio-ide-build/desktop/windows/'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      deleteDir()
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}
