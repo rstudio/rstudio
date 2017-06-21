@@ -39,15 +39,17 @@ if(NOT WIN32)
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_VERSION 5.4.0 5.4.1 5.4.2)
-         set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_VERSION}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
+      foreach(QT_CANDIDATE 5.4.0 5.4.1 5.4.2)
+         set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
             set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+            set(QT_VERSION "${QT_CANDIDATE}")
             break()
          else()
-            set(QMAKE_QT50_SDK "$ENV{HOME}/Qt${QT_VERSION}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
+            set(QMAKE_QT50_SDK "$ENV{HOME}/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
             if(EXISTS ${QMAKE_QT50_SDK})
                set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+               set(QT_VERSION "${QT_CANDIDATE}")
                break()
             endif()
          endif()
@@ -460,11 +462,11 @@ if(RSTUDIO_BUNDLE_QT)
       # install dependent libraries
       set(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib")
       set(QT_FULL_VERSION ${QT_VERSION})
-      set(SO_VERSION 53)
+      set(SO_VERSION "53")
 
       # use newer system library versions for Qt > 5.4.1
       if(QT_VERSION VERSION_GREATER 5.4.1)
-         set(SO_VERSION 55)
+         set(SO_VERSION "55")
       endif()
 
       install(PROGRAMS ${QT_LIBRARY_DIR}/libQt5Core.so.5
