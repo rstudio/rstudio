@@ -3,50 +3,80 @@
    invisible(.rs.restartR(command))
 })
 
-#' Facilities for creating / opening a project in RStudio.
-#'
-#' @param path Either the path to an \code{.Rproj} file, or the
-#'   directory in which the project should be initialized.
-#' @param newSession Should this project be opened in a new session?
-.rs.addApiFunction("openProject", function(path = NULL,
-                                           newSession = FALSE)
+.rs.addApiFunction("initializeProject", function(path = getwd())
 {
-   # when the path is not provided, we default to the current project
-   # (interpret this as a request to reload the active project)
-   if (is.null(path))
-      path <- .rs.getProjectDirectory()
+   path <- .rs.ensureScalarCharacter(path)
    
-   # normalize path
-   path <- normalizePath(path, mustWork = TRUE)
-   
-   # check if the user has provided us with a directory
-   if (utils::file_test("-d", path)) {
+   # if this is an existing file ...
+   if (file.exists(path))
+   {
+      # ... and it's an .Rproj file, then just return that (don't 
+      # re-initialize the project)
+      if (grepl("[.]Rproj$", path))
+         return(.rs.normalizePath(path, winslash = "/"))
       
-      # check for a .Rproj file in this directory. note that the
-      # .Rproj file may not match the directory name
-      files <- list.files(path, full.names = TRUE)
-      rprojFiles <- grep("[.]Rproj$", files, value = TRUE)
-      
-      if (length(rprojFiles)) {
-         # we have an existing .Rproj file; use that 
-         path <- rprojFiles[1]
-      } else {
-         # no existing .Rproj file; initialize the project
-         rProjPath <- file.path(path, paste(basename(path), "Rproj", sep = "."))
-         .Call("rs_writeProjectFile", rProjPath, PACKAGE = "(embedding)")
-         path <- rProjPath
+      # ... and it's not a directory, bail
+      if (!utils::file_test("-d", path))
+      {
+         fmt <- "can't create project at path '%s'"
+         stop(sprintf(fmt, .rs.createAliasedPath(path)))
       }
    }
    
-   # verify that we have the path of an existing .Rproj file
-   pathAliased <- .rs.createAliasedPath(path)
-   if (!file.exists(path))
-      stop("file '", pathAliased, "' does not exist")
+   # otherwise, assume we've received the path to a directory, and
+   # attempt to initialize a project within that directory
+   .rs.ensureDirectory(path)
    
-   # form server request
+   # check to see if a .Rproj file already exists in that directory;
+   # if so, then we don't need to re-initialize
+   rProjFiles <- list.files(path, 
+                            pattern = "[.]Rproj$",
+                            full.names = TRUE)
+   
+   # if we already have a .Rproj file, just return that
+   if (length(rProjFiles))
+      return(.rs.normalizePath(rProjFiles[[1]], winslash = "/"))
+   
+   # otherwise, attempt to create a new .Rproj file, and return
+   # the path to the generated file
+   rProjFile <- file.path(
+      normalizePath(path, mustWork = TRUE, winslash = "/"),
+      paste(basename(path), "Rproj", sep = ".")
+   )
+   
+   success <- .Call(
+      "rs_writeProjectFile",
+      rProjFile,
+      PACKAGE = "(embedding)"
+   )
+   
+   if (!success)
+   {
+      fmt <- "failed to initialize RStudio project in directory '%s'"
+      stop(sprintf(fmt, .rs.createAliasedPath(path)))
+   }
+   
+   return(rProjFile)
+   
+})
+
+.rs.addApiFunction("openProject", function(path = NULL,
+                                           newSession = FALSE)
+{
+   # default to current project directory (note that this can be
+   # NULL if the user is not within an RStudio project)
+   if (is.null(path))
+     path <- .rs.getProjectDirectory()
+   
+   path <- .rs.ensureScalarCharacter(path)
+   
+   # attempt to initialize project if necessary
+   rProjFile <- .rs.api.initializeProject(path)
+   
+   # request that we open this project
    invisible(
       .Call("rs_requestOpenProject",
-            pathAliased,
+            rProjFile,
             newSession,
             PACKAGE = "(embedding)")
    )
