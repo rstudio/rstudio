@@ -176,6 +176,9 @@ extern const int kCreateNamedTerminal;
 extern const int kActivateTerminal;
 extern const int kTerminalCwd;
 extern const int kAdminNotification;
+extern const int kRequestDocumentSave;
+extern const int kRequestDocumentSaveCompleted;
+extern const int kRequestOpenProject;
 }
    
 class ClientEvent

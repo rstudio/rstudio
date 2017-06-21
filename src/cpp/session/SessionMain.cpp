@@ -1510,7 +1510,7 @@ bool ensureUtf8Charset()
 
 // run session
 int main (int argc, char * const argv[]) 
-{ 
+{
    try
    {      
       // initialize log so we capture all errors including ones which occur
@@ -1708,6 +1708,8 @@ int main (int argc, char * const argv[])
                   FilePath firstProjPath = options.userHomePath().childPath(templatePath.filename()).childPath(templatePath.filename() + ".Rproj");
                   if (firstProjPath.exists())
                      firstProjectPath = firstProjPath.absolutePath();
+                  else
+                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.absolutePath() + ". Please ensure the template contains an Rproj file.");
                }
             }
          }

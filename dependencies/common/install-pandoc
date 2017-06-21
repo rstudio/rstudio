@@ -20,111 +20,63 @@ set -e
 source rstudio-tools
 
 # variables that control download + installation process
-PANDOC_URL_BASE=https://s3.amazonaws.com/rstudio-buildtools/pandoc/1.19.2.1
-PANDOC_VERSION=1.19.2.1-1
-PANDOC_VERSION_MACOS=1.19.2.1
-PANDOC_CITEPROC_VERSION=0.10.4-1
-PANDOC_CITEPROC_VERSION_MACOS=0.10.4
+PANDOC_VERSION="1.19.2.1"
+PANDOC_CITEPROC_VERSION="0.10.4"
+PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
+PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 
-if is-darwin; then
-  PANDOC_DIR="pandoc/${PANDOC_VERSION_MACOS}"
-else
-  PANDOC_DIR="pandoc/${PANDOC_VERSION}"
-fi
+# enter pandoc subdirectory
+mkdir -p "${PANDOC_SUBDIR}"
+pushd "${PANDOC_SUBDIR}"
 
-# remove patch version from pandoc directory (just for
-# ease-of-use with CMake installer scripts)
-PANDOC_DIR="$(echo "${PANDOC_DIR}" | cut -d"-" -f1)"
+# determine sub-directory based on platform
+PLATFORM="$(uname)-$(getconf LONG_BIT)"
+case "${PLATFORM}" in
 
-# exit early if pandoc already downloaded and installed
-if [ -d "${PANDOC_DIR}" ]; then
-  echo "Pandoc ${PANDOC_VERSION} already installed"
+"Darwin-64")
+  SUBDIR="macos"
+  FILES=(
+    "pandoc-${PANDOC_VERSION}.zip"
+    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.zip"
+  )
+  ;;
+
+"Linux-64")
+  SUBDIR="linux-64"
+  FILES=(
+    "pandoc.gz"
+    "pandoc-citeproc.gz"
+  )
+  ;;
+
+*)
+  echo "Pandoc binaries not available for platform '${PLATFORM}'."
   exit 0
-fi
-
-# construct download URL based on platform
-case "$(platform)" in
-
-  "centos")
-    CENTOS_VERSION="$(cat /etc/redhat-release | grep -oE '[0-9]+\.[0-9]+')"
-    CENTOS_VERSION_MAJOR="$(echo "${CENTOS_VERSION}" | cut -d"." -f1)"
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/centos${CENTOS_VERSION_MAJOR}"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
-  ;;
-
-  "opensuse")
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/opensuse-tumbleweed"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION}.x86_64.rpm"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.x86_64.rpm"
-  ;;
-
-  "ubuntu")
-    UBUNTU_VERSION="$(. /etc/os-release; echo "${VERSION_ID}")"
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/ubuntu-${UBUNTU_VERSION}/amd64"
-    PANDOC_FILE="pandoc_${PANDOC_VERSION}_amd64.deb"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc_${PANDOC_CITEPROC_VERSION}_amd64.deb"
-  ;;
-
-  "darwin")
-    PANDOC_URL_ARCH="${PANDOC_URL_BASE}/macos"
-    PANDOC_FILE="pandoc-${PANDOC_VERSION_MACOS}.zip"
-    PANDOC_CITEPROC_FILE="pandoc-citeproc-${PANDOC_CITEPROC_VERSION_MACOS}.zip"
-  ;;
-
-  *)
-    echo "Unrecognized platform $(platform); exiting now"
-    exit 1
-
-esac
-
-# construct pandoc download URLs
-PANDOC_URL="${PANDOC_URL_ARCH}/${PANDOC_FILE}"
-PANDOC_CITEPROC_URL="${PANDOC_URL_ARCH}/${PANDOC_CITEPROC_FILE}"
-
-# enter pandoc directory
-mkdir -p "${PANDOC_DIR}"
-pushd "${PANDOC_DIR}"
-
-# download pandoc
-download "${PANDOC_URL}"
-download "${PANDOC_CITEPROC_URL}"
-
-# extract pandoc (delegate based on extension)
-case "${PANDOC_FILE}" in
-  *.rpm)
-
-    rpm2cpio "${PANDOC_FILE}" | cpio -idmv
-    rpm2cpio "${PANDOC_CITEPROC_FILE}" | cpio -idmv
-    cp usr/bin/pandoc .
-    cp usr/bin/pandoc-citeproc .
-    rm -rf usr
-  ;;
-
-  *.deb)
-
-    dpkg -x "${PANDOC_FILE}" .
-    dpkg -x "${PANDOC_CITEPROC_FILE}" .
-    cp usr/bin/pandoc .
-    cp usr/bin/pandoc-citeproc .
-    rm -rf usr
-  ;;
-
-  *.zip)
-    unzip -o "${PANDOC_FILE}"
-    unzip -o "${PANDOC_CITEPROC_FILE}"
-  ;;
-
-  *)
-    echo "Unrecognized download file format ${PANDOC_FILE}"
-    exit 1
   ;;
 
 esac
 
-# clean up downloaded archives
-rm "${PANDOC_FILE}"
-rm "${PANDOC_CITEPROC_FILE}"
+# enter sub-directory
+mkdir -p "${SUBDIR}"
+pushd "${SUBDIR}"
 
-# return home
+# download and extract files
+for FILE in "${FILES[@]}"; do
+  download "${PANDOC_URL_BASE}/${SUBDIR}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+done
+
+# copy pandoc binaries to parent folder
+cp pandoc* ..
 popd
+
+# remove transient download folder
+rm -rf "${SUBDIR}"
+
+# make pandoc executable
+chmod 755 pandoc*
+
+# and we're done!
+popd
+

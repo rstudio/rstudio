@@ -15,6 +15,8 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/Exec.hpp>
@@ -742,10 +744,11 @@ void startup(const std::string& firstProjectPath)
 
    // if we have a project file path then try to initialize the
    // project context (show a warning to the user if we can't)
+   bool isNewProject = false;
    if (!projectFilePath.empty())
    {
       std::string userErrMsg;
-      Error error = s_projectContext.startup(projectFilePath, &userErrMsg);
+      Error error = s_projectContext.startup(projectFilePath, &userErrMsg, &isNewProject);
       if (error)
       {
          // log the error
@@ -760,6 +763,26 @@ void startup(const std::string& firstProjectPath)
          openProjError["message"] = userErrMsg;
          ClientEvent event(client_events::kOpenProjectError, openProjError);
          module_context::enqueClientEvent(event);
+      }
+   }
+
+   // add default open docs if specified in the project
+   // and the project has never been opened before
+   std::string defaultOpenDocs = projectContext().config().defaultOpenDocs;
+   if (!defaultOpenDocs.empty() && isNewProject)
+   {
+      std::vector<std::string> docs;
+      boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
+
+      BOOST_FOREACH(std::string& doc, docs)
+      {
+         boost::algorithm::trim(doc);
+
+         FilePath docPath = projectContext().directory().complete(doc);
+         if (docPath.exists())
+         {
+            addFirstRunDoc(projectFilePath, doc);
+         }
       }
    }
 }
@@ -798,17 +821,35 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
    return R_NilValue;
 }
 
+SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
+{
+   std::string projectFile = r::sexp::asString(projectFileSEXP);
+   bool newSession = r::sexp::asLogical(newSessionSEXP);
+   
+   // opening projects in a new session is only supported in desktop, RSP
+   if (newSession &&
+       options().programMode() == kSessionProgramModeServer &&
+       !options().multiSession())
+   {
+      newSession = false;
+   }
+   
+   json::Object data;
+   data["project_file"] = projectFile;
+   data["new_session"] = newSession;
+   
+   ClientEvent event(client_events::kRequestOpenProject, data);
+   module_context::enqueClientEvent(event);
+   
+   return R_NilValue;
+}
+
 Error initialize()
 {
-   r::routines::registerCallMethod(
-            "rs_writeProjectFile",
-            (DL_FUNC) rs_writeProjectFile,
-            1);
-   
-   r::routines::registerCallMethod(
-            "rs_addFirstRunDoc",
-            (DL_FUNC) rs_addFirstRunDoc,
-            2);
+   // register R methods
+   RS_REGISTER_CALL_METHOD(rs_writeProjectFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc, 2);
+   RS_REGISTER_CALL_METHOD(rs_requestOpenProject, 2);
    
    // call project-context initialize
    Error error = s_projectContext.initialize();

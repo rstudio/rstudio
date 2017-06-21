@@ -156,7 +156,7 @@ public class NotebookHtmlRenderer
                                        final String outputPath)
    {
       dependencyManager_.withUnsatisfiedDependencies(
-            Dependency.embeddedPackage("rmarkdown"),
+            Dependency.cranPackage("rmarkdown", "1.6"),
             new ServerRequestCallback<JsArray<Dependency>>()
             {
                @Override
