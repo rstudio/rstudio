@@ -1427,7 +1427,7 @@ void printCoreDumpable(const std::string& context)
    ostr << "Core Dumpable (" << context << ")" << std::endl;
 
    // ulimit
-   RLimitType rLimitSoft, rLimitHard;
+   RLimitType rLimitSoft = 0, rLimitHard = 0;
    Error error = getResourceLimit(core::system::CoreLimit,
                                   &rLimitSoft, &rLimitHard);
    if (error)
