@@ -40,8 +40,15 @@ const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
 const ChannelMode channelMode = Rpc;
 const std::string channelId("some channel Id");
 const bool altActive = false;
+
+#ifdef _WIN32
+const core::FilePath cwd("C:\\windows\\temp");
+const core::FilePath altCwd("C:\\windows\\system32");
+#else
 const core::FilePath cwd("/usr/local");
 const core::FilePath altCwd("/usr/stuff");
+#endif
+
 const int cols = core::system::kDefaultCols;
 const int rows = core::system::kDefaultRows;
 const bool restarted = false;

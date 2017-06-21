@@ -1,3 +1,7 @@
+.rs.addApiFunction("restartSession", function(command = NULL) {
+   command <- as.character(command)
+   invisible(.rs.restartR(command))
+})
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
