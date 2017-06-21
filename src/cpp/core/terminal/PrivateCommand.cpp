@@ -59,8 +59,8 @@ PrivateCommand::PrivateCommand(const std::string& command,
      firstEOM_(std::string::npos),
      outputStart_(std::string::npos)
 {
-   outputBOM_ = core::system::generateUuid(false);
-   outputEOM_ = core::system::generateUuid(true);
+   outputBOM_ = core::system::generateShortenedUuid();
+   outputEOM_ = core::system::generateShortenedUuid();
 
    std::string commandBefore_ = "echo ";
    commandBefore_ += outputBOM_;
@@ -75,7 +75,12 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
    boost::posix_time::ptime currentTime = now();
    if (privateCommandLoop_)
    {
-      // try to prevent private command from getting stuck
+      if (!output_.empty())
+      {
+         privateCommandLoop_ = false;
+         return false; // all done
+      }
+
       if (currentTime - lastPrivateCommand_ > privateCommandTimeout_)
       {
          terminateCapture();
@@ -83,7 +88,7 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
          return false;
       }
 
-      return true;
+      return true; // still waiting for output
    }
    else
    {
@@ -191,7 +196,7 @@ bool PrivateCommand::output(const std::string& output)
    // find the start of output
    if (outputStart_ == std::string::npos)
    {
-      std::string bomLine = outputBOM_ + "\n";
+      std::string bomLine = outputBOM_ + "\r\n";
       outputStart_ = privateCommandOutput_.find(bomLine, firstEOM_);
       if (outputStart_ == std::string::npos)
       {
@@ -201,7 +206,7 @@ bool PrivateCommand::output(const std::string& output)
    }
 
    // find the end of output
-   std::string eomLine = outputEOM_ + "\n";
+   std::string eomLine = outputEOM_ + "\r\n";
    size_t outputEnd = privateCommandOutput_.find(eomLine, outputStart_);
    if (outputEnd == std::string::npos)
    {
@@ -209,10 +214,10 @@ bool PrivateCommand::output(const std::string& output)
    }
 
    // extract the command output
-   privateCommandOutput_ = privateCommandOutput_.substr(outputStart_, outputEnd - outputStart_);
+   output_ = privateCommandOutput_.substr(outputStart_, outputEnd - outputStart_);
 
-   completeCapture();
-   return false;
+   resetParse();
+   return true;
 }
 
 std::string PrivateCommand::getPrivateOutput()
@@ -220,23 +225,24 @@ std::string PrivateCommand::getPrivateOutput()
    if (hasCaptured()) // still in-process
       return "";
 
-   std::string result = privateCommandOutput_;
-   privateCommandOutput_.clear();
+   std::string result = output_;
+   output_.clear();
    return result;
 }
 
-void PrivateCommand::completeCapture()
+void PrivateCommand::resetParse()
 {
-   privateCommandLoop_ = false;
    firstBOM_ = std::string::npos;
    firstEOM_ = std::string::npos;
    outputStart_ = std::string::npos;
+   privateCommandOutput_.clear();
 }
 
 void PrivateCommand::terminateCapture()
 {
-   completeCapture();
-   privateCommandOutput_.clear();
+   resetParse();
+   privateCommandLoop_ = false;
+   output_.clear();
 }
 
 } // namespace terminal

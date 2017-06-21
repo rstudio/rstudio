@@ -82,7 +82,7 @@ public:
    std::string getEOM() const { return outputEOM_; }
 
 private:
-   void completeCapture();
+   void resetParse();
 
 private:
    std::string command_;
@@ -109,8 +109,11 @@ private:
    std::string commandAfter_;
    std::string fullCommand_;
 
-   // Text output by the private command
+   // Raw text output by the private command
    std::string privateCommandOutput_;
+
+   // Processed text from the private command, only available once complete
+   std::string output_;
 
    // minimum delay between private command executions
    boost::posix_time::milliseconds privateCommandDelay_;

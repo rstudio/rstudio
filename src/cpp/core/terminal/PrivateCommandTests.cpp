@@ -106,7 +106,7 @@ context("Private Terminal Command Tests")
       // mimic shell echoing back the command
       cmd.output(cmd.getFullCommand());
       cmd.output(cmd.getBOM());
-      cmd.output("\n");
+      cmd.output("\r\n");
       cmd.output(results);
 
       // verify we can't get results until EOM is seen
@@ -114,12 +114,9 @@ context("Private Terminal Command Tests")
 
       // close off the output
       cmd.output(cmd.getEOM());
-      cmd.output("\n");
+      cmd.output("\r\n");
 
-      // capture should now be done
-      expect_false(cmd.hasCaptured());
-
-      // trying to capture again should fail (not enough time has gone by)
+      // trying to capture now should return false, meaning we can get the output
       expect_false(cmd.onTryCapture(ops, kNoChildProcess));
 
       // verify the captured output
