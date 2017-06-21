@@ -1909,3 +1909,17 @@
    setdiff(slots, "class")
  
 })
+
+.rs.addFunction("deparse", function(object)
+{
+   paste(deparse(object, width.cutoff = 500L), collapse = " ")
+})
+
+.rs.addFunction("ensureScalarCharacter", function(object)
+{
+   if (is.character(object) && length(object) == 1)
+      return(object)
+   
+   fmt <- "'%s' is not a length-one character vector"
+   stop(sprintf(fmt, .rs.deparse(substitute(object))), call. = FALSE)
+})
