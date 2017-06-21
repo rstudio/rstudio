@@ -932,7 +932,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
 
    TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence, cwd, &actualShellType);
+         shellType, cols, rows, termSequence, cwd, trackEnv, termHandle, &actualShellType);
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(

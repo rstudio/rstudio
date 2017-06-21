@@ -130,6 +130,8 @@ public:
          int cols, int rows,
          int termSequence,
          core::FilePath workingDir,
+         bool trackEnv,
+         const std::string& handle,
          TerminalShell::TerminalShellType *pSelectedShellType);
 
    virtual ~ConsoleProcess() {}
@@ -160,6 +162,7 @@ public:
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile(bool lastLineOnly = false) const;
+   void deleteEnvFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
    bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
    bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
@@ -218,6 +221,9 @@ private:
    ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks();
    void onConnectionOpened();
    void onConnectionClosed();
+
+   void saveEnvironment(const std::string& env);
+   static void loadEnvironment(const std::string& handle, core::system::Options* pEnv);
 
 private:
    // Command and options that will be used when start() is called

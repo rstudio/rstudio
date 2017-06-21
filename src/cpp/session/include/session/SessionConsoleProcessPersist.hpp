@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include <core/system/Types.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -54,6 +56,15 @@ void deleteLogFile(const std::string& handle, bool lastLineOnly = false);
 // Clean up ConsoleProcess buffer cache
 // Takes a function to see if a given handle represents a known process.
 void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
+
+// Save the environment for a given terminal handle.
+void saveConsoleEnvironment(const std::string& handle, const std::string& env);
+
+// Load environment variables for a given terminal handle
+void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv);
+
+// Delete the persisted environment for the given ConsoleProcess
+void deleteEnvFile(const std::string& handle);
 
 } // namespace console_persist
 } // namespace console_process

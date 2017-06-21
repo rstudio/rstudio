@@ -20,6 +20,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
+#include <core/system/Types.hpp>
 
 #include <session/SessionTerminalShell.hpp>
 
@@ -129,6 +130,8 @@ public:
    std::string getFullSavedBuffer() const;
    int getBufferLineCount() const;
    void deleteLogFile(bool lastLineOnly = false) const;
+   void deleteEnvFile() const;
+   void saveConsoleEnvironment(const std::string& env);
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
@@ -190,6 +193,7 @@ public:
    static std::string loadConsoleProcessMetadata();
    static void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
    static void saveConsoleProcesses(const std::string& metadata);
+   static void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv);
 
 private:
    std::string caption_;

@@ -177,6 +177,11 @@ void ConsoleProcessInfo::deleteLogFile(bool lastLineOnly) const
    console_persist::deleteLogFile(handle_, lastLineOnly);
 }
 
+void ConsoleProcessInfo::deleteEnvFile() const
+{
+   console_persist::deleteEnvFile(handle_);
+}
+
 core::json::Object ConsoleProcessInfo::toJson() const
 {
    json::Object result;
@@ -285,6 +290,16 @@ void ConsoleProcessInfo::deleteOrphanedLogs(bool (*validHandle)(const std::strin
 void ConsoleProcessInfo::saveConsoleProcesses(const std::string& metadata)
 {
    console_persist::saveConsoleProcesses(metadata);
+}
+
+void ConsoleProcessInfo::saveConsoleEnvironment(const std::string& env)
+{
+   console_persist::saveConsoleEnvironment(handle_, env);
+}
+
+void ConsoleProcessInfo::loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   console_persist::loadConsoleEnvironment(handle, pEnv);
 }
 
 } // namespace console_process_info

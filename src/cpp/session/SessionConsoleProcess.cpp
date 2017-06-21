@@ -48,11 +48,19 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       TerminalShell::TerminalShellType desiredShellType,
       int cols, int rows, int termSequence,
       FilePath workingDir,
+      bool trackEnv,
+      const std::string& handle,
       TerminalShell::TerminalShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
-   core::system::environment(&shellEnv);
+   if (trackEnv)
+   {
+      loadEnvironment(handle, &shellEnv);
+   }
+
+   if (shellEnv.empty())
+      core::system::environment(&shellEnv);
 
    *pSelectedShellType = desiredShellType;
 
@@ -420,8 +428,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
          return true;
 
-      // TODO (gary) process and persist the environment
-      std::string env = envCaptureCmd_.getPrivateOutput();
+      saveEnvironment(envCaptureCmd_.getPrivateOutput());
    }
 
    // For RPC-based communication, this is where input is always dispatched; for websocket
@@ -514,6 +521,11 @@ void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
 void ConsoleProcess::deleteLogFile(bool lastLineOnly) const
 {
    procInfo_->deleteLogFile(lastLineOnly);
+}
+
+void ConsoleProcess::deleteEnvFile() const
+{
+   procInfo_->deleteEnvFile();
 }
 
 std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable) const
@@ -885,6 +897,8 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
             proc->procInfo_->getCols(), proc->procInfo_->getRows(),
             proc->procInfo_->getTerminalSequence(),
             proc->procInfo_->getCwd(),
+            proc->procInfo_->getTrackEnv(),
+            proc->procInfo_->getHandle(),
             &actualShellType);
    proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);
@@ -925,6 +939,21 @@ void ConsoleProcess::onConnectionClosed()
 // websocket connection opened; called on different thread
 void ConsoleProcess::onConnectionOpened()
 {
+}
+
+void ConsoleProcess::saveEnvironment(const std::string& env)
+{
+   // Input should be output of /usr/bin/env, or empty.
+   if (env.empty())
+      return;
+
+   // TODO (gary) validation
+   procInfo_->saveConsoleEnvironment(env);
+}
+
+void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   ConsoleProcessInfo::loadConsoleEnvironment(handle, pEnv);
 }
 
 std::string ConsoleProcess::getShellName() const

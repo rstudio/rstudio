@@ -56,6 +56,7 @@ namespace {
 FilePath s_consoleProcPath;
 FilePath s_consoleProcIndexPath;
 bool s_inited = false;
+const std::string s_envFileExt = ".env";
 
 void initialize()
 {
@@ -87,6 +88,7 @@ const FilePath& getConsoleProcIndexPath()
 
 Error getLogFilePath(const std::string& handle, FilePath* pFile)
 {
+   initialize();
    Error error = getConsoleProcPath().ensureDirectory();
    if (error)
    {
@@ -94,6 +96,21 @@ Error getLogFilePath(const std::string& handle, FilePath* pFile)
    }
 
    *pFile = getConsoleProcPath().complete(handle);
+   return Success();
+}
+
+Error getEnvFilePath(const std::string& handle, FilePath* pFile)
+{
+   initialize();
+   Error error = getConsoleProcPath().ensureDirectory();
+   if (error)
+   {
+      return error;
+   }
+
+   std::string envHandle = handle;
+   envHandle.append(s_envFileExt);
+   *pFile = getConsoleProcPath().complete(envHandle);
    return Success();
 }
 
@@ -268,6 +285,48 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
          if (error)
             LOG_ERROR(error);
       }
+   }
+}
+
+void saveConsoleEnvironment(const std::string& handle, const std::string& env)
+{
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   error = rstudio::core::writeStringToFile(log, env);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+}
+
+void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   // TODO (gary)
+}
+
+void deleteEnvFile(const std::string& handle)
+{
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (!log.exists())
+      return;
+
+   error = log.removeIfExists();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
    }
 }
 
