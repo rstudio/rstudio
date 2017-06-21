@@ -94,6 +94,7 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
       {
          // We don't start a private command if something is being typed, or a command has never
          // been run.
+         lastPrivateCommand_ = currentTime;
          return false;
       }
 
