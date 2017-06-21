@@ -39,11 +39,11 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.Source.EditingTargetPredicate;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -261,7 +261,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       sourceShim_.saveWithPrompt(item, onCompleted, null);
    }
    
-   private void saveUnsavedDocuments(EditingTargetPredicate predicate,
+   private void saveUnsavedDocuments(EditingTargetSavePredicate predicate,
                                      Command onCompleted)
    {
       sourceShim_.saveUnsavedDocuments(predicate, onCompleted);

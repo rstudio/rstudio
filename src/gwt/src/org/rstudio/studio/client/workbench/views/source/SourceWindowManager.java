@@ -52,8 +52,8 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.source.Source.EditingTargetPredicate;
 import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -357,7 +357,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
    }
    
-   public void saveUnsavedDocuments(final EditingTargetPredicate predicate,
+   public void saveUnsavedDocuments(final EditingTargetSavePredicate predicate,
                                     final Command onCompleted)
    {
       doForAllSourceWindows(new SourceWindowCommand()
@@ -948,7 +948,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }-*/;
 
    private final native void saveUnsavedDocuments(WindowEx satellite,
-                                                  EditingTargetPredicate predicate,
+                                                  EditingTargetSavePredicate predicate,
                                                   Command onCompleted)
    /*-{
       satellite.rstudioSaveUnsavedDocuments(predicate, onCompleted);

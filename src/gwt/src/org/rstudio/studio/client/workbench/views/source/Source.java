@@ -150,6 +150,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
+import org.rstudio.studio.client.workbench.views.source.model.EditingTargetSavePredicate;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
@@ -2284,11 +2285,6 @@ public class Source implements InsertSourceHandler,
       
    }
   
-   public interface EditingTargetPredicate
-   {
-      public boolean accept(EditingTarget target, int type);
-   }
-   
    private boolean isUnsavedTarget(EditingTarget target, int type)
    {
       boolean fileBacked = target.getPath() != null;
@@ -2303,11 +2299,11 @@ public class Source implements InsertSourceHandler,
    }
    
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type,
-                                                            EditingTargetPredicate predicate)
+                                                            EditingTargetSavePredicate predicate)
    {
       if (predicate == null)
       {
-         predicate = new EditingTargetPredicate()
+         predicate = new EditingTargetSavePredicate()
          {
             @Override
             public boolean accept(EditingTarget target, int type)
@@ -2339,7 +2335,7 @@ public class Source implements InsertSourceHandler,
       saveUnsavedDocuments(null, onCompleted);
    }
    
-   public void saveUnsavedDocuments(final EditingTargetPredicate predicate,
+   public void saveUnsavedDocuments(final EditingTargetSavePredicate predicate,
                                     final Command onCompleted)
    {
       Command saveAllLocal = new Command()
@@ -4311,7 +4307,8 @@ public class Source implements InsertSourceHandler,
          for (String id : JsUtil.asIterable(ids))
             idSet.add(id);
          
-         final EditingTargetPredicate predicate = new EditingTargetPredicate()
+         final EditingTargetSavePredicate predicate =
+               new EditingTargetSavePredicate()
          {
             @Override
             public boolean accept(EditingTarget target, int type)
