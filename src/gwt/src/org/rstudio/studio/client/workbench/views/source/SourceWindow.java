@@ -246,7 +246,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       });
       
       $wnd.rstudioSaveUnsavedDocuments = $entry(function(predicate, onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveUnsavedDocuments(Lorg/rstudio/studio/client/workbench/views/source/Source$EditingTargetPredicate;Lcom/google/gwt/user/client/Command;)(predicate, onCompleted);
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveUnsavedDocuments(Lorg/rstudio/studio/client/workbench/views/source/model/EditingTargetSavePredicate;Lcom/google/gwt/user/client/Command;)(predicate, onCompleted);
       });
       
       $wnd.rstudioReadyToClose = false;
