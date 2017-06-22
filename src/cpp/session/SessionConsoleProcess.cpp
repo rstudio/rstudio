@@ -441,12 +441,9 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       // to deal with input built-up during a privateCommandLoop.
       processQueuedInput(ops);
 
-      if (procInfo_->getChannelMode() == Websocket)
-      {
-         // capture weak reference to the callbacks so websocket callback
-         // can use them
-         pOps_ = ops.weak_from_this();
-      }
+      // capture weak reference to the callbacks so websocket callback
+      // can use them
+      pOps_ = ops.weak_from_this();
    }
    END_LOCK_MUTEX
 
@@ -955,7 +952,6 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
       size_t equalSign = line.find_first_of('=');
       if (equalSign == std::string::npos)
       {
-         LOG_ERROR_MESSAGE("Malformed terminal environment ignored");
          return;
       }
 
@@ -969,7 +965,6 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
    }
    if (environment.empty())
    {
-      LOG_ERROR_MESSAGE("Ignoring empty environment");
       return;
    }
 
