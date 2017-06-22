@@ -131,7 +131,7 @@ public:
    int getBufferLineCount() const;
    void deleteLogFile(bool lastLineOnly = false) const;
    void deleteEnvFile() const;
-   void saveConsoleEnvironment(const std::string& env);
+   void saveConsoleEnvironment(const core::system::Options& environment);
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);

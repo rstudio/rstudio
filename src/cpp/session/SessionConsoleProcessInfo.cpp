@@ -292,9 +292,9 @@ void ConsoleProcessInfo::saveConsoleProcesses(const std::string& metadata)
    console_persist::saveConsoleProcesses(metadata);
 }
 
-void ConsoleProcessInfo::saveConsoleEnvironment(const std::string& env)
+void ConsoleProcessInfo::saveConsoleEnvironment(const core::system::Options& environment)
 {
-   console_persist::saveConsoleEnvironment(handle_, env);
+   console_persist::saveConsoleEnvironment(handle_, environment);
 }
 
 void ConsoleProcessInfo::loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)

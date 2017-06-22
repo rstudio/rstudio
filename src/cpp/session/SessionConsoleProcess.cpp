@@ -13,6 +13,8 @@
  *
  */
 
+#include <sstream>
+
 #include <session/SessionConsoleProcess.hpp>
 
 #include <core/Algorithm.hpp>
@@ -943,12 +945,38 @@ void ConsoleProcess::onConnectionOpened()
 
 void ConsoleProcess::saveEnvironment(const std::string& env)
 {
-   // Input should be output of /usr/bin/env, or empty.
    if (env.empty())
       return;
 
-   // TODO (gary) validation
-   procInfo_->saveConsoleEnvironment(env);
+   std::string normalized = env;
+   string_utils::convertLineEndings(&normalized, string_utils::LineEndingNative);
+
+   core::system::Options environment;
+   std::istringstream iss(normalized);
+   for (std::string line; std::getline(iss, line); )
+   {
+      size_t equalSign = line.find_first_of('=');
+      if (equalSign == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("Malformed terminal environment ignored");
+         return;
+      }
+
+      std::string varName = line.substr(0, equalSign);
+      if (!varName.compare("_"))
+         continue;
+
+      core::system::setenv(&environment,
+                           line.substr(0, equalSign),
+                           line.substr(equalSign + 1));
+   }
+   if (environment.empty())
+   {
+      LOG_ERROR_MESSAGE("Ignoring empty environment");
+      return;
+   }
+
+   procInfo_->saveConsoleEnvironment(environment);
 }
 
 void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Options* pEnv)

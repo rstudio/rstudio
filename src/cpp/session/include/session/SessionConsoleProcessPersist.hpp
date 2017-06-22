@@ -58,7 +58,7 @@ void deleteLogFile(const std::string& handle, bool lastLineOnly = false);
 void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
 
 // Save the environment for a given terminal handle.
-void saveConsoleEnvironment(const std::string& handle, const std::string& env);
+void saveConsoleEnvironment(const std::string& handle, const core::system::Options& environment);
 
 // Load environment variables for a given terminal handle
 void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv);

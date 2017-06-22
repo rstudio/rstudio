@@ -53,9 +53,9 @@ class PrivateCommand : boost::noncopyable
 public:
    PrivateCommand(
          const std::string& command,
-         int privateCommandDelayMs = 3000, // min delay between private commands
+         int privateCommandDelayMs = 2000, // min delay between private commands
          int waitAfterCommandDelayMs = 1500, // min delay after user command
-         int privateCommandTimeoutMs = 1000, // timeout for private command
+         int privateCommandTimeoutMs = 1200, // timeout for private command
          bool oncePerUserCommand = true); // only run private command after user has hit <enter>
 
    // Give private command opportunity to capture terminal; returns true if it does (or already did).

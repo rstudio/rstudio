@@ -134,6 +134,11 @@ std::string loadConsoleProcessMetadata()
 
 void saveConsoleProcesses(const std::string& metadata)
 {
+   initialize();
+
+   if (!s_consoleProcPath.exists())
+      return;
+
    Error error = rstudio::core::writeStringToFile(getConsoleProcIndexPath(),
                                                   metadata);
    if (error)
@@ -288,7 +293,7 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
    }
 }
 
-void saveConsoleEnvironment(const std::string& handle, const std::string& env)
+void saveConsoleEnvironment(const std::string& handle, const core::system::Options& environment)
 {
    FilePath log;
    Error error = getEnvFilePath(handle, &log);
@@ -297,7 +302,11 @@ void saveConsoleEnvironment(const std::string& handle, const std::string& env)
       LOG_ERROR(error);
       return;
    }
-   error = rstudio::core::writeStringToFile(log, env);
+
+   json::Object envJson = json::toJsonObject(environment);
+   std::ostringstream ostr;
+   json::writeFormatted(envJson, ostr);
+   error = rstudio::core::writeStringToFile(log, ostr.str());
    if (error)
    {
       LOG_ERROR(error);
@@ -306,7 +315,42 @@ void saveConsoleEnvironment(const std::string& handle, const std::string& env)
 
 void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
 {
-   // TODO (gary)
+  // TODO (gary)
+
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (!log.exists())
+      return;
+
+   std::string jsonStr;
+   error = rstudio::core::readStringFromFile(log, &jsonStr);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value envJson;
+   if (!json::parse(jsonStr, &envJson) ||
+       !json::isType<json::Array>(envJson))
+   {
+      LOG_ERROR(systemError(boost::system::errc::protocol_error,
+                            "Error parsing terminal environment save file",
+                            ERROR_LOCATION));
+      return;
+   }
+
+   core::system::Options loadedEnvironment = json::optionsFromJson(envJson.get_obj());
+   BOOST_FOREACH(const core::system::Option& var, loadedEnvironment)
+   {
+      core::system::setenv(pEnv, var.first, var.second);
+   }
 }
 
 void deleteEnvFile(const std::string& handle)
