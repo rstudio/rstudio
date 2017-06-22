@@ -46,6 +46,14 @@ public interface FileDialogs
                  boolean forceDefaultExtension,
                  ProgressOperationWithInput<FileSystemItem> operation);
 
+   void saveFile(String caption,
+                 String buttonLabel,
+                 FileSystemContext fsContext,
+                 FileSystemItem initialFilePath,
+                 String defaultExtension,
+                 boolean forceDefaultExtension,
+                 ProgressOperationWithInput<FileSystemItem> operation);
+   
    void chooseFolder(String caption,
                      FileSystemContext fsContext,
                      FileSystemItem initialDir,

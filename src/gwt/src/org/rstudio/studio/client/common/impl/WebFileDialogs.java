@@ -84,7 +84,19 @@ public class WebFileDialogs implements FileDialogs
                         boolean forceDefaultExtension,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
+      saveFile(caption, "Save", fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
+   }
+   
+   public void saveFile(String caption,
+                        String buttonLabel,
+                        FileSystemContext fsContext,
+                        FileSystemItem initialFilePath,
+                        String defaultExtension,
+                        boolean forceDefaultExtension,
+                        ProgressOperationWithInput<FileSystemItem> operation)
+   {
       SaveFileDialog dialog = new SaveFileDialog(caption,
+                                                 buttonLabel,
                                                  fsContext,
                                                  defaultExtension,
                                                  forceDefaultExtension,

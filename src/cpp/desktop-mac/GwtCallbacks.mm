@@ -192,13 +192,15 @@ private:
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
-              dir: (NSString* ) dir
-              defaultExtension: (NSString*) defaultExtension
-              forceDefaultExtension: (Boolean) forceDefaultExtension
+                  buttonLabel: (NSString*) buttonLabel
+                          dir: (NSString* ) dir
+             defaultExtension: (NSString*) defaultExtension
+        forceDefaultExtension: (Boolean) forceDefaultExtension
 {
    dir = resolveAliasedPath(dir);
    
    NSSavePanel *save = [NSSavePanel savePanel];
+   [save setPrompt: buttonLabel];
    
    BOOL hasDefaultExtension = defaultExtension != nil &&
                               [defaultExtension length] > 0;

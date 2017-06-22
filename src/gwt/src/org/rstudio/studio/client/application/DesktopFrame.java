@@ -30,7 +30,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                           String dir,
                           String filter,
                           boolean canChooseDirectories);
-   String getSaveFileName(String caption, 
+   String getSaveFileName(String caption,
+                          String buttonLabel,
                           String dir, 
                           String defaultExtension, 
                           boolean forceDefaultExtension);

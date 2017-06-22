@@ -161,13 +161,24 @@ public class DesktopFileDialogs implements FileDialogs
                         final boolean forceDefaultExtension,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
+      saveFile(caption, "Save", fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
+   }
+   
+   public void saveFile(final String caption,
+                        final String buttonLabel,
+                        final FileSystemContext fsContext,
+                        final FileSystemItem initialFilePath,
+                        final String defaultExtension,
+                        final boolean forceDefaultExtension,
+                        final ProgressOperationWithInput<FileSystemItem> operation)
+   {
       new FileDialogOperation()
       {
          @Override
          String operation(String caption, String dir)
          {
             String fileName = Desktop.getFrame().getSaveFileName(
-                  caption, dir, defaultExtension, forceDefaultExtension);
+                  caption, buttonLabel, dir, defaultExtension, forceDefaultExtension);
 
             if (fileName != null)
             {
