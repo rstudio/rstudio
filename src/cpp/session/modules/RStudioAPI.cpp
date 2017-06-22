@@ -132,19 +132,22 @@ SEXP rs_showDialog(SEXP titleSEXP,
 SEXP rs_openFileDialog(SEXP typeSEXP,
                        SEXP captionSEXP,
                        SEXP pathSEXP,
-                       SEXP filterSEXP)
+                       SEXP filterSEXP,
+                       SEXP existingSEXP)
 {
    // extract components
    int type = r::sexp::asInteger(typeSEXP);
    std::string caption = r::sexp::asString(captionSEXP);
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP, ""));
    std::string filter = r::sexp::asString(filterSEXP);
+   bool existing = r::sexp::asLogical(existingSEXP);
    
    json::Object data;
    data["type"] = type;
    data["caption"] = caption;
    data["file"] = module_context::createFileSystemItem(path);
    data["filter"] = filter;
+   data["existing"] = existing;
    ClientEvent event(client_events::kOpenFileDialog, data);
    
    json::JsonRpcRequest request;
@@ -173,7 +176,7 @@ Error initialize()
    s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
 
    RS_REGISTER_CALL_METHOD(rs_showDialog, 8);
-   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 4);
+   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 5);
 
    return Success();
 }

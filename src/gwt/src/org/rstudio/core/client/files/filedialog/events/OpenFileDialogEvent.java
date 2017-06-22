@@ -28,10 +28,11 @@ public class OpenFileDialogEvent extends GwtEvent<OpenFileDialogEvent.Handler>
       {
       }
       
-      public final native int getType()            /*-{ return this.type;    }-*/;
-      public final native String getCaption()      /*-{ return this.caption; }-*/;
-      public final native FileSystemItem getFile() /*-{ return this.file;    }-*/;
-      public final native String getFilter()       /*-{ return this.filter;  }-*/;
+      public final native int getType()            /*-{ return this.type;     }-*/;
+      public final native String getCaption()      /*-{ return this.caption;  }-*/;
+      public final native FileSystemItem getFile() /*-{ return this.file;     }-*/;
+      public final native String getFilter()       /*-{ return this.filter;   }-*/;
+      public final native boolean selectExisting() /*-{ return this.existing; }-*/;
    }
    
    public OpenFileDialogEvent(Data data)
@@ -39,16 +40,16 @@ public class OpenFileDialogEvent extends GwtEvent<OpenFileDialogEvent.Handler>
       data_ = data;
    }
    
-   public final int getType()            { return data_.getType();    }
-   public final String getCaption()      { return data_.getCaption(); }
-   public final FileSystemItem getFile() { return data_.getFile();    }
-   public final String getFilter()       { return data_.getFilter();  }
+   public final int getType()            { return data_.getType();        }
+   public final String getCaption()      { return data_.getCaption();     }
+   public final FileSystemItem getFile() { return data_.getFile();        }
+   public final String getFilter()       { return data_.getFilter();      }
+   public final boolean selectExisting() { return data_.selectExisting(); }
    
    private final Data data_;
    
-   public static final int TYPE_SELECT_EXISTING_FILE   = 1;
-   public static final int TYPE_SELECT_EXISTING_FOLDER = 2;
-   public static final int TYPE_SELECT_NEW_FILE        = 3;
+   public static final int TYPE_SELECT_FILE      = 1;
+   public static final int TYPE_SELECT_DIRECTORY = 2;
 
    // Boilerplate ----
 

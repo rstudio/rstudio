@@ -520,6 +520,7 @@ public class Workbench implements BusyHandler,
                              ProgressIndicator indicator)
          {
             indicator.onCompleted();
+            
             server_.openFileDialogCompleted(
                   input == null ? "" : input.getPath(),
                   new VoidServerRequestCallback());
@@ -528,20 +529,57 @@ public class Workbench implements BusyHandler,
       
       String caption = event.getCaption();
       int type = event.getType();
-      FileSystemItem initialFile = event.getFile();
+      FileSystemItem initialFilePath = event.getFile();
       String filter = event.getFilter();
+      boolean selectExisting = event.selectExisting();
       
-      if (type == OpenFileDialogEvent.TYPE_SELECT_EXISTING_FILE)
+      if (type == OpenFileDialogEvent.TYPE_SELECT_FILE)
       {
-         fileDialogs_.openFile(caption, fsContext_, initialFile, filter, onSelected);
+         if (selectExisting)
+         {
+            fileDialogs_.openFile(
+                  caption,
+                  fsContext_,
+                  initialFilePath,
+                  filter,
+                  onSelected);
+         }
+         else
+         {
+            fileDialogs_.saveFile(
+                  caption,
+                  fsContext_,
+                  initialFilePath,
+                  "",
+                  false,
+                  onSelected);
+         }
       }
-      else if (type == OpenFileDialogEvent.TYPE_SELECT_EXISTING_FOLDER)
+      else if (type == OpenFileDialogEvent.TYPE_SELECT_DIRECTORY)
       {
-         fileDialogs_.chooseFolder(caption, fsContext_, initialFile, onSelected);
+         if (selectExisting)
+         {
+            fileDialogs_.chooseFolder(
+                  caption,
+                  fsContext_,
+                  initialFilePath,
+                  onSelected);
+         }
+         else
+         {
+            fileDialogs_.saveFile(
+                  caption,
+                  fsContext_,
+                  initialFilePath,
+                  "",
+                  false,
+                  onSelected);
+         }
       }
-      else if (type == OpenFileDialogEvent.TYPE_SELECT_NEW_FILE)
+      else
       {
-         fileDialogs_.saveFile(caption, fsContext_, initialFile, filter, false, onSelected);
+         assert false: "unexpected file dialog type '" + type + "'";
+         server_.openFileDialogCompleted(null, new VoidServerRequestCallback());
       }
    }
    
