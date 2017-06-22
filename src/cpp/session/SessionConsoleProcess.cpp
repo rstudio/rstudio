@@ -56,7 +56,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 {
    // configure environment for shell
    core::system::Options shellEnv;
-   if (trackEnv)
+   if (trackEnv && !handle.empty())
    {
       loadEnvironment(handle, &shellEnv);
    }

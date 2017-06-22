@@ -284,7 +284,7 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
          continue;
       }
 
-      if (!validHandle(child.filename()))
+      if (!validHandle(child.stem()))
       {
          error = child.remove();
          if (error)
@@ -315,8 +315,6 @@ void saveConsoleEnvironment(const std::string& handle, const core::system::Optio
 
 void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
 {
-  // TODO (gary)
-
    FilePath log;
    Error error = getEnvFilePath(handle, &log);
    if (error)
