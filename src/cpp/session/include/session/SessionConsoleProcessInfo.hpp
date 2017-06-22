@@ -20,6 +20,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
+#include <core/system/Types.hpp>
 
 #include <session/SessionTerminalShell.hpp>
 
@@ -79,7 +80,7 @@ public:
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
-         int cols, int rows, bool zombie);
+         int cols, int rows, bool zombie, bool trackEnv);
 
    // constructor for non-terminals
    ConsoleProcessInfo(
@@ -129,6 +130,8 @@ public:
    std::string getFullSavedBuffer() const;
    int getBufferLineCount() const;
    void deleteLogFile(bool lastLineOnly = false) const;
+   void deleteEnvFile() const;
+   void saveConsoleEnvironment(const core::system::Options& environment);
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
@@ -180,12 +183,17 @@ public:
    void setZombie(bool zombie) { zombie_ = zombie; }
    bool getZombie() const { return zombie_; }
 
+   // Track terminal session's environment?
+   void setTrackEnv(bool trackEnv) { trackEnv_ = trackEnv; }
+   bool getTrackEnv() const { return trackEnv_; }
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
    static std::string loadConsoleProcessMetadata();
    static void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
    static void saveConsoleProcesses(const std::string& metadata);
+   static void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv);
 
 private:
    std::string caption_;
@@ -209,6 +217,7 @@ private:
    bool restarted_;
    AutoCloseMode autoClose_;
    bool zombie_;
+   bool trackEnv_;
 };
 
 } // namespace console_process

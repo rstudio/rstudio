@@ -53,6 +53,7 @@ const int cols = core::system::kDefaultCols;
 const int rows = core::system::kDefaultRows;
 const bool restarted = false;
 const bool zombie = false;
+const bool trackEnv = false;
 
 const size_t maxLines = kDefaultTerminalMaxOutputLines;
 
@@ -83,7 +84,8 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getRows() == second.getRows() &&
            first.getRestarted() == second.getRestarted() &&
            first.getAutoClose() == second.getAutoClose() &&
-           first.getZombie() == second.getZombie());
+           first.getZombie() == second.getZombie() &&
+           first.getTrackEnv() == second.getTrackEnv());
 }
 
 } // anonymous namespace
@@ -94,7 +96,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Create ConsoleProcessInfo and read properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence,
-                             shellType, altActive, cwd, cols, rows, zombie);
+                             shellType, altActive, cwd, cols, rows, zombie, trackEnv);
 
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
@@ -124,6 +126,7 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(cpi.getAutoClose() == NeverAutoClose);
 
       CHECK(cpi.getZombie() == zombie);
+      CHECK(cpi.getTrackEnv() == trackEnv);
    }
 
    SECTION("Generate a handle")
@@ -140,7 +143,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Change properties")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
 
       std::string altCaption("other caption");
       CHECK(altCaption.compare(caption));
@@ -191,12 +194,15 @@ TEST_CASE("ConsoleProcessInfo")
 
       cpi.setZombie(true);
       CHECK(cpi.getZombie());
+
+      cpi.setTrackEnv(true);
+      CHECK(cpi.getTrackEnv());
    }
 
    SECTION("Change exit code")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
 
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
@@ -219,9 +225,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Compare ConsoleProcInfos with different exit codes")
    {
       ConsoleProcessInfo cpiFirst(caption, title, handle1, sequence, shellType,
-                                  altActive, cwd, cols, rows, zombie);
+                                  altActive, cwd, cols, rows, zombie, trackEnv);
       ConsoleProcessInfo cpiSecond(caption, title, handle1, sequence, shellType,
-                                   altActive, cwd, cols, rows, zombie);
+                                   altActive, cwd, cols, rows, zombie, trackEnv);
 
       cpiFirst.setExitCode(1);
       cpiSecond.setExitCode(12);
@@ -231,7 +237,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore")
    {
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
-                                  altActive, cwd, cols, rows, zombie);
+                                  altActive, cwd, cols, rows, zombie, trackEnv);
 
       core::json::Object origJson = cpiOrig.toJson();
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -277,7 +283,7 @@ TEST_CASE("ConsoleProcessInfo")
       // in the JSON. Same comment on the leaky abstractions here as for
       // previous non-terminal test.
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -313,7 +319,7 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Persist and restore terminals with multiple chunks")
    {
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
 
       // blow away anything that might have been left over from a previous
       // failed run
@@ -378,9 +384,9 @@ TEST_CASE("ConsoleProcessInfo")
    SECTION("Delete unknown log files")
    {
       ConsoleProcessInfo cpiGood(caption, title, handle1, sequence, shellType,
-                                 altActive, cwd, cols, rows, zombie);
+                                 altActive, cwd, cols, rows, zombie, trackEnv);
       ConsoleProcessInfo cpiBad(caption, title, bogusHandle1, sequence, shellType,
-                                altActive, cwd, cols, rows, zombie);
+                                altActive, cwd, cols, rows, zombie, trackEnv);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
       CHECK(orig1.length() < kOutputBufferSize);
@@ -416,7 +422,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 5;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
       cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
@@ -458,7 +464,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int smallMaxLines = 3;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
       cpi.setMaxOutputLines(smallMaxLines);
 
       // blow away anything that might have been left over from a previous
@@ -502,7 +508,7 @@ TEST_CASE("ConsoleProcessInfo")
    {
       const int lines = 10;
       ConsoleProcessInfo cpi(caption, title, handle1, sequence, shellType,
-                             altActive, cwd, cols, rows, zombie);
+                             altActive, cwd, cols, rows, zombie, trackEnv);
       cpi.setMaxOutputLines(lines * 2);
 
       // blow away anything that might have been left over from a previous

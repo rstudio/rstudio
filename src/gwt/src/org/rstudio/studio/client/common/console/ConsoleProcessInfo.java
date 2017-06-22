@@ -243,6 +243,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.zombie;
    }-*/;
 
+   public final native boolean getTrackEnv() /*-{
+      return this.track_env;
+   }-*/;
+
    public final native boolean isTerminal() /*-{
       return this.terminal_sequence > 0;
    }-*/;
