@@ -46,6 +46,13 @@ const size_t kAutoFlushLength = 20;
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
 
+/*
+ * Note on multi-threading and locking: if connected to a terminal with websockets,
+ * ConsoleProcess::onReceivedInput will be called on a separate thread. Thus, there
+ * is inputOutputQueueMutex_ used to guard anything that can be modified by this call
+ * but accessed elsewhere. Unpleasant. Be nice to refactor to contain this error-prone
+ * complexity someday.
+ */
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
@@ -150,6 +157,7 @@ public:
 
    core::Error start();
    void enqueInput(const Input& input);
+   void enqueInputInternalLock(const Input& input);
    Input dequeInput();
    void enquePrompt(const std::string& prompt);
    void interrupt();
@@ -252,7 +260,7 @@ private:
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_;
-   boost::mutex inputQueueMutex_;
+   boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
@@ -267,7 +275,6 @@ private:
    // cached pointer to process operations, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
    boost::mutex procOpsMutex_;
-   bool haveProcOps_;
 
    // private command handler, used to capture environment variables during terminal idle time
    core::terminal::PrivateCommand envCaptureCmd_;

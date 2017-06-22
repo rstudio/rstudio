@@ -90,17 +90,16 @@ private:
    // If true, only run private command after user has hit <enter> (and only once per-user <enter>)
    bool oncePerUserCommand_;
 
-   // Are we in private command mode? Has to be thread-safe because websocket input callback
-   // reads this from separate thread. This should be a C++11 std::atomic<bool>.
+   // Are we in private command mode?
    bool privateCommandLoop_;
 
    // When did we last perform a private command?
    boost::posix_time::ptime lastPrivateCommand_;
 
-   // When did user last hit Enter at the end of a line of input? Protect with inputQueueMutex_.
+   // When did user last hit Enter at the end of a line of input?
    boost::posix_time::ptime lastEnterTime_;
 
-   // Is there a partially-typed command? Protect with inputQueueMutex_.
+   // Is there a partially-typed command?
    bool pendingCommand_;
 
    std::string outputBOM_;

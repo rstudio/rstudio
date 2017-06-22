@@ -128,8 +128,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
      newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false), haveProcOps_(false),
-     envCaptureCmd_(kEnvCommand)
+     lastInputSequence_(kIgnoreSequence), started_(false), envCaptureCmd_(kEnvCommand)
 {
    regexInit();
 
@@ -144,7 +143,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), haveProcOps_(false), envCaptureCmd_(kEnvCommand)
+     started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -156,7 +155,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), haveProcOps_(false), envCaptureCmd_(kEnvCommand)
+     started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -290,49 +289,51 @@ Error ConsoleProcess::start()
    return error;
 }
 
-void ConsoleProcess::enqueInput(const Input& input)
+void ConsoleProcess::enqueInputInternalLock(const Input& input)
 {
-   LOCK_MUTEX(inputQueueMutex_)
+   LOCK_MUTEX(inputOutputQueueMutex_)
    {
-      if (input.sequence == kIgnoreSequence)
-      {
-         inputQueue_.push_back(input);
-         return;
-      }
-
-      if (input.sequence == kFlushSequence)
-      {
-         inputQueue_.push_back(input);
-
-         // set everything in queue to "ignore" so it will be pulled from
-         // queue as-is, even with gaps
-         for (std::deque<Input>::iterator it = inputQueue_.begin();
-              it != inputQueue_.end(); it++)
-         {
-            (*it).sequence = kIgnoreSequence;
-         }
-         lastInputSequence_ = kIgnoreSequence;
-         return;
-      }
-
-      // insert in order by sequence
-      for (std::deque<Input>::iterator it = inputQueue_.begin();
-           it != inputQueue_.end(); it++)
-      {
-         if (input.sequence < (*it).sequence)
-         {
-            inputQueue_.insert(it, input);
-            return;
-         }
-      }
-      inputQueue_.push_back(input);
+      enqueInput(input);
    }
    END_LOCK_MUTEX
 }
 
-// Do not call directly, needs to be within the inputQueueMutex_ for safety in
-// presence of multithreaded calls (via websockets). This is handled by
-// processQueuedInput.
+void ConsoleProcess::enqueInput(const Input& input)
+{
+   if (input.sequence == kIgnoreSequence)
+   {
+      inputQueue_.push_back(input);
+      return;
+   }
+
+   if (input.sequence == kFlushSequence)
+   {
+      inputQueue_.push_back(input);
+
+      // set everything in queue to "ignore" so it will be pulled from
+      // queue as-is, even with gaps
+      for (std::deque<Input>::iterator it = inputQueue_.begin();
+           it != inputQueue_.end(); it++)
+      {
+         (*it).sequence = kIgnoreSequence;
+      }
+      lastInputSequence_ = kIgnoreSequence;
+      return;
+   }
+
+   // insert in order by sequence
+   for (std::deque<Input>::iterator it = inputQueue_.begin();
+        it != inputQueue_.end(); it++)
+   {
+      if (input.sequence < (*it).sequence)
+      {
+         inputQueue_.insert(it, input);
+         return;
+      }
+   }
+   inputQueue_.push_back(input);
+}
+
 ConsoleProcess::Input ConsoleProcess::dequeInput()
 {
    // Pull next available Input from queue; return an empty Input
@@ -424,34 +425,30 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       interruptChild_ = false;
    }
 
-   if (procInfo_->getTrackEnv())
+   LOCK_MUTEX(inputOutputQueueMutex_)
    {
-      // try to capture and persist the environment
-      if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
-         return true;
-
-      saveEnvironment(envCaptureCmd_.getPrivateOutput());
-   }
-
-   // For RPC-based communication, this is where input is always dispatched; for websocket
-   // communication, it is normally dispatched inside onReceivedInput, but this call is needed
-   // to deal with input built-up during a privateCommandLoop.
-   processQueuedInput(ops);
-
-   if (procInfo_->getChannelMode() == Websocket)
-   {
-      // capture weak reference to the callbacks so websocket callback
-      // can use them; only need to capture the first time
-      if (!haveProcOps_)
+      if (procInfo_->getTrackEnv())
       {
-         LOCK_MUTEX(procOpsMutex_)
-         {
-            pOps_ = ops.weak_from_this();
-            haveProcOps_ = true;
-         }
-         END_LOCK_MUTEX
+         // try to capture and persist the environment
+         if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
+            return true;
+
+         saveEnvironment(envCaptureCmd_.getPrivateOutput());
+      }
+
+      // For RPC-based communication, this is where input is always dispatched; for websocket
+      // communication, it is normally dispatched inside onReceivedInput, but this call is needed
+      // to deal with input built-up during a privateCommandLoop.
+      processQueuedInput(ops);
+
+      if (procInfo_->getChannelMode() == Websocket)
+      {
+         // capture weak reference to the callbacks so websocket callback
+         // can use them
+         pOps_ = ops.weak_from_this();
       }
    }
+   END_LOCK_MUTEX
 
    if (newCols_ != -1 && newRows_ != -1)
    {
@@ -471,53 +468,49 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
 {
-   LOCK_MUTEX(inputQueueMutex_)
+   // process input queue
+   Input input = dequeInput();
+   while (!input.empty())
    {
-      // process input queue
-      Input input = dequeInput();
-      while (!input.empty())
+      // pty interrupt
+      if (input.interrupt)
       {
-         // pty interrupt
-         if (input.interrupt)
-         {
-            Error error = ops.ptyInterrupt();
-            if (error)
-               LOG_ERROR(error);
+         Error error = ops.ptyInterrupt();
+         if (error)
+            LOG_ERROR(error);
 
-            if (input.echoInput)
-               procInfo_->appendToOutputBuffer("^C");
-         }
+         if (input.echoInput)
+            procInfo_->appendToOutputBuffer("^C");
+      }
 
-         // text input
-         else
-         {
-            std::string inputText = input.text;
+      // text input
+      else
+      {
+         std::string inputText = input.text;
 
-            envCaptureCmd_.userInput(inputText);
+         envCaptureCmd_.userInput(inputText);
 
 #ifdef _WIN32
-            if (!options_.smartTerminal)
-            {
-               string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
-            }
-#endif
-            Error error = ops.writeToStdin(inputText, false);
-            if (error)
-               LOG_ERROR(error);
-
-            if (!options_.smartTerminal) // smart terminal does echo via pty
-            {
-               if (input.echoInput)
-                  procInfo_->appendToOutputBuffer(inputText);
-               else
-                  procInfo_->appendToOutputBuffer("\n");
-            }
+         if (!options_.smartTerminal)
+         {
+            string_utils::convertLineEndings(&inputText, string_utils::LineEndingWindows);
          }
+#endif
+         Error error = ops.writeToStdin(inputText, false);
+         if (error)
+            LOG_ERROR(error);
 
-         input = dequeInput();
+         if (!options_.smartTerminal) // smart terminal does echo via pty
+         {
+            if (input.echoInput)
+               procInfo_->appendToOutputBuffer(inputText);
+            else
+               procInfo_->appendToOutputBuffer("\n");
+         }
       }
+
+      input = dequeInput();
    }
-   END_LOCK_MUTEX
 }
 
 void ConsoleProcess::deleteLogFile(bool lastLineOnly) const
@@ -579,7 +572,11 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    if (options_.smartTerminal)
    {
-      enqueOutputEvent(output);
+      LOCK_MUTEX(inputOutputQueueMutex_)
+      {
+         enqueOutputEvent(output);
+      }
+      END_LOCK_MUTEX
       return;
    }
 
@@ -919,9 +916,9 @@ ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSock
 // rstudioapi, may be called on different thread
 void ConsoleProcess::onReceivedInput(const std::string& input)
 {
-   enqueInput(Input(input));
-   LOCK_MUTEX(procOpsMutex_)
+   LOCK_MUTEX(inputOutputQueueMutex_)
    {
+      enqueInput(Input(input));
       boost::shared_ptr<core::system::ProcessOperations> ops = pOps_.lock();
       if (ops)
       {
