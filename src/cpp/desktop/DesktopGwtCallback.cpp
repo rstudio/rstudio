@@ -169,7 +169,31 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    return createAliasedPath(result);
 }
 
+namespace {
+
+QString getSaveFileNameImpl(QWidget* pParent,
+                            const QString& caption,
+                            const QString& label,
+                            const QString& dir,
+                            QFileDialog::Options options)
+{
+    // initialize dialog
+    QFileDialog dialog(pParent, caption, dir);
+    dialog.setOptions(options);
+    dialog.setLabelText(QFileDialog::Accept, label);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+
+    // execute dialog and check for success
+    if (dialog.exec() == QDialog::Accepted)
+        return dialog.selectedFiles().value(0);
+
+    return QString();
+}
+
+} // end anonymous namespace
+
 QString GwtCallback::getSaveFileName(const QString& caption,
+                                     const QString& label,
                                      const QString& dir,
                                      const QString& defaultExtension,
                                      bool forceDefaultExtension)
@@ -178,8 +202,13 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 
    while (true)
    {
-      QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir,
-                                                    QString(), 0, standardFileDialogOptions());
+      QString result = getSaveFileNameImpl(
+                  pOwner_->asWidget(),
+                  caption,
+                  label,
+                  resolvedDir,
+                  standardFileDialogOptions());
+
       activateAndFocusOwner();
       if (result.isEmpty())
          return result;

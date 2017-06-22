@@ -60,6 +60,7 @@ public slots:
                            const QString& dir,
                            const QString& filter);
    QString getSaveFileName(const QString& caption,
+                           const QString& buttonLabel,
                            const QString& dir,
                            const QString& defaultExtension,
                            bool forceDefaultExtension);
