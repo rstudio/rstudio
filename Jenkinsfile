@@ -136,6 +136,7 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source') {
           trigger_external_build('IDE/macos')
+          trigger_external_build('IDE/windows')
         }
         parallel parallel_containers
 

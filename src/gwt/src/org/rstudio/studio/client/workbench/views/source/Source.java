@@ -53,6 +53,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -93,6 +94,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.FileMRUList;
@@ -160,6 +162,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -187,7 +190,8 @@ public class Source implements InsertSourceHandler,
                              OpenObjectExplorerEvent.Handler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
-                             GetEditorContextEvent.Handler
+                             GetEditorContextEvent.Handler,
+                             RequestDocumentSaveEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -582,6 +586,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(GetEditorContextEvent.TYPE, this);
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
+      events.addHandler(RequestDocumentSaveEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -2278,7 +2283,7 @@ public class Source implements InsertSourceHandler,
                                    null);
       
    }
-   
+  
    private boolean isUnsavedTarget(EditingTarget target, int type)
    {
       boolean fileBacked = target.getPath() != null;
@@ -2288,6 +2293,11 @@ public class Source implements InsertSourceHandler,
    }
    
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type)
+   {
+      return getUnsavedChanges(type,  null);
+   }
+   
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
@@ -2300,26 +2310,42 @@ public class Source implements InsertSourceHandler,
       }
 
       for (EditingTarget target : editors_)
-         if (isUnsavedTarget(target, type))
-            targets.add(target);
+      {
+         // no need to save targets which are up-to-date
+         if (!isUnsavedTarget(target, type))
+            continue;
+         
+         // if we've requested the save of specific documents, screen
+         // out documents not within the requested id set
+         if (ids != null && !ids.contains(target.getId()))
+            continue;
+         
+         targets.add(target);
+      }
       
       return targets;
    }
    
-   public void saveAllUnsaved(final Command onCompleted)
+   public void saveUnsavedDocuments(final Command onCompleted)
+   {
+      saveUnsavedDocuments(null, onCompleted);
+   }
+   
+   public void saveUnsavedDocuments(final Set<String> ids,
+                                    final Command onCompleted)
    {
       Command saveAllLocal = new Command()
       {
          @Override
          public void execute()
          {
-            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED), onCompleted);
+            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, ids), onCompleted);
          }
       };
-
+      
       // if this is the main source window, save all files in satellites first
       if (SourceWindowManager.isMainSourceWindow())
-         windowManager_.saveAllUnsaved(saveAllLocal);
+         windowManager_.saveUnsavedDocuments(ids, saveAllLocal);
       else
          saveAllLocal.execute();
    }
@@ -4235,6 +4261,57 @@ public class Source implements InsertSourceHandler,
    public void onOpenProfileEvent(OpenProfileEvent event)
    {
       onShowProfiler(event);
+   }
+   
+   @Override
+   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   {
+      final JsArrayString ids = event.getDocumentIds();
+      
+      // we use a timer that fires the document save completed event,
+      // just to ensure the server receives a response even if something
+      // goes wrong during save or some client-side code throws. unfortunately
+      // the current save code is wired up in such a way that it's difficult
+      // to distinguish a success from failure, so we just make sure the
+      // server receives a response after 5s (defaulting to failure)
+      final Mutable<Boolean> savedSuccessfully = new Mutable<Boolean>(false);
+      final Timer completedTimer = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (SourceWindowManager.isMainSourceWindow())
+            {
+               server_.requestDocumentSaveCompleted(
+                     savedSuccessfully.get(),
+                     new VoidServerRequestCallback());
+            }
+         }
+      };
+      completedTimer.schedule(5000);
+      
+      final Command onCompleted = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            savedSuccessfully.set(true);
+            completedTimer.schedule(0);
+         }
+      };
+      
+      if (ids == null)
+      {
+         saveUnsavedDocuments(onCompleted);
+      }
+      else
+      {
+         final Set<String> idSet = new HashSet<String>();
+         for (String id : JsUtil.asIterable(ids))
+            idSet.add(id);
+         
+         saveUnsavedDocuments(idSet, onCompleted);
+      }
    }
    
    private void inEditorForPath(String path, 

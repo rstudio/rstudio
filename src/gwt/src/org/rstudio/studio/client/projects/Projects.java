@@ -45,6 +45,7 @@ import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowHandler;
+import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
@@ -84,7 +85,8 @@ public class Projects implements OpenProjectFileHandler,
                                  OpenProjectErrorHandler,
                                  OpenProjectNewWindowHandler,
                                  NewProjectEvent.Handler,
-                                 OpenProjectEvent.Handler
+                                 OpenProjectEvent.Handler,
+                                 RequestOpenProjectEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
@@ -130,6 +132,7 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(OpenProjectNewWindowEvent.TYPE, this);
       eventBus.addHandler(NewProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
+      eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
       
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
@@ -603,6 +606,20 @@ public class Projects implements OpenProjectFileHandler,
       showOpenProjectDialog(ProjectOpener.PROJECT_TYPE_FILE,
                             event.getForceSaveAll(),
                             event.getAllowOpenInNewWindow());
+   }
+   
+   @Override
+   public void onRequestOpenProjectEvent(RequestOpenProjectEvent event)
+   {
+      String projFile = event.getProjectFile();
+      if (event.isNewSession())
+      {
+         eventBus_.fireEvent(new OpenProjectNewWindowEvent(projFile, null));
+      }
+      else
+      {
+         eventBus_.fireEvent(new SwitchToProjectEvent(projFile));
+      }
    }
    
    @Handler

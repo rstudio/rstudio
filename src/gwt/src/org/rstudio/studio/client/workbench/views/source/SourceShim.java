@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -264,12 +265,18 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
    
-   public void saveAllUnsaved(Command onCompleted)
+   public void saveUnsavedDocuments(Set<String> ids,
+                                    Command onCompleted)
    {
       if (source_ != null)
       {
-         source_.saveAllUnsaved(onCompleted);
+         source_.saveUnsavedDocuments(ids, onCompleted);
       }
+   }
+   
+   public void saveUnsavedDocuments(Command onCompleted)
+   {
+      saveUnsavedDocuments(null, onCompleted);
    }
    
    public void closeAllSourceDocs(String caption, Command onCompleted)
