@@ -62,6 +62,7 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
+import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
@@ -87,6 +88,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -911,6 +913,16 @@ public class ClientEventDispatcher
          {
             AdminNotification notification = event.getData();
             eventBus_.fireEvent(new AdminNotificationEvent(notification));
+         }
+         else if (type.equals(ClientEvent.RequestDocumentSave))
+         {
+            RequestDocumentSaveEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RequestDocumentSaveEvent(data));
+         }
+         else if (type.equals(ClientEvent.RequestOpenProject))
+         {
+            RequestOpenProjectEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RequestOpenProjectEvent(data));
          }
          else
          {
