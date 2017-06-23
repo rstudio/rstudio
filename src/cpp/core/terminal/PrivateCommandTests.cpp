@@ -85,6 +85,7 @@ context("Private Terminal Command Tests")
    } ops;
 
    const std::string kCommand = "sample_command";
+   const std::string kEol = "\r\n";
    const std::string kPrompt = "fake-prompt someuser$ ";
    const bool kHasChildProcess = true;
    const bool kNoChildProcess = false;
@@ -105,8 +106,9 @@ context("Private Terminal Command Tests")
 
       // mimic shell echoing back the command
       cmd.output(cmd.getFullCommand());
+      cmd.output(kEol);
       cmd.output(cmd.getBOM());
-      cmd.output("\r\n");
+      cmd.output(kEol);
       cmd.output(results);
 
       // verify we can't get results until EOM is seen
@@ -114,7 +116,7 @@ context("Private Terminal Command Tests")
 
       // close off the output
       cmd.output(cmd.getEOM());
-      cmd.output("\r\n");
+      cmd.output(kEol);
 
       // trying to capture now should return false, meaning we can get the output
       expect_false(cmd.onTryCapture(ops, kNoChildProcess));

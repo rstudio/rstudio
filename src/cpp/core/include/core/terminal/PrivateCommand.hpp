@@ -127,8 +127,7 @@ private:
    boost::posix_time::milliseconds privateCommandTimeout_;
 
    // parse details
-   size_t firstBOM_; // BOM in the echo'd command
-   size_t firstEOM_; // EOM in the echo'd command
+   size_t firstCRLF_; // end of command
    size_t outputStart_; // start of output
 
    // did last private command timeout?

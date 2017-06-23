@@ -28,6 +28,8 @@ boost::posix_time::ptime now()
    return boost::posix_time::microsec_clock::universal_time();
 }
 
+const std::string kEol = "\r\n";
+
 } // anonymous namespace
 
 /*
@@ -55,8 +57,7 @@ PrivateCommand::PrivateCommand(const std::string& command,
      privateCommandDelay_(privateCommandDelayMs),
      waitForCommandDelay_(waitAfterCommandDelayMs),
      privateCommandTimeout_(privateCommandTimeoutMs),
-     firstBOM_(std::string::npos),
-     firstEOM_(std::string::npos),
+     firstCRLF_(std::string::npos),
      outputStart_(std::string::npos),
      timeout_(false)
 {
@@ -174,33 +175,22 @@ bool PrivateCommand::output(const std::string& output)
 
    privateCommandOutput_.append(output);
 
-   // find the first BOM (from the command echo)
-   if (firstBOM_ == std::string::npos)
+   // find the end of command line
+   if (firstCRLF_ == std::string::npos)
    {
-      firstBOM_ = privateCommandOutput_.find(outputBOM_, 0);
-      if (firstBOM_ == std::string::npos)
+      firstCRLF_ = privateCommandOutput_.find(kEol, 0);
+      if (firstCRLF_ == std::string::npos)
       {
          return true;
       }
-      firstBOM_ += outputBOM_.length();
-   }
-
-   // find the first EOM (from the command echo)
-   if (firstEOM_ == std::string::npos)
-   {
-      firstEOM_ = privateCommandOutput_.find(outputEOM_, firstBOM_);
-      if (firstEOM_ == std::string::npos)
-      {
-         return true;
-      }
-      firstEOM_ = firstEOM_ + outputEOM_.length();
+      firstCRLF_ += kEol.length();
    }
 
    // find the start of output
    if (outputStart_ == std::string::npos)
    {
-      std::string bomLine = outputBOM_ + "\r\n";
-      outputStart_ = privateCommandOutput_.find(bomLine, firstEOM_);
+      std::string bomLine = outputBOM_ + kEol;
+      outputStart_ = privateCommandOutput_.find(bomLine, firstCRLF_);
       if (outputStart_ == std::string::npos)
       {
          return true;
@@ -209,7 +199,7 @@ bool PrivateCommand::output(const std::string& output)
    }
 
    // find the end of output
-   std::string eomLine = outputEOM_ + "\r\n";
+   std::string eomLine = outputEOM_ + kEol;
    size_t outputEnd = privateCommandOutput_.find(eomLine, outputStart_);
    if (outputEnd == std::string::npos)
    {
@@ -235,8 +225,7 @@ std::string PrivateCommand::getPrivateOutput()
 
 void PrivateCommand::resetParse()
 {
-   firstBOM_ = std::string::npos;
-   firstEOM_ = std::string::npos;
+   firstCRLF_ = std::string::npos;
    outputStart_ = std::string::npos;
    privateCommandOutput_.clear();
 }
