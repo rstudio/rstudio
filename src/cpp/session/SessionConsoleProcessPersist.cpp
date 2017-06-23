@@ -63,7 +63,7 @@ void initialize()
    if (s_inited) return;
 
    // storage for session-scoped console/terminal metadata
-   s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
+   s_consoleProcPath = module_context::scopedScratchPath().complete(kConsoleDir);
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
    {
