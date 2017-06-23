@@ -76,6 +76,9 @@ public:
    // force exit of private capture
    void terminateCapture();
 
+   // did last command timeout, value reset after this call
+   bool timeout();
+
    // following are aids for testing; hate to have these but alternatives were uglier
    std::string getFullCommand() const { return fullCommand_; }
    std::string getBOM() const { return outputBOM_; }
@@ -127,6 +130,9 @@ private:
    size_t firstBOM_; // BOM in the echo'd command
    size_t firstEOM_; // EOM in the echo'd command
    size_t outputStart_; // start of output
+
+   // did last private command timeout?
+   bool timeout_;
 };
 
 } // namespace terminal

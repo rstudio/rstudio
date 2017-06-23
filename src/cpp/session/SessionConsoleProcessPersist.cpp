@@ -336,7 +336,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
 
    json::Value envJson;
    if (!json::parse(jsonStr, &envJson) ||
-       !json::isType<json::Array>(envJson))
+       !json::isType<json::Object>(envJson))
    {
       LOG_ERROR(systemError(boost::system::errc::protocol_error,
                             "Error parsing terminal environment save file",

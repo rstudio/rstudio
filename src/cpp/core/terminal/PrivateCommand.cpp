@@ -57,7 +57,8 @@ PrivateCommand::PrivateCommand(const std::string& command,
      privateCommandTimeout_(privateCommandTimeoutMs),
      firstBOM_(std::string::npos),
      firstEOM_(std::string::npos),
-     outputStart_(std::string::npos)
+     outputStart_(std::string::npos),
+     timeout_(false)
 {
    outputBOM_ = core::system::generateShortenedUuid();
    outputEOM_ = core::system::generateShortenedUuid();
@@ -85,6 +86,7 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
       {
          terminateCapture();
          ops.ptyInterrupt();
+         timeout_ = true;
          return false;
       }
 
@@ -129,6 +131,7 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
       lastPrivateCommand_ = currentTime;
       privateCommandOutput_.clear();
       privateCommandLoop_ = true;
+      timeout_ = false;
 
       // send the command
       Error error = ops.writeToStdin(fullCommand_, false);
@@ -244,6 +247,14 @@ void PrivateCommand::terminateCapture()
    privateCommandLoop_ = false;
    output_.clear();
 }
+
+bool PrivateCommand::timeout()
+{
+   bool didTimeout = timeout_;
+   timeout_ = false;
+   return didTimeout;
+}
+
 
 } // namespace terminal
 } // namespace core
