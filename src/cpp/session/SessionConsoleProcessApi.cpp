@@ -411,7 +411,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc != NULL)
    {
-      proc->enqueInput(input);
+      proc->enqueInputInternalLock(input);
       return Success();
    }
    else
