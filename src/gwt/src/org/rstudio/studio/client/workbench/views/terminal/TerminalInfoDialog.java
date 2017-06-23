@@ -62,7 +62,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
       diagnostics.append("Working Dir: '" + cwd + "'\n"); 
       diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");
-      diagnostics.append("Report lag:  '" + uiPrefs_.enableReportTerminalLag().getValue() + "'\n");
+      diagnostics.append("Typing lag:  '" + socket.getTypingLagMsg() + "'\n");
 
       diagnostics.append("\nSystem Information\n------------------\n");
       diagnostics.append("Desktop:    '" + Desktop.isDesktop() + "'\n");
