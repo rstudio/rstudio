@@ -1151,11 +1151,11 @@ enum RS_NSActivityOptions : uint64_t
 {
    if (sel == @selector(browseUrl:))
       return @"browseUrl";
-   else if (sel == @selector(getOpenFileName:dir:filter:canChooseDirectories:))
+   else if (sel == @selector(getOpenFileName:label:dir:filter:canChooseDirectories:))
       return @"getOpenFileName";
-   else if (sel == @selector(getSaveFileName:dir:defaultExtension:forceDefaultExtension:))
+   else if (sel == @selector(getSaveFileName:label:dir:defaultExtension:forceDefaultExtension:))
       return @"getSaveFileName";
-   else if (sel == @selector(getExistingDirectory:dir:))
+   else if (sel == @selector(getExistingDirectory:label:dir:))
       return @"getExistingDirectory";
    else if (sel == @selector(getUriForPath:))
       return @"getUriForPath";
