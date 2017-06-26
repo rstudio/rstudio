@@ -746,6 +746,7 @@ public class TerminalSession extends XTermWidget
                         {
                            write(outputStr);
                         }
+                        deferredOutput_.clear();
                      }
                   }
 
