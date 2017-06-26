@@ -156,6 +156,7 @@ private:
 
 
 - (NSString*) getOpenFileName: (NSString*) caption
+                        label: (NSString*) label
                           dir: (NSString*) dir
                        filter: (NSString*) filter
          canChooseDirectories: (Boolean) canChooseDirectories
@@ -164,6 +165,7 @@ private:
    
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
+   [open setPrompt: label];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseDirectories: canChooseDirectories];
@@ -192,7 +194,7 @@ private:
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
-                  buttonLabel: (NSString*) buttonLabel
+                        label: (NSString*) label
                           dir: (NSString* ) dir
              defaultExtension: (NSString*) defaultExtension
         forceDefaultExtension: (Boolean) forceDefaultExtension
@@ -200,7 +202,7 @@ private:
    dir = resolveAliasedPath(dir);
    
    NSSavePanel *save = [NSSavePanel savePanel];
-   [save setPrompt: buttonLabel];
+   [save setPrompt: label];
    
    BOOL hasDefaultExtension = defaultExtension != nil &&
                               [defaultExtension length] > 0;
@@ -252,11 +254,14 @@ private:
    return [self runFileDialog: save];
 }
 
-- (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
+- (NSString*) getExistingDirectory: (NSString*) caption
+                             label: (NSString*) label
+                               dir: (NSString*) dir
 {
    dir = resolveAliasedPath(dir);
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
+   [open setPrompt: label];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
