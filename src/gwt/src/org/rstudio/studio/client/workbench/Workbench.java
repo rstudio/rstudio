@@ -561,26 +561,12 @@ public class Workbench implements BusyHandler,
       }
       else if (type == OpenFileDialogEvent.TYPE_SELECT_DIRECTORY)
       {
-         if (selectExisting)
-         {
-            fileDialogs_.chooseFolder(
-                  caption,
-                  label,
-                  fsContext_,
-                  initialFilePath,
-                  onSelected);
-         }
-         else
-         {
-            fileDialogs_.saveFile(
-                  caption,
-                  label,
-                  fsContext_,
-                  initialFilePath,
-                  "",
-                  false,
-                  onSelected);
-         }
+         fileDialogs_.chooseFolder(
+               caption,
+               label,
+               fsContext_,
+               initialFilePath,
+               onSelected);
       }
       else
       {
