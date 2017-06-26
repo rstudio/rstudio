@@ -8,7 +8,7 @@ RUN iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.or
 
 # install some deps via chocolatey
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
-  choco install -y jdk8 ant windows-sdk-10.1
+  choco install -y jdk8 ant windows-sdk-7.1
 
 # install aws cli
 # awscli bug where cp65001 is not understood by internal python.
