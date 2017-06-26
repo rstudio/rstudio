@@ -679,14 +679,15 @@ public class TerminalSession extends XTermWidget
    @Override
    protected void terminalReady()
    {
+      deferredOutput_.clear();
       if (newTerminal_)
       {
+         reloading_ = false;
          setNewTerminal(false);
       }
       else
       {
          reloading_ = true;
-         deferredOutput_.clear();
          fetchNextChunk(0);
       }
    }
@@ -779,7 +780,7 @@ public class TerminalSession extends XTermWidget
       {
          // Move cursor to first column and clear to end-of-line
          final String sequence = AnsiCode.CSI + AnsiCode.CHA + AnsiCode.CSI + AnsiCode.EL;
-         
+
          // immediately clear line locally
          write(sequence);
          
@@ -848,10 +849,8 @@ public class TerminalSession extends XTermWidget
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
-
    private boolean reloading_;
    private ArrayList<String> deferredOutput_ = new ArrayList<String>();
-
    private boolean restartSequenceWritten_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
