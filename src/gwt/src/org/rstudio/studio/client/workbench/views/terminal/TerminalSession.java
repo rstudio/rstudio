@@ -744,7 +744,7 @@ public class TerminalSession extends XTermWidget
                         reloading_ = false;
                         for (String outputStr : deferredOutput_)
                         {
-                           write(outputStr);
+                           socket_.dispatchOutput(outputStr, doLocalEcho());
                         }
                         deferredOutput_.clear();
                      }
