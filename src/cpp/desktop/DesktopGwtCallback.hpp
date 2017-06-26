@@ -56,15 +56,20 @@ public slots:
    QString fixedWidthFont();
    bool isCocoa();
    void browseUrl(QString url);
+
    QString getOpenFileName(const QString& caption,
+                           const QString& label,
                            const QString& dir,
                            const QString& filter);
+
    QString getSaveFileName(const QString& caption,
-                           const QString& buttonLabel,
+                           const QString& label,
                            const QString& dir,
                            const QString& defaultExtension,
                            bool forceDefaultExtension);
+
    QString getExistingDirectory(const QString& caption,
+                                const QString& label,
                                 const QString& dir);
 
    void onClipboardChanged(QClipboard::Mode mode);

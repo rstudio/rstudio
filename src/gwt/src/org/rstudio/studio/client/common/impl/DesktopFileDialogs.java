@@ -211,9 +211,9 @@ public class DesktopFileDialogs implements FileDialogs
       chooseFolder(caption, "Open", fsContext, initialDir, operation);
    }
    
-   public void chooseFolder(String caption,
-                            String label,
-                            FileSystemContext fsContext,
+   public void chooseFolder(final String caption,
+                            final String label,
+                            final FileSystemContext fsContext,
                             final FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
