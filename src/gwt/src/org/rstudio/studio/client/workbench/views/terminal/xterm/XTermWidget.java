@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.StringSink;
@@ -131,6 +133,8 @@ public class XTermWidget extends Widget implements RequiresResize,
    {
       terminal_.scrollToBottom();
       terminal_.write(str);
+      
+      Debug.devlog(AnsiCode.prettyPrint(str));
    }
 
    /**

@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -213,6 +215,8 @@ public class TerminalSession extends XTermWidget
       connected_ = false;
       connecting_ = false;
       restartSequenceWritten_ = false;
+      reloading_ = false;
+      deferredOutput_.clear();
       if (permanent)
       {
          zombie_ = true;
@@ -239,6 +243,11 @@ public class TerminalSession extends XTermWidget
    @Override
    public void receivedOutput(String output)
    {
+      if (reloading_)
+      {
+         deferredOutput_.add(output);
+         return;
+      }
       socket_.dispatchOutput(output, doLocalEcho());
    }
 
@@ -533,6 +542,15 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
+    * Is this terminal one that was previously running, terminated, and now restarted?
+    * @return true if previously existed and has been restarted
+    */
+   public boolean getRestarted()
+   {
+      return consoleProcess_.getProcessInfo().getRestarted();
+   }
+
+   /**
     * Does this terminal's shell program (i.e. bash) have any child processes?
     * @return true if it has child processes, or it hasn't been determined yet
     */
@@ -667,6 +685,8 @@ public class TerminalSession extends XTermWidget
       }
       else
       {
+         reloading_ = true;
+         deferredOutput_.clear();
          fetchNextChunk(0);
       }
    }
@@ -708,7 +728,7 @@ public class TerminalSession extends XTermWidget
                      new ServerRequestCallback<ProcessBufferChunk>()
                {
                   @Override
-                  public void onResponseReceived(ProcessBufferChunk chunk)
+                  public void onResponseReceived(final ProcessBufferChunk chunk)
                   {
                      write(chunk.getChunk());
                      if (chunk.getMoreAvailable())
@@ -720,6 +740,11 @@ public class TerminalSession extends XTermWidget
                         writeRestartSequence();
                         if (zombie_)
                            showZombieMessage();
+                        reloading_ = false;
+                        for (String outputStr : deferredOutput_)
+                        {
+                           write(outputStr);
+                        }
                      }
                   }
 
@@ -727,6 +752,8 @@ public class TerminalSession extends XTermWidget
                   public void onError(ServerError error)
                   {
                      writeError(error.getUserMessage());
+                     reloading_ = false;
+                     deferredOutput_.clear();
                   }
                });
             }
@@ -752,7 +779,7 @@ public class TerminalSession extends XTermWidget
       {
          // Move cursor to first column and clear to end-of-line
          final String sequence = AnsiCode.CSI + AnsiCode.CHA + AnsiCode.CSI + AnsiCode.EL;
-
+         
          // immediately clear line locally
          write(sequence);
          
@@ -821,6 +848,10 @@ public class TerminalSession extends XTermWidget
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
+
+   private boolean reloading_;
+   private ArrayList<String> deferredOutput_ = new ArrayList<String>();
+
    private boolean restartSequenceWritten_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
