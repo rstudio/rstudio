@@ -115,6 +115,7 @@ set (CORE_SOURCE_FILES
    system/ShellUtils.cpp
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
+   terminal/PrivateCommand.cpp
    tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
    tex/TexSynctex.cpp

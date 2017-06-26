@@ -510,6 +510,11 @@ public:
       return quitChildProcessesOnExit_;
    }
 
+   std::string firstProjectTemplatePath() const
+   {
+      return firstProjectTemplatePath_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -570,6 +575,7 @@ private:
    std::string defaultConsoleTerm_;
    bool defaultCliColorForce_;
    bool quitChildProcessesOnExit_;
+   std::string firstProjectTemplatePath_;
 
    // r
    std::string coreRSourcePath_;

@@ -15,12 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -47,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
@@ -244,8 +248,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveWithPrompt(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(target, onCompleted);
       });
       
-      $wnd.rstudioSaveAllUnsaved = $entry(function(onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveAllUnsaved(Lcom/google/gwt/user/client/Command;)(onCompleted);
+      $wnd.rstudioSaveUnsavedDocuments = $entry(function(ids, onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveUnsavedDocuments(Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/user/client/Command;)(ids, onCompleted);
       });
       
       $wnd.rstudioReadyToClose = false;
@@ -260,9 +264,17 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       sourceShim_.saveWithPrompt(item, onCompleted, null);
    }
    
-   private void saveAllUnsaved(Command onCompleted)
+   private void saveUnsavedDocuments(JsArrayString idArray, Command onCompleted)
    {
-      sourceShim_.saveAllUnsaved(onCompleted);
+      Set<String> ids = null;
+      if (idArray != null)
+      {
+         ids = new HashSet<String>();
+         for (String id : JsUtil.asIterable(idArray))
+            ids.add(id);
+      }
+      
+      sourceShim_.saveUnsavedDocuments(ids, onCompleted);
    }
    
    private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 

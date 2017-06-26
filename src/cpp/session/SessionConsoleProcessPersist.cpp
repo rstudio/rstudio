@@ -47,20 +47,23 @@ namespace console_persist {
 //                Added current-working directory, alt-buffer, cols, rows
 // 2017/06/8  - console04 -> console05
 //                Added autoClose, zombie
-#define kConsoleDir "console05"
+// 2017/06/16 - console05 -> console06
+//                Added trackEnv
+#define kConsoleDir "console06"
 
 namespace {
 
 FilePath s_consoleProcPath;
 FilePath s_consoleProcIndexPath;
 bool s_inited = false;
+const std::string s_envFileExt = ".env";
 
 void initialize()
 {
    if (s_inited) return;
 
    // storage for session-scoped console/terminal metadata
-   s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
+   s_consoleProcPath = module_context::scopedScratchPath().complete(kConsoleDir);
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
    {
@@ -85,6 +88,7 @@ const FilePath& getConsoleProcIndexPath()
 
 Error getLogFilePath(const std::string& handle, FilePath* pFile)
 {
+   initialize();
    Error error = getConsoleProcPath().ensureDirectory();
    if (error)
    {
@@ -92,6 +96,21 @@ Error getLogFilePath(const std::string& handle, FilePath* pFile)
    }
 
    *pFile = getConsoleProcPath().complete(handle);
+   return Success();
+}
+
+Error getEnvFilePath(const std::string& handle, FilePath* pFile)
+{
+   initialize();
+   Error error = getConsoleProcPath().ensureDirectory();
+   if (error)
+   {
+      return error;
+   }
+
+   std::string envHandle = handle;
+   envHandle.append(s_envFileExt);
+   *pFile = getConsoleProcPath().complete(envHandle);
    return Success();
 }
 
@@ -115,6 +134,11 @@ std::string loadConsoleProcessMetadata()
 
 void saveConsoleProcesses(const std::string& metadata)
 {
+   initialize();
+
+   if (!s_consoleProcPath.exists())
+      return;
+
    Error error = rstudio::core::writeStringToFile(getConsoleProcIndexPath(),
                                                   metadata);
    if (error)
@@ -260,12 +284,91 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
          continue;
       }
 
-      if (!validHandle(child.filename()))
+      if (!validHandle(child.stem()))
       {
          error = child.remove();
          if (error)
             LOG_ERROR(error);
       }
+   }
+}
+
+void saveConsoleEnvironment(const std::string& handle, const core::system::Options& environment)
+{
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Object envJson = json::toJsonObject(environment);
+   std::ostringstream ostr;
+   json::writeFormatted(envJson, ostr);
+   error = rstudio::core::writeStringToFile(log, ostr.str());
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+}
+
+void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (!log.exists())
+      return;
+
+   std::string jsonStr;
+   error = rstudio::core::readStringFromFile(log, &jsonStr);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value envJson;
+   if (!json::parse(jsonStr, &envJson) ||
+       !json::isType<json::Object>(envJson))
+   {
+      LOG_ERROR(systemError(boost::system::errc::protocol_error,
+                            "Error parsing terminal environment save file",
+                            ERROR_LOCATION));
+      return;
+   }
+
+   core::system::Options loadedEnvironment = json::optionsFromJson(envJson.get_obj());
+   BOOST_FOREACH(const core::system::Option& var, loadedEnvironment)
+   {
+      core::system::setenv(pEnv, var.first, var.second);
+   }
+}
+
+void deleteEnvFile(const std::string& handle)
+{
+   FilePath log;
+   Error error = getEnvFilePath(handle, &log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (!log.exists())
+      return;
+
+   error = log.removeIfExists();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
    }
 }
 

@@ -65,7 +65,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.cols = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_COLS;
       procInfo.rows = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_ROWS;
       procInfo.restarted = false;
-      procInfo.autoclose = AUTOCLOSE_DEFAULT;
+      procInfo.autoclose = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::AUTOCLOSE_DEFAULT;
       procInfo.zombie = false;
 
       return procInfo;
@@ -241,6 +241,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
    
    public final native boolean getZombie() /*-{
       return this.zombie;
+   }-*/;
+
+   public final native boolean getTrackEnv() /*-{
+      return this.track_env;
    }-*/;
 
    public final native boolean isTerminal() /*-{

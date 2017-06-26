@@ -29,7 +29,7 @@ namespace rstudio {
 namespace session {
 namespace projects {
 
-void startup();
+void startup(const std::string& firstProjectPath);
 
 core::Error initialize();
 

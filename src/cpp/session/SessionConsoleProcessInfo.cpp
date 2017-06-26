@@ -39,7 +39,7 @@ ConsoleProcessInfo::ConsoleProcessInfo()
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
      channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false)
+     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false), trackEnv_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -54,14 +54,14 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          TerminalShell::TerminalShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
-         int cols, int rows, bool zombie)
+         int cols, int rows, bool zombie, bool trackEnv)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(true),
      interactionMode_(InteractionAlways), maxOutputLines_(kDefaultTerminalMaxOutputLines),
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(altBufferActive), shellType_(shellType),
      channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false),
-     autoClose_(DefaultAutoClose), zombie_(zombie)
+     autoClose_(DefaultAutoClose), zombie_(zombie), trackEnv_(trackEnv)
 {
 }
 
@@ -74,7 +74,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
      showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
      channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false)
+     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false), trackEnv_(false)
 {
 }
 
@@ -177,6 +177,11 @@ void ConsoleProcessInfo::deleteLogFile(bool lastLineOnly) const
    console_persist::deleteLogFile(handle_, lastLineOnly);
 }
 
+void ConsoleProcessInfo::deleteEnvFile() const
+{
+   console_persist::deleteEnvFile(handle_);
+}
+
 core::json::Object ConsoleProcessInfo::toJson() const
 {
    json::Object result;
@@ -206,6 +211,7 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["restarted"] = restarted_;
    result["autoclose"] = static_cast<int>(autoClose_);
    result["zombie"] = zombie_;
+   result["track_env"] = trackEnv_;
 
    return result;
 }
@@ -266,6 +272,7 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    int autoCloseInt = obj["autoclose"].get_int();
    pProc->autoClose_ = static_cast<AutoCloseMode>(autoCloseInt);
    pProc->zombie_ = obj["zombie"].get_bool();
+   pProc->trackEnv_ = obj["track_env"].get_bool();
 
    return pProc;
 }
@@ -283,6 +290,16 @@ void ConsoleProcessInfo::deleteOrphanedLogs(bool (*validHandle)(const std::strin
 void ConsoleProcessInfo::saveConsoleProcesses(const std::string& metadata)
 {
    console_persist::saveConsoleProcesses(metadata);
+}
+
+void ConsoleProcessInfo::saveConsoleEnvironment(const core::system::Options& environment)
+{
+   console_persist::saveConsoleEnvironment(handle_, environment);
+}
+
+void ConsoleProcessInfo::loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   console_persist::loadConsoleEnvironment(handle, pEnv);
 }
 
 } // namespace console_process_info

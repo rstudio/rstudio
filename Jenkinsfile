@@ -51,7 +51,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos')) {
+  if (os.contains('centos') || os.contains('suse')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -136,6 +136,7 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source') {
           trigger_external_build('IDE/macos')
+          trigger_external_build('IDE/windows')
         }
         parallel parallel_containers
 
