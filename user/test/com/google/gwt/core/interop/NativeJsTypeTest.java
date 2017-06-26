@@ -18,7 +18,6 @@ package com.google.gwt.core.interop;
 import static jsinterop.annotations.JsPackage.GLOBAL;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.interop.JsTypeSpecialTypesTest.SomeFunctionalInterface;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import javaemul.internal.annotations.DoNotInline;
@@ -273,7 +272,7 @@ public class NativeJsTypeTest extends GWTTestCase {
     Object aJsFunction = new SomeFunction();
     // True cases.
     assertTrue(aJsFunction instanceof NativeFunction);
-    assertTrue(aJsFunction instanceof SomeFunctionalInterface);
+    assertTrue(aJsFunction instanceof SomeFunctionInterface);
     assertTrue(aJsFunction instanceof NativeObject);
     // False cases.
     assertFalse(aJsFunction instanceof NativeArray);
@@ -283,7 +282,7 @@ public class NativeJsTypeTest extends GWTTestCase {
     Object anotherFunction = createFunction();
     // True cases.
     assertTrue(anotherFunction instanceof NativeFunction);
-    assertTrue(anotherFunction instanceof SomeFunctionalInterface);
+    assertTrue(anotherFunction instanceof SomeFunctionInterface);
     assertTrue(anotherFunction instanceof NativeObject);
     // False cases.
     assertFalse(anotherFunction instanceof NativeArray);
@@ -354,6 +353,15 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertFalse(aBoxedNumber instanceof NativeFunction);
     assertFalse(aBoxedNumber instanceof NativeString);
 
+    Object anObject = new Object();
+    // True cases.
+    assertTrue(anObject instanceof NativeObject);
+    // False cases.
+    assertFalse(anObject instanceof NativeNumber);
+    assertFalse(anObject instanceof NativeArray);
+    assertFalse(anObject instanceof NativeFunction);
+    assertFalse(anObject instanceof NativeString);
+
     Object nullObject = null;
 
     assertFalse(nullObject instanceof NativeObject);
@@ -372,17 +380,6 @@ public class NativeJsTypeTest extends GWTTestCase {
 
   private static native Object getUndefined() /*-{
   }-*/;
-
-  @JsType(isNative = true)
-  private static class UnreferencedNativeType { }
-
-  private static native Object createArray() /*-{
-    return [];
-  }-*/;
-
-  public void testUnreferencedNativeArrayInstanceOf() {
-    assertTrue(createArray() instanceof UnreferencedNativeType[]);
-  }
 
   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
   interface NativeInterface {

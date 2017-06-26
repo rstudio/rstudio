@@ -97,7 +97,6 @@ public class JsTypeArrayTest extends GWTTestCase {
     public SimpleJsTypeAsAField[] arrayField;
   }
 
-  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
   public void testJsTypeArray_asAField() {
     SimpleJsTypeAsAFieldHolder holder = new SimpleJsTypeAsAFieldHolder();
     fillArrayField(holder);
@@ -200,6 +199,17 @@ public class JsTypeArrayTest extends GWTTestCase {
     assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[]);
     assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][]);
     assertTrue(array instanceof SimpleJsTypeReturnForMultiDimArray[][][]);
+  }
+
+  @JsType(isNative = true)
+  private static class UnreferencedNativeType { }
+
+  private static native Object createArray() /*-{
+    return [];
+  }-*/;
+
+  public void testJsTypeArray_unreferencedNativeArrayInstanceOf() {
+    assertTrue(createArray() instanceof UnreferencedNativeType[]);
   }
 
   @JsFunction

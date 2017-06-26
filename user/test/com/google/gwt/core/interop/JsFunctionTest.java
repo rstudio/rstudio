@@ -24,6 +24,7 @@ import jsinterop.annotations.JsProperty;
 
 /**
  * Tests JsFunction functionality.
+ * Note that JsOverlay and lambda's are tested in Java8Test.
  */
 @SuppressWarnings("cast")
 public class JsFunctionTest extends GWTTestCase {
@@ -249,7 +250,6 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testGetClass() {
-
     MyJsFunctionInterface jsfunctionImplementation =
         new MyJsFunctionInterface() {
           @Override
@@ -264,7 +264,6 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testInstanceField() {
-
     MyJsFunctionInterface jsfunctionImplementation =
         new MyJsFunctionInterface() {
           String hello = new Object().getClass().getName();
@@ -275,26 +274,6 @@ public class JsFunctionTest extends GWTTestCase {
         };
     assertEquals(Object.class.getName().length() + 4, jsfunctionImplementation.foo(4));
   }
-
-  // uncomment when Java8 is supported.
-//  public void testJsFunctionLambda_JS() {
-//    MyJsFunctionInterface jsFunctionInterface = a -> { return a + 2; };
-//    assertEquals(12, callAsFunction(jsFunctionInterface, 10));
-//    assertEquals(12, callAsCallBackFunction(jsFunctionInterface, 10));
-//  }
-//
-//  public void testJsFunctionLambda_Java() {
-//    MyJsFunctionInterface jsFunctionInterface = a -> { return a + 2; };
-//    assertEquals(12, jsFunctionInterface.foo(10));
-//  }
-//
-//  public void testJsFunctionDefaultMethod() {
-//    MyJsFunctionSubInterfaceWithDefaultMethod impl =
-//        new MyJsFunctionSubInterfaceWithDefaultMethod() {
-//        };
-//    assertEquals(10, impl.foo(10));
-//    assertEquals(10, callAsFunction(impl, 10));
-//  }
 
   private static native Object callAsFunction(Object fn) /*-{
     return fn();

@@ -1604,7 +1604,22 @@ public class Java8Test extends GWTTestCase {
   }
 
   @JsFunction
-  interface JsFunctionInterface {
+  interface MyJsFunctionInterface {
+    int foo(int a);
+  }
+
+  public void testJsFunction_lambda() {
+    MyJsFunctionInterface jsFunctionInterface = a -> a + 2;
+    assertEquals(12, callAsFunction(jsFunctionInterface, 10));
+    assertEquals(12, jsFunctionInterface.foo(10));
+  }
+
+  private static native int callAsFunction(Object fn, int arg) /*-{
+    return fn(arg);
+  }-*/;
+
+  @JsFunction
+  interface MyJsFunctionInterfaceWithOverlay {
     Double m();
     @JsOverlay
     default Double callM() {
@@ -1612,11 +1627,12 @@ public class Java8Test extends GWTTestCase {
     }
   }
 
-  private static native JsFunctionInterface createNative() /*-{
+  private static native MyJsFunctionInterfaceWithOverlay createNative() /*-{
     return function () { return 5; };
   }-*/;
+
   public void testJsFunction_withOverlay() {
-    JsFunctionInterface f = new JsFunctionInterface() {
+    MyJsFunctionInterfaceWithOverlay f = new MyJsFunctionInterfaceWithOverlay() {
       @Override
       public Double m() {
         return new Double(2.0);
