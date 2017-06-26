@@ -789,8 +789,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       bool enableWebsockets)
 {
    ConsoleProcessPtr cp;
-   procInfo->setRestarted(true); // only flip to false if we find an existing
-                                 // process for this terminal handle
+
+   // only true if we create a new process with a previously used handle
+   procInfo->setRestarted(false);
 
    // Use websocket as preferred communication channel; it can fail
    // here if unable to establish the server-side of things, in which case
@@ -839,6 +840,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       else
       {
          // Create new process with previously used handle
+         procInfo->setRestarted(true);
 
          // previous terminal session might have been killed while a full-screen
          // program was running

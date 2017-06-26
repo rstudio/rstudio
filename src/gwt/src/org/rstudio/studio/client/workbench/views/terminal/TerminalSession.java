@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -154,6 +156,14 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             
+            if (!consoleProcess_.getProcessInfo().getAltBufferActive() && altBufferActive())
+            {
+               // If server reports the terminal is not showing alt-buffer, but local terminal
+               // emulator is showing alt-buffer, terminal was killed while running
+               // a full-screen program. Switch local terminal back to primary buffer.
+               showPrimaryBuffer();
+            }
+            
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
@@ -213,6 +223,8 @@ public class TerminalSession extends XTermWidget
       connected_ = false;
       connecting_ = false;
       restartSequenceWritten_ = false;
+      reloading_ = false;
+      deferredOutput_.clear();
       if (permanent)
       {
          zombie_ = true;
@@ -239,6 +251,11 @@ public class TerminalSession extends XTermWidget
    @Override
    public void receivedOutput(String output)
    {
+      if (reloading_)
+      {
+         deferredOutput_.add(output);
+         return;
+      }
       socket_.dispatchOutput(output, doLocalEcho());
    }
 
@@ -533,6 +550,15 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
+    * Is this terminal one that was previously running, terminated, and now restarted?
+    * @return true if previously existed and has been restarted
+    */
+   public boolean getRestarted()
+   {
+      return consoleProcess_.getProcessInfo().getRestarted();
+   }
+
+   /**
     * Does this terminal's shell program (i.e. bash) have any child processes?
     * @return true if it has child processes, or it hasn't been determined yet
     */
@@ -661,12 +687,15 @@ public class TerminalSession extends XTermWidget
    @Override
    protected void terminalReady()
    {
+      deferredOutput_.clear();
       if (newTerminal_)
       {
+         reloading_ = false;
          setNewTerminal(false);
       }
       else
       {
+         reloading_ = true;
          fetchNextChunk(0);
       }
    }
@@ -708,7 +737,7 @@ public class TerminalSession extends XTermWidget
                      new ServerRequestCallback<ProcessBufferChunk>()
                {
                   @Override
-                  public void onResponseReceived(ProcessBufferChunk chunk)
+                  public void onResponseReceived(final ProcessBufferChunk chunk)
                   {
                      write(chunk.getChunk());
                      if (chunk.getMoreAvailable())
@@ -720,6 +749,12 @@ public class TerminalSession extends XTermWidget
                         writeRestartSequence();
                         if (zombie_)
                            showZombieMessage();
+                        reloading_ = false;
+                        for (String outputStr : deferredOutput_)
+                        {
+                           socket_.dispatchOutput(outputStr, doLocalEcho());
+                        }
+                        deferredOutput_.clear();
                      }
                   }
 
@@ -727,6 +762,8 @@ public class TerminalSession extends XTermWidget
                   public void onError(ServerError error)
                   {
                      writeError(error.getUserMessage());
+                     reloading_ = false;
+                     deferredOutput_.clear();
                   }
                });
             }
@@ -821,6 +858,8 @@ public class TerminalSession extends XTermWidget
    private boolean connected_;
    private boolean connecting_;
    private boolean terminating_;
+   private boolean reloading_;
+   private ArrayList<String> deferredOutput_ = new ArrayList<String>();
    private boolean restartSequenceWritten_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;

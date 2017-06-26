@@ -55,6 +55,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(session.getShellType()) + "'\n");
       diagnostics.append("Handle:      '" + session.getHandle() + "'\n");
       diagnostics.append("Sequence:    '" + session.getSequence() + "'\n");
+      diagnostics.append("Restarted:   '" + session.getRestarted() + "\n");
       diagnostics.append("Busy:        '" + session.getHasChildProcs() + "'\n");
       diagnostics.append("Alt-Buffer:  '" + session.altBufferActive() + "'\n");
       diagnostics.append("Zombie:      '" + session.getZombie() + "'\n");
