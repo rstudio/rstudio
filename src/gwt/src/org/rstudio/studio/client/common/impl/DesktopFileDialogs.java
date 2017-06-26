@@ -120,8 +120,18 @@ public class DesktopFileDialogs implements FileDialogs
       openFile(caption, fsContext, initialFilePath, filter, false, operation);
    }
    
+   public void openFile(final String caption,
+                        final FileSystemContext fsContext,
+                        final FileSystemItem initialFilePath,
+                        final String filter,
+                        final boolean canChooseDirectories,
+                        final ProgressOperationWithInput<FileSystemItem> operation)
+   {
+      openFile(caption, "Open", fsContext, initialFilePath, filter, canChooseDirectories, operation);
+   }
    
    public void openFile(final String caption,
+                        final String label,
                         final FileSystemContext fsContext,
                         final FileSystemItem initialFilePath,
                         final String filter,
@@ -141,6 +151,7 @@ public class DesktopFileDialogs implements FileDialogs
          {
             String fileName = Desktop.getFrame().getOpenFileName(
                   caption,
+                  label,
                   dir,
                   filter,
                   canChooseDirectories);
@@ -197,6 +208,15 @@ public class DesktopFileDialogs implements FileDialogs
                             final FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
+      chooseFolder(caption, "Open", fsContext, initialDir, operation);
+   }
+   
+   public void chooseFolder(String caption,
+                            String label,
+                            FileSystemContext fsContext,
+                            final FileSystemItem initialDir,
+                            ProgressOperationWithInput<FileSystemItem> operation)
+   {
       new FileDialogOperation()
       {
          @Override
@@ -204,6 +224,7 @@ public class DesktopFileDialogs implements FileDialogs
          {
             return Desktop.getFrame().getExistingDirectory(
                   caption,
+                  label,
                   initialDir != null ? initialDir.getPath() : null);
          }
       }.execute(caption, fsContext, null, operation);

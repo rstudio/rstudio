@@ -131,6 +131,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
 
 SEXP rs_openFileDialog(SEXP typeSEXP,
                        SEXP captionSEXP,
+                       SEXP labelSEXP,
                        SEXP pathSEXP,
                        SEXP filterSEXP,
                        SEXP existingSEXP)
@@ -138,6 +139,7 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    // extract components
    int type = r::sexp::asInteger(typeSEXP);
    std::string caption = r::sexp::asString(captionSEXP);
+   std::string label = r::sexp::asString(labelSEXP);
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP, ""));
    std::string filter = r::sexp::asString(filterSEXP);
    bool existing = r::sexp::asLogical(existingSEXP);
@@ -145,6 +147,7 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    json::Object data;
    data["type"] = type;
    data["caption"] = caption;
+   data["label"] = label;
    data["file"] = module_context::createFileSystemItem(path);
    data["filter"] = filter;
    data["existing"] = existing;
@@ -176,7 +179,7 @@ Error initialize()
    s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
 
    RS_REGISTER_CALL_METHOD(rs_showDialog, 8);
-   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 5);
+   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 6);
 
    return Success();
 }

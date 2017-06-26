@@ -38,6 +38,13 @@ public interface FileDialogs
                  boolean canChooseDirectories,
                  ProgressOperationWithInput<FileSystemItem> operation);
    
+   void openFile(String caption,
+                 String label,
+                 FileSystemContext fsContext,
+                 FileSystemItem initialFilePath,
+                 String filter,
+                 boolean canChooseDirectories,
+                 ProgressOperationWithInput<FileSystemItem> operation);
 
    void saveFile(String caption,
                  FileSystemContext fsContext,
@@ -47,7 +54,7 @@ public interface FileDialogs
                  ProgressOperationWithInput<FileSystemItem> operation);
 
    void saveFile(String caption,
-                 String buttonLabel,
+                 String label,
                  FileSystemContext fsContext,
                  FileSystemItem initialFilePath,
                  String defaultExtension,
@@ -58,4 +65,11 @@ public interface FileDialogs
                      FileSystemContext fsContext,
                      FileSystemItem initialDir,
                      ProgressOperationWithInput<FileSystemItem> operation);
+   
+   void chooseFolder(String caption,
+                     String label,
+                     FileSystemContext fsContext,
+                     FileSystemItem initialDir,
+                     ProgressOperationWithInput<FileSystemItem> operation);
+   
 }

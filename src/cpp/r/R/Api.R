@@ -604,7 +604,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 
 .rs.addApiFunction("selectFile", function(
-   caption = "Open File",
+   caption = "Select File",
+   label = "Select",
    path = .rs.getProjectDirectory(),
    filter = NULL,
    existing = TRUE)
@@ -612,6 +613,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .Call("rs_openFileDialog",
          1L,
          caption,
+         label,
          path,
          filter,
          existing,
@@ -619,15 +621,18 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 .rs.addApiFunction("selectDirectory", function(
-   caption = "Open Directory",
+   caption = "Select Directory",
+   label = "Select",
    path = .rs.getProjectDirectory(),
    existing = TRUE)
 {
    .Call("rs_openFileDialog",
          2L,
          caption,
+         label,
          path,
          NULL,
          existing,
          PACKAGE = "(embedding)")
 })
+

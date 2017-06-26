@@ -528,6 +528,7 @@ public class Workbench implements BusyHandler,
       };
       
       String caption = event.getCaption();
+      String label = event.getLabel();
       int type = event.getType();
       FileSystemItem initialFilePath = event.getFile();
       String filter = event.getFilter();
@@ -539,15 +540,18 @@ public class Workbench implements BusyHandler,
          {
             fileDialogs_.openFile(
                   caption,
+                  label,
                   fsContext_,
                   initialFilePath,
                   filter,
+                  false,
                   onSelected);
          }
          else
          {
             fileDialogs_.saveFile(
                   caption,
+                  label,
                   fsContext_,
                   initialFilePath,
                   "",
@@ -561,6 +565,7 @@ public class Workbench implements BusyHandler,
          {
             fileDialogs_.chooseFolder(
                   caption,
+                  label,
                   fsContext_,
                   initialFilePath,
                   onSelected);
@@ -569,6 +574,7 @@ public class Workbench implements BusyHandler,
          {
             fileDialogs_.saveFile(
                   caption,
+                  label,
                   fsContext_,
                   initialFilePath,
                   "",

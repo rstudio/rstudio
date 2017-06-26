@@ -30,6 +30,7 @@ public class OpenFileDialogEvent extends GwtEvent<OpenFileDialogEvent.Handler>
       
       public final native int getType()            /*-{ return this.type;     }-*/;
       public final native String getCaption()      /*-{ return this.caption;  }-*/;
+      public final native String getLabel()        /*-{ return this.label;    }-*/;
       public final native FileSystemItem getFile() /*-{ return this.file;     }-*/;
       public final native String getFilter()       /*-{ return this.filter;   }-*/;
       public final native boolean selectExisting() /*-{ return this.existing; }-*/;
@@ -42,6 +43,7 @@ public class OpenFileDialogEvent extends GwtEvent<OpenFileDialogEvent.Handler>
    
    public final int getType()            { return data_.getType();        }
    public final String getCaption()      { return data_.getCaption();     }
+   public final String getLabel()        { return data_.getLabel();       }
    public final FileSystemItem getFile() { return data_.getFile();        }
    public final String getFilter()       { return data_.getFilter();      }
    public final boolean selectExisting() { return data_.selectExisting(); }
