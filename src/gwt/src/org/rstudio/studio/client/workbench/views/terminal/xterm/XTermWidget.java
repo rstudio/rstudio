@@ -334,6 +334,14 @@ public class XTermWidget extends Widget implements RequiresResize,
       return terminal_.altBufferActive();
    }
    
+   /**
+    * Switch terminal to primary buffer.
+    */
+   public void showPrimaryBuffer()
+   {
+      terminal_.showPrimaryBuffer();
+   }
+   
    public static boolean isXTerm(Element el)
    {
       while (el != null)
