@@ -943,9 +943,19 @@ bool isTextFile(const FilePath& targetPath)
       return true;
 
 #ifndef _WIN32
+   
+   // the behavior of the 'file' command in the macOS High Sierra beta
+   // changed such that '--mime' no longer ensured that mime-type strings
+   // were actually emitted. using '-I' instead appears to work around this.
+#ifdef __APPLE__
+   const char * const kMimeTypeArg = "-I";
+#else
+   const char * const kMimeTypeArg = "--mime";
+#endif
+   
    core::shell_utils::ShellCommand cmd("file");
    cmd << "--dereference";
-   cmd << "--mime";
+   cmd << kMimeTypeArg;
    cmd << "--brief";
    cmd << targetPath;
    core::system::ProcessResult result;
