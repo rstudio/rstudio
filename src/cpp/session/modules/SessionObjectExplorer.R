@@ -316,7 +316,10 @@
    expandable <-
       
       # is this an R list / environment with children?
-      (is.recursive(object) && !is.primitive(object) && n > 0) ||
+      (is.recursive(object) &&
+       !is.function(object) &&
+       !is.primitive(object) &&
+       n > 0) ||
       
       # is this an S4 object with one or more slots?
       (s4 && length(.rs.slotNames(object)) > 0) ||
@@ -326,6 +329,10 @@
       
       # do we have relevant attributes?
       .rs.explorer.hasRelevantAttributes(object)
+   
+   # force Python function wrappers to be non-expandable for now
+   if (is.function(object) && inherits(object, "python.builtin.object"))
+      expandable <- FALSE
    
    # extract attributes when relevant
    attributes <- NULL
@@ -430,7 +437,9 @@
       return(result)
    
    # default to internal inspectors
-   if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
+   if (inherits(object, "python.builtin.object"))
+      .rs.explorer.inspectReticulateObject(object, context)
+   else if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
       .rs.explorer.inspectXmlNode(object, context)
    else if (is.list(object) || is.call(object) || is.expression(object))
       .rs.explorer.inspectList(object, context)
@@ -442,6 +451,25 @@
       .rs.explorer.inspectFunction(object, context)
    else
       .rs.explorer.inspectDefault(object, context)
+})
+
+.rs.addFunction("explorer.inspectReticulateObject", function(object,
+                                                             context = .rs.explorer.createContext())
+{
+   children <- NULL
+   if (context$recursive)
+   {
+      nms <- names(object)
+      children <- lapply(nms, function(name)
+      {
+         access <- sprintf("#[['%s']]", name)
+         tags <- character()
+         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         .rs.explorer.inspectObject(object[[name]], childContext)
+      })
+   }
+   
+   .rs.explorer.createInspectionResult(object, context, children)
 })
 
 .rs.addFunction("explorer.inspectXmlNode", function(object,
