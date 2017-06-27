@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -124,8 +124,11 @@ include_directories(
 # define executable
 add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
+# add origin rpath for suse/sles and for xenial; on both of these operating
+# systems we need to create symlinks for libssl alongside the rserver binary
+# due to distribution-specific openssl versioning and SONAME schemes
+if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES" OR
+   RSTUDIO_PACKAGE_VARIANT STREQUAL "xenial")
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set_target_properties(rserver PROPERTIES
                          INSTALL_RPATH \$ORIGIN)

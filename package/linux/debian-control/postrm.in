@@ -20,5 +20,9 @@ then
    systemctl daemon-reload
 fi
 
+# remove openssl softlinks
+rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.1.0.0
+rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
+
 # clear error termination state
 set -e

@@ -7,6 +7,27 @@ set +e
 useradd -r rstudio-server
 groupadd -r rstudio-server
 
+# find architecture dir (it's okay if neither branch succeeds)
+if test -d /usr/lib/x86_64-linux-gnu
+then
+  architecture_dir=/usr/lib/x86_64-linux-gnu
+elif test -d /usr/lib/i386-linux-gnu 
+then
+  architecture_dir=/usr/lib/i386-linux-gnu
+fi
+
+# create openssl softlinks back to libssl1.0.0 if libssl1.0.2 is installed
+# (Debian 9 uses a libssl with a SONAME of 1.0.2 even though it's ABI 
+# compatible with 1.0.0 for our purposes). 
+if test -f $architecture_dir/libssl.so.1.0.2
+then
+  ln -s -f $architecture_dir/libssl.so.1.0.2 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.1.0.0
+fi
+if test -f $architecture_dir/libcrypto.so.1.0.2
+then
+  ln -s -f $architecture_dir/libcrypto.so.1.0.2 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
+fi
+
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
