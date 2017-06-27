@@ -400,7 +400,7 @@ options(connectionObserver = list(
          drivers <- listDrivers()
       }, error = function(e) warning(e$message))
 
-      uniqueDrivers <- drivers[drivers$attribute == "Driver", ]
+      uniqueDrivers <- drivers[!is.na(drivers$attribute) & drivers$attribute == "Driver", ]
 
       driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, uniqueDrivers$name)
 
