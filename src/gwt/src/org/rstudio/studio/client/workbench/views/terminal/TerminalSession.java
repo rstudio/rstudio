@@ -156,6 +156,14 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             
+            if (!consoleProcess_.getProcessInfo().getAltBufferActive() && altBufferActive())
+            {
+               // If server reports the terminal is not showing alt-buffer, but local terminal
+               // emulator is showing alt-buffer, terminal was killed while running
+               // a full-screen program. Switch local terminal back to primary buffer.
+               showPrimaryBuffer();
+            }
+            
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
