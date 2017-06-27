@@ -179,6 +179,7 @@ extern const int kAdminNotification;
 extern const int kRequestDocumentSave;
 extern const int kRequestDocumentSaveCompleted;
 extern const int kRequestOpenProject;
+extern const int kOpenFileDialog;
 }
    
 class ClientEvent

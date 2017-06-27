@@ -121,6 +121,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    
    void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback);
    
+   void openFileDialogCompleted(String path, ServerRequestCallback<Void> requestCallback);
+   
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
   
