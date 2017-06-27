@@ -1058,6 +1058,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CHOOSE_FILE_COMPLETED, file, requestCallback);
    }
 
+   public void openFileDialogCompleted(String selectedPath,
+                                       ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(selectedPath)
+            .get();
+      
+      sendRequest(RPC_SCOPE, OPEN_FILE_DIALOG_COMPLETED, params, requestCallback);
+   }
+
    public void getPackageState(
          boolean manual,
          ServerRequestCallback<PackageState> requestCallback)
@@ -2032,7 +2042,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(encoding));
       sendRequest(RPC_SCOPE, REOPEN_WITH_ENCODING, params, requestCallback);
    }
-
+   
    public void removeContentUrl(String contentUrl,
                                 ServerRequestCallback<Void> requestCallback)
    {
@@ -5267,6 +5277,7 @@ public class RemoteServer implements Server
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
+   private static final String OPEN_FILE_DIALOG_COMPLETED = "open_file_dialog_completed";
 
    private static final String GET_PACKAGE_STATE = "get_package_state";
    private static final String AVAILABLE_PACKAGES = "available_packages";

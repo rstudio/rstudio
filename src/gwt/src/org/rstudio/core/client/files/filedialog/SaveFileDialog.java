@@ -24,12 +24,13 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 public class SaveFileDialog extends FileDialog
 {
    public SaveFileDialog(String title,
+                         String buttonLabel,
                          FileSystemContext context,
                          String defaultExtension,
                          boolean forceDefaultExtension,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Save", true, true, true, context, "", operation);
+      super(title, null, buttonLabel, true, true, true, context, "", operation);
       defaultExtension_ = defaultExtension;
       forceDefaultExtension_ = forceDefaultExtension;
    }
