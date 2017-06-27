@@ -1150,8 +1150,11 @@ enum RS_NSActivityOptions : uint64_t
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
    NSString* selectorName = NSStringFromSelector(sel);
-   NSArray<NSString*>* parts = [selectorName componentsSeparatedByString: @":"];
-   return parts[0];
+   NSUInteger location = [selectorName rangeOfString: @":"].location;
+   if (location == NSNotFound)
+      location = [selectorName length];
+   NSString* methodName = [selectorName substringToIndex: location];
+   return methodName;
 }
 
 + (BOOL)isSelectorExcludedFromWebScript: (SEL) sel
