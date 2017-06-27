@@ -206,6 +206,7 @@ void addConsoleProcess(const ConsoleProcessPtr& proc)
 Error reapConsoleProcess(const ConsoleProcess& proc)
 {
    proc.deleteLogFile();
+   proc.deleteEnvFile();
    if (s_procs.erase(proc.handle()))
    {
       saveConsoleProcesses();

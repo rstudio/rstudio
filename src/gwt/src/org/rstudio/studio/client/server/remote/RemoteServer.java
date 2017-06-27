@@ -1058,6 +1058,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CHOOSE_FILE_COMPLETED, file, requestCallback);
    }
 
+   public void openFileDialogCompleted(String selectedPath,
+                                       ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(selectedPath)
+            .get();
+      
+      sendRequest(RPC_SCOPE, OPEN_FILE_DIALOG_COMPLETED, params, requestCallback);
+   }
+
    public void getPackageState(
          boolean manual,
          ServerRequestCallback<PackageState> requestCallback)
@@ -1971,6 +1981,17 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
+                                            ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(isSuccessfulSave));
+      sendRequest(RPC_SCOPE,
+                  REQUEST_DOCUMENT_SAVE_COMPLETED,
+                  params,
+                  requestCallback);
+   }
 
    public void modifyDocumentProperties(
          String id,
@@ -2021,7 +2042,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(encoding));
       sendRequest(RPC_SCOPE, REOPEN_WITH_ENCODING, params, requestCallback);
    }
-
+   
    public void removeContentUrl(String contentUrl,
                                 ServerRequestCallback<Void> requestCallback)
    {
@@ -5256,6 +5277,7 @@ public class RemoteServer implements Server
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
+   private static final String OPEN_FILE_DIALOG_COMPLETED = "open_file_dialog_completed";
 
    private static final String GET_PACKAGE_STATE = "get_package_state";
    private static final String AVAILABLE_PACKAGES = "available_packages";
@@ -5329,6 +5351,7 @@ public class RemoteServer implements Server
    private static final String CREATE_RD_SHELL = "create_rd_shell";
    private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
+   private static final String REQUEST_DOCUMENT_SAVE_COMPLETED = "request_document_save_completed";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
    private static final String GET_DOCUMENT_PROPERTIES = "get_document_properties";
    private static final String REVERT_DOCUMENT = "revert_document";

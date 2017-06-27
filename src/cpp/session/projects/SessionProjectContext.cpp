@@ -159,12 +159,14 @@ FilePath ProjectContext::oldScratchPath() const
 // that need to run after R is available use the implementation of the
 // initialize method (below)
 Error ProjectContext::startup(const FilePath& projectFile,
-                              std::string* pUserErrMsg)
+                              std::string* pUserErrMsg,
+                              bool* pIsNewProject)
 {
    // test for project file existence
    if (!projectFile.exists())
    {
       *pUserErrMsg = "the project file does not exist";
+      *pIsNewProject = true;
       return pathNotFoundError(projectFile.absolutePath(), ERROR_LOCATION);
    }
 
@@ -175,6 +177,16 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return systemError(boost::system::errc::permission_denied,
                          ERROR_LOCATION);
    }
+
+   // check to see whether or not this project has been opened before
+   FilePath projectUserPath = projectFile.parent().complete(".Rproj.user");
+   if (projectUserPath.exists())
+   {
+      FilePath contextPath = projectUserPath.complete(userSettings().contextId());
+      *pIsNewProject = !contextPath.exists();
+   }
+   else
+      *pIsNewProject = true;
 
    // calculate project scratch path
    FilePath scratchPath;

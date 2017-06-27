@@ -16,8 +16,13 @@ package org.rstudio.core.client;
 
 public class Stopwatch
 {
-   public Stopwatch()
+   /**
+    * Track how long something takes, you know, like a Stopwatch.
+    * @param debugLog Show timing via Debug.log
+    */
+   public Stopwatch(boolean debugLog)
    {
+      debugLog_ = debugLog;
       reset();
    }
 
@@ -29,9 +34,11 @@ public class Stopwatch
    public long mark(String label)
    {
       long stopTime = System.currentTimeMillis();
-      Debug.log("[Stopwatch] " + label + ": " + (stopTime - startTime_) + " ms");
+      if (debugLog_)
+         Debug.log("[Stopwatch] " + label + ": " + (stopTime - startTime_) + " ms");
       return stopTime - startTime_;
    }
 
    private long startTime_;
+   private boolean debugLog_;
 }

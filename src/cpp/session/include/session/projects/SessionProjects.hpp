@@ -91,7 +91,8 @@ public:
    virtual ~ProjectContext() {}
 
    core::Error startup(const core::FilePath& projectFile,
-                       std::string* pUserErrMsg);
+                       std::string* pUserErrMsg,
+                       bool* pIsNewProject);
 
    core::Error initialize();
 

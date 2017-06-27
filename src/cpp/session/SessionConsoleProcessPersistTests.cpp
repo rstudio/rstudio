@@ -14,9 +14,15 @@
  */
 #include <session/SessionConsoleProcessPersist.hpp>
 
+
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
+
 #include <sstream>
+
+#include <boost/foreach.hpp>
+
+#include <core/system/Environment.hpp>
 
 namespace rstudio {
 namespace session {
@@ -190,6 +196,40 @@ TEST_CASE("ConsoleProcess Persistence")
       CHECK((loaded.compare(orig1) == 0));
       loaded = console_persist::getSavedBuffer(handle2, maxLines);
       CHECK((loaded.compare(orig2) == 0));
+   }
+
+   SECTION("Save and restore environment")
+   {
+      core::system::Options env;
+      core::system::environment(&env);
+      CHECK((!env.empty()));
+
+      console_persist::saveConsoleEnvironment(handle1, env);
+
+      core::system::Options loadEnv;
+      console_persist::loadConsoleEnvironment(handle1, &loadEnv);
+      CHECK((loadEnv.size() == env.size()));
+
+      BOOST_FOREACH(const core::system::Option& varOrig, env)
+      {
+         bool match = false;
+         BOOST_FOREACH(const core::system::Option& varLoaded, loadEnv)
+         {
+            if (varLoaded.first == varOrig.first)
+            {
+               if (varLoaded.second == varOrig.second)
+               {
+                  match = true;
+                  break;
+               }
+            }
+         }
+         CHECK(match);
+         if (!match)
+            break;
+      }
+
+      console_persist::deleteEnvFile(handle1);
    }
 }
 

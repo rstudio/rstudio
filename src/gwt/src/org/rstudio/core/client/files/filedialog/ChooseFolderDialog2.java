@@ -25,11 +25,12 @@ import java.util.ArrayList;
 public class ChooseFolderDialog2 extends FileSystemDialog
 {
    public ChooseFolderDialog2(String title,
+                              String label,
                               FileSystemContext context,
                               boolean allowFolderCreation,
                               ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Choose", context, "", allowFolderCreation, operation);
+      super(title, null, label, context, "", allowFolderCreation, operation);
    }
 
    @Override

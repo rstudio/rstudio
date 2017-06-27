@@ -13,6 +13,8 @@
  *
  */
 
+#include <sstream>
+
 #include <session/SessionConsoleProcess.hpp>
 
 #include <core/Algorithm.hpp>
@@ -38,6 +40,9 @@ bool useWebsockets()
                      session::userSettings().terminalWebsockets();
 }
 
+// Posix-only, use is gated via getTrackEnv() always being false on Win32.
+const std::string kEnvCommand = "/usr/bin/env";
+
 } // anonymous namespace
 
 // create process options for a terminal
@@ -45,11 +50,19 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       TerminalShell::TerminalShellType desiredShellType,
       int cols, int rows, int termSequence,
       FilePath workingDir,
+      bool trackEnv,
+      const std::string& handle,
       TerminalShell::TerminalShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
-   core::system::environment(&shellEnv);
+   if (trackEnv && !handle.empty())
+   {
+      loadEnvironment(handle, &shellEnv);
+   }
+
+   if (shellEnv.empty())
+      core::system::environment(&shellEnv);
 
    *pSelectedShellType = desiredShellType;
 
@@ -115,7 +128,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
      newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false)
+     lastInputSequence_(kIgnoreSequence), started_(false), envCaptureCmd_(kEnvCommand)
 {
    regexInit();
 
@@ -130,7 +143,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false)
+     started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -142,7 +155,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
      pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false)
+     started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -230,7 +243,6 @@ void ConsoleProcess::commonInit()
 #endif
    }
 
-
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    if (!options_.smartTerminal)
@@ -275,6 +287,15 @@ Error ConsoleProcess::start()
    if (!error)
       started_ = true;
    return error;
+}
+
+void ConsoleProcess::enqueInputInternalLock(const Input& input)
+{
+   LOCK_MUTEX(inputOutputQueueMutex_)
+   {
+      enqueInput(input);
+   }
+   END_LOCK_MUTEX
 }
 
 void ConsoleProcess::enqueInput(const Input& input)
@@ -404,20 +425,27 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       interruptChild_ = false;
    }
 
-   if (procInfo_->getChannelMode() == Rpc)
+   LOCK_MUTEX(inputOutputQueueMutex_)
    {
+      if (procInfo_->getTrackEnv())
+      {
+         // try to capture and persist the environment
+         if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
+            return true;
+
+         saveEnvironment(envCaptureCmd_.getPrivateOutput());
+      }
+
+      // For RPC-based communication, this is where input is always dispatched; for websocket
+      // communication, it is normally dispatched inside onReceivedInput, but this call is needed
+      // to deal with input built-up during a privateCommandLoop.
       processQueuedInput(ops);
-   }
-   else
-   {
+
       // capture weak reference to the callbacks so websocket callback
       // can use them
-      LOCK_MUTEX(mutex_)
-      {
-         pOps_ = ops.weak_from_this();
-      }
-      END_LOCK_MUTEX
+      pOps_ = ops.weak_from_this();
    }
+   END_LOCK_MUTEX
 
    if (newCols_ != -1 && newRows_ != -1)
    {
@@ -456,6 +484,9 @@ void ConsoleProcess::processQueuedInput(core::system::ProcessOperations& ops)
       else
       {
          std::string inputText = input.text;
+
+         envCaptureCmd_.userInput(inputText);
+
 #ifdef _WIN32
          if (!options_.smartTerminal)
          {
@@ -484,6 +515,11 @@ void ConsoleProcess::deleteLogFile(bool lastLineOnly) const
    procInfo_->deleteLogFile(lastLineOnly);
 }
 
+void ConsoleProcess::deleteEnvFile() const
+{
+   procInfo_->deleteEnvFile();
+}
+
 std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable) const
 {
    return procInfo_->getSavedBufferChunk(chunk, pMoreAvailable);
@@ -496,6 +532,10 @@ std::string ConsoleProcess::getBuffer() const
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
+   if (envCaptureCmd_.output(output))
+      return;
+
+   // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
 
    // copy to output buffer
@@ -529,7 +569,11 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    if (options_.smartTerminal)
    {
-      enqueOutputEvent(output);
+      LOCK_MUTEX(inputOutputQueueMutex_)
+      {
+         enqueOutputEvent(output);
+      }
+      END_LOCK_MUTEX
       return;
    }
 
@@ -581,7 +625,7 @@ void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
 void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
                                          const std::string& prompt)
 {
-   // if there is a custom prmopt handler then give it a chance to
+   // if there is a custom prompt handler then give it a chance to
    // handle the prompt first
    if (onPrompt_)
    {
@@ -745,8 +789,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       bool enableWebsockets)
 {
    ConsoleProcessPtr cp;
-   procInfo->setRestarted(true); // only flip to false if we find an existing
-                                 // process for this terminal handle
+
+   // only true if we create a new process with a previously used handle
+   procInfo->setRestarted(false);
 
    // Use websocket as preferred communication channel; it can fail
    // here if unable to establish the server-side of things, in which case
@@ -795,6 +840,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       else
       {
          // Create new process with previously used handle
+         procInfo->setRestarted(true);
 
          // previous terminal session might have been killed while a full-screen
          // program was running
@@ -849,6 +895,8 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
             proc->procInfo_->getCols(), proc->procInfo_->getRows(),
             proc->procInfo_->getTerminalSequence(),
             proc->procInfo_->getCwd(),
+            proc->procInfo_->getTrackEnv(),
+            proc->procInfo_->getHandle(),
             &actualShellType);
    proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);
@@ -867,13 +915,14 @@ ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSock
 // rstudioapi, may be called on different thread
 void ConsoleProcess::onReceivedInput(const std::string& input)
 {
-   LOCK_MUTEX(mutex_)
+   LOCK_MUTEX(inputOutputQueueMutex_)
    {
       enqueInput(Input(input));
       boost::shared_ptr<core::system::ProcessOperations> ops = pOps_.lock();
       if (ops)
       {
-         processQueuedInput(*ops);
+         if (!envCaptureCmd_.hasCaptured())
+            processQueuedInput(*ops);
       }
    }
    END_LOCK_MUTEX
@@ -888,6 +937,45 @@ void ConsoleProcess::onConnectionClosed()
 // websocket connection opened; called on different thread
 void ConsoleProcess::onConnectionOpened()
 {
+}
+
+void ConsoleProcess::saveEnvironment(const std::string& env)
+{
+   if (env.empty())
+      return;
+
+   std::string normalized = env;
+   string_utils::convertLineEndings(&normalized, string_utils::LineEndingNative);
+
+   core::system::Options environment;
+   std::istringstream iss(normalized);
+   for (std::string line; std::getline(iss, line); )
+   {
+      size_t equalSign = line.find_first_of('=');
+      if (equalSign == std::string::npos)
+      {
+         return;
+      }
+
+      std::string varName = line.substr(0, equalSign);
+      if (!varName.compare("_"))
+         continue;
+
+      core::system::setenv(&environment,
+                           line.substr(0, equalSign),
+                           line.substr(equalSign + 1));
+   }
+   if (environment.empty())
+   {
+      return;
+   }
+
+   procInfo_->saveConsoleEnvironment(environment);
+}
+
+void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Options* pEnv)
+{
+   ConsoleProcessInfo::loadConsoleEnvironment(handle, pEnv);
 }
 
 std::string ConsoleProcess::getShellName() const

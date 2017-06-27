@@ -26,6 +26,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -82,7 +83,8 @@ public class Workbench implements BusyHandler,
                                   InstallRtoolsEvent.Handler,
                                   ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler,
-                                  AdminNotificationHandler
+                                  AdminNotificationHandler,
+                                  OpenFileDialogEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -144,6 +146,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ShinyGadgetDialogEvent.TYPE, this);
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
+      eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -504,6 +507,72 @@ public class Workbench implements BusyHandler,
                                  "Admin Notification", 
                                  notification.getMessage(),
                                  adminNotificationAcknowledged(notification.getId()));
+   }
+   
+   @Override
+   public void onOpenFileDialog(OpenFileDialogEvent event)
+   {
+      final ProgressOperationWithInput<FileSystemItem> onSelected =
+            new ProgressOperationWithInput<FileSystemItem>()
+      {
+         @Override
+         public void execute(FileSystemItem input,
+                             ProgressIndicator indicator)
+         {
+            indicator.onCompleted();
+            
+            server_.openFileDialogCompleted(
+                  input == null ? "" : input.getPath(),
+                  new VoidServerRequestCallback());
+         }
+      };
+      
+      String caption = event.getCaption();
+      String label = event.getLabel();
+      int type = event.getType();
+      FileSystemItem initialFilePath = event.getFile();
+      String filter = event.getFilter();
+      boolean selectExisting = event.selectExisting();
+      
+      if (type == OpenFileDialogEvent.TYPE_SELECT_FILE)
+      {
+         if (selectExisting)
+         {
+            fileDialogs_.openFile(
+                  caption,
+                  label,
+                  fsContext_,
+                  initialFilePath,
+                  filter,
+                  false,
+                  onSelected);
+         }
+         else
+         {
+            fileDialogs_.saveFile(
+                  caption,
+                  label,
+                  fsContext_,
+                  initialFilePath,
+                  "",
+                  false,
+                  onSelected);
+         }
+      }
+      else if (type == OpenFileDialogEvent.TYPE_SELECT_DIRECTORY)
+      {
+         fileDialogs_.chooseFolder(
+               caption,
+               label,
+               fsContext_,
+               initialFilePath,
+               onSelected);
+      }
+      else
+      {
+         assert false: "unexpected file dialog type '" + type + "'";
+         server_.openFileDialogCompleted(null, new VoidServerRequestCallback());
+      }
    }
    
    private Operation adminNotificationAcknowledged(final String id)

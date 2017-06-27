@@ -1,0 +1,54 @@
+FROM microsoft/windowsservercore
+
+# set RUN commands to use powershell
+SHELL ["powershell"]
+
+# install chocolatey
+RUN iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+# install some deps via chocolatey
+RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
+  choco install -y jdk8 ant windows-sdk-7.1
+
+# install aws cli
+# awscli bug where cp65001 is not understood by internal python.
+RUN choco install -y awscli ;\
+  cp 'C:\Program Files\Amazon\AWSCLI\encodings\utf_8.pyc' 'C:\Program Files\Amazon\AWSCLI\encodings\cp65001.pyc'
+
+# we use "R" for its real purpose, remove the Invoke-History powershell alias
+RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
+
+# install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
+RUN $ErrorActionPreference = 'Stop' ;\
+  $ProgressPreference = 'SilentlyContinue' ;\
+  Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe -OutFile c:\R-3.0.3-win.exe ;\
+  Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;\
+  Remove-Item c:\R-3.0.3-win.exe -Force
+
+# add R to path
+RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;\
+  [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
+
+# install nsis (version on chocolatey is too new)
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile C:\nsis-2.50-setup.exe ;\
+  Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;\
+  Remove-Item c:\nsis-2.50-setup.exe
+
+# install qt (note that we are using the current directory's context)
+COPY windows/qt-noninteractive-install.qs c:\qt-noninteractive-install.qs
+RUN $ErrorActionPreference = 'Stop'; \
+  $ProgressPreference = 'SilentlyContinue' ;\
+  Invoke-WebRequest http://download.qt.io/archive/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe -OutFile c:\qt.exe ;\
+  Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install.qs' ;\
+  Remove-Item c:\qt.exe -Force
+
+# cpack (an alias from chocolatey) and cmake's cpack conflict.
+RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
+
+#### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
+##### the items below this are dependencies relevant to jenkins-swarm. #####
+##### follow https://issues.jenkins-ci.org/browse/JENKINS-36776 to track docker windows support on jenkins #####
+
+RUN choco install -y git cygwin
+ENV JENKINS_SWARM_VERSION 3.3
+RUN Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;

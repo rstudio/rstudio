@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
@@ -58,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -356,15 +358,26 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
    }
    
-   public void saveAllUnsaved(Command onCompleted)
+   public void saveUnsavedDocuments(final Set<String> ids,
+                                    final Command onCompleted)
    {
+      
       doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override
-         public void execute(String windowId, WindowEx window,
-               Command continuation)
+         public void execute(String windowId,
+                             WindowEx window,
+                             Command continuation)
          {
-            saveAllUnsaved(window, continuation);
+            JsArrayString idArray = null;
+            if (ids != null)
+            {
+               idArray = JavaScriptObject.createArray().cast();
+               for (String id : ids)
+                  idArray.push(id);
+            }
+            
+            saveUnsavedDocuments(window, idArray, continuation);
          }
       }, onCompleted);
    }
@@ -944,9 +957,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       satellite.rstudioSaveWithPrompt(item, onCompleted);
    }-*/;
 
-   private final native void saveAllUnsaved(WindowEx satellite, 
-         Command onCompleted) /*-{
-      satellite.rstudioSaveAllUnsaved(onCompleted);
+   private final native void saveUnsavedDocuments(WindowEx satellite,
+                                                  JsArrayString ids,
+                                                  Command onCompleted)
+   /*-{
+      satellite.rstudioSaveUnsavedDocuments(ids, onCompleted);
    }-*/;
    
    

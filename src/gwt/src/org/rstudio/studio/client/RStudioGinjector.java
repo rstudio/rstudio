@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -129,7 +129,6 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalInfoDialog;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocket;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
@@ -231,7 +230,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewConnectionSnippetHost newConnectionSnippetHost);
    void injectMembers(NewConnectionSnippetDialog newConnectionSnippetDialog);
    void injectMembers(NewPackagePage page);
-   void injectMembers(TerminalSessionSocket socket);
    void injectMembers(NewConnectionInstallPackagePage newConnectionInstallPackagePage);
    void injectMembers(ObjectExplorerEditingTargetWidget widget);
    void injectMembers(ObjectExplorerDataGrid widget);
