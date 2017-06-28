@@ -789,16 +789,6 @@ void UserSettings::setVcsTerminalPath(const FilePath& terminalPath)
    settings_.set("vcsTerminalPath", terminalPath.absolutePath());
 }
 
-bool UserSettings::vcsUseGitBash() const
-{
-   return settings_.getBool("vcsUseGitBash", true);
-}
-
-void UserSettings::setVcsUseGitBash(bool useGitBash)
-{
-   settings_.set("vcsUseGitBash", useGitBash);
-}
-
 bool UserSettings::cleanTexi2DviOutput() const
 {
    return settings_.getBool("cleanTexi2DviOutput", true);

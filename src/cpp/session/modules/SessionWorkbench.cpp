@@ -419,14 +419,13 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
    // read and set source control prefs
-   bool vcsEnabled, useGitBash;
+   bool vcsEnabled;
    std::string gitExe, svnExe, terminalPath;
    error = json::readObject(sourceControlPrefs,
                             "vcs_enabled", &vcsEnabled,
                             "git_exe_path", &gitExe,
                             "svn_exe_path", &svnExe,
-                            "terminal_path", &terminalPath,
-                            "use_git_bash", &useGitBash);
+                            "terminal_path", &terminalPath);
    if (error)
       return error;
    userSettings().beginUpdate();
@@ -449,8 +448,6 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       userSettings().setVcsTerminalPath(FilePath());
    else
       userSettings().setVcsTerminalPath(terminalFilePath);
-
-   userSettings().setVcsUseGitBash(useGitBash);
 
    userSettings().endUpdate();
 
@@ -597,8 +594,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
       terminalPath = detectedTerminalPath();
    sourceControlPrefs["terminal_path"] = terminalPath.absolutePath();
 
-   sourceControlPrefs["use_git_bash"] = userSettings().vcsUseGitBash();
-
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
    FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
    sourceControlPrefs["rsa_key_path"] =
@@ -643,10 +638,23 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
 #if defined(_WIN32)
 
-   // if we are using git bash then return its path
-   if (git::isGitEnabled() && userSettings().vcsUseGitBash())
+   // Use default terminal setting for shell
+   console_process::AvailableTerminalShells shells;
+   console_process::TerminalShell shell;
+
+   if (shells.getInfo(userSettings().defaultTerminalShellValue(), &shell))
    {
-      terminalPath = console_process::getGitBashShell();
+      terminalPath = shell.path;
+   }
+
+   // last-ditch, use system shell
+   if (!terminalPath.exists())
+   {
+      console_process::TerminalShell sysShell;
+      if (console_process::AvailableTerminalShells::getSystemShell(&sysShell))
+      {
+         terminalPath = sysShell.path;
+      }
    }
 
 #elif defined(__APPLE__)

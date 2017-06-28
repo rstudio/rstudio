@@ -1,7 +1,7 @@
 /*
  * SourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -110,15 +110,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
  
-      // use git bash
-      chkUseGitBash_ = new CheckBox("Use Git Bash as shell for Git projects");
-      if (haveGitBashPref())
-      {
-         extraSpaced(chkUseGitBash_);
-         add(chkUseGitBash_);
-      }
-      
-        
       // svn exe path chooser
       svnExePathLabel_ = new Label("SVN executable:");
       svnExePathChooser_ = new FileChooserTextBox("",
@@ -152,7 +143,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitExePathChooser_.setEnabled(false);
       svnExePathChooser_.setEnabled(false);
       terminalPathChooser_.setEnabled(false);
-      chkUseGitBash_.setEnabled(false);
    }
 
    @Override
@@ -165,13 +155,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitExePathChooser_.setEnabled(true);
       svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
-      chkUseGitBash_.setEnabled(true);
 
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitExePathChooser_.setText(prefs.getGitExePath());
       svnExePathChooser_.setText(prefs.getSvnExePath());
       terminalPathChooser_.setText(prefs.getTerminalPath());
-      chkUseGitBash_.setValue(prefs.getUseGitBash());
       
       sshKeyWidget_.setRsaSshKeyPath(prefs.getRsaKeyPath(),
                                      prefs.getHaveRsaKey());
@@ -205,8 +193,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
       SourceControlPrefs prefs = SourceControlPrefs.create(
             chkVcsEnabled_.getValue(), gitExePathChooser_.getText(),
-            svnExePathChooser_.getText(), terminalPathChooser_.getText(),
-            chkUseGitBash_.getValue());
+            svnExePathChooser_.getText(), terminalPathChooser_.getText());
 
       rPrefs.setSourceControlPrefs(prefs);
 
@@ -218,11 +205,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       return Desktop.isDesktop() && BrowseCap.isLinux();
    }
    
-   private boolean haveGitBashPref()
-   {
-      return Desktop.isDesktop() && BrowseCap.isWindows();
-   }
-
    private void addTextBoxChooser(Label captionLabel, HyperlinkLabel link,
          String captionPanelStyle, TextBoxWithButton chooser)
    {
@@ -265,7 +247,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnExePathChooser_.setVisible(vcsEnabled);
       terminalPathLabel_.setVisible(vcsEnabled);
       terminalPathChooser_.setVisible(vcsEnabled && haveTerminalPathPref());
-      chkUseGitBash_.setVisible(vcsEnabled && haveGitBashPref());
       sshKeyWidget_.setVisible(vcsEnabled);
    }
    
@@ -279,6 +260,5 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private TextBoxWithButton svnExePathChooser_;
    private Label terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
-   private CheckBox chkUseGitBash_;
    private SshKeyWidget sshKeyWidget_;
 }
