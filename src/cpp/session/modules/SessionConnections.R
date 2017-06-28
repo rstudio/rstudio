@@ -244,12 +244,12 @@ options(connectionObserver = list(
       list(
          name = "ODBC",
          package = "odbc",
-         version = "1.0.1.9000"
+         version = "1.1.1"
       ),
       list(
          name = "Spark",
          package = "sparklyr",
-         version = "0.5.5"
+         version = "0.5.6"
       )
    )
 })

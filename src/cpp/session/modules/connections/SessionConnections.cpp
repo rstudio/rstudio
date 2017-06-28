@@ -612,8 +612,7 @@ Error handleConnectionsResourceRequest(const http::Request& request,
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("sparklyr", "0.5.5") ||
-          module_context::isPackageVersionInstalled("odbc", "1.0.1.9000");
+   return true;
 }
 
 bool activateConnections()
