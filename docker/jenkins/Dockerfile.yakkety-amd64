@@ -1,15 +1,21 @@
-FROM ubuntu:xenial
+FROM ubuntu:yakkety
 
 ARG AWS_REGION=us-east-1
 
-# install needed packages. replace httpredir apt source with cloudfront
+# replace httpredir apt source with cloudfront
 RUN set -x \
-    && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
-    && export DEBIAN_FRONTEND=noninteractive \
+    && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list 
+
+# install dir manager (needed to install key below)
+RUN apt-get update \
+    && apt-get install -y dirmngr
+
+RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu xenial/' >> /etc/apt/sources.list \
+    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu yakkety/' >> /etc/apt/sources.list \
     && apt-get update
 
+# install needed packages
 RUN apt-get update \
   && apt-get install -y \
     ant \

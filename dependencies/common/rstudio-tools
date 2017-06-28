@@ -176,6 +176,8 @@ ubuntu-codename () {
 	15.04) echo "vivid"   ;;
 	15.10) echo "wily"    ;;
 	16.04) echo "xenial"  ;;
+	16.10) echo "yakkety" ;;
+	17.04) echo "zesty"   ;;
 	*)     echo "unknown"; return 1 ;;
 
 	esac
