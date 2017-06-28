@@ -115,8 +115,6 @@ public class Packages
   
       void setObserver(PackagesDisplayObserver observer) ;
       void setProgress(boolean showProgress);
-      
-      void setActions(ArrayList<Action> actions);
    }
    
    @Inject

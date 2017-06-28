@@ -46,7 +46,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
-import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -86,7 +85,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       commands_ = commands;
       session_ = session;
       display_ = display;
-      events_ = events;
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -119,51 +117,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       prePackratSeparator_.setVisible(true);
    }
    
-   @Override
-   public void setActions(ArrayList<Packages.Action> actions)
-   {
-      // command that manages the layout of the packages list and action center
-      Command manageActionCenterLayout = new Command() {
-         @Override
-         public void execute()
-         {
-            resizeActionCenter();
-         }
-      };
-      
-      if (actions == null || actions.size() == 0)
-      {
-         if (actionCenter_ != null)
-         {
-            packagesTableContainer_.remove(actionCenter_);
-            actionCenter_ = null;
-            layoutPackagesTable();
-            packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
-         }
-      }
-      else
-      {
-         // if we have no action center or we're changing the number of actions
-         // in a non-collapsed center, raise the packages pane
-         if (actionCenter_ == null ||
-             ((!actionCenter_.collapsed()) && 
-              (actionCenter_.getActionCount() != actions.size())))
-         {
-            events_.fireEvent(new RaisePackagePaneEvent());
-         }
-
-         // create the action center if it doesn't already exist
-         if (actionCenter_ == null)
-         {
-            actionCenter_ = new ActionCenter(manageActionCenterLayout);
-            packagesTableContainer_.add(actionCenter_);
-         }
-         
-         actionCenter_.setActions(actions);
-         resizeActionCenter();
-      }
-   }
-    
    @Override
    public void installPackage(PackageInstallContext installContext,
                               PackageInstallOptions defaultInstallOptions,
@@ -349,9 +302,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // selected.
       if (packagesTable_ != null)
          packagesTable_.onResize();
-      
-      if (actionCenter_ != null)
-         resizeActionCenter();
    }
    
    private void createPackagesTable()
@@ -359,7 +309,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       try
       {
          packagesTableContainer_.clear();
-         actionCenter_ = null;
          packagesTable_ = new DataGrid<PackageInfo>(
             packagesDataProvider_.getList().size(), dataGridRes_);
       }
@@ -646,21 +595,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   private void resizeActionCenter()
-   {
-      packagesTableContainer_.setWidgetLeftRight(
-            actionCenter_, 
-            0, Unit.PX, 
-            0, Unit.PX);
-      packagesTableContainer_.setWidgetTopHeight(
-            actionCenter_, 
-            0, Unit.PX, 
-            actionCenter_.getHeight(), Unit.PX);
-
-      layoutPackagesTable(actionCenter_.getHeight());
-      packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
-   }
-   
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
@@ -670,7 +604,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratMenuButton_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
-   private ActionCenter actionCenter_ = null;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_ = PackratContext.empty();
 
@@ -678,8 +611,4 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
-   private final EventBus events_;
-   
-   
-   private final static int ACTION_CENTER_ANIMATION_MS = 250;
 }
