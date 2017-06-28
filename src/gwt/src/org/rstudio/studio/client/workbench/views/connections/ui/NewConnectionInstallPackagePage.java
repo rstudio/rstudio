@@ -94,6 +94,7 @@ public class NewConnectionInstallPackagePage
                      public void onError(ServerError error)
                      {
                         Debug.logError(error);
+                        wizard.closeDialog();
                      }
                   });
                }
