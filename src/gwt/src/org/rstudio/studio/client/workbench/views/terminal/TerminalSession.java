@@ -128,7 +128,7 @@ public class TerminalSession extends XTermWidget
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
             getTitle(), getSequence(), getAltBufferActive(), getCwd(), 
-            getZombie(),
+            getZombie(), uiPrefs_.terminalTrackEnvironment().getValue(),
             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override

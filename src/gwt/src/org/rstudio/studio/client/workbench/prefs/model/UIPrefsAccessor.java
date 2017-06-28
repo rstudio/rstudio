@@ -615,6 +615,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("terminal_autoclose", true);
    }
 
+   public PrefValue<Boolean> terminalTrackEnvironment()
+   {
+      return bool("terminal_track_env", true);
+   }
+
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

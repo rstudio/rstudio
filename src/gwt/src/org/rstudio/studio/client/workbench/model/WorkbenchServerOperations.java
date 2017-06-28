@@ -152,11 +152,12 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     * @param altBufferActive terminal showing alt-buffer (full-screen ncurses)
     * @param cwd current working directory
     * @param zombie if true, terminal buffer reloaded but no process created
+    * @param trackEnv if true, server runs a hidden command to capture environment variables
     * @param requestCallback callback from server upon completion
     */
    void startTerminal(int shellType, int cols, int rows, String handle, 
                       String caption, String title, int sequence, 
-                      boolean altBufferActive, String cwd, boolean zombie,
+                      boolean altBufferActive, String cwd, boolean zombie, boolean trackEnv,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);

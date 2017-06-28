@@ -40,6 +40,10 @@ const std::string kEol = "\r\n";
  *
  * where BOM and EOM would be actual uuids. This assumes our shell supports && for
  * issuing sequential commands.
+ *
+ * Command is prefixed with a space, to take advantage of
+ * HISTCONTROL=ignorespace (or ignoreboth) as a way to prevent command from
+ * showing up in shell history.
  */
 
 PrivateCommand::PrivateCommand(const std::string& command,
@@ -64,7 +68,7 @@ PrivateCommand::PrivateCommand(const std::string& command,
    outputBOM_ = core::system::generateShortenedUuid();
    outputEOM_ = core::system::generateShortenedUuid();
 
-   std::string commandBefore_ = "echo ";
+   std::string commandBefore_ = " echo ";
    commandBefore_ += outputBOM_;
    std::string commandAfter_ = "echo ";
    commandAfter_ += outputEOM_;
