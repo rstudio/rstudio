@@ -102,10 +102,10 @@ try {
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
           [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
-          [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
-          [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'server', variant: 'xenial']
+          [os: 'zesty',    arch: 'amd64',  flavor: 'desktop', variant: 'zesty'],
+          [os: 'zesty',    arch: 'i386',   flavor: 'desktop', variant: 'zesty'],
+          [os: 'zesty',    arch: 'amd64',  flavor: 'server',  variant: 'zesty'],
+          [os: 'zesty',    arch: 'i386',   flavor: 'server',  variant: 'zesty']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]

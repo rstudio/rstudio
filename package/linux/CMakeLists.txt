@@ -34,9 +34,9 @@ if(RSTUDIO_PACKAGE_VARIANT STREQUAL "")
    if(LSB_RELEASE_EXEC)
        exec_program(lsb_release ARGS -r 
                     OUTPUT_VARIABLE UBUNTU_VER)
-       string(FIND "${UBUNTU_VER}" "16.04" UBUNTU_VER_POS)
+       string(FIND "${UBUNTU_VER}" "17.04" UBUNTU_VER_POS)
        if (UBUNTU_VER_POS GREATER 0)
-           set(RSTUDIO_PACKAGE_VARIANT "xenial")
+           set(RSTUDIO_PACKAGE_VARIANT "zesty")
        endif()
    endif()
 endif()
@@ -60,7 +60,15 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, ")
+
+  # get openssl package version
+  find_package(OpenSSL REQUIRED QUIET)
+  if(NOT OpenSSL_VERSION VERSION_LESS "1.1")
+     set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libssl1.1, ")
+  else()
+     set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libssl1.0.0, ")
+  endif()
 
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
@@ -104,8 +112,8 @@ if(RSTUDIO_SERVER)
    # target first
    if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
-   elseif(RSTUDIO_PACKAGE_VARIANT STREQUAL "xenial")
-      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}xenial-")
+   elseif(RSTUDIO_PACKAGE_VARIANT STREQUAL "zesty")
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}zesty-")
    elseif(IS_RHEL_5)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
    elseif(IS_RHEL) 
