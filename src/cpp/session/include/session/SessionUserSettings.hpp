@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -167,9 +167,6 @@ public:
 
    core::FilePath vcsTerminalPath() const;
    void setVcsTerminalPath(const core::FilePath& terminalPath);
-
-   bool vcsUseGitBash() const;
-   void setVcsUseGitBash(bool useGitBash);
 
    bool cleanTexi2DviOutput() const;
    void setCleanTexi2DviOutput(bool cleanTexi2DviOutput);
