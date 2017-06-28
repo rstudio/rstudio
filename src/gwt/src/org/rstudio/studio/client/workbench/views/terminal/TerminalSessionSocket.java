@@ -313,7 +313,11 @@ public class TerminalSessionSocket
                requestCallback);
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
-         socket_.send(input);
+         if (socket_ != null)
+            socket_.send(input);
+         else
+            diagnostic("Tried to send user input over null websocket");
+            
          requestCallback.onResponseReceived(null);
          break;
       case ConsoleProcessInfo.CHANNEL_PIPE:
