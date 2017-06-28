@@ -1,7 +1,7 @@
 /*
- * PackageList.java
+ * PackageUpdate.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,23 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class PackageState extends JavaScriptObject
+public class PackratActions extends JavaScriptObject
 {
-   protected PackageState()
+   protected PackratActions()
    {
    }
-   
-   public final native JsArray<PackageInfo> getPackageList() /*-{
-      return this.package_list;
+
+   public final native JsArray<PackratPackageAction> getRestoreActions() /*-{
+      return this.restore_actions ? this.restore_actions : [];
    }-*/;
-   
-   public final native PackratContext getPackratContext() /*-{
-      return this.packrat_context;
+
+   public final native JsArray<PackratPackageAction> getSnapshotActions() /*-{
+      return this.snapshot_actions ? this.snapshot_actions : [];
    }-*/;
 }

@@ -1,7 +1,7 @@
 /*
  * PackagesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,7 +65,6 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -252,6 +251,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
       packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
       packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratCheckStatus().createMenuItem(false));
       packratMenu.addItem(commands_.packratClean().createMenuItem(false));
       packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
       packratMenu.addSeparator();
@@ -486,9 +486,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
-         
-         // highlight rows that are out of sync in packrat
-         packagesTable_.setRowStyles(new PackageRowStyles());
       }
       else
       {
@@ -631,19 +628,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          super.buildRowImpl(pkg, idx);
       }
    }   
-   
-   private class PackageRowStyles implements RowStyles<PackageInfo>
-   {
-      public String getStyleNames(PackageInfo row, int rowIndex)
-      {
-         PackageInfo pkgInfo = row.cast();
-         if (pkgInfo.getOutOfSync())
-         {
-            return dataGridRes_.dataGridStyle().packageOutOfSyncRow();
-         }
-         return "";
-      }
-   }
    
    private class DescriptionCell extends AbstractCell<PackageInfo>
    {

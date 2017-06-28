@@ -318,13 +318,6 @@ public class Projects implements OpenProjectFileHandler,
                                           newProject.getCreateGitRepo());
                }
                
-               if (newProject.getUsePackrat() !=
-                   uiPrefs.newProjUsePackrat().getValue())
-               {
-                  uiPrefs.newProjUsePackrat().setGlobalValue(
-                                          newProject.getUsePackrat());
-               }
-               
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
                projServer_.setUiPrefs(
