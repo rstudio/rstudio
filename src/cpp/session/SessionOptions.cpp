@@ -216,7 +216,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "quit child processes on session exit")
       ("session-first-project-template-path",
        value<std::string>(&firstProjectTemplatePath_)->default_value(""),
-       "first project template path");
+       "first project template path")
+      ("default-rsconnect-server",
+       value<std::string>(&defaultRSConnectServer_)->default_value(""),
+       "default RStudio Connect server URL");
 
    // allow options
    options_description allow("allow");

@@ -387,6 +387,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    sessionInfo["git_commit_large_file_size"] = options.gitCommitLargeFileSize();
 
+   sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client

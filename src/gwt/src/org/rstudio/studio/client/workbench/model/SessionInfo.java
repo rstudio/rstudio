@@ -506,4 +506,8 @@ public class SessionInfo extends JavaScriptObject
    public final native int getGitCommitLargeFileSize() /*-{
       return this.git_commit_large_file_size;
    }-*/;
+   
+   public final native String getDefaultRSConnectServer() /*-{
+      return this.default_rsconnect_server;
+   }-*/;
 }
