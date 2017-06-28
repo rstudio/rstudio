@@ -58,4 +58,7 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
 
    void connectionTest(String code, 
                        ServerRequestCallback<String> callback);
+
+   void connectionAddPackage(String packageName, 
+                             ServerRequestCallback<Void> callback);
 }

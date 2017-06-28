@@ -5190,6 +5190,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, STOP_SHINY_APP, params, true, callback);
    }
 
+   @Override
+   public void connectionAddPackage(String packageName,
+                                    ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, CONNECTION_ADD_PACKAGE, params, callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5599,4 +5608,7 @@ public class RemoteServer implements Server
    private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
 
    private static final String STOP_SHINY_APP = "stop_shiny_app";
+
+   private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
+
 }

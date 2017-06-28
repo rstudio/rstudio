@@ -555,3 +555,8 @@ options(connectionObserver = list(
 
    .rs.scalar(error)
 })
+
+.rs.addJsonRpcHandler("connection_add_package", function(package) {
+   extensionPath <- system.file("rstudio/connections.dcf", package = package)
+   invisible(.Call("rs_connectionAddPackage", package, extensionPath))
+})
