@@ -16,12 +16,12 @@
 #include <core/http/LocalStreamAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/json/Json.hpp>
+#include <core/SocketRpc.hpp>
 
 #include <server/ServerOptionsOverlay.hpp>
 #include <server/ServerSessionManager.hpp>
 #include <server/ServerSecureKeyFile.hpp>
 
-#include <session/SessionServerRpc.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
 #include "ServerSessionRpc.hpp"
