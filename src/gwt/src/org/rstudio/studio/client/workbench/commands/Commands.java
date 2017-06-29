@@ -360,6 +360,7 @@ public abstract class
    public abstract AppCommand packratBundle();
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
+   public abstract AppCommand packratCheckStatus();
 
    // Version control
    public abstract AppCommand versionControlHelp();

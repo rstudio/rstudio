@@ -895,11 +895,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
    bool altBufferActive;
    std::string currentDir;
    bool zombie;
-#if defined(_WIN32)
-   bool trackEnv = false;
-#else
-   bool trackEnv = true;
-#endif
+   bool trackEnv;
 
    Error error = json::readParams(request.params,
                                   &shellTypeInt,
@@ -911,9 +907,14 @@ Error startTerminal(const json::JsonRpcRequest& request,
                                   &termSequence,
                                   &altBufferActive,
                                   &currentDir,
-                                  &zombie);
+                                  &zombie,
+                                  &trackEnv);
    if (error)
       return error;
+
+#if defined(_WIN32)
+   bool trackEnv = false;
+#endif
 
    TerminalShell::TerminalShellType shellType =
          TerminalShell::safeShellTypeFromInt(shellTypeInt);

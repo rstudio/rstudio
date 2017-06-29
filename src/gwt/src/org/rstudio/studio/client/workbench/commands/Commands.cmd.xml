@@ -2415,6 +2415,12 @@ well as menu structures (for main menu and popup menus).
    		rebindable="false"
    		context="packrat"/>
 
+   <cmd id="packratCheckStatus"
+         menuLabel="Check Library _Status..."
+         desc="Check the status of the Packrat library"
+         rebindable="false"
+         context="packrat"/>
+
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
         desc="Configure version control options"

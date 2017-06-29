@@ -77,6 +77,12 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::setenv(&shellEnv, "GIT_EDITOR", editorCommand);
       core::system::setenv(&shellEnv, "SVN_EDITOR", editorCommand);
    }
+
+   // don't add commands starting with a space to shell history
+   if (trackEnv)
+   {
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
+   }
 #endif
 
    if (termSequence != kNoTerminal)

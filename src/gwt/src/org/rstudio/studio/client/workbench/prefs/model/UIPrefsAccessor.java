@@ -405,11 +405,6 @@ public class UIPrefsAccessor extends Prefs
       return bool("new_proj_git_init", false);
    }
    
-   public PrefValue<Boolean> newProjUsePackrat()
-   {
-      return bool("new_proj_use_packrat", false);
-   }
-   
    public PrefValue<String> defaultSweaveEngine()
    {
       return string("default_sweave_engine", "Sweave");
@@ -613,6 +608,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> terminalAutoClose()
    {
       return bool("terminal_autoclose", true);
+   }
+
+   public PrefValue<Boolean> terminalTrackEnvironment()
+   {
+      return bool("terminal_track_env", true);
    }
 
    public static final String KNIT_DIR_DEFAULT = "default";

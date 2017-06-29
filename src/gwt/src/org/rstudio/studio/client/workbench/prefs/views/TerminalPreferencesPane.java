@@ -126,6 +126,14 @@ public class TerminalPreferencesPane extends PreferencesPane
             "Deselect this option to keep terminal pane open after shell exits.");
       add(chkTerminalAutoClose);
 
+      if (haveCaptureEnvPref())
+      {
+         CheckBox chkCaptureEnv = checkboxPref("Save and Restore Environment Variables",
+               prefs_.terminalTrackEnvironment(),
+               "Terminal occasionally runs a hidden command to capture state of environment variables.");
+         add(chkCaptureEnv);
+      }
+      
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
       helpLink.addStyleName(res_.styles().newSection()); 
@@ -222,6 +230,11 @@ public class TerminalPreferencesPane extends PreferencesPane
    private boolean haveWebsocketPref()
    {
       return session_.getSessionInfo().getAllowTerminalWebsockets();
+   }
+
+   private boolean haveCaptureEnvPref()
+   {
+      return !BrowseCap.isWindowsDesktop();
    }
 
    private int selectedShellType()

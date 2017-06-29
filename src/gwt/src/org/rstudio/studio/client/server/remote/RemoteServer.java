@@ -175,6 +175,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
+import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
@@ -506,6 +507,7 @@ public class RemoteServer implements Server
                      boolean altBufferActive,
                      String cwd,
                      boolean zombie,
+                     boolean trackEnv,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -519,6 +521,7 @@ public class RemoteServer implements Server
       params.set(7, JSONBoolean.getInstance(altBufferActive));
       params.set(8, new JSONString(StringUtil.notNull(cwd)));
       params.set(9, JSONBoolean.getInstance(zombie));
+      params.set(10, JSONBoolean.getInstance(trackEnv));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
@@ -4768,6 +4771,11 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   public void getPackratActions(ServerRequestCallback<PackratActions> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PACKRAT_ACTIONS, requestCallback);
+   }
+   
    @Override
    public void packratBootstrap(String dir,
                                 boolean enter,
@@ -5559,6 +5567,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
+   private static final String GET_PACKRAT_ACTIONS = "get_packrat_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";
