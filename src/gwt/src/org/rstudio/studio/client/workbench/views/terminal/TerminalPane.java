@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
@@ -287,7 +288,20 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      terminals_.createNewTerminal();
+      terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
+      {
+         @Override
+         public void onSuccess(Boolean connected)
+         {
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+            creatingTerminal_ = false;
+         }
+      });
    }
 
    @Override
@@ -298,11 +312,20 @@ public class TerminalPane extends WorkbenchPane
 
       creatingTerminal_ = true;
       
-      if (!terminals_.createNamedTerminal(caption))
+      terminals_.createNamedTerminal(caption, new ResultCallback<Boolean, String>()
       {
-         // Name was not available. 
-         creatingTerminal_ = false;
-      }
+         @Override
+         public void onSuccess(Boolean connected)
+         {
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+            creatingTerminal_ = false;
+         }
+      });
    }
 
    @Override
@@ -868,7 +891,19 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void execute()
          {
-            terminal.connect();
+            terminal.connect(new ResultCallback<Boolean, String>()
+            {
+               @Override
+               public void onSuccess(Boolean connected) 
+               {
+               }
+
+               @Override
+               public void onFailure(String msg)
+               {
+                  Debug.devlog(msg);
+               }
+            });
          }
       });
    }

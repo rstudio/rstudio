@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -283,37 +285,37 @@ public class TerminalList implements Iterable<String>,
    /**
     * Initiate startup of a new terminal
     */
-   public void createNewTerminal()
+   public void createNewTerminal(final ResultCallback<Boolean, String> callback)
    {
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
             nextTerminalSequence());
-      startTerminal(info);
+      startTerminal(info, callback);
    }
 
    /**
     * Initiate startup of a new terminal with specified caption.
     * @param caption desired caption; if null or empty creates standard caption
-    * @return true if caption available, false if name already in use
+    * @param callback report success or failure of connection
     */
-   public boolean createNamedTerminal(String caption)
+   public void createNamedTerminal(String caption, final ResultCallback<Boolean, String> callback)
    {
       if (StringUtil.isNullOrEmpty(caption))
       {
-         createNewTerminal();
-         return true;
+         createNewTerminal(callback);
+         return;
       }
       
       // is this terminal name available?
       if (!isCaptionAvailable(caption))
       {
-         return false;
+         callback.onFailure("Terminal name '" + caption + "' already in use");
+         return;
       }
       
       ConsoleProcessInfo info = ConsoleProcessInfo.createNamedTerminalInfo(
             nextTerminalSequence(), caption);
 
-      startTerminal(info);
-      return true;
+      startTerminal(info, callback);
    }
 
    /**
@@ -330,7 +332,20 @@ public class TerminalList implements Iterable<String>,
       }
 
       existing.setHandle(handle);
-      startTerminal(existing);
+      startTerminal(existing, new ResultCallback<Boolean, String>()
+      {
+         @Override
+         public void onSuccess(Boolean connected) 
+         {
+         }
+
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+         }
+      });
+
       return true;
    }
 
@@ -393,11 +408,12 @@ public class TerminalList implements Iterable<String>,
       return maxNum + 1;
    }
 
-   private void startTerminal(ConsoleProcessInfo info)
+   private void startTerminal(ConsoleProcessInfo info, 
+                              final ResultCallback<Boolean, String> callback)
    {
       TerminalSession newSession = new TerminalSession(
             info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/);
-      newSession.connect();
+      newSession.connect(callback);
       updateTerminalBusyStatus();
    }
 

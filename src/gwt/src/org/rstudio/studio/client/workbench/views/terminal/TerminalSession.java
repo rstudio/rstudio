@@ -21,6 +21,7 @@ import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -115,10 +116,13 @@ public class TerminalSession extends XTermWidget
     *     to the remote terminal (RPC or WebSocket)
     * (3) start (or reconnect to) the server-side process for the terminal
     */
-   public void connect()
+   public void connect(final ResultCallback<Boolean, String> callback)
    {
       if (connected_ || connecting_ || terminating_)
+      {
+         callback.onSuccess(connected_ && !terminating_);
          return;
+      }
 
       connecting_ = true;
       setNewTerminal(getHandle() == null);
@@ -137,15 +141,15 @@ public class TerminalSession extends XTermWidget
             consoleProcess_ = consoleProcess;
             if (consoleProcess_ == null)
             {
-               writeError("No ConsoleProcess received from server");
                disconnect(false);
+               callback.onFailure("No ConsoleProcess received from server");
                return;
             }
 
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
-               writeError("Unsupported ConsoleProcess interaction mode");
                disconnect(false);
+               callback.onFailure("Unsupported ConsoleProcess interaction mode");
                return;
             } 
             
@@ -178,13 +182,14 @@ public class TerminalSession extends XTermWidget
                         connecting_ = false;
                         sendUserInput();
                         eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
+                        callback.onSuccess(true /*connected*/);
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
                         disconnect(false);
-                        writeError(error.getUserMessage());
+                        callback.onFailure(error.getUserMessage());
                      }
                   });
 
@@ -193,8 +198,8 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onError(String errorMsg)
                {
-                  writeError(errorMsg);
                   disconnect(false);
+                  callback.onFailure(errorMsg);
                   return;
                }
             });
@@ -204,9 +209,8 @@ public class TerminalSession extends XTermWidget
          public void onError(ServerError error)
          {
             disconnect(false);
-            writeError(error.getUserMessage());
+            callback.onFailure(error.getUserMessage());
          }
-
       });
    }
    
@@ -243,6 +247,7 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   writeError(error.getUserMessage());
                }
             });
@@ -270,7 +275,25 @@ public class TerminalSession extends XTermWidget
       if (!connected_)
       {
          // accumulate user input until we are connected, then play it back
-         connect();
+         connect(new ResultCallback<Boolean, String>()
+         {
+            @Override
+            public void onSuccess(Boolean connected) 
+            {
+               if (connected)
+               {
+                  sendUserInput();
+                  return;
+               }
+            }
+            
+            @Override
+            public void onFailure(String msg)
+            {
+               Debug.devlog(msg);
+               writeError(msg);
+            }
+         });
          return;
       }
 
@@ -345,6 +368,7 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onError(ServerError error)
                {
+                  Debug.logError(error);
                   writeError(error.getUserMessage());
                }
             });
@@ -481,15 +505,27 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      socket_.dispatchOutput(AnsiCode.ForeColor.RED + "Error: " + 
-            msg + AnsiCode.DEFAULTCOLORS, false /*detectLocalEcho*/);
+      writeln(AnsiCode.ForeColor.RED + "Error: " + msg + AnsiCode.DEFAULTCOLORS);
    }
 
    @Override
    protected void onLoad()
    {
       super.onLoad();
-      connect();
+      connect(new ResultCallback<Boolean, String>()
+      {
+         @Override
+         public void onSuccess(Boolean connected) 
+         {
+         }
+
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+            writeError(msg);
+         }
+      });
    }
 
    @Override
@@ -506,19 +542,33 @@ public class TerminalSession extends XTermWidget
       super.setVisible(isVisible);
       if (isVisible)
       {
-         connect();
-
-         // Inform the terminal that there may have been a resize. This could 
-         // happen on first display, or if the terminal was hidden behind other
-         // terminal sessions and there was a resize.
-         // A delay is needed to give the xterm.js implementation an
-         // opportunity to be ready for this.
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         connect(new ResultCallback<Boolean, String>()
          {
             @Override
-            public void execute()
+            public void onSuccess(Boolean connected) 
             {
-               onResize();
+               if (connected)
+               {
+                  // Inform the terminal that there may have been a resize. This could 
+                  // happen on first display, or if the terminal was hidden behind other
+                  // terminal sessions and there was a resize.
+                  // A delay is needed to give the xterm.js implementation an
+                  // opportunity to be ready for this.
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        onResize();
+                     }
+                  });
+               }
+            }
+
+            @Override
+            public void onFailure(String msg)
+            {
+               Debug.devlog(msg);
             }
          });
       }
@@ -761,6 +811,7 @@ public class TerminalSession extends XTermWidget
                   @Override
                   public void onError(ServerError error)
                   {
+                     Debug.logError(error);
                      writeError(error.getUserMessage());
                      reloading_ = false;
                      deferredOutput_.clear();
