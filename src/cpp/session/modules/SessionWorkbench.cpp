@@ -913,7 +913,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
       return error;
 
 #if defined(_WIN32)
-   bool trackEnv = false;
+   trackEnv = false;
 #endif
 
    TerminalShell::TerminalShellType shellType =
