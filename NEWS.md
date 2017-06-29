@@ -95,6 +95,7 @@
 * Make columns in data viewer resizable
 * Add option to kill child processes when session exits
 * Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
+* Remove Packrat package sync notifications; replace with Check Library Status command
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
