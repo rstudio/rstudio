@@ -85,6 +85,7 @@ public class TerminalSession extends XTermWidget
       cwd_ = info.getCwd();
       autoCloseMode_ = info.getAutoCloseMode();
       zombie_ = info.getZombie();
+      restarted_ = info.getRestarted();
       trackEnv_ = info.getTrackEnv();
       
       setTitle(info.getTitle());
@@ -154,8 +155,11 @@ public class TerminalSession extends XTermWidget
                return;
             } 
             
+            // Extract properties so they are available even if the terminal goes offline, which
+            // causes consoleProcess_ to become null.
             cols_ = consoleProcess_.getProcessInfo().getCols();
             rows_ = consoleProcess_.getProcessInfo().getRows();
+            restarted_ = consoleProcess_.getProcessInfo().getRestarted();
             trackEnv_ = consoleProcess_.getProcessInfo().getTrackEnv();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
@@ -599,7 +603,7 @@ public class TerminalSession extends XTermWidget
     */
    public boolean getRestarted()
    {
-      return consoleProcess_.getProcessInfo().getRestarted();
+      return restarted_;
    }
 
    /**
@@ -911,6 +915,7 @@ public class TerminalSession extends XTermWidget
    private String cwd_; 
    private int autoCloseMode_;
    private boolean zombie_; // process closed but UI kept alive
+   private boolean restarted_;
    private boolean trackEnv_;
 
    // Injected ---- 
