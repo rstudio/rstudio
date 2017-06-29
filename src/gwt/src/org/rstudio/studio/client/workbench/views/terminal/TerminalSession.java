@@ -157,21 +157,35 @@ public class TerminalSession extends XTermWidget
             
             // Extract properties so they are available even if the terminal goes offline, which
             // causes consoleProcess_ to become null.
+            terminalHandle_ = consoleProcess_.getProcessInfo().getHandle(); 
             cols_ = consoleProcess_.getProcessInfo().getCols();
             rows_ = consoleProcess_.getProcessInfo().getRows();
             restarted_ = consoleProcess_.getProcessInfo().getRestarted();
             trackEnv_ = consoleProcess_.getProcessInfo().getTrackEnv();
+            zombie_ = consoleProcess_.getProcessInfo().getZombie();
+            autoCloseMode_ = consoleProcess_.getProcessInfo().getAutoCloseMode();
+            shellType_ = consoleProcess_.getProcessInfo().getShellType();
+            altBufferActive_ = consoleProcess_.getProcessInfo().getAltBufferActive();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             
-            if (!consoleProcess_.getProcessInfo().getAltBufferActive() && altBufferActive())
+            showAltAfterReload_ = false;
+            if (!getAltBufferActive() && xtermAltBufferActive())
             {
                // If server reports the terminal is not showing alt-buffer, but local terminal
                // emulator is showing alt-buffer, terminal was killed while running
-               // a full-screen program. Switch local terminal back to primary buffer.
+               // a full-screen program. Switch local terminal back to primary buffer before
+               // we reload the cache from the server.
                showPrimaryBuffer();
+            }
+            else if (getAltBufferActive() && !xtermAltBufferActive())
+            {
+               // Server is targeting alt-buffer, but local terminal emulator is showing
+               // the main buffer. Possible when refreshing with a full-screen program running.
+               // Switch to alt-buffer after we reload the cache from the server.
+               showAltAfterReload_ = true;
             }
             
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
@@ -413,7 +427,7 @@ public class TerminalSession extends XTermWidget
             uiPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop() && 
             !getHasChildProcs() &&
-            !altBufferActive() &&
+            !xtermAltBufferActive() &&
             cursorAtEOL();
    }
 
@@ -580,21 +594,12 @@ public class TerminalSession extends XTermWidget
     */
    public String getHandle()
    {
-      if (consoleProcess_ == null)
-      {
-         return terminalHandle_;
-      }
-      terminalHandle_ = consoleProcess_.getProcessInfo().getHandle();
       return terminalHandle_;
    }
    
    public int getShellType()
    {
-      if (consoleProcess_ == null)
-      {
-         return shellType_;
-      }
-      return consoleProcess_.getProcessInfo().getShellType();
+      return shellType_;
    }
 
    /**
@@ -829,6 +834,8 @@ public class TerminalSession extends XTermWidget
     * Write to terminal after a terminal has restarted (on the server). We
     * use this to cleanup the current line, as a new prompt is typically
     * output by the server upon reconnect.
+    * 
+    * For a full-screen program, switch the terminal back into the alt-buffer.
     */
    public void writeRestartSequence()
    {
@@ -851,6 +858,12 @@ public class TerminalSession extends XTermWidget
 
          restartSequenceWritten_ = true;
       }
+
+      if (showAltAfterReload_)
+      {
+         showAltBuffer();
+         showAltAfterReload_ = false;
+      }
    }
    
    /**
@@ -864,11 +877,6 @@ public class TerminalSession extends XTermWidget
    
    public int getAutoCloseMode()
    {
-      if (consoleProcess_ == null)
-      {
-         return autoCloseMode_;
-      }
-      autoCloseMode_ = consoleProcess_.getProcessInfo().getAutoCloseMode();
       return autoCloseMode_;
    }
    
@@ -878,11 +886,6 @@ public class TerminalSession extends XTermWidget
     */
    public boolean getZombie()
    {
-      if (consoleProcess_ == null)
-      {
-         return zombie_;
-      }
-      zombie_ = consoleProcess_.getProcessInfo().getZombie();
       return zombie_;
    }
    
@@ -917,6 +920,7 @@ public class TerminalSession extends XTermWidget
    private boolean zombie_; // process closed but UI kept alive
    private boolean restarted_;
    private boolean trackEnv_;
+   private boolean showAltAfterReload_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 
