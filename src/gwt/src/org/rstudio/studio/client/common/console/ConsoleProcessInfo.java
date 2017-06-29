@@ -42,7 +42,8 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    public static final native ConsoleProcessInfo createNamedTerminalInfo(
          int sequence,
-         String caption) /*-{
+         String caption,
+         boolean trackEnv) /*-{
 
       var procInfo = new Object();
 
@@ -67,11 +68,15 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.restarted = false;
       procInfo.autoclose = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::AUTOCLOSE_DEFAULT;
       procInfo.zombie = false;
+      procInfo.track_env = trackEnv;
 
       return procInfo;
    }-*/;
 
-   public static final native ConsoleProcessInfo createNewTerminalInfo(int sequence) /*-{
+   public static final native ConsoleProcessInfo createNewTerminalInfo(
+         int sequence,
+         boolean trackEnv) /*-{
+         
       var procInfo = new Object();
 
       procInfo.handle = null;
@@ -95,6 +100,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.restarted = false;
       procInfo.autoclose = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::AUTOCLOSE_DEFAULT;
       procInfo.zombie = false;
+      procInfo.track_env = trackEnv;
 
       return procInfo;
    }-*/;
@@ -114,6 +120,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
     * @param cwd
     * @param autoCloseMode
     * @param zombie
+    * @param trackEnv
     * @return
     */
    public static final native ConsoleProcessInfo createTerminalMetadata(
@@ -128,7 +135,8 @@ public class ConsoleProcessInfo extends JavaScriptObject
          boolean altBufferActive,
          String cwd,
          int autoCloseMode,
-         boolean zombie) /*-{
+         boolean zombie,
+         boolean trackEnv) /*-{
 
       var procInfo = new Object();
 
@@ -153,6 +161,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.restarted = false;
       procInfo.autoclose = autoCloseMode;
       procInfo.zombie = zombie;
+      procInfo.track_env = trackEnv;
 
       return procInfo;
    }-*/;
