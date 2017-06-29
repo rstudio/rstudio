@@ -54,6 +54,8 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       toolbar_ = new EditingTargetToolbar(commands_, true);
       grid_ = new ObjectExplorerDataGrid(handle, document);
       resizePanel_ = new ResizeLayoutPanel();
+      statusBar_ = new ObjectExplorerEditingTargetStatusBar(this, grid_);
+      handle_ = handle;
       
       cbAttributes_ = new CheckBox();
       
@@ -144,13 +146,21 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       });
       
       mainWidget_.setSize("100%", "100%");
+      mainWidget_.addSouth(statusBar_, 16);
       mainWidget_.add(resizePanel_);
+   }
+   
+   public ObjectExplorerHandle getHandle()
+   {
+      return handle_;
    }
    
    private final DockLayoutPanel mainWidget_;
    private final Toolbar toolbar_;
    private final ResizeLayoutPanel resizePanel_;
    private final ObjectExplorerDataGrid grid_;
+   private final ObjectExplorerEditingTargetStatusBar statusBar_;
+   private final ObjectExplorerHandle handle_;
    
    private final ToolbarButton refreshButton_;
    private final CheckBox cbAttributes_;
