@@ -467,11 +467,10 @@ public class AceEditor implements DocDisplay,
       if (StringUtil.isNullOrEmpty(selectionValue))
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         clearEmacsMark();
       }
       else
       {
@@ -490,10 +489,10 @@ public class AceEditor implements DocDisplay,
             Position.create(cursorPos.getRow(), 0),
             cursorPos));
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         commands_.cutDummy().execute();
-         if (isEmacsModeOn()) clearEmacsMark();
+         Desktop.getFrame().clipboardCut();
+         clearEmacsMark();
       }
       else
       {
@@ -528,11 +527,10 @@ public class AceEditor implements DocDisplay,
                Position.create(cursorPos.getRow(), lineLength)));
       }
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         clearEmacsMark();
       }
       else
       {
@@ -546,7 +544,7 @@ public class AceEditor implements DocDisplay,
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardPaste();
       }
