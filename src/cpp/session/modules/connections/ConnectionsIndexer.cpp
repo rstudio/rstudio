@@ -279,6 +279,12 @@ core::json::Value connectionsRegistryAsJson()
    return connectionsRegistry().toJson();
 }
 
+void registerConnectionsRegistryEntry(std::string packageName, std::string extensionPath)
+{
+   FilePath extensionFilePath(extensionPath);
+   connectionsRegistry().add(packageName, extensionFilePath);
+}
+
 void registerConnectionsWorker()
 {
    ppe::indexer().addWorker(connectionsWorker());
