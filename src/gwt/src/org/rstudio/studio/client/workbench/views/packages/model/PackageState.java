@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.packages.model;
 
 import org.rstudio.studio.client.packrat.model.PackratContext;
-import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;

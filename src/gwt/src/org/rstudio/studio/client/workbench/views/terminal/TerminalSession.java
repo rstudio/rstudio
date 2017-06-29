@@ -85,6 +85,7 @@ public class TerminalSession extends XTermWidget
       cwd_ = info.getCwd();
       autoCloseMode_ = info.getAutoCloseMode();
       zombie_ = info.getZombie();
+      trackEnv_ = info.getTrackEnv();
       
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(this, this);
@@ -132,7 +133,7 @@ public class TerminalSession extends XTermWidget
       server_.startTerminal(getShellType(),
             getCols(), getRows(), getHandle(), getCaption(), 
             getTitle(), getSequence(), getAltBufferActive(), getCwd(), 
-            getZombie(), uiPrefs_.terminalTrackEnvironment().getValue(),
+            getZombie(), getTrackEnv(),
             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -146,7 +147,7 @@ public class TerminalSession extends XTermWidget
                return;
             }
 
-            if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
+            if (consoleProcess_.getProcessInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
                disconnect(false);
                callback.onFailure("Unsupported ConsoleProcess interaction mode");
@@ -155,6 +156,7 @@ public class TerminalSession extends XTermWidget
             
             cols_ = consoleProcess_.getProcessInfo().getCols();
             rows_ = consoleProcess_.getProcessInfo().getRows();
+            trackEnv_ = consoleProcess_.getProcessInfo().getTrackEnv();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
@@ -484,14 +486,6 @@ public class TerminalSession extends XTermWidget
             new SimpleRequestCallback<Void>("Interrupting child"));
    }
    
-   private int getInteractionMode()
-   {
-      if (consoleProcess_ != null)
-         return consoleProcess_.getProcessInfo().getInteractionMode();
-      else
-         return ConsoleProcessInfo.INTERACTION_NEVER;
-   } 
-
    protected void addHandlerRegistration(HandlerRegistration reg)
    {
       registrations_.add(reg);
@@ -890,11 +884,7 @@ public class TerminalSession extends XTermWidget
    
    public boolean getTrackEnv()
    {
-      if (consoleProcess_ == null)
-      {
-         return true;
-      }
-      return consoleProcess_.getProcessInfo().getTrackEnv();
+      return trackEnv_;
    }
    
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -921,6 +911,7 @@ public class TerminalSession extends XTermWidget
    private String cwd_; 
    private int autoCloseMode_;
    private boolean zombie_; // process closed but UI kept alive
+   private boolean trackEnv_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 
