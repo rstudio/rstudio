@@ -95,9 +95,10 @@ public class TerminalInfoDialog extends ModalDialogBase
          }
       }));
       
-      addLeftButton(new ThemedButton("Append Buffer", new ClickHandler() {
+      appendBufferButton_ = new ThemedButton("Append Buffer", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event) {
+            appendBufferButton_.setEnabled(false);
             diagnostics.append("\n\nTerminal Buffer\n---------------\n");
             session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
             {
@@ -106,6 +107,8 @@ public class TerminalInfoDialog extends ModalDialogBase
                {
                   diagnostics.append(AnsiCode.prettyPrintNonCRLF(buffer));
                   textArea_.setText(diagnostics.toString());
+                  textArea_.setCursorPos(diagnostics.toString().length());
+                  textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
                }
                
                @Override
@@ -116,7 +119,9 @@ public class TerminalInfoDialog extends ModalDialogBase
                }
             });
          }
-      }));
+      });
+      addLeftButton(appendBufferButton_);
+      
    }
 
    @Inject
@@ -133,6 +138,7 @@ public class TerminalInfoDialog extends ModalDialogBase
    }
    
    TextArea textArea_;
+   ThemedButton appendBufferButton_;
 
    // Injected ---- 
    private UIPrefs uiPrefs_;
