@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -26,7 +28,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,7 +35,7 @@ import com.google.inject.Inject;
 public class TerminalInfoDialog extends ModalDialogBase
 {
 
-   public TerminalInfoDialog(TerminalSession session, TerminalSessionSocket socket)
+   public TerminalInfoDialog(final TerminalSession session, TerminalSessionSocket socket)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -47,7 +48,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       if (StringUtil.isNullOrEmpty(cwd))
          cwd = "Default";
       
-      StringBuilder diagnostics = new StringBuilder();
+      final StringBuilder diagnostics = new StringBuilder();
       diagnostics.append("Terminal Session Information\n----------------------------\n");
       diagnostics.append("Caption:     '" + session.getCaption() + "'\n");
       diagnostics.append("Title:       '" + session.getTitle() + "'\n");
@@ -87,14 +88,35 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setReadOnly(true);
       textArea_.setText(diagnostics.toString());
 
-      setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-      ThemedButton closeButton = new ThemedButton("Close",
-                                                  new ClickHandler() {
+      addOkButton(new ThemedButton("Close", new ClickHandler() {
+         @Override
          public void onClick(ClickEvent event) {
             closeDialog();
          }
-      });
-      addOkButton(closeButton); 
+      }));
+      
+      addLeftButton(new ThemedButton("Append Buffer", new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event) {
+            diagnostics.append("\n\nTerminal Buffer\n---------------\n");
+            session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
+            {
+               @Override
+               public void onSuccess(String buffer)
+               {
+                  diagnostics.append(AnsiCode.prettyPrintNonCRLF(buffer));
+                  textArea_.setText(diagnostics.toString());
+               }
+               
+               @Override
+               public void onFailure(String message)
+               {
+                  diagnostics.append(message);
+                  textArea_.setText(diagnostics.toString());
+               }
+            });
+         }
+      }));
    }
 
    @Inject

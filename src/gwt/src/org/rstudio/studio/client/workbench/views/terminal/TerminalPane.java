@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -40,10 +41,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
@@ -165,6 +167,7 @@ public class TerminalPane extends WorkbenchPane
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
       commands_.showTerminalInfo().setEnabled(false);
       commands_.interruptTerminal().setEnabled(false);
+      commands_.sendTerminalToEditor().setEnabled(false);
 
       return toolbar;
    }
@@ -535,6 +538,36 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.interruptTerminal();
    }
    
+   @Override
+   public void sendTerminalToEditor()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+ 
+      visibleTerminal.getBuffer(true /*stripAnsi*/, new ResultCallback<String, String>()
+      {
+         @Override
+         public void onSuccess(String buffer)
+         {
+            if (buffer.isEmpty())
+               return;
+
+            // open a new tab for the terminal buffer copy
+            events_.fireEvent(new NewWorkingCopyEvent(FileTypeRegistry.TEXT,
+                  null /*path*/,
+                  buffer));
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+         }
+      });
+   }
+   
+  
    /**
     * Rename the currently visible terminal (client-side only).
     * 

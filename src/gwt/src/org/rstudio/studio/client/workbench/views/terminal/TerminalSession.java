@@ -894,6 +894,25 @@ public class TerminalSession extends XTermWidget
       return trackEnv_;
    }
    
+   public void getBuffer(final boolean stripAnsiCodes, final ResultCallback<String, String> callback)
+   {
+      consoleProcess_.getTerminalBuffer(stripAnsiCodes, new ServerRequestCallback<ProcessBufferChunk>()
+      {
+         @Override
+         public void onResponseReceived(final ProcessBufferChunk chunk)
+         {
+            String buffer = chunk.getChunk();
+            callback.onSuccess(buffer);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+   
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;

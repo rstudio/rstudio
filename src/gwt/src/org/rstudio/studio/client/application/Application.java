@@ -993,6 +993,7 @@ public class Application implements ApplicationEventHandlers
       commands_.nextTerminal().remove();
       commands_.showTerminalInfo().remove();
       commands_.interruptTerminal().remove();
+      commands_.sendTerminalToEditor().remove();
    }
 
    private final ApplicationView view_ ;
