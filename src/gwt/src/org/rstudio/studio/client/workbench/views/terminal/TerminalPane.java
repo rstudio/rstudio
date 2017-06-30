@@ -191,7 +191,7 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  if (!visibleTerminal.altBufferActive())
+                  if (!visibleTerminal.xtermAltBufferActive())
                   {
                      // not running a full-screen program
                      interruptable = true;
