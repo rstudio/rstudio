@@ -112,6 +112,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * @param caption
        */
       void activateNamedTerminal(String caption);
+      
+      /**
+       * Send current terminal's buffer to a new editor buffer.
+       */
+      void sendTerminalToEditor();
    }
 
    @Inject
@@ -180,6 +185,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onInterruptTerminal()
    {
       view_.interruptTerminal();
+   }
+   
+   @Handler
+   public void onSendTerminalToEditor()
+   {
+      view_.sendTerminalToEditor();
    }
 
    public void initialize()

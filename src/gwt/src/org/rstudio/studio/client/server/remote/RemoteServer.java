@@ -714,6 +714,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER_CHUNK, params, requestCallback);
    }
 
+   @Override
+   public void processGetBuffer(String handle,
+                                boolean stripAnsiCodes,
+                                ServerRequestCallback<ProcessBufferChunk> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      params.set(1,  JSONBoolean.getInstance(stripAnsiCodes));
+      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER, params, requestCallback);
+   }
+
    @Override 
    public void processUseRpc(String handle,
                              ServerRequestCallback<Void> requestCallback)
@@ -5280,6 +5291,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_TITLE = "process_set_title";
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
+   private static final String PROCESS_GET_BUFFER = "process_get_buffer";
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";

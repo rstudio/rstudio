@@ -434,6 +434,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTerminal"/>
             <separator/>
             <cmd refid="renameTerminal"/>
+            <cmd refid="sendTerminalToEditor"/>
             <cmd refid="showTerminalInfo"/>
             <separator/>
             <cmd refid="activateTerminal"/>
@@ -2462,20 +2463,20 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="renameTerminal"
-        label="Rename Current Terminal"
-        menuLabel="_Rename Current Terminal"
+        label="Rename Terminal"
+        menuLabel="_Rename Terminal"
         desc="Change terminal session name"/>
 
    <cmd id="closeTerminal"
    	    buttonLabel=""
-        label="Close Current Terminal"
-        menuLabel="Cl_ose Current Terminal"
+        label="Close Terminal"
+        menuLabel="Cl_ose Terminal"
         desc="Close current terminal session"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
         buttonLabel=""
-        label="Clear Current Terminal"
-        menuLabel="_Clear Current Terminal"
+        label="Clear Terminal Buffer"
+        menuLabel="_Clear Terminal Buffer"
         desc="Clear terminal"/>
 
    <cmd id="previousTerminal"
@@ -2487,20 +2488,26 @@ well as menu structures (for main menu and popup menus).
    <cmd id="nextTerminal"
         label="Next Terminal"
         buttonLabel=""
-        menuLabel="_Next Terminal"
+        menuLabel="Ne_xt Terminal"
         desc="Show next terminal"/>
 
    <cmd id="showTerminalInfo"
         label="Terminal Diagnostics..."
         buttonLabel=""
         menuLabel="Terminal _Diagnostics..."
-        desc="Show Info on Current Terminal"/>
+        desc="Show info on current terminal"/>
 
    <cmd id="interruptTerminal"
         buttonLabel=""
-        label="Interrupt Current Terminal"
+        label="Send Interrupt"
         menuLabel="_Interrupt Current Terminal"
         desc="Send Ctrl+C to Current Terminal"/>
+
+   <cmd id="sendTerminalToEditor"
+        label="Copy Terminal to Editor"
+        buttonLabel=""
+        menuLabel="Copy Terminal to New _Editor Tab"
+        desc="Copy current terminal's buffer to a new editor buffer"/>
  
    <cmd id="browseAddins"
         label="Browse Addins"
