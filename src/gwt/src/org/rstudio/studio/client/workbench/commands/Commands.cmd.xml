@@ -2506,7 +2506,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="sendTerminalToEditor"
         label="Copy Terminal to Editor"
         buttonLabel=""
-        menuLabel="Copy Terminal to New _Editor Tab"
+        menuLabel="Copy Terminal to _Editor"
         desc="Copy current terminal's buffer to a new editor buffer"/>
  
    <cmd id="browseAddins"
