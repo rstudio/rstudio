@@ -128,6 +128,13 @@ public class AceEditorCommandDispatcher
             AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
+   @Handler
+   public void onInsertSnippet()
+   {
+      fireEvent(
+            AceEditorCommandEvent.INSERT_SNIPPET,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
    
    // Private methods ----
    

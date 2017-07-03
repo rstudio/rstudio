@@ -2813,15 +2813,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onInsertSnippet()
-   {
-      // NOTE: Bound to Shift + Tab so we delegate back there
-      // if this isn't dispatched
-      if (!docDisplay_.onInsertSnippet())
-         docDisplay_.blockOutdent();
-   }
-   
-   @Handler
    void onShowDiagnosticsActiveDocument()
    {
       lintManager_.lint(true, true, false);

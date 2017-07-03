@@ -452,6 +452,7 @@ public class AceEditor implements DocDisplay,
                   case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
                   case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
                   case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
+                  case AceEditorCommandEvent.INSERT_SNIPPET:             insertSnippet();            break;
                   }
                }
             });
@@ -3593,6 +3594,12 @@ public class AceEditor implements DocDisplay,
    /*-{
       return editor.tabstopManager != null;
    }-*/;
+   
+   private void insertSnippet()
+   {
+      if (!snippets_.onInsertSnippet())
+         blockOutdent();
+   }
    
    @Override
    public boolean onInsertSnippet()
