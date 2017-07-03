@@ -133,6 +133,11 @@
                 <artifactId>tapestry</artifactId>
                 <version>4.0.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>1.3.9</version>
+            </dependency>
             <!-- For DevMode / JUnitShell (transitive dependency on jetty-server for CodeServer) -->
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
