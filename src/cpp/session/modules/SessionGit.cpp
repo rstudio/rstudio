@@ -485,24 +485,18 @@ public:
       // build shell arguments
       ShellArgs arguments;
       
-      // on some platforms, git will return paths which contain characters
-      // not in the ASCII set with a so-called 'quoted octal encoding'.
-      // this is controlled by the 'core.quotepath' configuration option;
-      // by setting this to off we ensure that git will return us a
-      // plain UTF-8 encoded path which requires no further processing
-      arguments << "-c" << "core.quotepath=off"
-                << "status" << "--porcelain" << "--" << dir;
+      arguments << "status" << "-z" << "--porcelain" << "--" << dir;
       
       std::string output;
       Error error = runGit(arguments, &output);
       if (error)
          return error;
       
-      // split and parse each line of status output
-      std::vector<std::string> lines = split(output);
+      // split and parse each piece of status output
+      std::vector<std::string> pieces = core::algorithm::split(output, "\0");
 
-      for (std::vector<std::string>::iterator it = lines.begin();
-           it != lines.end();
+      for (std::vector<std::string>::iterator it = pieces.begin();
+           it != pieces.end();
            it++)
       {
          std::string line = *it;
@@ -510,9 +504,15 @@ public:
             continue;
          FileWithStatus file;
 
-         file.status = line.substr(0, 2);
-
+         std::string status = line.substr(0, 2);
          std::string filePath = line.substr(3);
+         file.status = status;
+         
+         // if this was a git rename, we need to capture the rename target
+         // from the next field. note that Git flips the order of filenames
+         // when running with '-z'
+         if (status == "R ")
+            filePath = *(++it) + " -> " + filePath;
 
          // remove trailing slashes
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')

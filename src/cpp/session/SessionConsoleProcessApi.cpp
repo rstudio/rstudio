@@ -49,6 +49,16 @@ ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
    return proc;
 }
 
+// Return buffer for a terminal, optionally stripping out Ansi codes.
+std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
+{
+   std::string buffer = proc->getBuffer();
+
+   if (stripAnsi)
+      core::text::stripAnsiCodes(&buffer);
+   string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
+   return buffer;
+}
 
 
 // R APIs ---------------------------------------------------------------
@@ -181,11 +191,7 @@ SEXP rs_terminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    if (proc == NULL)
       return R_NilValue;
 
-   std::string buffer = proc->getBuffer();
-
-   if (stripAnsi)
-      core::text::stripAnsiCodes(&buffer);
-   string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
+   std::string buffer = getTerminalBuffer(proc, stripAnsi);
    return r::sexp::create(core::algorithm::split(buffer, "\n"), &protect);
 }
 
@@ -411,7 +417,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc != NULL)
    {
-      proc->enqueInput(input);
+      proc->enqueInputInternalLock(input);
       return Success();
    }
    else
@@ -564,6 +570,33 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error procGetBuffer(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   bool stripAnsi;
+
+   Error error = json::readParams(request.params, &handle, &stripAnsi);
+   if (error)
+      return error;
+
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error getting buffer chunk",
+                         ERROR_LOCATION);
+
+   json::Object result;
+   std::string buffer = getTerminalBuffer(proc, stripAnsi);
+
+   result["chunk"] = buffer;
+   result["chunk_number"] = 0;
+   result["more_available"] = false;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 Error procUseRpc(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -634,6 +667,28 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error procSetZombie(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error setting process to zombie mode",
+                         ERROR_LOCATION);
+
+   // Set a process to zombie mode meaning we keep showing it and its buffer, but don't
+   // start its process
+   proc->setZombie();
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initializeApi()
@@ -666,7 +721,9 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
       (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))
-      (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild));
+      (bind(registerRpcMethod, "process_set_zombie", procSetZombie))
+      (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild))
+      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer));
 
    return initBlock.execute();
 }

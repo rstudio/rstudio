@@ -17,11 +17,11 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -31,13 +31,11 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.inject.Inject;
 import com.sksamuel.gwt.websockets.CloseEvent;
 import com.sksamuel.gwt.websockets.Websocket;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
@@ -99,7 +97,7 @@ public class TerminalSessionSocket
          }
          
          private String input_;
-         private Stopwatch stopWatch_ = new Stopwatch();
+         private Stopwatch stopWatch_ = new Stopwatch(false);
          private long duration_;
       }
       
@@ -119,12 +117,7 @@ public class TerminalSessionSocket
          if (item == null)
             return;
          
-         long average = 0;
-         if (accumulatedPoints_ > 0)
-         {
-            average = accumulatedTime_ / accumulatedPoints_;
-         }
-         if (!item.matches(output, average))
+         if (!item.matches(output, average()))
          {
             // output not what we expected, reset the whole list
             pending_.clear();
@@ -134,6 +127,20 @@ public class TerminalSessionSocket
             accumulatedPoints_++;
             accumulatedTime_ += item.duration();
          }
+      }
+      
+      private long average()
+      {
+         if (accumulatedPoints_ > 0)
+         {
+            return accumulatedTime_ / accumulatedPoints_;
+         }
+         return 0;
+      }
+
+      public String averageTimeMsg()
+      {
+         return Long.toString(average()) + "ms";
       }
       
       private LinkedList<InputDatapoint> pending_;
@@ -149,29 +156,16 @@ public class TerminalSessionSocket
    public TerminalSessionSocket(Session session,
                                 XTermWidget xterm)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
 
       // Show delay between receiving a keystroke and sending it to the 
-      // terminal emulator; for diagnostics on laggy typing. Intended for
-      // brief use from a command-prompt. Time between input/display shown
-      // in console.
-      reportTypingLag_ = uiPrefs_.enableReportTerminalLag().getValue();
-      if (reportTypingLag_)
-      {
-         inputEchoTiming_ = new InputEchoTimeMonitor();
-      }
+      // terminal emulator; for diagnostics on laggy typing.
+      // Time between input/display shown in terminal diagnostics dialog.
+      inputEchoTiming_ = new InputEchoTimeMonitor();
    }
 
-   @Inject
-   private void initialize(UIPrefs uiPrefs)
-   {
-      uiPrefs_ = uiPrefs;
-   }
-   
    /**
     * Connect the input/output channel to the server. This requires that
     * an rsession has already been started via RPC and the consoleProcess
@@ -261,7 +255,7 @@ public class TerminalSessionSocket
             @Override
             public void onError()
             {
-               diagnostic("WebSocket connect error, switching to RPC");
+               diagnosticError("WebSocket connect error, switching to RPC");
                socket_ = null;
                
                // Unable to connect client to server via websocket; let server
@@ -320,7 +314,11 @@ public class TerminalSessionSocket
                requestCallback);
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
-         socket_.send(input);
+         if (socket_ != null)
+            socket_.send(input);
+         else
+            diagnosticError("Tried to send user input over null websocket");
+            
          requestCallback.onResponseReceived(null);
          break;
       case ConsoleProcessInfo.CHANNEL_PIPE:
@@ -360,16 +358,14 @@ public class TerminalSessionSocket
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
-      if (reportTypingLag_)
-         inputEchoTiming_.inputReceived(event.getData());
+      inputEchoTiming_.inputReceived(event.getData());
       session_.receivedInput(event.getData());
    }
 
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      if (reportTypingLag_)
-         inputEchoTiming_.outputReceived(event.getOutput());
+      inputEchoTiming_.outputReceived(event.getOutput());
       session_.receivedOutput(event.getOutput());
    }
 
@@ -420,6 +416,12 @@ public class TerminalSessionSocket
       return localEcho_.getDiagnostics();
    }
    
+   private void diagnosticError(String msg)
+   {
+      Debug.log(msg);
+      diagnostic(msg);
+   }
+   
    private void diagnostic(String msg)
    {
       if (diagnostic_ == null)
@@ -430,13 +432,17 @@ public class TerminalSessionSocket
       diagnostic_.append(msg);
       diagnostic_.append("\n");
    }
+   
+   public String getTypingLagMsg()
+   {
+      return inputEchoTiming_.averageTimeMsg();
+   }
  
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final Session session_;
    private final XTermWidget xterm_;
    private ConsoleProcess consoleProcess_;
    private HandlerRegistration terminalInputHandler_;
-   private boolean reportTypingLag_;
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
    private TerminalLocalEcho localEcho_;
@@ -448,7 +454,4 @@ public class TerminalSessionSocket
    
    public static final Pattern PASSWORD_PATTERN =
          Pattern.create(PASSWORD_REGEX, "im");
- 
-   // Injected ---- 
-   private UIPrefs uiPrefs_;
 }

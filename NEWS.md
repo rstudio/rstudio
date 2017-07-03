@@ -62,11 +62,12 @@
 * RStudio warns when attempting to commit large files (>10 MB)
 * Implemented 'ignore whitespace' option for Git Diff view
 * Wait for index.lock file to clear before performing git operations (with recovery)
+* Improve handling of paths containing special characters
 
 ### Miscellaneous
 
 * ANSI escape code support in console for colored output
-* Add support for custom, user-provided project templates
+* Add support for custom, user-provided [project templates](https://rstudio.github.io/rstudio-extensions/rstudio_project_templates.html)
 * Add support for middle-click pasting using X11 global selection (Linux Desktop only)
 * Document cursor position is now saved and restored between RStudio sessions
 * Addins are now fully searchable in dropdown toolbar menu
@@ -89,11 +90,12 @@
 * Show disambiguation in overflow list when two editor tabs have the same filename
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
-* OS X: Always show project label on dock tiles
+* macOS: Always show project label on dock tiles
 * Remove 100 column limit in data viewer
 * Make columns in data viewer resizable
 * Add option to kill child processes when session exits
 * Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
+* Remove Packrat package sync notifications; replace with Check Library Status command
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -103,6 +105,7 @@
 * Server Pro: Add support for NFSv4 Access Control Lists in Project Sharing
 * Server Pro: Add support for user-initiated session quit and force-terminate
 * Server Pro: Add support for admin-supplied notifications in R sessions
+* Server Pro: New session-timeout-kill-hours option to expire and cleanly remove old R sessions
 
 ### Bug Fixes
 
@@ -130,3 +133,5 @@
 * Color errors in the R console correctly when resuming a session
 * Fixed an issue in which notebook tables would not print data with lists of lists
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
+* Server Pro: Fix issue with using multiple R versions feature when multi-session is off
+

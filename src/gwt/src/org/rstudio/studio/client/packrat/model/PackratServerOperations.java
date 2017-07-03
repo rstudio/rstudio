@@ -17,6 +17,7 @@ package org.rstudio.studio.client.packrat.model;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -41,4 +42,6 @@ public interface PackratServerOperations extends BuildServerOperations
    void getPendingActions(String action, 
                           String dir,
                           ServerRequestCallback<JsArray<PackratPackageAction>> requestCallback);
+   
+   void getPackratActions(ServerRequestCallback<PackratActions> requestCallback);
 }

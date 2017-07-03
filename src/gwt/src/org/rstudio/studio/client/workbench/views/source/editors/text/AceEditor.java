@@ -467,11 +467,10 @@ public class AceEditor implements DocDisplay,
       if (StringUtil.isNullOrEmpty(selectionValue))
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         clearEmacsMark();
       }
       else
       {
@@ -486,17 +485,20 @@ public class AceEditor implements DocDisplay,
          return;
       
       Position cursorPos = getCursorPosition();
-      setSelectionRange(Range.fromPoints(
+      Range yankRange = Range.fromPoints(
             Position.create(cursorPos.getRow(), 0),
-            cursorPos));
+            cursorPos);
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         commands_.cutDummy().execute();
-         if (isEmacsModeOn()) clearEmacsMark();
+         String text = getTextForRange(yankRange);
+         Desktop.getFrame().setClipboardText(text);
+         replaceRange(yankRange, "");
+         clearEmacsMark();
       }
       else
       {
+         setSelectionRange(yankRange);
          yankedText_ = getSelectionValue();
          replaceSelection("");
       }
@@ -508,6 +510,7 @@ public class AceEditor implements DocDisplay,
          return;
       
       Position cursorPos = getCursorPosition();
+      Range yankRange = null;
       String line = getLine(cursorPos.getRow());
       int lineLength = line.length();
       
@@ -517,25 +520,27 @@ public class AceEditor implements DocDisplay,
       String rest = line.substring(cursorPos.getColumn());
       if (rest.trim().isEmpty())
       {
-         setSelectionRange(Range.fromPoints(
+         yankRange = Range.fromPoints(
                cursorPos,
-               Position.create(cursorPos.getRow() + 1, 0)));
+               Position.create(cursorPos.getRow() + 1, 0));
       }
       else
       {
-         setSelectionRange(Range.fromPoints(
+         yankRange = Range.fromPoints(
                cursorPos,
-               Position.create(cursorPos.getRow(), lineLength)));
+               Position.create(cursorPos.getRow(), lineLength));
       }
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         String text = getTextForRange(yankRange);
+         Desktop.getFrame().setClipboardText(text);
+         replaceRange(yankRange, "");
+         clearEmacsMark();
       }
       else
       {
+         setSelectionRange(yankRange);
          yankedText_ = getSelectionValue();
          replaceSelection("");
       }
@@ -546,7 +551,7 @@ public class AceEditor implements DocDisplay,
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardPaste();
       }

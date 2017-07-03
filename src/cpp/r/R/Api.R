@@ -1,3 +1,86 @@
+.rs.addApiFunction("restartSession", function(command = NULL) {
+   command <- as.character(command)
+   invisible(.rs.restartR(command))
+})
+
+.rs.addApiFunction("initializeProject", function(path = getwd())
+{
+   path <- .rs.ensureScalarCharacter(path)
+   
+   # if this is an existing file ...
+   if (file.exists(path))
+   {
+      # ... and it's an .Rproj file, then just return that (don't 
+      # re-initialize the project)
+      if (grepl("[.]Rproj$", path))
+         return(.rs.normalizePath(path, winslash = "/"))
+      
+      # ... and it's not a directory, bail
+      if (!utils::file_test("-d", path))
+      {
+         fmt <- "file '%s' exists and is not a directory"
+         stop(sprintf(fmt, .rs.createAliasedPath(path)))
+      }
+   }
+   
+   # otherwise, assume we've received the path to a directory, and
+   # attempt to initialize a project within that directory
+   .rs.ensureDirectory(path)
+   
+   # check to see if a .Rproj file already exists in that directory;
+   # if so, then we don't need to re-initialize
+   rProjFiles <- list.files(path, 
+                            pattern = "[.]Rproj$",
+                            full.names = TRUE)
+   
+   # if we already have a .Rproj file, just return that
+   if (length(rProjFiles))
+      return(.rs.normalizePath(rProjFiles[[1]], winslash = "/"))
+   
+   # otherwise, attempt to create a new .Rproj file, and return
+   # the path to the generated file
+   rProjFile <- file.path(
+      normalizePath(path, mustWork = TRUE, winslash = "/"),
+      paste(basename(path), "Rproj", sep = ".")
+   )
+   
+   success <- .Call(
+      "rs_writeProjectFile",
+      rProjFile,
+      PACKAGE = "(embedding)"
+   )
+   
+   if (!success)
+   {
+      fmt <- "failed to initialize RStudio project in directory '%s'"
+      stop(sprintf(fmt, .rs.createAliasedPath(path)))
+   }
+   
+   return(rProjFile)
+   
+})
+
+.rs.addApiFunction("openProject", function(path = NULL,
+                                           newSession = FALSE)
+{
+   # default to current project directory (note that this can be
+   # NULL if the user is not within an RStudio project)
+   if (is.null(path))
+     path <- .rs.getProjectDirectory()
+   
+   path <- .rs.ensureScalarCharacter(path)
+   
+   # attempt to initialize project if necessary
+   rProjFile <- .rs.api.initializeProject(path)
+   
+   # request that we open this project
+   invisible(
+      .Call("rs_requestOpenProject",
+            rProjFile,
+            newSession,
+            PACKAGE = "(embedding)")
+   )
+})
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
@@ -143,11 +226,18 @@
    if (!file.exists(filePath)) {
       stop(filePath, " does not exist.")
    }
+   
+   # transform numeric line, column values to integer
+   if (is.numeric(line))
+      line <- as.integer(line)
+   
+   if (is.numeric(col))
+      col <- as.integer(col)
 
    # validate line/col arguments
    if (!is.integer(line) || length(line) != 1 ||
        !is.integer(col)  || length(col) != 1) {
-      stop("line and column must be integer values.")
+      stop("line and column must be numeric values.")
    }
 
    # expand and alias for client
@@ -393,6 +483,18 @@
    .Call("rs_getPersistentValue", name)
 })
 
+.rs.addApiFunction("documentSave", function(id = NULL) {
+   if (is.null(id)) {
+      context <- .rs.api.getActiveDocumentContext()
+      id <- context$id
+   }
+   .Call("rs_requestDocumentSave", id, PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("documentSaveAll", function() {
+   .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE
@@ -499,3 +601,37 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalRunning = .rs.api.terminalRunning,
                                 terminalKill = .rs.api.terminalKill,
                                 terminalSend = .rs.api.terminalSend))
+
+
+.rs.addApiFunction("selectFile", function(
+   caption = "Select File",
+   label = "Select",
+   path = .rs.getProjectDirectory(),
+   filter = NULL,
+   existing = TRUE)
+{
+   .Call("rs_openFileDialog",
+         1L,
+         caption,
+         label,
+         path,
+         filter,
+         existing,
+         PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("selectDirectory", function(
+   caption = "Select Directory",
+   label = "Select",
+   path = .rs.getProjectDirectory())
+{
+   .Call("rs_openFileDialog",
+         2L,
+         caption,
+         label,
+         path,
+         NULL,
+         TRUE,
+         PACKAGE = "(embedding)")
+})
+

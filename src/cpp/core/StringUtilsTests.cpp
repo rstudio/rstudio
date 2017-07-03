@@ -15,11 +15,39 @@
 
 #include <tests/TestThat.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
+
 
 namespace rstudio {
 namespace core {
 namespace string_utils {
+
+using namespace algorithm;
+
+context("String splitting")
+{
+   test_that("Strings can be split on NUL bytes")
+   {
+      std::string text("a\0b\0c", 5);
+      std::string delim("\0", 1);
+      std::vector<std::string> splat = split(text, delim);
+      expect_true(splat.size() == 3);
+      expect_true(splat[0] == "a");
+      expect_true(splat[1] == "b");
+      expect_true(splat[2] == "c");
+   }
+   
+   test_that("raw delimiters containing null bytes can be split")
+   {
+      std::string text("a\0b\0c", 5);
+      std::vector<std::string> splat = split(text, "\0");
+      expect_true(splat.size() == 3);
+      expect_true(splat[0] == "a");
+      expect_true(splat[1] == "b");
+      expect_true(splat[2] == "c");
+   }
+}
 
 context("isSubsequence")
 {

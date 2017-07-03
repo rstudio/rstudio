@@ -45,6 +45,7 @@ namespace core {
    class FilePath;
    class FileInfo;
    class Settings;
+   class DistributedEvent;
    namespace system {
       class ProcessSupervisor;
       struct ProcessResult;
@@ -65,8 +66,6 @@ namespace session {
 
 namespace rstudio {
 namespace session {   
-
-class DistributedEvent;
 
 namespace module_context {
 
@@ -333,12 +332,13 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
+   boost::signal<void ()>                    onDestroyed;
    boost::signal<void (const std::vector<std::string>&)>
                                              onLibPathsChanged;
    boost::signal<void (const std::string&)>  onPackageLoaded;
    boost::signal<void ()>                    onPackageLibraryMutated;
    boost::signal<void ()>                    onPreferencesSaved;
-   boost::signal<void (const DistributedEvent&)>
+   boost::signal<void (const core::DistributedEvent&)>
                                              onDistributedEvent;
    boost::signal<void (core::FilePath)>      onPermissionsChanged;
 

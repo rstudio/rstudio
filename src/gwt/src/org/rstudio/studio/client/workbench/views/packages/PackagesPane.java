@@ -1,7 +1,7 @@
 /*
  * PackagesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,6 @@ import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -46,7 +45,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
-import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -65,8 +63,6 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.cellview.client.RowStyles;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -87,7 +83,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       commands_ = commands;
       session_ = session;
       display_ = display;
-      events_ = events;
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -120,51 +115,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       prePackratSeparator_.setVisible(true);
    }
    
-   @Override
-   public void setActions(ArrayList<Packages.Action> actions)
-   {
-      // command that manages the layout of the packages list and action center
-      Command manageActionCenterLayout = new Command() {
-         @Override
-         public void execute()
-         {
-            resizeActionCenter();
-         }
-      };
-      
-      if (actions == null || actions.size() == 0)
-      {
-         if (actionCenter_ != null)
-         {
-            packagesTableContainer_.remove(actionCenter_);
-            actionCenter_ = null;
-            layoutPackagesTable();
-            packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
-         }
-      }
-      else
-      {
-         // if we have no action center or we're changing the number of actions
-         // in a non-collapsed center, raise the packages pane
-         if (actionCenter_ == null ||
-             ((!actionCenter_.collapsed()) && 
-              (actionCenter_.getActionCount() != actions.size())))
-         {
-            events_.fireEvent(new RaisePackagePaneEvent());
-         }
-
-         // create the action center if it doesn't already exist
-         if (actionCenter_ == null)
-         {
-            actionCenter_ = new ActionCenter(manageActionCenterLayout);
-            packagesTableContainer_.add(actionCenter_);
-         }
-         
-         actionCenter_.setActions(actions);
-         resizeActionCenter();
-      }
-   }
-    
    @Override
    public void installPackage(PackageInstallContext installContext,
                               PackageInstallOptions defaultInstallOptions,
@@ -252,6 +202,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
       packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
       packratMenu.addSeparator();
+      packratMenu.addItem(commands_.packratCheckStatus().createMenuItem(false));
       packratMenu.addItem(commands_.packratClean().createMenuItem(false));
       packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
       packratMenu.addSeparator();
@@ -349,9 +300,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // selected.
       if (packagesTable_ != null)
          packagesTable_.onResize();
-      
-      if (actionCenter_ != null)
-         resizeActionCenter();
    }
    
    private void createPackagesTable()
@@ -359,7 +307,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       try
       {
          packagesTableContainer_.clear();
-         actionCenter_ = null;
          packagesTable_ = new DataGrid<PackageInfo>(
             packagesDataProvider_.getList().size(), dataGridRes_);
       }
@@ -486,9 +433,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
          packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
-         
-         // highlight rows that are out of sync in packrat
-         packagesTable_.setRowStyles(new PackageRowStyles());
       }
       else
       {
@@ -632,19 +576,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }   
    
-   private class PackageRowStyles implements RowStyles<PackageInfo>
-   {
-      public String getStyleNames(PackageInfo row, int rowIndex)
-      {
-         PackageInfo pkgInfo = row.cast();
-         if (pkgInfo.getOutOfSync())
-         {
-            return dataGridRes_.dataGridStyle().packageOutOfSyncRow();
-         }
-         return "";
-      }
-   }
-   
    private class DescriptionCell extends AbstractCell<PackageInfo>
    {
       @Override
@@ -662,21 +593,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   private void resizeActionCenter()
-   {
-      packagesTableContainer_.setWidgetLeftRight(
-            actionCenter_, 
-            0, Unit.PX, 
-            0, Unit.PX);
-      packagesTableContainer_.setWidgetTopHeight(
-            actionCenter_, 
-            0, Unit.PX, 
-            actionCenter_.getHeight(), Unit.PX);
-
-      layoutPackagesTable(actionCenter_.getHeight());
-      packagesTableContainer_.animate(ACTION_CENTER_ANIMATION_MS);
-   }
-   
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
@@ -686,7 +602,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ToolbarButton packratMenuButton_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
-   private ActionCenter actionCenter_ = null;
    private int gridRenderRetryCount_;
    private PackratContext packratContext_ = PackratContext.empty();
 
@@ -694,8 +609,4 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
-   private final EventBus events_;
-   
-   
-   private final static int ACTION_CENTER_ANIMATION_MS = 250;
 }

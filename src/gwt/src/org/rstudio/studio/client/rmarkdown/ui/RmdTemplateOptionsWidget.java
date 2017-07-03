@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
@@ -86,6 +88,9 @@ public class RmdTemplateOptionsWidget extends Composite
          labelFormatNotes_.setVisible(false);
          labelFormatName_.setVisible(true);
       }
+
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
+      optionsTabs_.addStyleName(styles.dialogTabPanel());
    }
    
    public void setTemplate(RmdTemplate template, boolean forCreate)

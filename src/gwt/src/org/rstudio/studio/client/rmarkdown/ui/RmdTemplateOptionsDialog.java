@@ -18,6 +18,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -50,7 +51,9 @@ public class RmdTemplateOptionsDialog
       super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
             template.getName() + " Options", onSaved, onCancelled);
       setWidth("425px");
-      setHeight("450px");
+      setHeight(
+         RStudioThemes.isFlat() ? "430px" : "450px"
+      );
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);

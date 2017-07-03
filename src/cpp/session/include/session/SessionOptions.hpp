@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ private:
 
 public:
    // read options  
-   core::ProgramStatus read(int argc, char * const argv[]);   
+   core::ProgramStatus read(int argc, char * const argv[], std::ostream& osWarnings);
    virtual ~Options() {}
    
    bool runTests() const
@@ -498,6 +498,11 @@ public:
       return launcherToken_;
    }
 
+   std::string defaultRSConnectServer()
+   {
+      return defaultRSConnectServer_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -510,6 +515,11 @@ public:
       return quitChildProcessesOnExit_;
    }
 
+   std::string firstProjectTemplatePath() const
+   {
+      return firstProjectTemplatePath_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -520,7 +530,7 @@ private:
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
-   bool validateOverlayOptions(std::string* pErrMsg);
+   bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
 
@@ -570,6 +580,7 @@ private:
    std::string defaultConsoleTerm_;
    bool defaultCliColorForce_;
    bool quitChildProcessesOnExit_;
+   std::string firstProjectTemplatePath_;
 
    // r
    std::string coreRSourcePath_;
@@ -648,6 +659,9 @@ private:
 
    // monitor
    std::string monitorSharedSecret_;
+
+   // connect
+   std::string defaultRSConnectServer_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

@@ -1020,9 +1020,19 @@ bool isTextFile(const FilePath& targetPath)
       return true;
 
 #ifndef _WIN32
+   
+   // the behavior of the 'file' command in the macOS High Sierra beta
+   // changed such that '--mime' no longer ensured that mime-type strings
+   // were actually emitted. using '-I' instead appears to work around this.
+#ifdef __APPLE__
+   const char * const kMimeTypeArg = "-I";
+#else
+   const char * const kMimeTypeArg = "--mime";
+#endif
+   
    core::shell_utils::ShellCommand cmd("file");
    cmd << "--dereference";
-   cmd << "--mime";
+   cmd << kMimeTypeArg;
    cmd << "--brief";
    cmd << targetPath;
    core::system::ProcessResult result;
@@ -1507,12 +1517,44 @@ r_util::ActiveSession& activeSession()
       std::string id = options().sessionScope().id();
       if (!id.empty())
          pSession = activeSessions().get(id);
-      else
+      else if (options().programMode() == kSessionProgramModeDesktop)
       {
          // if no active session, create one and use the launcher token as a
          // synthetic session ID
-         pSession = activeSessions().emptySession(
-               options().launcherToken());
+         //
+         // we only do this in desktop mode to preserve backwards compatibility
+         // with some functionality that depends on session data
+         // persisting after rstudio has been closed
+         //
+         // this entire clause will likely need to be reverted in a future release
+         // once we ensure that all execution modes have this squared away
+         pSession = activeSessions().emptySession(options().launcherToken());
+      }
+      else
+      {
+         // if no scope was specified, we are in singleton session mode
+         // check to see if there is an existing active session, and use that
+         std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
+               activeSessions().list(userHomePath(), options().projectSharingEnabled());
+         if (sessions.size() == 1)
+         {
+            // there is only one session, so this must be singleton session mode
+            // reopen that session
+            pSession = sessions.front();
+         }
+         else
+         {
+            // create a new session entry
+            // this should not really run because in single session mode there will
+            // only be one session but we'll create one here just in case for safety
+            std::string sessionId;
+
+            // pass ~ as the default working directory
+            // this is resolved deeper in the code in SessionClientInit to turn into
+            // the actual user preference or session default directory that it should be
+            activeSessions().create(options().sessionScope().project(), "~", &sessionId);
+            pSession = activeSessions().get(sessionId);
+         }
       }
    }
    return *pSession;

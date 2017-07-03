@@ -254,7 +254,7 @@ var MarkdownHighlightRules = function() {
             regex : "-?\\@[\\w\\d-]+"
         }, {
             token : "text",
-            regex : "[^\\*_%$`\\[#<>{}\\\\@\\s]+"
+            regex : "[^\\*_%$`\\[#<>{}\\\\@\\s!]+"
         }, {
             token : "text",
             regex : "\\\\"

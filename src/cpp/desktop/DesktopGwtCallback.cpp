@@ -154,22 +154,54 @@ QString resolveAliasedPath(const QString& path)
 } // anonymous namespace
 
 QString GwtCallback::getOpenFileName(const QString& caption,
-                                    const QString& dir,
-                                    const QString& filter)
+                                     const QString& label,
+                                     const QString& dir,
+                                     const QString& filter)
 {
    QString resolvedDir = resolveAliasedPath(dir);
-   QString result = QFileDialog::getOpenFileName(pOwner_->asWidget(),
-                                                 caption,
-                                                 resolvedDir,
-                                                 filter,
-                                                 0,
-                                                 standardFileDialogOptions());
+
+   QFileDialog dialog(
+            pOwner_->asWidget(),
+            caption,
+            resolveAliasedPath(dir),
+            filter);
+
+   dialog.setFileMode(QFileDialog::ExistingFile);
+   dialog.setLabelText(QFileDialog::Accept, label);
+
+   QString result;
+   if (dialog.exec() == QDialog::Accepted)
+      result = dialog.selectedFiles().value(0);
 
    activateAndFocusOwner();
    return createAliasedPath(result);
 }
 
+namespace {
+
+QString getSaveFileNameImpl(QWidget* pParent,
+                            const QString& caption,
+                            const QString& label,
+                            const QString& dir,
+                            QFileDialog::Options options)
+{
+    // initialize dialog
+    QFileDialog dialog(pParent, caption, dir);
+    dialog.setOptions(options);
+    dialog.setLabelText(QFileDialog::Accept, label);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+
+    // execute dialog and check for success
+    if (dialog.exec() == QDialog::Accepted)
+        return dialog.selectedFiles().value(0);
+
+    return QString();
+}
+
+} // end anonymous namespace
+
 QString GwtCallback::getSaveFileName(const QString& caption,
+                                     const QString& label,
                                      const QString& dir,
                                      const QString& defaultExtension,
                                      bool forceDefaultExtension)
@@ -178,8 +210,13 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 
    while (true)
    {
-      QString result = QFileDialog::getSaveFileName(pOwner_->asWidget(), caption, resolvedDir,
-                                                    QString(), 0, standardFileDialogOptions());
+      QString result = getSaveFileNameImpl(
+                  pOwner_->asWidget(),
+                  caption,
+                  label,
+                  resolvedDir,
+                  standardFileDialogOptions());
+
       activateAndFocusOwner();
       if (result.isEmpty())
          return result;
@@ -216,11 +253,12 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 }
 
 QString GwtCallback::getExistingDirectory(const QString& caption,
-                                         const QString& dir)
+                                          const QString& label,
+                                          const QString& dir)
 {
-   QString resolvedDir = resolveAliasedPath(dir);
-
    QString result;
+
+   // TODO: can we remove this code below?
 #ifdef _WIN32
    if (dir.isNull())
    {
@@ -240,16 +278,21 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
          result = QString();
       else
          result = QString::fromWCharArray(szDir);
+      activateAndFocusOwner();
+      return createAliasedPath(result);
    }
-   else
-   {
-      result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir,
-                                                 QFileDialog::ShowDirsOnly | standardFileDialogOptions());
-   }
-#else
-   result = QFileDialog::getExistingDirectory(pOwner_->asWidget(), caption, resolvedDir,
-                                              QFileDialog::ShowDirsOnly | standardFileDialogOptions());
 #endif
+
+   QFileDialog dialog(
+            pOwner_->asWidget(),
+            caption,
+            resolveAliasedPath(dir));
+
+   dialog.setLabelText(QFileDialog::Accept, label);
+   dialog.setFileMode(QFileDialog::Directory);
+   dialog.setOption(QFileDialog::ShowDirsOnly, true);
+   if (dialog.exec() == QDialog::Accepted)
+      result = dialog.selectedFiles().value(0);
 
    activateAndFocusOwner();
    return createAliasedPath(result);
@@ -327,6 +370,18 @@ void GwtCallback::clipboardCopy()
 void GwtCallback::clipboardPaste()
 {
    doAction(QKeySequence::Paste);
+}
+
+void GwtCallback::setClipboardText(QString text)
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   pClipboard->setText(text, QClipboard::Clipboard);
+}
+
+QString GwtCallback::getClipboardText()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   return pClipboard->text(QClipboard::Clipboard);
 }
 
 void GwtCallback::setGlobalMouseSelection(QString selection)

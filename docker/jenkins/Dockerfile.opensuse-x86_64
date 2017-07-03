@@ -22,6 +22,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     rpm-build \
     sudo \
     tar \
+    unzip \
     wget \
     xml-commons-apis \
     zlib-devel

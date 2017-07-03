@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
@@ -25,12 +26,14 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -38,10 +41,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
@@ -101,6 +105,23 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
       events_.addHandler(TerminalCwdEvent.TYPE, this);
 
+      events.addHandler(RestartStatusEvent.TYPE, 
+                          new RestartStatusEvent.Handler()
+      {
+         @Override
+         public void onRestartStatus(RestartStatusEvent event)
+         {
+            if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+            {
+               isRestartInProgress_ = true;
+            }
+            else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+            {
+               isRestartInProgress_ = false;
+            }
+         }
+      });
+ 
       ensureWidget();
    }
 
@@ -146,6 +167,7 @@ public class TerminalPane extends WorkbenchPane
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
       commands_.showTerminalInfo().setEnabled(false);
       commands_.interruptTerminal().setEnabled(false);
+      commands_.sendTerminalToEditor().setEnabled(false);
 
       return toolbar;
    }
@@ -172,7 +194,7 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  if (!visibleTerminal.altBufferActive())
+                  if (!visibleTerminal.xtermAltBufferActive())
                   {
                      // not running a full-screen program
                      interruptable = true;
@@ -269,7 +291,20 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      terminals_.createNewTerminal();
+      terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
+      {
+         @Override
+         public void onSuccess(Boolean connected)
+         {
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+            creatingTerminal_ = false;
+         }
+      });
    }
 
    @Override
@@ -280,11 +315,20 @@ public class TerminalPane extends WorkbenchPane
 
       creatingTerminal_ = true;
       
-      if (!terminals_.createNamedTerminal(caption))
+      terminals_.createNamedTerminal(caption, new ResultCallback<Boolean, String>()
       {
-         // Name was not available. 
-         creatingTerminal_ = false;
-      }
+         @Override
+         public void onSuccess(Boolean connected)
+         {
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+            creatingTerminal_ = false;
+         }
+      });
    }
 
    @Override
@@ -307,7 +351,7 @@ public class TerminalPane extends WorkbenchPane
                           "already loaded. Ignoring.");
          return;
       }
-
+      
       // add terminal to the dropdown's cache; terminals aren't actually
       // connected until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
@@ -494,6 +538,36 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.interruptTerminal();
    }
    
+   @Override
+   public void sendTerminalToEditor()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+ 
+      visibleTerminal.getBuffer(true /*stripAnsi*/, new ResultCallback<String, String>()
+      {
+         @Override
+         public void onSuccess(String buffer)
+         {
+            if (buffer.isEmpty())
+               return;
+
+            // open a new tab for the terminal buffer copy
+            events_.fireEvent(new NewWorkingCopyEvent(FileTypeRegistry.TEXT,
+                  null /*path*/,
+                  buffer));
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.devlog(msg);
+         }
+      });
+   }
+   
+  
    /**
     * Rename the currently visible terminal (client-side only).
     * 
@@ -542,7 +616,7 @@ public class TerminalPane extends WorkbenchPane
    /**
     * Cleanup after process with given handle has terminated.
     * @param handle identifier for process that exited
-    * @param processExited true if process exited on server
+    * @param processExited true if process exited on server; false if client-side is forcing exit
     */
    private void cleanupAfterTerminate(String handle, boolean processExited)
    {
@@ -552,7 +626,12 @@ public class TerminalPane extends WorkbenchPane
          // to the Terminal pane.
          return;
       }
-      
+
+      if (isRestartInProgress_)
+      {
+         return;
+      }
+
       // determine if terminal should remain loaded in UI even though process
       // has exited
       if (processExited)
@@ -573,6 +652,7 @@ public class TerminalPane extends WorkbenchPane
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
+               server_.processSetZombie(handle,  new VoidServerRequestCallback());
             }
             return;
          }
@@ -844,7 +924,19 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void execute()
          {
-            terminal.connect();
+            terminal.connect(new ResultCallback<Boolean, String>()
+            {
+               @Override
+               public void onSuccess(Boolean connected) 
+               {
+               }
+
+               @Override
+               public void onFailure(String msg)
+               {
+                  Debug.devlog(msg);
+               }
+            });
          }
       });
    }
@@ -924,7 +1016,8 @@ public class TerminalPane extends WorkbenchPane
    private ToolbarButton closeButton_;
    ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
-
+   private boolean isRestartInProgress_;
+   
    // Injected ----  
    private GlobalDisplay globalDisplay_;
    private EventBus events_;

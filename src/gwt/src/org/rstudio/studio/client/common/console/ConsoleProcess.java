@@ -371,7 +371,12 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       server_.processGetBufferChunk(procInfo_.getHandle(), chunk, requestCallback);
    }
-   
+
+   public void getTerminalBuffer(boolean stripAnsiCodes, ServerRequestCallback<ProcessBufferChunk> requestCallback)
+   {
+      server_.processGetBuffer(procInfo_.getHandle(), stripAnsiCodes, requestCallback);
+   }
+    
    public void useRpcMode(ServerRequestCallback<Void> requestCallback)
    {
       forceRpc_ = true;

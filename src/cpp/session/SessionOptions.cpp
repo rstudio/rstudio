@@ -77,7 +77,7 @@ Options& options()
    return instance ;
 }
    
-core::ProgramStatus Options::read(int argc, char * const argv[])
+core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& osWarnings)
 {
    using namespace boost::program_options ;
    
@@ -213,7 +213,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "default CLICOLOR_FORCE setting for R console")
       ("session-quit-child-processes-on-exit",
        value<bool>(&quitChildProcessesOnExit_)->default_value(false),
-       "quit child processes on session exit");
+       "quit child processes on session exit")
+      ("session-first-project-template-path",
+       value<std::string>(&firstProjectTemplatePath_)->default_value(""),
+       "first project template path")
+      ("default-rsconnect-server",
+       value<std::string>(&defaultRSConnectServer_)->default_value(""),
+       "default RStudio Connect server URL");
 
    // allow options
    options_description allow("allow");
@@ -447,7 +453,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // call overlay hooks
    resolveOverlayOptions();
    std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
+   if (!validateOverlayOptions(&errMsg, osWarnings))
    {
       program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();

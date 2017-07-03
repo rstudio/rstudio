@@ -25,6 +25,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/system/Process.hpp>
+#include <core/terminal/PrivateCommand.hpp>
 
 #include <session/SessionConsoleProcessSocket.hpp>
 
@@ -40,18 +41,25 @@ namespace console_process {
 
 const int kFlushSequence = -2; // see ShellInput.FLUSH_SEQUENCE
 const int kIgnoreSequence = -1; // see ShellInput.IGNORE_SEQUENCE
-const int kAutoFlushLength = 20;
+const size_t kAutoFlushLength = 20;
 
 class ConsoleProcess;
 typedef boost::shared_ptr<ConsoleProcess> ConsoleProcessPtr;
 
+/*
+ * Note on multi-threading and locking: if connected to a terminal with websockets,
+ * ConsoleProcess::onReceivedInput will be called on a separate thread. Thus, there
+ * is inputOutputQueueMutex_ used to guard anything that can be modified by this call
+ * but accessed elsewhere. Unpleasant. Be nice to refactor to contain this error-prone
+ * complexity someday.
+ */
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
 private:
    // This constructor is only for resurrecting orphaned processes (i.e. for
    // suspend/resume scenarios)
-   ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo);
+   explicit ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    ConsoleProcess(
          const std::string& command,
@@ -129,6 +137,8 @@ public:
          int cols, int rows,
          int termSequence,
          core::FilePath workingDir,
+         bool trackEnv,
+         const std::string& handle,
          TerminalShell::TerminalShellType *pSelectedShellType);
 
    virtual ~ConsoleProcess() {}
@@ -147,6 +157,7 @@ public:
 
    core::Error start();
    void enqueInput(const Input& input);
+   void enqueInputInternalLock(const Input& input);
    Input dequeInput();
    void enquePrompt(const std::string& prompt);
    void interrupt();
@@ -159,6 +170,7 @@ public:
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile(bool lastLineOnly = false) const;
+   void deleteEnvFile() const;
    void setNotBusy() { procInfo_->setHasChildProcs(false); }
    bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
    bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
@@ -194,6 +206,8 @@ public:
 
    void onReceivedInput(const std::string& input);
 
+   void setZombie();
+
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
    bool onContinue(core::system::ProcessOperations& ops);
@@ -215,6 +229,9 @@ private:
    ConsoleProcessSocketConnectionCallbacks createConsoleProcessSocketConnectionCallbacks();
    void onConnectionOpened();
    void onConnectionClosed();
+
+   void saveEnvironment(const std::string& env);
+   static void loadEnvironment(const std::string& handle, core::system::Options* pEnv);
 
 private:
    // Command and options that will be used when start() is called
@@ -243,6 +260,7 @@ private:
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
    int lastInputSequence_;
+   boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
@@ -254,9 +272,12 @@ private:
    // is the underlying process started?
    bool started_;
 
-   // cached pointer to process options, for use in websocket thread callbacks
+   // cached pointer to process operations, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
-   boost::mutex mutex_;
+   boost::mutex procOpsMutex_;
+
+   // private command handler, used to capture environment variables during terminal idle time
+   core::terminal::PrivateCommand envCaptureCmd_;
 };
 
 core::json::Array processesAsJson();

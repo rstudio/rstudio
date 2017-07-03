@@ -9,7 +9,7 @@ properties([
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
                 string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version'),
                 string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
-                string(name: 'SLACK_CHANNEL', defaultValue: '#rstudio', description: 'Slack channel to publish build message.'),
+                string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
                 string(name: 'FLAVOR_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching FLAVOR')
@@ -51,7 +51,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos')) {
+  if (os.contains('centos') || os.contains('suse')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -103,7 +103,9 @@ try {
           [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
           [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial']
+          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
+          [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
+          [os: 'xenial',   arch: 'i386',   flavor: 'server', variant: 'xenial']
         ]
         containers = limit_builds(containers)
         def parallel_containers = [:]
@@ -134,6 +136,7 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source') {
           trigger_external_build('IDE/macos')
+          trigger_external_build('IDE/windows')
         }
         parallel parallel_containers
 
