@@ -372,6 +372,18 @@ void GwtCallback::clipboardPaste()
    doAction(QKeySequence::Paste);
 }
 
+void GwtCallback::setClipboardText(QString text)
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   pClipboard->setText(text, QClipboard::Clipboard);
+}
+
+QString GwtCallback::getClipboardText()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   return pClipboard->text(QClipboard::Clipboard);
+}
+
 void GwtCallback::setGlobalMouseSelection(QString selection)
 {
     QClipboard* clipboard = QApplication::clipboard();
