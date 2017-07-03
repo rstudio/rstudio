@@ -347,11 +347,11 @@ public class BuildPresenter extends BasePresenter
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
       final String caption = "Build";
-      workbenchContext_.setBuildInProgress(true);
       terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
          @Override
          public void execute()
          {
+            workbenchContext_.setBuildInProgress(true);
             sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
                @Override
                public void execute()
