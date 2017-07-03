@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter 
 {
@@ -93,7 +94,8 @@ public class BuildPresenter extends BasePresenter
                          FileTypeRegistry fileTypeRegistry,
                          Session session,
                          DependencyManager dependencyManager,
-                         SourceBuildHelper sourceBuildHelper)
+                         SourceBuildHelper sourceBuildHelper,
+                         TerminalHelper terminalHelper)
    {
       super(display);
       view_ = display;
@@ -105,6 +107,7 @@ public class BuildPresenter extends BasePresenter
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
       sourceBuildHelper_ = sourceBuildHelper;
+      terminalHelper_ = terminalHelper;
       session_ = session;
       dependencyManager_ = dependencyManager;
         
@@ -343,29 +346,36 @@ public class BuildPresenter extends BasePresenter
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
+      final String caption = "Build";
       workbenchContext_.setBuildInProgress(true);
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
          @Override
          public void execute()
          {
-            server_.startBuild(type, subType, 
-                               new SimpleRequestCallback<Boolean>() {
+            sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
                @Override
-               public void onResponseReceived(Boolean response)
+               public void execute()
                {
+                  server_.startBuild(type, subType, 
+                        new SimpleRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean response)
+                     {
 
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        super.onError(error);
+                        workbenchContext_.setBuildInProgress(false);
+                     }
+
+                  });
                }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  super.onError(error);
-                  workbenchContext_.setBuildInProgress(false);
-               }
-              
-            });
+            }, caption);
          }
-      }, "Build");
+      }, caption, "Terminal jobs will be terminated. Are you sure?");
    }
    
    void onStopBuild()
@@ -433,4 +443,5 @@ public class BuildPresenter extends BasePresenter
    private final FileTypeRegistry fileTypeRegistry_;
    private final SourceBuildHelper sourceBuildHelper_;
    private final WorkbenchContext workbenchContext_;
+   private final TerminalHelper terminalHelper_;
 }
