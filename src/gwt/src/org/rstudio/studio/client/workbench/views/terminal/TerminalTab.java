@@ -15,10 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -32,8 +37,10 @@ import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerm
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                          implements ProvidesBusy
@@ -44,7 +51,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
       implements ProvidesBusy,
                  CreateTerminalEvent.Handler,
-                 SessionInitHandler,
                  SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
                  CreateNamedTerminalEvent.Handler,
@@ -76,8 +82,13 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
       @Handler
       public abstract void onSendTerminalToEditor();
+      
+      /**
+       * Attach a list of server-side terminals to the pane.
+       * @param procList list of terminals on server
+       */
+      public abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
-      abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
    }
 
@@ -86,20 +97,41 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                       EventBus events,
                       Commands commands,
                       Binder binder,
+                      Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                       final Session session)
    {
       super("Terminal", shim);
       shim_ = shim;
+      pConsoleProcessFactory_ = pConsoleProcessFactory;
 
       binder.bind(commands, shim_);
       events.addHandler(CreateTerminalEvent.TYPE, shim_);
-      events.addHandler(SessionInitEvent.TYPE, shim_);
       events.addHandler(SendToTerminalEvent.TYPE, shim_);
       events.addHandler(ClearTerminalEvent.TYPE, shim_);
       events.addHandler(CreateNamedTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
 
-      shim_.initialize();
+      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            JsArray<ConsoleProcessInfo> procs =
+                  session.getSessionInfo().getConsoleProcesses();
+            final ArrayList<ConsoleProcessInfo> procList = new ArrayList<ConsoleProcessInfo>();
+
+            for (int i = 0; i < procs.length(); i++)
+            {
+               final ConsoleProcessInfo proc = procs.get(i);
+               if (proc.isTerminal())
+               {
+                  addTerminalProcInfo(procList, proc);
+               }
+            }
+            if (!procList.isEmpty())
+               shim_.onRepopulateTerminals(procList);
+         }
+      });
    }
 
    @Override
@@ -120,5 +152,48 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       shim_.addBusyHandler(handler);
    }
 
+   /**
+    * Add process to list of processes, sorted in ascending order by
+    * terminal sequence number. If duplicate sequence numbers are
+    * encountered, all but the first will have the process killed.
+    * 
+    * @param terminalProcs (in/out) sorted list of terminal processes
+    * @param procInfo process to insert in the list
+    */
+   private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
+                                    ConsoleProcessInfo procInfo)
+   {
+      int newSequence = procInfo.getTerminalSequence();
+      if (newSequence < 1)
+      {
+         Debug.logWarning("Invalid terminal sequence " + newSequence + 
+               ", killing unrecognized process");
+         pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
+         return;
+      }
+
+      for (int i = 0; i < procInfoList.size(); i++)
+      {
+         int currentSequence = procInfoList.get(i).getTerminalSequence();
+
+         if (newSequence == currentSequence)
+         {
+            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
+                  ", killing duplicate process");
+            pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
+            return;
+         }
+
+         if (newSequence < currentSequence)
+         {
+            procInfoList.add(i, procInfo);
+            return;
+         }
+      }
+      procInfoList.add(procInfo);
+   }
+   
    private Shim shim_;
+
+   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
 }

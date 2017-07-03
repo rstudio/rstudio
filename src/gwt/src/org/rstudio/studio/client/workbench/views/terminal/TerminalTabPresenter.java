@@ -17,17 +17,13 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
@@ -36,10 +32,8 @@ import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerm
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class TerminalTabPresenter extends BusyPresenter
                                   implements SendToTerminalEvent.Handler,
@@ -121,17 +115,13 @@ public class TerminalTabPresenter extends BusyPresenter
 
    @Inject
    public TerminalTabPresenter(final Display view,
-                               final Session session,
                                GlobalDisplay globalDisplay,
-                               UIPrefs uiPrefs,
-                               Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+                               UIPrefs uiPrefs)
    {
       super(view);
       view_ = view;
-      session_ = session;
       globalDisplay_ = globalDisplay;
       uiPrefs_ = uiPrefs;
-      pConsoleProcessFactory_ = pConsoleProcessFactory;
    }
 
    @Handler
@@ -193,10 +183,6 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.sendTerminalToEditor();
    }
 
-   public void initialize()
-   {
-   }
-
    @Override
    public void onCreateTerminal(CreateTerminalEvent event)
    {
@@ -229,62 +215,9 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.activateNamedTerminal(event.getId());
    }
 
-   public void onSessionInit(SessionInitEvent sie)
+   public void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
    {
-      JsArray<ConsoleProcessInfo> procs =
-            session_.getSessionInfo().getConsoleProcesses();
-      final ArrayList<ConsoleProcessInfo> procList = new ArrayList<ConsoleProcessInfo>();
-
-      for (int i = 0; i < procs.length(); i++)
-      {
-         final ConsoleProcessInfo proc = procs.get(i);
-         if (proc.isTerminal())
-         {
-            addTerminalProcInfo(procList, proc);
-         }
-      }
       view_.repopulateTerminals(procList);
-   }
-
-   /**
-    * Add process to list of processes, sorted in ascending order by
-    * terminal sequence number. If duplicate sequence numbers are
-    * encountered, all but the first will have the process killed.
-    * 
-    * @param terminalProcs (in/out) sorted list of terminal processes
-    * @param procInfo process to insert in the list
-    */
-   private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
-                                    ConsoleProcessInfo procInfo)
-   {
-      int newSequence = procInfo.getTerminalSequence();
-      if (newSequence < 1)
-      {
-         Debug.logWarning("Invalid terminal sequence " + newSequence + 
-               ", killing unrecognized process");
-         pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
-         return;
-      }
-
-      for (int i = 0; i < procInfoList.size(); i++)
-      {
-         int currentSequence = procInfoList.get(i).getTerminalSequence();
-
-         if (newSequence == currentSequence)
-         {
-            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
-                  ", killing duplicate process");
-            pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
-            return;
-         }
-
-         if (newSequence < currentSequence)
-         {
-            procInfoList.add(i, procInfo);
-            return;
-         }
-      }
-      procInfoList.add(procInfo);
    }
 
    public void confirmClose(final Command onConfirmed)
@@ -323,9 +256,7 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    // Injected ---- 
-   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final Display view_;
-   private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final UIPrefs uiPrefs_;
 }
