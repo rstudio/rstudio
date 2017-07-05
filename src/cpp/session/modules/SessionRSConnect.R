@@ -192,13 +192,13 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server) { 
+.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) { 
    # init with empty list
    appList <- list()
 
    # attempt to get app ID from server
    tryCatch({
-     appList <- rsconnect:::getAppById(id, account, server)
+     appList <- rsconnect:::getAppById(id, account, server, hostUrl)
    }, error = function(e) {
      # Connect returns a generic HTTP failure when the app doesn't exist (for
      # instance, after being deleted); check the error message and treat this

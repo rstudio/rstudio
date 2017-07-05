@@ -698,6 +698,7 @@ public class RSConnectDeploy extends Composite
                   fromPrevious_.getAppId(),
                   fromPrevious_.getAccountName(), 
                   fromPrevious_.getServer(), 
+                  fromPrevious_.getHostUrl(),
                   new ServerRequestCallback<RSConnectApplicationInfo>()
                   {
                      @Override
@@ -1033,9 +1034,7 @@ public class RSConnectDeploy extends Composite
    
    private boolean isUpdate()
    {
-      return fromPrevious_ != null && 
-            getSelectedAccount() != null &&
-            getSelectedAccount().equals(fromPrevious_.getAccount());
+      return fromPrevious_ != null;
    }
    
    private void checkForExistingApp(final RSConnectAccount account, 

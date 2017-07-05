@@ -4254,13 +4254,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getRSConnectApp(String appId, String accountName, String server,
+   public void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
          ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(appId));
       params.set(1, new JSONString(accountName));
       params.set(2, new JSONString(server));
+      params.set(3, new JSONString(hostUrl));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP,
             params,

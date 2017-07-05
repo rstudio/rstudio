@@ -45,7 +45,7 @@
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
             <g:Label styleName="{res.style.firstControlLabel}" 
-                     text="Destination Account:">
+                     text="Publish Using Account:">
             </g:Label>
             <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
                        ui:field="addAccountAnchor_" text="Add New Account">
