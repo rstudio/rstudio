@@ -1030,21 +1030,10 @@ public class TextEditingTargetWidget
          }
          else if (type == SourceDocument.XT_RMARKDOWN)
          {
-            // assume static by default
-            boolean isStatic = true;
-            if (isShiny_)
-            {
-               // Shiny documents cannot be static
-               isStatic = false;
-            }
-            else if (!RmdEditorOptions.getBool(
-                  YamlFrontMatter.getFrontMatter(editor_), 
-                  RmdEditorOptions.PUBLISH_OUTPUT, true))
-            {
-               // don't publish as static if explicitly asked not to
-               isStatic = false;
-            }
-            publishButton_.setRmd(publishPath, isStatic);
+            // don't publish markdown docs as static
+            publishButton_.setRmd(publishPath, 
+                  false // not static
+                  );
          }
          else 
          {
