@@ -81,6 +81,8 @@
 * New "Copy To" command in Files pane to copy and rename in one step
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
+* Minor fixes to C++ syntax highlighting
+* Added syntax highlighting for TOML files
 * Improve performance of autocompletion for installed packages
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
