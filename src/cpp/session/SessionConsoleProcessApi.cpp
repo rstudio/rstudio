@@ -136,8 +136,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
    // notify the client so it adds this new terminal to the UI list
    json::Object eventData;
    eventData["process_info"] = ptrProc->toJson();
-   ClientEvent createNamedTerminalEvent(client_events::kAddTerminal, eventData);
-   module_context::enqueClientEvent(createNamedTerminalEvent);
+   ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
+   module_context::enqueClientEvent(addTerminalEvent);
 
    return r::sexp::create(terminalId, &protect);
 }
