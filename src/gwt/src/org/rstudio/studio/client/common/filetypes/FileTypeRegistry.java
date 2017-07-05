@@ -149,11 +149,16 @@ public class FileTypeRegistry
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", new ImageResource2x(ICONS.iconSh2x()),
          null, false);
    
+   public static final TextFileType TOML =
+         new TextFileType("toml", "TOML", EditorLanguage.LANG_TOML, ".toml",
+                          new ImageResource2x(ICONS.iconToml2x()), false, false, false, false, false,
+                          false, false, false, false, false, false, false, false);
+   
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yml",
                           new ImageResource2x(ICONS.iconYaml2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
-
+   
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
                           new ImageResource2x(ICONS.iconXml2x()), false, false, false, false, false,
@@ -374,6 +379,8 @@ public class FileTypeRegistry
       register("*.py", PYTHON, new ImageResource2x(icons.iconPython2x()));
       register("*.sql", SQL, new ImageResource2x(icons.iconSql2x()));
       register("*.sh", SH, new ImageResource2x(icons.iconSh2x()));
+      register("*.tml", TOML, new ImageResource2x(icons.iconToml2x()));
+      register("*.toml", TOML, new ImageResource2x(icons.iconToml2x()));
       register("*.yml", YAML, new ImageResource2x(icons.iconYaml2x()));
       register("*.yaml", YAML, new ImageResource2x(icons.iconYaml2x()));
       register("*.xml", XML, new ImageResource2x(icons.iconXml2x()));
