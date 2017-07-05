@@ -32,11 +32,6 @@ Window->Preferences->General->Editors->Text Editors->Spelling
 Enable spell checking
 Use "settings/english.dictionary".
 
------------- Output Filtering -------------
-
-Window->Preferences->Java->Compiler->Building
-Make sure "Filtered Resources" includes ".svn/"
-
 ---------- Code style/formatting ----------
 
 Window->Preferences->Java->Code Style->Formatter->Import...
