@@ -106,6 +106,7 @@ public:
    core::text::AnsiCodeMode ansiConsoleMode() const;
    bool terminalWebsockets() const;
    bool terminalAutoclose() const;
+   bool terminalTrackEnv() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -263,6 +264,7 @@ private:
    mutable boost::scoped_ptr<int> pAnsiConsoleMode_;
    mutable boost::scoped_ptr<bool> pTerminalWebsockets_;
    mutable boost::scoped_ptr<bool> pTerminalAutoclose_;
+   mutable boost::scoped_ptr<bool> pTerminalTrackEnv_;
 
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

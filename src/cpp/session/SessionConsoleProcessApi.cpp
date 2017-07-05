@@ -83,17 +83,60 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
    if (!session::options().allowShell())
       return R_NilValue;
 
+   std::pair<int, std::string> termSequence = nextTerminalName();
    std::string terminalId = r::sexp::asString(typeSEXP);
    if (terminalId.empty())
    {
-      terminalId = nextTerminalName();
+      terminalId = termSequence.second;
    }
 
-   json::Object eventData;
-   eventData["id"] = terminalId;
+   std::string handle;
+   Error error = createTerminalConsoleProc(
+            TerminalShell::DefaultShell,
+            core::system::kDefaultCols,
+            core::system::kDefaultRows,
+            std::string(), // handle
+            terminalId,
+            std::string(), // title
+            kNewTerminal,
+            false, // altBufferActive
+            std::string(), // cwd
+            false, // zombie
+            session::userSettings().terminalTrackEnv(),
+            &handle);
+   if (error)
+   {
+      std::string msg = "Failed to create terminal: '";
+      msg += error.summary();
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
+   }
 
-   // send the event
-   ClientEvent createNamedTerminalEvent(client_events::kCreateNamedTerminal, eventData);
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      r::exec::error("Unable to find created terminal");
+      return R_NilValue;
+   }
+
+   error = ptrProc->start();
+   if (error)
+   {
+      std::string msg = "Failed to start terminal: '";
+      msg += error.summary();
+      msg += "'";
+
+      reapConsoleProcess(*ptrProc);
+
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   // notify the client so it adds this new terminal to the UI list
+   json::Object eventData;
+   eventData["process_info"] = ptrProc->toJson();
+   ClientEvent createNamedTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(createNamedTerminalEvent);
 
    return r::sexp::create(terminalId, &protect);
@@ -689,6 +732,81 @@ Error procSetZombie(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getTerminalShells(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   console_process::AvailableTerminalShells availableShells;
+   json::Array shells;
+   availableShells.toJson(&shells);
+   pResponse->setResult(shells);
+   return Success();
+}
+
+Error startTerminal(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+   int shellTypeInt;
+   int cols, rows; // initial pseudo-terminal size
+   std::string termHandle; // empty if starting a new terminal
+   std::string termCaption;
+   std::string termTitle;
+   int termSequence = kNoTerminal;
+   bool altBufferActive;
+   std::string currentDir;
+   bool zombie;
+   bool trackEnv;
+
+   Error error = json::readParams(request.params,
+                                  &shellTypeInt,
+                                  &cols,
+                                  &rows,
+                                  &termHandle,
+                                  &termCaption,
+                                  &termTitle,
+                                  &termSequence,
+                                  &altBufferActive,
+                                  &currentDir,
+                                  &zombie,
+                                  &trackEnv);
+   if (error)
+      return error;
+
+#if defined(_WIN32)
+   trackEnv = false;
+#endif
+   std::string handle;
+   error = createTerminalConsoleProc(
+            TerminalShell::safeShellTypeFromInt(shellTypeInt),
+            cols,
+            rows,
+            termHandle,
+            termCaption,
+            termTitle,
+            termSequence,
+            altBufferActive,
+            currentDir,
+            zombie,
+            trackEnv,
+            &handle);
+   if (error)
+      return error;
+
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Failed to create terminal",
+                         ERROR_LOCATION);
+   }
+
+   pResponse->setResult(ptrProc->toJson());
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initializeApi()
@@ -723,7 +841,9 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))
       (bind(registerRpcMethod, "process_set_zombie", procSetZombie))
       (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild))
-      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer));
+      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer))
+      (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
+      (bind(registerRpcMethod, "start_terminal", startTerminal));
 
    return initBlock.execute();
 }

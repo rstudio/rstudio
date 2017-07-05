@@ -313,27 +313,9 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createNamedTerminal(String caption)
+   public void addTerminal(ConsoleProcessInfo cpi)
    {
-      if (creatingTerminal_)
-         return;
-
-      creatingTerminal_ = true;
-      
-      terminals_.createNamedTerminal(caption, new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected)
-         {
-         }
-         
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.devlog(msg);
-            creatingTerminal_ = false;
-         }
-      });
+      terminals_.addTerminal(cpi);
    }
 
    @Override

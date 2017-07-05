@@ -683,16 +683,6 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getTerminalShells(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
-{
-   console_process::AvailableTerminalShells availableShells;
-   json::Array shells;
-   availableShells.toJson(&shells);
-   pResponse->setResult(shells);
-   return Success();
-}
-
 Error executeCode(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
@@ -880,85 +870,6 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
-Error startTerminal(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   using namespace session::module_context;
-   using namespace session::console_process;
-
-   int shellTypeInt;
-   int cols, rows; // initial pseudo-terminal size
-   std::string termHandle; // empty if starting a new terminal
-   std::string termCaption;
-   std::string termTitle;
-   int termSequence = kNoTerminal;
-   bool altBufferActive;
-   std::string currentDir;
-   bool zombie;
-   bool trackEnv;
-
-   Error error = json::readParams(request.params,
-                                  &shellTypeInt,
-                                  &cols,
-                                  &rows,
-                                  &termHandle,
-                                  &termCaption,
-                                  &termTitle,
-                                  &termSequence,
-                                  &altBufferActive,
-                                  &currentDir,
-                                  &zombie,
-                                  &trackEnv);
-   if (error)
-      return error;
-
-#if defined(_WIN32)
-   trackEnv = false;
-#endif
-
-   TerminalShell::TerminalShellType shellType =
-         TerminalShell::safeShellTypeFromInt(shellTypeInt);
-
-   if (termSequence == kNoTerminal)
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         "Unsupported terminal sequence",
-                         ERROR_LOCATION);
-   }
-
-   if (termCaption.empty())
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         "Empty terminal caption not supported",
-                         ERROR_LOCATION);
-   }
-
-   FilePath cwd;
-   if (!currentDir.empty())
-   {
-      cwd = module_context::resolveAliasedPath(currentDir);
-   }
-
-   TerminalShell::TerminalShellType actualShellType;
-   core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence, cwd, trackEnv, termHandle, &actualShellType);
-
-   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
-         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
-            termCaption, termTitle, termHandle, termSequence, actualShellType,
-            altBufferActive, cwd, cols, rows, zombie, trackEnv));
-
-   boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
-
-   ptrProc->onExit().connect(boost::bind(
-                              &source_control::enqueueRefreshEvent));
-
-   pResponse->setResult(ptrProc->toJson());
-
-   return Success();
-}
-
 Error setCRANMirror(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -1077,9 +988,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
-      (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
-      (bind(registerRpcMethod, "start_terminal", startTerminal))
       (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }
@@ -1089,4 +998,3 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
-

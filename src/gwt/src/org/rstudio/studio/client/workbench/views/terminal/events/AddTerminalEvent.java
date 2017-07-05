@@ -1,5 +1,5 @@
 /*
- * CreateNamedTerminalEvent.java
+ * AddTerminalEvent.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -14,45 +14,37 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
-import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent.Handler;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 
-@JavaScriptSerializable
-public class CreateNamedTerminalEvent extends CrossWindowEvent<Handler>
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent.Handler;
+
+public class AddTerminalEvent extends GwtEvent<Handler>
 {
-   public interface Handler extends EventHandler
-   {
-      void onCreateNamedTerminal(CreateNamedTerminalEvent event);
-   }
-
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
-      public final native String getId() /*-{ return this["id"]; }-*/;
+
+      public native final ConsoleProcessInfo getProcessInfo() /*-{ 
+         return this.process_info; 
+      }-*/;
    }
    
-   public CreateNamedTerminalEvent()
+   public interface Handler extends EventHandler
    {
-   }
-   
-   public CreateNamedTerminalEvent(Data data)
-   {
-      this(data.getId());
+      void onAddTerminal(AddTerminalEvent event);
    }
 
-   public CreateNamedTerminalEvent(String id)
+   public AddTerminalEvent(Data data)
    {
-      id_ = id;
+      processInfo_ = data.getProcessInfo();
    }
 
-   public String getId()
+   public ConsoleProcessInfo getProcessInfo()
    {
-      return id_;
+      return processInfo_;
    }
    
    @Override
@@ -62,12 +54,12 @@ public class CreateNamedTerminalEvent extends CrossWindowEvent<Handler>
    }
 
    @Override
-   protected void dispatch(Handler createNamedTerminalHandler)
+   protected void dispatch(Handler handler)
    {
-      createNamedTerminalHandler.onCreateNamedTerminal(this);
+      handler.onAddTerminal(this);
    }
 
-   private String id_;
-   
+   private final ConsoleProcessInfo processInfo_;
+
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

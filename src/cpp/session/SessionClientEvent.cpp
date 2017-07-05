@@ -171,7 +171,7 @@ const int kRStudioAPIShowDialogCompleted = 152;
 const int kObjectExplorerEvent = 153;
 const int kSendToTerminal = 154;
 const int kClearTerminal = 155;
-const int kCreateNamedTerminal = 156;
+const int kAddTerminal = 156;
 const int kActivateTerminal = 157;
 const int kTerminalCwd = 158;
 const int kAdminNotification = 159;
@@ -476,8 +476,8 @@ std::string ClientEvent::typeName() const
          return "send_to_terminal";
       case client_events::kClearTerminal:
          return "clear_terminal";
-      case client_events::kCreateNamedTerminal:
-         return "create_named_terminal";
+      case client_events::kAddTerminal:
+         return "add_terminal";
       case client_events::kActivateTerminal:
          return "activate_terminal";
       case client_events::kTerminalCwd:
