@@ -89,6 +89,14 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
    {
       terminalId = termSequence.second;
    }
+   else if (findProcByCaption(terminalId) != NULL)
+   {
+      std::string msg = "Terminal id already in use: '";
+      msg += terminalId;
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
+   }
 
    std::string handle;
    Error error = createTerminalConsoleProc(
@@ -98,7 +106,7 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
             std::string(), // handle
             terminalId,
             std::string(), // title
-            kNewTerminal,
+            termSequence.first,
             false, // altBufferActive
             std::string(), // cwd
             false, // zombie
