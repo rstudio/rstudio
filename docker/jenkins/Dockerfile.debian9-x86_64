@@ -1,8 +1,15 @@
 FROM debian:stretch
 
+# update apt repository to cloudfront's mirror
+RUN set -x \
+    && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
+    && sed -i "s/security.debian.org/cloudfront.debian.net\/debian-security/" /etc/apt/sources.list
+
+# update system
 RUN set -x \
     && apt-get update -y
 
+# install necessary packages
 RUN apt-get install -y \
     ant \
     libboost-all-dev \
@@ -41,12 +48,8 @@ RUN bash /tmp/install-dependencies
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.0 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.2 && \
     /tmp/install-qt-sdk
-
-# add Qt libraries to ld path
-RUN echo '/opt/RStudio-QtSDK/Qt5.4.2/5.4/gcc_64/lib' >> /etc/ld.so.conf
-RUN ldconfig
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
