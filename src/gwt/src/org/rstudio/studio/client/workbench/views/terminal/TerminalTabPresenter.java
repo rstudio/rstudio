@@ -27,8 +27,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -39,7 +39,7 @@ public class TerminalTabPresenter extends BusyPresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
-                                             CreateNamedTerminalEvent.Handler,
+                                             AddTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
 
 {
@@ -94,11 +94,11 @@ public class TerminalTabPresenter extends BusyPresenter
       void interruptTerminal();
       
       /**
-       * Create a new terminal with given caption.
-       * @param caption requested terminal caption, or null to autogenerate
+       * Add a terminal to the list.
+       * @param cpi information on the terminal
        * caption
        */
-      void createNamedTerminal(String caption);
+      void addTerminal(ConsoleProcessInfo cpi);
       
       /**
        * Activate (display) terminal with given caption. If none specified,
@@ -203,9 +203,9 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onCreateNamedTerminal(CreateNamedTerminalEvent event)
+   public void onAddTerminal(AddTerminalEvent event)
    {
-      view_.createNamedTerminal(event.getId());
+      view_.addTerminal(event.getProcessInfo());
    }
 
    @Override

@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -289,33 +288,7 @@ public class TerminalList implements Iterable<String>,
    public void createNewTerminal(final ResultCallback<Boolean, String> callback)
    {
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
-            nextTerminalSequence(), uiPrefs_.terminalTrackEnvironment().getValue());
-      startTerminal(info, callback);
-   }
-
-   /**
-    * Initiate startup of a new terminal with specified caption.
-    * @param caption desired caption; if null or empty creates standard caption
-    * @param callback report success or failure of connection
-    */
-   public void createNamedTerminal(String caption, final ResultCallback<Boolean, String> callback)
-   {
-      if (StringUtil.isNullOrEmpty(caption))
-      {
-         createNewTerminal(callback);
-         return;
-      }
-      
-      // is this terminal name available?
-      if (!isCaptionAvailable(caption))
-      {
-         callback.onFailure("Terminal name '" + caption + "' already in use");
-         return;
-      }
-      
-      ConsoleProcessInfo info = ConsoleProcessInfo.createNamedTerminalInfo(
-            nextTerminalSequence(), caption, uiPrefs_.terminalTrackEnvironment().getValue());
-
+            uiPrefs_.terminalTrackEnvironment().getValue());
       startTerminal(info, callback);
    }
 
@@ -391,22 +364,6 @@ public class TerminalList implements Iterable<String>,
          }
       }
       return false;
-   }
-
-   /**
-    * Choose a 1-based sequence number one higher than the highest currently 
-    * known terminal number. We don't try to fill gaps if terminals are closed 
-    * in the middle of the opened tabs.
-    * @return Highest currently known terminal plus one
-    */
-   private int nextTerminalSequence()
-   {
-      int maxNum = ConsoleProcessInfo.SEQUENCE_NO_TERMINAL;
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
-      {
-         maxNum = Math.max(maxNum, item.getValue().getTerminalSequence());
-      }
-      return maxNum + 1;
    }
 
    private void startTerminal(ConsoleProcessInfo info, 

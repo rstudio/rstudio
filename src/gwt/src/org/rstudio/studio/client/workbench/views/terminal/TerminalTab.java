@@ -32,8 +32,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -53,7 +53,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                  CreateTerminalEvent.Handler,
                  SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
-                 CreateNamedTerminalEvent.Handler,
+                 AddTerminalEvent.Handler,
                  ActivateNamedTerminalEvent.Handler
    {
       @Handler
@@ -108,7 +108,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       events.addHandler(CreateTerminalEvent.TYPE, shim_);
       events.addHandler(SendToTerminalEvent.TYPE, shim_);
       events.addHandler(ClearTerminalEvent.TYPE, shim_);
-      events.addHandler(CreateNamedTerminalEvent.TYPE, shim_);
+      events.addHandler(AddTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
 
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
