@@ -48,14 +48,6 @@ RUN mkdir -p /opt/RStudio-QtSDK && \
 RUN echo '/opt/RStudio-QtSDK/Qt5.4.2/5.4/gcc_64/lib' >> /etc/ld.so.conf
 RUN ldconfig
 
-# download, make, and install openssl 1.0.2
-#cd /opt
-#wget https://www.openssl.org/source/openssl-1.0.2l.tar.gz
-#cd openssl-1.0.2l
-#./config shared
-#make
-#make install
-
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
