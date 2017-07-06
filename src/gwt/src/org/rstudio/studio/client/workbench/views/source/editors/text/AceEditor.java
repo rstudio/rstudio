@@ -1941,6 +1941,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().getRenderer().setShowGutter(on);
    }
+   
+   public boolean getUseSoftTabs()
+   {
+      return getSession().getUseSoftTabs();
+   }
 
    public void setUseSoftTabs(boolean on)
    {
@@ -2001,6 +2006,20 @@ public class AceEditor implements DocDisplay,
    public void setTabSize(int tabSize)
    {
       getSession().setTabSize(tabSize);
+   }
+   
+   public void autoDetectIndentation(boolean on)
+   {
+      if (!on)
+         return;
+      
+      JsArrayString lines = getLines();
+      if (lines.length() < 5)
+         return;
+
+      int indentSize = StringUtil.detectIndent(lines);
+      if (indentSize > 0)
+         setTabSize(indentSize);
    }
 
    public void setShowInvisibles(boolean show)

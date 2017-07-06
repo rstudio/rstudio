@@ -126,6 +126,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // num spacers for tab
          numSpacesForTab().setGlobalValue(
                newUiPrefs.numSpacesForTab().getGlobalValue());
+         
+         // auto detect indentation
+         autoDetectIndentation().setGlobalValue(
+               newUiPrefs.autoDetectIndentation().getGlobalValue());
    
          // blinking cursor
          blinkingCursor().setGlobalValue(

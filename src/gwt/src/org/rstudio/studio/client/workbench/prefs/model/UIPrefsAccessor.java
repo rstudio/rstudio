@@ -77,6 +77,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return integer("num_spaces_for_tab", 2);
    }
+   
+   public PrefValue<Boolean> autoDetectIndentation()
+   {
+      return bool("auto_detect_indentation", true);
+   }
 
    public PrefValue<Boolean> showMargin()
    {
