@@ -172,7 +172,7 @@ extern const int kRStudioAPIShowDialogCompleted;
 extern const int kObjectExplorerEvent;
 extern const int kSendToTerminal;
 extern const int kClearTerminal;
-extern const int kCreateNamedTerminal;
+extern const int kAddTerminal;
 extern const int kActivateTerminal;
 extern const int kTerminalCwd;
 extern const int kAdminNotification;

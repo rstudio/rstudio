@@ -73,6 +73,9 @@ public interface FileIconResources extends ClientBundle
 
    @Source("iconYaml_2x.png")
    ImageResource iconYaml2x();
+   
+   @Source("iconToml_2x.png")
+   ImageResource iconToml2x();
 
    @Source("iconXml_2x.png")
    ImageResource iconXml2x();

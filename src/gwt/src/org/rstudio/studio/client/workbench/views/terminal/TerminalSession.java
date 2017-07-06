@@ -87,14 +87,10 @@ public class TerminalSession extends XTermWidget
       zombie_ = info.getZombie();
       restarted_ = info.getRestarted();
       trackEnv_ = info.getTrackEnv();
+      caption_ = info.getCaption();
       
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(this, this);
-
-      if (StringUtil.isNullOrEmpty(info.getCaption()))
-         caption_ = "Terminal " + sequence_;
-      else
-         caption_ = info.getCaption();
 
       setHeight("100%");
    }
@@ -144,17 +140,31 @@ public class TerminalSession extends XTermWidget
             if (consoleProcess_ == null)
             {
                disconnect(false);
-               callback.onFailure("No ConsoleProcess received from server");
+               callback.onFailure("No Terminal ConsoleProcess received from server");
                return;
             }
 
             if (consoleProcess_.getProcessInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
                disconnect(false);
-               callback.onFailure("Unsupported ConsoleProcess interaction mode");
+               callback.onFailure("Unsupported Terminal ConsoleProcess interaction mode");
                return;
             } 
-            
+
+            if (consoleProcess_.getProcessInfo().getCaption().isEmpty())
+            {
+               disconnect(false);
+               callback.onFailure("Empty Terminal caption");
+               return;
+            } 
+
+            if (consoleProcess_.getProcessInfo().getTerminalSequence() <= ConsoleProcessInfo.SEQUENCE_NO_TERMINAL)
+            {
+               disconnect(false);
+               callback.onFailure("Undetermined Terminal sequence");
+               return;
+            } 
+              
             // Extract properties so they are available even if the terminal goes offline, which
             // causes consoleProcess_ to become null.
             terminalHandle_ = consoleProcess_.getProcessInfo().getHandle(); 
@@ -166,6 +176,8 @@ public class TerminalSession extends XTermWidget
             autoCloseMode_ = consoleProcess_.getProcessInfo().getAutoCloseMode();
             shellType_ = consoleProcess_.getProcessInfo().getShellType();
             altBufferActive_ = consoleProcess_.getProcessInfo().getAltBufferActive();
+            caption_ = consoleProcess_.getProcessInfo().getCaption();
+            sequence_ = consoleProcess_.getProcessInfo().getTerminalSequence();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
@@ -918,7 +930,7 @@ public class TerminalSession extends XTermWidget
    private ConsoleProcess consoleProcess_;
    private String caption_;
    private String title_;
-   private final int sequence_;
+   private int sequence_;
    private String terminalHandle_;
    private final HasValue<Boolean> hasChildProcs_;
    private int shellType_;

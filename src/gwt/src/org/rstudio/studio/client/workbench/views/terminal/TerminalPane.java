@@ -222,7 +222,11 @@ public class TerminalPane extends WorkbenchPane
    {
       // terminal tab was selected
       super.onSelected();
-      ensureTerminal();
+      
+      // if terminal is not selected, and the tab "X" is clicked, the tab receives
+      // onSelected but in this case we don't want to create a new terminal
+      if (!closingAll_)
+         ensureTerminal();
    }
 
    @Override
@@ -258,6 +262,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void activateTerminal()
    {
+      closingAll_ = false;
       ensureVisible();
       bringToFront();
    }
@@ -308,27 +313,9 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createNamedTerminal(String caption)
+   public void addTerminal(ConsoleProcessInfo cpi)
    {
-      if (creatingTerminal_)
-         return;
-
-      creatingTerminal_ = true;
-      
-      terminals_.createNamedTerminal(caption, new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected)
-         {
-         }
-         
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.devlog(msg);
-            creatingTerminal_ = false;
-         }
-      });
+      terminals_.addTerminal(cpi);
    }
 
    @Override
@@ -417,6 +404,8 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void terminateAllTerminals()
    {
+      closingAll_ = true;
+      
       // kill any terminal server processes, and remove them from the server-
       // side list of known processes, and client-side list
       terminals_.terminateAll();
@@ -1017,6 +1006,7 @@ public class TerminalPane extends WorkbenchPane
    ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
    private boolean isRestartInProgress_;
+   private boolean closingAll_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;
