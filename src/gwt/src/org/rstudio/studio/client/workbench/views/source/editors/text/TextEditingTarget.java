@@ -1314,7 +1314,7 @@ public class TextEditingTarget implements
          }.schedule(100);
       }
 
-      registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);
+      registerPrefs(releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
       
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
@@ -6127,11 +6127,13 @@ public class TextEditingTarget implements
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
                      UIPrefs prefs,
+                     ProjectConfig projectConfig,
                      DocDisplay docDisplay,
                      final SourceDocument sourceDoc)
    {
       registerPrefs(releaseOnDismiss,
                     prefs,
+                    projectConfig,
                     docDisplay,
                     new PrefsContext() {
                         @Override
@@ -6149,6 +6151,7 @@ public class TextEditingTarget implements
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
                      UIPrefs prefs,
+                     final ProjectConfig projectConfig,
                      final DocDisplay docDisplay,
                      final PrefsContext context)
    {
@@ -6181,13 +6184,15 @@ public class TextEditingTarget implements
                   }
                   else
                   {
-                     docDisplay.setUseSoftTabs(arg);
+                     if (projectConfig == null)
+                        docDisplay.setUseSoftTabs(arg);
                   }
                }}));
       releaseOnDismiss.add(prefs.numSpacesForTab().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
-                  docDisplay.setTabSize(arg);
+                  if (projectConfig == null)
+                     docDisplay.setTabSize(arg);
                }}));
       releaseOnDismiss.add(prefs.showMargin().bind(
             new CommandWithArg<Boolean>() {

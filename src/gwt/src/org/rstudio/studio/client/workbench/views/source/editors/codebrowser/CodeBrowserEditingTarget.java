@@ -168,6 +168,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       
       TextEditingTarget.registerPrefs(releaseOnDismiss_, 
                                       prefs_, 
+                                      null,
                                       docDisplay_,
                                       document);
       
