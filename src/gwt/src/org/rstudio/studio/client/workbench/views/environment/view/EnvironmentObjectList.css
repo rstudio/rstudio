@@ -17,12 +17,12 @@
 .rstudio-themes-flat .categoryHeaderRow
 {
    color: #000;
+   font-weight: normal;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .categoryHeaderRow
 {
    color: #FFF;
-   font-weight: inherit;
 }
 
 .expandIcon
@@ -95,6 +95,11 @@ td.valueCol
 .categoryHeaderText
 {
    padding-left: 5px;
+}
+
+.rstudio-themes-flat .categoryHeaderText
+{
+
 }
 
 .clickableCol

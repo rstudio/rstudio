@@ -4,6 +4,8 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
+@external gwt-SplitLayoutPanel-VDragger;
+
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
@@ -18,6 +20,12 @@
 {
    font-family: fixedWidthFont;
    background-color: #e0e0e0;
+}
+
+.rstudio-themes-flat .environmentPane .gwt-SplitLayoutPanel-VDragger {
+   border-top: solid 1px #000;
+   border-bottom: solid 1px #000;
+   height: 6px !important;
 }
 
 .environmentPanel
@@ -160,7 +168,8 @@
 .rstudio-themes-flat .rstudio-themes-default .objectGrid td.expandCol,
 .rstudio-themes-flat .rstudio-themes-default .objectGrid td.valueCol,
 .rstudio-themes-flat .rstudio-themes-default .objectGrid .detailRow,
-.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
+.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow,
+.rstudio-themes-flat .rstudio-themes-default .environmentPane .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DEFAULT_BORDER;
 }
 
@@ -168,7 +177,8 @@
 .rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid td.expandCol,
 .rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid td.valueCol,
 .rstudio-themes-flat .rstudio-themes-dark-grey .objectGrid .detailRow,
-.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
+.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow,
+.rstudio-themes-flat .rstudio-themes-dark-grey .environmentPane .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DARKGREY_BORDER;
 }
 
@@ -176,7 +186,8 @@
 .rstudio-themes-flat .rstudio-themes-alternate .objectGrid td.expandCol,
 .rstudio-themes-flat .rstudio-themes-alternate .objectGrid td.valueCol,
 .rstudio-themes-flat .rstudio-themes-alternate .objectGrid .detailRow,
-.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
+.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow,
+.rstudio-themes-flat .rstudio-themes-alternate .environmentPane .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
