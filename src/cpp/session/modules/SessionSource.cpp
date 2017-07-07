@@ -89,7 +89,7 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    }
    (*pDocJson)["notebook"] = notebook;
    
-   // discover a project-specific tab width if available
+   // discover project-specific settings when available
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
    
    r_util::RProjectConfig projConfig;
