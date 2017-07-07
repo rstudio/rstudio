@@ -345,9 +345,6 @@ Error findProjectConfig(FilePath filePath,
 {
    Error error;
    
-   if (!filePath.isDirectory())
-      filePath = filePath.parent();
-   
    FilePath projPath;
    error = findProjectFile(filePath, &projPath);
    if (error)
