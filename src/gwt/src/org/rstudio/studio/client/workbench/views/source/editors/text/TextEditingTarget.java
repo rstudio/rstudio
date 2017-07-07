@@ -2519,8 +2519,11 @@ public class TextEditingTarget implements
          return;
       }
       
+      boolean stripTrailingWhitespace = (projConfig_ == null)
+            ? prefs_.stripTrailingWhitespace().getValue()
+            : projConfig_.stripTrailingWhitespace();
       
-      if (prefs_.stripTrailingWhitespace().getValue() &&
+      if (stripTrailingWhitespace &&
           !fileType_.isMarkdown() &&
           !name_.getValue().equals("DESCRIPTION"))
       {
@@ -2538,7 +2541,11 @@ public class TextEditingTarget implements
          }
       }
       
-      if (prefs_.autoAppendNewline().getValue() || fileType_.isPython())
+      boolean autoAppendNewline = (projConfig_ == null)
+            ? prefs_.autoAppendNewline().getValue()
+            : projConfig_.ensureTrailingNewline();
+            
+      if (autoAppendNewline || fileType_.isPython())
       {
          String lastLine = docDisplay_.getLine(lineCount - 1);
          if (lastLine.length() != 0)

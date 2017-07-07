@@ -97,8 +97,12 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    if (!error)
    {
       json::Object projConfigJson;
+      
       projConfigJson["tab_size"] = projConfig.numSpacesForTab;
       projConfigJson["use_soft_tabs"] = projConfig.useSpacesForTab;
+      projConfigJson["strip_trailing_whitespace"] = projConfig.stripTrailingWhitespace;
+      projConfigJson["ensure_trailing_newline"] = projConfig.autoAppendNewline;
+      
       (*pDocJson)["project_config"] = projConfigJson;
    }
 }

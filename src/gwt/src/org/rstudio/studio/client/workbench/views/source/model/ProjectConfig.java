@@ -22,6 +22,24 @@ public class ProjectConfig extends JavaScriptObject
    {
    }
    
-   public native final int getTabSize()      /*-{ return this.tab_size;      }-*/;
-   public native final boolean useSoftTabs() /*-{ return this.use_soft_tabs; }-*/;
+   public native final int getTabSize()
+   /*-{
+      return this["tab_size"];
+   }-*/;
+   
+   public native final boolean useSoftTabs()
+   /*-{
+      return this["use_soft_tabs"];
+   }-*/;
+   
+   public native final boolean stripTrailingWhitespace()
+   /*-{
+      return this["strip_trailing_whitespace"];
+   }-*/;
+   
+   public native final boolean ensureTrailingNewline()
+   /*-{
+      return this["ensure_trailing_newline"];
+   }-*/;
+
 }
