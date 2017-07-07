@@ -32,7 +32,9 @@
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/text/DcfParser.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -86,6 +88,19 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
          LOG_ERROR(error);
    }
    (*pDocJson)["notebook"] = notebook;
+   
+   // discover a project-specific tab width if available
+   FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+   
+   r_util::RProjectConfig projConfig;
+   Error error = r_util::findProjectConfig(docPath, &projConfig);
+   if (!error)
+   {
+      json::Object projConfigJson;
+      projConfigJson["tab_size"] = projConfig.numSpacesForTab;
+      projConfigJson["use_soft_tabs"] = projConfig.useSpacesForTab;
+      (*pDocJson)["project_config"] = projConfigJson;
+   }
 }
 
 void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)

@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <ostream>
 
+#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
@@ -309,6 +310,54 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
    }
 
    return stream ;
+}
+
+Error findProjectFile(FilePath filePath,
+                      FilePath* pProjPath)
+{
+   // check to see if we already have a .Rproj file
+   if (filePath.extension() == ".Rproj")
+   {
+      *pProjPath = filePath;
+      return Success();
+   }
+   
+   if (!filePath.isDirectory())
+      filePath = filePath.parent();
+   
+   // no .Rproj file found; scan parent directories
+   for (; filePath.exists(); filePath = filePath.parent())
+   {
+      FilePath projPath = projectFromDirectory(filePath);
+      if (projPath.exists())
+      {
+         *pProjPath = projPath;
+         return Success();
+      }
+   }
+   
+   return fileNotFoundError(ERROR_LOCATION);
+}
+
+Error findProjectConfig(FilePath filePath,
+                        RProjectConfig* pConfig)
+{
+   Error error;
+   
+   if (!filePath.isDirectory())
+      filePath = filePath.parent();
+   
+   FilePath projPath;
+   error = findProjectFile(filePath, &projPath);
+   if (error)
+      return error;
+   
+   std::string errorMessage;
+   error = readProjectFile(projPath, pConfig, &errorMessage);
+   if (error)
+      return error;
+   
+   return Success();
 }
 
 Error readProjectFile(const FilePath& projectFilePath,

@@ -1255,6 +1255,14 @@ public class TextEditingTarget implements
             releaseOnDismiss_, dependencyManager_);
       view_.addResizeHandler(notebook_);
       
+      // apply project properties
+      projConfig_ = document.getProjectConfig();
+      if (projConfig_ != null)
+      {
+         docDisplay_.setUseSoftTabs(projConfig_.useSoftTabs());
+         docDisplay_.setTabSize(projConfig_.getTabSize());
+      }
+      
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
@@ -6543,6 +6551,7 @@ public class TextEditingTarget implements
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;
+   private ProjectConfig projConfig_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
