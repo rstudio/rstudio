@@ -12,6 +12,8 @@
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
 @eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
 
+@eval THEME_DARK_SEARCHRESULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground;
+
 @def headerRowHeight 20px;
 
 .environmentPane
@@ -154,6 +156,11 @@
 .filterMatch
 {
 	background-color: #e8e8ff;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .filterMatch
+{
+   background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .objectGrid td.nameCol,
