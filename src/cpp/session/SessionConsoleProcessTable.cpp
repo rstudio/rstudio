@@ -316,6 +316,85 @@ Error createTerminalConsoleProc(
    return Success();
 }
 
+Error createTerminalExecuteConsoleProc(
+      const std::string& title,
+      const std::string& command,
+      const std::vector<std::string>& args,
+      std::string currentDir,
+      std::string* pHandle)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+   std::string termHandle;
+   int cols = core::system::kDefaultCols;
+   int rows = core::system::kDefaultRows;
+
+   std::pair<int, std::string> sequenceInfo = nextTerminalName();
+   int termSequence = sequenceInfo.first;
+   std::string caption = sequenceInfo.second;
+
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
+
+   core::system::ProcessOptions options;
+
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   options.environment = childEnv;
+
+   options.smartTerminal = true;
+
+   std::string actualCommand;
+
+#ifndef _WIN32
+   options.detachSession = true;
+
+   shell_utils::ShellCommand cmdWithArgs(command);
+   cmdWithArgs << shell_utils::EscapeFilesOnly;
+   BOOST_FOREACH(const std::string& arg, args)
+   {
+      cmdWithArgs << arg;
+   }
+   actualCommand = cmdWithArgs;
+#endif
+
+#ifdef _WIN32
+   options.detachProcess = true;
+
+   // TODO (gary) construct command
+   // actualCommand =
+   // commandArgs =
+#endif
+
+   options.reportHasSubprocs = true;
+   options.trackCwd = false;
+   if (!currentDir.empty())
+   {
+      options.workingDir = module_context::resolveAliasedPath(currentDir);
+   }
+
+   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
+         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
+            caption, title, termHandle, termSequence, TerminalShell::NoShell,
+            false /*altBuffer*/, cwd, cols, rows, false /*zombie*/, false /*trackEnv*/));
+
+   // TODO (gary) ensure these are roundtripping successfully
+   ptrProcInfo->setInteractionMode(InteractionNever);
+   ptrProcInfo->setAutoClose(NeverAutoClose);
+   ptrProcInfo->setHasChildProcs(false);
+
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+               ConsoleProcess::createTerminalExecuteProcess(cmdWithArgs, options, ptrProcInfo);
+
+   *pHandle = ptrProc->handle();
+
+   return Success();
+}
+
 } // namespace console_process
 } // namespace session
 } // namespace rstudio

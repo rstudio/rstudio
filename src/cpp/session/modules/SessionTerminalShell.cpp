@@ -184,6 +184,8 @@ std::string TerminalShell::getShellName(TerminalShellType type)
       return "Bash";
    case CustomShell:
       return "Custom";
+   case NoShell:
+      return "User command";
    default:
       return "Unknown";
    }

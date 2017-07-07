@@ -88,6 +88,7 @@ public class TerminalSession extends XTermWidget
       restarted_ = info.getRestarted();
       trackEnv_ = info.getTrackEnv();
       caption_ = info.getCaption();
+      interactionMode_ = info.getInteractionMode();
       
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(this, this);
@@ -144,13 +145,6 @@ public class TerminalSession extends XTermWidget
                return;
             }
 
-            if (consoleProcess_.getProcessInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-            {
-               disconnect(false);
-               callback.onFailure("Unsupported Terminal ConsoleProcess interaction mode");
-               return;
-            } 
-
             if (consoleProcess_.getProcessInfo().getCaption().isEmpty())
             {
                disconnect(false);
@@ -178,6 +172,7 @@ public class TerminalSession extends XTermWidget
             altBufferActive_ = consoleProcess_.getProcessInfo().getAltBufferActive();
             caption_ = consoleProcess_.getProcessInfo().getCaption();
             sequence_ = consoleProcess_.getProcessInfo().getTerminalSequence();
+            interactionMode_ = consoleProcess_.getProcessInfo().getInteractionMode();
 
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
@@ -841,7 +836,7 @@ public class TerminalSession extends XTermWidget
    {
       writeln("[Process completed]");
    }
-
+   
    /**
     * Write to terminal after a terminal has restarted (on the server). We
     * use this to cleanup the current line, as a new prompt is typically
@@ -900,7 +895,7 @@ public class TerminalSession extends XTermWidget
    {
       return zombie_;
    }
-   
+
    public boolean getTrackEnv()
    {
       return trackEnv_;
@@ -923,6 +918,26 @@ public class TerminalSession extends XTermWidget
             Debug.logError(error);
          }
       });
+   }
+
+   public int getInteractionMode()
+   {
+      return interactionMode_;
+   }
+
+   public String getInteractionModeName()
+   {
+      switch (interactionMode_)
+      {
+      case ConsoleProcessInfo.INTERACTION_ALWAYS:
+         return "Always";
+      case ConsoleProcessInfo.INTERACTION_NEVER:
+         return "Never";
+      case ConsoleProcessInfo.INTERACTION_POSSIBLE:
+         return "Possible";
+      default:
+         return "Unknown";
+      }
    }
    
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -952,6 +967,7 @@ public class TerminalSession extends XTermWidget
    private boolean restarted_;
    private boolean trackEnv_;
    private boolean showAltAfterReload_;
+   private int interactionMode_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

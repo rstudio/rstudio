@@ -761,15 +761,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);   
    }
 
-   @Override 
-   public void processSetZombie(String handle,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(handle)));
-      sendRequest(RPC_SCOPE, PROCESS_SET_ZOMBIE, params, requestCallback);   
-   }
-
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -5296,7 +5287,6 @@ public class RemoteServer implements Server
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";
    private static final String PROCESS_INTERRUPT_CHILD = "process_interrupt_child";
-   private static final String PROCESS_SET_ZOMBIE = "process_set_zombie";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

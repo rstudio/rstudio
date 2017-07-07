@@ -367,6 +367,78 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
    return R_NilValue;
 }
 
+// Run a process in a terminal
+SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP showSEXP)
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   std::string command = r::sexp::asString(commandSEXP);
+   if (command.empty())
+   {
+      r::exec::error("No command specified");
+      return R_NilValue;
+   }
+
+   std::vector<std::string> args;
+   if (!r::sexp::fillVectorString(argsSEXP, &args))
+   {
+      r::exec::error("Invalid command arguments");
+      return R_NilValue;
+   }
+
+   std::string cwd = r::sexp::asString(dirSEXP);
+   bool show = r::sexp::asLogical(showSEXP);
+
+   std::string title = "User Command: ";
+   title += command;
+   std::string handle;
+   Error error = createTerminalExecuteConsoleProc(
+            title,
+            command,
+            args,
+            cwd,
+            &handle);
+   if (error)
+   {
+      std::string msg = "Failed to create terminal for job execution: '";
+      msg += error.summary();
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      r::exec::error("Unable to find terminal for job execution");
+      return R_NilValue;
+   }
+
+   error = ptrProc->start();
+   if (error)
+   {
+      std::string msg = "Failed to start job in terminal: '";
+      msg += error.summary();
+      msg += "'";
+
+      reapConsoleProcess(*ptrProc);
+
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   // notify the client so it adds this new terminal to the UI list
+   json::Object eventData;
+   eventData["process_info"] = ptrProc->toJson();
+   ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
+   module_context::enqueClientEvent(addTerminalEvent);
+
+   return r::sexp::create(ptrProc->getCaption(), &protect);
+}
+
 // RPC APIs ---------------------------------------------------------------
 
 Error procStart(const json::JsonRpcRequest& request,
@@ -718,28 +790,6 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error procSetZombie(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   std::string handle;
-
-   Error error = json::readParams(request.params,
-                                  &handle);
-   if (error)
-      return error;
-
-   ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
-      return systemError(boost::system::errc::invalid_argument,
-                         "Error setting process to zombie mode",
-                         ERROR_LOCATION);
-
-   // Set a process to zombie mode meaning we keep showing it and its buffer, but don't
-   // start its process
-   proc->setZombie();
-   return Success();
-}
-
 Error getTerminalShells(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -832,6 +882,7 @@ Error initializeApi()
    RS_REGISTER_CALL_METHOD(rs_terminalRunning, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalKill, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalSend, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalExecute, 4);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
@@ -847,7 +898,6 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
       (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))
-      (bind(registerRpcMethod, "process_set_zombie", procSetZombie))
       (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild))
       (bind(registerRpcMethod, "process_get_buffer", procGetBuffer))
       (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))

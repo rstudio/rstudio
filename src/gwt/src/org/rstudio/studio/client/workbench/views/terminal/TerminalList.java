@@ -68,6 +68,7 @@ public class TerminalList implements Iterable<String>,
             term.getCaption(),
             term.getTitle(),
             term.getSequence(),
+            term.getInteractionMode(),
             term.getHasChildProcs(),
             term.getCols(),
             term.getRows(),
@@ -149,6 +150,19 @@ public class TerminalList implements Iterable<String>,
       {
          current.setCwd(cwd);
       }
+   }
+
+   /**
+    * update zombie flag
+    * @param handle terminal handle
+    * @param zombie new zombie flag setting
+    */
+   public void setZombie(String handle, boolean zombie)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setZombie(zombie);
    }
 
    /**

@@ -590,6 +590,22 @@
    .Call("rs_terminalVisible")
 })
 
+.rs.addApiFunction("terminalExecute", function(command,
+                                               args = character(),
+                                               dir = character(),
+                                               show = TRUE) {
+   if (is.null(command) || !is.character(command) || (length(command) != 1))
+      stop("'command' must be a single element character vector")
+   if (!is.null(args) && !is.character(args))
+      stop("'args' must be a character vector")
+   if (is.null(dir) || !is.character(dir) || (length(dir) != 1))
+      stop("'dir' must be a single element character vector")
+   if (is.null(show) || !is.logical(show))
+      stop("'show' must be a logical vector")
+
+   .Call("rs_terminalExecute", command, args, dir, show)
+})
+
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalCreate = .rs.api.terminalCreate,
                                 terminalClear = .rs.api.terminalClear,
@@ -600,8 +616,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalBusy = .rs.api.terminalBusy,
                                 terminalRunning = .rs.api.terminalRunning,
                                 terminalKill = .rs.api.terminalKill,
-                                terminalSend = .rs.api.terminalSend))
-
+                                terminalSend = .rs.api.terminalSend,
+                                terminalExecute = .rs.api.terminalExecute))
 
 .rs.addApiFunction("selectFile", function(
    caption = "Select File",

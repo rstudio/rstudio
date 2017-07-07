@@ -180,7 +180,7 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
-   if (interactionMode() != InteractionNever)
+   if (interactionMode() != InteractionNever || options_.smartTerminal)
    {
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
@@ -661,6 +661,24 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
+   AutoCloseMode autoClose = procInfo_->getAutoClose();
+   if (procInfo_->getAutoClose() == DefaultAutoClose)
+   {
+      if (session::userSettings().terminalAutoclose())
+      {
+         autoClose = AlwaysAutoClose;
+      }
+      else
+      {
+         autoClose = NeverAutoClose;
+      }
+      procInfo_->setAutoClose(autoClose);
+   }
+
+   if (procInfo_->getAutoClose() == NeverAutoClose)
+   {
+      setZombie();
+   }
    saveConsoleProcesses();
 
    json::Object data;
@@ -790,6 +808,7 @@ ConsoleProcessPtr ConsoleProcess::create(
 // supports reattaching to a running process, or creating a new process with
 // previously used handle
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
+      const std::string& command,
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo,
       bool enableWebsockets)
@@ -824,7 +843,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       procInfo->setChannelMode(Rpc, "");
    }
 
-   std::string command;
    if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
       // return existing ConsoleProcess if it is still running
@@ -888,9 +906,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
-   return createTerminalProcess(options, procInfo, useWebsockets());
+   std::string command;
+   return createTerminalProcess(command, options, procInfo, useWebsockets());
 }
-
 
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
@@ -906,6 +924,14 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
             &actualShellType);
    proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);
+}
+
+ConsoleProcessPtr ConsoleProcess::createTerminalExecuteProcess(
+      const std::string& command,
+      core::system::ProcessOptions options,
+      boost::shared_ptr<ConsoleProcessInfo> procInfo)
+{
+   return createTerminalProcess(command, options, procInfo, useWebsockets());
 }
 
 ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSocketConnectionCallbacks()

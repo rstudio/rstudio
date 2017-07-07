@@ -95,6 +95,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
          String caption,
          String title,
          int sequence,
+         int interactionMode,
          boolean childProcs,
          int cols,
          int rows,
@@ -110,7 +111,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.handle = handle;
       procInfo.caption = caption;
       procInfo.show_on_output = false;
-      procInfo.interaction_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS;
+      procInfo.interaction_mode = interactionMode;
       procInfo.max_output_lines = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_MAX_OUTPUT_LINES;
       procInfo.buffered_output = "";
       procInfo.exit_code = null;
@@ -241,5 +242,9 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    public final native void setHandle(String handle) /*-{
       this.handle = handle;
+   }-*/;
+
+   public final native void setZombie(boolean zombie) /*-{
+      this.zombie = zombie;
    }-*/;
 }

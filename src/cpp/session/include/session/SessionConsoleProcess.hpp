@@ -118,6 +118,7 @@ public:
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static ConsoleProcessPtr createTerminalProcess(
+         const std::string& command, // empty string for interactive shell
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
          bool enableWebsockets);
@@ -128,6 +129,11 @@ public:
 
    static ConsoleProcessPtr createTerminalProcess(
          ConsoleProcessPtr proc);
+
+   static ConsoleProcessPtr createTerminalExecuteProcess(
+         const std::string& command,
+         core::system::ProcessOptions options,
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    // Configure ProcessOptions for a terminal and return it. Also sets
    // the output param pSelectedShellType to indicate which shell type
