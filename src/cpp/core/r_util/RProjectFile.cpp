@@ -313,7 +313,6 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 }
 
 Error findProjectFile(FilePath filePath,
-                      const FilePath& anchorPath,
                       FilePath* pProjPath)
 {
    // check to see if we already have a .Rproj file
@@ -322,17 +321,13 @@ Error findProjectFile(FilePath filePath,
       *pProjPath = filePath;
       return Success();
    }
-   
+
    if (!filePath.isDirectory())
       filePath = filePath.parent();
-   
+
    // no .Rproj file found; scan parent directories
-   while (true)
+   for (; filePath.exists(); filePath = filePath.parent())
    {
-      // bail if we get an empty path
-      if (filePath.empty())
-         break;
-      
       // scan this directory for .Rproj files
       FilePath projPath = projectFromDirectory(filePath);
       if (!projPath.empty())
@@ -340,19 +335,12 @@ Error findProjectFile(FilePath filePath,
          *pProjPath = projPath;
          return Success();
       }
-      
-      // bail if we hit the anchored path
-      if (filePath == anchorPath)
-         break;
-      
-      filePath = filePath.parent();
    }
-   
+
    return fileNotFoundError(ERROR_LOCATION);
 }
 
 Error findProjectConfig(FilePath filePath,
-                        const FilePath& anchorPath,
                         RProjectConfig* pConfig)
 {
    Error error;
@@ -361,7 +349,7 @@ Error findProjectConfig(FilePath filePath,
       filePath = filePath.parent();
    
    FilePath projPath;
-   error = findProjectFile(filePath, anchorPath, &projPath);
+   error = findProjectFile(filePath, &projPath);
    if (error)
       return error;
    

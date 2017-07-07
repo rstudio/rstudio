@@ -91,10 +91,9 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    
    // discover project-specific settings when available
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
-   FilePath anchorPath = module_context::userHomePath().parent();
    
    r_util::RProjectConfig projConfig;
-   Error error = r_util::findProjectConfig(docPath, anchorPath, &projConfig);
+   Error error = r_util::findProjectConfig(docPath, &projConfig);
    if (!error)
    {
       json::Object projConfigJson;
