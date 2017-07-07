@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -118,11 +119,17 @@ public class RSConnectAccountList extends Composite
       accountList_.clearItems();
       for (int i = 0; i < accounts.length(); i++)
       {
-         if (showCloudAccounts_ || !accounts.get(i).isCloudAccount())
-         {
-            accounts_.add(accounts.get(i));
-            accountList_.addItem(new AccountEntry(accounts.get(i)));
-         }
+         // skip account if it's a cloud account and we aren't showing those
+         if (!showCloudAccounts_ && accounts.get(i).isCloudAccount())
+            continue;
+         
+         // skip account if we have a filter and this doesn't match it
+         if (!StringUtil.isNullOrEmpty(serverFilter_) && 
+               accounts.get(i).getServer() != serverFilter_)
+            continue;
+         
+         accounts_.add(accounts.get(i));
+         accountList_.addItem(new AccountEntry(accounts.get(i)));
       }
       if (onRefreshCompleted_ != null)
       {
@@ -197,11 +204,17 @@ public class RSConnectAccountList extends Composite
       return showCloudAccounts_;
    }
    
+   public void setServerFilter(String filter)
+   {
+      serverFilter_ = filter;
+   }
+   
    private final WidgetListBox<AccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
    
    private boolean showCloudAccounts_;
+   private String serverFilter_;
    
    private ArrayList<RSConnectAccount> accounts_ = 
          new ArrayList<RSConnectAccount>();

@@ -731,6 +731,49 @@ public class RSConnectDeploy extends Composite
       }
    }
    
+   private void populateAccountList(JsArray<RSConnectAccount> accounts)
+   {
+      if (fromPrevious_ != null)
+      {
+         bool hasAccount = false;
+         // if updating a previous deployment, check and see if one of the accounts matches the 
+         // account on the content
+         for (int i = 0; i < accounts.length(); i++)
+         {
+            if (accounts.get(i).getName() == fromPrevious_.getAccountName())
+            {
+               hasAccount = true;
+               break;
+            }
+         }
+         
+      }
+
+      // populate the accounts in the UI (the account display widget filters
+      // based on account criteria)
+      int numAccounts = setAccountList(accounts);
+
+      // if this is our first try, ask the user to connect an account
+      // since none are currently connected
+      if (numAccounts == 0 && !isRetry)
+      {
+         connector_.showAccountWizard(accounts.length() == 0, 
+               source_.isShiny(),
+               new OperationWithInput<Boolean>() 
+         {
+            @Override
+            public void execute(Boolean input)
+            {
+               populateAccountList(indicator, true);
+            }
+         });
+      }
+      else
+      {
+         setPreviousInfo();
+      }
+   }
+   
    private void populateAccountList(final ProgressIndicator indicator,
                                     final boolean isRetry)
    {
@@ -740,29 +783,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
-            // populate the accounts in the UI (the account display widget 
-            // filters based on account criteria)
-            int numAccounts = setAccountList(accounts);
-
-            // if this is our first try, ask the user to connect an account
-            // since none are currently connected
-            if (numAccounts == 0 && !isRetry)
-            {
-               connector_.showAccountWizard(accounts.length() == 0, 
-                     source_.isShiny(),
-                     new OperationWithInput<Boolean>() 
-               {
-                  @Override
-                  public void execute(Boolean input)
-                  {
-                     populateAccountList(indicator, true);
-                  }
-               });
-            }
-            else
-            {
-               setPreviousInfo();
-            }
+            populateAccountList(accounts);
          }
          
          @Override
