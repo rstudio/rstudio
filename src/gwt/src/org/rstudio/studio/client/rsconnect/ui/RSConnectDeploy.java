@@ -627,7 +627,12 @@ public class RSConnectDeploy extends Composite
    
    private RSConnectAccount getSelectedAccount()
    {
-      return accountList_.getSelectedAccount();
+      if (accountList_.isVisible())
+         return accountList_.getSelectedAccount();
+      else if (accountEntry_.isVisible())
+         return accountEntry_.getAccount();
+      else
+         return null;
    }
    
    private void hideCheckUncheckAllButton()
@@ -731,6 +736,71 @@ public class RSConnectDeploy extends Composite
       }
    }
    
+   private void setSingleAccount(RSConnectAccount account)
+   {
+      accountEntry_.setAccount(account);
+      accountEntry_.setVisible(true);
+   }
+   
+   private void populateAccountList(final ProgressIndicator indicator,
+         final boolean isRetry,
+         JsArray<RSConnectAccount> accounts)
+   {
+      // if we're updating a deployment, check to see if there's a match
+      if (fromPrevious_ != null)
+      {
+         bool matched = false;
+         for (int i = 0; i < accounts.length(); i++)
+         {
+            if (accounts.get(i).equals(fromPrevious_.getAccount()));
+            {
+               // show just this account, and hide the account list
+               setSingleAccount(accounts.get(i));
+               accountList_.setVisible(false);
+               
+               // populate app info
+               matched = true;
+               break;
+            }
+         }
+         
+         if (!matched)
+         {
+            // we're updating a deployment, but we don't have a corresponding account
+            setSingleAccount(fromPrevious_.getAccount());
+            
+            // TODO
+            // accountList_.setFilter(server)
+         }
+         setPreviousInfo();
+         return;
+      }
+
+      // populate the accounts in the UI (the account display widget 
+      // filters based on account criteria)
+      int numAccounts = setAccountList(accounts);
+
+      // if this is our first try, ask the user to connect an account
+      // since none are currently connected
+      if (numAccounts == 0 && !isRetry)
+      {
+         connector_.showAccountWizard(accounts.length() == 0, 
+               source_.isShiny(),
+               new OperationWithInput<Boolean>() 
+         {
+            @Override
+            public void execute(Boolean input)
+            {
+               populateAccountList(indicator, true);
+            }
+         });
+      }
+      else
+      {
+         setPreviousInfo();
+      }
+   }
+   
    private void populateAccountList(final ProgressIndicator indicator,
                                     final boolean isRetry)
    {
@@ -740,29 +810,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
-            // populate the accounts in the UI (the account display widget 
-            // filters based on account criteria)
-            int numAccounts = setAccountList(accounts);
-
-            // if this is our first try, ask the user to connect an account
-            // since none are currently connected
-            if (numAccounts == 0 && !isRetry)
-            {
-               connector_.showAccountWizard(accounts.length() == 0, 
-                     source_.isShiny(),
-                     new OperationWithInput<Boolean>() 
-               {
-                  @Override
-                  public void execute(Boolean input)
-                  {
-                     populateAccountList(indicator, true);
-                  }
-               });
-            }
-            else
-            {
-               setPreviousInfo();
-            }
+            populateAccountList(indicator, isRetry, accounts);
          }
          
          @Override
@@ -1141,7 +1189,6 @@ public class RSConnectDeploy extends Composite
       checkUncheckAllButton_.setText(allChecked_ ? "Uncheck All" : "Check All");
    }
    
-   
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
@@ -1163,6 +1210,7 @@ public class RSConnectDeploy extends Composite
    @UiField VerticalPanel fileListPanel_;
    @UiField VerticalPanel filePanel_;
    @UiField VerticalPanel descriptionPanel_;
+   @UiField RSConnectAccountEntry accountEntry_;
    
    // provided fields
    @UiField(provided=true) RSConnectAccountList accountList_;

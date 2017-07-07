@@ -51,6 +51,9 @@
                        ui:field="addAccountAnchor_" text="Add New Account">
             </g:Anchor>
          </g:HorizontalPanel>
+         <rsc:RSConnectAccountEntry styleName="{res.style.accountEntry}"
+                                    ui:field="accountEntry_">
+         </rsc:RSConnectAccountEntry>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">
          </rsc:RSConnectAccountList>

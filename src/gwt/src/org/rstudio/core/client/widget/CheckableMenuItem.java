@@ -7,7 +7,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.MenuItem;
 
 // A menu item that can be checked or unchecked--appears similarly to a

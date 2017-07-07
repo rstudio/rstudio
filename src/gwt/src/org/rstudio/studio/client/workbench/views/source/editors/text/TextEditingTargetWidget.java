@@ -58,8 +58,6 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
-import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
-import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -931,7 +929,6 @@ public class TextEditingTargetWidget
      
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
-      isShiny_ = false;
    }
    
    private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)
@@ -975,7 +972,6 @@ public class TextEditingTargetWidget
       runDocumentMenuButton_.setVisible(isShinyPrerendered);
       setKnitDocumentMenuVisible(isShinyPrerendered);
       
-      isShiny_ = true;
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
    }
@@ -1288,5 +1284,4 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
-   private boolean isShiny_ = false;
 }

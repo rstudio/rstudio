@@ -1,7 +1,7 @@
 /*
  * RSConnectAccountList.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -27,51 +26,12 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.dom.client.Style.FontWeight;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 
 public class RSConnectAccountList extends Composite
 {
-   public class AccountEntry extends Composite
-   {
-      public AccountEntry(RSConnectAccount account)
-      {
-         account_ = account;
-         HorizontalPanel panel = new HorizontalPanel();
-         Image icon = new Image(account.isCloudAccount() ? 
-               new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconSmall2x()) : 
-               new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconSmall2x()));
-         icon.getElement().getStyle().setMarginRight(2, Unit.PX);
-         panel.add(icon);
-
-         Label nameLabel = new Label(account.getName() + ":");
-         nameLabel.getElement().getStyle().setCursor(Cursor.POINTER);
-         nameLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-         nameLabel.getElement().getStyle().setMarginRight(4, Unit.PX);
-         panel.add(nameLabel);
-
-         Label serverLabel = new Label(account.getServer());
-         serverLabel.getElement().getStyle().setCursor(Cursor.POINTER);
-         panel.add(serverLabel);
-
-         initWidget(panel);
-      }
-      
-      public RSConnectAccount getAccount()
-      {
-         return account_;
-      }
-      
-      final RSConnectAccount account_;
-   }
-   
    public RSConnectAccountList(RSConnectServerOperations server, 
          GlobalDisplay display,
          boolean refreshImmediately, 
@@ -80,7 +40,7 @@ public class RSConnectAccountList extends Composite
       server_ = server;
       display_ = display;
       showCloudAccounts_ = showCloudAccounts;
-      accountList_ = new WidgetListBox<AccountEntry>();
+      accountList_ = new WidgetListBox<RSConnectAccountEntry>();
       accountList_.setEmptyText("No accounts connected.");
       if (refreshImmediately)
          refreshAccountList();
@@ -121,7 +81,7 @@ public class RSConnectAccountList extends Composite
          if (showCloudAccounts_ || !accounts.get(i).isCloudAccount())
          {
             accounts_.add(accounts.get(i));
-            accountList_.addItem(new AccountEntry(accounts.get(i)));
+            accountList_.addItem(new RSConnectAccountEntry(accounts.get(i)));
          }
       }
       if (onRefreshCompleted_ != null)
@@ -154,12 +114,12 @@ public class RSConnectAccountList extends Composite
          {
             // extract the list of accounts, sort the desired account to the
             // top, and put them back
-            List<AccountEntry> entries = new ArrayList<AccountEntry>();
+            List<RSConnectAccountEntry> entries = new ArrayList<RSConnectAccountEntry>();
             entries.addAll(accountList_.getItems());
             if (entries.size() <= i)
                return;
             accountList_.clearItems();
-            AccountEntry entry = entries.get(i);
+            RSConnectAccountEntry entry = entries.get(i);
             entries.remove(i);
             entries.add(0, entry);
             for (int j = 0; j < entries.size(); j++) {
@@ -197,7 +157,7 @@ public class RSConnectAccountList extends Composite
       return showCloudAccounts_;
    }
    
-   private final WidgetListBox<AccountEntry> accountList_;
+   private final WidgetListBox<RSConnectAccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
    
