@@ -191,6 +191,10 @@
 .terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
    background-color: #CCC;
 }
+.terminal .xterm-selection div {
+   position: absolute;
+   background-color: #CCC;
+}
 .terminal .xterm-viewport {
   /* On OS X this is required in order for the scroll bar to appear fully opaque */
   background-color: #000000;

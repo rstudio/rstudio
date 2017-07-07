@@ -235,6 +235,10 @@ create_terminal_cursor_rules <- function(isDark) {
                  ".terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,",
                  ".terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {",
                  "   background-color: %s;",
+                 "}",
+                 ".terminal .xterm-selection div {",
+                 "   position: absolute;",
+                 "   background-color: %s;",
                  "}"),
            
            # .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor
@@ -250,6 +254,9 @@ create_terminal_cursor_rules <- function(isDark) {
 
            # .terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
            # .terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before
+           termCursorBgColorFirst,
+
+           # .terminal .xterm-selection div
            termCursorBgColorFirst)
 }
 
