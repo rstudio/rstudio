@@ -32,7 +32,6 @@
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
-#include <core/text/DcfParser.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
