@@ -29,6 +29,10 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
+# explicitly do not use new c++ 11 features
+# they currently do not work with our source
+add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
+
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 

@@ -27,15 +27,20 @@ if(EXISTS "/etc/redhat-release")
    endif()
 endif()
 
-# detect Xenial (Ubuntu 16)
+# detect Xenial (Ubuntu 16) or Debian 9
 set(IS_XENIAL "OFF")
+set(IS_STRETCH "OFF")
 find_program(LSB_RELEASE_EXEC lsb_release)
 if(LSB_RELEASE_EXEC)
     exec_program(lsb_release ARGS -r 
-                 OUTPUT_VARIABLE UBUNTU_VER)
-    string(FIND "${UBUNTU_VER}" "16.04" UBUNTU_VER_POS)
-    if (UBUNTU_VER_POS GREATER 0)
+                 OUTPUT_VARIABLE LSB_VER)
+    string(FIND "${LSB_VER}" "16.04" XENIAL_VER_POS)
+    if(XENIAL_VER_POS GREATER 0)
        set(IS_XENIAL "ON")
+    endif()
+    string(FIND "${LSB_VER}" "9.0" STRETCH_VER_POS)
+    if(STRETCH_VER_POS GREATER 0)
+       set(IS_STRETCH "ON")
     endif()
 endif()
 
@@ -100,6 +105,8 @@ set(RSTUDIO_PACKAGE_SUFFIX "-")
 # always use xenial suffix on xenial builds
 if(IS_XENIAL)
   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}xenial-")
+elseif(IS_STRETCH)
+  set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}stretch-")
 elseif(RSTUDIO_SERVER)
    # SLES builds are produced from a CentOS5 machine, so check for specific SLES
    # target first

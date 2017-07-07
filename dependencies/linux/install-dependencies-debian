@@ -3,7 +3,7 @@
 #
 # install-dependencies-debian
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,21 @@ sudo apt-get -y install cmake
 
 # core system libraries
 sudo apt-get -y install uuid-dev
-sudo apt-get -y install libssl-dev
+
+# for libssl, we want to make sure we get 1.0.2
+# version 1.1.0+ is not compatible with our source code
+which apt-cache > /dev/null
+if [ $? == 0 ]; then
+  apt-cache show libssl1.0-dev > /dev/null
+  if [ $? == 0 ]; then
+    sudo apt-get -y install libssl1.0-dev
+  else
+    sudo apt-get -y install libssl-dev
+  fi
+else
+   sudo apt-get -y install libssl-dev
+fi
+
 sudo apt-get -y install libbz2-dev
 sudo apt-get -y install zlib1g-dev
 sudo apt-get -y install libpam-dev
