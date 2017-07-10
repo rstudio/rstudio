@@ -519,14 +519,17 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(id = "") {
+.rs.addApiFunction("terminalCreate", function(id = "", show = TRUE) {
    if (is.null(id))
       id <- ""
 
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
 
-   .Call("rs_terminalCreate", id)
+   if (is.null(show) || !is.logical(show))
+      stop("'show' must be a logical vector")
+
+   .Call("rs_terminalCreate", id, show)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {
@@ -591,19 +594,19 @@
 })
 
 .rs.addApiFunction("terminalExecute", function(command,
-                                               args = character(),
-                                               dir = character(),
+                                               args = NULL,
+                                               workingDir = character(),
                                                show = TRUE) {
    if (is.null(command) || !is.character(command) || (length(command) != 1))
       stop("'command' must be a single element character vector")
    if (!is.null(args) && !is.character(args))
       stop("'args' must be a character vector")
-   if (is.null(dir) || !is.character(dir) || (length(dir) != 1))
-      stop("'dir' must be a single element character vector")
+   if (!is.null(workingDir) && !is.character(workingDir))
+      stop("'workingDir' must be a single element character vector")
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalExecute", command, args, dir, show)
+   .Call("rs_terminalExecute", command, args, workingDir, show)
 })
 
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,

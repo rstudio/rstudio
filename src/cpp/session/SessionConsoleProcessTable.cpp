@@ -254,7 +254,7 @@ Error createTerminalConsoleProc(
       const std::string& termTitle,
       int termSequence,
       bool altBufferActive,
-      std::string currentDir,
+      const std::string& currentDir,
       bool zombie,
       bool trackEnv,
       std::string* pHandle)
@@ -320,7 +320,7 @@ Error createTerminalExecuteConsoleProc(
       const std::string& title,
       const std::string& command,
       const std::vector<std::string>& args,
-      std::string currentDir,
+      const std::string& currentDir,
       std::string* pHandle)
 {
    using namespace session::module_context;
@@ -372,10 +372,7 @@ Error createTerminalExecuteConsoleProc(
 
    options.reportHasSubprocs = true;
    options.trackCwd = false;
-   if (!currentDir.empty())
-   {
-      options.workingDir = module_context::resolveAliasedPath(currentDir);
-   }
+   options.workingDir = cwd;
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(

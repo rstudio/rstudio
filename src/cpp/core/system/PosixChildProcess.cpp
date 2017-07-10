@@ -605,7 +605,10 @@ Error ChildProcess::run()
       {
          if (::chdir(options_.workingDir.absolutePath().c_str()))
          {
-            LOG_ERROR(systemError(errno, "Error changing directory", ERROR_LOCATION));
+            std::string message = "Error changing directory: '";
+            message += options_.workingDir.absolutePath().c_str();
+            message += "'";
+            LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
          }
       }
 

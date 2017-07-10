@@ -206,6 +206,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onAddTerminal(AddTerminalEvent event)
    {
       view_.addTerminal(event.getProcessInfo());
+      
+      if (event.getShow())
+      {
+         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
+         onActivateTerminal();
+      }
    }
 
    @Override

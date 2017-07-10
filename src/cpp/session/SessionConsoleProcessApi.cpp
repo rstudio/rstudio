@@ -76,7 +76,7 @@ SEXP rs_terminalList()
 
 // Create a terminal with given id (caption). If null, create with automatically
 // generated name. Returns resulting name in either case.
-SEXP rs_terminalCreate(SEXP typeSEXP)
+SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
 {
    r::sexp::Protect protect;
 
@@ -97,6 +97,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
       r::exec::error(msg);
       return R_NilValue;
    }
+
+   bool show = r::sexp::asLogical(showSEXP);
 
    std::string handle;
    Error error = createTerminalConsoleProc(
@@ -141,9 +143,10 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
       return R_NilValue;
    }
 
-   // notify the client so it adds this new terminal to the UI list
+   // notify the client so it adds this new terminal to the UI list and starts it
    json::Object eventData;
    eventData["process_info"] = ptrProc->toJson();
+   eventData["show"] = show;
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
@@ -389,7 +392,22 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
       return R_NilValue;
    }
 
-   std::string cwd = r::sexp::asString(dirSEXP);
+   std::string currentDir;
+   if (!r::sexp::isNull(dirSEXP))
+      currentDir = r::sexp::asString(dirSEXP);
+   if (!currentDir.empty())
+   {
+      FilePath cwd = module_context::resolveAliasedPath(currentDir);
+      if (!cwd.exists() || !cwd.isDirectory())
+      {
+         std::string message = "Invalid directory: '";
+         message += cwd.absolutePathNative();
+         message += "'";
+         r::exec::error(message);
+         return R_NilValue;
+      }
+   }
+
    bool show = r::sexp::asLogical(showSEXP);
 
    std::string title = "User Command: ";
@@ -399,7 +417,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
             title,
             command,
             args,
-            cwd,
+            currentDir,
             &handle);
    if (error)
    {
@@ -433,6 +451,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
    // notify the client so it adds this new terminal to the UI list
    json::Object eventData;
    eventData["process_info"] = ptrProc->toJson();
+   eventData["show"] = show;
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
@@ -872,7 +891,7 @@ Error initializeApi()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
-   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalClear, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalList, 0);
    RS_REGISTER_CALL_METHOD(rs_terminalContext, 1);

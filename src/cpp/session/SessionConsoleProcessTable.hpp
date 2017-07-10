@@ -74,7 +74,7 @@ core::Error createTerminalConsoleProc(
       const std::string& termTitle,
       int termSequence,
       bool altBufferActive,
-      std::string currentDir,
+      const std::string& currentDir,
       bool zombie,
       bool trackEnv,
       std::string* pHandle);
@@ -85,7 +85,7 @@ core::Error createTerminalExecuteConsoleProc(
       const std::string& title,
       const std::string& command,
       const std::vector<std::string>& args,
-      std::string currentDir,
+      const std::string& currentDir,
       std::string* pHandle);
 
 } // namespace console_process
