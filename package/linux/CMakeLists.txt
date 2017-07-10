@@ -59,11 +59,11 @@ if(RSTUDIO_SERVER)
   set(RPM_POSTINST postinst.sh.in)
   set(RPM_POSTRM postrm.sh.in)
 
-  # deiban dependencies -- to install the .deb from the command line with
+  # debian dependencies -- to install the .deb from the command line with
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, ")
 
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
@@ -84,7 +84,7 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libssl1.0.0 | libssl1.0.2, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
   
   # look for the well known locations for Qt SDK to determine which version
   # of libgstreamer we depend on
@@ -97,6 +97,13 @@ elseif(RSTUDIO_DESKTOP)
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 
+endif()
+
+# add dependencies on appropriate libssl
+if (IS_XENIAL OR IS_STRETCH)
+   set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libssl1.0.2, ")
+else()
+   set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libssl1.0.0, ")
 endif()
 
 # define package suffix
