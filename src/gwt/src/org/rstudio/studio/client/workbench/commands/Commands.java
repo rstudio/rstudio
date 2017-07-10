@@ -394,6 +394,7 @@ public abstract class
    public abstract AppCommand nextTerminal();
    public abstract AppCommand showTerminalInfo();
    public abstract AppCommand interruptTerminal();
+   public abstract AppCommand sendTerminalToEditor();
     
    // Help
    public abstract AppCommand helpBack();

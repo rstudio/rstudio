@@ -1,7 +1,7 @@
 /*
  * WorkbenchContext.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import com.google.gwt.user.client.Timer;
@@ -110,20 +109,7 @@ public class WorkbenchContext
             rVersionsInfo_ = event.getRVersionsInfo();
          }
       });
-      
-      // track busy terminals
-      eventBus.addHandler(TerminalBusyEvent.TYPE,
-                          new TerminalBusyEvent.Handler()
-      {
-         @Override
-         public void onTerminalBusy(TerminalBusyEvent event)
-         {
-            isTerminalBusy_ = event.isBusy();
-         }
-      });
    }
-   
-  
   
    public FileSystemItem getCurrentWorkingDir()
    {
@@ -223,11 +209,6 @@ public class WorkbenchContext
       return isServerBusy_;
    }
    
-   public boolean isTerminalBusy()
-   {
-      return isTerminalBusy_;
-   }
-   
    public boolean isRestartInProgress()
    {
       return isRestartInProgress_;
@@ -262,7 +243,6 @@ public class WorkbenchContext
    }
    
    private boolean isServerBusy_ = false;
-   private boolean isTerminalBusy_ = false;
    private boolean isRestartInProgress_ = false;
    private boolean isBuildInProgress_ = false;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();

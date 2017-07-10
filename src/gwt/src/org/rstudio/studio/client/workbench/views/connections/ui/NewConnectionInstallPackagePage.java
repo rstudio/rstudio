@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -22,8 +23,12 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
@@ -56,10 +61,12 @@ public class NewConnectionInstallPackagePage
 
    @Inject
    private void initialize(DependencyManager dependencyManager,
-                           ConnectionsPresenter connectionsPresenter)
+                           ConnectionsPresenter connectionsPresenter,
+                           ConnectionsServerOperations server)
    {
       dependencyManager_ = dependencyManager;
       connectionsPresenter_ = connectionsPresenter;
+      server_ = server;
    }
 
    @Override
@@ -74,8 +81,22 @@ public class NewConnectionInstallPackagePage
                @Override
                public void execute()
                {
-                  wizard.closeDialog();
-                  connectionsPresenter_.onNewConnection();
+                  server_.connectionAddPackage(info_.getPackage(), new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onResponseReceived(Void empty)
+                     {
+                        wizard.closeDialog();
+                        connectionsPresenter_.onNewConnection();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        wizard.closeDialog();
+                     }
+                  });
                }
             }
       );
@@ -118,4 +139,5 @@ public class NewConnectionInstallPackagePage
    private NewConnectionInfo info_;
    private DependencyManager dependencyManager_;
    private ConnectionsPresenter connectionsPresenter_;
+   private ConnectionsServerOperations server_;
 }

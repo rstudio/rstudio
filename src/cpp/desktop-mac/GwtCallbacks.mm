@@ -359,6 +359,19 @@ private:
    [self performClipboardAction: @selector(paste:)];
 }
 
+- (void) setClipboardText: (NSString*) text
+{
+   NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+   [pasteboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: nil];
+   [pasteboard setString: text forType: NSStringPboardType];
+}
+
+- (NSString*) getClipboardText
+{
+   NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+   return [pasteboard stringForType: NSStringPboardType];
+}
+
 - (NSString*) getUriForPath: (NSString*) path
 {
    NSURL* url = [NSURL fileURLWithPath: resolveAliasedPath(path)];

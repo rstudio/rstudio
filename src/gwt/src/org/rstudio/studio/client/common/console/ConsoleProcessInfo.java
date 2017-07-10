@@ -37,41 +37,13 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int AUTOCLOSE_NEVER = 2;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;
+   public static final int SEQUENCE_NEW_TERMINAL = -1;
 
    protected ConsoleProcessInfo() {}
 
-   public static final native ConsoleProcessInfo createNamedTerminalInfo(
-         int sequence,
-         String caption) /*-{
-
-      var procInfo = new Object();
-
-      procInfo.handle = null;
-      procInfo.caption = caption;
-      procInfo.show_on_output = false;
-      procInfo.interaction_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS;
-      procInfo.max_output_lines = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_MAX_OUTPUT_LINES;
-      procInfo.buffered_output = "";
-      procInfo.exit_code = null;
-      procInfo.terminal_sequence = sequence;
-      procInfo.allow_restart = false;
-      procInfo.title = null;
-      procInfo.child_procs = true;
-      procInfo.shell_type = @org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo::SHELL_DEFAULT,
-      procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
-      procInfo.channel_id = "";
-      procInfo.alt_buffer = false;
-      procInfo.cwd = null;
-      procInfo.cols = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_COLS;
-      procInfo.rows = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_ROWS;
-      procInfo.restarted = false;
-      procInfo.autoclose = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::AUTOCLOSE_DEFAULT;
-      procInfo.zombie = false;
-
-      return procInfo;
-   }-*/;
-
-   public static final native ConsoleProcessInfo createNewTerminalInfo(int sequence) /*-{
+   public static final native ConsoleProcessInfo createNewTerminalInfo(
+         boolean trackEnv) /*-{
+         
       var procInfo = new Object();
 
       procInfo.handle = null;
@@ -81,7 +53,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.max_output_lines = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_MAX_OUTPUT_LINES;
       procInfo.buffered_output = "";
       procInfo.exit_code = null;
-      procInfo.terminal_sequence = sequence;
+      procInfo.terminal_sequence = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::SEQUENCE_NEW_TERMINAL;
       procInfo.allow_restart = false;
       procInfo.title = null;
       procInfo.child_procs = true;
@@ -95,6 +67,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.restarted = false;
       procInfo.autoclose = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::AUTOCLOSE_DEFAULT;
       procInfo.zombie = false;
+      procInfo.track_env = trackEnv;
 
       return procInfo;
    }-*/;
@@ -114,6 +87,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
     * @param cwd
     * @param autoCloseMode
     * @param zombie
+    * @param trackEnv
     * @return
     */
    public static final native ConsoleProcessInfo createTerminalMetadata(
@@ -128,7 +102,8 @@ public class ConsoleProcessInfo extends JavaScriptObject
          boolean altBufferActive,
          String cwd,
          int autoCloseMode,
-         boolean zombie) /*-{
+         boolean zombie,
+         boolean trackEnv) /*-{
 
       var procInfo = new Object();
 
@@ -153,6 +128,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.restarted = false;
       procInfo.autoclose = autoCloseMode;
       procInfo.zombie = zombie;
+      procInfo.track_env = trackEnv;
 
       return procInfo;
    }-*/;

@@ -58,7 +58,7 @@
 }
 
 .rstudio-themes-flat .profvis-treetable {
-   color: inherit;
+   color: inherit !important;
 }
 
 .rstudio-themes-flat .profvis-treetable table tr {

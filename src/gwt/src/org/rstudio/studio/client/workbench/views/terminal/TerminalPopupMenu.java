@@ -108,6 +108,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          }
          addSeparator();
          addItem(commands_.renameTerminal().createMenuItem(false));
+         addItem(commands_.sendTerminalToEditor().createMenuItem(false));
          addItem(commands_.showTerminalInfo().createMenuItem(false));
          addSeparator();
          addItem(commands_.previousTerminal().createMenuItem(false));
@@ -162,6 +163,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_.interruptTerminal().setEnabled(haveActiveTerminal);
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
       
       // inform server of the selection
       server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {

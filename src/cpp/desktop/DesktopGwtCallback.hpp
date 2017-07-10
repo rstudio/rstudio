@@ -76,9 +76,13 @@ public slots:
 
    void undo(bool forAce);
    void redo(bool forAce);
+
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
+
+   void setClipboardText(QString text);
+   QString getClipboardText();
 
    void setGlobalMouseSelection(QString selection);
    QString getGlobalMouseSelection();

@@ -36,3 +36,13 @@
 	font-weight: normal;
 	margin-right: 10px;
 }
+
+.showInternalsCheckbox
+{
+   margin-top: 1px;
+}
+
+.showInternalsCheckbox input
+{
+   margin-right: 5px !important;
+}

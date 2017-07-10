@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -26,7 +28,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,7 +35,7 @@ import com.google.inject.Inject;
 public class TerminalInfoDialog extends ModalDialogBase
 {
 
-   public TerminalInfoDialog(TerminalSession session, TerminalSessionSocket socket)
+   public TerminalInfoDialog(final TerminalSession session, TerminalSessionSocket socket)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -47,7 +48,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       if (StringUtil.isNullOrEmpty(cwd))
          cwd = "Default";
       
-      StringBuilder diagnostics = new StringBuilder();
+      final StringBuilder diagnostics = new StringBuilder();
       diagnostics.append("Terminal Session Information\n----------------------------\n");
       diagnostics.append("Caption:     '" + session.getCaption() + "'\n");
       diagnostics.append("Title:       '" + session.getTitle() + "'\n");
@@ -57,7 +58,8 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("Sequence:    '" + session.getSequence() + "'\n");
       diagnostics.append("Restarted:   '" + session.getRestarted() + "\n");
       diagnostics.append("Busy:        '" + session.getHasChildProcs() + "'\n");
-      diagnostics.append("Alt-Buffer:  '" + session.altBufferActive() + "'\n");
+      diagnostics.append("Full screen: 'client=" + session.xtermAltBufferActive() +  
+            "/server=" + session.getAltBufferActive() + "'\n"); 
       diagnostics.append("Zombie:      '" + session.getZombie() + "'\n");
       diagnostics.append("Track Env    '" + session.getTrackEnv() + "'\n");
       diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
@@ -86,14 +88,40 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setReadOnly(true);
       textArea_.setText(diagnostics.toString());
 
-      setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-      ThemedButton closeButton = new ThemedButton("Close",
-                                                  new ClickHandler() {
+      addOkButton(new ThemedButton("Close", new ClickHandler() {
+         @Override
          public void onClick(ClickEvent event) {
             closeDialog();
          }
+      }));
+      
+      appendBufferButton_ = new ThemedButton("Append Buffer", new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event) {
+            appendBufferButton_.setEnabled(false);
+            diagnostics.append("\n\nTerminal Buffer\n---------------\n");
+            session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
+            {
+               @Override
+               public void onSuccess(String buffer)
+               {
+                  diagnostics.append(AnsiCode.prettyPrintNonCRLF(buffer));
+                  textArea_.setText(diagnostics.toString());
+                  textArea_.setCursorPos(diagnostics.toString().length());
+                  textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
+               }
+               
+               @Override
+               public void onFailure(String message)
+               {
+                  diagnostics.append(message);
+                  textArea_.setText(diagnostics.toString());
+               }
+            });
+         }
       });
-      addOkButton(closeButton); 
+      addLeftButton(appendBufferButton_);
+      
    }
 
    @Inject
@@ -110,6 +138,7 @@ public class TerminalInfoDialog extends ModalDialogBase
    }
    
    TextArea textArea_;
+   ThemedButton appendBufferButton_;
 
    // Injected ---- 
    private UIPrefs uiPrefs_;

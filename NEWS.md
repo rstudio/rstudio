@@ -81,6 +81,8 @@
 * New "Copy To" command in Files pane to copy and rename in one step
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
+* Minor fixes to C++ syntax highlighting
+* Added syntax highlighting for TOML files
 * Improve performance of autocompletion for installed packages
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
@@ -95,6 +97,7 @@
 * Make columns in data viewer resizable
 * Add option to kill child processes when session exits
 * Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
+* Remove Packrat package sync notifications; replace with Check Library Status command
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
