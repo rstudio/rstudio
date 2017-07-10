@@ -654,3 +654,47 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
          PACKAGE = "(embedding)")
 })
 
+.rs.addApiFunction("getThemeInfo", function() {
+   editor <- .Call("rs_readUiPref", "theme")
+   global <- .Call("rs_readUiPref", "flat_theme")
+
+   global <- switch(
+    if (is.null(global)) "" else global,
+    alternate = "Sky",
+    default = "Modern",
+    "Classic"
+  )
+
+  dark <- grepl(
+    paste(
+      "ambiance",
+      "chaos",
+      "clouds midnight",
+      "cobalt",
+      "idle fingers",
+      "kr theme",
+      "material",
+      "merbivore soft",
+      "merbivore",
+      "mono industrial",
+      "monokai",
+      "pastel on dark",
+      "solarized dark",
+      "tomorrow night blue",
+      "tomorrow night bright",
+      "tomorrow night 80s",
+      "tomorrow night",
+      "twilight",
+      "vibrant ink",
+      sep = "|"
+    ),
+    editor,
+    ignore.case = TRUE)
+  dark <- !identical(global, "Classic") && dark
+
+  list(
+    editor = editor,
+    global = global,
+    dark = dark
+  )
+})
