@@ -45,7 +45,7 @@ struct TerminalShell
       PosixBash    = 7, // Posix: Bash
       CustomShell  = 8, // User-specified shell command
 
-      Max          = PosixBash
+      Max          = CustomShell
    };
 
    TerminalShell()

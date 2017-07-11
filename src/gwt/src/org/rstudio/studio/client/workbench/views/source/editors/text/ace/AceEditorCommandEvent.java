@@ -33,6 +33,7 @@ public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEven
    public static final int EXPAND_TO_MATCHING         =  9;
    public static final int ADD_CURSOR_ABOVE           = 10;
    public static final int ADD_CURSOR_BELOW           = 11;
+   public static final int INSERT_SNIPPET             = 12;
    
    public static final int EXECUTION_POLICY_FOCUSED = 1;
    public static final int EXECUTION_POLICY_ALWAYS  = 2;

@@ -175,6 +175,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
+import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
@@ -506,6 +507,7 @@ public class RemoteServer implements Server
                      boolean altBufferActive,
                      String cwd,
                      boolean zombie,
+                     boolean trackEnv,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -519,6 +521,7 @@ public class RemoteServer implements Server
       params.set(7, JSONBoolean.getInstance(altBufferActive));
       params.set(8, new JSONString(StringUtil.notNull(cwd)));
       params.set(9, JSONBoolean.getInstance(zombie));
+      params.set(10, JSONBoolean.getInstance(trackEnv));
 
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
@@ -711,6 +714,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER_CHUNK, params, requestCallback);
    }
 
+   @Override
+   public void processGetBuffer(String handle,
+                                boolean stripAnsiCodes,
+                                ServerRequestCallback<ProcessBufferChunk> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      params.set(1,  JSONBoolean.getInstance(stripAnsiCodes));
+      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER, params, requestCallback);
+   }
+
    @Override 
    public void processUseRpc(String handle,
                              ServerRequestCallback<Void> requestCallback)
@@ -745,15 +759,6 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
       sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);   
-   }
-
-   @Override 
-   public void processSetZombie(String handle,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(handle)));
-      sendRequest(RPC_SCOPE, PROCESS_SET_ZOMBIE, params, requestCallback);   
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -4768,6 +4773,11 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   public void getPackratActions(ServerRequestCallback<PackratActions> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PACKRAT_ACTIONS, requestCallback);
+   }
+   
    @Override
    public void packratBootstrap(String dir,
                                 boolean enter,
@@ -5190,6 +5200,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, STOP_SHINY_APP, params, true, callback);
    }
 
+   @Override
+   public void connectionAddPackage(String packageName,
+                                    ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, CONNECTION_ADD_PACKAGE, params, callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5263,11 +5282,11 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_TITLE = "process_set_title";
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
+   private static final String PROCESS_GET_BUFFER = "process_get_buffer";
    private static final String PROCESS_USE_RPC = "process_use_rpc";
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";
    private static final String PROCESS_INTERRUPT_CHILD = "process_interrupt_child";
-   private static final String PROCESS_SET_ZOMBIE = "process_set_zombie";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";
@@ -5559,6 +5578,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
+   private static final String GET_PACKRAT_ACTIONS = "get_packrat_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";
@@ -5599,4 +5619,7 @@ public class RemoteServer implements Server
    private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
 
    private static final String STOP_SHINY_APP = "stop_shiny_app";
+
+   private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
+
 }

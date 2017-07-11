@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
 import org.rstudio.core.client.StringUtil;
@@ -254,7 +255,7 @@ public class TerminalSessionSocket
             @Override
             public void onError()
             {
-               diagnostic("WebSocket connect error, switching to RPC");
+               diagnosticError("WebSocket connect error, switching to RPC");
                socket_ = null;
                
                // Unable to connect client to server via websocket; let server
@@ -313,7 +314,11 @@ public class TerminalSessionSocket
                requestCallback);
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
-         socket_.send(input);
+         if (socket_ != null)
+            socket_.send(input);
+         else
+            diagnosticError("Tried to send user input over null websocket");
+            
          requestCallback.onResponseReceived(null);
          break;
       case ConsoleProcessInfo.CHANNEL_PIPE:
@@ -409,6 +414,12 @@ public class TerminalSessionSocket
    public String getLocalEchoDiagnostics()
    {
       return localEcho_.getDiagnostics();
+   }
+   
+   private void diagnosticError(String msg)
+   {
+      Debug.log(msg);
+      diagnostic(msg);
    }
    
    private void diagnostic(String msg)

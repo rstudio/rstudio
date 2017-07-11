@@ -162,8 +162,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kSendToTerminal;
       else if (name == "clear_terminal")
          type = session::client_events::kClearTerminal;
-      else if (name == "create_named_terminal")
-         type = session::client_events::kCreateNamedTerminal;
+      else if (name == "add_terminal")
+         type = session::client_events::kAddTerminal;
       else if (name == "activate_terminal")
          type = session::client_events::kActivateTerminal;
       else if (name == "terminal_cwd")
@@ -1517,6 +1517,19 @@ r_util::ActiveSession& activeSession()
       std::string id = options().sessionScope().id();
       if (!id.empty())
          pSession = activeSessions().get(id);
+      else if (options().programMode() == kSessionProgramModeDesktop)
+      {
+         // if no active session, create one and use the launcher token as a
+         // synthetic session ID
+         //
+         // we only do this in desktop mode to preserve backwards compatibility
+         // with some functionality that depends on session data
+         // persisting after rstudio has been closed
+         //
+         // this entire clause will likely need to be reverted in a future release
+         // once we ensure that all execution modes have this squared away
+         pSession = activeSessions().emptySession(options().launcherToken());
+      }
       else
       {
          // if no scope was specified, we are in singleton session mode

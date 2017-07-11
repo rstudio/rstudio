@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionConsoleProcessApi.hpp"
+#include "modules/SessionVCS.hpp"
 
 using namespace rstudio::core;
 
@@ -155,9 +156,8 @@ std::vector<std::string> getAllCaptions()
    return allCaptions;
 }
 
-// Determine next terminal sequence, used when creating terminal name
-// via rstudioapi: mimics what happens in client code.
-std::string nextTerminalName()
+// Determine next terminal sequence and name
+std::pair<int, std::string> nextTerminalName()
 {
    int maxNum = kNoTerminal;
    BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
@@ -166,7 +166,9 @@ std::string nextTerminalName()
    }
    maxNum++;
 
-   return std::string("Terminal ") + core::safe_convert::numberToString(maxNum);
+   return std::pair<int, std::string>(
+            maxNum,
+            std::string("Terminal ") + core::safe_convert::numberToString(maxNum));
 }
 
 void saveConsoleProcesses()
@@ -241,6 +243,77 @@ Error internalInitialize()
    loadConsoleProcesses();
 
    return initializeApi();
+}
+
+Error createTerminalConsoleProc(
+      TerminalShell::TerminalShellType shellType,
+      int cols,
+      int rows,
+      const std::string& termHandle, // empty if starting a new terminal
+      const std::string& termCaption,
+      const std::string& termTitle,
+      int termSequence,
+      bool altBufferActive,
+      const std::string& currentDir,
+      bool zombie,
+      bool trackEnv,
+      std::string* pHandle)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+#if defined(_WIN32)
+   trackEnv = false;
+#endif
+
+   std::string computedCaption = termCaption;
+
+   if (termSequence == kNewTerminal)
+   {
+      std::pair<int, std::string> sequenceInfo = nextTerminalName();
+      termSequence = sequenceInfo.first;
+      if (computedCaption.empty())
+         computedCaption = sequenceInfo.second;
+   }
+
+   if (termSequence == kNoTerminal)
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Unsupported terminal sequence",
+                         ERROR_LOCATION);
+   }
+
+   if (computedCaption.empty())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Empty terminal caption not supported",
+                         ERROR_LOCATION);
+   }
+
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
+
+   TerminalShell::TerminalShellType actualShellType;
+   core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
+         shellType, cols, rows, termSequence, cwd, trackEnv, termHandle, &actualShellType);
+
+   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
+         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
+            computedCaption, termTitle, termHandle, termSequence, actualShellType,
+            altBufferActive, cwd, cols, rows, zombie, trackEnv));
+
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
+
+   ptrProc->onExit().connect(boost::bind(
+                              &modules::source_control::enqueueRefreshEvent));
+
+   *pHandle = ptrProc->handle();
+
+   return Success();
 }
 
 } // namespace console_process

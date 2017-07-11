@@ -9,6 +9,8 @@
 
 @eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
 
+@eval THEME_DARK_SEARCHRESULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground;
+
 .console {
    font-family: fixedWidthFont;
    padding-left: 6px;
@@ -96,6 +98,11 @@
 
 .searchMatch {
    background-color: rgb(190, 230, 255);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .searchMatch
+{
+   background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
 
 .functionInfo, .paramInfoName {

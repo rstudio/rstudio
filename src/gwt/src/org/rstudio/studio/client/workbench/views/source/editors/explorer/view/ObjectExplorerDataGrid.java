@@ -28,6 +28,8 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
+import org.rstudio.core.client.widget.events.SelectionChangedEvent;
+import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -74,6 +76,8 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlDivBuilder;
 import com.google.gwt.dom.client.Element;
@@ -84,6 +88,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -298,7 +303,8 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   private String generateExtractingRCode(Data data, String finalReplacement)
+   public static String generateExtractingRCode(Data data,
+                                                String finalReplacement)
    {
       if (data == null || data.isMorePlaceholder())
          return null;
@@ -621,6 +627,11 @@ public class ObjectExplorerDataGrid
       synchronize();
    }
    
+   public HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler)
+   {
+      return addHandler(handler, SelectionChangedEvent.TYPE);
+   }
+   
    // Handlers ---
    
    @Override
@@ -748,6 +759,11 @@ public class ObjectExplorerDataGrid
          event.stopPropagation();
          event.preventDefault();
       }
+      
+      // report selection changes
+      int eventType = event.getTypeInt();
+      if (eventType == Event.ONCLICK || (eventType & Event.KEYEVENTS) != 0)
+         fireEvent(new SelectionChangedEvent());
    }
    
    @Override
@@ -972,6 +988,7 @@ public class ObjectExplorerDataGrid
             
             // force update of data grid
             synchronize();
+            setFocusDeferred(true);
          }
       });
    }
@@ -1005,6 +1022,19 @@ public class ObjectExplorerDataGrid
             
             // force update of data grid
             synchronize();
+            setFocusDeferred(true);
+         }
+      });
+   }
+   
+   private void setFocusDeferred(final boolean focused)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            setFocus(focused);
          }
       });
    }
@@ -1209,6 +1239,14 @@ public class ObjectExplorerDataGrid
       if (dataProvider_ == null)
          return 0;
       return getData().size();
+   }
+   
+   public Data getCurrentSelection()
+   {
+      int selectedRow = getKeyboardSelectedRow();
+      return (selectedRow == -1)
+            ? null
+            : getData().get(selectedRow);
    }
    
    public List<Data> getData()

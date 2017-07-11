@@ -120,7 +120,11 @@ public class XTermNative extends JavaScriptObject
       this.write("\x1b[?1047l"); // show primary buffer
       this.write("\x1b[m"); // reset all visual attributes
    }-*/;
-   
+
+   public final native void showAltBuffer() /*-{
+      this.write("\x1b[?1047h"); // show alt buffer
+   }-*/;
+    
    public final native String currentLine() /*-{
       lineBuf = this.lines.get(this.y + this.ybase);
       if (!lineBuf) // resize may be in progress

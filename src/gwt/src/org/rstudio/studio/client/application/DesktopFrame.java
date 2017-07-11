@@ -45,11 +45,17 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void undo(boolean forAce);
    void redo(boolean forAce);
+   
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
+   
+   void setClipboardText(String text);
+   String getClipboardText();
+   
    void setGlobalMouseSelection(String selection);
    String getGlobalMouseSelection();
+   
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);

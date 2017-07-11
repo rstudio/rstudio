@@ -77,6 +77,12 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::setenv(&shellEnv, "GIT_EDITOR", editorCommand);
       core::system::setenv(&shellEnv, "SVN_EDITOR", editorCommand);
    }
+
+   // don't add commands starting with a space to shell history
+   if (trackEnv)
+   {
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
+   }
 #endif
 
    if (termSequence != kNoTerminal)
@@ -655,6 +661,24 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
+   AutoCloseMode autoClose = procInfo_->getAutoClose();
+   if (procInfo_->getAutoClose() == DefaultAutoClose)
+   {
+      if (session::userSettings().terminalAutoclose())
+      {
+         autoClose = AlwaysAutoClose;
+      }
+      else
+      {
+         autoClose = NeverAutoClose;
+      }
+      procInfo_->setAutoClose(autoClose);
+   }
+
+   if (procInfo_->getAutoClose() == NeverAutoClose)
+   {
+      setZombie();
+   }
    saveConsoleProcesses();
 
    json::Object data;

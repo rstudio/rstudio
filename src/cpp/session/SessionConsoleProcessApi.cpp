@@ -49,6 +49,16 @@ ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
    return proc;
 }
 
+// Return buffer for a terminal, optionally stripping out Ansi codes.
+std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
+{
+   std::string buffer = proc->getBuffer();
+
+   if (stripAnsi)
+      core::text::stripAnsiCodes(&buffer);
+   string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
+   return buffer;
+}
 
 
 // R APIs ---------------------------------------------------------------
@@ -73,18 +83,69 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
    if (!session::options().allowShell())
       return R_NilValue;
 
+   std::pair<int, std::string> termSequence = nextTerminalName();
    std::string terminalId = r::sexp::asString(typeSEXP);
    if (terminalId.empty())
    {
-      terminalId = nextTerminalName();
+      terminalId = termSequence.second;
+   }
+   else if (findProcByCaption(terminalId) != NULL)
+   {
+      std::string msg = "Terminal id already in use: '";
+      msg += terminalId;
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
    }
 
-   json::Object eventData;
-   eventData["id"] = terminalId;
+   std::string handle;
+   Error error = createTerminalConsoleProc(
+            TerminalShell::DefaultShell,
+            core::system::kDefaultCols,
+            core::system::kDefaultRows,
+            std::string(), // handle
+            terminalId,
+            std::string(), // title
+            termSequence.first,
+            false, // altBufferActive
+            std::string(), // cwd
+            false, // zombie
+            session::userSettings().terminalTrackEnv(),
+            &handle);
+   if (error)
+   {
+      std::string msg = "Failed to create terminal: '";
+      msg += error.summary();
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
+   }
 
-   // send the event
-   ClientEvent createNamedTerminalEvent(client_events::kCreateNamedTerminal, eventData);
-   module_context::enqueClientEvent(createNamedTerminalEvent);
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      r::exec::error("Unable to find created terminal");
+      return R_NilValue;
+   }
+
+   error = ptrProc->start();
+   if (error)
+   {
+      std::string msg = "Failed to start terminal: '";
+      msg += error.summary();
+      msg += "'";
+
+      reapConsoleProcess(*ptrProc);
+
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   // notify the client so it adds this new terminal to the UI list
+   json::Object eventData;
+   eventData["process_info"] = ptrProc->toJson();
+   ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
+   module_context::enqueClientEvent(addTerminalEvent);
 
    return r::sexp::create(terminalId, &protect);
 }
@@ -181,11 +242,7 @@ SEXP rs_terminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    if (proc == NULL)
       return R_NilValue;
 
-   std::string buffer = proc->getBuffer();
-
-   if (stripAnsi)
-      core::text::stripAnsiCodes(&buffer);
-   string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
+   std::string buffer = getTerminalBuffer(proc, stripAnsi);
    return r::sexp::create(core::algorithm::split(buffer, "\n"), &protect);
 }
 
@@ -564,6 +621,33 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error procGetBuffer(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   bool stripAnsi;
+
+   Error error = json::readParams(request.params, &handle, &stripAnsi);
+   if (error)
+      return error;
+
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == NULL)
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error getting buffer chunk",
+                         ERROR_LOCATION);
+
+   json::Object result;
+   std::string buffer = getTerminalBuffer(proc, stripAnsi);
+
+   result["chunk"] = buffer;
+   result["chunk_number"] = 0;
+   result["more_available"] = false;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 Error procUseRpc(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -634,25 +718,78 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error procSetZombie(const json::JsonRpcRequest& request,
+Error getTerminalShells(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   console_process::AvailableTerminalShells availableShells;
+   json::Array shells;
+   availableShells.toJson(&shells);
+   pResponse->setResult(shells);
+   return Success();
+}
+
+Error startTerminal(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string handle;
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+   int shellTypeInt;
+   int cols, rows; // initial pseudo-terminal size
+   std::string termHandle; // empty if starting a new terminal
+   std::string termCaption;
+   std::string termTitle;
+   int termSequence = kNoTerminal;
+   bool altBufferActive;
+   std::string currentDir;
+   bool zombie;
+   bool trackEnv;
 
    Error error = json::readParams(request.params,
-                                  &handle);
+                                  &shellTypeInt,
+                                  &cols,
+                                  &rows,
+                                  &termHandle,
+                                  &termCaption,
+                                  &termTitle,
+                                  &termSequence,
+                                  &altBufferActive,
+                                  &currentDir,
+                                  &zombie,
+                                  &trackEnv);
    if (error)
       return error;
 
-   ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
-      return systemError(boost::system::errc::invalid_argument,
-                         "Error setting process to zombie mode",
-                         ERROR_LOCATION);
+#if defined(_WIN32)
+   trackEnv = false;
+#endif
+   std::string handle;
+   error = createTerminalConsoleProc(
+            TerminalShell::safeShellTypeFromInt(shellTypeInt),
+            cols,
+            rows,
+            termHandle,
+            termCaption,
+            termTitle,
+            termSequence,
+            altBufferActive,
+            currentDir,
+            zombie,
+            trackEnv,
+            &handle);
+   if (error)
+      return error;
 
-   // Set a process to zombie mode meaning we keep showing it and its buffer, but don't
-   // start its process
-   proc->setZombie();
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Failed to create terminal",
+                         ERROR_LOCATION);
+   }
+
+   pResponse->setResult(ptrProc->toJson());
+
    return Success();
 }
 
@@ -688,8 +825,10 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
       (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))
-      (bind(registerRpcMethod, "process_set_zombie", procSetZombie))
-      (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild));
+      (bind(registerRpcMethod, "process_interrupt_child", procInterruptChild))
+      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer))
+      (bind(registerRpcMethod, "get_terminal_shells", getTerminalShells))
+      (bind(registerRpcMethod, "start_terminal", startTerminal));
 
    return initBlock.execute();
 }

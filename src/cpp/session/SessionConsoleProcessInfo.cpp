@@ -31,6 +31,7 @@ namespace console_process {
 const int kDefaultMaxOutputLines = 500;
 const int kDefaultTerminalMaxOutputLines = 1000; // xterm.js scrollback constant
 const int kNoTerminal = 0; // terminal sequence number for a non-terminal
+const int kNewTerminal = -1; // new terminal, sequence number yet to be determined
 const size_t kOutputBufferSize = 8192;
 
 ConsoleProcessInfo::ConsoleProcessInfo()
