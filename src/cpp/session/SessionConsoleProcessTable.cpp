@@ -301,8 +301,8 @@ Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
 Error createTerminalExecuteConsoleProc(
       const std::string& title,
       const std::string& command,
-      const std::vector<std::string>& args,
       const std::string& currentDir,
+      const core::system::Options& env,
       std::string* pHandle)
 {
    using namespace session::module_context;
@@ -322,30 +322,17 @@ Error createTerminalExecuteConsoleProc(
 
    core::system::Options childEnv;
    core::system::environment(&childEnv);
+   core::system::getModifiedEnv(env, &childEnv);
    options.environment = childEnv;
 
    options.smartTerminal = true;
 
-   std::string actualCommand;
-
 #ifndef _WIN32
    options.detachSession = true;
-
-   shell_utils::ShellCommand cmdWithArgs(command);
-   cmdWithArgs << shell_utils::EscapeFilesOnly;
-   BOOST_FOREACH(const std::string& arg, args)
-   {
-      cmdWithArgs << arg;
-   }
-   actualCommand = cmdWithArgs;
 #endif
 
 #ifdef _WIN32
    options.detachProcess = true;
-
-   // TODO (gary) construct command
-   // actualCommand =
-   // commandArgs =
 #endif
 
    options.reportHasSubprocs = true;
@@ -371,7 +358,7 @@ Error createTerminalExecuteConsoleProc(
    ptrProcInfo->setHasChildProcs(false);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
-         ConsoleProcess::createTerminalProcess(cmdWithArgs, options, ptrProcInfo,
+         ConsoleProcess::createTerminalProcess(command, options, ptrProcInfo,
                                                ConsoleProcess::useWebsockets());
    *pHandle = ptrProc->handle();
 

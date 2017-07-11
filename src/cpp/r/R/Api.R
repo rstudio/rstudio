@@ -594,19 +594,19 @@
 })
 
 .rs.addApiFunction("terminalExecute", function(command,
-                                               args = character(),
                                                workingDir = NULL,
+                                               env = character(),
                                                show = TRUE) {
    if (is.null(command) || !is.character(command) || (length(command) != 1))
       stop("'command' must be a single element character vector")
-   if (!is.null(args) && !is.character(args))
-      stop("'args' must be a character vector")
    if (!is.null(workingDir) && (!is.character(workingDir) || (length(workingDir) != 1)))
       stop("'workingDir' must be a single element character vector")
+   if (!is.null(env) && !is.character(env))
+      stop("'env' must be a character vector")
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalExecute", command, args, workingDir, show)
+   .Call("rs_terminalExecute", command, workingDir, env, show)
 })
 
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,

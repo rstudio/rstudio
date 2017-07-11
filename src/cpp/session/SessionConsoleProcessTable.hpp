@@ -73,8 +73,8 @@ core::Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
 core::Error createTerminalExecuteConsoleProc(
       const std::string& title,
       const std::string& command,
-      const std::vector<std::string>& args,
       const std::string& currentDir,
+      const core::system::Options& env,
       std::string* pHandle);
 
 } // namespace console_process

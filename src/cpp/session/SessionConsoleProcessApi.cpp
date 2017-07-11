@@ -378,7 +378,10 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
 }
 
 // Run a process in a terminal
-SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP showSEXP)
+SEXP rs_terminalExecute(SEXP commandSEXP,
+                        SEXP dirSEXP,
+                        SEXP envSEXP,
+                        SEXP showSEXP)
 {
    r::sexp::Protect protect;
 
@@ -389,13 +392,6 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
    if (command.empty())
    {
       r::exec::error("No command specified");
-      return R_NilValue;
-   }
-
-   std::vector<std::string> args;
-   if (!r::sexp::fillVectorString(argsSEXP, &args))
-   {
-      r::exec::error("Invalid command arguments");
       return R_NilValue;
    }
 
@@ -415,6 +411,28 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
       }
    }
 
+   std::vector<std::string> env;
+   if (!r::sexp::fillVectorString(envSEXP, &env))
+   {
+      r::exec::error("Invalid environment");
+      return R_NilValue;
+   }
+
+   core::system::Options customEnv;
+   BOOST_FOREACH(const std::string& str, env)
+   {
+      core::system::Option envVar;
+      if (!core::system::parseEnvVar(str, &envVar))
+      {
+         std::string msg = "Invalid environment: '";
+         msg += str;
+         msg += "'";
+         r::exec::error(msg);
+         return R_NilValue;
+      }
+      customEnv.push_back(envVar);
+   }
+
    bool show = r::sexp::asLogical(showSEXP);
 
    std::string title = "User Command: ";
@@ -423,8 +441,8 @@ SEXP rs_terminalExecute(SEXP commandSEXP, SEXP argsSEXP, SEXP dirSEXP, SEXP show
    Error error = createTerminalExecuteConsoleProc(
             title,
             command,
-            args,
             currentDir,
+            customEnv,
             &handle);
    if (error)
    {
