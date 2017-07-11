@@ -63,21 +63,7 @@ public class TerminalList implements Iterable<String>,
     */
    public void addTerminal(TerminalSession term)
    {
-      addTerminal(ConsoleProcessInfo.createTerminalMetadata(
-            term.getHandle(),
-            term.getCaption(),
-            term.getTitle(),
-            term.getSequence(),
-            term.getInteractionMode(),
-            term.getHasChildProcs(),
-            term.getCols(),
-            term.getRows(),
-            term.getShellType(),
-            term.getAltBufferActive(),
-            term.getCwd(),
-            term.getAutoCloseMode(),
-            term.getZombie(),
-            term.getTrackEnv()));
+      addTerminal(term.getProcInfo());
    }
 
    /**
@@ -163,6 +149,19 @@ public class TerminalList implements Iterable<String>,
       if (current == null)
          return;
       current.setZombie(zombie);
+   }
+
+   /**
+    * update caption
+    * @param handle terminal handle
+    * @param zombie new caption
+    */
+   public void setCaption(String handle, String caption)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setCaption(caption);
    }
 
    /**

@@ -47,24 +47,20 @@ const std::string kEnvCommand = "/usr/bin/env";
 
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
-      TerminalShell::TerminalShellType desiredShellType,
-      int cols, int rows, int termSequence,
-      FilePath workingDir,
-      bool trackEnv,
-      const std::string& handle,
+      const ConsoleProcessInfo& procInfo,
       TerminalShell::TerminalShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
-   if (trackEnv && !handle.empty())
+   if (procInfo.getTrackEnv() && !procInfo.getHandle().empty())
    {
-      loadEnvironment(handle, &shellEnv);
+      loadEnvironment(procInfo.getHandle(), &shellEnv);
    }
 
    if (shellEnv.empty())
       core::system::environment(&shellEnv);
 
-   *pSelectedShellType = desiredShellType;
+   *pSelectedShellType = procInfo.getShellType();
 
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
@@ -79,16 +75,16 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    }
 
    // don't add commands starting with a space to shell history
-   if (trackEnv)
+   if (procInfo.getTrackEnv())
    {
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
 #endif
 
-   if (termSequence != kNoTerminal)
+   if (procInfo.getTerminalSequence()!= kNoTerminal)
    {
       core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                           boost::lexical_cast<std::string>(termSequence));
+                           boost::lexical_cast<std::string>(procInfo.getTerminalSequence()));
    }
 
    // ammend shell paths as appropriate
@@ -96,20 +92,20 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = workingDir.empty() ? module_context::shellWorkingDirectory() :
-                                             workingDir;
+   options.workingDir = procInfo.getCwd().empty() ? module_context::shellWorkingDirectory() :
+                                                    procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
    options.reportHasSubprocs = true;
    options.trackCwd = true;
-   options.cols = cols;
-   options.rows = rows;
+   options.cols = procInfo.getCols();
+   options.rows = procInfo.getRows();
 
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;
 
-   if (shells.getInfo(desiredShellType, &shell))
+   if (shells.getInfo(procInfo.getShellType(), &shell))
    {
       *pSelectedShellType = shell.type;
       options.shellPath = shell.path;
@@ -915,12 +911,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 {
    TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-            proc->procInfo_->getShellType(),
-            proc->procInfo_->getCols(), proc->procInfo_->getRows(),
-            proc->procInfo_->getTerminalSequence(),
-            proc->procInfo_->getCwd(),
-            proc->procInfo_->getTrackEnv(),
-            proc->procInfo_->getHandle(),
+            *proc->procInfo_,
             &actualShellType);
    proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);

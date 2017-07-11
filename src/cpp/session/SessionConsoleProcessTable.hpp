@@ -64,20 +64,9 @@ core::Error reapConsoleProcess(const ConsoleProcess& proc);
 // Initialize ConsoleProcess list and APIs
 core::Error internalInitialize();
 
-// Create ConsoleProcess for an interative terminal. Final parameter returns handle.
-core::Error createTerminalConsoleProc(
-      TerminalShell::TerminalShellType shellType,
-      int cols,
-      int rows,
-      const std::string& termHandle, // empty if starting a new terminal
-      const std::string& termCaption,
-      const std::string& termTitle,
-      int termSequence,
-      bool altBufferActive,
-      const std::string& currentDir,
-      bool zombie,
-      bool trackEnv,
-      std::string* pHandle);
+// Create a ConsoleProcess and add it to the table. Final parameter returns handle.
+core::Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
+                                      std::string* pHandle);
 
 // Create a ConsoleProcess for a non-interactive job displayed in the terminal. Final parameter
 // returns handle.
