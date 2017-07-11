@@ -220,8 +220,13 @@ core::json::Object ConsoleProcessInfo::toJson() const
 boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::Object& obj)
 {
    boost::shared_ptr<ConsoleProcessInfo> pProc(new ConsoleProcessInfo());
-   pProc->handle_ = obj["handle"].get_str();
-   pProc->caption_ = obj["caption"].get_str();
+
+   json::Value handle = obj["handle"];
+   if (!handle.is_null())
+      pProc->handle_ = handle.get_str();
+   json::Value caption = obj["caption"];
+   if (!caption.is_null())
+      pProc->caption_ = caption.get_str();
 
    json::Value showOnOutput = obj["show_on_output"];
    if (!showOnOutput.is_null())
@@ -241,9 +246,13 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    else
       pProc->maxOutputLines_ = kDefaultMaxOutputLines;
 
-   std::string bufferedOutput = obj["buffered_output"].get_str();
-   std::copy(bufferedOutput.begin(), bufferedOutput.end(),
-             std::back_inserter(pProc->outputBuffer_));
+   json::Value bufferedOutputValue = obj["buffered_output"];
+   if (!bufferedOutputValue.is_null())
+   {
+      std::string bufferedOutput = bufferedOutputValue.get_str();
+      std::copy(bufferedOutput.begin(), bufferedOutput.end(),
+                std::back_inserter(pProc->outputBuffer_));
+   }
    json::Value exitCode = obj["exit_code"];
    if (exitCode.is_null())
       pProc->exitCode_.reset();
@@ -252,19 +261,31 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
 
    pProc->terminalSequence_ = obj["terminal_sequence"].get_int();
    pProc->allowRestart_ = obj["allow_restart"].get_bool();
-   pProc->title_ = obj["title"].get_str();
+
+   json::Value title = obj["title"];
+   if (!title.is_null())
+      pProc->title_ = title.get_str();
+
    pProc->childProcs_ = obj["child_procs"].get_bool();
    int shellTypeInt = obj["shell_type"].get_int();
    pProc->shellType_ =
       static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
    int channelModeInt = obj["channel_mode"].get_int();
    pProc->channelMode_ = static_cast<ChannelMode>(channelModeInt);
-   pProc->channelId_ = obj["channel_id"].get_str();
+
+   json::Value channelId = obj["channel_id"];
+   if (!channelId.is_null())
+      pProc->channelId_ = channelId.get_str();
+
    pProc->altBufferActive_ = obj["alt_buffer"].get_bool();
 
-   std::string cwd = obj["cwd"].get_str();
-   if (!cwd.empty())
-      pProc->cwd_ = module_context::resolveAliasedPath(obj["cwd"].get_str());
+   json::Value cwdValue = obj["cwd"];
+   if (!cwdValue.is_null())
+   {
+      std::string cwd = cwdValue.get_str();
+      if (!cwd.empty())
+         pProc->cwd_ = module_context::resolveAliasedPath(obj["cwd"].get_str());
+   }
 
    pProc->cols_ = obj["cols"].get_int();
    pProc->rows_ = obj["rows"].get_int();
