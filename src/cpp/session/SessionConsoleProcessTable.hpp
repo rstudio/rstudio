@@ -74,7 +74,7 @@ core::Error createTerminalConsoleProc(
       const std::string& termTitle,
       int termSequence,
       bool altBufferActive,
-      std::string currentDir,
+      const std::string& currentDir,
       bool zombie,
       bool trackEnv,
       std::string* pHandle);

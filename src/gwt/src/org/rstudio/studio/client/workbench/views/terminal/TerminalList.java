@@ -152,6 +152,19 @@ public class TerminalList implements Iterable<String>,
    }
 
    /**
+    * update zombie flag
+    * @param handle terminal handle
+    * @param zombie new zombie flag setting
+    */
+   public void setZombie(String handle, boolean zombie)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setZombie(zombie);
+   }
+
+   /**
     * Remove given terminal from the list
     * @param handle terminal handle
     */

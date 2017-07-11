@@ -661,6 +661,24 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
+   AutoCloseMode autoClose = procInfo_->getAutoClose();
+   if (procInfo_->getAutoClose() == DefaultAutoClose)
+   {
+      if (session::userSettings().terminalAutoclose())
+      {
+         autoClose = AlwaysAutoClose;
+      }
+      else
+      {
+         autoClose = NeverAutoClose;
+      }
+      procInfo_->setAutoClose(autoClose);
+   }
+
+   if (procInfo_->getAutoClose() == NeverAutoClose)
+   {
+      setZombie();
+   }
    saveConsoleProcesses();
 
    json::Object data;

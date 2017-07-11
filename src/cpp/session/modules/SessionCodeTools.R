@@ -494,19 +494,17 @@
 
 .rs.addFunction("getFunctionArgumentNames", function(object)
 {
+   # for primitive objects, 'args()' can be used to extract
+   # a function object with compatible prototype -- although
+   # primitive functions that power control flow (e.g. `if()`,
+   # `return()` can return NULL)
    if (is.primitive(object))
-   {
-      ## Only closures have formals, not primitive functions.
-      result <- tryCatch({
-        names(formals(args(object)))
-      }, error = function(e) {
-         character()
-      })
-   }
-   else
-   {
+      object <- args(object)
+   
+   result <- character()
+   if (is.function(object))
       result <- names(formals(object))
-   }
+   
    result
 })
 

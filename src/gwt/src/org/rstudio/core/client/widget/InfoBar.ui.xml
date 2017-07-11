@@ -37,6 +37,13 @@
          width: 9px;
          height: 9px;
       }
+      .rstudio-themes-flat .rstudio-themes-dark-grey .dismiss {
+         -webkit-filter: invert(100%);
+            -moz-filter: invert(100%);
+             -ms-filter: invert(100%);
+              -o-filter: invert(100%);
+                 filter: invert(100%);
+      }
    </ui:style>
 
    <g:FlowPanel>

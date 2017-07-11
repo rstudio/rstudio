@@ -242,4 +242,8 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public final native void setHandle(String handle) /*-{
       this.handle = handle;
    }-*/;
+
+   public final native void setZombie(boolean zombie) /*-{
+      this.zombie = zombie;
+   }-*/;
 }
