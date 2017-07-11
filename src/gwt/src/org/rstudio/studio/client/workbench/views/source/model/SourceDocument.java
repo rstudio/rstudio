@@ -131,6 +131,10 @@ public class SourceDocument extends JavaScriptObject
       return this.notebook || {};
    }-*/;
    
+   public native final ProjectConfig getProjectConfig() /*-{
+      return this.project_config || null;
+   }-*/;
+   
    public final String getSourceWindowId() 
    {
       if (getProperties().hasKey(SourceWindowManager.SOURCE_WINDOW_ID))
