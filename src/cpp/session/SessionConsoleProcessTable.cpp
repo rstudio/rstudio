@@ -283,8 +283,7 @@ Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
 
    TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-            cpi->getShellType(), cpi->getCols(), cpi->getRows(), cpi->getTerminalSequence(),
-            cpi->getCwd(), cpi->getTrackEnv(), cpi->getHandle(), &actualShellType);
+            *cpi, &actualShellType);
 
    cpi->setShellType(actualShellType);
 

@@ -133,12 +133,7 @@ public:
    // the output param pSelectedShellType to indicate which shell type
    // was actually configured (e.g. what did 'default' get mapped to?).
    static core::system::ProcessOptions createTerminalProcOptions(
-         TerminalShell::TerminalShellType desiredShellType,
-         int cols, int rows,
-         int termSequence,
-         core::FilePath workingDir,
-         bool trackEnv,
-         const std::string& handle,
+         const ConsoleProcessInfo& procInfo,
          TerminalShell::TerminalShellType *pSelectedShellType);
 
    virtual ~ConsoleProcess() {}

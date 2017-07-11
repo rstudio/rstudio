@@ -54,7 +54,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.buffered_output = "";
       procInfo.exit_code = null;
       procInfo.terminal_sequence = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::SEQUENCE_NEW_TERMINAL;
-      procInfo.allow_restart = false;
+      procInfo.allow_restart = true;
       procInfo.title = "";
       procInfo.child_procs = true;
       procInfo.shell_type = @org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo::SHELL_DEFAULT,
