@@ -245,38 +245,27 @@ Error internalInitialize()
    return initializeApi();
 }
 
-Error createTerminalConsoleProc(
-      TerminalShell::TerminalShellType shellType,
-      int cols,
-      int rows,
-      const std::string& termHandle, // empty if starting a new terminal
-      const std::string& termCaption,
-      const std::string& termTitle,
-      int termSequence,
-      bool altBufferActive,
-      const std::string& currentDir,
-      bool zombie,
-      bool trackEnv,
-      std::string* pHandle)
+Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
+                                std::string* pHandle)
 {
    using namespace session::module_context;
    using namespace session::console_process;
 
 #if defined(_WIN32)
-   trackEnv = false;
+   cpi->setTrackEnv(false);
 #endif
 
-   std::string computedCaption = termCaption;
+   std::string computedCaption = cpi->getCaption();
 
-   if (termSequence == kNewTerminal)
+   if (cpi->getTerminalSequence() == kNewTerminal)
    {
       std::pair<int, std::string> sequenceInfo = nextTerminalName();
-      termSequence = sequenceInfo.first;
+      cpi->setTerminalSequence(sequenceInfo.first);
       if (computedCaption.empty())
          computedCaption = sequenceInfo.second;
    }
 
-   if (termSequence == kNoTerminal)
+   if (cpi->getTerminalSequence() == kNoTerminal)
    {
       return systemError(boost::system::errc::invalid_argument,
                          "Unsupported terminal sequence",
@@ -290,23 +279,17 @@ Error createTerminalConsoleProc(
                          ERROR_LOCATION);
    }
 
-   FilePath cwd;
-   if (!currentDir.empty())
-   {
-      cwd = module_context::resolveAliasedPath(currentDir);
-   }
+   cpi->setCaption(computedCaption);
 
    TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-         shellType, cols, rows, termSequence, cwd, trackEnv, termHandle, &actualShellType);
+            cpi->getShellType(), cpi->getCols(), cpi->getRows(), cpi->getTerminalSequence(),
+            cpi->getCwd(), cpi->getTrackEnv(), cpi->getHandle(), &actualShellType);
 
-   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
-         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
-            computedCaption, termTitle, termHandle, termSequence, actualShellType,
-            altBufferActive, cwd, cols, rows, zombie, trackEnv));
+   cpi->setShellType(actualShellType);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
+               ConsoleProcess::createTerminalProcess(options, cpi);
 
    ptrProc->onExit().connect(boost::bind(
                               &modules::source_control::enqueueRefreshEvent));

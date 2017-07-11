@@ -497,35 +497,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void startTerminal(
-                     int shellType,
-                     int cols, int rows,
-                     String terminalHandle,
-                     String caption,
-                     String title,
-                     int sequence,
-                     boolean altBufferActive,
-                     String cwd,
-                     boolean zombie,
-                     boolean trackEnv,
-                     ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void startTerminal(ConsoleProcessInfo cpi,
+                             ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(shellType));
-      params.set(1, new JSONNumber(cols));
-      params.set(2, new JSONNumber(rows));
-      params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
-      params.set(4, new JSONString(StringUtil.notNull(caption)));
-      params.set(5, new JSONString(StringUtil.notNull(title)));
-      params.set(6, new JSONNumber(sequence));
-      params.set(7, JSONBoolean.getInstance(altBufferActive));
-      params.set(8, new JSONString(StringUtil.notNull(cwd)));
-      params.set(9, JSONBoolean.getInstance(zombie));
-      params.set(10, JSONBoolean.getInstance(trackEnv));
-
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
-                  params,
+                  cpi,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    

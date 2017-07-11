@@ -98,20 +98,21 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
       return R_NilValue;
    }
 
+   boost::shared_ptr<ConsoleProcessInfo> pCpi(
+            new ConsoleProcessInfo(
+               terminalId,
+               std::string() /*title*/,
+               std::string() /*handle*/,
+               termSequence.first,
+               TerminalShell::DefaultShell,
+               false /*altBufferActive*/,
+               core::FilePath() /*cwd*/,
+               core::system::kDefaultCols, core::system::kDefaultRows,
+               false /*zombie*/,
+               session::userSettings().terminalTrackEnv()));
+
    std::string handle;
-   Error error = createTerminalConsoleProc(
-            TerminalShell::DefaultShell,
-            core::system::kDefaultCols,
-            core::system::kDefaultRows,
-            std::string(), // handle
-            terminalId,
-            std::string(), // title
-            termSequence.first,
-            false, // altBufferActive
-            std::string(), // cwd
-            false, // zombie
-            session::userSettings().terminalTrackEnv(),
-            &handle);
+   Error error = createTerminalConsoleProc(pCpi, &handle);
    if (error)
    {
       std::string msg = "Failed to create terminal: '";
@@ -734,49 +735,15 @@ Error startTerminal(const json::JsonRpcRequest& request,
    using namespace session::module_context;
    using namespace session::console_process;
 
-   int shellTypeInt;
-   int cols, rows; // initial pseudo-terminal size
-   std::string termHandle; // empty if starting a new terminal
-   std::string termCaption;
-   std::string termTitle;
-   int termSequence = kNoTerminal;
-   bool altBufferActive;
-   std::string currentDir;
-   bool zombie;
-   bool trackEnv;
-
-   Error error = json::readParams(request.params,
-                                  &shellTypeInt,
-                                  &cols,
-                                  &rows,
-                                  &termHandle,
-                                  &termCaption,
-                                  &termTitle,
-                                  &termSequence,
-                                  &altBufferActive,
-                                  &currentDir,
-                                  &zombie,
-                                  &trackEnv);
+   json::Object jsObject;
+   Error error = json::readParam(request.params, 0, &jsObject);
    if (error)
       return error;
 
-#if defined(_WIN32)
-   trackEnv = false;
-#endif
+   boost::shared_ptr<ConsoleProcessInfo> cpi = ConsoleProcessInfo::fromJson(jsObject);
+
    std::string handle;
-   error = createTerminalConsoleProc(
-            TerminalShell::safeShellTypeFromInt(shellTypeInt),
-            cols,
-            rows,
-            termHandle,
-            termCaption,
-            termTitle,
-            termSequence,
-            altBufferActive,
-            currentDir,
-            zombie,
-            trackEnv,
-            &handle);
+   error = createTerminalConsoleProc(cpi, &handle);
    if (error)
       return error;
 
