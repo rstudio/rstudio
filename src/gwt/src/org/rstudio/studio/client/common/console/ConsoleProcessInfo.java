@@ -196,4 +196,17 @@ public class ConsoleProcessInfo extends JavaScriptObject
       this.cols = cols;
       this.rows = rows;
    }-*/;
+
+   public final native String getInteractionModeName() /*-{
+      switch (this.interaction_mode) {
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS:
+            return "Always";
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_NEVER:
+            return "Never";
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_POSSIBLE:
+            return "Possible";
+         default:
+            return "Unknown";
+      }
+   }-*/;
 }

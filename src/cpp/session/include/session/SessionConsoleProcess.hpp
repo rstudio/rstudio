@@ -130,11 +130,6 @@ public:
    static ConsoleProcessPtr createTerminalProcess(
          ConsoleProcessPtr proc);
 
-   static ConsoleProcessPtr createTerminalExecuteProcess(
-         const std::string& command,
-         core::system::ProcessOptions options,
-         boost::shared_ptr<ConsoleProcessInfo> procInfo);
-
    // Configure ProcessOptions for a terminal and return it. Also sets
    // the output param pSelectedShellType to indicate which shell type
    // was actually configured (e.g. what did 'default' get mapped to?).

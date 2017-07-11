@@ -308,10 +308,6 @@ Error createTerminalExecuteConsoleProc(
    using namespace session::module_context;
    using namespace session::console_process;
 
-   std::string termHandle;
-   int cols = core::system::kDefaultCols;
-   int rows = core::system::kDefaultRows;
-
    std::pair<int, std::string> sequenceInfo = nextTerminalName();
    int termSequence = sequenceInfo.first;
    std::string caption = sequenceInfo.second;
@@ -357,17 +353,25 @@ Error createTerminalExecuteConsoleProc(
    options.workingDir = cwd;
 
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
-         boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
-            caption, title, termHandle, termSequence, TerminalShell::NoShell,
-            false /*altBuffer*/, cwd, cols, rows, false /*zombie*/, false /*trackEnv*/));
+         boost::shared_ptr<ConsoleProcessInfo>(
+            new ConsoleProcessInfo(
+               caption,
+               title,
+               std::string() /*handle*/,
+               termSequence,
+               TerminalShell::NoShell,
+               false /*altBuffer*/,
+               cwd,
+               core::system::kDefaultCols, core::system::kDefaultRows,
+               false /*zombie*/,
+               false /*trackEnv*/));
 
-   // TODO (gary) ensure these are roundtripping successfully
    ptrProcInfo->setInteractionMode(InteractionNever);
    ptrProcInfo->setAutoClose(NeverAutoClose);
    ptrProcInfo->setHasChildProcs(false);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalExecuteProcess(cmdWithArgs, options, ptrProcInfo);
+         ConsoleProcess::createTerminalProcess(cmdWithArgs, options, ptrProcInfo, useWebsockets());
 
    *pHandle = ptrProc->handle();
 

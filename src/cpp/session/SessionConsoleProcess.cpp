@@ -917,14 +917,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
    return createTerminalProcess(options, proc->procInfo_);
 }
 
-ConsoleProcessPtr ConsoleProcess::createTerminalExecuteProcess(
-      const std::string& command,
-      core::system::ProcessOptions options,
-      boost::shared_ptr<ConsoleProcessInfo> procInfo)
-{
-   return createTerminalProcess(command, options, procInfo, useWebsockets());
-}
-
 ConsoleProcessSocketConnectionCallbacks ConsoleProcess::createConsoleProcessSocketConnectionCallbacks()
 {
    ConsoleProcessSocketConnectionCallbacks cb;

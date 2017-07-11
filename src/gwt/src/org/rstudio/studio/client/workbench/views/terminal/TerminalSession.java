@@ -810,26 +810,6 @@ public class TerminalSession extends XTermWidget
       });
    }
 
-   public int getInteractionMode()
-   {
-      return interactionMode_;
-   }
-
-   public String getInteractionModeName()
-   {
-      switch (interactionMode_)
-      {
-      case ConsoleProcessInfo.INTERACTION_ALWAYS:
-         return "Always";
-      case ConsoleProcessInfo.INTERACTION_NEVER:
-         return "Never";
-      case ConsoleProcessInfo.INTERACTION_POSSIBLE:
-         return "Possible";
-      default:
-         return "Unknown";
-      }
-   }
-   
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
@@ -846,7 +826,6 @@ public class TerminalSession extends XTermWidget
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
-   private int interactionMode_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 
