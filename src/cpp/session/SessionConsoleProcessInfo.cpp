@@ -47,6 +47,11 @@ ConsoleProcessInfo::ConsoleProcessInfo()
    outputBuffer_.push_back('\n');
 }
 
+// The constant values in the initializer list (i.e. those not supplied as arguments
+// to the constructor) should match the constants set in the client
+// ConsoleProcessInfo.createNewTerminalInfo constructor. A new terminal can be
+// created from the client side via the UI using the client-side constructor, or on
+// the server-side via the R API (e.g. terminalCreate) which uses this C++ constructor.
 ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& caption,
          const std::string& title,

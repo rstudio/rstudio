@@ -41,6 +41,8 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    protected ConsoleProcessInfo() {}
 
+   // See comment in C++ code about keeping this in sync with SessionConsoleProcessInfo 
+   // constructor for terminal scenario.
    public static final native ConsoleProcessInfo createNewTerminalInfo(
          boolean trackEnv) /*-{
          
