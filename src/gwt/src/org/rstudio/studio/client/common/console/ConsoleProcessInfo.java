@@ -197,6 +197,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
       this.rows = rows;
    }-*/;
 
+   public final native void setExitCode(int exitCode) /*-{
+      this.exit_code = exitCode;
+   }-*/;
+
    public final native String getInteractionModeName() /*-{
       switch (this.interaction_mode) {
          case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS:

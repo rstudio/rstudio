@@ -34,12 +34,6 @@ namespace {
 
 ConsoleProcessSocket s_terminalSocket;
 
-bool useWebsockets()
-{
-   return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
-}
-
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
@@ -288,6 +282,7 @@ Error ConsoleProcess::start()
    }
    if (!error)
       started_ = true;
+
    return error;
 }
 
@@ -866,6 +861,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          // program was running
          procInfo->setAltBufferActive(false);
 
+         if (!procInfo->getZombie())
+            procInfo->resetExitCode();
+
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
          addConsoleProcess(cp);
@@ -996,6 +994,12 @@ void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Op
 std::string ConsoleProcess::getShellName() const
 {
    return TerminalShell::getShellName(procInfo_->getShellType());
+}
+
+bool ConsoleProcess::useWebsockets()
+{
+   return session::options().allowTerminalWebsockets() &&
+                     session::userSettings().terminalWebsockets();
 }
 
 core::json::Array processesAsJson()

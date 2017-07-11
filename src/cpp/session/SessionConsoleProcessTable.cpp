@@ -371,8 +371,8 @@ Error createTerminalExecuteConsoleProc(
    ptrProcInfo->setHasChildProcs(false);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
-         ConsoleProcess::createTerminalProcess(cmdWithArgs, options, ptrProcInfo, useWebsockets());
-
+         ConsoleProcess::createTerminalProcess(cmdWithArgs, options, ptrProcInfo,
+                                               ConsoleProcess::useWebsockets());
    *pHandle = ptrProc->handle();
 
    return Success();

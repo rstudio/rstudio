@@ -601,8 +601,9 @@ public class TerminalPane extends WorkbenchPane
     * Cleanup after process with given handle has terminated.
     * @param handle identifier for process that exited
     * @param processExited true if process exited on server; false if client-side is forcing exit
+    * @param exitCode exit code if known (-1 if not known)
     */
-   private void cleanupAfterTerminate(String handle, boolean processExited)
+   private void cleanupAfterTerminate(String handle, boolean processExited, int exitCode)
    {
       if (terminals_.indexOfTerminal(handle) == -1)
       {
@@ -631,13 +632,14 @@ public class TerminalPane extends WorkbenchPane
 
          if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_NEVER)
          {
+            terminals_.setExitCode(handle, exitCode);
+            terminals_.setZombie(handle, true);
             TerminalSession terminal = loadedTerminalWithHandle(handle);
             if (terminal != null)
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
             }
-            terminals_.setZombie(handle, true);
             return;
          }
       }
@@ -672,14 +674,14 @@ public class TerminalPane extends WorkbenchPane
    public void onServerProcessExit(ServerProcessExitEvent event)
    {
       // Notification from server that a process exited.
-      cleanupAfterTerminate(event.getProcessHandle(), true);
+      cleanupAfterTerminate(event.getProcessHandle(), true, event.getExitCode());
    }
 
    @Override
    public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
    {
       // Notification from a TerminalSession that it is being forcibly closed.
-      cleanupAfterTerminate(event.getTerminalWidget().getHandle(), false);
+      cleanupAfterTerminate(event.getTerminalWidget().getHandle(), false, -1);
    }
 
    @Override

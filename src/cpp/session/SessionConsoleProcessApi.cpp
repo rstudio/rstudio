@@ -222,6 +222,12 @@ SEXP rs_terminalContext(SEXP terminalSEXP)
    builder.add("shell", proc->getShellName());
    builder.add("running", proc->isStarted());
    builder.add("busy", proc->getIsBusy());
+
+   if (proc->getExitCode())
+      builder.add("exit_code", *proc->getExitCode());
+   else
+      builder.add("exit_code", R_NilValue);
+
    builder.add("connection", proc->getChannelMode());
    builder.add("sequence", proc->getTerminalSequence());
    builder.add("lines", proc->getBufferLineCount());

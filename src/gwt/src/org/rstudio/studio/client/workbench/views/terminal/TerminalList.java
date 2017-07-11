@@ -151,6 +151,14 @@ public class TerminalList implements Iterable<String>,
       current.setZombie(zombie);
    }
 
+   public void setExitCode(String handle, int exitCode)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setExitCode(exitCode);
+   }
+
    /**
     * update caption
     * @param handle terminal handle

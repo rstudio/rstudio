@@ -61,6 +61,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       diagnostics.append("Sequence:    '" + cpi.getTerminalSequence() + "'\n");
       diagnostics.append("Restarted:   '" + cpi.getRestarted() + "\n");
       diagnostics.append("Busy:        '" + cpi.getHasChildProcs() + "'\n");
+      diagnostics.append("Exit Code:   '" + cpi.getExitCode() + "'\n");
       diagnostics.append("Full screen: 'client=" + session.xtermAltBufferActive() +  
             "/server=" + cpi.getAltBufferActive() + "'\n"); 
       diagnostics.append("Zombie:      '" + cpi.getZombie() + "'\n");
