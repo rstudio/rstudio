@@ -641,8 +641,8 @@ public class TerminalPane extends WorkbenchPane
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
-               server_.processSetZombie(handle,  new VoidServerRequestCallback());
             }
+            terminals_.setZombie(handle, true);
             return;
          }
       }
