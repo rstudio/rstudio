@@ -112,6 +112,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchScreen;
 import org.rstudio.studio.client.workbench.ui.WorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildPresenter;
@@ -243,6 +244,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ProfilerPresenter.class).in(Singleton.class);
       bind(ObjectExplorerPresenter.class).asEagerSingleton();
       bind(WorkbenchContext.class).asEagerSingleton();
+      bind(PaneManager.class).in(Singleton.class);
       bind(DependencyManager.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
