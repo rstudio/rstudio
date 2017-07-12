@@ -180,6 +180,7 @@ extern const int kRequestDocumentSave;
 extern const int kRequestDocumentSaveCompleted;
 extern const int kRequestOpenProject;
 extern const int kOpenFileDialog;
+extern const int kRemoveTerminal;
 }
    
 class ClientEvent

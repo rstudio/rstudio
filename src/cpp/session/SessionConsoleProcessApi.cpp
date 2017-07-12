@@ -263,15 +263,27 @@ SEXP rs_terminalKill(SEXP terminalsSEXP)
    if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
       return R_NilValue;
 
+   std::string handle;
    BOOST_FOREACH(const std::string& terminalId, terminalIds)
    {
       ConsoleProcessPtr proc = findProcByCaption(terminalId);
       if (proc != NULL)
       {
+         handle = proc->handle();
          proc->interrupt();
          reapConsoleProcess(*proc);
       }
    }
+
+   // Notify the client so it removes this terminal from the UI list.
+   if (!handle.empty())
+   {
+      json::Object eventData;
+      eventData["handle"] = handle;
+      ClientEvent removeTerminalEvent(client_events::kRemoveTerminal, eventData);
+      module_context::enqueClientEvent(removeTerminalEvent);
+   }
+
    return R_NilValue;
 }
 

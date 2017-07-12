@@ -23,6 +23,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -41,6 +43,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -316,6 +319,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
+   public void removeTerminal(String handle)
+   {
+      terminals_.removeTerminal(handle);
+   }
+
+   @Override
    public void activateNamedTerminal(String caption)
    {
       if (StringUtil.isNullOrEmpty(caption))
@@ -553,7 +562,64 @@ public class TerminalPane extends WorkbenchPane
       });
    }
    
-  
+   @Override
+   public void debug_dumpTerminalContext()
+   {
+      StringBuilder dump = new StringBuilder();
+
+      if (terminalSessionsPanel_ != null)
+      {
+         int total = getLoadedTerminalCount();
+         dump.append("Loaded TerminalSessions: ");
+         dump.append(total);
+         dump.append("\n");
+         for (int i = 0; i < total; i++)
+         {
+            TerminalSession session = getLoadedTerminalAtIndex(i);
+            if (session == null)
+            {
+               dump.append("null\n");
+            }
+            else
+            {
+               dump.append("Handle: '");
+               String handle = session.getHandle();
+               if (handle == null)
+               {
+                  dump.append("null");
+               }
+               else
+               {
+                  dump.append(handle);
+               }
+               dump.append("' Caption: '");
+               String caption = session.getCaption();
+               if (caption == null)
+               {
+                  dump.append("null");
+               }
+               else
+               {
+                  dump.append(caption);
+               }
+               dump.append("'\n");
+            }
+         }
+         
+         dump.append("\n");
+         dump.append(terminals_.debug_dumpTerminalList());
+      }
+      
+      new EditDialog(dump.toString(), false, false, new ProgressOperationWithInput<String>()
+      {
+         @Override
+         public void execute(String input, ProgressIndicator indicator)
+         {
+            indicator.onCompleted();
+         }
+      }).showModal();
+   }
+
    /**
     * Rename the currently visible terminal (client-side only).
     * 

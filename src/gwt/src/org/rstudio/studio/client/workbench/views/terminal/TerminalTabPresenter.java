@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTe
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.gwt.user.client.Command;
@@ -40,8 +42,8 @@ public class TerminalTabPresenter extends BusyPresenter
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
+                                             RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
-
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
@@ -102,6 +104,13 @@ public class TerminalTabPresenter extends BusyPresenter
       void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
       /**
+       * Remove a terminal from the list.
+       * @param handle terminal to remove
+       * caption
+       */
+      void removeTerminal(String handle);
+
+      /**
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
        * @param caption
@@ -112,6 +121,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * Send current terminal's buffer to a new editor buffer.
        */
       void sendTerminalToEditor();
+
+      /**
+       * Show debug context info for all terminals
+       */
+      void debug_dumpTerminalContext();
    }
 
    @Inject
@@ -184,6 +198,17 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.sendTerminalToEditor();
    }
 
+   @Handler
+   public void onDebugTerminalContext()
+   {
+      if (view_ == null)
+      { 
+         Debug.log("Error: Terminal View null");
+         return; 
+      }
+      view_.debug_dumpTerminalContext();
+   }
+
    @Override
    public void onCreateTerminal(CreateTerminalEvent event)
    {
@@ -213,6 +238,12 @@ public class TerminalTabPresenter extends BusyPresenter
          onActivateTerminal();
          view_.activateNamedTerminal(event.getProcessInfo().getCaption());
       }
+   }
+
+   @Override
+   public void onRemoveTerminal(RemoveTerminalEvent event)
+   {
+      view_.removeTerminal(event.getHandle());
    }
 
    @Override

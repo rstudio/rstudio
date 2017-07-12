@@ -473,6 +473,29 @@ public class TerminalList implements Iterable<String>,
    {
       setCwd(event.getHandle(), event.getCwd());
    }
+   
+   public String debug_dumpTerminalList()
+   {
+      StringBuilder dump = new StringBuilder();
+     
+      dump.append("Terminal List Count: ");
+      dump.append(terminalCount());
+      dump.append("\n");
+      for (int i = 0; i < terminalCount(); i++)
+      {
+         dump.append("Handle: '");
+         String handle = terminalHandleAtIndex(i);
+         dump.append(handle);
+         dump.append("' Caption: '");
+
+         TerminalListData data = getFullMetadataForHandle(handle);
+         dump.append(data.getCPI().getCaption());
+         dump.append("' Session Created: ");
+         dump.append(data.getSessionCreated());
+         dump.append("\n");
+      }
+      return dump.toString();
+   }
 
    /**
     * Map of terminal handles to terminal metadata; order they are added
