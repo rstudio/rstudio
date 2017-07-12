@@ -286,7 +286,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
                writeError(msg);
             }
          });
@@ -498,7 +498,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
             writeError(msg);
          }
       });
@@ -544,7 +544,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
             }
          });
       }

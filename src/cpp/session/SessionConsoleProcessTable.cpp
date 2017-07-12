@@ -335,7 +335,7 @@ Error createTerminalExecuteConsoleProc(
    options.detachProcess = true;
 #endif
 
-   options.reportHasSubprocs = true;
+   options.reportHasSubprocs = false;
    options.trackCwd = false;
    options.workingDir = cwd;
 
@@ -355,7 +355,6 @@ Error createTerminalExecuteConsoleProc(
 
    ptrProcInfo->setInteractionMode(InteractionNever);
    ptrProcInfo->setAutoClose(NeverAutoClose);
-   ptrProcInfo->setHasChildProcs(false);
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
          ConsoleProcess::createTerminalProcess(command, options, ptrProcInfo,

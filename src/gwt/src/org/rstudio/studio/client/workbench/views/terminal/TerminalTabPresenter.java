@@ -96,9 +96,10 @@ public class TerminalTabPresenter extends BusyPresenter
       /**
        * Add a terminal to the list.
        * @param cpi information on the terminal
+       * @param hasSession true if a TerminalSession has been created for this terminal
        * caption
        */
-      void addTerminal(ConsoleProcessInfo cpi);
+      void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
       /**
        * Activate (display) terminal with given caption. If none specified,
@@ -205,12 +206,12 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onAddTerminal(AddTerminalEvent event)
    {
-      view_.addTerminal(event.getProcessInfo());
+      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
       
       if (event.getShow())
       {
-         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
          onActivateTerminal();
+         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
       }
    }
 

@@ -180,7 +180,8 @@ public class TerminalPane extends WorkbenchPane
             boolean closable = false;
             boolean clearable = false;
 
-            final TerminalSession visibleTerminal = getSelectedTerminal();
+            TerminalSession visibleTerminal = getSelectedTerminal();
+            
             if (visibleTerminal != null)
             {
                clearable = true;
@@ -211,7 +212,6 @@ public class TerminalPane extends WorkbenchPane
             clearButton_.setVisible(clearable);
          }
       });
-
     }
 
    @Override
@@ -303,16 +303,16 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
             creatingTerminal_ = false;
          }
       });
    }
 
    @Override
-   public void addTerminal(ConsoleProcessInfo cpi)
+   public void addTerminal(ConsoleProcessInfo cpi, boolean hasSession)
    {
-      terminals_.addTerminal(cpi);
+      terminals_.addTerminal(cpi, hasSession);
    }
 
    @Override
@@ -340,7 +340,7 @@ public class TerminalPane extends WorkbenchPane
       // connected until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
       {
-         terminals_.addTerminal(procInfo);
+         terminals_.addTerminal(procInfo, false /*hasSession*/);
       }
    }
 
@@ -548,7 +548,7 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
          }
       });
    }
@@ -640,6 +640,8 @@ public class TerminalPane extends WorkbenchPane
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
             }
+
+            events_.fireEvent(new TerminalSubprocEvent(handle, false));
             return;
          }
       }
@@ -824,6 +826,9 @@ public class TerminalPane extends WorkbenchPane
    {
       if (StringUtil.isNullOrEmpty(caption))
       {
+         if (terminalSessionsPanel_ == null)
+            return null;
+         
          Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
          if (visibleWidget instanceof TerminalSession)
          {
@@ -920,7 +925,7 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onFailure(String msg)
                {
-                  Debug.devlog(msg);
+                  Debug.log(msg);
                }
             });
          }
@@ -935,6 +940,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.setHasChildProcs(event.hasSubprocs());
       }
+      updateTerminalToolbar();
    }
 
    private void showTerminalWidget(TerminalSession terminal)
@@ -949,6 +955,11 @@ public class TerminalPane extends WorkbenchPane
       unregisterChildProcsHandler();
       if (terminal != null)
       {
+         // Only needed for interactive terminals, not those running
+         // one-shot commands via terminalExecute API.
+         if (terminal.getProcInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
+            return;
+         
          terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
                new ValueChangeHandler<Boolean>() 
          {
