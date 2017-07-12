@@ -5,6 +5,7 @@ ApplicationCache
 ApplicationCacheErrorEvent
 Array
 ArrayBuffer
+Atomics
 Attr
 Audio
 AudioBuffer
@@ -34,6 +35,7 @@ BluetoothRemoteGATTService
 BluetoothUUID
 Boolean
 BroadcastChannel
+BudgetService
 ByteLengthQueuingStrategy
 CDATASection
 CSS
@@ -231,6 +233,7 @@ ImageCapture
 ImageData
 Infinity
 InputDeviceCapabilities
+InputEvent
 InputMethodContext
 Int16Array
 Int32Array
@@ -302,6 +305,10 @@ OverflowEvent
 PageTransitionEvent
 PasswordCredential
 Path2D
+PaymentAddress
+PaymentRequest
+PaymentRequestUpdateEvent
+PaymentResponse
 Performance
 PerformanceEntry
 PerformanceLongTaskTiming
@@ -311,6 +318,7 @@ PerformanceNavigation
 PerformanceNavigationTiming
 PerformanceObserver
 PerformanceObserverEntryList
+PerformancePaintTiming
 PerformanceResourceTiming
 PerformanceTiming
 PeriodicWave
@@ -515,6 +523,7 @@ ServiceWorkerMessageEvent
 ServiceWorkerRegistration
 Set
 ShadowRoot
+SharedArrayBuffer
 SharedWorker
 SiteBoundCredential
 SourceBuffer
@@ -522,6 +531,7 @@ SourceBufferList
 SpeechInputEvent
 SpeechSynthesisEvent
 SpeechSynthesisUtterance
+StaticRange
 StereoPannerNode
 Storage
 StorageEvent
@@ -730,6 +740,7 @@ onloadedmetadata
 onloadstart
 onlostpointercapture
 onmessage
+onmessageerror
 onmousedown
 onmouseenter
 onmouseleave
