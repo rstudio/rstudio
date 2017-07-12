@@ -329,7 +329,7 @@ public class JsonpRequest<T> {
           // don't want to unregister the callback since there may be pending
           // requests that have not yet come back and we don't want them to
           // have an undefined callback function.
-          unregisterCallbacks(CALLBACKS);
+          unregisterCallbacks(CALLBACKS, callbackId);
         }
         Node script = Document.get().getElementById(callbackId);
         if (script != null) {
@@ -340,7 +340,7 @@ public class JsonpRequest<T> {
     });
   }
 
-  private native void unregisterCallbacks(JavaScriptObject callbacks) /*-{
-    delete callbacks[this.@com.google.gwt.jsonp.client.JsonpRequest::callbackId];
+  private native void unregisterCallbacks(JavaScriptObject callbacks, String callbackId) /*-{
+    callbacks[callbackId].onSuccess = callbacks[callbackId].onFailure = function() {};
   }-*/;
 }

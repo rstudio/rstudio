@@ -295,6 +295,10 @@ public final class GWT {
   public static void setUncaughtExceptionHandler(
       UncaughtExceptionHandler handler) {
     uncaughtExceptionHandler = handler;
+    // Dev mode does not do this
+    if (GWT.isScript() && handler != null) {
+      Impl.maybeInitializeWindowOnError();
+    }
   }
 
   /**

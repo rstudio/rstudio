@@ -25,6 +25,7 @@ import com.google.gwt.core.client.JsIdentityTest;
 import com.google.gwt.core.client.JsonUtilsTest;
 import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.ScriptInjectorTest;
+import com.google.gwt.core.client.WindowOnErrorTest;
 import com.google.gwt.core.client.impl.ImplTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorCollectorTest;
@@ -62,6 +63,7 @@ public class CoreSuite {
     suite.addTestSuite(StackTraceEmulTest.class);
     suite.addTestSuite(StackTraceNativeTest.class);
     suite.addTestSuite(StackTraceStripTest.class);
+    suite.addTestSuite(WindowOnErrorTest.class);
 
     // Uncomment to print native stack traces for different platforms
     // suite.addTestSuite(com.google.gwt.core.client.impl.StackTraceGenerator.class);

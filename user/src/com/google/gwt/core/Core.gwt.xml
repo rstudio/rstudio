@@ -83,6 +83,17 @@
   <define-property name="jre.logging.simpleConsoleHandler" values="ENABLED, DISABLED" />
   <set-property name="jre.logging.simpleConsoleHandler" value="ENABLED"/>
 
+  <!--
+   Configures if the UncaughtExceptionHandler will trap errors coming from
+   listening on window.error.
+   Three different flags are:
+     - Trap window on error at all times and forward (REPORT)
+     - Only trap window.onerror if there is no current window.onerror handler (REPORT_IF_NO_HANDLER)
+     - Do not trap anything (legacy behavior) (IGNORE)
+  -->
+  <define-property name="gwt.uncaughtexceptionhander.windowonerror" values="IGNORE, REPORT, REPORT_IF_NO_HANDLER" />
+  <set-property name="gwt.uncaughtexceptionhander.windowonerror" value="IGNORE"/>
+
   <!-- To support legacy logging flags -->
   <inherits name="com.google.gwt.logging.LogImpl"/>
 </module>
