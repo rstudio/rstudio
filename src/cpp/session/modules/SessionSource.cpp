@@ -33,6 +33,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -86,6 +87,35 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
          LOG_ERROR(error);
    }
    (*pDocJson)["notebook"] = notebook;
+   
+   // discover project-specific settings when available
+   r_util::RProjectConfig projConfig;
+   FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+   FilePath projDir = projects::projectContext().directory();
+   bool hasConfig = false;
+   
+   if (docPath.isWithin(projDir))
+   {
+      projConfig = projects::projectContext().config();
+      hasConfig = true;
+   }
+   else
+   {
+      Error error = r_util::findProjectConfig(docPath, &projConfig);
+      hasConfig = !error;
+   }
+   
+   if (hasConfig)
+   {
+      json::Object projConfigJson;
+      
+      projConfigJson["tab_size"] = projConfig.numSpacesForTab;
+      projConfigJson["use_soft_tabs"] = projConfig.useSpacesForTab;
+      projConfigJson["strip_trailing_whitespace"] = projConfig.stripTrailingWhitespace;
+      projConfigJson["ensure_trailing_newline"] = projConfig.autoAppendNewline;
+      
+      (*pDocJson)["project_config"] = projConfigJson;
+   }
 }
 
 void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)

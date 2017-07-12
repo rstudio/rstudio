@@ -293,9 +293,31 @@
     targets <- target
   }
 
+  yaml <- NULL
+  
+  # check for a known encoding
+  encoding <- getOption("encoding")
+  properties <- .rs.getSourceDocumentProperties(target)
+  if (!is.null(properties$encoding))
+     encoding <- properties$encoding
+  
+  # attempt to parse yaml front matter
+  yaml <- tryCatch(
+     rmarkdown::yaml_front_matter(target, encoding = encoding),
+     error = function(e) NULL
+  )
+  
+  # if this failed, try again as UTF-8
+  if (is.null(yaml) && !identical(encoding, "UTF-8"))
+  {
+     yaml <- tryCatch(
+        rmarkdown::yaml_front_matter(target, encoding = "UTF-8"),
+        error = function(e) NULL
+     )
+  }
+  
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
-  yaml <- rmarkdown::yaml_front_matter(target)
   if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
     return(rsconnect::listBundleFiles(dirname(target)))
   }

@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,24 +45,26 @@ public class TerminalInfoDialog extends ModalDialogBase
       boolean localEchoEnabled = uiPrefs_.terminalLocalEcho().getValue() && 
             !BrowseCap.isWindowsDesktop();
       
-      String cwd = session.getCwd();
+      ConsoleProcessInfo cpi = session.getProcInfo();
+      
+      String cwd = cpi.getCwd();
       if (StringUtil.isNullOrEmpty(cwd))
          cwd = "Default";
       
       final StringBuilder diagnostics = new StringBuilder();
       diagnostics.append("Terminal Session Information\n----------------------------\n");
-      diagnostics.append("Caption:     '" + session.getCaption() + "'\n");
-      diagnostics.append("Title:       '" + session.getTitle() + "'\n");
-      diagnostics.append("Cols x Rows  '" + session.getCols() + " x " + session.getRows() + "'\n");
-      diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(session.getShellType()) + "'\n");
-      diagnostics.append("Handle:      '" + session.getHandle() + "'\n");
-      diagnostics.append("Sequence:    '" + session.getSequence() + "'\n");
-      diagnostics.append("Restarted:   '" + session.getRestarted() + "\n");
-      diagnostics.append("Busy:        '" + session.getHasChildProcs() + "'\n");
+      diagnostics.append("Caption:     '" + cpi.getCaption() + "'\n");
+      diagnostics.append("Title:       '" + cpi.getTitle() + "'\n");
+      diagnostics.append("Cols x Rows  '" + cpi.getCols() + " x " + cpi.getRows() + "'\n");
+      diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(cpi.getShellType()) + "'\n");
+      diagnostics.append("Handle:      '" + cpi.getHandle() + "'\n");
+      diagnostics.append("Sequence:    '" + cpi.getTerminalSequence() + "'\n");
+      diagnostics.append("Restarted:   '" + cpi.getRestarted() + "\n");
+      diagnostics.append("Busy:        '" + cpi.getHasChildProcs() + "'\n");
       diagnostics.append("Full screen: 'client=" + session.xtermAltBufferActive() +  
-            "/server=" + session.getAltBufferActive() + "'\n"); 
-      diagnostics.append("Zombie:      '" + session.getZombie() + "'\n");
-      diagnostics.append("Track Env    '" + session.getTrackEnv() + "'\n");
+            "/server=" + cpi.getAltBufferActive() + "'\n"); 
+      diagnostics.append("Zombie:      '" + cpi.getZombie() + "'\n");
+      diagnostics.append("Track Env    '" + cpi.getTrackEnv() + "'\n");
       diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
       diagnostics.append("Working Dir: '" + cwd + "'\n"); 
       diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");

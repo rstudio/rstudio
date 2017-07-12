@@ -91,6 +91,7 @@ public class CallFramePanel extends ResizeComposite
       callFramePanelHeader.addStyleName(globalStyles.windowframe());
       callFramePanelHeader.add(tracebackTitle);
       CheckBox showInternals = new CheckBox("Show internals");
+      showInternals.addStyleName(style.showInternalsCheckbox());
       showInternals.setValue(panelHost_.getShowInternalFunctions());
       showInternals.addValueChangeHandler(
             new ValueChangeHandler<Boolean>()

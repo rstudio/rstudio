@@ -903,7 +903,6 @@ pre {
 
 
 .gwt-SplitLayoutPanel-HDragger, .gwt-SplitLayoutPanel-VDragger {
-   background-color: transparent !important;
    border: 0px;
    cursor: move;
 }

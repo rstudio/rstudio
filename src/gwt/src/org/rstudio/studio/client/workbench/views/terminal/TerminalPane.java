@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
@@ -80,8 +79,7 @@ public class TerminalPane extends WorkbenchPane
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
-                                     TerminalSubprocEvent.Handler,
-                                     TerminalCwdEvent.Handler
+                                     TerminalSubprocEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -103,7 +101,6 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
-      events_.addHandler(TerminalCwdEvent.TYPE, this);
 
       events.addHandler(RestartStatusEvent.TYPE, 
                           new RestartStatusEvent.Handler()
@@ -570,13 +567,11 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // The caption lives in multiple places:
-      // (1) the TerminalSession for connected terminals
-      // (2) the dropdown menu label
-      // (3) the TerminalMetadata held in terminals_
-      visibleTerminal.setCaption(newCaption);
+      // (1) the dropdown menu label
+      // (2) the ConsoleProcessInfo held in terminals_
       activeTerminalToolbarButton_.setActiveTerminal(
             newCaption, visibleTerminal.getHandle());
-      terminals_.addTerminal(visibleTerminal);
+      terminals_.setCaption(visibleTerminal.getHandle(), newCaption);
    }
 
    @Override
@@ -641,8 +636,8 @@ public class TerminalPane extends WorkbenchPane
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
-               server_.processSetZombie(handle,  new VoidServerRequestCallback());
             }
+            terminals_.setZombie(handle, true);
             return;
          }
       }
@@ -937,16 +932,6 @@ public class TerminalPane extends WorkbenchPane
       if (terminal != null)
       {
          terminal.setHasChildProcs(event.hasSubprocs());
-      }
-   }
-
-   @Override
-   public void onTerminalCwd(TerminalCwdEvent event)
-   {
-      TerminalSession terminal = loadedTerminalWithHandle(event.getHandle());
-      if (terminal != null)
-      {
-         terminal.setCwd(event.getCwd());
       }
    }
 

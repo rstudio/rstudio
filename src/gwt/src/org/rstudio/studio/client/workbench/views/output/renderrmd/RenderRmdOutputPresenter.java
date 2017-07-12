@@ -37,6 +37,8 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
@@ -52,6 +54,8 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    public RenderRmdOutputPresenter(CompileOutputPaneFactory outputFactory,
                                    RMarkdownServerOperations server,
                                    GlobalDisplay globalDisplay,
+                                   PaneManager paneManager,
+                                   Commands commands,
                                    EventBus events)
    {
       super(outputFactory.create("R Markdown", 
@@ -59,6 +63,8 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
+      paneManager_ = paneManager;
+      commands_ = commands;
       events_ = events;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
@@ -121,6 +127,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    public void onRmdRenderStarted(RmdRenderStartedEvent event)
    {
       switchToConsoleAfterRender_ = !view_.isEffectivelyVisible();
+      isSourceZoomed_ = paneManager_.getZoomedWindow() == paneManager_.getSourceLogicalWindow();
       view_.ensureVisible(true);
       view_.compileStarted(event.getTargetFile());
       targetFile_ = event.getTargetFile();
@@ -140,7 +147,15 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       setIsBusy(false);
       if (event.getResult().getSucceeded() && switchToConsoleAfterRender_)
       {
-         events_.fireEvent(new ConsoleActivateEvent(false)); 
+         if (isSourceZoomed_)
+         {
+            if (paneManager_.getZoomedWindow() != paneManager_.getSourceLogicalWindow())
+               commands_.layoutZoomSource().execute();
+         }
+         else
+         {
+            events_.fireEvent(new ConsoleActivateEvent(false));
+         }
       }
       else if (!event.getResult().getSucceeded())
       {
@@ -166,7 +181,15 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       setIsBusy(false);
       if (switchToConsoleAfterRender_)
       {
-         events_.fireEvent(new ConsoleActivateEvent(false)); 
+         if (isSourceZoomed_)
+         {
+            if (paneManager_.getZoomedWindow() != paneManager_.getSourceLogicalWindow())
+               commands_.layoutZoomSource().execute();
+         }
+         else
+         {
+            events_.fireEvent(new ConsoleActivateEvent(false)); 
+         }
       }
    }
    
@@ -192,8 +215,11 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    private final RMarkdownServerOperations server_;
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
+   private final PaneManager paneManager_;
+   private final Commands commands_;
    private final EventBus events_;
    
+   private boolean isSourceZoomed_ = false;
    private boolean switchToConsoleAfterRender_ = false;
    private String targetFile_;
 }
