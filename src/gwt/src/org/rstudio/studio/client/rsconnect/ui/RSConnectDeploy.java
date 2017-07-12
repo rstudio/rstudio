@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
@@ -88,6 +89,8 @@ public class RSConnectDeploy extends Composite
    {
       String accountAnchor();
       String accountList();
+      String accountListCondensed();
+      String accountEntry();
       String controlLabel();
       String deployLabel();
       String descriptionPanel();
@@ -749,18 +752,27 @@ public class RSConnectDeploy extends Composite
       // if we're updating a deployment, check to see if there's a match
       if (fromPrevious_ != null)
       {
-         bool matched = false;
+         boolean matched = false;
+         JsArray<RSConnectAccount> serverList = JsArray.createArray().cast();
          for (int i = 0; i < accounts.length(); i++)
          {
-            if (accounts.get(i).equals(fromPrevious_.getAccount()));
+            if (accounts.get(i).equals(fromPrevious_.getAccount()))
             {
                // show just this account, and hide the account list
                setSingleAccount(accounts.get(i));
                accountList_.setVisible(false);
+               publishFromPanel_.setVisible(false);
                
                // populate app info
                matched = true;
                break;
+            }
+            
+            // if we haven't found a match yet, remember the account if it matches the server
+            // used to deploy the app
+            if (fromPrevious_.getServer() == accounts.get(i).getServer())
+            {
+               serverList.push(accounts.get(i));
             }
          }
          
@@ -768,16 +780,20 @@ public class RSConnectDeploy extends Composite
          {
             // we're updating a deployment, but we don't have a corresponding account
             setSingleAccount(fromPrevious_.getAccount());
-            
-            // TODO
-            // accountList_.setFilter(server)
+            publishToLabel_.setStyleName(style_.controlLabel());
+            accountList_.addStyleName(style_.accountListCondensed());
+
+            // filter to only those matching the given server
+            accountList_.setAccountList(serverList);
          }
          setPreviousInfo();
          return;
       }
 
-      // populate the accounts in the UI (the account display widget 
-      // filters based on account criteria)
+      // populate the accounts in the UI (the account display widget filters
+      // based on account criteria)
+      accountEntry_.setVisible(false);
+      publishToLabel_.setVisible(false);
       int numAccounts = setAccountList(accounts);
 
       // if this is our first try, ask the user to connect an account
@@ -1204,12 +1220,14 @@ public class RSConnectDeploy extends Composite
    @UiField Label appExistingName_;
    @UiField Label appProgressName_;
    @UiField Label nameLabel_;
+   @UiField Label publishToLabel_;
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
    @UiField VerticalPanel fileListPanel_;
    @UiField VerticalPanel filePanel_;
    @UiField VerticalPanel descriptionPanel_;
+   @UiField HorizontalPanel publishFromPanel_;
    @UiField RSConnectAccountEntry accountEntry_;
    
    // provided fields

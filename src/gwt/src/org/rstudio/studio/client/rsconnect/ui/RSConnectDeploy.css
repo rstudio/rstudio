@@ -60,11 +60,16 @@
    margin-top: 7px;
 }
 
+.launchCheck label
+{
+   margin-left: 5px;
+}
+
 .fileList
 {
    background-color: #ffffff;
    border: 1px solid #999999;
-   height: 165px;
+   height: 205px;
    width: 250px;
    padding: 7px;
    margin-top: 5px;
@@ -124,6 +129,22 @@
 {
    height: 100px;
    width: 250px;
+}
+
+.accountList.accountListCondensed
+{
+   height: 80px;
+}
+
+.accountEntry
+{
+   width: 250px;
+   padding-left: 5px;
+   padding-right: 5px;
+   padding-top: 10px;
+   padding-bottom: 5px;
+   border: 1px solid #999999;
+   background-color: #fcfcfc;
 }
 
 .accountAnchor
