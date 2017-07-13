@@ -447,8 +447,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
 
    bool show = r::sexp::asLogical(showSEXP);
 
-   std::string title = "User Command: ";
-   title += command;
+   std::string title = command;
    std::string handle;
    Error error = createTerminalExecuteConsoleProc(
             title,
@@ -493,6 +492,25 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    module_context::enqueClientEvent(addTerminalEvent);
 
    return r::sexp::create(ptrProc->getCaption(), &protect);
+}
+
+// Return terminal exit codes
+SEXP rs_terminalExitCode(SEXP idSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(idSEXP);
+
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
+   {
+      return R_NilValue;
+   }
+
+   if (proc->getExitCode())
+      return r::sexp::create(*proc->getExitCode(), &protect);
+   else
+      return R_NilValue;
 }
 
 // RPC APIs ---------------------------------------------------------------
@@ -905,6 +923,7 @@ Error initializeApi()
    RS_REGISTER_CALL_METHOD(rs_terminalKill, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalSend, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalExecute, 4);
+   RS_REGISTER_CALL_METHOD(rs_terminalExitCode, 1);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()

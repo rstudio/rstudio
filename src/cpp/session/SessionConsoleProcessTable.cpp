@@ -327,12 +327,10 @@ Error createTerminalExecuteConsoleProc(
 
    options.smartTerminal = true;
 
-#ifndef _WIN32
-   options.detachSession = true;
-#endif
-
 #ifdef _WIN32
    options.detachProcess = true;
+#else
+   options.detachSession = true;
 #endif
 
    options.reportHasSubprocs = false;

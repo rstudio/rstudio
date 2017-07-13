@@ -609,6 +609,13 @@
    .Call("rs_terminalExecute", command, workingDir, env, show)
 })
 
+.rs.addApiFunction("terminalExitCode", function(id) {
+   if (is.null(id) || !is.character(id) || (length(id) != 1))
+      stop("'id' must be a single element character vector")
+
+   .Call("rs_terminalExitCode", id)
+})
+
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalCreate = .rs.api.terminalCreate,
                                 terminalClear = .rs.api.terminalClear,
@@ -620,7 +627,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalRunning = .rs.api.terminalRunning,
                                 terminalKill = .rs.api.terminalKill,
                                 terminalSend = .rs.api.terminalSend,
-                                terminalExecute = .rs.api.terminalExecute))
+                                terminalExecute = .rs.api.terminalExecute,
+                                terminalExitCode = .rs.api.terminalExitCode))
 
 .rs.addApiFunction("selectFile", function(
    caption = "Select File",
