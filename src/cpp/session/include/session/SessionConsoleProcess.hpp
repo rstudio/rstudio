@@ -118,6 +118,7 @@ public:
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static ConsoleProcessPtr createTerminalProcess(
+         const std::string& command, // empty string for interactive shell
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
          bool enableWebsockets);
@@ -178,6 +179,7 @@ public:
    bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
    core::FilePath getCwd() const { return procInfo_->getCwd(); }
    bool getWasRestarted() const { return procInfo_->getRestarted(); }
+   boost::optional<int> getExitCode() const { return procInfo_->getExitCode(); }
 
    std::string getShellName() const;
    TerminalShell::TerminalShellType getShellType() const {
@@ -202,6 +204,7 @@ public:
    void onReceivedInput(const std::string& input);
 
    void setZombie();
+   static bool useWebsockets();
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();

@@ -130,13 +130,6 @@ public class TerminalSession extends XTermWidget
                return;
             }
 
-            if (consoleProcess_.getProcessInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-            {
-               disconnect(false);
-               callback.onFailure("Unsupported Terminal ConsoleProcess interaction mode");
-               return;
-            } 
-
             if (consoleProcess_.getProcessInfo().getCaption().isEmpty())
             {
                disconnect(false);
@@ -293,7 +286,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
                writeError(msg);
             }
          });
@@ -459,14 +452,6 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Show modal dialog with information about this terminal session.
-    */
-   public void showTerminalInfo()
-   {
-      new TerminalInfoDialog(this, socket_).showModal();
-   }
-   
-   /**
     * Send an interrupt (SIGINT) to the terminal's child process
     */
    public void interruptTerminal()
@@ -505,7 +490,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
             writeError(msg);
          }
       });
@@ -551,7 +536,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
             }
          });
       }
@@ -746,6 +731,12 @@ public class TerminalSession extends XTermWidget
    public void showZombieMessage()
    {
       writeln("[Process completed]");
+      write("[Exit code: ");
+      if (procInfo_.getExitCode() != null)
+         write(Integer.toString(procInfo_.getExitCode()));
+      else
+         write("Unknown");
+      writeln("]");
    }
 
    /**
@@ -817,6 +808,11 @@ public class TerminalSession extends XTermWidget
       });
    }
    
+   public TerminalSessionSocket getSocket()
+   {
+      return socket_;
+   }
+
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
