@@ -83,8 +83,9 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
-  # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, ")
+  # deb dependencies; to support both ubuntu and debian we need to tolerate
+  # different names for the libssl 1.0 package
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libssl1.0.0 | libssl1.0.2, ")
   
   # look for the well known locations for Qt SDK to determine which version
   # of libgstreamer we depend on
@@ -97,13 +98,6 @@ elseif(RSTUDIO_DESKTOP)
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")
 
-endif()
-
-# add dependencies on appropriate libssl
-if (IS_XENIAL OR IS_STRETCH)
-   set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libssl1.0.2, ")
-else()
-   set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}libssl1.0.0, ")
 endif()
 
 # define package suffix
