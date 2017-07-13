@@ -23,8 +23,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -43,7 +41,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -165,7 +162,7 @@ public class TerminalPane extends WorkbenchPane
       commands_.closeTerminal().setEnabled(false);
       commands_.renameTerminal().setEnabled(false);
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
-      commands_.showTerminalInfo().setEnabled(false);
+      commands_.showTerminalInfo().setEnabled(true);
       commands_.interruptTerminal().setEnabled(false);
       commands_.sendTerminalToEditor().setEnabled(false);
 
@@ -513,13 +510,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void showTerminalInfo()
    {
-      final TerminalSession visibleTerminal = getSelectedTerminal();
-      if (visibleTerminal == null)
-      {
-         return;
-      }
-
-      visibleTerminal.showTerminalInfo();
+      new TerminalInfoDialog(debug_dumpTerminalContext(), getSelectedTerminal()).showModal();
    }
    
    @Override
@@ -562,8 +553,7 @@ public class TerminalPane extends WorkbenchPane
       });
    }
    
-   @Override
-   public void debug_dumpTerminalContext()
+   public String debug_dumpTerminalContext()
    {
       StringBuilder dump = new StringBuilder();
 
@@ -610,14 +600,7 @@ public class TerminalPane extends WorkbenchPane
          dump.append(terminals_.debug_dumpTerminalList());
       }
       
-      new EditDialog(dump.toString(), false, false, new ProgressOperationWithInput<String>()
-      {
-         @Override
-         public void execute(String input, ProgressIndicator indicator)
-         {
-            indicator.onCompleted();
-         }
-      }).showModal();
+      return dump.toString();
    }
 
    /**

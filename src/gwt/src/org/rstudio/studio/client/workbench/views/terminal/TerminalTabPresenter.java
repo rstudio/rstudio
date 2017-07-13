@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
@@ -121,11 +120,6 @@ public class TerminalTabPresenter extends BusyPresenter
        * Send current terminal's buffer to a new editor buffer.
        */
       void sendTerminalToEditor();
-
-      /**
-       * Show debug context info for all terminals
-       */
-      void debug_dumpTerminalContext();
    }
 
    @Inject
@@ -196,17 +190,6 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onSendTerminalToEditor()
    {
       view_.sendTerminalToEditor();
-   }
-
-   @Handler
-   public void onDebugTerminalContext()
-   {
-      if (view_ == null)
-      { 
-         Debug.log("Error: Terminal View null");
-         return; 
-      }
-      view_.debug_dumpTerminalContext();
    }
 
    @Override

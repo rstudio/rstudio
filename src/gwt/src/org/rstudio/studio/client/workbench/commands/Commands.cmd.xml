@@ -494,7 +494,6 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
-            <cmd refid="debugTerminalContext"/>
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
          </menu>
@@ -2668,10 +2667,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Import Editor Contents..."
         rebindable="false"/>
 
-   <cmd id="debugTerminalContext"
-        menuLabel="Dump _Terminal Context..."
-        rebindable="false"/>
-         
    <cmd id="refreshSuperDevMode"
         rebindable="false"/>
 

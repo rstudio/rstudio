@@ -452,14 +452,6 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Show modal dialog with information about this terminal session.
-    */
-   public void showTerminalInfo()
-   {
-      new TerminalInfoDialog(this, socket_).showModal();
-   }
-   
-   /**
     * Send an interrupt (SIGINT) to the terminal's child process
     */
    public void interruptTerminal()
@@ -814,6 +806,11 @@ public class TerminalSession extends XTermWidget
             Debug.logError(error);
          }
       });
+   }
+   
+   public TerminalSessionSocket getSocket()
+   {
+      return socket_;
    }
 
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
