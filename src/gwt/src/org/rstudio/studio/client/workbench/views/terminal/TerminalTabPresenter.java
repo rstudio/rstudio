@@ -43,6 +43,7 @@ public class TerminalTabPresenter extends BusyPresenter
                                              AddTerminalEvent.Handler,
                                              RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
+
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 

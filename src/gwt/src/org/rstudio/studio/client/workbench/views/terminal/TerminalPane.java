@@ -180,8 +180,7 @@ public class TerminalPane extends WorkbenchPane
             boolean closable = false;
             boolean clearable = false;
 
-            TerminalSession visibleTerminal = getSelectedTerminal();
-            
+            final TerminalSession visibleTerminal = getSelectedTerminal();
             if (visibleTerminal != null)
             {
                clearable = true;
@@ -212,6 +211,7 @@ public class TerminalPane extends WorkbenchPane
             clearButton_.setVisible(clearable);
          }
       });
+
     }
 
    @Override
@@ -1004,11 +1004,6 @@ public class TerminalPane extends WorkbenchPane
       unregisterChildProcsHandler();
       if (terminal != null)
       {
-         // Only needed for interactive terminals, not those running
-         // one-shot commands via terminalExecute API.
-         if (terminal.getProcInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-            return;
-         
          terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
                new ValueChangeHandler<Boolean>() 
          {

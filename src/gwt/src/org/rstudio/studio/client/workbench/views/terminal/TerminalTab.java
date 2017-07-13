@@ -84,7 +84,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
       @Handler
       public abstract void onSendTerminalToEditor();
-
+      
       /**
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server

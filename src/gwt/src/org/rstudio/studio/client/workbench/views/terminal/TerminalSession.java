@@ -738,7 +738,7 @@ public class TerminalSession extends XTermWidget
          write("Unknown");
       writeln("]");
    }
-   
+
    /**
     * Write to terminal after a terminal has restarted (on the server). We
     * use this to cleanup the current line, as a new prompt is typically
