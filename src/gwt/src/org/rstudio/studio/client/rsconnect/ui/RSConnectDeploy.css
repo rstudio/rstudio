@@ -167,22 +167,42 @@
    width: 250px;
 }
 
-.appDetailsPanel
+.appDetailsPanel, .appErrorPanel
 {
    border: 1px solid #999999;
-   background-color: white;
    padding: 5px;
    margin: 0px;
-   white-space: nowrap;
-   text-overflow: ellipsis;
    overflow: hidden;
    width: 238px;
+}
+
+.appDetailsPanel 
+{
+   background-color: white;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+
+.appErrorPanel
+{
+   background-color: #fff3aa;
 }
 
 .descriptionPanel
 {
    text-align: center;
 }
+
+.appErrorMessage
+{
+}
+
+.appWarningIcon
+{
+   width: 16px;
+   height: 14px;
+   margin-right: 5px;
+}}
 
 .wizardDeployPage
 {

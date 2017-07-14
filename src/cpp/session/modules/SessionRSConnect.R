@@ -195,21 +195,18 @@
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) { 
    # init with empty list
    appList <- list()
+   appError <- ""
 
    # attempt to get app ID from server
    tryCatch({
      appList <- rsconnect:::getAppById(id, account, server, hostUrl)
    }, error = function(e) {
-     # Connect returns a generic HTTP failure when the app doesn't exist (for
-     # instance, after being deleted); check the error message and treat this
-     # particular case as though the search returned no apps. 
-     if (!grepl("does not exist", conditionMessage(e))) {
-        # we didn't expect this error, bubble it up
-        stop(e)
-     }
+      # record the error message when a failure occurs (will be passed to the client for display)
+      errorMessage <- conditionMessage(e)
    })
    
-   .rs.scalarListFromList(appList)
+   list(error = .rs.scalar(appError), 
+        app   = if(length(appList) > 0) .rs.scalarListFromList(appList) else NULL)
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {

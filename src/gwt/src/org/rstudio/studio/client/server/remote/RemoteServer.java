@@ -117,6 +117,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -4223,7 +4224,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
-         ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
+         ServerRequestCallback<RSConnectApplicationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(appId));

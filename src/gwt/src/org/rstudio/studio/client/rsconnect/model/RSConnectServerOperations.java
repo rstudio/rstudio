@@ -36,7 +36,7 @@ public interface RSConnectServerOperations
                ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
 
    void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
-               ServerRequestCallback<RSConnectApplicationInfo> requestCallback);
+               ServerRequestCallback<RSConnectApplicationResult> requestCallback);
    
    void getRSConnectDeployments(String sourceFile, String outputFile,
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 

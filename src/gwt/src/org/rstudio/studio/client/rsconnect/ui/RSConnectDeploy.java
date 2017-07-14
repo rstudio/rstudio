@@ -36,6 +36,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
@@ -88,9 +89,13 @@ public class RSConnectDeploy extends Composite
    public interface DeployStyle extends CssResource
    {
       String accountAnchor();
+      String accountEntry();
       String accountList();
       String accountListCondensed();
-      String accountEntry();
+      String appDetailsPanel();
+      String appErrorMessage();
+      String appErrorPanel();
+      String appWarningIcon();
       String controlLabel();
       String deployLabel();
       String descriptionPanel();
@@ -100,6 +105,7 @@ public class RSConnectDeploy extends Composite
       String launchCheck();
       String normalStatus();
       String otherStatus();
+      String progressPanel();
       String rootCell();
       String source();
       String sourceDestLabels();
@@ -107,8 +113,6 @@ public class RSConnectDeploy extends Composite
       String transferArrow();
       String urlAnchor();
       String wizard();
-      String progressPanel();
-      String appDetailsPanel();
       String wizardDeployPage();
    }
    
@@ -654,50 +658,6 @@ public class RSConnectDeploy extends Composite
          appExistingName_.setText(fromPrevious_.getDisplayName());
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
-
-         final ServerRequestCallback<JsArray<RSConnectApplicationInfo>> 
-               onAppsReceived = 
-               new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
-         {
-            @Override
-            public void onResponseReceived(
-                  JsArray<RSConnectApplicationInfo> infos)
-            {
-               // hide server progress
-               appProgressPanel_.setVisible(false);
-
-               // find an app with the same account, server, and name;
-               // when found, populate the UI with app details
-               boolean found = false;
-               if (infos != null)
-               {
-                  for (int i = 0; i < infos.length(); i++)
-                  {
-                     RSConnectApplicationInfo info = infos.get(i);
-                     if (info.getName() == fromPrevious_.getName())
-                     {
-                        showAppInfo(info);
-                        found = true;
-                        break;
-                     }
-                  }
-               }
-
-               if (!found)
-               {
-                  forgetPreviousDeployment();
-               }
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               // it's okay if we fail here, since the application info
-               // display is purely informative
-               appProgressPanel_.setVisible(false);
-               showAppInfo(null);
-            }
-         };
-
          
          if (!StringUtil.isNullOrEmpty(fromPrevious_.getAppId()))
          {
@@ -707,24 +667,30 @@ public class RSConnectDeploy extends Composite
                   fromPrevious_.getAccountName(), 
                   fromPrevious_.getServer(), 
                   fromPrevious_.getHostUrl(),
-                  new ServerRequestCallback<RSConnectApplicationInfo>()
+                  new ServerRequestCallback<RSConnectApplicationResult>()
                   {
                      @Override
                      public void onResponseReceived(
-                           RSConnectApplicationInfo info)
+                           RSConnectApplicationResult info)
                      {
                         // create a single-entry array with the app ID 
                         JsArray<RSConnectApplicationInfo> infos = 
                               JsArray.createArray().cast();
-                        if (info != null)
-                           infos.push(info);
-                        onAppsReceived.onResponseReceived(infos);
+                        if (info.getApp() != null)
+                        {
+                           infos.push(info.getApp());
+                           onAppsReceived_.onResponseReceived(infos);
+                        }
+                        else if (!StringUtil.isNullOrEmpty(info.getError()))
+                        {
+                           onAppsReceived_.onError(info.getError());
+                        }
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        onAppsReceived.onError(error);
+                        onAppsReceived_.onError(error);
                      }
                   });
          }
@@ -734,7 +700,7 @@ public class RSConnectDeploy extends Composite
             server_.getRSConnectAppList(
                   fromPrevious_.getAccountName(), 
                   fromPrevious_.getServer(), 
-                  onAppsReceived);
+                  onAppsReceived_);
             }
       }
    }
@@ -1205,6 +1171,66 @@ public class RSConnectDeploy extends Composite
       checkUncheckAllButton_.setText(allChecked_ ? "Uncheck All" : "Check All");
    }
    
+   private class OnAppsReceived extends ServerRequestCallback<JsArray<RSConnectApplicationInfo>>
+   {
+      @Override
+      public void onResponseReceived(
+            JsArray<RSConnectApplicationInfo> infos)
+      {
+         // hide server progress
+         appProgressPanel_.setVisible(false);
+
+         // find an app with the same account, server, and name; when found,
+         // populate the UI with app details
+         boolean found = false;
+         if (infos != null)
+         {
+            for (int i = 0; i < infos.length(); i++)
+            {
+               RSConnectApplicationInfo info = infos.get(i);
+               if (info.getName() == fromPrevious_.getName())
+               {
+                  showAppInfo(info);
+                  found = true;
+                  break;
+               }
+            }
+         }
+
+         if (!found)
+         {
+            forgetPreviousDeployment();
+         }
+      }
+      
+      public void onError(String error)
+      {
+         // it's okay if we fail here, since the application info display is
+         // purely informative
+         appProgressPanel_.setVisible(false);
+         showAppInfo(null);
+         if (!StringUtil.isNullOrEmpty(error))
+            showAppError(error);
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         onError(error.getMessage());
+      }
+   };
+   
+   private void showAppError(String error)
+   {
+      appErrorPanel_.setVisible(true);
+      appDetailsPanel_.setVisible(false);
+      String[] lines = error.split("\n");
+      
+      // show just the last line, but show all the content on hover
+      appErrorMessage_.setText(lines[lines.length - 1]);
+      appErrorMessage_.setTitle(error);
+   }
+
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
@@ -1214,9 +1240,11 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel appProgressPanel_;
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel rootPanel_;
+   @UiField HTMLPanel appErrorPanel_;
    @UiField Image deployIllustration_;
    @UiField Image descriptionImage_;
    @UiField InlineLabel deployLabel_;
+   @UiField Label appErrorMessage_;
    @UiField Label appExistingName_;
    @UiField Label appProgressName_;
    @UiField Label nameLabel_;
@@ -1250,6 +1278,8 @@ public class RSConnectDeploy extends Composite
    private Command onDeployEnabled_;
    private RSConnectDeploymentRecord fromPrevious_;
    private boolean allChecked_ = true;
+
+   private final OnAppsReceived onAppsReceived_ = new OnAppsReceived();
 
    private final DeployStyle style_;
    private final boolean forDocument_;

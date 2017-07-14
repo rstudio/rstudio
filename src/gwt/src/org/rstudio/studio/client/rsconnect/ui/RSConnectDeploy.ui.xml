@@ -5,6 +5,7 @@
     xmlns:rw="urn:import:org.rstudio.core.client.widget">
     <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
     <ui:with field="coreRes" type="org.rstudio.core.client.resources.CoreResources" />
+    <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources" />
     <g:HTMLPanel ui:field="rootPanel_">
     <g:Image ui:field="deployIllustration_"></g:Image>
     <g:Grid ui:field="mainGrid_"><g:row>
@@ -93,6 +94,16 @@
                               ui:field="appProgressName_"></g:InlineLabel>
                <g:InlineLabel text="..."></g:InlineLabel>
                <g:Image resource="{coreRes.progress_gray}"></g:Image>
+            </g:HTMLPanel>
+            <g:HTMLPanel ui:field="appErrorPanel_" 
+                         styleName="{res.style.appErrorPanel}" 
+                         visible="false">
+               <g:HorizontalPanel>
+                   <g:Image resource="{themeRes.warningSmall2x}"
+                            styleName="{res.style.appWarningIcon}"></g:Image>
+                   <g:Label styleName="{res.style.appErrorMessage}"
+                        ui:field="appErrorMessage_"></g:Label>
+               </g:HorizontalPanel>
             </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>
