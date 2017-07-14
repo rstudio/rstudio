@@ -117,6 +117,22 @@ assign(x = ".rs.acCompletionTypes",
    if (grepl("^\\s*#+'\\s*$", line) && token == "'")
       token <- ""
    
+   # draw from 'man-roxygen' folder for '@template' completions
+   if (grepl("^\\s*#+'\\s*@template\\s+", line))
+   {
+      projDir <- .rs.getProjectDirectory()
+      if (is.null(projDir))
+         return(emptyCompletions)
+      
+      manRoxygen <- file.path(projDir, "man-roxygen")
+      if (!utils::file_test("-d", manRoxygen))
+         return(emptyCompletions)
+      
+      completions <- .rs.getCompletionsFile(token, path = manRoxygen, quote = FALSE)
+      completions$results <- sub("[.][rR]$", "", completions$results)
+      return(completions)
+   }
+   
    # allow the token to be empty only if we're attempting completions
    # at the start of the line
    if (token == "")
