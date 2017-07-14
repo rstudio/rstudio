@@ -27,7 +27,7 @@ public class WindowOnErrorTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.core.WindowOnError";
+    return "com.google.gwt.core.Core";
   }
 
   @Override
