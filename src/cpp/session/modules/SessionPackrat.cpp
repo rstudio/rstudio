@@ -748,7 +748,7 @@ bool resolveStateAfterAction(PackratActionType action,
    if (hashChangedState)
       packages::enquePackageStateChanged();
 
-   return hashChangedState || !(hasPendingRestoreActions || 
+   return hashChangedState || !(hasPendingSnapshotActions ||
                                 hasPendingRestoreActions);
 }
 
