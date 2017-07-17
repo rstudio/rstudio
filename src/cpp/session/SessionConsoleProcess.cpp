@@ -75,11 +75,8 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    }
 #endif
 
-   if (procInfo.getTerminalSequence()!= kNoTerminal)
-   {
-      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                           boost::lexical_cast<std::string>(procInfo.getTerminalSequence()));
-   }
+   core::system::setenv(&shellEnv, "RSTUDIO_TERM",
+                        boost::lexical_cast<std::string>(procInfo.getHandle()));
 
    // ammend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
