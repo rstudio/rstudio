@@ -109,12 +109,44 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
-.rs.addFunction("attemptRoxygenTagCompletion", function(token)
+.rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
 {
-   # Allow for roxygen completions when no token is available
-   match <- token == "" || grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
-   if (!match)
-      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
+   
+   # fix up tokenization
+   if (grepl("^\\s*#+'\\s*$", line) && token == "'")
+      token <- ""
+   
+   # draw from 'man-roxygen' folder for '@template' completions
+   if (grepl("^\\s*#+'\\s*@template\\s+", line))
+   {
+      projDir <- .rs.getProjectDirectory()
+      if (is.null(projDir))
+         return(emptyCompletions)
+      
+      manRoxygen <- file.path(projDir, "man-roxygen")
+      if (!utils::file_test("-d", manRoxygen))
+         return(emptyCompletions)
+      
+      completions <- .rs.getCompletionsFile(token, path = manRoxygen, quote = FALSE)
+      completions$results <- sub("[.][rR]$", "", completions$results)
+      return(completions)
+   }
+   
+   # allow the token to be empty only if we're attempting completions
+   # at the start of the line
+   if (token == "")
+   {
+      match <- grepl("^\\s*#+'\\s*$", line)
+      if (!match)
+         return(emptyCompletions)
+   }
+   else
+   {
+      match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
+      if (!match)
+         return(emptyCompletions)
+   }
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
@@ -1875,7 +1907,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
-      return(.rs.attemptRoxygenTagCompletion(token))
+      return(.rs.attemptRoxygenTagCompletion(token, line))
    
    # install.packages
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
