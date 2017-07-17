@@ -75,9 +75,6 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    }
 #endif
 
-   core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                        boost::lexical_cast<std::string>(procInfo.getHandle()));
-
    // ammend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 
@@ -233,6 +230,8 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "TERM",
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
+
+      core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 #endif
    }
 
