@@ -15,6 +15,7 @@
 
 #include "SessionConsoleProcessApi.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
@@ -55,7 +56,26 @@ std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
    std::string buffer = proc->getBuffer();
 
    if (stripAnsi)
+   {
       core::text::stripAnsiCodes(&buffer);
+
+      // remove <BEL> characters
+      boost::algorithm::replace_all(buffer, "\x07", "");
+
+      // process backspaces
+      std::string::iterator iter = buffer.begin();
+      std::string::iterator end = buffer.end();
+      while (iter != end)
+      {
+         iter = std::find(iter, end, '\b');
+         if (iter == end) break;
+         if (iter == buffer.begin())
+            iter = buffer.erase(iter);
+         else
+            iter = buffer.erase(iter-1, iter+1);
+         end = buffer.end();
+      }
+   }
    string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
    return buffer;
 }
