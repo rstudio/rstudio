@@ -296,7 +296,7 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    public boolean cursorAtEOL()
    {
-      if (altBufferActive())
+      if (xtermAltBufferActive())
       {
          return false;
       }
@@ -329,11 +329,27 @@ public class XTermWidget extends Widget implements RequiresResize,
     * Is the terminal showing the alternate full-screen buffer?
     * @return true if full-screen buffer is active
     */
-   public boolean altBufferActive()
+   public boolean xtermAltBufferActive()
    {
       return terminal_.altBufferActive();
    }
    
+   /**
+    * Switch terminal to primary buffer.
+    */
+   public void showPrimaryBuffer()
+   {
+      terminal_.showPrimaryBuffer();
+   }
+
+   /**
+    * Switch terminal to alt-buffer
+    */
+   public void showAltBuffer()
+   {
+      terminal_.showAltBuffer();
+   }
+    
    public static boolean isXTerm(Element el)
    {
       while (el != null)

@@ -485,79 +485,6 @@ void connectionPreviewObject(const json::JsonRpcRequest& request,
    sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
 }
 
-
-Error installSpark(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
-{
-   // get params
-   std::string sparkVersion, hadoopVersion;
-   Error error = json::readParams(request.params,
-                                  &sparkVersion,
-                                  &hadoopVersion);
-   if (error)
-      return error;
-
-   // R binary
-   FilePath rProgramPath;
-   error = module_context::rScriptPath(&rProgramPath);
-   if (error)
-      return error;
-
-   // options
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   options.redirectStdErrToStdOut = true;
-
-   // build install command
-   boost::format fmt("sparklyr::spark_install('%1%', hadoop_version = '%2%', "
-                     "verbose = TRUE)");
-   std::string cmd = boost::str(fmt %
-                                 sparkVersion %
-                                 hadoopVersion);
-
-   // build args
-   std::vector<std::string> args;
-   args.push_back("--slave");
-   args.push_back("--vanilla");
-
-   // propagate R_LIBS
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
-   std::string libPaths = module_context::libPathsString();
-   if (!libPaths.empty())
-      core::system::setenv(&childEnv, "R_LIBS", libPaths);
-   options.environment = childEnv;
-
-
-   // for windows we need to forward setInternet2
-#ifdef _WIN32
-   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
-      args.push_back("--internet2");
-#endif
-
-   args.push_back("-e");
-   args.push_back(cmd);
-
-   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
-         boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing Spark " + sparkVersion,
-            console_process::InteractionNever);
-
-   // create and execute console process
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
-            args,
-            options,
-            pCPI);
-
-   // return console process
-   pResponse->setResult(pCP->toJson());
-   return Success();
-}
-
-
-
 // track whether connections were enabled at the start of this R session
 bool s_connectionsInitiallyEnabled = false;
 
@@ -609,11 +536,19 @@ Error handleConnectionsResourceRequest(const http::Request& request,
 
 } // anonymous namespace
 
+SEXP rs_connectionAddPackage(SEXP packageSEXP, SEXP extensionSEXP)
+{
+   std::string packageName = r::sexp::safeAsString(packageSEXP);
+   std::string extensionPath = r::sexp::safeAsString(extensionSEXP);
+
+   registerConnectionsRegistryEntry(packageName, extensionPath);
+
+   return R_NilValue;
+}
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("sparklyr", "0.5.5") ||
-          module_context::isPackageVersionInstalled("odbc", "1.0.1.9000");
+   return true;
 }
 
 bool activateConnections()
@@ -645,6 +580,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
    RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
    RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
+   RS_REGISTER_CALL_METHOD(rs_connectionAddPackage, 2);
 
    // initialize environment
    initEnvironment();
@@ -675,7 +611,6 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_objects", connectionListObjects))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
-      (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
             handleConnectionsResourceRequest))
       (bind(sourceModuleRFile, "SessionConnections.R"));

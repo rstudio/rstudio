@@ -1,7 +1,7 @@
 /*
  * SourceControlPrefs.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,15 +26,13 @@ public class SourceControlPrefs extends JavaScriptObject
    public static final native SourceControlPrefs create(boolean vcsEnabled,
                                                         String gitExePath,
                                                         String svnExePath,
-                                                        String terminalPath,
-                                                        boolean useGitBash) 
+                                                        String terminalPath)
                                                                            /*-{
       var prefs = new Object();
       prefs.vcs_enabled = vcsEnabled;
       prefs.git_exe_path = gitExePath;
       prefs.svn_exe_path = svnExePath;
       prefs.terminal_path = terminalPath;
-      prefs.use_git_bash = useGitBash;
       return prefs ;
    }-*/;
 
@@ -52,10 +50,6 @@ public class SourceControlPrefs extends JavaScriptObject
    
    public native final String getTerminalPath() /*-{
       return this.terminal_path;
-   }-*/;
-   
-   public native final boolean getUseGitBash() /*-{
-      return this.use_git_bash;
    }-*/;
    
    public native final String getRsaKeyPath() /*-{

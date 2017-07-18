@@ -25,6 +25,7 @@ namespace connections {
 
 core::json::Value connectionsRegistryAsJson();
 void registerConnectionsWorker();
+void registerConnectionsRegistryEntry(std::string packageName, std::string extensionPath);
                        
 } // namespace connections
 } // namespace modules

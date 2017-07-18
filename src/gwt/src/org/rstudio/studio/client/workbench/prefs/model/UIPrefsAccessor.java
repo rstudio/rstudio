@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.prefs.model;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -406,11 +405,6 @@ public class UIPrefsAccessor extends Prefs
       return bool("new_proj_git_init", false);
    }
    
-   public PrefValue<Boolean> newProjUsePackrat()
-   {
-      return bool("new_proj_use_packrat", false);
-   }
-   
    public PrefValue<String> defaultSweaveEngine()
    {
       return string("default_sweave_engine", "Sweave");
@@ -601,11 +595,6 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_terminal_tab", true);
    }
    
-   public PrefValue<Boolean> enableReportTerminalLag()
-   {
-      return bool("enable_report_terminal_lag", false);
-   }
-   
    public PrefValue<Boolean> terminalLocalEcho()
    {
       return bool("terminal_local_echo", true);
@@ -619,6 +608,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> terminalAutoClose()
    {
       return bool("terminal_autoclose", true);
+   }
+
+   public PrefValue<Boolean> terminalTrackEnvironment()
+   {
+      return bool("terminal_track_env", true);
    }
 
    public static final String KNIT_DIR_DEFAULT = "default";

@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionConsoleProcessApi.hpp"
+#include "modules/SessionVCS.hpp"
 
 using namespace rstudio::core;
 
@@ -155,9 +156,8 @@ std::vector<std::string> getAllCaptions()
    return allCaptions;
 }
 
-// Determine next terminal sequence, used when creating terminal name
-// via rstudioapi: mimics what happens in client code.
-std::string nextTerminalName()
+// Determine next terminal sequence and name
+std::pair<int, std::string> nextTerminalName()
 {
    int maxNum = kNoTerminal;
    BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
@@ -166,7 +166,9 @@ std::string nextTerminalName()
    }
    maxNum++;
 
-   return std::string("Terminal ") + core::safe_convert::numberToString(maxNum);
+   return std::pair<int, std::string>(
+            maxNum,
+            std::string("Terminal ") + core::safe_convert::numberToString(maxNum));
 }
 
 void saveConsoleProcesses()
@@ -241,6 +243,123 @@ Error internalInitialize()
    loadConsoleProcesses();
 
    return initializeApi();
+}
+
+Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
+                                std::string* pHandle)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+#if defined(_WIN32)
+   cpi->setTrackEnv(false);
+#endif
+
+   std::string computedCaption = cpi->getCaption();
+
+   if (cpi->getTerminalSequence() == kNewTerminal)
+   {
+      std::pair<int, std::string> sequenceInfo = nextTerminalName();
+      cpi->setTerminalSequence(sequenceInfo.first);
+      if (computedCaption.empty())
+         computedCaption = sequenceInfo.second;
+   }
+
+   if (cpi->getTerminalSequence() == kNoTerminal)
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Unsupported terminal sequence",
+                         ERROR_LOCATION);
+   }
+
+   if (computedCaption.empty())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Empty terminal caption not supported",
+                         ERROR_LOCATION);
+   }
+
+   cpi->setCaption(computedCaption);
+
+   TerminalShell::TerminalShellType actualShellType;
+   core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
+            *cpi, &actualShellType);
+
+   cpi->setShellType(actualShellType);
+
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+               ConsoleProcess::createTerminalProcess(options, cpi);
+
+   ptrProc->onExit().connect(boost::bind(
+                              &modules::source_control::enqueueRefreshEvent));
+
+   *pHandle = ptrProc->handle();
+
+   return Success();
+}
+
+Error createTerminalExecuteConsoleProc(
+      const std::string& title,
+      const std::string& command,
+      const std::string& currentDir,
+      const core::system::Options& env,
+      std::string* pHandle)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+   std::pair<int, std::string> sequenceInfo = nextTerminalName();
+   int termSequence = sequenceInfo.first;
+   std::string caption = sequenceInfo.second;
+
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
+
+   core::system::ProcessOptions options;
+
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   core::system::getModifiedEnv(env, &childEnv);
+   options.environment = childEnv;
+
+   options.smartTerminal = true;
+
+#ifdef _WIN32
+   options.detachProcess = true;
+#else
+   options.detachSession = true;
+#endif
+
+   options.reportHasSubprocs = false;
+   options.trackCwd = false;
+   options.workingDir = cwd;
+
+   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
+         boost::shared_ptr<ConsoleProcessInfo>(
+            new ConsoleProcessInfo(
+               caption,
+               title,
+               std::string() /*handle*/,
+               termSequence,
+               TerminalShell::NoShell,
+               false /*altBuffer*/,
+               cwd,
+               core::system::kDefaultCols, core::system::kDefaultRows,
+               false /*zombie*/,
+               false /*trackEnv*/));
+
+   ptrProcInfo->setInteractionMode(InteractionNever);
+   ptrProcInfo->setAutoClose(NeverAutoClose);
+
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+         ConsoleProcess::createTerminalProcess(command, options, ptrProcInfo,
+                                               ConsoleProcess::useWebsockets());
+   *pHandle = ptrProc->handle();
+
+   return Success();
 }
 
 } // namespace console_process

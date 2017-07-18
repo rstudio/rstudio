@@ -632,6 +632,16 @@ public class AnsiCode
                   .replace("\t", "<TAB>");
    }
 
+   public static String prettyPrintNonCRLF(String input)
+   {
+      // not efficient but only intended for debug/unit testing
+      return input.replace("\u001b", "<ESC>")
+                  .replace("\7", "<BEL>")
+                  .replace("\177", "<DEL>")
+                  .replace("\b", "<BS>");
+   }
+
+
    // Control characters handled by R console, plus leading character of
    // ANSI escape sequences
    public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";

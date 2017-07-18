@@ -58,7 +58,11 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processGetBufferChunk(String handle,
                               int chunk,
                               ServerRequestCallback<ProcessBufferChunk> requestCallback);
-   
+
+   void processGetBuffer(String handle,
+                         boolean stripAnsiCodes,
+                         ServerRequestCallback<ProcessBufferChunk> requestCallback);
+    
    /**
     * Switch a server process to use Rpc mode after failing to connect to
     * non-rpc channel such as websocket.
@@ -113,13 +117,4 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
     */
    void processInterruptChild(String handle,
                               ServerRequestCallback<Void> requestCallback);
-
-   /**
-    * Set zombie flag on a process. Server will keep this process's metadata and 
-    * buffer around, but won't restart the process.
-    * @param handle process handle
-    * @param requestCallback
-    */
-   void processSetZombie(String handle,
-                         ServerRequestCallback<Void> requestCallback);
 }

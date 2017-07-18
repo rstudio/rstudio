@@ -41,6 +41,8 @@ var c_cppHighlightRules = function() {
       return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
    }
 
+   // See: http://en.cppreference.com/w/cpp/keyword. Note that
+   // 'operatorYY' keywords are highlighted separately below.
    var keywords = lang.arrayToMap([
       "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand",
       "bitor", "bool", "break", "case", "catch", "char", "char16_t",
@@ -50,8 +52,8 @@ var c_cppHighlightRules = function() {
       "export", "extern", "false", "float", "for", "friend", "goto",
       "if", "inline", "int", "in", "long", "mutable", "namespace",
       "new", "noexcept", "not", "not_eq", "nullptr", "or", "or_eq",
-      "private", "protected", "public", "register",
-      "reinterpret_cast", "return", "short", "signed", "sizeof",
+      "private", "protected", "public", "register", "reinterpret_cast",
+      "return", "short", "signed", "sizeof", "sizeof...",
       "static", "static_assert", "static_cast", "struct", "switch",
       "template", "this", "thread_local", "throw", "true", "try",
       "typedef", "typeid", "typeof", "typename", "union", "unsigned",
@@ -60,8 +62,8 @@ var c_cppHighlightRules = function() {
    ]);
 
    var preProcTokens = [
-      "include", "pragma", "line", "define", "undef", "ifdef", "ifndef",
-      "if", "else", "elif", "endif", "warning", "error"
+      "include", "pragma", "line", "define", "defined", "undef", "ifdef",
+      "ifndef", "if", "else", "elif", "endif", "warning", "error"
    ];
 
    var buildinConstants = lang.arrayToMap(
@@ -70,13 +72,14 @@ var c_cppHighlightRules = function() {
 
    var operatorTokens = [
 
-      ">>=", "<<=", "new", "delete",
+      "new", "delete",
+
+      ">>=", "<<=", "->*", "...",
       
-      "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
-      "*=", "+=", "-=", "/=", "++", "--", "&=", "^=",
-      "%=", "->",
+      "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::", "*=",
+      "+=", "-=", "/=", "++", "--", "&=", "^=", "%=", "->", ".*",
       
-      "!", "$", "&", "|", "+", "-", "*", "/", "^", "~", "="
+      "!", "$", "&", "|", "+", "-", "*", "/", "^", "~", "=", "%"
       
    ];
 

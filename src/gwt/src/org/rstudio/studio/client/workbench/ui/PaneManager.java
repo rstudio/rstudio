@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import org.rstudio.core.client.Debug;
@@ -77,6 +78,7 @@ import java.util.List;
  * TODO: Push client state when selected tab or layout changes
  */
 
+@Singleton
 public class PaneManager
 {
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
@@ -887,6 +889,11 @@ public class PaneManager
          return;
       
       toggleWindowZoom(parentWindow, tab);
+   }
+   
+   public LogicalWindow getZoomedWindow()
+   {
+      return maximizedWindow_;
    }
 
    public ConsolePane getConsole()

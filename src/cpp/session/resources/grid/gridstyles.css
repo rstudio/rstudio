@@ -16,7 +16,7 @@
 body {
     height: 100%;
     margin: 0px;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    font-family: 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     background-color: #ffffff;
 }
 
@@ -333,6 +333,10 @@ th:focus {
 
 .searchMatch {
     background-color: #e8e8ff;
+}
+
+.rstudio-themes-flat.editor_dark .searchMatch {
+    background-color: #6d787f;
 }
 
 .naCell {

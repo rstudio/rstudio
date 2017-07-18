@@ -1,7 +1,7 @@
 /*
  * SessionPackrat.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,7 +55,7 @@ using namespace rstudio::core;
 #define kPackratActionSnapshot "snapshot"
 
 #define kAutoSnapshotName "auto.snapshot"
-#define kAutoSnapshotDefault true
+#define kAutoSnapshotDefault false
 
 #define kInvalidHashValue "--------"
 
@@ -748,7 +748,7 @@ bool resolveStateAfterAction(PackratActionType action,
    if (hashChangedState)
       packages::enquePackageStateChanged();
 
-   return hashChangedState || !(hasPendingRestoreActions || 
+   return hashChangedState || !(hasPendingSnapshotActions ||
                                 hasPendingRestoreActions);
 }
 
@@ -898,13 +898,12 @@ json::Object contextAsJson()
    return contextAsJson(context);
 }
 
-// Annotates a JSON object with pending Packrat actions, with the side effect
-// of checking Packrat state and marking the current state as observed
-void annotatePendingActions(json::Object *pJson, bool useCached)
+Error getPackratActions(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
 {
    json::Value restoreActions;
    json::Value snapshotActions;
-   json::Object& json = *pJson;
+   json::Object json;
 
    std::string oldLibraryHash = 
       getHash(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED);
@@ -928,10 +927,10 @@ void annotatePendingActions(json::Object *pJson, bool useCached)
    {
       // check for pending restore and snapshot actions
       bool hasPendingSnapshotActions = 
-         getPendingActions(PACKRAT_ACTION_SNAPSHOT, useCached, newLibraryHash,
+         getPendingActions(PACKRAT_ACTION_SNAPSHOT, false, newLibraryHash,
                            newLockfileHash, &snapshotActions);
       bool hasPendingRestoreActions = 
-         getPendingActions(PACKRAT_ACTION_RESTORE, useCached, newLibraryHash,
+         getPendingActions(PACKRAT_ACTION_RESTORE, false, newLibraryHash,
                            newLockfileHash, &restoreActions);
       
       // if the state could be interpreted as either a pending restore or a
@@ -954,6 +953,9 @@ void annotatePendingActions(json::Object *pJson, bool useCached)
       
    json["restore_actions"] = restoreActions;
    json["snapshot_actions"] = snapshotActions;
+    
+   pResponse->setResult(json);
+   return Success();
 }
 
 Error initialize()
@@ -982,6 +984,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_packrat_prerequisites", getPackratPrerequisites))
       (bind(registerRpcMethod, "get_packrat_context", getPackratContext))
       (bind(registerRpcMethod, "packrat_bootstrap", packratBootstrap))
+      (bind(registerRpcMethod, "get_packrat_actions", getPackratActions))
       (bind(sourceModuleRFile, "SessionPackrat.R"));
    return initBlock.execute();
 }

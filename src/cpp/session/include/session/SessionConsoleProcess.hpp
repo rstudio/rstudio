@@ -118,6 +118,7 @@ public:
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static ConsoleProcessPtr createTerminalProcess(
+         const std::string& command, // empty string for interactive shell
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
          bool enableWebsockets);
@@ -133,12 +134,7 @@ public:
    // the output param pSelectedShellType to indicate which shell type
    // was actually configured (e.g. what did 'default' get mapped to?).
    static core::system::ProcessOptions createTerminalProcOptions(
-         TerminalShell::TerminalShellType desiredShellType,
-         int cols, int rows,
-         int termSequence,
-         core::FilePath workingDir,
-         bool trackEnv,
-         const std::string& handle,
+         const ConsoleProcessInfo& procInfo,
          TerminalShell::TerminalShellType *pSelectedShellType);
 
    virtual ~ConsoleProcess() {}
@@ -183,6 +179,7 @@ public:
    bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
    core::FilePath getCwd() const { return procInfo_->getCwd(); }
    bool getWasRestarted() const { return procInfo_->getRestarted(); }
+   boost::optional<int> getExitCode() const { return procInfo_->getExitCode(); }
 
    std::string getShellName() const;
    TerminalShell::TerminalShellType getShellType() const {
@@ -207,6 +204,7 @@ public:
    void onReceivedInput(const std::string& input);
 
    void setZombie();
+   static bool useWebsockets();
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();

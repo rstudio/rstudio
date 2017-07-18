@@ -42,6 +42,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability sys_ptrace,
      capability kill,
     
+     signal (send) set=("kill") peer=unconfined,
+     ptrace,
+
      @{PROC} r,
      @{PROC}/*/cmdline r,
 

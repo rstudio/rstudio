@@ -360,6 +360,7 @@ public abstract class
    public abstract AppCommand packratBundle();
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
+   public abstract AppCommand packratCheckStatus();
 
    // Version control
    public abstract AppCommand versionControlHelp();
@@ -393,6 +394,7 @@ public abstract class
    public abstract AppCommand nextTerminal();
    public abstract AppCommand showTerminalInfo();
    public abstract AppCommand interruptTerminal();
+   public abstract AppCommand sendTerminalToEditor();
     
    // Help
    public abstract AppCommand helpBack();

@@ -21,4 +21,5 @@ public interface CallFramePanelStyle extends CssResource
 {
    String tracebackHeader();
    String toggleHide();
+   String showInternalsCheckbox();
 }

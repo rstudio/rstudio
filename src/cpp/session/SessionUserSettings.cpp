@@ -434,6 +434,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool terminalAutoclose = readPref<bool>(prefs, "terminal_autoclose", true);
    pTerminalAutoclose_.reset(new bool(terminalAutoclose));
 
+   bool terminalTrackEnv = readPref<bool>(prefs, "terminal_track_env", true);
+   pTerminalTrackEnv_.reset(new bool(terminalTrackEnv));
+
    syncConsoleColorEnv();
 }
 
@@ -652,6 +655,11 @@ bool UserSettings::terminalAutoclose() const
    return readUiPref<bool>(pTerminalAutoclose_);
 }
 
+bool UserSettings::terminalTrackEnv() const
+{
+   return readUiPref<bool>(pTerminalTrackEnv_);
+}
+
 CRANMirror UserSettings::cranMirror() const
 {
    // get the settings
@@ -787,16 +795,6 @@ FilePath UserSettings::vcsTerminalPath() const
 void UserSettings::setVcsTerminalPath(const FilePath& terminalPath)
 {
    settings_.set("vcsTerminalPath", terminalPath.absolutePath());
-}
-
-bool UserSettings::vcsUseGitBash() const
-{
-   return settings_.getBool("vcsUseGitBash", true);
-}
-
-void UserSettings::setVcsUseGitBash(bool useGitBash)
-{
-   settings_.set("vcsUseGitBash", useGitBash);
 }
 
 bool UserSettings::cleanTexi2DviOutput() const

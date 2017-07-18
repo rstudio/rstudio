@@ -34,12 +34,6 @@ namespace {
 
 ConsoleProcessSocket s_terminalSocket;
 
-bool useWebsockets()
-{
-   return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
-}
-
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
@@ -47,24 +41,20 @@ const std::string kEnvCommand = "/usr/bin/env";
 
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
-      TerminalShell::TerminalShellType desiredShellType,
-      int cols, int rows, int termSequence,
-      FilePath workingDir,
-      bool trackEnv,
-      const std::string& handle,
+      const ConsoleProcessInfo& procInfo,
       TerminalShell::TerminalShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
-   if (trackEnv && !handle.empty())
+   if (procInfo.getTrackEnv() && !procInfo.getHandle().empty())
    {
-      loadEnvironment(handle, &shellEnv);
+      loadEnvironment(procInfo.getHandle(), &shellEnv);
    }
 
    if (shellEnv.empty())
       core::system::environment(&shellEnv);
 
-   *pSelectedShellType = desiredShellType;
+   *pSelectedShellType = procInfo.getShellType();
 
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
@@ -77,33 +67,33 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::setenv(&shellEnv, "GIT_EDITOR", editorCommand);
       core::system::setenv(&shellEnv, "SVN_EDITOR", editorCommand);
    }
-#endif
 
-   if (termSequence != kNoTerminal)
+   // don't add commands starting with a space to shell history
+   if (procInfo.getTrackEnv())
    {
-      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                           boost::lexical_cast<std::string>(termSequence));
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
+#endif
 
    // ammend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = workingDir.empty() ? module_context::shellWorkingDirectory() :
-                                             workingDir;
+   options.workingDir = procInfo.getCwd().empty() ? module_context::shellWorkingDirectory() :
+                                                    procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
    options.reportHasSubprocs = true;
    options.trackCwd = true;
-   options.cols = cols;
-   options.rows = rows;
+   options.cols = procInfo.getCols();
+   options.rows = procInfo.getRows();
 
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;
 
-   if (shells.getInfo(desiredShellType, &shell))
+   if (shells.getInfo(procInfo.getShellType(), &shell))
    {
       *pSelectedShellType = shell.type;
       options.shellPath = shell.path;
@@ -174,7 +164,7 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
-   if (interactionMode() != InteractionNever)
+   if (interactionMode() != InteractionNever || options_.smartTerminal)
    {
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
@@ -240,6 +230,8 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "TERM",
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
+
+      core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 #endif
    }
 
@@ -286,6 +278,7 @@ Error ConsoleProcess::start()
    }
    if (!error)
       started_ = true;
+
    return error;
 }
 
@@ -655,6 +648,24 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
+   AutoCloseMode autoClose = procInfo_->getAutoClose();
+   if (procInfo_->getAutoClose() == DefaultAutoClose)
+   {
+      if (session::userSettings().terminalAutoclose())
+      {
+         autoClose = AlwaysAutoClose;
+      }
+      else
+      {
+         autoClose = NeverAutoClose;
+      }
+      procInfo_->setAutoClose(autoClose);
+   }
+
+   if (procInfo_->getAutoClose() == NeverAutoClose)
+   {
+      setZombie();
+   }
    saveConsoleProcesses();
 
    json::Object data;
@@ -784,13 +795,15 @@ ConsoleProcessPtr ConsoleProcess::create(
 // supports reattaching to a running process, or creating a new process with
 // previously used handle
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
+      const std::string& command,
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo,
       bool enableWebsockets)
 {
    ConsoleProcessPtr cp;
-   procInfo->setRestarted(true); // only flip to false if we find an existing
-                                 // process for this terminal handle
+
+   // only true if we create a new process with a previously used handle
+   procInfo->setRestarted(false);
 
    // Use websocket as preferred communication channel; it can fail
    // here if unable to establish the server-side of things, in which case
@@ -817,7 +830,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       procInfo->setChannelMode(Rpc, "");
    }
 
-   std::string command;
    if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
       // return existing ConsoleProcess if it is still running
@@ -839,10 +851,14 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       else
       {
          // Create new process with previously used handle
+         procInfo->setRestarted(true);
 
          // previous terminal session might have been killed while a full-screen
          // program was running
          procInfo->setAltBufferActive(false);
+
+         if (!procInfo->getZombie())
+            procInfo->resetExitCode();
 
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
@@ -880,21 +896,16 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
-   return createTerminalProcess(options, procInfo, useWebsockets());
+   std::string command;
+   return createTerminalProcess(command, options, procInfo, useWebsockets());
 }
-
 
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
 {
    TerminalShell::TerminalShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
-            proc->procInfo_->getShellType(),
-            proc->procInfo_->getCols(), proc->procInfo_->getRows(),
-            proc->procInfo_->getTerminalSequence(),
-            proc->procInfo_->getCwd(),
-            proc->procInfo_->getTrackEnv(),
-            proc->procInfo_->getHandle(),
+            *proc->procInfo_,
             &actualShellType);
    proc->procInfo_->setShellType(actualShellType);
    return createTerminalProcess(options, proc->procInfo_);
@@ -979,6 +990,12 @@ void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Op
 std::string ConsoleProcess::getShellName() const
 {
    return TerminalShell::getShellName(procInfo_->getShellType());
+}
+
+bool ConsoleProcess::useWebsockets()
+{
+   return session::options().allowTerminalWebsockets() &&
+                     session::userSettings().terminalWebsockets();
 }
 
 core::json::Array processesAsJson()

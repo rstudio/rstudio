@@ -39,7 +39,7 @@ if(NOT WIN32)
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_CANDIDATE 5.4.0 5.4.1 5.4.2)
+      foreach(QT_CANDIDATE 5.4.2 5.4.1 5.4.0)
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
             set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")

@@ -519,14 +519,17 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(id = "") {
+.rs.addApiFunction("terminalCreate", function(id = "", show = TRUE) {
    if (is.null(id))
       id <- ""
 
    if (!is.character(id))
       stop("'id' must be NULL or a character vector of length one")
 
-   .Call("rs_terminalCreate", id)
+   if (is.null(show) || !is.logical(show))
+      stop("'show' must be a logical vector")
+
+   .Call("rs_terminalCreate", id, show)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {
@@ -590,6 +593,29 @@
    .Call("rs_terminalVisible")
 })
 
+.rs.addApiFunction("terminalExecute", function(command,
+                                               workingDir = NULL,
+                                               env = character(),
+                                               show = TRUE) {
+   if (is.null(command) || !is.character(command) || (length(command) != 1))
+      stop("'command' must be a single element character vector")
+   if (!is.null(workingDir) && (!is.character(workingDir) || (length(workingDir) != 1)))
+      stop("'workingDir' must be a single element character vector")
+   if (!is.null(env) && !is.character(env))
+      stop("'env' must be a character vector")
+   if (is.null(show) || !is.logical(show))
+      stop("'show' must be a logical vector")
+
+   .Call("rs_terminalExecute", command, workingDir, env, show)
+})
+
+.rs.addApiFunction("terminalExitCode", function(id) {
+   if (is.null(id) || !is.character(id) || (length(id) != 1))
+      stop("'id' must be a single element character vector")
+
+   .Call("rs_terminalExitCode", id)
+})
+
 options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalCreate = .rs.api.terminalCreate,
                                 terminalClear = .rs.api.terminalClear,
@@ -600,6 +626,83 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
                                 terminalBusy = .rs.api.terminalBusy,
                                 terminalRunning = .rs.api.terminalRunning,
                                 terminalKill = .rs.api.terminalKill,
-                                terminalSend = .rs.api.terminalSend))
+                                terminalSend = .rs.api.terminalSend,
+                                terminalExecute = .rs.api.terminalExecute,
+                                terminalExitCode = .rs.api.terminalExitCode))
 
+.rs.addApiFunction("selectFile", function(
+   caption = "Select File",
+   label = "Select",
+   path = .rs.getProjectDirectory(),
+   filter = NULL,
+   existing = TRUE)
+{
+   .Call("rs_openFileDialog",
+         1L,
+         caption,
+         label,
+         path,
+         filter,
+         existing,
+         PACKAGE = "(embedding)")
+})
 
+.rs.addApiFunction("selectDirectory", function(
+   caption = "Select Directory",
+   label = "Select",
+   path = .rs.getProjectDirectory())
+{
+   .Call("rs_openFileDialog",
+         2L,
+         caption,
+         label,
+         path,
+         NULL,
+         TRUE,
+         PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("getThemeInfo", function() {
+   editor <- .Call("rs_readUiPref", "theme")
+   global <- .Call("rs_readUiPref", "flat_theme")
+
+   global <- switch(
+    if (is.null(global)) "" else global,
+    alternate = "Sky",
+    default = "Modern",
+    "Classic"
+  )
+
+  dark <- grepl(
+    paste(
+      "ambiance",
+      "chaos",
+      "clouds midnight",
+      "cobalt",
+      "idle fingers",
+      "kr theme",
+      "material",
+      "merbivore soft",
+      "merbivore",
+      "mono industrial",
+      "monokai",
+      "pastel on dark",
+      "solarized dark",
+      "tomorrow night blue",
+      "tomorrow night bright",
+      "tomorrow night 80s",
+      "tomorrow night",
+      "twilight",
+      "vibrant ink",
+      sep = "|"
+    ),
+    editor,
+    ignore.case = TRUE)
+  dark <- !identical(global, "Classic") && dark
+
+  list(
+    editor = editor,
+    global = global,
+    dark = dark
+  )
+})

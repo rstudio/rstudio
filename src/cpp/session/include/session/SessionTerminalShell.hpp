@@ -44,8 +44,9 @@ struct TerminalShell
 
       PosixBash    = 7, // Posix: Bash
       CustomShell  = 8, // User-specified shell command
+      NoShell      = 9, // Non-interactive job with no shell
 
-      Max          = PosixBash
+      Max          = NoShell
    };
 
    TerminalShell()

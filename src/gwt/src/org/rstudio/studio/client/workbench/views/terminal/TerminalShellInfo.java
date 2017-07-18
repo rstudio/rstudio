@@ -36,6 +36,7 @@ public class TerminalShellInfo extends JavaScriptObject
    
    public static final int SHELL_POSIX_BASH = 7;
    public static final int SHELL_CUSTOM = 8;
+   public static final int SHELL_NONE = 9;
 
    protected TerminalShellInfo() {}
 
@@ -69,6 +70,8 @@ public class TerminalShellInfo extends JavaScriptObject
          return "Bash";
       case SHELL_CUSTOM:
          return "Custom";
+      case SHELL_NONE:
+         return "User command";
       default:
          return "Unknown";
       }

@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -498,6 +498,11 @@ public:
       return launcherToken_;
    }
 
+   std::string defaultRSConnectServer()
+   {
+      return defaultRSConnectServer_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -654,6 +659,9 @@ private:
 
    // monitor
    std::string monitorSharedSecret_;
+
+   // connect
+   std::string defaultRSConnectServer_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

@@ -22,6 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
@@ -165,8 +166,9 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTyp
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
@@ -894,10 +896,15 @@ public class ClientEventDispatcher
             ClearTerminalEvent.Data data = event.getData();
             eventBus_.fireEvent(new ClearTerminalEvent(data));
          }
-         else if (type.equals(ClientEvent.CreateNamedTerminal))
+         else if (type.equals(ClientEvent.AddTerminal))
          {
-            CreateNamedTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CreateNamedTerminalEvent(data));
+            AddTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new AddTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.RemoveTerminal))
+         {
+            RemoveTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RemoveTerminalEvent(data));
          }
          else if (type.equals(ClientEvent.ActivateTerminal))
          {
@@ -923,6 +930,11 @@ public class ClientEventDispatcher
          {
             RequestOpenProjectEvent.Data data = event.getData();
             eventBus_.fireEvent(new RequestOpenProjectEvent(data));
+         }
+         else if (type.equals(ClientEvent.OpenFileDialog))
+         {
+            OpenFileDialogEvent.Data data = event.getData();
+            eventBus_.fireEvent(new OpenFileDialogEvent(data));
          }
          else
          {

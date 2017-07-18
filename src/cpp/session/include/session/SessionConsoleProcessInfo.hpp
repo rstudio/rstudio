@@ -58,6 +58,7 @@ enum AutoCloseMode
 extern const int kDefaultMaxOutputLines;
 extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
+extern const int kNewTerminal;
 extern const size_t kOutputBufferSize;
 
 // ConsoleProcess metadata that is persisted, and sent to the client on
@@ -136,6 +137,7 @@ public:
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
    boost::optional<int> getExitCode() const { return exitCode_; }
+   void resetExitCode();
 
    // Does this process have child processes?
    void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }
