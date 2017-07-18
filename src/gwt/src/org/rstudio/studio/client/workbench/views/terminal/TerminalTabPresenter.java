@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTe
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.gwt.user.client.Command;
@@ -40,6 +41,7 @@ public class TerminalTabPresenter extends BusyPresenter
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
+                                             RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
 
 {
@@ -96,10 +98,18 @@ public class TerminalTabPresenter extends BusyPresenter
       /**
        * Add a terminal to the list.
        * @param cpi information on the terminal
+       * @param hasSession true if a TerminalSession has been created for this terminal
        * caption
        */
-      void addTerminal(ConsoleProcessInfo cpi);
+      void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
+      /**
+       * Remove a terminal from the list.
+       * @param handle terminal to remove
+       * caption
+       */
+      void removeTerminal(String handle);
+
       /**
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
@@ -205,7 +215,19 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onAddTerminal(AddTerminalEvent event)
    {
-      view_.addTerminal(event.getProcessInfo());
+      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
+      
+      if (event.getShow())
+      {
+         onActivateTerminal();
+         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
+      }
+   }
+
+   @Override
+   public void onRemoveTerminal(RemoveTerminalEvent event)
+   {
+      view_.removeTerminal(event.getHandle());
    }
 
    @Override

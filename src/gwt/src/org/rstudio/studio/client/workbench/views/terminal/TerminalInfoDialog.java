@@ -36,55 +36,62 @@ import com.google.inject.Inject;
 public class TerminalInfoDialog extends ModalDialogBase
 {
 
-   public TerminalInfoDialog(final TerminalSession session, TerminalSessionSocket socket)
+   public TerminalInfoDialog(String globalInfo, final TerminalSession session)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText("Terminal Diagnostics - " + session.getCaption());
+      setText("Terminal Diagnostics");
 
       boolean localEchoEnabled = uiPrefs_.terminalLocalEcho().getValue() && 
             !BrowseCap.isWindowsDesktop();
       
-      ConsoleProcessInfo cpi = session.getProcInfo();
-      
-      String cwd = cpi.getCwd();
-      if (StringUtil.isNullOrEmpty(cwd))
-         cwd = "Default";
-      
       final StringBuilder diagnostics = new StringBuilder();
-      diagnostics.append("Terminal Session Information\n----------------------------\n");
-      diagnostics.append("Caption:     '" + cpi.getCaption() + "'\n");
-      diagnostics.append("Title:       '" + cpi.getTitle() + "'\n");
-      diagnostics.append("Cols x Rows  '" + cpi.getCols() + " x " + cpi.getRows() + "'\n");
-      diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(cpi.getShellType()) + "'\n");
-      diagnostics.append("Handle:      '" + cpi.getHandle() + "'\n");
-      diagnostics.append("Sequence:    '" + cpi.getTerminalSequence() + "'\n");
-      diagnostics.append("Restarted:   '" + cpi.getRestarted() + "\n");
-      diagnostics.append("Busy:        '" + cpi.getHasChildProcs() + "'\n");
-      diagnostics.append("Full screen: 'client=" + session.xtermAltBufferActive() +  
-            "/server=" + cpi.getAltBufferActive() + "'\n"); 
-      diagnostics.append("Zombie:      '" + cpi.getZombie() + "'\n");
-      diagnostics.append("Track Env    '" + cpi.getTrackEnv() + "'\n");
-      diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
-      diagnostics.append("Working Dir: '" + cwd + "'\n"); 
-      diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");
-      diagnostics.append("Typing lag:  '" + socket.getTypingLagMsg() + "'\n");
-
-      diagnostics.append("\nSystem Information\n------------------\n");
-      diagnostics.append("Desktop:    '" + Desktop.isDesktop() + "'\n");
-      diagnostics.append("Platform:   '" + BrowseCap.getPlatformName() + "'\n");
-      if (!Desktop.isDesktop())
-         diagnostics.append("Browser:    '" + BrowseCap.getBrowserName() + "'\n");
-
-      diagnostics.append("\nConnection Information\n----------------------\n");
-      diagnostics.append(socket.getConnectionDiagnostics());
       
-      diagnostics.append("\nLocal-echo Match Failures\n-------------------------\n");
-      if (!localEchoEnabled)
-         diagnostics.append("<Not applicable>\n");
-      else
-         diagnostics.append(socket.getLocalEchoDiagnostics());
-     
+      diagnostics.append("Global Terminal Information\n---------------------------\n");
+      diagnostics.append(globalInfo);
+      if (session != null)
+      {
+         ConsoleProcessInfo cpi = session.getProcInfo();
+
+         String cwd = cpi.getCwd();
+         if (StringUtil.isNullOrEmpty(cwd))
+            cwd = "Default";
+
+         diagnostics.append("\nCurrent Terminal Session Information\n------------------------------------\n");
+         diagnostics.append("Caption:     '" + cpi.getCaption() + "'\n");
+         diagnostics.append("Title:       '" + cpi.getTitle() + "'\n");
+         diagnostics.append("Cols x Rows  '" + cpi.getCols() + " x " + cpi.getRows() + "'\n");
+         diagnostics.append("Shell:       '" + TerminalShellInfo.getShellName(cpi.getShellType()) + "'\n");
+         diagnostics.append("Handle:      '" + cpi.getHandle() + "'\n");
+         diagnostics.append("Sequence:    '" + cpi.getTerminalSequence() + "'\n");
+         diagnostics.append("Restarted:   '" + cpi.getRestarted() + "\n");
+         diagnostics.append("Busy:        '" + cpi.getHasChildProcs() + "'\n");
+         diagnostics.append("Exit Code:   '" + cpi.getExitCode() + "'\n");
+         diagnostics.append("Full screen: 'client=" + session.xtermAltBufferActive() +  
+               "/server=" + cpi.getAltBufferActive() + "'\n"); 
+         diagnostics.append("Zombie:      '" + cpi.getZombie() + "'\n");
+         diagnostics.append("Track Env    '" + cpi.getTrackEnv() + "'\n");
+         diagnostics.append("Local-echo:  '" + localEchoEnabled + "'\n"); 
+         diagnostics.append("Working Dir: '" + cwd + "'\n"); 
+         diagnostics.append("Interactive: '" + cpi.getInteractionModeName() + "'\n");
+         diagnostics.append("WebSockets:  '" + uiPrefs_.terminalUseWebsockets().getValue() + "'\n");
+         diagnostics.append("Typing lag:  '" + session.getSocket().getTypingLagMsg() + "'\n");
+
+         diagnostics.append("\nSystem Information\n------------------\n");
+         diagnostics.append("Desktop:    '" + Desktop.isDesktop() + "'\n");
+         diagnostics.append("Platform:   '" + BrowseCap.getPlatformName() + "'\n");
+         if (!Desktop.isDesktop())
+            diagnostics.append("Browser:    '" + BrowseCap.getBrowserName() + "'\n");
+
+         diagnostics.append("\nConnection Information\n----------------------\n");
+         diagnostics.append(session.getSocket().getConnectionDiagnostics());
+
+         diagnostics.append("\nLocal-echo Match Failures\n-------------------------\n");
+         if (!localEchoEnabled)
+            diagnostics.append("<Not applicable>\n");
+         else
+            diagnostics.append(session.getSocket().getLocalEchoDiagnostics());
+      }
       textArea_ = new TextArea();
       textArea_.addStyleName(ThemeResources.INSTANCE.themeStyles().fixedWidthFont());
       textArea_.setSize("600px", "400px");
@@ -98,33 +105,35 @@ public class TerminalInfoDialog extends ModalDialogBase
          }
       }));
       
-      appendBufferButton_ = new ThemedButton("Append Buffer", new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event) {
-            appendBufferButton_.setEnabled(false);
-            diagnostics.append("\n\nTerminal Buffer\n---------------\n");
-            session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
-            {
-               @Override
-               public void onSuccess(String buffer)
+      if (session != null)
+      {
+         appendBufferButton_ = new ThemedButton("Append Buffer", new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+               appendBufferButton_.setEnabled(false);
+               diagnostics.append("\n\nTerminal Buffer\n---------------\n");
+               session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
                {
-                  diagnostics.append(AnsiCode.prettyPrintNonCRLF(buffer));
-                  textArea_.setText(diagnostics.toString());
-                  textArea_.setCursorPos(diagnostics.toString().length());
-                  textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
-               }
-               
-               @Override
-               public void onFailure(String message)
-               {
-                  diagnostics.append(message);
-                  textArea_.setText(diagnostics.toString());
-               }
-            });
-         }
-      });
-      addLeftButton(appendBufferButton_);
-      
+                  @Override
+                  public void onSuccess(String buffer)
+                  {
+                     diagnostics.append(AnsiCode.prettyPrintNonCRLF(buffer));
+                     textArea_.setText(diagnostics.toString());
+                     textArea_.setCursorPos(diagnostics.toString().length());
+                     textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
+                  }
+
+                  @Override
+                  public void onFailure(String message)
+                  {
+                     diagnostics.append(message);
+                     textArea_.setText(diagnostics.toString());
+                  }
+               });
+            }
+         });
+         addLeftButton(appendBufferButton_);
+      }      
    }
 
    @Inject

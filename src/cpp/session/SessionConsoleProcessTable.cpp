@@ -298,6 +298,70 @@ Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
    return Success();
 }
 
+Error createTerminalExecuteConsoleProc(
+      const std::string& title,
+      const std::string& command,
+      const std::string& currentDir,
+      const core::system::Options& env,
+      std::string* pHandle)
+{
+   using namespace session::module_context;
+   using namespace session::console_process;
+
+   std::pair<int, std::string> sequenceInfo = nextTerminalName();
+   int termSequence = sequenceInfo.first;
+   std::string caption = sequenceInfo.second;
+
+   FilePath cwd;
+   if (!currentDir.empty())
+   {
+      cwd = module_context::resolveAliasedPath(currentDir);
+   }
+
+   core::system::ProcessOptions options;
+
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   core::system::getModifiedEnv(env, &childEnv);
+   options.environment = childEnv;
+
+   options.smartTerminal = true;
+
+#ifdef _WIN32
+   options.detachProcess = true;
+#else
+   options.detachSession = true;
+#endif
+
+   options.reportHasSubprocs = false;
+   options.trackCwd = false;
+   options.workingDir = cwd;
+
+   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
+         boost::shared_ptr<ConsoleProcessInfo>(
+            new ConsoleProcessInfo(
+               caption,
+               title,
+               std::string() /*handle*/,
+               termSequence,
+               TerminalShell::NoShell,
+               false /*altBuffer*/,
+               cwd,
+               core::system::kDefaultCols, core::system::kDefaultRows,
+               false /*zombie*/,
+               false /*trackEnv*/));
+
+   ptrProcInfo->setInteractionMode(InteractionNever);
+   ptrProcInfo->setAutoClose(NeverAutoClose);
+
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+         ConsoleProcess::createTerminalProcess(command, options, ptrProcInfo,
+                                               ConsoleProcess::useWebsockets());
+   *pHandle = ptrProc->handle();
+
+   return Success();
+}
+
 } // namespace console_process
 } // namespace session
 } // namespace rstudio

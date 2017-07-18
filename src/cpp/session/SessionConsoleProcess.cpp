@@ -34,12 +34,6 @@ namespace {
 
 ConsoleProcessSocket s_terminalSocket;
 
-bool useWebsockets()
-{
-   return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
-}
-
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
@@ -80,12 +74,6 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
 #endif
-
-   if (procInfo.getTerminalSequence()!= kNoTerminal)
-   {
-      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
-                           boost::lexical_cast<std::string>(procInfo.getTerminalSequence()));
-   }
 
    // ammend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
@@ -176,7 +164,7 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
-   if (interactionMode() != InteractionNever)
+   if (interactionMode() != InteractionNever || options_.smartTerminal)
    {
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
@@ -242,6 +230,8 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "TERM",
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
+
+      core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 #endif
    }
 
@@ -288,6 +278,7 @@ Error ConsoleProcess::start()
    }
    if (!error)
       started_ = true;
+
    return error;
 }
 
@@ -804,6 +795,7 @@ ConsoleProcessPtr ConsoleProcess::create(
 // supports reattaching to a running process, or creating a new process with
 // previously used handle
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
+      const std::string& command,
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo,
       bool enableWebsockets)
@@ -838,7 +830,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       procInfo->setChannelMode(Rpc, "");
    }
 
-   std::string command;
    if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
       // return existing ConsoleProcess if it is still running
@@ -865,6 +856,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          // previous terminal session might have been killed while a full-screen
          // program was running
          procInfo->setAltBufferActive(false);
+
+         if (!procInfo->getZombie())
+            procInfo->resetExitCode();
 
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
@@ -902,9 +896,9 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
       boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
-   return createTerminalProcess(options, procInfo, useWebsockets());
+   std::string command;
+   return createTerminalProcess(command, options, procInfo, useWebsockets());
 }
-
 
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
@@ -996,6 +990,12 @@ void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Op
 std::string ConsoleProcess::getShellName() const
 {
    return TerminalShell::getShellName(procInfo_->getShellType());
+}
+
+bool ConsoleProcess::useWebsockets()
+{
+   return session::options().allowTerminalWebsockets() &&
+                     session::userSettings().terminalWebsockets();
 }
 
 core::json::Array processesAsJson()

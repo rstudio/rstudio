@@ -95,6 +95,11 @@ void ConsoleProcessInfo::setExitCode(int exitCode)
    exitCode_.reset(exitCode);
 }
 
+void ConsoleProcessInfo::resetExitCode()
+{
+   exitCode_.reset();
+}
+
 void ConsoleProcessInfo::appendToOutputBuffer(const std::string &str)
 {
    // For modal console procs, store terminal output directly in the

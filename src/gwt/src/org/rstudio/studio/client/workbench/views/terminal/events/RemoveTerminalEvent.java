@@ -1,5 +1,5 @@
 /*
- * AddTerminalEvent.java
+ * RemoveTerminalEvent.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -18,43 +18,32 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent.Handler;
 
-public class AddTerminalEvent extends GwtEvent<Handler>
+public class RemoveTerminalEvent extends GwtEvent<Handler>
 {
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
 
-      public native final ConsoleProcessInfo getProcessInfo() /*-{ 
-         return this.process_info; 
-      }-*/;
-
-      public native final boolean getShow() /*-{ 
-         return this.show; 
+      public native final String getHandle() /*-{ 
+         return this.handle; 
       }-*/;
    }
    
    public interface Handler extends EventHandler
    {
-      void onAddTerminal(AddTerminalEvent event);
+      void onRemoveTerminal(RemoveTerminalEvent event);
    }
 
-   public AddTerminalEvent(Data data)
+   public RemoveTerminalEvent(Data data)
    {
-      processInfo_ = data.getProcessInfo();
-      show_ = data.getShow();
+      handle_ = data.getHandle();
    }
 
-   public ConsoleProcessInfo getProcessInfo()
+   public String getHandle()
    {
-      return processInfo_;
-   }
-   
-   public boolean getShow()
-   {
-      return show_;
+      return handle_;
    }
    
    @Override
@@ -66,11 +55,10 @@ public class AddTerminalEvent extends GwtEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onAddTerminal(this);
+      handler.onRemoveTerminal(this);
    }
 
-   private final ConsoleProcessInfo processInfo_;
-   private final boolean show_;
+   private final String handle_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
