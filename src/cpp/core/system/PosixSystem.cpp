@@ -59,6 +59,8 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <core/RegexUtils.hpp>
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -747,8 +749,61 @@ bool hasSubprocessesViaPgrep(PidType pid)
 
 std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
 {
-   // TODO (gary)
    std::vector<SubprocInfo> subprocs;
+
+   // pgrep -P ppid -l returns 0 if there are matches, non-zero
+   // otherwise; output is one line per direct child process,
+   // for example:
+   //
+   // 23432 sleep
+   // 23433 mycommand
+   shell_utils::ShellCommand cmd("pgrep");
+   cmd << "-P" << pid << "-l";
+
+   core::system::ProcessOptions options;
+   options.detachSession = true;
+
+   core::system::ProcessResult result;
+   Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                            options,
+                            &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return subprocs;
+   }
+
+   if (result.exitStatus == 0)
+   {
+      boost::regex re("^(\\d+)\\s+(.+)");
+      std::vector<std::string> lines = algorithm::split(result.stdOut, "\n");
+      BOOST_FOREACH(const std::string& line, lines)
+      {
+         if (boost::algorithm::trim_copy(line).empty())
+         {
+            continue;
+         }
+
+         boost::smatch matches;
+         if (regex_utils::match(line, matches, re))
+         {
+            SubprocInfo info;
+            info.pid = safe_convert::stringTo<PidType>(matches[1], -1);
+            if (info.pid != -1)
+            {
+               info.exe = matches[2];
+               subprocs.push_back(info);
+            }
+         }
+         else
+         {
+            std::string msg = "Unrecognized output from pgrep -l: '";
+            msg += line;
+            msg += "'";
+            LOG_ERROR_MESSAGE(msg);
+         }
+      }
+   }
    return subprocs;
 }
 

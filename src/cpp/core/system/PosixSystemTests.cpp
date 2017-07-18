@@ -109,6 +109,52 @@ context("PosixSystemTests")
       }
    }
 
+   test_that("Empty subprocess list returned correctly with pgrep method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
+         expect_true(children.empty());
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+   test_that("Subprocess name detected correctly with pgrep method")
+   {
+      std::string exe = "sleep";
+
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
+         expect_true(children.size() == 1);
+         if (children.size() == 1)
+            expect_true(children[0].exe.compare(exe) == 0);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
 #ifdef __APPLE__ // Mac-specific subprocess detection
 
    test_that("No subprocess detected correctly with Mac method")
