@@ -15,6 +15,8 @@
 
 #ifndef _WIN32
 
+#include <boost/foreach.hpp>
+
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
 #include <sys/wait.h>
@@ -146,9 +148,20 @@ context("PosixSystemTests")
       {
          // we now have a subprocess
          std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
-         expect_true(children.size() == 1);
-         if (children.size() == 1)
-            expect_true(children[0].exe.compare(exe) == 0);
+         expect_true(children.size() >= 1);
+         if (children.size() >= 1)
+         {
+            bool found = false;
+            BOOST_FOREACH(SubprocInfo info, children)
+            {
+               if (info.exe.compare(exe) == 0)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            expect_true(found);
+         }
 
          ::kill(pid, SIGKILL);
          ::waitpid(pid, NULL, 0);
