@@ -35,15 +35,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
          expect_false(hasSubprocesses(pid));
 
-         kill(pid, SIGKILL);
+         expect_true(::kill(pid, SIGKILL) == 0);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -54,15 +55,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // we now have a subprocess
          expect_true(hasSubprocesses(getpid()));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -73,15 +75,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
          expect_false(hasSubprocessesViaPgrep(pid));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -92,15 +95,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // we now have a subprocess
          expect_true(hasSubprocessesViaPgrep(getpid()));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -113,15 +117,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
          expect_false(hasSubprocessesMac(pid));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -132,17 +137,90 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // we now have a subprocess
          expect_true(hasSubprocessesMac(getpid()));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
+
+   test_that("Subprocess list correctly empty with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesMac(pid);
+         expect_true(children.empty());
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+   test_that("Subprocess count and pid detected correctly with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // we now have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+         expect_true(children.size() == 1);
+         expect_true(children.at(0).pid == pid);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+   test_that("Subprocess name detected correctly with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+      std::string exe = "sleep";
+
+      if (pid == 0)
+      {
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess, need a slight pause to allow system tables to
+         // catch up
+         ::sleep(1);
+         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+         expect_true(children.size() == 1);
+         if (children.size() == 1)
+            expect_true(children[0].exe.compare(exe) == 0);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+
+
 #endif // __APPLE__
 
 #ifdef HAVE_PROCSELF
@@ -153,15 +231,16 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
          expect_false(hasSubprocessesViaProcFs(pid));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -172,18 +251,40 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // we now have a subprocess
          expect_true(hasSubprocessesViaProcFs(getpid()));
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 #endif // HAVE_PROCSELF
+
+   test_that("Empty list of subprocesses returned correctly with generic method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         std::vector<SubprocInfo> children = getSubprocesses(pid);
+         expect_true(children.empty());
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
 
    test_that("Current working directory determined correctly with generic method")
    {
@@ -194,8 +295,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -205,7 +306,8 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -218,8 +320,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -229,7 +331,8 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -243,8 +346,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -254,7 +357,8 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 #endif // HAVE_PROCSELF

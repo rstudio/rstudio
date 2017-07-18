@@ -224,6 +224,42 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hProcess);
       CloseHandle(pi.hThread);
    }
+
+   SECTION("Empty subproc list when no child processes")
+   {
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+
+      ZeroMemory(&si, sizeof(si));
+      si.cb = sizeof(si);
+      ZeroMemory(&pi, sizeof(pi));
+
+      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+      cmd.copy(&(cmdBuf[0]), cmd.size());
+
+      // Start the child process.
+      CHECK(CreateProcess(
+               NULL,          // No module name (use command line)
+               &(cmdBuf[0]),  // Command
+               NULL,          // Process handle not inheritable
+               NULL,          // Thread handle not inheritable
+               FALSE,         // Set handle inheritance to FALSE
+               0,             // No creation flags
+               NULL,          // Use parent's environment block
+               NULL,          // Use parent's starting directory
+               &si,           // Pointer to STARTUPINFO structure
+               &pi));         // Pointer to PROCESS_INFORMATION structure
+
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      expect_true(children.empty());
+
+      CHECK(TerminateProcess(pi.hProcess, 1));
+
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+   }
 }
 
 } // end namespace tests

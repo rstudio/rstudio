@@ -745,19 +745,60 @@ bool hasSubprocessesViaPgrep(PidType pid)
    return result.exitStatus == 0;
 }
 
+std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
+{
+   // TODO (gary)
+   std::vector<SubprocInfo> subprocs;
+   return subprocs;
+}
+
 #ifdef __APPLE__ // Mac-specific subprocess detection
 bool hasSubprocessesMac(PidType pid)
 {
    int result = proc_listchildpids(pid, NULL, 0);
    if (result > 0)
    {
-      // have fetch details to get accurate result
+      // have to fetch details to get accurate result
       std::vector<int> buffer;
       buffer.reserve(result);
       result = proc_listchildpids(pid, &buffer[0], buffer.capacity() * sizeof(int));
    }
    return result > 0;
 }
+
+std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
+{
+   std::vector<SubprocInfo> subprocs;
+
+   int result = proc_listchildpids(pid, NULL, 0);
+   if (result > 0)
+   {
+      std::vector<PidType> buffer(result, 0);
+      result = proc_listchildpids(pid, &buffer[0], buffer.size() * sizeof(PidType));
+      for (int i = 0; i < result; i++)
+      {
+         PidType childPid = buffer[i];
+         if (childPid == 0)
+            continue;
+
+         SubprocInfo info;
+         info.pid = childPid;
+
+         // Try to get exe
+         std::string path(PROC_PIDPATHINFO_MAXSIZE, '\0');
+         proc_pidpath(childPid, &path[0], path.length());
+         path.resize(strlen(&path[0]));
+         if (!path.empty())
+         {
+            core::FilePath exePath(path);
+            info.exe = exePath.filename();
+         }
+         subprocs.push_back(info);
+      }
+   }
+   return subprocs;
+}
+
 #endif
 
 #ifdef HAVE_PROCSELF
@@ -855,6 +896,13 @@ bool hasSubprocessesViaProcFs(PidType pid)
    }
    return false;
 }
+
+std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
+{
+   // TODO (gary)
+   std::vector<SubprocInfo> subprocs;
+   return subprocs;
+}
 #endif // HAVE_PROCSELF
 
 bool hasSubprocesses(PidType pid)
@@ -867,6 +915,21 @@ bool hasSubprocesses(PidType pid)
    return hasSubprocessesViaProcFs(pid);
 #else
    return hasSubprocessesViaPgrep(pid);
+#endif
+
+#endif
+}
+
+std::vector<SubprocInfo> getSubprocesses(PidType pid)
+{
+#ifdef __APPLE__
+   return getSubprocessesMac(pid);
+#else // Linux
+
+#ifdef HAVE_PROCSELF
+   return getSubprocessesViaProcFs(pid);
+#else
+   return getSubprocessesViaPgrep(pid);
 #endif
 
 #endif

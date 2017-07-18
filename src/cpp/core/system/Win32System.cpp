@@ -912,6 +912,13 @@ bool hasSubprocesses(PidType pid)
    return false;
 }
 
+std::vector<SubprocInfo> getSubprocesses(PidType pid)
+{
+   // NYI for Win32
+   std::vector<SubprocInfo> subprocs;
+   return subprocs;
+}
+
 FilePath currentWorkingDir(PidType pid)
 {
    // NYI for Win32; commonly accepted technique for this is to use
