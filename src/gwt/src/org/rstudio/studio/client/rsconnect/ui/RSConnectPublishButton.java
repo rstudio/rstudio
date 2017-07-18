@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
@@ -79,7 +80,7 @@ public class RSConnectPublishButton extends Composite
       }
    }
 
-   public RSConnectPublishButton(int contentType, boolean showCaption,
+   public RSConnectPublishButton(String host, int contentType, boolean showCaption,
          AppCommand boundCommand)
    {
       contentType_ = contentType;
@@ -102,11 +103,15 @@ public class RSConnectPublishButton extends Composite
                }
             });
       
+      publishButton_.getElement().setId(ElementIds.ID_PREFIX + 
+            ElementIds.PUBLISH_ITEM + "_" + host);
       panel.add(publishButton_);
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
       publishMenuButton_ = new ToolbarButton(publishMenu_, true);
+      publishMenuButton_.getElement().setId(ElementIds.ID_PREFIX + 
+            ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host);
       panel.add(publishMenuButton_);
       
       // initialize composite widget
@@ -798,6 +803,15 @@ public class RSConnectPublishButton extends Composite
          }
       });
    }
+   
+   public final static String HOST_EDITOR = "editor";
+   public final static String HOST_PLOTS = "plots_pane";
+   public final static String HOST_PRESENTATION = "presentation";
+   public final static String HOST_PROFILER = "profiler";
+   public final static String HOST_RMD_OUTPUT = "rmd_output";
+   public final static String HOST_SHINY_APP = "shiny_app";
+   public final static String HOST_HTML_PREVIEW = "html_preview";
+   public final static String HOST_VIEWER = "viewer";
    
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;

@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -88,6 +89,8 @@ public class WizardPageSelector<I,T> extends Composite
          
          LayoutPanel layoutPanel = new LayoutPanel();
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
+         layoutPanel.getElement().setId(
+               ElementIds.idFromLabel(pageInfo.getTitle() + "_wizard_page"));
          
          ImageResource pageImageResource = pageInfo.getImage();
          Image image = null;

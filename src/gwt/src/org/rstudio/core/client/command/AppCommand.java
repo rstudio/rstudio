@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -546,6 +547,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       text.append("<table ");
+      if (label != null)
+      {
+         text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
+      }
       
       if (styleName != null)
       {

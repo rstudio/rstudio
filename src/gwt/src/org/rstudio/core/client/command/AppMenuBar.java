@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 
 import java.util.List;
@@ -64,7 +65,8 @@ public class AppMenuBar extends BaseMenuBar
          if (vertical_)
             text = AppCommand.formatMenuLabel(null, text, null);
          else
-            text = DomUtils.textToHtml(text);
+            text = "<span id=\"" + ElementIds.idFromLabel(text) + "_menu" + "\">" +
+                   DomUtils.textToHtml(text) + "</span>";
       }
 
       return super.addItem(text,

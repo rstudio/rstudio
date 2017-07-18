@@ -154,6 +154,7 @@ public class ProfilerEditingTargetWidget extends Composite
       
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(
+                  RSConnectPublishButton.HOST_PROFILER,
                   RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
       
       publishButton_.setPublishHtmlSource(publishHtmlSource);
