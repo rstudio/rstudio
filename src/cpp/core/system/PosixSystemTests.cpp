@@ -281,9 +281,8 @@ context("PosixSystemTests")
 
 
 
-#endif // __APPLE__
+#else
 
-#ifdef HAVE_PROCSELF
    test_that("No subprocess detected correctly with procfs method")
    {
       pid_t pid = fork();
@@ -323,7 +322,63 @@ context("PosixSystemTests")
          ::waitpid(pid, NULL, 0);
       }
    }
-#endif // HAVE_PROCSELF
+
+   test_that("No subprocesses detected correctly with procfs method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
+         expect_true(children.empty());
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+   test_that("Subprocess detected correctly with procfs method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+      std::string exe = "sleep";
+
+      if (pid == 0)
+      {
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
+         expect_true(children.size() >= 1);
+         if (children.size() >= 1)
+         {
+            bool found = false;
+            BOOST_FOREACH(SubprocInfo info, children)
+            {
+               if (info.exe.compare(exe) == 0)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            expect_true(found);
+         }
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+#endif // !__APPLE__
 
    test_that("Empty list of subprocesses returned correctly with generic method")
    {
@@ -396,7 +451,7 @@ context("PosixSystemTests")
       }
    }
 
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
    test_that("Current working directory determined correctly with procfs method")
    {
       FilePath emptyPath;
@@ -421,7 +476,7 @@ context("PosixSystemTests")
          ::waitpid(pid, NULL, 0);
       }
    }
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 }
 
 } // end namespace tests

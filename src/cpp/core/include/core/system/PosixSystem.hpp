@@ -229,10 +229,10 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid);
 
 // Detect subprocesses via procfs; returns false no subprocesses, true if
 // subprocesses or unable to determine if there are subprocesses
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
 bool hasSubprocessesViaProcFs(PidType pid);
 std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid);
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
@@ -240,9 +240,9 @@ FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
 // empty FilePath if unable to determine.
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid);
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 
 } // namespace system
 } // namespace core
