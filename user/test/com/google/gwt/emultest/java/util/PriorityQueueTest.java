@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.TreeSet;
@@ -186,7 +187,7 @@ public class PriorityQueueTest extends GWTTestCase {
     assertTrue(queue.contains(3));
     assertFalse(queue.contains(4));
   }
-  
+
   public void testPeekElement() {
     PriorityQueue<Integer> queue = new PriorityQueue<>();
     try {
@@ -245,5 +246,40 @@ public class PriorityQueueTest extends GWTTestCase {
     PriorityQueue<Integer> pq = new PriorityQueue<Integer>();
     addArray(pq, values);
     return pq;
-  } 
+  }
+
+  public void testIteratorRemove() {
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+    queue.add(1);
+    queue.add(2);
+    queue.add(3);
+    queue.add(5);
+    queue.add(6);
+
+    int sum = 0;
+    Iterator<Integer> it = queue.iterator();
+    while (it.hasNext()) {
+      int i = it.next();
+      if (i == 2) {
+        it.remove();
+      }
+      sum += i;
+    }
+    assertEquals(17, sum);
+    assertEquals(4, queue.size());
+
+    try {
+      queue.iterator().remove();
+      fail();
+    } catch (IllegalStateException e) { }
+
+    try {
+      Iterator<Integer> itt = queue.iterator();
+      while (itt.hasNext()) {
+        it.remove();
+        it.remove();
+        fail();
+      }
+    } catch (IllegalStateException e) { };
+  }
 }

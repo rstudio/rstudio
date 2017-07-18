@@ -124,8 +124,31 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
 
   @Override
   public Iterator<E> iterator() {
-    // TODO(jat): PriorityQueue is supposed to have a modifiable iterator.
-    return Collections.unmodifiableList(heap).iterator();
+    return new Iterator<E>() {
+      private E current = null;
+      // Make a copy of the elements so that remove() doesn't screw up the order.
+      Iterator<E> elementsToTraverse = new ArrayList<>(heap).iterator();
+      @Override
+      public boolean hasNext() {
+        return elementsToTraverse.hasNext();
+      }
+
+      @Override
+      public E next() {
+        current = elementsToTraverse.next();
+        return current;
+      }
+
+      @Override
+      public void remove() {
+        if (current == null) {
+          throw new IllegalStateException("remove() called before iteration or removed already.");
+        }
+        // Remove the current element. Keep on iterating.
+        PriorityQueue.this.remove(current);
+        current = null;
+      }
+    };
   }
 
   @Override
