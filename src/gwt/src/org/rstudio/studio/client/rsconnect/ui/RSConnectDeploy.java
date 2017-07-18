@@ -325,16 +325,8 @@ public class RSConnectDeploy extends Composite
          {
             if (fromPrevious_ != null)
             {
-               boolean existing = accountList_.getSelectedAccount().equals(
-                     fromPrevious_.getAccount());
-               appInfoPanel_.setVisible(existing);
-               newAppPanel_.setVisible(!existing);
-
-               // validate name if necessary
-               if (existing && onDeployEnabled_ != null)
-                  onDeployEnabled_.execute();
-               else if (!existing)
-                  appName_.validateAppName();
+               // re-fetch based on new account (maybe the other account has access)
+               setPreviousInfo();
             }
             else
             {
@@ -658,14 +650,25 @@ public class RSConnectDeploy extends Composite
          appExistingName_.setText(fromPrevious_.getDisplayName());
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
+         appErrorPanel_.setVisible(false);
          
+         // default to details supplied by record, but use selected account instead if we know it
+         String accountName = fromPrevious_.getAccountName();
+         String server = fromPrevious_.getServer();
+         RSConnectAccount account = accountList_.getSelectedAccount();
+         if (account != null)
+         {
+            accountName = account.getName();
+            server = account.getServer();
+         }
+
          if (!StringUtil.isNullOrEmpty(fromPrevious_.getAppId()))
          {
             // we know this app's ID, so get its details directly
             server_.getRSConnectApp(
                   fromPrevious_.getAppId(),
-                  fromPrevious_.getAccountName(), 
-                  fromPrevious_.getServer(), 
+                  accountName,
+                  server,
                   fromPrevious_.getHostUrl(),
                   new ServerRequestCallback<RSConnectApplicationResult>()
                   {
