@@ -72,12 +72,13 @@ public class DeploymentMenuItem extends CheckableMenuItem
             record.getDisplayName();
 
       // build subtitle
-      String subtitle;
-      if (record.getUsername() != null)
+      String subtitle = "";
+      if (!StringUtil.isNullOrEmpty(record.getUsername()))
          subtitle = record.getUsername();
       else
          subtitle = record.getAccountName();
-      subtitle += "@";
+      if (!StringUtil.isNullOrEmpty(subtitle))
+         subtitle += "@";
       if (record.getHostUrl() != null)
          subtitle += StringUtil.getHostFromUrl(record.getHostUrl());
       else
