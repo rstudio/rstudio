@@ -47,6 +47,8 @@ bool detectRVersion(const core::FilePath& rScriptPath,
                     core::r_util::RVersion* pVersion,
                     std::string* pErrMsg);
 
+void overrideSystemRVersion(const core::r_util::RVersion& version);
+
 } // namespace r_environment
 } // namespace server
 } // namespace rstudio

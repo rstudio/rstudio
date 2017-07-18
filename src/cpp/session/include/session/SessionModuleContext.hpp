@@ -98,6 +98,7 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
    
 // r session info
 std::string rVersion();
+std::string rVersionLabel();
 std::string rHomeDir();
 
 // active sessions

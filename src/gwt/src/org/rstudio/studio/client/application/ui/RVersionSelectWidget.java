@@ -78,6 +78,8 @@ public class RVersionSelectWidget extends SelectWidget
          String choice = "R version " + version.getVersion();
          if (disambiguate)
             choice = choice + " (" + version.getRHome() + ")";
+         if (!version.getLabel().isEmpty())
+            choice += " (" + version.getLabel() + ")";
          choices.add(choice);
       }
 
@@ -108,7 +110,7 @@ public class RVersionSelectWidget extends SelectWidget
             String version = str.substring(0, loc);
             String rHomeDir = str.substring(loc + SEP.length());
             if (version.length() > 0 && rHomeDir.length() > 0)
-               return RVersionSpec.create(version, rHomeDir);
+               return RVersionSpec.create(version, rHomeDir, "");
          }
       }
       

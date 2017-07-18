@@ -587,7 +587,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // begin session
    using namespace module_context;
-   activeSession().beginSession(rVersion(), rHomeDir());
+   activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
 
    // setup fork handlers
    main_process::setupForkHandlers();

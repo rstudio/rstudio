@@ -1498,6 +1498,12 @@ std::string rVersion()
    return rVersion;
 }
 
+std::string rVersionLabel()
+{
+   std::string versionLabel = system::getenv("RSTUDIO_R_VERSION_LABEL");
+   return versionLabel;
+}
+
 std::string rHomeDir()
 {
    // get the current R home directory

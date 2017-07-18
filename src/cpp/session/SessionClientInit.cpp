@@ -365,6 +365,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    json::Object rVersionsJson;
    rVersionsJson["r_version"] = module_context::rVersion();
+   rVersionsJson["r_version_label"] = module_context::rVersionLabel();
    rVersionsJson["r_home_dir"] = module_context::rHomeDir();
    sessionInfo["r_versions_info"] = rVersionsJson;
 

@@ -599,15 +599,16 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                if (json::isType<json::Object>(switchToVersionJson))
                {
                   using namespace module_context;
-                  std::string version, rHome;
+                  std::string version, rHome, label;
                   Error error = json::readObject(
                                             switchToVersionJson.get_obj(),
                                             "version", &version,
-                                            "r_home", &rHome);
+                                            "r_home", &rHome,
+                                            "label", &label);
                   if (!error)
                   {
                      // set version for active session
-                     activeSession().setRVersion(version, rHome);
+                     activeSession().setRVersion(version, rHome, label);
 
                      // if we had a project directory as well then
                      // set it's version (this is necessary because

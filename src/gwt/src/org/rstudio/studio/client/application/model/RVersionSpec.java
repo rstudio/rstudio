@@ -23,19 +23,25 @@ public class RVersionSpec extends JavaScriptObject
  
    public final static RVersionSpec createEmpty()
    {
-      return create("","");
+      return create("","","");
    }
    
    public final static native RVersionSpec create(String version, 
-                                                  String rHome) /*-{
+                                                  String rHome,
+                                                  String label) /*-{
       return {
          version: version,
-         r_home: rHome
+         r_home: rHome,
+         label: label
       };
    }-*/;                               
    
    public final native String getVersion() /*-{
       return this.version;
+   }-*/;
+   
+   public final native String getLabel() /*-{
+      return this.label;
    }-*/;
 
    public final native String getRHome() /*-{
@@ -49,7 +55,9 @@ public class RVersionSpec extends JavaScriptObject
          for (int j = 0; j<rVersions.length(); j++)
          {
             if (i != j && rVersions.get(i).getVersion().equals(
-                          rVersions.get(j).getVersion())) 
+                          rVersions.get(j).getVersion())
+                       && rVersions.get(i).getLabel().equals(
+                          rVersions.get(j).getLabel())) 
                return true;
          }
       }

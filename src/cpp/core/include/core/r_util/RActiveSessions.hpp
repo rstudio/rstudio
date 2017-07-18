@@ -210,6 +210,14 @@ public:
          return std::string();
    }
 
+   std::string rVersionLabel()
+   {
+      if (!empty())
+         return readProperty("r-version-label");
+      else
+         return std::string();
+   }
+
    std::string rVersionHome()
    {
       if (!empty())
@@ -219,12 +227,14 @@ public:
    }
 
    void setRVersion(const std::string& rVersion,
-                    const std::string& rVersionHome)
+                    const std::string& rVersionHome,
+                    const std::string& rVersionLabel = "")
    {
       if (!empty())
       {
          writeProperty("r-version", rVersion);
          writeProperty("r-version-home", rVersionHome);
+         writeProperty("r-version-label", rVersionLabel);
       }
    }
 
@@ -243,11 +253,12 @@ public:
    }
 
    void beginSession(const std::string& rVersion,
-                     const std::string& rVersionHome)
+                     const std::string& rVersionHome,
+                     const std::string& rVersionLabel = "")
    {
       setLastUsed();
       setRunning(true);
-      setRVersion(rVersion, rVersionHome);
+      setRVersion(rVersion, rVersionHome, rVersionLabel);
    }
 
    void endSession()

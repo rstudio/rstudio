@@ -37,7 +37,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                         std::string* pRScriptPath,
                         std::string* pVersion,
                         EnvironmentVars* pVars,
-                        std::string* pErrMsg);
+                        std::string* pErrMsg,
+                        const std::string& prelaunchScript = "");
 
 void setREnvironmentVars(const EnvironmentVars& vars);
 void setREnvironmentVars(const EnvironmentVars& vars,

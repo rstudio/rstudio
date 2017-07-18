@@ -242,7 +242,8 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
                         const config_utils::Variables& scriptVars,
                         std::string* pRHome,
                         std::string* pRLibPath,
-                        std::string* pErrMsg)
+                        std::string* pErrMsg,
+                        const std::string& prelaunchScript = "")
 {
    // eliminate a potentially conflicting R_HOME before calling R RHOME"
    // (the normal semantics of invoking the R script are that it overwrites
@@ -252,6 +253,11 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
 
    // run R script to detect R home
    std::string command = rScriptPath.absolutePath() + " RHOME";
+   if (!prelaunchScript.empty())
+   {
+      command = prelaunchScript + " &> /dev/null && " + command;
+   }
+
    system::ProcessResult result;
    Error error = runCommand(command, core::system::ProcessOptions(), &result);
    if (error)
@@ -403,7 +409,8 @@ bool detectRLocationsUsingScript(const FilePath& rScriptPath,
                                  FilePath* pHomePath,
                                  FilePath* pLibPath,
                                  config_utils::Variables* pScriptVars,
-                                 std::string* pErrMsg)
+                                 std::string* pErrMsg,
+                                 const std::string& prelaunchScript = "")
 {
    // scan R script for other locations and append them to our vars
    Error error = config_utils::extractVariables(rScriptPath, pScriptVars);
@@ -417,7 +424,7 @@ bool detectRLocationsUsingScript(const FilePath& rScriptPath,
 
    // get r home path
    std::string rHome, rLib;
-   if (!getRHomeAndLibPath(rScriptPath, *pScriptVars, &rHome, &rLib, pErrMsg))
+   if (!getRHomeAndLibPath(rScriptPath, *pScriptVars, &rHome, &rLib, pErrMsg, prelaunchScript))
       return false;
 
    // validate: error if we got no output
@@ -448,7 +455,8 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
                             FilePath* pHomePath,
                             FilePath* pLibPath,
                             config_utils::Variables* pScriptVars,
-                            std::string* pErrMsg)
+                            std::string* pErrMsg,
+                            const std::string& prelaunchScript = "")
 {
    // eliminate a potentially conflicting R_HOME before calling R
    // (the normal semantics of invoking the R script are that it overwrites
@@ -463,6 +471,12 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
             "R.home('share'),"
             "R.home('include'),"
             "R.home('doc'),sep=':'))\"";
+
+   if (!prelaunchScript.empty())
+   {
+      command = prelaunchScript + " &> /dev/null && " + command;
+   }
+
    system::ProcessResult result;
    Error error = runCommand(command, system::ProcessOptions(), &result);
    if (error)
@@ -559,7 +573,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                         std::string* pRScriptPath,
                         std::string* pVersion,
                         EnvironmentVars* pVars,
-                        std::string* pErrMsg)
+                        std::string* pErrMsg,
+                        const std::string& prelaunchScript)
 {
    // if there is a which R script override then validate it
    if (!whichRScript.empty())
@@ -616,7 +631,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                                &rHomePath,
                                &rLibPath,
                                &scriptVars,
-                               pErrMsg))
+                               pErrMsg,
+                               prelaunchScript))
    {
       // fallback to detecting using script (sometimes we are unable to
       // call R successfully immediately after a system reboot)
@@ -628,7 +644,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                                        &rHomePath,
                                        &rLibPath,
                                        &scriptVars,
-                                       &scriptErrMsg))
+                                       &scriptErrMsg,
+                                       prelaunchScript))
       {
          pErrMsg->append("; " + scriptErrMsg);
          return false;

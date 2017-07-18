@@ -50,8 +50,46 @@ public:
       return FilePath(core::system::getenv(environment_, "R_HOME"));
    }
 
+   void setHomeDir(const FilePath& filePath)
+   {
+      core::system::setenv(&environment_, "R_HOME", filePath.absolutePath());
+   }
+
    const std::string& number() const { return number_; }
+   void setNumber(const std::string& number) { number_ = number; }
+
    const core::system::Options& environment() const { return environment_; }
+   void setEnvironment(const core::system::Options& environment) { environment_ = environment; }
+
+   const std::string& label() const { return label_; }
+   void setLabel(const std::string& label)
+   {
+      label_ = label;
+      if (label.empty())
+         core::system::unsetenv(&environment_, "RSTUDIO_R_VERSION_LABEL");
+      else
+         core::system::setenv(&environment_, "RSTUDIO_R_VERSION_LABEL", label);
+   }
+
+   const std::string& module() const { return module_; }
+   void setModule(const std::string& module)
+   {
+      module_ = module;
+      if (module.empty())
+         core::system::unsetenv(&environment_, "RSTUDIO_R_MODULE");
+      else
+         core::system::setenv(&environment_, "RSTUDIO_R_MODULE", module);
+   }
+
+   const std::string& prelaunchScript() const { return prelaunchScript_; }
+   void setPrelaunchScript(const std::string& prelaunchScript)
+   {
+      prelaunchScript_ = prelaunchScript;
+      if (prelaunchScript.empty())
+         core::system::unsetenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT");
+      else
+         core::system::setenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT", prelaunchScript);
+   }
 
    bool operator<(const RVersion& other) const
    {
@@ -73,12 +111,16 @@ public:
 private:
    std::string number_;
    core::system::Options environment_;
+   std::string label_;
+   std::string module_;
+   std::string prelaunchScript_;
 };
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version);
 
 std::vector<RVersion> enumerateRVersions(
                               std::vector<FilePath> rHomePaths,
+                              std::vector<r_util::RVersion> rEntries,
                               bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
