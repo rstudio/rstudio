@@ -252,7 +252,7 @@ TEST_CASE("Win32SystemTests")
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
       std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-      expect_true(children.empty());
+      CHECK(children.empty());
 
       CHECK(TerminateProcess(pi.hProcess, 1));
 
