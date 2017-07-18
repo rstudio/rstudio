@@ -17,6 +17,7 @@
 
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <tests/TestThat.hpp>
 
