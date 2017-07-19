@@ -30,87 +30,6 @@ namespace tests {
 
 context("PosixSystemTests")
 {
-
-   test_that("No subprocess detected correctly with generic method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         expect_false(hasSubprocesses(pid));
-
-         expect_true(::kill(pid, SIGKILL) == 0);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
-   test_that("Subprocess detected correctly with generic method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         expect_true(hasSubprocesses(getpid()));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
-   test_that("No subprocess detected correctly with pgrep method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesViaPgrep(pid));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
-   test_that("Subprocess detected correctly with pgrep method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         expect_true(hasSubprocessesViaPgrep(getpid()));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
    test_that("Empty subprocess list returned correctly with pgrep method")
    {
       pid_t pid = fork();
@@ -169,46 +88,6 @@ context("PosixSystemTests")
    }
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
-
-   test_that("No subprocess detected correctly with Mac method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesMac(pid));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
-   test_that("Subprocess detected correctly with Mac method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         expect_true(hasSubprocessesMac(getpid()));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
 
    test_that("Subprocess list correctly empty with Mac method")
    {
@@ -282,46 +161,6 @@ context("PosixSystemTests")
 
 
 #else
-
-   test_that("No subprocess detected correctly with procfs method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesViaProcFs(pid));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
-
-   test_that("Subprocess detected correctly with procfs method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         expect_true(hasSubprocessesViaProcFs(getpid()));
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
-      }
-   }
 
    test_that("No subprocesses detected correctly with procfs method")
    {

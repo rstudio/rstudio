@@ -169,6 +169,9 @@ struct ProcessOptions
    // Periodically report if process has any child processes
    bool reportHasSubprocs;
 
+   // Ignore these subprocesses when reporting
+   std::vector<std::string> subprocWhitelist;
+
    // Periodically track process' current working directory
    bool trackCwd;
 

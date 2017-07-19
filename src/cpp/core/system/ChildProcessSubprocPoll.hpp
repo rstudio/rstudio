@@ -58,7 +58,8 @@ public:
          boost::posix_time::milliseconds resetRecentDelay,
          boost::posix_time::milliseconds checkSubprocDelay,
          boost::posix_time::milliseconds checkCwdDelay,
-         boost::function<bool (PidType pid)> subProcCheck,
+         boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck,
+         const std::vector<std::string>& subProcWhitelist,
          boost::function<core::FilePath (PidType pid)> cwdCheck);
 
    virtual ~ChildProcessSubprocPoll() {}
@@ -108,7 +109,10 @@ private:
 
    // function used to check for subprocesses; if NULL then subprocess
    // checking will not be done
-   boost::function<bool (PidType pid)> subProcCheck_;
+   boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck_;
+
+   // list of processes that aren't reported when checking for subprocesses
+   std::vector<std::string> subProcWhitelist_;
 
    // function used to update current working directory; if NULL then cwd
    // updating will not be done

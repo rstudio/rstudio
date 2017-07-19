@@ -129,13 +129,15 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
-      boolean busy = workbenchContext_.isServerBusy() || terminalHelper_.isTerminalBusy();
+      int busyMode = pUiPrefs_.get().terminalBusyMode().getValue();
+
+      boolean busy = workbenchContext_.isServerBusy() || terminalHelper_.warnBeforeClosing(busyMode);
       String msg = null;
       if (busy)
       {
-         if (workbenchContext_.isServerBusy() && !terminalHelper_.isTerminalBusy())
+         if (workbenchContext_.isServerBusy() && !terminalHelper_.warnBeforeClosing(busyMode))
             msg = "The R session is currently busy.";
-         else if (workbenchContext_.isServerBusy() && terminalHelper_.isTerminalBusy())
+         else if (workbenchContext_.isServerBusy() && terminalHelper_.warnBeforeClosing(busyMode))
             msg = "The R session and the terminal are currently busy.";
          else 
             msg = "The terminal is currently busy.";
@@ -473,7 +475,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   SuspendOptions.createSaveMinimal(saveChanges),
                   null));  
          }
-      }, "Restart R", "Terminal jobs will be terminated. Are you sure?");
+      }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
+         pUiPrefs_.get().terminalBusyMode().getValue());
    }
    
    @Handler
@@ -811,6 +814,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final SourceShim sourceShim_;
    private final TerminalHelper terminalHelper_;
    private SaveAction saveAction_ = SaveAction.saveAsk();
-
+   
    private boolean suspendingAndRestarting_ = false;
 }

@@ -723,12 +723,6 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
-bool hasSubprocessesViaPgrep(PidType pid)
-{
-   std::vector<SubprocInfo> subprocs = getSubprocessesViaPgrep(pid);
-   return !subprocs.empty();
-}
-
 std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
 {
    std::vector<SubprocInfo> subprocs;
@@ -790,11 +784,6 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
 }
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
-bool hasSubprocessesMac(PidType pid)
-{
-   std::vector<SubprocInfo> subprocs = getSubprocessesMac(pid);
-   return !subprocs.empty();
-}
 
 std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
 {
@@ -830,11 +819,6 @@ std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
 }
 
 #else
-bool hasSubprocessesViaProcFs(PidType pid)
-{
-   std::vector<SubprocInfo> subprocs = getSubprocessesViaProcFs(pid);
-   return !subprocs.empty();
-}
 
 std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
 {
@@ -961,15 +945,6 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
    return subprocs;
 }
 #endif // !__APPLE__
-
-bool hasSubprocesses(PidType pid)
-{
-#ifdef __APPLE__
-   return hasSubprocessesMac(pid);
-#else // Linux
-   return hasSubprocessesViaProcFs(pid);
-#endif
-}
 
 std::vector<SubprocInfo> getSubprocesses(PidType pid)
 {

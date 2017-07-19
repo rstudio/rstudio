@@ -644,6 +644,7 @@ void AsyncChildProcess::poll()
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
          options().reportHasSubprocs ? core::system::hasSubprocesses : NULL,
+         options().subprocWhitelist,
          options().trackCwd ? core::system::currentWorkingDir : NULL));
 
       if (callbacks_.onStarted)

@@ -89,6 +89,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
+   if (session::userSettings().terminalBusyMode() == core::system::busy_detection::Whitelist)
+      options.subprocWhitelist = session::userSettings().terminalBusyWhitelist();
+
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;

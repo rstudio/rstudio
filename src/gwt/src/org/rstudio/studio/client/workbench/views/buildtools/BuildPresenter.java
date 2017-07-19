@@ -375,7 +375,8 @@ public class BuildPresenter extends BasePresenter
                }
             }, caption);
          }
-      }, caption, "Terminal jobs will be terminated. Are you sure?");
+      }, caption, "Terminal jobs will be terminated. Are you sure?", 
+            uiPrefs_.terminalBusyMode().getValue());
    }
    
    void onStopBuild()

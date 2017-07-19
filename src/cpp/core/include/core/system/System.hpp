@@ -276,9 +276,6 @@ void abort();
 
 Error terminateProcess(PidType pid);
 
-// Returns true if pid has one or more subprocesses
-bool hasSubprocesses(PidType pid);
-
 struct SubprocInfo
 {
    PidType pid;

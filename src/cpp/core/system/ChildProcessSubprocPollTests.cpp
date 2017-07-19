@@ -50,7 +50,7 @@ public:
    NoSubProcPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL, NULL)
+                NULL, std::vector<std::string>(), NULL)
    {}
 
    ChildProcessSubprocPoll poller_;
@@ -63,17 +63,26 @@ public:
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
                 boost::bind(&SubProcPollingFixture::checkSubproc, this, _1),
+                std::vector<std::string>(),
                 NULL),
         checkReturns_(false),
         callerPid_(0),
         checkCalled_(false)
    {}
 
-   bool checkSubproc(PidType pid)
+   std::vector<SubprocInfo> checkSubproc(PidType pid)
    {
       callerPid_ = pid;
       checkCalled_ = true;
-      return checkReturns_;
+      std::vector<SubprocInfo> result;
+      if (checkReturns_)
+      {
+         SubprocInfo info;
+         info.exe = "some_exe";
+         info.pid = 123;
+         result.push_back(info);
+      }
+      return result;
    }
 
    void clearFlags()
@@ -95,7 +104,7 @@ public:
    CwdPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL,
+                NULL, std::vector<std::string>(),
                 boost::bind(&CwdPollingFixture::checkCwd, this, _1)),
         callerPid_(0),
         checkCalled_(false)

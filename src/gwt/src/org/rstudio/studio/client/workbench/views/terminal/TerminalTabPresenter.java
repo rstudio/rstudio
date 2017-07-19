@@ -19,8 +19,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -125,12 +123,12 @@ public class TerminalTabPresenter extends BusyPresenter
 
    @Inject
    public TerminalTabPresenter(final Display view,
-                               GlobalDisplay globalDisplay,
+                               TerminalHelper terminalHelper,
                                UIPrefs uiPrefs)
    {
       super(view);
       view_ = view;
-      globalDisplay_ = globalDisplay;
+      terminalHelper_ = terminalHelper;
       uiPrefs_ = uiPrefs;
    }
 
@@ -244,27 +242,17 @@ public class TerminalTabPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.activeTerminals())
-      {
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-               "Close Terminal(s) ", 
-               "Are you sure you want to close all terminals? Any running jobs " +
-                     "will be stopped.", false, 
-                     new Operation()
+      final String caption = "Close Terminal(s) ";
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
+         @Override
+         public void execute()
          {
-            @Override
-            public void execute()
-            {
-               shutDownTerminals();
-               onConfirmed.execute();
-            }
-         }, null, null, "Close Terminals", "Cancel", true);
-      }
-      else
-      {
-         shutDownTerminals();
-         onConfirmed.execute(); 
-      }
+            shutDownTerminals();
+            onConfirmed.execute();
+         }
+      }, caption, "Are you sure you want to close all terminals? Any running jobs " +
+            "will be stopped",
+            uiPrefs_.terminalBusyMode().getValue());
    }
 
    private void shutDownTerminals()
@@ -279,6 +267,6 @@ public class TerminalTabPresenter extends BusyPresenter
 
    // Injected ---- 
    private final Display view_;
-   private final GlobalDisplay globalDisplay_;
+   private final TerminalHelper terminalHelper_;
    private final UIPrefs uiPrefs_;
 }
