@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
@@ -41,6 +42,7 @@ public class RSConnectLocalAccount extends Composite
       
       // apply the default server if one is registered
       Session session = RStudioGinjector.INSTANCE.getSession();
+      ElementIds.assignElementId(serverUrl_.getElement(), ElementIds.RSC_SERVER_URL);
       if (session != null && session.getSessionInfo() != null)
       {
          serverUrl_.setText(session.getSessionInfo().getDefaultRSConnectServer());

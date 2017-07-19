@@ -3,6 +3,20 @@
 # errors shouldn't cause script to exit
 set +e 
 
+# determine which init system is in use
+# a variation on:
+# https://wiki.ubuntu.com/SystemdForUpstartUsers#How_to_identify_which_init_system_you_are_currently_booting_with
+INIT_SYSTEM="unknown"
+if ps -p1 | grep systemd > /dev/null 2>&1; then
+    # If pid 1 is systemd, this is systemd.
+    INIT_SYSTEM="systemd"
+elif ps -p1 | grep init > /dev/null 2>&1; then
+    # If pid 1 is init and init tells us it is upstart, this is upstart.
+    if /sbin/init --version | grep upstart > /dev/null 2>&1; then
+        INIT_SYSTEM="upstart"
+    fi
+fi
+
 # only remove things if this is an uninstall
 if [ "$1" = 0 ]
 then
@@ -14,7 +28,6 @@ then
    rm -rf /tmp/rstudio-rserver
 
    # stop and remove service under systemd
-   INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
    if test "$INIT_SYSTEM" = "systemd"
    then
       systemctl stop rstudio-server.service 2>/dev/null
