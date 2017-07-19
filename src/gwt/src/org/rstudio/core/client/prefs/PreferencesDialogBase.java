@@ -24,6 +24,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -61,6 +63,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             });        
          }
       });
+      ElementIds.assignElementId(okButton.getElement(), ElementIds.PREFERENCES_CONFIRM);
       addOkButton(okButton);
       addCancelButton();
       

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -116,6 +117,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          }
       });
       nextButton_.setVisible(false);
+      nextButton_.getElement().setId(ElementIds.idFromLabel(caption) + "_wizard_next");
       addActionButton(nextButton_);
    }
 
@@ -518,6 +520,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    private void resetOkButtonCaption()
    {
       setOkButtonCaption(okCaption_);
+      setOkButtonId(ElementIds.idFromLabel(okCaption_) + "_wizard_confirm");
    }
  
    private boolean pageIsFinal(WizardPage<I, T> page)

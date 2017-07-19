@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -49,6 +50,7 @@ public class RSConnectDeployDialog
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
+      ElementIds.assignElementId(deployButton_.getElement(), ElementIds.DEPLOY_CONTENT);
       addOkButton(deployButton_);
       addCancelButton();
       connect_ = connect;

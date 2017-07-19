@@ -106,6 +106,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
 
          // Create the publish button and wire it to our HTML generator
          publishButton_ = new RSConnectPublishButton(
+               RSConnectPublishButton.HOST_PRESENTATION,
                RSConnect.CONTENT_TYPE_PRES, false, null);
          publishButton_.setPublishHtmlSource(new PublishHtmlSource()
          {
