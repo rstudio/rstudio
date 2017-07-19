@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetNotebook.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -171,6 +171,10 @@ public class TextEditingTargetNotebook
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
+            // ignore if it already matches target mode
+            if (docDisplay_.showChunkOutputInline() == (event.getValue() == CHUNK_OUTPUT_INLINE))
+               return;
+            
             // propagate to YAML
             String yaml = RmdEditorOptions.set(
                   YamlFrontMatter.getFrontMatter(docDisplay_), 
@@ -362,11 +366,15 @@ public class TextEditingTargetNotebook
       String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
       if (!StringUtil.isNullOrEmpty(frontMatter))
       {
-         String mode = RmdEditorOptions.getString(frontMatter,
+         String yamlMode = RmdEditorOptions.getString(frontMatter,
                CHUNK_OUTPUT_TYPE, null);
-         if (!StringUtil.isNullOrEmpty(mode))
+         if (!StringUtil.isNullOrEmpty(yamlMode))
          {
-            docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, mode);
+            String docMode = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
+            if (yamlMode != docMode)
+            {
+               docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, yamlMode);
+            }
          }
       }
    }
