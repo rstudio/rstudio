@@ -69,7 +69,8 @@ public:
 
    void stop();
 
-   bool hasSubprocess() const;
+   bool hasNonWhitelistSubprocess() const;
+   bool hasWhitelistSubprocess() const;
    bool hasRecentOutput() const;
    core::FilePath getCwd() const;
 
@@ -91,6 +92,7 @@ private:
 
    // results of most recent checks
    bool hasSubprocess_;
+   bool hasWhitelistSubprocess_;
    bool hasRecentOutput_;
    core::FilePath cwd_;
 

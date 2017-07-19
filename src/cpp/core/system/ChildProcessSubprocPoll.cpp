@@ -46,6 +46,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
      resetRecentOutputAfter_(boost::posix_time::not_a_date_time),
      checkCwdAfter_(boost::posix_time::not_a_date_time),
      hasSubprocess_(true),
+     hasWhitelistSubprocess_(false),
      hasRecentOutput_(true),
      didThrottleSubprocCheck_(false),
      stopped_(false),
@@ -116,7 +117,8 @@ bool ChildProcessSubprocPoll::pollSubproc(boost::posix_time::ptime currentTime)
 
    // Enough time has passed, update whether "pid" has subprocesses
    // and restart the timer.
-   bool foundSubprocess = false;
+   hasSubprocess_ = false;
+   hasWhitelistSubprocess_ = false;
    std::vector<SubprocInfo> children = subProcCheck_(pid_);
    BOOST_FOREACH(SubprocInfo proc, children)
    {
@@ -126,17 +128,16 @@ bool ChildProcessSubprocPoll::pollSubproc(boost::posix_time::ptime currentTime)
          if (proc.exe == whitelistItem)
          {
             isWhitelistItem = true;
+            hasWhitelistSubprocess_ = true;
             break;
          }
       }
       if (!isWhitelistItem)
       {
-         foundSubprocess = true;
-         break;
+         hasSubprocess_ = true;
       }
    }
 
-   hasSubprocess_ = foundSubprocess;
    checkSubProcAfter_ = currentTime + checkSubprocDelay_;
    didThrottleSubprocCheck_ = false;
    return true;
@@ -169,9 +170,14 @@ void ChildProcessSubprocPoll::stop()
    stopped_ = true;
 }
 
-bool ChildProcessSubprocPoll::hasSubprocess() const
+bool ChildProcessSubprocPoll::hasNonWhitelistSubprocess() const
 {
    return hasSubprocess_;
+}
+
+bool ChildProcessSubprocPoll::hasWhitelistSubprocess() const
+{
+   return hasWhitelistSubprocess_;
 }
 
 bool ChildProcessSubprocPoll::hasRecentOutput() const

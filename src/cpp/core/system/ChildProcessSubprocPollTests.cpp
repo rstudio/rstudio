@@ -139,9 +139,9 @@ context("ChildProcess polling support class")
       PidType pid = 12345;
       NoSubProcPollingFixture test(pid);
 
-      // we start with the flags set to true
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess());
+      expect_true(test.poller_.hasNonWhitelistSubprocess());
+      expect_false(test.poller_.hasWhitelistSubprocess());
    }
 
    test_that("recent input state without subproc polling doesn't change immediately")
@@ -174,9 +174,9 @@ context("ChildProcess polling support class")
       PidType pid = 12345;
       SubProcPollingFixture test(pid);
 
-      // we start with the flags set to true
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess());
+      expect_true(test.poller_.hasNonWhitelistSubprocess());
+      expect_false(test.poller_.hasWhitelistSubprocess());
    }
 
    test_that("childproc checked when recent output and timeout expires")
@@ -190,7 +190,7 @@ context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
       expect_true(test.poller_.poll(false)); // not longer than the recent output timeout!
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
    }
@@ -206,7 +206,7 @@ context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
       test.poller_.poll(false); // not longer than the output timeout
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
 
@@ -216,7 +216,7 @@ context("ChildProcess polling support class")
       test.poller_.poll(false);
       expect_false(test.checkCalled_); // because of no recent output
       expect_false(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
    }
 
    test_that("initial state for cwd polling matches expectations")

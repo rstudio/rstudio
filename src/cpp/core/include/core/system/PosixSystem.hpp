@@ -218,19 +218,16 @@ core::Error restorePriv();
 
 #ifdef __APPLE__
 // Detect subprocesses via Mac-only BSD-ish APIs
-bool hasSubprocessesMac(PidType pid);
 std::vector<SubprocInfo> getSubprocessesMac(PidType pid);
 #endif // __APPLE__
 
 // Detect subprocesses via shelling out to pgrep, kinda expensive but used
 // as last-resort on non-Mac Posix system without procfs.
-bool hasSubprocessesViaPgrep(PidType pid);
 std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid);
 
 // Detect subprocesses via procfs; returns false no subprocesses, true if
 // subprocesses or unable to determine if there are subprocesses
 #ifndef __APPLE__
-bool hasSubprocessesViaProcFs(PidType pid);
 std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid);
 #endif // !__APPLE__
 
