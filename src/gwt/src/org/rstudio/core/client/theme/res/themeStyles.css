@@ -2195,7 +2195,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .search {
-   top: 1px;
+   top: 0px;
    height: 16px;
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
