@@ -94,7 +94,8 @@
       popupTopRight, popupTopRightInner,
       popupMiddleLeft, popupMiddleCenter,
       popupMiddleCenterInner, popupMiddleRight, popupBottomLeft,
-      popupBottomCenter, popupBottomRight;
+      popupBottomCenter, popupBottomRight,
+      popupTop;
 
 @external Caption;
 
@@ -507,6 +508,47 @@ pre {
 	position: relative;
 	top: -2px;
 	right: -12px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel.gwt-DecoratedPopupPanel {
+   margin-left: -20px;
+   margin-top: 5px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTop {
+   background: #e1e2e5;
+   border: solid 1px #a3a8b2;
+   border-bottom: none;
+   border-radius: 3px 3px 0px 0px;
+   height: 20px;
+   display: block;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopCenter {
+   height: 20px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopLeft,
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopRight {
+   display: none;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupMiddleCenter {
+   padding-left: 10px;
+   border: solid 1px #a3a8b2;
+   padding-right: 10px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .miniDialogCaption {
+   margin-bottom: 12px;
+   margin-left: -2px;
+   padding-top: 1px;
+   margin-top: -2px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .miniDialogTools {
+   top: -5px;
+   right: -8px;
 }
 
 .gwt-DialogBox-ModalDialog, .gwt-DecoratedPopupPanel {
