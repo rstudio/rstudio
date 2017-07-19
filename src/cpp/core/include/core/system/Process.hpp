@@ -42,6 +42,18 @@ extern const char* const kDumbTerm;
 extern const int kDefaultCols;
 extern const int kDefaultRows;
 
+namespace busy_detection {
+
+enum Mode
+{
+   Always = 0,
+   Never = 1,
+   Whitelist = 2,
+};
+
+} // BusyDetectionMode
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Run child process synchronously

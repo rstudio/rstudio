@@ -55,7 +55,7 @@ const bool restarted = false;
 const bool zombie = false;
 const bool trackEnv = false;
 
-const size_t maxLines = kDefaultTerminalMaxOutputLines;
+const int maxLines = kDefaultTerminalMaxOutputLines;
 
 bool testHandle(const std::string& handle)
 {
