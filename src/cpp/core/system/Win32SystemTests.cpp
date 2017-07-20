@@ -18,6 +18,7 @@
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -137,7 +138,8 @@ TEST_CASE("Win32SystemTests")
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
-      CHECK_FALSE(hasSubprocesses(pi.dwProcessId));
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      CHECK(children.empty());
 
       CHECK(TerminateProcess(pi.hProcess, 1));
 
@@ -173,7 +175,23 @@ TEST_CASE("Win32SystemTests")
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
       ::Sleep(100); // give child time to start
-      CHECK(hasSubprocesses(pi.dwProcessId));
+
+      std::string exe = "ping.exe";
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      CHECK(children.size() >= 1);
+      if (children.size() >= 1)
+      {
+         bool found = false;
+         BOOST_FOREACH(SubprocInfo info, children)
+         {
+            if (info.exe.compare(exe) == 0)
+            {
+               found = true;
+               break;
+            }
+         }
+         CHECK(found);
+      }
 
       CHECK(TerminateProcess(pi.hProcess, 1));
 
