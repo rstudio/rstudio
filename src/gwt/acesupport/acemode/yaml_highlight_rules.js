@@ -120,11 +120,17 @@ var YamlHighlightRules = function() {
                     var curIndent = stack[1];
 
                     if (curIndent >= val.length) {
-                        this.next = "start";
+
+                        // TODO: it seems like this should not be necessary?
+                        if (/^yaml/.test(state))
+                            this.next = "yaml-start";
+                        else
+                            this.next = "start";
+
                         stack.splice(0);
                     }
                     else {
-                        this.next = "mlString";
+                        this.next = state;
                     }
                     return this.token;
                 },
