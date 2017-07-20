@@ -55,9 +55,12 @@ var YamlHighlightRules = function() {
                 token: "constant.language",
                 regex: "[&\\*][a-zA-Z0-9-_]+"
             }, {
+                token: ["meta.tag", "keyword", "meta.tag", "keyword"],
+                regex: /^(\s*\w.*?)(:{2,3})(\s*\w.*?)(:(?:\s+|$))/
+            }, {
                 token: ["meta.tag", "keyword"],
                 regex: /^(\s*\w.*?)(:(?:\s+|$))/
-            },{
+            }, {
                 token: ["meta.tag", "keyword"],
                 regex: /(\w+?)(\s*:(?:\s+|$))/
             }, {
