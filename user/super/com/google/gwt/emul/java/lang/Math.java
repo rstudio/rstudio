@@ -17,6 +17,7 @@ package java.lang;
 
 import static javaemul.internal.InternalPreconditions.checkCriticalArithmetic;
 
+import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
@@ -46,29 +47,24 @@ public final class Math {
   private static final double PI_OVER_180 = PI / 180.0;
   private static final double PI_UNDER_180 = 180.0 / PI;
 
-  public static double abs(double x) {
-    return NativeMath.abs(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double abs(double x);
 
-  public static float abs(float x) {
-    return (float) NativeMath.abs(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native float abs(float x);
 
-  public static int abs(int x) {
-    return x < 0 ? -x : x;
-  }
+  @JsMethod(namespace = "Math")
+  public static native int abs(int x);
 
   public static long abs(long x) {
     return x < 0 ? -x : x;
   }
 
-  public static double acos(double x) {
-    return NativeMath.acos(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double acos(double x);
 
-  public static double asin(double x) {
-    return NativeMath.asin(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double asin(double x);
 
   public static int addExact(int x, int y) {
     double r = (double) x + (double) y;
@@ -83,24 +79,21 @@ public final class Math {
     return r;
   }
 
-  public static double atan(double x) {
-    return NativeMath.atan(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double atan(double x);
 
-  public static double atan2(double y, double x) {
-    return NativeMath.atan2(y, x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double atan2(double y, double x);
 
   public static double cbrt(double x) {
-    return x == 0 || !Double.isFinite(x) ? x : NativeMath.pow(x, 1.0 / 3.0);
+    return x == 0 || !Double.isFinite(x) ? x : pow(x, 1.0 / 3.0);
   }
 
-  public static double ceil(double x) {
-    return NativeMath.ceil(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double ceil(double x);
 
   public static double copySign(double magnitude, double sign) {
-    return isNegative(sign) ? -NativeMath.abs(magnitude) : NativeMath.abs(magnitude);
+    return isNegative(sign) ? -abs(magnitude) : abs(magnitude);
   }
 
   private static boolean isNegative(double d) {
@@ -111,12 +104,11 @@ public final class Math {
     return (float) copySign((double) magnitude, (double) sign);
   }
 
-  public static double cos(double x) {
-    return NativeMath.cos(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double cos(double x);
 
   public static double cosh(double x) {
-    return (NativeMath.exp(x) + NativeMath.exp(-x)) / 2;
+    return (exp(x) + exp(-x)) / 2;
   }
 
   public static int decrementExact(int x) {
@@ -129,17 +121,15 @@ public final class Math {
     return x - 1;
   }
 
-  public static double exp(double x) {
-    return NativeMath.exp(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double exp(double x);
 
   public static double expm1(double d) {
-    return d == 0 ? d : NativeMath.exp(d) - 1;
+    return d == 0 ? d : exp(d) - 1;
   }
 
-  public static double floor(double x) {
-    return NativeMath.floor(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double floor(double x);
 
   public static int floorDiv(int dividend, int divisor) {
     checkCriticalArithmetic(divisor != 0);
@@ -165,7 +155,7 @@ public final class Math {
 
   public static double hypot(double x, double y) {
     return Double.isInfinite(x) || Double.isInfinite(y) ?
-        Double.POSITIVE_INFINITY : NativeMath.sqrt(x * x + y * y);
+        Double.POSITIVE_INFINITY : sqrt(x * x + y * y);
   }
 
   public static int incrementExact(int x) {
@@ -178,45 +168,38 @@ public final class Math {
     return x + 1;
   }
 
-  public static double log(double x) {
-    return NativeMath.log(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double log(double x);
 
   public static double log10(double x) {
-    return NativeMath.log(x) * NativeMath.LOG10E;
+    return log(x) * NativeMath.LOG10E;
   }
 
   public static double log1p(double x) {
-    return x == 0 ? x : NativeMath.log(x + 1);
+    return x == 0 ? x : log(x + 1);
   }
 
-  public static double max(double x, double y) {
-    return NativeMath.max(x, y);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double max(double x, double y);
 
-  public static float max(float x, float y) {
-    return (float) NativeMath.max(x, y);
-  }
+  @JsMethod(namespace = "Math")
+  public static native float max(float x, float y);
 
-  public static int max(int x, int y) {
-    return x > y ? x : y;
-  }
+  @JsMethod(namespace = "Math")
+  public static native int max(int x, int y);
 
   public static long max(long x, long y) {
     return x > y ? x : y;
   }
 
-  public static double min(double x, double y) {
-    return NativeMath.min(x, y);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double min(double x, double y);
 
-  public static float min(float x, float y) {
-    return (float) NativeMath.min(x, y);
-  }
+  @JsMethod(namespace = "Math")
+  public static native float min(float x, float y);
 
-  public static int min(int x, int y) {
-    return x < y ? x : y;
-  }
+  @JsMethod(namespace = "Math")
+  public static native int min(int x, int y);
 
   public static long min(long x, long y) {
     return x < y ? x : y;
@@ -250,24 +233,22 @@ public final class Math {
     return -x;
   }
 
-  public static double pow(double x, double exp) {
-    return NativeMath.pow(x, exp);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double pow(double x, double exp);
 
-  public static double random() {
-    return NativeMath.random();
-  }
+  @JsMethod(namespace = "Math")
+  public static native double random();
 
   public static double rint(double x) {
     // Floating point has a mantissa with an accuracy of 52 bits so
     // any number bigger than 2^52 is effectively a finite integer value.
     // This case also filters out NaN and infinite values.
-    if (NativeMath.abs(x) < (double) (1L << 52)) {
+    if (abs(x) < (double) (1L << 52)) {
       double mod2 = x % 2;
       if ((mod2 == -1.5) || (mod2 == 0.5)) {
-        x = NativeMath.floor(x);
+        x = floor(x);
       } else {
-        x = NativeMath.round(x);
+        x = round(x);
       }
     }
     return x;
@@ -297,7 +278,7 @@ public final class Math {
 
   public static double scalb(double d, int scaleFactor) {
     if (scaleFactor >= 31 || scaleFactor <= -31) {
-      return d * NativeMath.pow(2, scaleFactor);
+      return d * pow(2, scaleFactor);
     } else if (scaleFactor > 0) {
       return d * (1 << scaleFactor);
     } else if (scaleFactor == 0) {
@@ -323,21 +304,18 @@ public final class Math {
     return (float) signum((double) f);
   }
 
-  public static double sin(double x) {
-    return NativeMath.sin(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double sin(double x);
 
   public static double sinh(double x) {
-    return x == 0 ? x : (NativeMath.exp(x) - NativeMath.exp(-x)) / 2;
+    return x == 0 ? x : (exp(x) - exp(-x)) / 2;
   }
 
-  public static double sqrt(double x) {
-    return NativeMath.sqrt(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double sqrt(double x);
 
-  public static double tan(double x) {
-    return NativeMath.tan(x);
-  }
+  @JsMethod(namespace = "Math")
+  public static native double tan(double x);
 
   public static double tanh(double x) {
     if (x == 0.0) {
@@ -345,7 +323,7 @@ public final class Math {
     } else if (Double.isInfinite(x)) {
       return signum(x);
     } else {
-      double e2x = NativeMath.exp(2 * x);
+      double e2x = exp(2 * x);
       return (e2x - 1) / (e2x + 1);
     }
   }
@@ -371,23 +349,6 @@ public final class Math {
   @JsType(isNative = true, name = "Math", namespace = JsPackage.GLOBAL)
   private static class NativeMath {
     public static double LOG10E;
-    public static native double abs(double x);
-    public static native double acos(double x);
-    public static native double asin(double x);
-    public static native double atan(double x);
-    public static native double atan2(double y, double x);
-    public static native double ceil(double x);
-    public static native double cos(double x);
-    public static native double exp(double x);
-    public static native double floor(double x);
-    public static native double log(double x);
-    public static native double max(double x, double y);
-    public static native double min(double x, double y);
-    public static native double pow(double x, double exp);
-    public static native double random();
     public static native double round(double x);
-    public static native double sin(double x);
-    public static native double sqrt(double x);
-    public static native double tan(double x);
   }
 }
