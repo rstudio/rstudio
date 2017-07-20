@@ -22,6 +22,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -111,7 +112,7 @@ public class TerminalSession extends XTermWidget
       }
 
       connecting_ = true;
-      setNewTerminal(getHandle() == null);
+      setNewTerminal(StringUtil.isNullOrEmpty(getHandle()));
       
       socket_.resetDiagnostics();
 
@@ -679,7 +680,10 @@ public class TerminalSession extends XTermWidget
    private void fetchNextChunk(final int chunkToFetch)
    {
       if (!shellSupportsReload())
+      {
+         reloading_ = false;
          return;
+      }
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
