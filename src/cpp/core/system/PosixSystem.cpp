@@ -932,7 +932,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
       }
 
       SubprocInfo info;
-      info.exe = contents.substr(openParen + 1, closingParen - openParen);
+      info.exe = contents.substr(openParen + 1, closingParen - openParen - 1);
       info.pid = safe_convert::stringTo<PidType>(contents.substr(0, openParen - 1), -1);
       if (info.pid == -1)
       {

@@ -175,7 +175,7 @@ context("PosixSystemTests")
       else
       {
          // process we started doesn't have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
+         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(pid);
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
@@ -197,7 +197,7 @@ context("PosixSystemTests")
       else
       {
          // we now have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
+         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(getpid());
          expect_true(children.size() >= 1);
          if (children.size() >= 1)
          {
