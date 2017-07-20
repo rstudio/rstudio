@@ -291,7 +291,8 @@ namespace {
 
 bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return childProc->hasSubprocess() || childProc->hasRecentOutput();
+   return childProc->hasNonWhitelistSubprocess() || childProc->hasWhitelistSubprocess()||
+         childProc->hasRecentOutput();
 }
 
 } // anonymous namespace

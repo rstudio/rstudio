@@ -42,6 +42,18 @@ extern const char* const kDumbTerm;
 extern const int kDefaultCols;
 extern const int kDefaultRows;
 
+namespace busy_detection {
+
+enum Mode
+{
+   Always = 0,
+   Never = 1,
+   Whitelist = 2,
+};
+
+} // BusyDetectionMode
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Run child process synchronously
@@ -156,6 +168,9 @@ struct ProcessOptions
 
    // Periodically report if process has any child processes
    bool reportHasSubprocs;
+
+   // Ignore these subprocesses when reporting
+   std::vector<std::string> subprocWhitelist;
 
    // Periodically track process' current working directory
    bool trackCwd;
@@ -302,8 +317,8 @@ struct ProcessCallbacks
    // comment above for potential values)
    boost::function<void(int)> onExit;
 
-   // Called periodically to report if this process has subprocesses
-   boost::function<void(bool)> onHasSubprocs;
+   // Called periodically to report if this process has subprocesses (non-whitelist, whitelist)
+   boost::function<void(bool, bool)> onHasSubprocs;
 
    // Called periodically to report current working directory of process
    boost::function<void(const core::FilePath&)> reportCwd;

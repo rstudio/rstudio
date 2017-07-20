@@ -89,6 +89,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
+   if (session::userSettings().terminalBusyMode() == core::system::busy_detection::Whitelist)
+      options.subprocWhitelist = session::userSettings().terminalBusyWhitelist();
+
    // set path to shell
    AvailableTerminalShells shells;
    TerminalShell shell;
@@ -117,7 +120,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
-     newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false),
+     newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false), whitelistChildProc_(false),
      lastInputSequence_(kIgnoreSequence), started_(false), envCaptureCmd_(kEnvCommand)
 {
    regexInit();
@@ -132,7 +135,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
-     pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
+     pid_(-1), childProcsSent_(false), whitelistChildProc_(false), lastInputSequence_(kIgnoreSequence),
      started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
@@ -144,7 +147,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
      interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
-     pid_(-1), childProcsSent_(false), lastInputSequence_(kIgnoreSequence),
+     pid_(-1), childProcsSent_(false), whitelistChildProc_(false), lastInputSequence_(kIgnoreSequence),
      started_(false), envCaptureCmd_(kEnvCommand)
 {
    commonInit();
@@ -423,7 +426,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       if (procInfo_->getTrackEnv())
       {
          // try to capture and persist the environment
-         if (envCaptureCmd_.onTryCapture(ops, procInfo_->getHasChildProcs()))
+         if (envCaptureCmd_.onTryCapture(ops, getIsBusy()))
             return true;
 
          saveEnvironment(envCaptureCmd_.getPrivateOutput());
@@ -677,11 +680,12 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
-void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
+void ConsoleProcess::onHasSubprocs(bool hasNonWhitelistSubprocs, bool hasWhitelistSubprocs)
 {
-   if (hasSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
+   whitelistChildProc_ = hasWhitelistSubprocs;
+   if (hasNonWhitelistSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
    {
-      procInfo_->setHasChildProcs(hasSubprocs);
+      procInfo_->setHasChildProcs(hasNonWhitelistSubprocs);
 
       json::Object subProcs;
       subProcs["handle"] = handle();
@@ -756,7 +760,7 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
    if (options_.reportHasSubprocs)
    {
-      cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
+      cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1, _2);
    }
    if (options_.trackCwd)
    {

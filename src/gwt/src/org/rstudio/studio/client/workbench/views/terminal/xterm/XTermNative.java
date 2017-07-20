@@ -119,6 +119,7 @@ public class XTermNative extends JavaScriptObject
    public final native void showPrimaryBuffer() /*-{
       this.write("\x1b[?1047l"); // show primary buffer
       this.write("\x1b[m"); // reset all visual attributes
+      this.write("\x1b[?9l"); // reset mouse mode
    }-*/;
 
    public final native void showAltBuffer() /*-{

@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import java.util.List;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -27,6 +30,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.TerminalPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -56,8 +60,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       session_ = session;
       server_ = server;
 
-      add(spaced(new Label("Use the terminal to run system commands, execute data-processing jobs, and more.")));
-
       Label shellLabel = headerLabel("Shell");
       shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       add(shellLabel);
@@ -70,10 +72,9 @@ public class TerminalPreferencesPane extends PreferencesPane
          @Override
          public void onChange(ChangeEvent event)
          {
-            manageControlVisibility();
+            manageCustomShellControlVisibility();
          }
       });
-
 
       String textboxWidth = "250px";
       customShellPathLabel_ = new Label("Custom shell binary (fully qualified path):");
@@ -132,6 +133,33 @@ public class TerminalPreferencesPane extends PreferencesPane
                prefs_.terminalTrackEnvironment(),
                "Terminal occasionally runs a hidden command to capture state of environment variables.");
          add(chkCaptureEnv);
+      }
+
+      if (haveBusyDetectionPref())
+      {
+         Label shutdownLabel = headerLabel("Process Termination");
+         shutdownLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+         add(shutdownLabel);
+         shutdownLabel.setVisible(true);
+
+         busyMode_ = new SelectWidget("Ask before killing processes:");
+         spaced(busyMode_);
+         add(busyMode_);
+         busyMode_.setEnabled(false);
+         busyMode_.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               manageBusyModeControlVisibility();
+            }
+         });
+         busyWhitelistLabel_ = new Label("Don't ask before killing:");
+         add(busyWhitelistLabel_);
+         busyWhitelist_ = new TextBox();
+         busyWhitelist_.getElement().setAttribute("spellcheck", "false");
+         busyWhitelist_.setWidth(textboxWidth);
+         add(busyWhitelist_);
+         busyWhitelist_.setEnabled(false);
       }
       
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
@@ -199,7 +227,7 @@ public class TerminalPreferencesPane extends PreferencesPane
                      customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
                      customShellOptions_.setEnabled(true);
                   }
-                  manageControlVisibility();
+                  manageCustomShellControlVisibility();
                }
 
                @Override
@@ -207,13 +235,56 @@ public class TerminalPreferencesPane extends PreferencesPane
             });
          }
       });
+
+      if (busyMode_ != null)
+      {
+         busyMode_.getListBox().clear();
+         busyMode_.addChoice("Always", Integer.toString(UIPrefsAccessor.BUSY_DETECT_ALWAYS));
+         busyMode_.addChoice("Never", Integer.toString(UIPrefsAccessor.BUSY_DETECT_NEVER));
+         busyMode_.addChoice("Always except for whitelist", Integer.toString(UIPrefsAccessor.BUSY_DETECT_WHITELIST));
+         busyMode_.setEnabled(true);
+         
+         int selection = prefs_.terminalBusyMode().getValue();
+         if (selection < UIPrefsAccessor.BUSY_DETECT_ALWAYS ||
+               selection > UIPrefsAccessor.BUSY_DETECT_WHITELIST)
+            selection = UIPrefsAccessor.BUSY_DETECT_ALWAYS;
+         
+         busyMode_.getListBox().setSelectedIndex(selection);
+         
+         List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
+               prefs_.terminalBusyWhitelist().getValue());
+         
+         StringBuilder whitelist = new StringBuilder();
+         for (String entry: whitelistArray)
+         {
+            if (entry.trim().isEmpty())
+            {
+               continue;
+            }
+            if (whitelist.length() > 0)
+            {
+               whitelist.append(" ");
+            }
+            whitelist.append(entry.trim());
+         }
+
+         busyWhitelist_.setText(whitelist.toString());
+         busyWhitelist_.setEnabled(true);
+
+         manageBusyModeControlVisibility();
+      }
    }
 
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
-
+     
+      if (haveBusyDetectionPref())
+      {
+         prefs_.terminalBusyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
+      } 
       TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
             customShellPath_.getText(),
             customShellOptions_.getText());
@@ -223,6 +294,11 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    private boolean haveLocalEchoPref()
+   {
+      return !BrowseCap.isWindowsDesktop();
+   }
+
+   private boolean haveBusyDetectionPref()
    {
       return !BrowseCap.isWindowsDesktop();
    }
@@ -244,7 +320,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       return StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
    }
 
-   private void manageControlVisibility()
+   private void manageCustomShellControlVisibility()
    {
       boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
       customShellPathLabel_.setVisible(customEnabled);
@@ -252,13 +328,31 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptionsLabel_.setVisible(customEnabled);
       customShellOptions_.setVisible(customEnabled);
    }
- 
+
+   private int selectedBusyMode()
+   {
+      int idx = busyMode_.getListBox().getSelectedIndex();
+      String valStr = busyMode_.getListBox().getValue(idx);
+      return StringUtil.parseInt(valStr, UIPrefsAccessor.BUSY_DETECT_ALWAYS);
+   }
+
+   private void manageBusyModeControlVisibility()
+   {
+      boolean whitelistEnabled = selectedBusyMode() == UIPrefsAccessor.BUSY_DETECT_WHITELIST;
+      busyWhitelistLabel_.setVisible(whitelistEnabled);
+      busyWhitelist_.setVisible(whitelistEnabled);
+   }
+  
    private SelectWidget terminalShell_;
    private Label customShellPathLabel_;
    private TextBox customShellPath_;
    private Label customShellOptionsLabel_;
    private TextBox customShellOptions_;
 
+   private SelectWidget busyMode_;
+   private Label busyWhitelistLabel_;
+   private TextBox busyWhitelist_;
+   
    // Injected ----  
    private final UIPrefs prefs_;
    private final PreferencesDialogResources res_;
