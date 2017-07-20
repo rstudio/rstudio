@@ -176,7 +176,7 @@ TEST_CASE("Win32SystemTests")
 
       ::Sleep(100); // give child time to start
 
-      std::string exe = "ping.exe";
+      std::string exe = "PING.EXE";
       std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
       CHECK(children.size() >= 1);
       if (children.size() >= 1)

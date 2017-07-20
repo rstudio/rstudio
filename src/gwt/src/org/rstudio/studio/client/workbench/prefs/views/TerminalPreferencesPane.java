@@ -280,9 +280,11 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       boolean restartRequired = super.onApply(rPrefs);
      
-      prefs_.terminalBusyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
-      prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
-      
+      if (haveBusyDetectionPref())
+      {
+         prefs_.terminalBusyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
+      } 
       TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
             customShellPath_.getText(),
             customShellOptions_.getText());
