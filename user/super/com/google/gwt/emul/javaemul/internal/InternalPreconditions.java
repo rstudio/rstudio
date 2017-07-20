@@ -76,32 +76,34 @@ public final class InternalPreconditions {
   private static final String CHECK_BOUNDS = getProperty("jre.checks.bounds");
   private static final String CHECK_API = getProperty("jre.checks.api");
 
+  // Note that == used instead of equals below for comparisons as it is easier/quicker to optimize.
+
   // NORMAL
   private static final boolean LEVEL_NORMAL_OR_HIGHER =
-      getProperty("jre.checks.checkLevel").equals("NORMAL");
+      getProperty("jre.checks.checkLevel") == "NORMAL";
   // NORMAL or OPTIMIZED
   private static final boolean LEVEL_OPT_OR_HIGHER =
-      getProperty("jre.checks.checkLevel").equals("OPTIMIZED") || LEVEL_NORMAL_OR_HIGHER;
+      getProperty("jre.checks.checkLevel") == "OPTIMIZED" || LEVEL_NORMAL_OR_HIGHER;
   // NORMAL or OPTIMIZED or MINIMAL
   private static final boolean LEVEL_MINIMAL_OR_HIGHER =
-      getProperty("jre.checks.checkLevel").equals("MINIMAL") || LEVEL_OPT_OR_HIGHER;
+      getProperty("jre.checks.checkLevel") == "MINIMAL" || LEVEL_OPT_OR_HIGHER;
 
   static {
     if (!LEVEL_MINIMAL_OR_HIGHER) {
       throw new IllegalStateException("Incorrect level: " + getProperty("jre.checks.checkLevel"));
     }
   }
-
+  
   private static final boolean IS_TYPE_CHECKED =
-      (CHECK_TYPE.equals("AUTO") && LEVEL_OPT_OR_HIGHER) || CHECK_TYPE.equals("ENABLED");
+      CHECK_TYPE == "AUTO" && LEVEL_OPT_OR_HIGHER || CHECK_TYPE == "ENABLED";
   private static final boolean IS_BOUNDS_CHECKED =
-      (CHECK_BOUNDS.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_BOUNDS.equals("ENABLED");
+      CHECK_BOUNDS == "AUTO" && LEVEL_NORMAL_OR_HIGHER || CHECK_BOUNDS == "ENABLED";
   private static final boolean IS_API_CHECKED =
-      (CHECK_API.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_API.equals("ENABLED");
+      CHECK_API == "AUTO" && LEVEL_NORMAL_OR_HIGHER || CHECK_API == "ENABLED";
   private static final boolean IS_NUMERIC_CHECKED =
-      (CHECK_NUMERIC.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_NUMERIC.equals("ENABLED");
+      CHECK_NUMERIC == "AUTO" && LEVEL_NORMAL_OR_HIGHER || CHECK_NUMERIC == "ENABLED";
 
-  private static final boolean IS_ASSERTED = getProperty("jre.checkedMode").equals("ENABLED");
+  private static final boolean IS_ASSERTED = getProperty("jre.checkedMode") == "ENABLED";
 
   /**
    * This method reports if the code is compiled with type checks.
