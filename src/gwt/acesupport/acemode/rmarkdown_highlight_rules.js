@@ -139,33 +139,14 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
-   // ensure that YAML highlight rules only start of document
-   this.$rules["$start"] = this.$rules["start"].slice();
-   for (var key in this.$rules)
-   {
-      var stateRules = this.$rules[key];
-      for (var i = 0; i < stateRules.length; i++)
-      {
-         if (stateRules[i].next === "start")
-            stateRules[i].next = "$start";
-      }
-   }
-
-   // escape eagerly from 'start' to '$start' state
-   var startRules = this.$rules["start"];
-   for (var i = 0; i < startRules.length; i++)
-   {
-      if (startRules[i].next == null)
-         startRules[i].next = "$start";
-   }
-
    // Embed YAML highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
       "yaml",
       "^\\s*---\\s*$",
-      "^\\s*(?:---|\\.\\.\\.)\\s*$"
+      "^\\s*(?:---|\\.\\.\\.)\\s*$",
+      ["fieldblock", "listblock", "allowBlock"]
    );
 
    this.$rules["yaml-start"].unshift({
