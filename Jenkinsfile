@@ -142,8 +142,10 @@ try {
         parallel parallel_containers
 
         // trigger downstream pro-docs build if we're finished building the pro variants
+        // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro') {
           trigger_external_build('IDE/pro-docs')
+          trigger_external_build('IDE/qa-autotest')
         }
 
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
