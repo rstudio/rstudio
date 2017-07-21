@@ -606,7 +606,7 @@ public class TextEditingTargetRMarkdownHelper
       // introduce unwanted mutations)
       YamlTree tree = new YamlTree(yaml);
       List<String> formats = getOutputFormats(tree);
-      if (formats.contains(format))
+      if (formats != null && formats.contains(format))
       {
          tree.reorder(Arrays.asList(format));
          onCompleted.execute(tree.toString());
