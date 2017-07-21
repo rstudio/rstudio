@@ -16,6 +16,7 @@
 #include <sstream>
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <core/Algorithm.hpp>
 
@@ -234,7 +235,19 @@ void ConsoleProcess::commonInit()
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
 
+      // environment variables that can be used when configuring custom shells
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
+
+      core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_NAME",
+                           projects::projectContext().file().stem());
+
+      FilePath projPath = core::system::userHomePath();
+      if (projects::projectContext().hasProject())
+      {
+         projPath = FilePath::safeCurrentPath( projects::projectContext().directory());
+      }
+      core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_PATH",
+                           module_context::createAliasedPath(projPath));
 #endif
    }
 
