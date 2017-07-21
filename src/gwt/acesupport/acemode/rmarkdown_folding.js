@@ -57,6 +57,10 @@ oop.inherits(FoldMode, BaseFoldMode);
          return Utils.startsWith(beforeState, "yaml") ? FOLD_END : FOLD_START;
       }
 
+      // Check for '#' header starts.
+      if (state === "start" && Utils.startsWith(line, "#"))
+         return FOLD_START;
+
       var trimmed = line.trim();
 
       // Chunk
