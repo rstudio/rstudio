@@ -4227,10 +4227,10 @@ public class RemoteServer implements Server
          ServerRequestCallback<RSConnectApplicationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(appId));
-      params.set(1, new JSONString(accountName));
-      params.set(2, new JSONString(server));
-      params.set(3, new JSONString(hostUrl));
+      params.set(0, new JSONString(StringUtil.notNull(appId)));
+      params.set(1, new JSONString(StringUtil.notNull(accountName)));
+      params.set(2, new JSONString(StringUtil.notNull(server)));
+      params.set(3, new JSONString(StringUtil.notNull(hostUrl)));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP,
             params,
