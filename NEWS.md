@@ -98,6 +98,7 @@
 * Add option to kill child processes when session exits
 * Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
 * Remove Packrat package sync notifications; replace with Check Library Status command
+* Add support for ligature coding fonts in RStudio Desktop for Windows and Linux
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
