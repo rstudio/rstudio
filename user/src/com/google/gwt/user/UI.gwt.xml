@@ -64,4 +64,14 @@
     <skip name="rpc/**" />
   </source>
   <public path="public" />
+
+  <!--
+    gwt.cspCompatModeEnabled ensures that GWT's widgets try to be compatible
+    with strict CSP (Content Security Policy) policies. For example, with this
+    config enabled, GWT's Anchor class will take care not trigger violations due
+    to inline JS execution when clicked. This config should be safe to enable
+    and should have no user-visible effects.
+  -->
+  <define-property name="gwt.cspCompatModeEnabled" values="true, false"/>
+  <set-property name="gwt.cspCompatModeEnabled" value="false"/>
 </module>

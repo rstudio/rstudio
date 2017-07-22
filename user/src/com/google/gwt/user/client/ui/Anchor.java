@@ -19,6 +19,8 @@ import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.WhiteSpace;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.shared.DirectionEstimator;
@@ -124,6 +126,22 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
         /* is inline */true);
     if (useDefaultHref) {
       setHref(DEFAULT_HREF);
+    }
+
+    // The following click handler is used to support users of CSP (Content
+    // Security Policy). When a CSP policy is in place, clicking on a link with
+    // the DEFAULT_HREF as the href can trigger a CSP violation. As a
+    // work-around, we prevent execution using preventDefault() when the href is
+    // set to DEFAULT_HREF.
+    if ("true".equals(System.getProperty("gwt.cspCompatModeEnabled"))) {
+      addClickHandler(new ClickHandler() {
+        @Override
+        public void onClick(ClickEvent event) {
+          if (DEFAULT_HREF.equals(getAnchorElement().getHref())) {
+            event.preventDefault();
+          }
+        }
+      });
     }
   }
 

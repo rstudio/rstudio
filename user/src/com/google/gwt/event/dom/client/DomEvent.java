@@ -164,7 +164,11 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
    */
   public void preventDefault() {
     assertLive();
-    nativeEvent.preventDefault();
+    // If there is no native event object set, do nothing. There will be no
+    // default action anyway.
+    if (nativeEvent != null) {
+      nativeEvent.preventDefault();
+    }
   }
 
   /**
