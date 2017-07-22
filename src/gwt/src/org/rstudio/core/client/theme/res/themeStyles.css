@@ -1791,6 +1791,12 @@ body.ubuntu_mono .searchBox {
   margin-bottom: 2px;
 }
 
+.windows.rstudio-themes-flat input[type="checkbox"] {
+  margin-right: 3px;
+  margin-top: 1px;
+  vertical-align: top;
+}
+
 .rstudio-themes-flat .rstudio-themes-dark input[type="checkbox"] {
    background: #d3d8dc;
    border-color: rgb(45,60,75);
