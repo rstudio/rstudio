@@ -212,10 +212,15 @@ public class NewConnectionSnippetHost extends Composite
       final Grid connGrid = new Grid(visibleRows + 1, 4);
       connGrid.addStyleName(RES.styles().grid());
 
-      connGrid.getCellFormatter().setWidth(0, 0, "150px");
-      connGrid.getCellFormatter().setWidth(0, 1, "180px");
-      connGrid.getCellFormatter().setWidth(0, 2, "60px");
-      connGrid.getCellFormatter().setWidth(0, 3, "74px");
+      if (visibleRows > 0) {
+         connGrid.getCellFormatter().setWidth(0, 0, "150px");
+         connGrid.getCellFormatter().setWidth(0, 1, "180px");
+         connGrid.getCellFormatter().setWidth(0, 2, "60px");
+         connGrid.getCellFormatter().setWidth(0, 3, "74px");
+      }
+      else {
+         connGrid.getCellFormatter().setWidth(0, 0, "495px");
+      }
 
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
          connGrid.getRowFormatter().setStyleName(idxRow, RES.styles().gridRow());
@@ -346,8 +351,13 @@ public class NewConnectionSnippetHost extends Composite
       }
 
       connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
-      connGrid.getCellFormatter().getElement(visibleRows, 1).setAttribute("colspan", "4");
-      connGrid.setWidget(visibleRows, 1, buttonsPanel);
+
+
+      connGrid.getCellFormatter().getElement(visibleRows, 0).setAttribute("colspan", "4");
+      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
+      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
+      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
+      connGrid.setWidget(visibleRows, 0, buttonsPanel);
 
       return connGrid;
    }
