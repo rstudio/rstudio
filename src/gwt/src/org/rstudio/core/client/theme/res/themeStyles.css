@@ -1744,6 +1744,12 @@ body.ubuntu_mono .searchBox {
   margin: 3px 3px 5px 3px;
 }
 
+.windows .rstudio-themes-flat input[type="checkbox"] {
+  margin-right: 3px;
+  margin-top: 1px;
+  vertical-align: top;
+}
+
 .rstudio-themes-flat input[type="checkbox"] {
   margin: 0px;
   margin-bottom: 2px;
@@ -2240,7 +2246,7 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .searchMagGlass {
    top: 2px;
 }
-
+DCF
 .rstudio-themes-flat .clearSearch {
    top: 3px;
 }
