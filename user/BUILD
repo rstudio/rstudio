@@ -554,6 +554,7 @@ AugmentedJar(
         "-Xep:LoopConditionChecker:OFF",
         "-Xep:EqualsIncompatibleType:OFF",
         "-Xep:LogicalAssignment:OFF",
+        "-Xep:ComplexBooleanConstant:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",
