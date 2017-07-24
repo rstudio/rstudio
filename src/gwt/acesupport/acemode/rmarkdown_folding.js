@@ -57,11 +57,8 @@ oop.inherits(FoldMode, BaseFoldMode);
          return Utils.startsWith(beforeState, "yaml") ? FOLD_END : FOLD_START;
       }
 
-      // Note the '$start' state is a proxy state used to allow YAML
-      // highlighting only for the YAML header in an R Markdown document.
-      // That is, the 'entry point' state is 'start' while all following
-      // states are '$start'.
-      if (state === "$start" && Utils.startsWith(line, "#"))
+      // Check for '#' header starts.
+      if (state === "start" && Utils.startsWith(line, "#"))
          return FOLD_START;
 
       var trimmed = line.trim();
@@ -75,10 +72,7 @@ oop.inherits(FoldMode, BaseFoldMode);
          // separate mode); when ending that chunk and returning back
          // to the 'start' state the session will instead report that
          // state.
-         //
-         // The '$start' bit is an artefact of how we sneak YAML highlighting
-         // into the start of R Markdown documents.
-         return state === "$start" ? FOLD_END : FOLD_START;
+         return state === "start" ? FOLD_END : FOLD_START;
       }
       
       // No match (bail)
@@ -94,7 +88,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       var increment;
       if (row === 0)
          increment = 1;
-      else if (state === "start" || state === "$start")
+      else if (state === "start")
          increment = -1;
       else
          increment = 1;

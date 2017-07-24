@@ -334,6 +334,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return dbl("font_size_points", 10.0);
    }
+   
+   public PrefValue<Boolean> useLigatures()
+   {
+      return bool("use_ligatures", false);
+   }
 
    public PrefValue<String> theme()
    {

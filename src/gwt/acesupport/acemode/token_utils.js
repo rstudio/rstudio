@@ -96,9 +96,9 @@ var TokenUtils = function(doc, tokenizer, tokens,
          
          assumeGood = false;
 
-         var state = (row === 0) ? 'start' : this.$endStates[row-1];
+         var state = (row === 0) ? 'start' : this.$endStates[row - 1];
          var line = this.$doc.getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row);
 
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
