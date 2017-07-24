@@ -78,7 +78,7 @@ public class ProgressSpinner extends Composite
          public boolean execute()
          {
             frame_++;
-            redraw();
+            if (isVisible()) redraw();
             return !complete_;
          }
       }, FRAME_RATE_MS);
