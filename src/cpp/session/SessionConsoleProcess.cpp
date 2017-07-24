@@ -240,14 +240,6 @@ void ConsoleProcess::commonInit()
 
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_NAME",
                            projects::projectContext().file().stem());
-
-      FilePath projPath = core::system::userHomePath();
-      if (projects::projectContext().hasProject())
-      {
-         projPath = FilePath::safeCurrentPath( projects::projectContext().directory());
-      }
-      core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_PATH",
-                           module_context::createAliasedPath(projPath));
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_ID",
                            module_context::activeSession().id());
 #endif
