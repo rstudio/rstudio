@@ -207,10 +207,19 @@ void JsonRpcResponse::setError(const Error& error, const json::Value& clientInfo
       // populate sub-error field with error details
       json::Object executionError;
       executionError["code"] = ec.value();
+      
       std::string errorCategoryName = ec.category().name();
       executionError["category"] = errorCategoryName;
+      
       std::string errorMessage = ec.message();
       executionError["message"] = errorMessage;
+      
+      if (error.location().hasLocation())
+      {
+         std::string errorLocation = error.location().asString();
+         executionError["location"] = errorLocation;
+      }
+      
       jsonError["error"] = executionError;
       if (!clientInfo.is_null())
       {
