@@ -20,6 +20,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 
 using namespace rstudio::core;
 
@@ -62,8 +63,16 @@ void initialize()
 {
    if (s_inited) return;
 
-   // storage for session-scoped console/terminal metadata
-   s_consoleProcPath = module_context::scopedScratchPath().complete(kConsoleDir);
+   if (session::options().multiSession() &&
+       session::options().programMode() == kSessionProgramModeServer)
+   {
+      s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
+   }
+   else
+   {
+      s_consoleProcPath = module_context::scopedScratchPath().complete(kConsoleDir);
+   }
+
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
    {
