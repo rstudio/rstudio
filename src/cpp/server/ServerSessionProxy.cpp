@@ -567,21 +567,38 @@ void proxyRequest(
 
    // determine the uid for the username (for validation)
    UidType uid;
+   boost::optional<UidType> validateUid;
    Error error = userIdForUsername(context.username, &uid);
-   if (error)
+   if (!error)
    {
-      Error permissionError(boost::system::error_code(
-                               boost::system::errc::permission_denied,
-                               boost::system::get_system_category()),
-                            error,
-                            ERROR_LOCATION);
-      errorHandler(permissionError);
-      return;
+      // if the user exists on the system, do uid validation
+      validateUid = uid;
+   }
+   else
+   {
+      if (error.code() != boost::system::errc::permission_denied)
+      {
+         // if the error returned was permission_denied then no user was found
+         // we consider user not found to be an acceptable error as it should
+         // be created later by PAM profiles
+         //
+         // other errors indicate potential issues enumerating the passwd file
+         // so reject access since we cannot verify the identity of the user
+         Error permissionError(boost::system::error_code(
+                                  boost::system::errc::permission_denied,
+                                  boost::system::get_system_category()),
+                               error,
+                               ERROR_LOCATION);
+         errorHandler(permissionError);
+         return;
+      }
    }
 
    // create client
+   // if the user is available on the system pass in the uid for validation to ensure
+   // that we only connect to the socket if it was created by the user
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
-    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, false, uid));
+    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, false, validateUid));
 
    // setup retry context
    if (!connectionRetryProfile.empty())
