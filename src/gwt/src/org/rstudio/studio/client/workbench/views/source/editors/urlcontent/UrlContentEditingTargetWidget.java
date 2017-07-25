@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -30,7 +31,7 @@ public class UrlContentEditingTargetWidget extends Composite
    {
       commands_ = commands;
 
-      frame_ = new RStudioFrame(url, true, "");
+      frame_ = new RStudioThemedFrame(url, true, "allow-same-origin", null, null, false);
       frame_.setSize("100%", "100%");
 
       PanelWithToolbars panel = new PanelWithToolbars(createToolbar(),
@@ -58,5 +59,5 @@ public class UrlContentEditingTargetWidget extends Composite
    }
 
    private final Commands commands_;
-   private RStudioFrame frame_;
+   private RStudioThemedFrame frame_;
 }
