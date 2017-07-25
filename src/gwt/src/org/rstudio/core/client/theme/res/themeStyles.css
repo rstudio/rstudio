@@ -2262,10 +2262,8 @@ body.ubuntu_mono .searchBox {
    background: THEME_LIGHT_CONTROL_BACKGROUND;
 }
 
-@if rstudio.desktop true {
-.linux.rstudio-themes-flat .search {
-   top: 0px;
-}
+.rstudio-themes-flat .gwt-MenuBar .search {
+   margin-top: 1px;
 }
 
 .rstudio-themes-flat .tallerToolbarWrapper .search {
