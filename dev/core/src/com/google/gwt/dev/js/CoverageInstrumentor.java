@@ -151,6 +151,6 @@ public class CoverageInstrumentor {
     JsNameRef coverageObject = coverageFieldName.makeRef(info);
     JsBinaryOperation init = new JsBinaryOperation(info, JsBinaryOperator.ASG, coverageObject,
         baselineCoverage(info, instrumentableLines));
-    jsProgram.getGlobalBlock().getStatements().add(init.makeStmt());
+    jsProgram.getGlobalBlock().getStatements().add(0, init.makeStmt());
   }
 }
