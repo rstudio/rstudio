@@ -915,7 +915,7 @@ private:
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
                ext == ".json" || ext == ".tex" ||
-               ext == ".scala" ||
+               ext == ".toml" || ext == ".scala" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||
