@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.prefs;
 
+import org.rstudio.core.client.ElementIds;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -65,6 +67,7 @@ class SectionChooser extends SimplePanel implements
       innerPanel.add(nudgeRightPlus(label));
       panel.add(innerPanel);
       panel.setStyleName(res_.styles().section());
+      panel.getElement().setId(ElementIds.idFromLabel(name) + "_options");
 
       panel.addClickHandler(new ClickHandler()
       {

@@ -15,8 +15,11 @@
 
 #ifndef _WIN32
 
+#include <boost/foreach.hpp>
+
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <tests/TestThat.hpp>
 
@@ -27,141 +30,156 @@ namespace tests {
 
 context("PosixSystemTests")
 {
-
-   test_that("No subprocess detected correctly with generic method")
+   test_that("Empty subprocess list returned correctly with pgrep method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
-         expect_false(hasSubprocesses(pid));
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
+         expect_true(children.empty());
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
-   test_that("Subprocess detected correctly with generic method")
+   test_that("Subprocess name detected correctly with pgrep method")
    {
+      std::string exe = "sleep";
+
       pid_t pid = fork();
       expect_false(pid == -1);
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
          expect_true(false); // shouldn't get here!
       }
       else
       {
          // we now have a subprocess
-         expect_true(hasSubprocesses(getpid()));
+         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
+         expect_true(children.size() >= 1);
+         if (children.size() >= 1)
+         {
+            bool found = false;
+            BOOST_FOREACH(SubprocInfo info, children)
+            {
+               if (info.exe.compare(exe) == 0)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            expect_true(found);
+         }
 
-         kill(pid, SIGKILL);
-      }
-   }
-
-   test_that("No subprocess detected correctly with pgrep method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesViaPgrep(pid));
-
-         kill(pid, SIGKILL);
-      }
-   }
-
-   test_that("Subprocess detected correctly with pgrep method")
-   {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
-      }
-      else
-      {
-         // we now have a subprocess
-         expect_true(hasSubprocessesViaPgrep(getpid()));
-
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
 
-   test_that("No subprocess detected correctly with Mac method")
+   test_that("Subprocess list correctly empty with Mac method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesMac(pid));
+         std::vector<SubprocInfo> children = getSubprocessesMac(pid);
+         expect_true(children.empty());
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
-   test_that("Subprocess detected correctly with Mac method")
+   test_that("Subprocess count and pid detected correctly with Mac method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // we now have a subprocess
-         expect_true(hasSubprocessesMac(getpid()));
+         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+         expect_true(children.size() == 1);
+         expect_true(children.at(0).pid == pid);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
-#endif // __APPLE__
 
-#ifdef HAVE_PROCSELF
-   test_that("No subprocess detected correctly with procfs method")
+   test_that("Subprocess name detected correctly with Mac method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+      std::string exe = "sleep";
+
+      if (pid == 0)
+      {
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         expect_true(false); // shouldn't get here!
+      }
+      else
+      {
+         // we now have a subprocess, need a slight pause to allow system tables to
+         // catch up
+         ::sleep(1);
+         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+         expect_true(children.size() == 1);
+         if (children.size() == 1)
+            expect_true(children[0].exe.compare(exe) == 0);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
+
+
+
+#else
+
+   test_that("No subprocesses detected correctly with procfs method")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
          // process we started doesn't have a subprocess
-         expect_false(hasSubprocessesViaProcFs(pid));
+         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(pid);
+         expect_true(children.empty());
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -169,21 +187,58 @@ context("PosixSystemTests")
    {
       pid_t pid = fork();
       expect_false(pid == -1);
+      std::string exe = "sleep";
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "2", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", NULL);
          expect_true(false); // shouldn't get here!
       }
       else
       {
          // we now have a subprocess
-         expect_true(hasSubprocessesViaProcFs(getpid()));
+         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(getpid());
+         expect_true(children.size() >= 1);
+         if (children.size() >= 1)
+         {
+            bool found = false;
+            BOOST_FOREACH(SubprocInfo info, children)
+            {
+               if (info.exe.compare(exe) == 0)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            expect_true(found);
+         }
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
+
+   test_that("Empty list of subprocesses returned correctly with generic method")
+   {
+      pid_t pid = fork();
+      expect_false(pid == -1);
+
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // process we started doesn't have a subprocess
+         std::vector<SubprocInfo> children = getSubprocesses(pid);
+         expect_true(children.empty());
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
+      }
+   }
 
    test_that("Current working directory determined correctly with generic method")
    {
@@ -194,8 +249,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -205,7 +260,8 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
@@ -218,8 +274,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -229,11 +285,12 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
 
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
    test_that("Current working directory determined correctly with procfs method")
    {
       FilePath emptyPath;
@@ -243,8 +300,8 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp("sleep", "sleep", "5", NULL);
-         expect_true(false); // shouldn't get here!
+         ::sleep(1);
+         _exit(0);
       }
       else
       {
@@ -254,10 +311,11 @@ context("PosixSystemTests")
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
-         kill(pid, SIGKILL);
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, NULL, 0);
       }
    }
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 }
 
 } // end namespace tests

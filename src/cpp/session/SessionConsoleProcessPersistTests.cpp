@@ -198,6 +198,8 @@ TEST_CASE("ConsoleProcess Persistence")
       CHECK((loaded.compare(orig2) == 0));
    }
 
+#ifndef _WIN32
+
    SECTION("Save and restore environment")
    {
       core::system::Options env;
@@ -231,6 +233,9 @@ TEST_CASE("ConsoleProcess Persistence")
 
       console_persist::deleteEnvFile(handle1);
    }
+
+#endif // !_WIN32
+
 }
 
 } // end namespace tests

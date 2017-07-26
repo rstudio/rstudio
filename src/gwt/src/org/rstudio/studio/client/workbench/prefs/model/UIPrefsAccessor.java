@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
@@ -330,6 +334,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return dbl("font_size_points", 10.0);
    }
+   
+   public PrefValue<Boolean> useLigatures()
+   {
+      return bool("use_ligatures", false);
+   }
 
    public PrefValue<String> theme()
    {
@@ -615,6 +624,25 @@ public class UIPrefsAccessor extends Prefs
       return bool("terminal_track_env", true);
    }
 
+   public static final int BUSY_DETECT_ALWAYS = 0;
+   public static final int BUSY_DETECT_NEVER = 1;
+   public static final int BUSY_DETECT_WHITELIST = 2;
+
+   public PrefValue<Integer> terminalBusyMode()
+   {
+      return integer("busy_detection", BUSY_DETECT_ALWAYS);
+   }
+
+   public PrefValue<JsArrayString> terminalBusyWhitelist()
+   {
+      List<String> defArray = new ArrayList<String>();
+      defArray.add("tmux");
+      defArray.add("screen");
+      JsArrayString defJsArray = JsArrayUtil.toJsArrayString(defArray);
+
+      return object("busy_whitelist", defJsArray);
+   }
+ 
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

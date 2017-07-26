@@ -31,11 +31,13 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    public static final native RSConnectDeploymentRecord create(
          String name, 
          String title,
+         String id,
          RSConnectAccount account, 
          String url) /*-{
       return {
          'name': name,
          'title': title,
+         'appId': id,
          'account': account.name,
          'server': account.server,
          'url': url
@@ -45,11 +47,13 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    public static final native RSConnectDeploymentRecord create(
          String name, 
          String title,
+         String id,
          String account,
          String server) /*-{
       return {
          'name': name,
          'title': title,
+         'appId': id,
          'account': account,
          'server': server,
          };
@@ -85,6 +89,18 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
 
    public final native String getUrl() /*-{
       return this.url;
+   }-*/;
+   
+   public final native String getUsername() /*-{
+      return this.username;
+   }-*/;
+   
+   public final native String getHostUrl() /*-{
+      return this.hostUrl;
+   }-*/;
+   
+   public final native boolean isServerRegistered() /*-{
+      return this.serverRegistered;
    }-*/;
    
    public final RSConnectAccount getAccount()

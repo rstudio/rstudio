@@ -37,9 +37,24 @@ public class RStudioThemedFrame extends RStudioFrame
       this(null, null, null, false);
    }
 
-   public RStudioThemedFrame(String url, String customStyle, String urlStyle, boolean removeBodyStyle)
+   public RStudioThemedFrame(
+      String url,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle)
    {
-      super(url);
+      this(url, false, null, customStyle, urlStyle, removeBodyStyle);
+   }
+
+   public RStudioThemedFrame(
+      String url,
+      boolean sandbox,
+      String sandboxAllow,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle)
+   {
+      super(url, sandbox, sandboxAllow);
       
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;

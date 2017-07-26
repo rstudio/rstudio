@@ -62,7 +62,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    @Override
    protected Toolbar createMainToolbar()
    {
-      publishButton_ = new RSConnectPublishButton(
+      publishButton_ = new RSConnectPublishButton(RSConnectPublishButton.HOST_PLOTS,
             RSConnect.CONTENT_TYPE_PLOT, true, commands_.savePlotAsImage());
       publishButton_.setPublishHtmlSource(new PublishHtmlSource()
       {

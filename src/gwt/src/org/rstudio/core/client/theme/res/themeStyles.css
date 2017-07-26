@@ -26,7 +26,7 @@
 @external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
-@external editor_dark;
+@external editor_dark, editor_ligatures;
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
@@ -94,7 +94,8 @@
       popupTopRight, popupTopRightInner,
       popupMiddleLeft, popupMiddleCenter,
       popupMiddleCenterInner, popupMiddleRight, popupBottomLeft,
-      popupBottomCenter, popupBottomRight;
+      popupBottomCenter, popupBottomRight,
+      popupTop;
 
 @external Caption;
 
@@ -507,6 +508,47 @@ pre {
 	position: relative;
 	top: -2px;
 	right: -12px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel.gwt-DecoratedPopupPanel {
+   margin-left: -20px;
+   margin-top: 5px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTop {
+   background: #e1e2e5;
+   border: solid 1px #a3a8b2;
+   border-bottom: none;
+   border-radius: 3px 3px 0px 0px;
+   height: 20px;
+   display: block;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopCenter {
+   height: 20px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopLeft,
+.rstudio-themes-flat .miniDialogPopupPanel .popupTopRight {
+   display: none;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .popupMiddleCenter {
+   padding-left: 10px;
+   border: solid 1px #a3a8b2;
+   padding-right: 10px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .miniDialogCaption {
+   margin-bottom: 12px;
+   margin-left: -2px;
+   padding-top: 1px;
+   margin-top: -2px;
+}
+
+.rstudio-themes-flat .miniDialogPopupPanel .miniDialogTools {
+   top: -5px;
+   right: -8px;
 }
 
 .gwt-DialogBox-ModalDialog, .gwt-DecoratedPopupPanel {
@@ -1749,6 +1791,12 @@ body.ubuntu_mono .searchBox {
   margin-bottom: 2px;
 }
 
+.windows.rstudio-themes-flat input[type="checkbox"] {
+  margin-right: 3px;
+  margin-top: 1px;
+  vertical-align: top;
+}
+
 .rstudio-themes-flat .rstudio-themes-dark input[type="checkbox"] {
    background: #d3d8dc;
    border-color: rgb(45,60,75);
@@ -1931,6 +1979,10 @@ body.ubuntu_mono .searchBox {
    background-size: 16px 14px;
 }
 
+.editor_ligatures .ace_editor {
+   text-rendering: optimizeLegibility;
+}
+
 .menuSubheader {
    font-family: proportionalFont;
    text-transform: uppercase;
@@ -1939,6 +1991,14 @@ body.ubuntu_mono .searchBox {
    padding-left: 28px;
    padding-top: 2px;
    padding-bottom: 2px;
+}
+
+.menuItemSubtitle {
+   font-family: proportionalFont;
+   font-size: 11px;
+   padding-top: 2px;
+   padding-bottom: 2px;
+   color: #909090;
 }
 
 .borderedIFrame {
@@ -2195,17 +2255,15 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .search {
-   top: 1px;
+   top: 0px;
    height: 16px;
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
    background: THEME_LIGHT_CONTROL_BACKGROUND;
 }
 
-@if rstudio.desktop true {
-.linux.rstudio-themes-flat .search {
-   top: 0px;
-}
+.rstudio-themes-flat .gwt-MenuBar .search {
+   margin-top: 1px;
 }
 
 .rstudio-themes-flat .tallerToolbarWrapper .search {

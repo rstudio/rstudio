@@ -93,6 +93,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
      
       // add publish button 
       publishButton_ = new RSConnectPublishButton(
+            RSConnectPublishButton.HOST_VIEWER,
             RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar_.addRightWidget(publishButton_);
       

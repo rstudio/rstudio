@@ -148,9 +148,9 @@ var MarkdownHighlightRules = function() {
             emphasisUnderscore
         ],
        
-        start: [{
+        "start": [{
            token : "empty_line",
-           regex : '^$',
+           regex : '^\\s*$',
            next: "allowBlock"
         }, { // inline r code
             token : "support.function.inline_r_chunk",
@@ -292,6 +292,10 @@ var MarkdownHighlightRules = function() {
            token : "support.function",
            regex : "^ {4}.+",
            next : "allowBlock"
+        }, {
+            token : "empty_line",
+            regex : "^\\s*$",
+            next  : "allowBlock"
         }, {
            token : "empty",
            regex : "",

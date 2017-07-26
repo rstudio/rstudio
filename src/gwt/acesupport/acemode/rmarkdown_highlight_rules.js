@@ -27,7 +27,7 @@ var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHigh
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
-var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
+var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
 var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
@@ -139,33 +139,14 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
-   // ensure that YAML highlight rules only start of document
-   this.$rules["$start"] = this.$rules["start"].slice();
-   for (var key in this.$rules)
-   {
-      var stateRules = this.$rules[key];
-      for (var i = 0; i < stateRules.length; i++)
-      {
-         if (stateRules[i].next === "start")
-            stateRules[i].next = "$start";
-      }
-   }
-
-   // escape eagerly from 'start' to '$start' state
-   var startRules = this.$rules["start"];
-   for (var i = 0; i < startRules.length; i++)
-   {
-      if (startRules[i].next == null)
-         startRules[i].next = "$start";
-   }
-
    // Embed YAML highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
       "yaml",
       "^\\s*---\\s*$",
-      "^\\s*(?:---|\\.\\.\\.)\\s*$"
+      "^\\s*(?:---|\\.\\.\\.)\\s*$",
+      ["fieldblock", "listblock", "allowBlock"]
    );
 
    this.$rules["yaml-start"].unshift({

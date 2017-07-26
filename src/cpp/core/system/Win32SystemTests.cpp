@@ -18,6 +18,7 @@
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -137,7 +138,8 @@ TEST_CASE("Win32SystemTests")
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
-      CHECK_FALSE(hasSubprocesses(pi.dwProcessId));
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      CHECK(children.empty());
 
       CHECK(TerminateProcess(pi.hProcess, 1));
 
@@ -173,7 +175,23 @@ TEST_CASE("Win32SystemTests")
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
       ::Sleep(100); // give child time to start
-      CHECK(hasSubprocesses(pi.dwProcessId));
+
+      std::string exe = "PING.EXE";
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      CHECK(children.size() >= 1);
+      if (children.size() >= 1)
+      {
+         bool found = false;
+         BOOST_FOREACH(SubprocInfo info, children)
+         {
+            if (info.exe.compare(exe) == 0)
+            {
+               found = true;
+               break;
+            }
+         }
+         CHECK(found);
+      }
 
       CHECK(TerminateProcess(pi.hProcess, 1));
 
@@ -220,6 +238,42 @@ TEST_CASE("Win32SystemTests")
       CHECK(cwd.empty());
 
       TerminateProcess(pi.hProcess, 1);
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+   }
+
+   SECTION("Empty subproc list when no child processes")
+   {
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+
+      ZeroMemory(&si, sizeof(si));
+      si.cb = sizeof(si);
+      ZeroMemory(&pi, sizeof(pi));
+
+      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+      cmd.copy(&(cmdBuf[0]), cmd.size());
+
+      // Start the child process.
+      CHECK(CreateProcess(
+               NULL,          // No module name (use command line)
+               &(cmdBuf[0]),  // Command
+               NULL,          // Process handle not inheritable
+               NULL,          // Thread handle not inheritable
+               FALSE,         // Set handle inheritance to FALSE
+               0,             // No creation flags
+               NULL,          // Use parent's environment block
+               NULL,          // Use parent's starting directory
+               &si,           // Pointer to STARTUPINFO structure
+               &pi));         // Pointer to PROCESS_INFORMATION structure
+
+      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+      CHECK(children.empty());
+
+      CHECK(TerminateProcess(pi.hProcess, 1));
+
       WaitForSingleObject(pi.hProcess, INFINITE);
       CloseHandle(pi.hProcess);
       CloseHandle(pi.hThread);
