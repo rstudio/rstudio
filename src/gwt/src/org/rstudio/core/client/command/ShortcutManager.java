@@ -489,8 +489,9 @@ public class ShortcutManager implements NativePreviewHandler,
                   // the word behind the cursor; so we'll ignore this command 
                   // when focus is in the terminal and let terminal see keys
                   return false;
-               } 
-               if (binding.getContext() != AppCommand.Context.Workbench &&
+               }
+               if (binding.getId() != "executeCode" &&
+                     binding.getContext() != AppCommand.Context.Workbench &&
                      binding.getContext() != AppCommand.Context.Addin &&
                      binding.getContext() != AppCommand.Context.PackageDevelopment)
                {
