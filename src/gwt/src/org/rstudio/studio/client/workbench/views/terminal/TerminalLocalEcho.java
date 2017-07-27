@@ -129,6 +129,13 @@ public class TerminalLocalEcho
     */
    private int outputNonEchoed(String outputToMatch)
    {
+      // Server may output a space when wrapping a line, a space that wasn't sent to it,
+      // thus breaking local-match; so relax the rules on matching if output contains a 
+      // single space that wasn't local-echoed.
+      boolean trailingSpace = outputToMatch.endsWith(" ");
+      if (trailingSpace)
+         outputToMatch = outputToMatch.substring(0, outputToMatch.length() - 1);
+      
       String lastOutput = "";
       while (!localEcho_.isEmpty() && lastOutput.length() < outputToMatch.length())
       {
@@ -137,11 +144,29 @@ public class TerminalLocalEcho
 
       if (lastOutput.equals(outputToMatch))
       {
+         if (trailingSpace)
+         {
+            String nextLocalEcho = localEcho_.peek();
+            if (nextLocalEcho != null && nextLocalEcho == " ")
+            {
+               // also matched the trailing space so remove from local echo history
+               localEcho_.pop();
+            }
+            else
+            {
+               // we received an extra space, write it out
+               writer_.write(" ");
+            }
+         }
+
          // all matched, nothing to output
          return outputToMatch.length();
       }
 
-      else if (outputToMatch.startsWith(lastOutput))
+      if (trailingSpace)
+         outputToMatch += " ";
+      
+      if (outputToMatch.startsWith(lastOutput))
       {
          // output is superset of what was local-echoed; write out the
          // unmatched part
