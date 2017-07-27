@@ -24,6 +24,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
@@ -323,10 +324,10 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
-      // On Windows, rapid typing sometimes causes RPC messages for writeStandardInput
+      // On desktop, rapid typing sometimes causes RPC messages for writeStandardInput
       // to arrive out of sequence in the terminal; send a sequence number with each
       // message so server can put messages back in order
-      if (BrowseCap.isWindowsDesktop() && 
+      if (Desktop.isDesktop() && 
             consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
       {
          if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
