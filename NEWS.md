@@ -44,6 +44,7 @@
 * Added option to specify the working directory when executing R Markdown chunks
 * Added option to set preview mode (in viewer, window, etc.) in YAML header
 * Added option to skip knitting before publishing in YAML header
+* Multiline strings in YAML header are now properly highlighted
 
 ### R Notebooks
 
@@ -119,6 +120,8 @@
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
+* Fixed issue where 'execute current statement' behaved poorly with unclosed statements
+* Fixed issue where tibble warnings could be emitted by autocompletion engine
 * Fixed issue where 'Copy Plot to Clipboard' from Viewer failed with macOS Sierra
 * Fixed issue where keybinding changes were not reflected in popped-out windows
 * Fix hang when replacing a misspelled word with word and punctuation
