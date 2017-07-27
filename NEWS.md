@@ -44,6 +44,7 @@
 * Added option to specify the working directory when executing R Markdown chunks
 * Added option to set preview mode (in viewer, window, etc.) in YAML header
 * Added option to skip knitting before publishing in YAML header
+* Multiline strings in YAML header are now properly highlighted
 
 ### R Notebooks
 
