@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.Lists;
@@ -78,14 +77,12 @@ import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -93,8 +90,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * Manages the process of compiling {@link CompilationUnit}s.
@@ -147,49 +142,6 @@ public class JdtCompiler {
           .setMethodArgs(new MethodArgNamesLookup())
           .setProblems(cud.compilationResult().getProblems());
       results.add(builder.build());
-    }
-  }
-  /**
-   * Static cache of all the JRE package names.
-   */
-  public static class JreIndex {
-    private static Set<String> packages = readPackages();
-
-    public static boolean contains(String name) {
-      return packages.contains(name);
-    }
-
-    private static void addPackageRecursively(Set<String> packages, String pkg) {
-      if (!packages.add(pkg)) {
-        return;
-      }
-
-      int i = pkg.lastIndexOf('/');
-      if (i != -1) {
-        addPackageRecursively(packages, pkg.substring(0, i));
-      }
-    }
-
-    private static Set<String> readPackages() {
-      HashSet<String> pkgs = new HashSet<String>();
-      String klass = "java/lang/Object.class";
-      URL url = ClassLoader.getSystemClassLoader().getResource(klass);
-      try {
-        JarURLConnection connection = (JarURLConnection) url.openConnection();
-        JarFile f = connection.getJarFile();
-        Enumeration<JarEntry> entries = f.entries();
-        while (entries.hasMoreElements()) {
-          JarEntry e = entries.nextElement();
-          String name = e.getName();
-          if (name.endsWith(".class")) {
-            String pkg = Shared.getSlashedPackageFrom(name);
-            addPackageRecursively(pkgs, pkg);
-          }
-        }
-        return pkgs;
-      } catch (IOException e) {
-        throw new InternalCompilerException("Unable to find JRE", e);
-      }
     }
   }
 
@@ -440,7 +392,7 @@ public class JdtCompiler {
       String internalName = String.valueOf(internalNameChars);
 
       // If we already know this is a package, take the shortcut.
-      if (JreIndex.contains(internalName) || packages.contains(internalName)) {
+      if (packages.contains(internalName)) {
         return null;
       }
 
@@ -642,10 +594,6 @@ public class JdtCompiler {
     }
 
     private boolean isPackage(String slashedPackageName) {
-      // Test the JRE explicitly, because the classloader trick doesn't work.
-      if (JreIndex.contains(slashedPackageName)) {
-        return true;
-      }
       /*
        * TODO(zundel): When cached CompiledClass instances are used, 'packages'
        * does not contain all packages in the compile and this test fails the
