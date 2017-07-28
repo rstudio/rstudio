@@ -346,7 +346,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     List<ClassPathEntry> classPathEntries2 = oracle.getClassPathEntries();
     assertEquals(classPathEntries.size(), classPathEntries2.size());
     for (int i = 0; i < classPathEntries2.size(); ++i) {
-      assertSame(classPathEntries.get(i), classPathEntries2.get(i));
+      assertEquals(classPathEntries.get(i), classPathEntries2.get(i));
     }
   }
 
