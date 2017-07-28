@@ -41,24 +41,24 @@
 }
 
 @if user.agent safari {
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar {
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-thumb {
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-thumb {
    border: solid 3px rgb(94, 94, 78);
    background: rgb(111, 111, 95);
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track,
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-corner { 
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track,
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-corner { 
    background: rgb(94, 94, 78);
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track-piece {
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track-piece {
 }
 
-.rstudio-themes-flat .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track {
+.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track {
 }
 }
