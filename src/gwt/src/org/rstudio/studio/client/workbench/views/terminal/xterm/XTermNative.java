@@ -138,7 +138,23 @@ public class XTermNative extends JavaScriptObject
       }
       return current;
    }-*/;
-   
+
+   public final native String getLocalBuffer() /*-{
+      buffer = "";
+      for (row = 0; row < this.rows; row++) {
+         lineBuf = this.lines.get(row);
+         if (!lineBuf) // resize may be in progress
+            return null;
+      
+         for (col = 0; col < this.cols; col++) {
+            if (!lineBuf[col])
+               return null;
+            buffer += lineBuf[col][1];
+         }
+      }
+      return buffer;
+   }-*/;
+    
    /**
     * Install a handler for user input (typing). Only one handler at a 
     * time may be installed. Previous handler will be overwritten.
