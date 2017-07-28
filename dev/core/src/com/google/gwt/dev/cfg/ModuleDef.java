@@ -178,7 +178,7 @@ public class ModuleDef implements DepsInfoProvider {
   private Map<String, String> gwtXmlPathByModuleName = Maps.newHashMap();
 
   public ModuleDef(String name) {
-    this(name, ResourceLoaders.forClassLoader(Thread.currentThread()));
+    this(name, ResourceLoaders.fromContextClassLoader());
   }
 
   public ModuleDef(String name, ResourceLoader resources) {

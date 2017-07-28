@@ -18,12 +18,14 @@ package com.google.gwt.dev.cfg;
 import static com.google.gwt.thirdparty.guava.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
 
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -31,22 +33,20 @@ import java.util.List;
  */
 public class ResourceLoaders {
 
-  private static class ClassLoaderAdapter implements ResourceLoader {
-    private final ClassLoader wrapped;
+  private static class ContextClassLoaderAdapter implements ResourceLoader {
+    private final ClassLoader contextClassLoader;
 
-    public ClassLoaderAdapter(ClassLoader wrapped) {
-      // TODO(rluble): Maybe stop wrapping arbitrary class loaders here and always use the
-      // system ClassLoader.
-      this.wrapped = wrapped;
+    public ContextClassLoaderAdapter() {
+      this.contextClassLoader = Thread.currentThread().getContextClassLoader();
     }
 
     @Override
     public boolean equals(Object other) {
-      if (!(other instanceof ClassLoaderAdapter)) {
+      if (!(other instanceof ContextClassLoaderAdapter)) {
         return false;
       }
-      ClassLoaderAdapter otherAdapter = (ClassLoaderAdapter) other;
-      return wrapped.equals(otherAdapter.wrapped);
+      ContextClassLoaderAdapter otherAdapter = (ContextClassLoaderAdapter) other;
+      return contextClassLoader.equals(otherAdapter.contextClassLoader);
     }
 
     /**
@@ -54,8 +54,10 @@ public class ResourceLoaders {
      */
     @Override
     public List<URL> getClassPath() {
-      List<URL> result = new ArrayList<URL>();
-      for (String entry : Splitter.on(File.pathSeparatorChar).split(JAVA_CLASS_PATH.value())) {
+      List<URL> result = new ArrayList<>();
+      LinkedHashSet<String> uniqueClassPathEntries =
+          Sets.newLinkedHashSet(Splitter.on(File.pathSeparatorChar).split(JAVA_CLASS_PATH.value()));
+      for (String entry : uniqueClassPathEntries) {
         try {
           result.add(Paths.get(entry).toUri().toURL());
         } catch (MalformedURLException e) {
@@ -66,12 +68,12 @@ public class ResourceLoaders {
 
     @Override
     public URL getResource(String resourceName) {
-      return wrapped.getResource(resourceName);
+      return contextClassLoader.getResource(resourceName);
     }
 
     @Override
     public int hashCode() {
-      return wrapped.hashCode();
+      return contextClassLoader.hashCode();
     }
   }
 
@@ -137,8 +139,8 @@ public class ResourceLoaders {
   /**
    * Creates a ResourceLoader that loads from the given thread's class loader.
    */
-  public static ResourceLoader forClassLoader(Thread thread) {
-    return wrap(thread.getContextClassLoader());
+  public static ResourceLoader fromContextClassLoader() {
+    return new ContextClassLoaderAdapter();
   }
 
   /**
@@ -147,15 +149,6 @@ public class ResourceLoaders {
    */
   public static ResourceLoader forPathAndFallback(List<File> path, ResourceLoader fallback) {
     return new PrefixLoader(path, fallback);
-  }
-
-  /**
-   * Adapts a ClassLoader to work as a ResourceLoader.
-   * (Caveat: any ClassLoader in the chain that isn't a URLClassLoader won't contribute to the
-   * results of {@link  ResourceLoader#getClassPath}.)
-   */
-  public static ResourceLoader wrap(ClassLoader loader) {
-    return new ClassLoaderAdapter(loader);
   }
 
   private ResourceLoaders() {

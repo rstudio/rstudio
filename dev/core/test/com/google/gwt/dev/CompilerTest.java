@@ -2504,7 +2504,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
       // Fake out the resource loader to read resources both from the normal classpath as well as
       // this new application directory.
-      ResourceLoader resourceLoader = ResourceLoaders.forClassLoader(Thread.currentThread());
+      ResourceLoader resourceLoader = ResourceLoaders.fromContextClassLoader();
       resourceLoader =
           ResourceLoaders.forPathAndFallback(ImmutableList.of(applicationDir), resourceLoader);
 
@@ -2688,7 +2688,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // Fake out the resource loader to read resources both from the normal classpath as well as this
     // new application directory.
-    ResourceLoader resourceLoader = ResourceLoaders.forClassLoader(Thread.currentThread());
+    ResourceLoader resourceLoader = ResourceLoaders.fromContextClassLoader();
     resourceLoader =
         ResourceLoaders.forPathAndFallback(ImmutableList.of(applicationDir), resourceLoader);
 

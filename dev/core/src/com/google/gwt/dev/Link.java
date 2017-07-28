@@ -418,7 +418,7 @@ public class Link {
     if (saveSources) {
       // Assume that all source code is available in the compiler's classpath.
       // (This will have to be adjusted to work with Super Dev Mode.)
-      ResourceLoader loader = ResourceLoaders.forClassLoader(Thread.currentThread());
+      ResourceLoader loader = ResourceLoaders.fromContextClassLoader();
       SourceSaver.save(logger, artifacts, loader, options, destPrefix, extraFileSet);
     }
 

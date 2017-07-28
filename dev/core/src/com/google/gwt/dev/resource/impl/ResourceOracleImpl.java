@@ -204,14 +204,7 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
    * Preinitializes the classpath from the thread default {@link ClassLoader}.
    */
   public static void preload(TreeLogger logger) {
-    preload(logger, Thread.currentThread().getContextClassLoader());
-  }
-
-  /**
-   * Preinitializes the classpath for a given {@link ClassLoader}.
-   */
-  public static void preload(TreeLogger logger, ClassLoader classLoader) {
-    preload(logger, ResourceLoaders.wrap(classLoader));
+    preload(logger, ResourceLoaders.fromContextClassLoader());
   }
 
   /**
@@ -387,17 +380,7 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
    * {@link ClassLoader}.
    */
   public ResourceOracleImpl(TreeLogger logger) {
-    this(logger, Thread.currentThread().getContextClassLoader());
-  }
-
-  /**
-   * Constructs a {@link ResourceOracleImpl} from a {@link ClassLoader}. The
-   * specified {@link ClassLoader} and all of its parents which are instances of
-   * {@link java.net.URLClassLoader} will have their class path entries added to this
-   * instances underlying class path.
-   */
-  public ResourceOracleImpl(TreeLogger logger, ClassLoader classLoader) {
-    this(logger, ResourceLoaders.wrap(classLoader));
+    this(logger, ResourceLoaders.fromContextClassLoader());
   }
 
   public ResourceOracleImpl(TreeLogger logger, ResourceLoader resources) {

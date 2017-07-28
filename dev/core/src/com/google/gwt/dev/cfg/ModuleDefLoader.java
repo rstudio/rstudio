@@ -84,7 +84,7 @@ public class ModuleDefLoader {
       return moduleDef;
     }
 
-    ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+    ResourceLoader resources = ResourceLoaders.fromContextClassLoader();
 
     ModuleDefLoader loader = new ModuleDefLoader(resources) {
       @Override
@@ -122,7 +122,7 @@ public class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
-    ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+    ResourceLoader resources = ResourceLoaders.fromContextClassLoader();
     return loadFromResources(logger, moduleName, resources, refresh);
   }
 

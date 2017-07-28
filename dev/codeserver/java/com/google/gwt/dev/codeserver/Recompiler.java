@@ -437,7 +437,7 @@ public class Recompiler {
     ZipFileClassPathEntry.clearCache();
     ResourceOracleImpl.clearCache();
 
-    ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
+    ResourceLoader resources = ResourceLoaders.fromContextClassLoader();
     resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
     this.resourceLoader.set(resources);
 
