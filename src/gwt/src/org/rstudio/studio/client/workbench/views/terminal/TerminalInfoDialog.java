@@ -110,35 +110,30 @@ public class TerminalInfoDialog extends ModalDialogBase
          appendBufferButton_ = new ThemedButton("Append Buffer", new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-               boolean localBuffer = false;
                appendBufferButton_.setEnabled(false);
-               diagnostics.append("\n\nTerminal Buffer\n---------------\n");
-               if (localBuffer)
+               diagnostics.append("\n\nTerminal Buffer (Server)\n---------------\n");
+               session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
                {
-                  diagnostics.append(AnsiCode.prettyPrint(session.getLocalBuffer()));
-                  textArea_.setText(diagnostics.toString());
-               }
-               else
-               {
-                  session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
+                  @Override
+                  public void onSuccess(String buffer)
                   {
-                     @Override
-                     public void onSuccess(String buffer)
-                     {
-                        diagnostics.append(AnsiCode.prettyPrint(buffer));
-                        textArea_.setText(diagnostics.toString());
-                        textArea_.setCursorPos(diagnostics.toString().length());
-                        textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
-                     }
+                     diagnostics.append(AnsiCode.prettyPrint(buffer));
+                     textArea_.setText(diagnostics.toString());
+                     textArea_.setCursorPos(diagnostics.toString().length());
+                     textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
 
-                     @Override
-                     public void onFailure(String message)
-                     {
-                        diagnostics.append(message);
-                        textArea_.setText(diagnostics.toString());
-                     }
-                  });
-               }
+                     diagnostics.append("\n\nTerminal Buffer (Client)\n---------------\n");
+                     diagnostics.append(AnsiCode.prettyPrint(session.getLocalBuffer()));
+                     textArea_.setText(diagnostics.toString());
+                  }
+
+                  @Override
+                  public void onFailure(String message)
+                  {
+                     diagnostics.append(message);
+                     textArea_.setText(diagnostics.toString());
+                  }
+               });
             }
          });
          addLeftButton(appendBufferButton_);
