@@ -92,7 +92,7 @@
      - Do not trap anything (legacy behavior) (IGNORE)
   -->
   <define-property name="gwt.uncaughtexceptionhander.windowonerror" values="IGNORE, REPORT, REPORT_IF_NO_HANDLER" />
-  <set-property name="gwt.uncaughtexceptionhander.windowonerror" value="REPORT_IF_NO_HANDLER"/>
+  <set-property name="gwt.uncaughtexceptionhander.windowonerror" value="IGNORE"/>
 
   <!-- To support legacy logging flags -->
   <inherits name="com.google.gwt.logging.LogImpl"/>
