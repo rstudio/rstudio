@@ -62,13 +62,6 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    core::system::setenv(&shellEnv, "PROMPT_COMMAND",
                         "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
 
-   std::string editorCommand = session::modules::workbench::editFileCommand();
-   if (!editorCommand.empty())
-   {
-      core::system::setenv(&shellEnv, "GIT_EDITOR", editorCommand);
-      core::system::setenv(&shellEnv, "SVN_EDITOR", editorCommand);
-   }
-
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
    {
