@@ -2697,6 +2697,11 @@ public class TextEditingTarget implements
       return getPath();
    }
    
+   @Override
+   public FileType getFileType()
+   {
+      return fileType_;
+   }
 
    @Override
    public TextFileType getTextFileType()

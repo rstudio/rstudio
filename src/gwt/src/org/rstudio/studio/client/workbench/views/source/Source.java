@@ -71,7 +71,9 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -118,6 +120,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
@@ -750,6 +753,8 @@ public class Source implements InsertSourceHandler,
       vimCommands_.showHelpAtCursor(this);
       vimCommands_.reindent(this);
       vimCommands_.expandShrinkSelection(this);
+      vimCommands_.openNextFile(this);
+      vimCommands_.openPreviousFile(this);
       vimCommands_.addStarRegister();
    }
    
@@ -1005,8 +1010,15 @@ public class Source implements InsertSourceHandler,
       // attempt to open pre-existing tab
       for (int i = 0; i < editors_.size(); i++)
       {
-         String path = editors_.get(i).getPath();
-         if (path != null && path.equals(handle.getPath()))
+         EditingTarget target = editors_.get(i);
+         
+         // bail if this isn't an object explorer filetype
+         FileType fileType = target.getFileType();
+         if (!(fileType instanceof ObjectExplorerFileType))
+            continue;
+         
+         // check for identical titles
+         if (handle.getTitle().equals(target.getTitle()))
          {
             ((ObjectExplorerEditingTarget)editors_.get(i)).update(handle);
             ensureVisible(false);
@@ -3878,6 +3890,79 @@ public class Source implements InsertSourceHandler,
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
+   
+   @Handler
+   public void onOpenNextFileOnFilesystem()
+   {
+      openAdjacentFile(true);
+   }
+   
+   @Handler
+   public void onOpenPreviousFileOnFilesystem()
+   {
+      openAdjacentFile(false);
+   }
+   
+   private void openAdjacentFile(final boolean forward)
+   {
+      // ensure we have an editor and a titled document is open
+      if (activeEditor_ == null || StringUtil.isNullOrEmpty(activeEditor_.getPath()))
+         return;
+      
+      final FileSystemItem activePath =
+            FileSystemItem.createFile(activeEditor_.getPath());
+      final FileSystemItem activeDir = activePath.getParentPath();
+      
+      server_.listFiles(
+            activeDir,
+            false,
+            new ServerRequestCallback<DirectoryListing>()
+            {
+               @Override
+               public void onResponseReceived(DirectoryListing listing)
+               {
+                  // read file listing (bail if there are no adjacent files)
+                  JsArray<FileSystemItem> files = listing.getFiles();
+                  int n = files.length();
+                  if (n < 2)
+                     return;
+                  
+                  // find the index of the currently open file
+                  int index = -1;
+                  for (int i = 0; i < n; i++)
+                  {
+                     FileSystemItem file = files.get(i);
+                     if (file.equalTo(activePath))
+                     {
+                        index = i;
+                        break;
+                     }
+                  }
+                  
+                  // if this failed for some reason, bail
+                  if (index == -1)
+                     return;
+                  
+                  // compute index of file to be opened (with wrap-around)
+                  int target = (forward ? index + 1 : index - 1);
+                  if (target < 0)
+                     target = n - 1;
+                  else if (target >= n)
+                     target = 0;
+                  
+                  // extract the file and attempt to open
+                  FileSystemItem targetItem = files.get(target);
+                  openFile(targetItem);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
    
    private void attemptSourceNavigation(final SourceNavigation navigation,
                                         final AppCommand retryCommand)
