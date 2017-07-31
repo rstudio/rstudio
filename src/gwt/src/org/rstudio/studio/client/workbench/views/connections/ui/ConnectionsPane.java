@@ -701,6 +701,9 @@ public class ConnectionsPane extends WorkbenchPane
       
       sortConnections();
       
-      installConnectionExplorerToolbar(exploredConnection_);
+      if (exploredConnection_ != null)
+         installConnectionExplorerToolbar(exploredConnection_);
+      else
+         installConnectionsToolbar();
    }
 }
