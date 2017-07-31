@@ -711,13 +711,21 @@ private:
    }
    
    // write to file
-   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
-   NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
-   if (![data writeToFile: targetPath atomically: NO])
+   for (NSImageRep* imageRep in [image representations])
    {
-      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
-      error.addProperty("target-file", [targetPath UTF8String]);
-      LOG_ERROR(error);
+      if (![imageRep isKindOfClass: [NSBitmapImageRep class]])
+         continue;
+      
+      NSBitmapImageRep* bitmapImageRep = (NSBitmapImageRep*) imageRep;
+      NSData *data = [bitmapImageRep representationUsingType: imageFileType properties: properties];
+      if (![data writeToFile: targetPath atomically: NO])
+      {
+         Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+         error.addProperty("target-file", [targetPath UTF8String]);
+         LOG_ERROR(error);
+      }
+      
+      break;
    }
 }
 
