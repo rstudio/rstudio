@@ -22,7 +22,7 @@ public class ObjectExplorerFileType extends EditableFileType
 {
    public ObjectExplorerFileType()
    {
-      super("object_explorer",
+      super(ID,
             "Object Explorer",
             new ImageResource2x(FileIconResources.INSTANCE.iconObjectExplorer2x()));
    }
@@ -33,4 +33,6 @@ public class ObjectExplorerFileType extends EditableFileType
       assert false :
          "Object explorer doesn't operate on filesystem files";
    }
+   
+   public static final String ID = "object_explorer";
 }

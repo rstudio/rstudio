@@ -54,6 +54,7 @@ public interface EditingTarget extends IsWidget,
    ImageResource getIcon();
    String getTabTooltip();
    
+   FileType getFileType();
    TextFileType getTextFileType();
 
    void adaptToExtendedFileType(String extendedType);

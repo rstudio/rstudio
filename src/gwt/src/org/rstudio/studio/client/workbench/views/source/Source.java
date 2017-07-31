@@ -71,7 +71,9 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -1005,8 +1007,15 @@ public class Source implements InsertSourceHandler,
       // attempt to open pre-existing tab
       for (int i = 0; i < editors_.size(); i++)
       {
-         String path = editors_.get(i).getPath();
-         if (path != null && path.equals(handle.getPath()))
+         EditingTarget target = editors_.get(i);
+         
+         // bail if this isn't an object explorer filetype
+         FileType fileType = target.getFileType();
+         if (!(fileType instanceof ObjectExplorerFileType))
+            continue;
+         
+         // check for identical titles
+         if (handle.getTitle().equals(target.getTitle()))
          {
             ((ObjectExplorerEditingTarget)editors_.get(i)).update(handle);
             ensureVisible(false);
