@@ -710,8 +710,12 @@ private:
       imageFileType = NSPNGFileType;
    }
    
+   
    // write to file
-   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
+   CGImageRef cgRef = [image CGImageForProposedRect: NULL
+                                            context: nil
+                                              hints: nil];
+   NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithCGImage: cgRef];
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
