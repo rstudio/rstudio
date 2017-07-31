@@ -90,6 +90,7 @@
 * Add Clear Console button to top of Console pane
 * Add option to wrap around when navigating to previous or next editor tab
 * Allow opening directories as projects (Server and macOS only)
+* Vim: Use `]f` and `[f` to open adjacent files on the file system
 * Show disambiguation in overflow list when two editor tabs have the same filename
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
