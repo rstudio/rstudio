@@ -224,6 +224,7 @@ public class TerminalSession extends XTermWidget
    public void disconnect(boolean permanent)
    {
       inputQueue_.setLength(0);
+      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       socket_.disconnect(permanent);
       registrations_.removeHandler();
       consoleProcess_ = null;
