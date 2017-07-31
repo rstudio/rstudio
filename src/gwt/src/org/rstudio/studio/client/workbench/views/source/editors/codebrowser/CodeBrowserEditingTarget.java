@@ -412,6 +412,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public FileType getFileType()
+   {
+      return null;
+   }
+   
+   @Override
    public TextFileType getTextFileType()
    {
       return null;

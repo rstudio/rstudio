@@ -23,6 +23,8 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerEditingTargetWidget;
@@ -40,6 +42,7 @@ public class ObjectExplorerEditingTarget
                                       EventBus events)
    {
       super(server, commands, globalDisplay, events);
+      fileType_ = FileTypeRegistry.OBJECT_EXPLORER;
       events_ = events;
       isActive_ = false;
    }
@@ -117,13 +120,19 @@ public class ObjectExplorerEditingTarget
       events_.fireEvent(new PopoutDocEvent(getId(), null));
    }
    
+   @Override
+   public FileType getFileType()
+   {
+      return fileType_;
+   }
+   
    // Public methods ----
    
    public void update(ObjectExplorerHandle handle)
    {
       if (isActive_)
       {
-         // TODO
+         reloadDisplay();
       }
    }
    
@@ -146,5 +155,6 @@ public class ObjectExplorerEditingTarget
    private SimplePanelWithProgress progressPanel_;
    private ObjectExplorerEditingTargetWidget view_;
    private final EventBus events_;
+   private final FileType fileType_;
    private boolean isActive_;
 }
