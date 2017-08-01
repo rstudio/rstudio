@@ -119,6 +119,7 @@ public class XTermNative extends JavaScriptObject
    public final native void showPrimaryBuffer() /*-{
       this.write("\x1b[?1047l"); // show primary buffer
       this.write("\x1b[m"); // reset all visual attributes
+      this.write("\x1b[?9l"); // reset mouse mode
    }-*/;
 
    public final native void showAltBuffer() /*-{
@@ -137,7 +138,23 @@ public class XTermNative extends JavaScriptObject
       }
       return current;
    }-*/;
-   
+
+   public final native String getLocalBuffer() /*-{
+      buffer = "";
+      for (row = 0; row < this.rows; row++) {
+         lineBuf = this.lines.get(row);
+         if (!lineBuf) // resize may be in progress
+            return null;
+      
+         for (col = 0; col < this.cols; col++) {
+            if (!lineBuf[col])
+               return null;
+            buffer += lineBuf[col][1];
+         }
+      }
+      return buffer;
+   }-*/;
+    
    /**
     * Install a handler for user input (typing). Only one handler at a 
     * time may be installed. Previous handler will be overwritten.

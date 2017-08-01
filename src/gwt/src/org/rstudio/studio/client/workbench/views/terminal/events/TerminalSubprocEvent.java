@@ -31,6 +31,13 @@ public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
       {
       }
 
+      public static final native Data createData(String handle, boolean hasSubprocs) /*-{
+         var eventData = new Object();
+         eventData.handle = handle;
+         eventData.subprocs = hasSubprocs;
+         return eventData;
+      }-*/;
+ 
       /**
        * @return Terminal handle
        */
@@ -54,6 +61,11 @@ public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
    public TerminalSubprocEvent(Data data)
    {
       data_ = data;
+   }
+
+   public TerminalSubprocEvent(String handle, boolean hasSubprocs)
+   {
+      data_ = Data.createData(handle, hasSubprocs);
    }
 
    public String getHandle()

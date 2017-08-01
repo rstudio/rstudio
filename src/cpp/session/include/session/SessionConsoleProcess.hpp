@@ -118,6 +118,7 @@ public:
          boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static ConsoleProcessPtr createTerminalProcess(
+         const std::string& command, // empty string for interactive shell
          core::system::ProcessOptions options,
          boost::shared_ptr<ConsoleProcessInfo> procInfo,
          bool enableWebsockets);
@@ -166,8 +167,8 @@ public:
    std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile(bool lastLineOnly = false) const;
    void deleteEnvFile() const;
-   void setNotBusy() { procInfo_->setHasChildProcs(false); }
-   bool getIsBusy() const { return procInfo_->getHasChildProcs(); }
+   void setNotBusy() { procInfo_->setHasChildProcs(false); whitelistChildProc_ = false; }
+   bool getIsBusy() const { return procInfo_->getHasChildProcs() || whitelistChildProc_; }
    bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
    std::string getChannelMode() const;
    int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
@@ -178,6 +179,7 @@ public:
    bool getAltBufferActive() const { return procInfo_->getAltBufferActive(); }
    core::FilePath getCwd() const { return procInfo_->getCwd(); }
    bool getWasRestarted() const { return procInfo_->getRestarted(); }
+   boost::optional<int> getExitCode() const { return procInfo_->getExitCode(); }
 
    std::string getShellName() const;
    TerminalShell::TerminalShellType getShellType() const {
@@ -202,6 +204,7 @@ public:
    void onReceivedInput(const std::string& input);
 
    void setZombie();
+   static bool useWebsockets();
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
@@ -209,7 +212,7 @@ private:
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
-   void onHasSubprocs(bool hasSubProcs);
+   void onHasSubprocs(bool hasNonWhitelistSubProcs, bool hasWhitelistSubprocs);
    void reportCwd(const core::FilePath& cwd);
    void processQueuedInput(core::system::ProcessOperations& ops);
 
@@ -251,6 +254,9 @@ private:
 
    // Has client been notified of state of childProcs_ at least once?
    bool childProcsSent_;
+
+   // Is there a child process matching the whitelist?
+   bool whitelistChildProc_;
 
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;

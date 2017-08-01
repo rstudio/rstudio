@@ -22,7 +22,9 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
@@ -111,7 +113,7 @@ public class TerminalSession extends XTermWidget
       }
 
       connecting_ = true;
-      setNewTerminal(getHandle() == null);
+      setNewTerminal(StringUtil.isNullOrEmpty(getHandle()));
       
       socket_.resetDiagnostics();
 
@@ -129,13 +131,6 @@ public class TerminalSession extends XTermWidget
                callback.onFailure("No Terminal ConsoleProcess received from server");
                return;
             }
-
-            if (consoleProcess_.getProcessInfo().getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-            {
-               disconnect(false);
-               callback.onFailure("Unsupported Terminal ConsoleProcess interaction mode");
-               return;
-            } 
 
             if (consoleProcess_.getProcessInfo().getCaption().isEmpty())
             {
@@ -229,6 +224,7 @@ public class TerminalSession extends XTermWidget
    public void disconnect(boolean permanent)
    {
       inputQueue_.setLength(0);
+      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       socket_.disconnect(permanent);
       registrations_.removeHandler();
       consoleProcess_ = null;
@@ -293,7 +289,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
                writeError(msg);
             }
          });
@@ -329,10 +325,10 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
-      // On Windows, rapid typing sometimes causes RPC messages for writeStandardInput
+      // On desktop, rapid typing sometimes causes RPC messages for writeStandardInput
       // to arrive out of sequence in the terminal; send a sequence number with each
       // message so server can put messages back in order
-      if (BrowseCap.isWindowsDesktop() && 
+      if (Desktop.isDesktop() && 
             consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
       {
          if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
@@ -459,14 +455,6 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Show modal dialog with information about this terminal session.
-    */
-   public void showTerminalInfo()
-   {
-      new TerminalInfoDialog(this, socket_).showModal();
-   }
-   
-   /**
     * Send an interrupt (SIGINT) to the terminal's child process
     */
    public void interruptTerminal()
@@ -505,7 +493,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
             writeError(msg);
          }
       });
@@ -551,7 +539,7 @@ public class TerminalSession extends XTermWidget
             @Override
             public void onFailure(String msg)
             {
-               Debug.devlog(msg);
+               Debug.log(msg);
             }
          });
       }
@@ -694,7 +682,10 @@ public class TerminalSession extends XTermWidget
    private void fetchNextChunk(final int chunkToFetch)
    {
       if (!shellSupportsReload())
+      {
+         reloading_ = false;
          return;
+      }
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
@@ -746,6 +737,12 @@ public class TerminalSession extends XTermWidget
    public void showZombieMessage()
    {
       writeln("[Process completed]");
+      write("[Exit code: ");
+      if (procInfo_.getExitCode() != null)
+         write(Integer.toString(procInfo_.getExitCode()));
+      else
+         write("Unknown");
+      writeln("]");
    }
 
    /**
@@ -817,6 +814,11 @@ public class TerminalSession extends XTermWidget
       });
    }
    
+   public TerminalSessionSocket getSocket()
+   {
+      return socket_;
+   }
+
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;

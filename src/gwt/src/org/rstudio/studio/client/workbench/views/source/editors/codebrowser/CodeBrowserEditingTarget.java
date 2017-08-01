@@ -168,6 +168,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       
       TextEditingTarget.registerPrefs(releaseOnDismiss_, 
                                       prefs_, 
+                                      document.getProjectConfig(),
                                       docDisplay_,
                                       document);
       
@@ -408,6 +409,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public String getTabTooltip()
    {
       return "R Source Viewer";
+   }
+   
+   @Override
+   public FileType getFileType()
+   {
+      return null;
    }
    
    @Override

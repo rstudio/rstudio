@@ -58,11 +58,12 @@ public class RStudioThemes
          if (themeName.contains("dark")) {
             document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
-            
-            if (usesScrollbars()) {
-               element.addClassName("rstudio-themes-scrollbars");
-            }
          }
+
+         if (usesScrollbars()) {
+            element.addClassName("rstudio-themes-scrollbars");
+         }
+            
          element.addClassName("rstudio-themes-" + themeName);
       }
    }

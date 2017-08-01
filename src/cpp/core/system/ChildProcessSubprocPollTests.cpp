@@ -50,7 +50,7 @@ public:
    NoSubProcPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL, NULL)
+                NULL, std::vector<std::string>(), NULL)
    {}
 
    ChildProcessSubprocPoll poller_;
@@ -63,17 +63,26 @@ public:
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
                 boost::bind(&SubProcPollingFixture::checkSubproc, this, _1),
+                std::vector<std::string>(),
                 NULL),
         checkReturns_(false),
         callerPid_(0),
         checkCalled_(false)
    {}
 
-   bool checkSubproc(PidType pid)
+   std::vector<SubprocInfo> checkSubproc(PidType pid)
    {
       callerPid_ = pid;
       checkCalled_ = true;
-      return checkReturns_;
+      std::vector<SubprocInfo> result;
+      if (checkReturns_)
+      {
+         SubprocInfo info;
+         info.exe = "some_exe";
+         info.pid = 123;
+         result.push_back(info);
+      }
+      return result;
    }
 
    void clearFlags()
@@ -95,7 +104,7 @@ public:
    CwdPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL,
+                NULL, std::vector<std::string>(),
                 boost::bind(&CwdPollingFixture::checkCwd, this, _1)),
         callerPid_(0),
         checkCalled_(false)
@@ -130,9 +139,9 @@ context("ChildProcess polling support class")
       PidType pid = 12345;
       NoSubProcPollingFixture test(pid);
 
-      // we start with the flags set to true
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess());
+      expect_true(test.poller_.hasNonWhitelistSubprocess());
+      expect_false(test.poller_.hasWhitelistSubprocess());
    }
 
    test_that("recent input state without subproc polling doesn't change immediately")
@@ -165,9 +174,9 @@ context("ChildProcess polling support class")
       PidType pid = 12345;
       SubProcPollingFixture test(pid);
 
-      // we start with the flags set to true
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess());
+      expect_true(test.poller_.hasNonWhitelistSubprocess());
+      expect_false(test.poller_.hasWhitelistSubprocess());
    }
 
    test_that("childproc checked when recent output and timeout expires")
@@ -181,7 +190,7 @@ context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
       expect_true(test.poller_.poll(false)); // not longer than the recent output timeout!
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
    }
@@ -197,7 +206,7 @@ context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
       test.poller_.poll(false); // not longer than the output timeout
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
 
@@ -207,7 +216,7 @@ context("ChildProcess polling support class")
       test.poller_.poll(false);
       expect_false(test.checkCalled_); // because of no recent output
       expect_false(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
    }
 
    test_that("initial state for cwd polling matches expectations")

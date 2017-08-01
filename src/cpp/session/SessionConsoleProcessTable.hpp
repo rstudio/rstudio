@@ -68,6 +68,15 @@ core::Error internalInitialize();
 core::Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
                                       std::string* pHandle);
 
+// Create a ConsoleProcess for a non-interactive job displayed in the terminal. Final parameter
+// returns handle.
+core::Error createTerminalExecuteConsoleProc(
+      const std::string& title,
+      const std::string& command,
+      const std::string& currentDir,
+      const core::system::Options& env,
+      std::string* pHandle);
+
 } // namespace console_process
 } // namespace session
 } // namespace rstudio

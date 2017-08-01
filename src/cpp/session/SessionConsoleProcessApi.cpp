@@ -15,6 +15,7 @@
 
 #include "SessionConsoleProcessApi.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
@@ -55,7 +56,26 @@ std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
    std::string buffer = proc->getBuffer();
 
    if (stripAnsi)
+   {
       core::text::stripAnsiCodes(&buffer);
+
+      // remove <BEL> characters
+      boost::algorithm::replace_all(buffer, "\x07", "");
+
+      // process backspaces
+      std::string::iterator iter = buffer.begin();
+      std::string::iterator end = buffer.end();
+      while (iter != end)
+      {
+         iter = std::find(iter, end, '\b');
+         if (iter == end) break;
+         if (iter == buffer.begin())
+            iter = buffer.erase(iter);
+         else
+            iter = buffer.erase(iter-1, iter+1);
+         end = buffer.end();
+      }
+   }
    string_utils::convertLineEndings(&buffer, string_utils::LineEndingPosix);
    return buffer;
 }
@@ -76,7 +96,7 @@ SEXP rs_terminalList()
 
 // Create a terminal with given id (caption). If null, create with automatically
 // generated name. Returns resulting name in either case.
-SEXP rs_terminalCreate(SEXP typeSEXP)
+SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
 {
    r::sexp::Protect protect;
 
@@ -97,6 +117,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
       r::exec::error(msg);
       return R_NilValue;
    }
+
+   bool show = r::sexp::asLogical(showSEXP);
 
    boost::shared_ptr<ConsoleProcessInfo> pCpi(
             new ConsoleProcessInfo(
@@ -142,9 +164,10 @@ SEXP rs_terminalCreate(SEXP typeSEXP)
       return R_NilValue;
    }
 
-   // notify the client so it adds this new terminal to the UI list
+   // notify the client so it adds this new terminal to the UI list and starts it
    json::Object eventData;
    eventData["process_info"] = ptrProc->toJson();
+   eventData["show"] = show;
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
@@ -219,6 +242,12 @@ SEXP rs_terminalContext(SEXP terminalSEXP)
    builder.add("shell", proc->getShellName());
    builder.add("running", proc->isStarted());
    builder.add("busy", proc->getIsBusy());
+
+   if (proc->getExitCode())
+      builder.add("exit_code", *proc->getExitCode());
+   else
+      builder.add("exit_code", R_NilValue);
+
    builder.add("connection", proc->getChannelMode());
    builder.add("sequence", proc->getTerminalSequence());
    builder.add("lines", proc->getBufferLineCount());
@@ -254,15 +283,27 @@ SEXP rs_terminalKill(SEXP terminalsSEXP)
    if (!r::sexp::fillVectorString(terminalsSEXP, &terminalIds))
       return R_NilValue;
 
+   std::string handle;
    BOOST_FOREACH(const std::string& terminalId, terminalIds)
    {
       ConsoleProcessPtr proc = findProcByCaption(terminalId);
       if (proc != NULL)
       {
+         handle = proc->handle();
          proc->interrupt();
          reapConsoleProcess(*proc);
       }
    }
+
+   // Notify the client so it removes this terminal from the UI list.
+   if (!handle.empty())
+   {
+      json::Object eventData;
+      eventData["handle"] = handle;
+      ClientEvent removeTerminalEvent(client_events::kRemoveTerminal, eventData);
+      module_context::enqueClientEvent(removeTerminalEvent);
+   }
+
    return R_NilValue;
 }
 
@@ -366,6 +407,130 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
       module_context::enqueClientEvent(activateTerminalEvent);
    }
    return R_NilValue;
+}
+
+// Run a process in a terminal
+SEXP rs_terminalExecute(SEXP commandSEXP,
+                        SEXP dirSEXP,
+                        SEXP envSEXP,
+                        SEXP showSEXP)
+{
+   r::sexp::Protect protect;
+
+   if (!session::options().allowShell())
+      return R_NilValue;
+
+   std::string command = r::sexp::asString(commandSEXP);
+   if (command.empty())
+   {
+      r::exec::error("No command specified");
+      return R_NilValue;
+   }
+
+   std::string currentDir;
+   if (!r::sexp::isNull(dirSEXP))
+      currentDir = r::sexp::asString(dirSEXP);
+   if (!currentDir.empty())
+   {
+      FilePath cwd = module_context::resolveAliasedPath(currentDir);
+      if (!cwd.exists() || !cwd.isDirectory())
+      {
+         std::string message = "Invalid directory: '";
+         message += cwd.absolutePathNative();
+         message += "'";
+         r::exec::error(message);
+         return R_NilValue;
+      }
+   }
+
+   std::vector<std::string> env;
+   if (!r::sexp::fillVectorString(envSEXP, &env))
+   {
+      r::exec::error("Invalid environment");
+      return R_NilValue;
+   }
+
+   core::system::Options customEnv;
+   BOOST_FOREACH(const std::string& str, env)
+   {
+      core::system::Option envVar;
+      if (!core::system::parseEnvVar(str, &envVar))
+      {
+         std::string msg = "Invalid environment: '";
+         msg += str;
+         msg += "'";
+         r::exec::error(msg);
+         return R_NilValue;
+      }
+      customEnv.push_back(envVar);
+   }
+
+   bool show = r::sexp::asLogical(showSEXP);
+
+   std::string title = command;
+   std::string handle;
+   Error error = createTerminalExecuteConsoleProc(
+            title,
+            command,
+            currentDir,
+            customEnv,
+            &handle);
+   if (error)
+   {
+      std::string msg = "Failed to create terminal for job execution: '";
+      msg += error.summary();
+      msg += "'";
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   ConsoleProcessPtr ptrProc = findProcByHandle(handle);
+   if (!ptrProc)
+   {
+      r::exec::error("Unable to find terminal for job execution");
+      return R_NilValue;
+   }
+
+   error = ptrProc->start();
+   if (error)
+   {
+      std::string msg = "Failed to start job in terminal: '";
+      msg += error.summary();
+      msg += "'";
+
+      reapConsoleProcess(*ptrProc);
+
+      r::exec::error(msg);
+      return R_NilValue;
+   }
+
+   // notify the client so it adds this new terminal to the UI list
+   json::Object eventData;
+   eventData["process_info"] = ptrProc->toJson();
+   eventData["show"] = show;
+   ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
+   module_context::enqueClientEvent(addTerminalEvent);
+
+   return r::sexp::create(ptrProc->getCaption(), &protect);
+}
+
+// Return terminal exit codes
+SEXP rs_terminalExitCode(SEXP idSEXP)
+{
+   r::sexp::Protect protect;
+
+   std::string terminalId = r::sexp::asString(idSEXP);
+
+   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   if (proc == NULL)
+   {
+      return R_NilValue;
+   }
+
+   if (proc->getExitCode())
+      return r::sexp::create(*proc->getExitCode(), &protect);
+   else
+      return R_NilValue;
 }
 
 // RPC APIs ---------------------------------------------------------------
@@ -767,7 +932,7 @@ Error initializeApi()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
-   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 1);
+   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalClear, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalList, 0);
    RS_REGISTER_CALL_METHOD(rs_terminalContext, 1);
@@ -777,6 +942,8 @@ Error initializeApi()
    RS_REGISTER_CALL_METHOD(rs_terminalRunning, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalKill, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalSend, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalExecute, 4);
+   RS_REGISTER_CALL_METHOD(rs_terminalExitCode, 1);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()

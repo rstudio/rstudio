@@ -37,8 +37,9 @@ context("queue and fetch input")
             core::system::kDefaultCols, core::system::kDefaultRows,
             false /*zombie*/, false /*trackEnv*/));
 
+   std::string command;
    boost::shared_ptr<ConsoleProcess> pCP =
-         ConsoleProcess::createTerminalProcess(procOptions, pCPI, false /*enableWebsockets*/);
+         ConsoleProcess::createTerminalProcess(command, procOptions, pCPI, false /*enableWebsockets*/);
 
    test_that("empty queue returns nothing")
    {

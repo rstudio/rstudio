@@ -326,6 +326,14 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
    
    /**
+    * @return Local terminal buffer
+    */
+   public String getLocalBuffer()
+   {
+      return terminal_.getLocalBuffer();
+   }
+   
+   /**
     * Is the terminal showing the alternate full-screen buffer?
     * @return true if full-screen buffer is active
     */

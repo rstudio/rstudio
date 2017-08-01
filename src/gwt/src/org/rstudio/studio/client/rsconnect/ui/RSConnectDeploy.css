@@ -60,11 +60,16 @@
    margin-top: 7px;
 }
 
+.launchCheck label
+{
+   margin-left: 5px;
+}
+
 .fileList
 {
    background-color: #ffffff;
    border: 1px solid #999999;
-   height: 165px;
+   height: 205px;
    width: 250px;
    padding: 7px;
    margin-top: 5px;
@@ -126,6 +131,22 @@
    width: 250px;
 }
 
+.accountList.accountListCondensed
+{
+   height: 80px;
+}
+
+.accountEntry
+{
+   width: 250px;
+   padding-left: 5px;
+   padding-right: 5px;
+   padding-top: 10px;
+   padding-bottom: 5px;
+   border: 1px solid #999999;
+   background-color: #fcfcfc;
+}
+
 .accountAnchor
 {
    text-align: right;
@@ -146,22 +167,42 @@
    width: 250px;
 }
 
-.appDetailsPanel
+.appDetailsPanel, .appErrorPanel
 {
    border: 1px solid #999999;
-   background-color: white;
    padding: 5px;
    margin: 0px;
-   white-space: nowrap;
-   text-overflow: ellipsis;
    overflow: hidden;
    width: 238px;
+}
+
+.appDetailsPanel 
+{
+   background-color: white;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+
+.appErrorPanel
+{
+   background-color: #fff3aa;
 }
 
 .descriptionPanel
 {
    text-align: center;
 }
+
+.appErrorMessage
+{
+}
+
+.appWarningIcon
+{
+   width: 16px;
+   height: 14px;
+   margin-right: 5px;
+}}
 
 .wizardDeployPage
 {

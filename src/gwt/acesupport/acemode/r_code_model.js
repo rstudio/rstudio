@@ -1962,7 +1962,7 @@ var RCodeModel = function(session, tokenizer,
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
          var line = this.$getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row);
 
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||

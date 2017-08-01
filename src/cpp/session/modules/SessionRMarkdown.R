@@ -206,16 +206,30 @@
          }
          else if (is.character(val) && length(val) == 1) 
          {
-            # if it's a character value, check to see if it's a backtick
-            # expression
-            if (identical(substr(val, 1, 1), "`") &&
-                identical(substr(val, nchar(val), nchar(val)), "`")) 
+            needsPlaceholder <- (function() {
+               
+               # if it's a character value, check to see if it's a backtick
+               # expression
+               if (identical(substr(val, 1, 1), "`") &&
+                   identical(substr(val, nchar(val), nchar(val)), "`"))
+               {
+                  return(TRUE)
+               }
+               
+               # if it's a tagged value, placeholder
+               if (grepl("^[!]", val))
+                  return(TRUE)
+               
+               FALSE
+            })()
+            
+            if (needsPlaceholder)
             {
                # replace the backtick expression with an identifier
                key <- .Call("rs_generateShortUuid")
                exprs[[key]] <<- val
                key
-            } 
+            }
             else 
             {
                # leave other character expressions as-is
@@ -252,9 +266,11 @@
    data <- list()
    parseError <- ""
    parseSucceeded <- FALSE
+   
    tryCatch(
    {
-      data <- .rs.scalarListFromList(yaml::yaml.load(yaml))
+      handlers <- list(r = function(x) paste("!r", x))
+      data <- .rs.scalarListFromList(yaml::yaml.load(yaml, handlers = handlers))
       parseSucceeded <- TRUE
    },
    error = function(e)

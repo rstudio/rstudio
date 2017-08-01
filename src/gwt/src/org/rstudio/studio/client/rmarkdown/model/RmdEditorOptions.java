@@ -58,8 +58,6 @@ public class RmdEditorOptions
    
    private static String EDITOR_OPTION_KEY = "editor_options";
    
-   public static String PUBLISH_OUTPUT    = "publish_output";
-
    public static String PREVIEW_IN        = "preview";
    public static String PREVIEW_IN_WINDOW = "window";
    public static String PREVIEW_IN_VIEWER = "viewer";

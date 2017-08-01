@@ -17,6 +17,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/system/System.hpp>
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -184,6 +185,8 @@ std::string TerminalShell::getShellName(TerminalShellType type)
       return "Bash";
    case CustomShell:
       return "Custom";
+   case NoShell:
+      return "User command";
    default:
       return "Unknown";
    }
@@ -273,9 +276,13 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::CustomShell;
    pShellInfo->path = userSettings().customShellCommand();
+
+   // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
    if (!userSettings().customShellOptions().empty())
-      args.push_back(userSettings().customShellOptions());
+   {
+      args = core::algorithm::split(userSettings().customShellOptions(), " ");
+   }
    pShellInfo->args = args;
    return true;
 }

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -542,10 +543,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                          String styleName)
    {
       StringBuilder text = new StringBuilder();
-      int topOffset = -7;
+      int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
       text.append("<table ");
+      if (label != null)
+      {
+         text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
+      }
       
       if (styleName != null)
       {
@@ -554,7 +559,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       
       text.append("border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
-      text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: " +
+      text.append("<td width=\"25\" style=\"vertical-align: top\">" +
+                  "<div style=\"width: 25px; margin-top: " +
                   topOffset + "px; margin-bottom: -10px\">");
       if (icon != null)
       {

@@ -495,7 +495,12 @@ options(connectionObserver = list(
    }
 
    connectionContext <- .rs.rpc.get_new_connection_context()$connectionsList
-   connectionInfo <- Filter(function(e) e$package == package & e$name == name, connectionContext)
+   connectionInfo <- Filter(
+      function(e)
+        identical(as.character(e$package), as.character(package)) &
+        identical(as.character(e$name), as.character(name)),
+      connectionContext
+   )
 
    if (length(connectionInfo) != 1) {
       return(.rs.error(

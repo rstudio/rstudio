@@ -289,6 +289,54 @@ public class SourceVimCommands
    
    }-*/;
    
+   public native final void openNextFile(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var callback = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onOpenNextFileOnFilesystem()();
+      });
+      
+      Vim.defineAction("openNextFile", callback);
+      Vim.mapCommand({
+         keys: "]f",
+         type: "action",
+         action: "openNextFile",
+         context: "normal"
+      });
+      
+      Vim.mapCommand({
+         keys: "]f",
+         type: "action",
+         action: "openNextFile",
+         context: "visual"
+      });
+      
+   }-*/;
+   
+   public native final void openPreviousFile(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var callback = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::onOpenPreviousFileOnFilesystem()();
+      });
+      
+      Vim.defineAction("openPreviousFile", callback);
+      Vim.mapCommand({
+         keys: "[f",
+         type: "action",
+         action: "openPreviousFile",
+         context: "normal"
+      });
+      
+      Vim.mapCommand({
+         keys: "[f",
+         type: "action",
+         action: "openPreviousFile",
+         context: "visual"
+      });
+      
+   }-*/;
+   
    public native final void addStarRegister() /*-{
       
       var SystemClipboardRegister = function(text, linewise, blockwise) {

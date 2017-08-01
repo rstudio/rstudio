@@ -88,6 +88,7 @@ public:
          const std::string& server,
          const std::string& appName,
          const std::string& appTitle,
+         const std::string& appId, 
          const std::string& contentCategory,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
@@ -154,6 +155,7 @@ public:
              "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
              (appTitle.empty() ? "" : "appTitle = '" + 
                 string_utils::singleQuotedStrEscape(appTitle) + "', ") + 
+             (appId.empty() ? "" : "appId = " + appId + ", ") + 
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "
@@ -253,10 +255,10 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    json::Object source, settings;
-   std::string account, server, appName, appTitle;
+   std::string account, server, appName, appTitle, appId;
    Error error = json::readParams(request.params, &source, &settings,
                                    &account, &server, 
-                                   &appName, &appTitle);
+                                   &appName, &appTitle, &appId);
    if (error)
       return error;
 
@@ -290,7 +292,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    {
       error = RSConnectPublish::create(sourceDir, deployFiles, 
                                        sourceFile, sourceDoc, 
-                                       account, server, appName, appTitle,
+                                       account, server, appName, appTitle, appId, 
                                        contentCategory,
                                        additionalFiles,
                                        ignoredFiles, asMultiple,

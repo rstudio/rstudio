@@ -3346,7 +3346,11 @@ public class AceEditor implements DocDisplay,
          break;
       }
       
-      
+      // if we're unbalanced at this point, that means we tried to
+      // expand in an unclosed expression -- just execute the current
+      // line rather than potentially executing unintended code
+      if (parenCount + braceCount + bracketCount > 0)
+         return Range.create(pos.getRow(), 0, pos.getRow() + 1, 0);
       
       // shrink selection for empty lines at borders
       while (startRow < endRow && rowIsEmptyOrComment(startRow))

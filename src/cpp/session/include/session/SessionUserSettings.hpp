@@ -30,6 +30,7 @@
 #include <core/json/Json.hpp>
 
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/Process.hpp>
 
 #include <session/SessionTerminalShell.hpp>
 
@@ -107,6 +108,8 @@ public:
    bool terminalWebsockets() const;
    bool terminalAutoclose() const;
    bool terminalTrackEnv() const;
+   core::system::busy_detection::Mode terminalBusyMode() const;
+   std::vector<std::string> terminalBusyWhitelist() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -265,6 +268,8 @@ private:
    mutable boost::scoped_ptr<bool> pTerminalWebsockets_;
    mutable boost::scoped_ptr<bool> pTerminalAutoclose_;
    mutable boost::scoped_ptr<bool> pTerminalTrackEnv_;
+   mutable boost::scoped_ptr<int> pTerminalBusyMode_;
+   mutable boost::scoped_ptr<core::json::Array> pTerminalBusyWhitelist_;
 
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

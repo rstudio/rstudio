@@ -44,6 +44,7 @@
 * Added option to specify the working directory when executing R Markdown chunks
 * Added option to set preview mode (in viewer, window, etc.) in YAML header
 * Added option to skip knitting before publishing in YAML header
+* Multiline strings in YAML header are now properly highlighted
 
 ### R Notebooks
 
@@ -89,6 +90,7 @@
 * Add Clear Console button to top of Console pane
 * Add option to wrap around when navigating to previous or next editor tab
 * Allow opening directories as projects (Server and macOS only)
+* Vim: Use `]f` and `[f` to open adjacent files on the file system
 * Show disambiguation in overflow list when two editor tabs have the same filename
 * Respect control characters in error output; makes e.g. curl output correct
 * Add new cheat sheet links to Help: Data Import, Interfacing Spark
@@ -98,6 +100,7 @@
 * Add option to kill child processes when session exits
 * Upgrade to [pandoc](http://pandoc.org/) 1.19.2.1
 * Remove Packrat package sync notifications; replace with Check Library Status command
+* Add support for ligature coding fonts in RStudio Desktop for Windows and Linux
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -118,6 +121,8 @@
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
+* Fixed issue where 'execute current statement' behaved poorly with unclosed statements
+* Fixed issue where tibble warnings could be emitted by autocompletion engine
 * Fixed issue where 'Copy Plot to Clipboard' from Viewer failed with macOS Sierra
 * Fixed issue where keybinding changes were not reflected in popped-out windows
 * Fix hang when replacing a misspelled word with word and punctuation
@@ -130,6 +135,7 @@
 * Fixed an issue preventing plain .md files from being published if not rendered
 * Fixed runtime crashes in R packages that use Boost libraries
 * Fixed startup crashes associated with Boost regular expressions
+* Fixed an issue where scroll position in History pane could be lost when losing focus
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
 * Color errors in the R console correctly when resuming a session

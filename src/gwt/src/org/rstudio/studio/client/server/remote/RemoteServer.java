@@ -117,6 +117,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -4222,13 +4223,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getRSConnectApp(String appId, String accountName, String server,
-         ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
+   public void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
+         ServerRequestCallback<RSConnectApplicationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(appId));
-      params.set(1, new JSONString(accountName));
-      params.set(2, new JSONString(server));
+      params.set(0, new JSONString(StringUtil.notNull(appId)));
+      params.set(1, new JSONString(StringUtil.notNull(accountName)));
+      params.set(2, new JSONString(StringUtil.notNull(server)));
+      params.set(3, new JSONString(StringUtil.notNull(hostUrl)));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP,
             params,
@@ -4253,7 +4255,7 @@ public class RemoteServer implements Server
    @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
-         String server, String appName, String appTitle,
+         String server, String appName, String appTitle, String appId,
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
@@ -4264,6 +4266,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(server));
       params.set(4, new JSONString(appName));
       params.set(5, new JSONString(StringUtil.notNull(appTitle)));
+      params.set(6, new JSONString(StringUtil.notNull(appId)));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
