@@ -129,7 +129,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       if (haveCaptureEnvPref())
       {
-         CheckBox chkCaptureEnv = checkboxPref("Save and Restore Environment Variables",
+         CheckBox chkCaptureEnv = checkboxPref("Save and restore environment variables",
                prefs_.terminalTrackEnvironment(),
                "Terminal occasionally runs a hidden command to capture state of environment variables.");
          add(chkCaptureEnv);
