@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner.Coordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -44,8 +46,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
       docDisplay_ = docDisplay;
       handlers_ = new HandlerRegistrations();
 
-      // set the max width
-      setMaxWidth(Window.getClientWidth() - 200);
       getElement().getStyle().setZIndex(10000);
       
       addAttachHandler(new AttachEvent.Handler()
@@ -100,7 +100,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
       resolvePositionAndShow(
             signature,
             rectangle.getLeft(),
-            rectangle.getTop());
+            (rectangle.getTop() + rectangle.getBottom()) / 2);
    }
    
    public void resolvePositionAndShow(String signature)
@@ -151,24 +151,47 @@ public class RCompletionToolTip extends CppCompletionToolTip
       if (signature != null)
          setText(signature);
       
-      resolveWidth(signature);
-      resolvePositionRelativeTo(left, top);
+      // resolve the tooltip width (allow the left bounds to be
+      // nudged if the tooltip would be too large to fit)
+      left = resolveWidth(left, signature);
       
+      // show the tooltip
+      resolvePositionRelativeTo(left, top);
       setVisible(true);
       show();
       
    }
    
-   private void resolveWidth(String signature)
+   private int resolveWidth(int left, String signature)
    {
+      // default to current tooltip width
+      int targetWidth = getOffsetWidth();
+      
+      // adjust width based on size of signature
       if (signature.length() > 400)
-         setWidth("800px");
+         targetWidth = 700;
       else if (signature.length() > 300)
-         setWidth("700px");
+         targetWidth = 600;
       else if (signature.length() > 200)
-         setWidth("600px");
-      else
-         setWidth(getOffsetWidth() + "px");
+         targetWidth = 500;
+      
+      // check for overflow
+      if (targetWidth > (Window.getClientWidth() - left - 40))
+      {
+         // try nudging the 'left' value
+         left = Window.getClientWidth() - targetWidth - 40;
+         
+         // if 'left' is now too small, force to larger and
+         // clamp the target width
+         if (left < 40)
+         {
+            left = 40;
+            targetWidth = Window.getClientWidth() - 80;
+         }
+      }
+      
+      setWidth(targetWidth + "px");
+      return left;
    }
    
    public void resolvePositionAndShow(String signature,
@@ -188,35 +211,21 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private void resolvePositionRelativeTo(final int left,
                                           final int top)
    {
-      // some constants
-      final int H_PAD = 12;
-      final int V_PAD = tooltipTopPadding(docDisplay_);
-      final int H_BUFFER = 100;
-      final int MIN_WIDTH = 300;
-      
-      // do we have enough room to the right? if not then
-      int roomRight = Window.getClientWidth() - left;
-      int maxWidth = Math.min(roomRight - H_BUFFER, 500);
-      final boolean showLeft = maxWidth < MIN_WIDTH;
-      if (showLeft)
-         maxWidth = left - H_BUFFER;
-
-      setMaxWidth(maxWidth);
-      setPopupPositionAndShow(new PositionCallback(){
-
+      setPopupPositionAndShow(new PositionCallback()
+      {
          @Override
-         public void setPosition(int offsetWidth,
-                                 int offsetHeight)
+         public void setPosition(int offsetWidth, int offsetHeight)
          {
-            // if we are showing left then adjust
-            int adjustedLeft = left;
-            if (showLeft)
-               adjustedLeft = left - offsetWidth - H_PAD;
-
-            setPopupPosition(adjustedLeft, top - getOffsetHeight() - V_PAD);
+            Coordinates position = PopupPositioner.getPopupPosition(
+                  offsetWidth,
+                  offsetHeight,
+                  left,
+                  top,
+                  8,
+                  false);
+            setPopupPosition(position.getLeft(), position.getTop());
          }
       });
-
    }
    
    private void setAnchor(Position start, Position end)
