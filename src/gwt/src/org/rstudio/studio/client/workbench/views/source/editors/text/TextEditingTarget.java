@@ -6202,7 +6202,8 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs.autoDetectIndentation().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  docDisplay.autoDetectIndentation(arg);
+                  if (projectConfig == null)
+                     docDisplay.autoDetectIndentation(arg);
                }}));
       releaseOnDismiss.add(prefs.showMargin().bind(
             new CommandWithArg<Boolean>() {
