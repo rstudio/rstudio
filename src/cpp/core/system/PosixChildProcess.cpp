@@ -344,12 +344,10 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // on OSX you need to close all of the terminal handles to get
+      // you need to close all of the terminal handles to get
       // bash to quit, however some other processes (like svn+ssh
       // require the signal)
-#ifdef __APPLE__
       pImpl_->closeAll(false, ERROR_LOCATION);
-#endif
 
       if (::killpg(::getpgid(pImpl_->pid), SIGTERM) == -1)
       {
@@ -771,13 +769,11 @@ AsyncChildProcess::~AsyncChildProcess()
 
 Error AsyncChildProcess::terminate()
 {
-#ifdef __APPLE__
    if (options().pseudoterminal)
    {
       pAsyncImpl_->finishedStderr_ = true;
       pAsyncImpl_->finishedStdout_ = true;
    }
-#endif
 
    return ChildProcess::terminate();
 }
