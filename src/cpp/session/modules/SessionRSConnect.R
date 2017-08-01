@@ -78,17 +78,54 @@
      bundleId = character(0),
      appId = character(0),
      asStatic = logical(0),
+     hostUrl = character(0),
+     username = character(0),
      when = numeric(0))
    deployments <- list()
+   servers <- data.frame(
+     name = character(0),
+     url = character(0))
+   accounts <- data.frame(
+     name = character(0),
+     server = character(0))
      
    # attempt to populate the list from rsconnect; this can throw if e.g. the
    # package is not installed. in the case of any error we'll safely return 
    # an empty list, or a stored RPubs upload ID if one was given (below)
    tryCatch({
-     deploymentsFrame <- rsconnect::deployments(path)
+     # included "orphaned" deployments; we will filter later
+     deploymentsFrame <- rsconnect::deployments(path, excludeOrphaned = FALSE)
      deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+
+     # create the list of servers and accounts (for later filtering)
+     servers <- rsconnect::servers()
+     accounts <- rsconnect::accounts()
    }, error = function(e) { })
 
+   # cross-reference registered servers against the list of deployments, so the
+   # client knows without issuing a separate RPC which deployments don't have
+   # registered servers
+   if (nrow(deploymentsFrame) > 0) {
+     # filter the list of servers by those that actually have accounts
+     # registered 
+     servers <- servers[
+         as.character(servers$name) %in% as.character(accounts$server),]
+
+     # extract names and URLs from the remaining servers
+     urls <- as.character(servers[["url"]])
+     names <- as.character(servers[["name"]])
+
+     # compute whether the deployment is orphaned; note that this differs from
+     # the definition of "orphaned" used by the rsconnect package in that it
+     # considers only the server (not the account)
+     deploymentsFrame <- cbind(deploymentsFrame, list(
+       serverRegistered = as.character(deploymentsFrame[["server"]]) %in% names |
+                          as.character(deploymentsFrame[["hostUrl"]]) %in% urls))
+
+     # rebuild list with additional metadata
+     deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+   }
+   
    # no RPubs upload IDs to consider
    if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {
      return(deployments)
@@ -119,6 +156,10 @@
        rpubsDeployment[col] = TRUE
      else if (col == "when") 
        rpubsDeployment[col] = 0
+     else if (col == "hostUrl")
+       rpubsDeployment[col] = "rpubs.com"
+     else if (col == "username")
+       rpubsDeployment[col] = "rpubs"
      else 
        rpubsDeployment[col] = NA
    }
@@ -151,24 +192,21 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server) { 
+.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) { 
    # init with empty list
    appList <- list()
+   appError <- ""
 
    # attempt to get app ID from server
    tryCatch({
-     appList <- rsconnect:::getAppById(id, account, server)
+     appList <- rsconnect:::getAppById(id, account, server, hostUrl)
    }, error = function(e) {
-     # Connect returns a generic HTTP failure when the app doesn't exist (for
-     # instance, after being deleted); check the error message and treat this
-     # particular case as though the search returned no apps. 
-     if (!grepl("does not exist", conditionMessage(e))) {
-        # we didn't expect this error, bubble it up
-        stop(e)
-     }
+      # record the error message when a failure occurs (will be passed to the client for display)
+      errorMessage <- conditionMessage(e)
    })
    
-   .rs.scalarListFromList(appList)
+   list(error = .rs.scalar(appError), 
+        app   = if(length(appList) > 0) .rs.scalarListFromList(appList) else NULL)
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
@@ -252,9 +290,31 @@
     targets <- target
   }
 
+  yaml <- NULL
+  
+  # check for a known encoding
+  encoding <- getOption("encoding")
+  properties <- .rs.getSourceDocumentProperties(target)
+  if (!is.null(properties$encoding))
+     encoding <- properties$encoding
+  
+  # attempt to parse yaml front matter
+  yaml <- tryCatch(
+     rmarkdown::yaml_front_matter(target, encoding = encoding),
+     error = function(e) NULL
+  )
+  
+  # if this failed, try again as UTF-8
+  if (is.null(yaml) && !identical(encoding, "UTF-8"))
+  {
+     yaml <- tryCatch(
+        rmarkdown::yaml_front_matter(target, encoding = "UTF-8"),
+        error = function(e) NULL
+     )
+  }
+  
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
-  yaml <- rmarkdown::yaml_front_matter(target)
   if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
     return(rsconnect::listBundleFiles(dirname(target)))
   }

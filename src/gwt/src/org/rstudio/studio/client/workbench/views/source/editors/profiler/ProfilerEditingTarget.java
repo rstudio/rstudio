@@ -164,6 +164,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x());
    }
+   
+   @Override
+   public FileType getFileType()
+   {
+      return fileType_;
+   }
 
    @Override
    public TextFileType getTextFileType()

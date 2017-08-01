@@ -2837,6 +2837,12 @@ well as menu structures (for main menu and popup menus).
         label="Insert Pipe Operator"
         context="editor"/>
         
+   <cmd id="openNextFileOnFilesystem"
+        label="Open Next File on Filesystem"/>
+        
+   <cmd id="openPreviousFileOnFilesystem"
+        label="Open Previous File on Filesystem"/>
+        
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 

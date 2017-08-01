@@ -117,6 +117,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -497,35 +498,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void startTerminal(
-                     int shellType,
-                     int cols, int rows,
-                     String terminalHandle,
-                     String caption,
-                     String title,
-                     int sequence,
-                     boolean altBufferActive,
-                     String cwd,
-                     boolean zombie,
-                     boolean trackEnv,
-                     ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void startTerminal(ConsoleProcessInfo cpi,
+                             ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(shellType));
-      params.set(1, new JSONNumber(cols));
-      params.set(2, new JSONNumber(rows));
-      params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
-      params.set(4, new JSONString(StringUtil.notNull(caption)));
-      params.set(5, new JSONString(StringUtil.notNull(title)));
-      params.set(6, new JSONNumber(sequence));
-      params.set(7, JSONBoolean.getInstance(altBufferActive));
-      params.set(8, new JSONString(StringUtil.notNull(cwd)));
-      params.set(9, JSONBoolean.getInstance(zombie));
-      params.set(10, JSONBoolean.getInstance(trackEnv));
-
       sendRequest(RPC_SCOPE,
                   START_TERMINAL,
-                  params,
+                  cpi,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
@@ -759,15 +737,6 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
       sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);   
-   }
-
-   @Override 
-   public void processSetZombie(String handle,
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(handle)));
-      sendRequest(RPC_SCOPE, PROCESS_SET_ZOMBIE, params, requestCallback);   
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -4254,13 +4223,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getRSConnectApp(String appId, String accountName, String server,
-         ServerRequestCallback<RSConnectApplicationInfo> requestCallback)
+   public void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
+         ServerRequestCallback<RSConnectApplicationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(appId));
-      params.set(1, new JSONString(accountName));
-      params.set(2, new JSONString(server));
+      params.set(0, new JSONString(StringUtil.notNull(appId)));
+      params.set(1, new JSONString(StringUtil.notNull(accountName)));
+      params.set(2, new JSONString(StringUtil.notNull(server)));
+      params.set(3, new JSONString(StringUtil.notNull(hostUrl)));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP,
             params,
@@ -4285,7 +4255,7 @@ public class RemoteServer implements Server
    @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
-         String server, String appName, String appTitle,
+         String server, String appName, String appTitle, String appId,
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
@@ -4296,6 +4266,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(server));
       params.set(4, new JSONString(appName));
       params.set(5, new JSONString(StringUtil.notNull(appTitle)));
+      params.set(6, new JSONString(StringUtil.notNull(appId)));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
@@ -5296,7 +5267,6 @@ public class RemoteServer implements Server
    private static final String PROCESS_TEST_EXISTS = "process_test_exists";
    private static final String PROCESS_NOTIFY_VISIBLE = "process_notify_visible";
    private static final String PROCESS_INTERRUPT_CHILD = "process_interrupt_child";
-   private static final String PROCESS_SET_ZOMBIE = "process_set_zombie";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

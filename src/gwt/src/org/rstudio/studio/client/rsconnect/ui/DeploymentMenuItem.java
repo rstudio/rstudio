@@ -1,7 +1,7 @@
 /*
  * DeploymentMenuItem.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,14 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 
 public class DeploymentMenuItem extends CheckableMenuItem
@@ -26,16 +31,11 @@ public class DeploymentMenuItem extends CheckableMenuItem
          boolean isChecked,
          Command onInvoked)
    {
-      // we don't know the name of RPubs-deployed content, so don't show it
-      super(record.getServer() == "rpubs.com" || 
-               StringUtil.isNullOrEmpty(record.getDisplayName()) ? 
-            record.getServer() : 
-            record.getDisplayName() + " (" + record.getServer() + ")");
+      super(getHTML(isChecked, record), true);
       
-      // show actual name on hover (in case titles conflict)
-      setTitle(record.getName());
       isChecked_ = isChecked;
       onInvoked_ = onInvoked;
+      record_ = record;
       onStateChanged();
    }
 
@@ -57,6 +57,53 @@ public class DeploymentMenuItem extends CheckableMenuItem
       onInvoked_.execute();
    }
    
+   @Override
+   public String getHTMLContent()
+   {
+      return getHTML(isChecked(), record_);
+   }
+   
+   private static String getHTML(boolean isChecked, RSConnectDeploymentRecord record)
+   {
+      // build title; we don't know the name of RPubs-deployed content, so don't show it
+      String title = record.getServer() == "rpubs.com" || 
+               StringUtil.isNullOrEmpty(record.getDisplayName()) ? 
+            record.getServer() : 
+            record.getDisplayName();
+
+      // build subtitle
+      String subtitle = "";
+      if (!StringUtil.isNullOrEmpty(record.getUsername()))
+         subtitle = record.getUsername();
+      else
+         subtitle = record.getAccountName();
+      if (!StringUtil.isNullOrEmpty(subtitle))
+         subtitle += "@";
+      if (record.getHostUrl() != null)
+         subtitle += StringUtil.getHostFromUrl(record.getHostUrl());
+      else
+         subtitle += record.getServer();
+      
+      String label = 
+            "<div>" + SafeHtmlUtils.htmlEscape(title) + "</div>" +
+            "<div class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\">" + 
+                  SafeHtmlUtils.htmlEscape(subtitle) + "</div>";
+
+      return AppCommand.formatMenuLabel(
+            // icon
+            isChecked ? 
+                  new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
+                  null,
+            label,   // label
+            true,    // label is HTML
+            null,    // no shortcut
+            null,    // no icon offset
+            null,    // no right image
+            null,    // no right image description
+            ThemeStyles.INSTANCE.menuCheckable());
+   }
+   
+   private final RSConnectDeploymentRecord record_;
    private boolean isChecked_;
    private final Command onInvoked_;
 }

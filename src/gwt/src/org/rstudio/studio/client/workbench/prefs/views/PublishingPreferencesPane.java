@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
@@ -103,6 +104,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       connectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
       connectButton_.setWidth("100%");
       connectButton_.setWrapperWidth("100%");
+      ElementIds.assignElementId(connectButton_.getElement(), ElementIds.PUBLISH_CONNECT);
       connectButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -117,6 +119,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       reconnectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
       reconnectButton_.setWidth("100%");
       reconnectButton_.setWrapperWidth("100%");
+      ElementIds.assignElementId(reconnectButton_.getElement(), ElementIds.PUBLISH_RECONNECT);
       reconnectButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -130,6 +133,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       disconnectButton_ = new ThemedButton("Disconnect");
       disconnectButton_.setWidth("100%");
       disconnectButton_.setWrapperWidth("100%");
+      ElementIds.assignElementId(disconnectButton_.getElement(), ElementIds.PUBLISH_DISCONNECT);
       disconnectButton_.addClickHandler(new ClickHandler()
       {
          @Override

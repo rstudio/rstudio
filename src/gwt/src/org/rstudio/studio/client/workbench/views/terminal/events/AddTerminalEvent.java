@@ -30,6 +30,10 @@ public class AddTerminalEvent extends GwtEvent<Handler>
       public native final ConsoleProcessInfo getProcessInfo() /*-{ 
          return this.process_info; 
       }-*/;
+
+      public native final boolean getShow() /*-{ 
+         return this.show; 
+      }-*/;
    }
    
    public interface Handler extends EventHandler
@@ -40,11 +44,17 @@ public class AddTerminalEvent extends GwtEvent<Handler>
    public AddTerminalEvent(Data data)
    {
       processInfo_ = data.getProcessInfo();
+      show_ = data.getShow();
    }
 
    public ConsoleProcessInfo getProcessInfo()
    {
       return processInfo_;
+   }
+   
+   public boolean getShow()
+   {
+      return show_;
    }
    
    @Override
@@ -60,6 +70,7 @@ public class AddTerminalEvent extends GwtEvent<Handler>
    }
 
    private final ConsoleProcessInfo processInfo_;
+   private final boolean show_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

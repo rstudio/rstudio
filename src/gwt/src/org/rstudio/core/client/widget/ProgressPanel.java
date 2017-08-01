@@ -81,7 +81,7 @@ public class ProgressPanel extends Composite
    {
       clearTimer();
       progressImage_.setVisible(false);
-      progressSpinner_.setVisible(true);
+      progressSpinner_.setVisible(false);
    }
 
    private int getSpinnerColor()

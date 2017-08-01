@@ -212,6 +212,11 @@ public abstract class ModalDialogBase extends DialogBox
    {
       okButton_.setText(caption);
    }
+   
+   protected void setOkButtonId(String id)
+   {
+      okButton_.getElement().setId(id);
+   }
 
    protected void enableOkButton(boolean enabled)
    {

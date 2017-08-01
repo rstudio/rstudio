@@ -168,6 +168,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
@@ -899,6 +900,11 @@ public class ClientEventDispatcher
          {
             AddTerminalEvent.Data data = event.getData();
             eventBus_.fireEvent(new AddTerminalEvent(data));
+         }
+         else if (type.equals(ClientEvent.RemoveTerminal))
+         {
+            RemoveTerminalEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RemoveTerminalEvent(data));
          }
          else if (type.equals(ClientEvent.ActivateTerminal))
          {

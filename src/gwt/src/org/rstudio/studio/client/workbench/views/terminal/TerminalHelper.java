@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 
 import com.google.gwt.user.client.Command;
@@ -42,24 +43,25 @@ public class TerminalHelper
          @Override
          public void onTerminalBusy(TerminalBusyEvent event)
          {
-            isTerminalBusy_ = event.isBusy();
+            warnBeforeClosing_ = event.isBusy();
          }
       });
    }
    
-   /**
-    * @return true if one or more terminals have child processes
-    */
-   public boolean isTerminalBusy()
+   public boolean warnBeforeClosing(int busyMode)
    {
-      return isTerminalBusy_;
+      if (busyMode == UIPrefsAccessor.BUSY_DETECT_NEVER)
+         warnBeforeClosing_ = false;
+      
+      return warnBeforeClosing_;
    }
 
    public void warnBusyTerminalBeforeCommand(final Command command, 
                                              String caption,
-                                             String question)
+                                             String question,
+                                             int busyMode)
    {
-      if (!isTerminalBusy())
+      if (!warnBeforeClosing(busyMode))
       {
          command.execute();
          return;
@@ -78,7 +80,7 @@ public class TerminalHelper
             true);
    }
    
-   private boolean isTerminalBusy_;
+   private boolean warnBeforeClosing_;
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;

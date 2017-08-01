@@ -877,8 +877,10 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
-bool hasSubprocesses(PidType pid)
+std::vector<SubprocInfo> getSubprocesses(PidType pid)
 {
+   std::vector<SubprocInfo> subprocs;
+
    HANDLE hSnapShot;
    CloseHandleOnExitScope closeSnapShot(&hSnapShot, ERROR_LOCATION);
 
@@ -888,7 +890,7 @@ bool hasSubprocesses(PidType pid)
       // err on the side of assuming child processes, so we don't kill
       // a job unintentionally
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return true;
+      return subprocs;
    }
 
    PROCESSENTRY32 pe32;
@@ -896,7 +898,7 @@ bool hasSubprocesses(PidType pid)
    if (!Process32First(hSnapShot, &pe32))
    {
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return true;
+      return subprocs;
    }
 
    do
@@ -904,12 +906,15 @@ bool hasSubprocesses(PidType pid)
       if (pe32.th32ParentProcessID == pid)
       {
          // Found a child process
-         return true;
+         SubprocInfo info;
+         info.pid = pe32.th32ProcessID;
+         info.exe = pe32.szExeFile;
+
+         subprocs.push_back(info);
       }
    } while (Process32Next(hSnapShot, &pe32));
 
-   // Didn't find a child process
-   return false;
+   return subprocs;
 }
 
 FilePath currentWorkingDir(PidType pid)

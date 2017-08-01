@@ -218,18 +218,18 @@ core::Error restorePriv();
 
 #ifdef __APPLE__
 // Detect subprocesses via Mac-only BSD-ish APIs
-bool hasSubprocessesMac(PidType pid);
+std::vector<SubprocInfo> getSubprocessesMac(PidType pid);
 #endif // __APPLE__
 
 // Detect subprocesses via shelling out to pgrep, kinda expensive but used
 // as last-resort on non-Mac Posix system without procfs.
-bool hasSubprocessesViaPgrep(PidType pid);
+std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid);
 
 // Detect subprocesses via procfs; returns false no subprocesses, true if
 // subprocesses or unable to determine if there are subprocesses
-#ifdef HAVE_PROCSELF
-bool hasSubprocessesViaProcFs(PidType pid);
-#endif // HAVE_PROCSELF
+#ifndef __APPLE__
+std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid);
+#endif // !__APPLE__
 
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
@@ -237,9 +237,9 @@ FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
 // empty FilePath if unable to determine.
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid);
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 
 } // namespace system
 } // namespace core

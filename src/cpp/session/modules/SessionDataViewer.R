@@ -598,7 +598,8 @@
    isExplorable <-
       isS4(x) ||
       (is.list(x) && !is.data.frame(x)) ||
-      is.environment(x)
+      is.environment(x) ||
+      is.language(x)
    
    if (isExplorable)
    {
