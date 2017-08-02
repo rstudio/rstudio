@@ -688,6 +688,11 @@ public class RSConnectDeploy extends Composite
                         {
                            onAppsReceived_.onError(info.getError());
                         }
+                        else
+                        {
+                           onAppsReceived_.onError("Error retrieving application " + 
+                             fromPrevious_.getAppId() + ".");
+                        }
                      }
 
                      @Override
