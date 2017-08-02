@@ -112,3 +112,8 @@
 .rstudio-themes-flat.rstudio-themes-dark .profvis-message div {
    color: #FFF;
 }
+
+.rstudio-themes-flat.rstudio-themes-dark .profvis-options-panel {
+   background: rgb(47, 57, 65);
+   border-color: rgb(78, 92, 104);
+}
