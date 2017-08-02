@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -33,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
 
@@ -157,6 +160,42 @@ public class EditingTargetCodeExecution
    {
       executeRange(range, null, false);
    }
+   
+   public void sendSelectionToTerminal(boolean terminalExecuteWhenNotFocused)
+   {
+      if (terminalExecuteWhenNotFocused && !docDisplay_.isFocused())
+      {
+         // the current editor may be in another window; if one of our source
+         // windows was last focused, use that one instead
+         SourceWindowManager manager = 
+               RStudioGinjector.INSTANCE.getSourceWindowManager();
+         if (!StringUtil.isNullOrEmpty(manager.getLastFocusedSourceWindowId()))
+         {
+            RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCommand(
+                  commands_.sendToTerminalWithoutFocus(), SourceSatellite.NAME_PREFIX + 
+                           manager.getLastFocusedSourceWindowId());
+            return;
+         }
+      }
+
+      // send selection from this editor to the terminal
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // current line
+         int row = docDisplay_.getSelectionStart().getRow();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+
+         // if we failed to discover a range, bail
+         if (selectionRange == null)
+            return;
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      events_.fireEvent(new SendToTerminalEvent(code, null));
+ }
    
    public void profileSelection()
    {

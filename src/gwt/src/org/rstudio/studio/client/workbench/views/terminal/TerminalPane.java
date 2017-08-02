@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -269,7 +270,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal();
+         createTerminal(null);
       }
       else if (getSelectedTerminal() == null)
       {
@@ -287,12 +288,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createTerminal()
+   public void createTerminal(String postCreateText)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
+      postCreateText_ = postCreateText;
       terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
       {
          @Override
@@ -305,6 +307,7 @@ public class TerminalPane extends WorkbenchPane
          {
             Debug.log(msg);
             creatingTerminal_ = false;
+            postCreateText_ = null;
          }
       });
    }
@@ -415,6 +418,7 @@ public class TerminalPane extends WorkbenchPane
 
       // set client state back to startup values
       creatingTerminal_ = false;
+      postCreateText_ = null;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
 
@@ -489,10 +493,28 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void sendToTerminal(String text, String caption)
    {
-      final TerminalSession terminal = getTerminalWithCaption(caption);
-      if (text == null || terminal == null)
+      if (StringUtil.isNullOrEmpty(text))
          return;
+      
+      TerminalSession terminal;
+      if (StringUtil.isNullOrEmpty(caption))
+      {
+         terminal = getSelectedTerminal();
+         if (terminal == null)
+         {
+            events_.fireEvent(new CreateTerminalEvent(text));
+            return;
+         }
+      }
+      else
+      {
+         terminal = getTerminalWithCaption(caption); 
+         if (terminal == null)
+            return;
+      }
+
       terminal.receivedInput(text);
+      activateTerminal();
    }
 
    @Override
@@ -642,7 +664,12 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
+      if (!StringUtil.isNullOrEmpty(postCreateText_))
+      {
+         terminal.receivedInput(postCreateText_);
+      }
       creatingTerminal_ = false;
+      postCreateText_ = null;
       updateTerminalToolbar();
    }
    
@@ -1043,6 +1070,7 @@ public class TerminalPane extends WorkbenchPane
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
+   private String postCreateText_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
    ToolbarButton clearButton_;

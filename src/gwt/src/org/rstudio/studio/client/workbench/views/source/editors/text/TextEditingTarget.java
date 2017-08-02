@@ -4055,6 +4055,18 @@ public class TextEditingTarget implements
       codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
    }
 
+   @Handler
+   void onSendToTerminal()
+   {
+      codeExecution_.sendSelectionToTerminal(true);
+   }
+
+   @Handler 
+   void onSendToTerminalWithoutFocus() 
+   { 
+      codeExecution_.sendSelectionToTerminal(false);
+   } 
+  
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {
