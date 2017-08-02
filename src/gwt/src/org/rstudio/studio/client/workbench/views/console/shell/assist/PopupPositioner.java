@@ -44,12 +44,13 @@ public class PopupPositioner implements PositionCallback
             popupHeight,
             cursorBounds_.getLeft(),
             cursorBounds_.getBottom(),
-            5);
+            5,
+            true);
       
       popup_.setPopupPosition(coords.getLeft(), coords.getTop());
    }
    
-   private static class Coordinates
+   public static class Coordinates
    {
       public Coordinates(int left, int top)
       {
@@ -68,56 +69,75 @@ public class PopupPositioner implements PositionCallback
                                               int height,
                                               int pageX,
                                               int pageY,
-                                              int fudgeFactor)
+                                              int fudgeFactor,
+                                              boolean preferBottom)
    {
       int windowTop = Window.getScrollTop();
       int windowLeft = Window.getScrollLeft();
       int windowRight = windowLeft + Window.getClientWidth();
       int windowBottom = windowTop + Window.getClientHeight();
       
-      // Compute the horizontal position.
-      int left = pageX + fudgeFactor;
-      
       // Check to see if the popup would overflow to the right.
       // If so, nudge the coordinates left to prevent this.
-      int horizontalOverflow = pageX + width + fudgeFactor - windowRight;
-      if (horizontalOverflow > 0)
+      int horizontalOverflow = pageX + width - windowRight;
+      if (horizontalOverflow > fudgeFactor)
       {
-         left = Math.max(
+         pageX = Math.max(
                fudgeFactor + 10,
-               left - horizontalOverflow);
+               pageX - horizontalOverflow);
       }
       
       // Compute the vertical position. Normally we want the
       // completion popup to appear below the rectangle, but
       // we may need to position it above (e.g. R completions
       // in the console).
-      boolean showOnBottom =
-            pageY + height + fudgeFactor < windowBottom;
+      if (preferBottom)
+      {
+         boolean showOnBottom = pageY + height + fudgeFactor < windowBottom;
+         pageY = showOnBottom
+               ? pageY + fudgeFactor
+               : pageY - height - fudgeFactor - 10;
+      }
+      else
+      {
+         boolean showOnTop = pageY - height - fudgeFactor > 0;
+         pageY = showOnTop
+               ? pageY - height - fudgeFactor - 10
+               : pageY + fudgeFactor;
+      }
       
-      int top = showOnBottom ?
-            pageY + fudgeFactor :
-            pageY - height - fudgeFactor - 10;
-      
-      return new Coordinates(left, top);
+      return new Coordinates(pageX, pageY);
    }
    
-   public static void setPopupPosition(PopupPanel panel, int pageX, int pageY)
+   public static void setPopupPosition(PopupPanel panel,
+                                       int pageX,
+                                       int pageY)
    {
-      setPopupPosition(panel, pageX, pageY, 0);
+      setPopupPosition(panel, pageX, pageY, 0, true);
    }
+   
    
    public static void setPopupPosition(PopupPanel panel,
                                        int pageX,
                                        int pageY,
                                        int fudgeFactor)
    {
+      setPopupPosition(panel, pageX, pageY, fudgeFactor, true);
+   }
+   
+   public static void setPopupPosition(PopupPanel panel,
+                                       int pageX,
+                                       int pageY,
+                                       int fudgeFactor,
+                                       boolean preferBottom)
+   {
       Coordinates transformed = getPopupPosition(
             panel.getOffsetWidth(),
             panel.getOffsetHeight(),
             pageX,
             pageY,
-            fudgeFactor);
+            fudgeFactor,
+            preferBottom);
       
       panel.setPopupPosition(
             transformed.getLeft(),
