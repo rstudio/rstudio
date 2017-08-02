@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -164,8 +165,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    
    private int resolveWidth(int left, String signature)
    {
-      // default to current tooltip width
-      int targetWidth = getOffsetWidth();
+      int targetWidth = 400;
       
       // adjust width based on size of signature
       if (signature.length() > 400)
@@ -190,7 +190,9 @@ public class RCompletionToolTip extends CppCompletionToolTip
          }
       }
       
-      setWidth(targetWidth + "px");
+      Style styles = getElement().getStyle();
+      styles.setProperty("maxWidth", targetWidth + "px");
+      
       return left;
    }
    
