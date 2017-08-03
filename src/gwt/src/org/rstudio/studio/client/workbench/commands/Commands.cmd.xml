@@ -2516,9 +2516,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Send to Terminal"
         desc="Send the current line or selection to terminal"/>
 
-   <cmd id="sendToTerminalWithoutFocus"
-        rebindable="false"/>
-  
    <cmd id="browseAddins"
         label="Browse Addins"
         menuLabel="_Browse Addins..."

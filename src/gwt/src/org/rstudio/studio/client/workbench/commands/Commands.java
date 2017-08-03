@@ -398,7 +398,6 @@ public abstract class
    public abstract AppCommand interruptTerminal();
    public abstract AppCommand sendTerminalToEditor();
    public abstract AppCommand sendToTerminal();
-   public abstract AppCommand sendToTerminalWithoutFocus();
     
    // Help
    public abstract AppCommand helpBack();

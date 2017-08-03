@@ -995,7 +995,6 @@ public class Application implements ApplicationEventHandlers
       commands_.interruptTerminal().remove();
       commands_.sendTerminalToEditor().remove();
       commands_.sendToTerminal().remove();
-      commands_.sendToTerminalWithoutFocus().remove();
    }
 
    private final ApplicationView view_ ;

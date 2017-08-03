@@ -4006,10 +4006,7 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
-      if (fileType_.isScript())
-         onSendToTerminalWithoutFocus();
-      else
-         codeExecution_.executeSelection(false);
+      codeExecution_.executeSelection(false);
    }
 
    @Handler
@@ -4064,15 +4061,9 @@ public class TextEditingTarget implements
    @Handler
    void onSendToTerminal()
    {
-      codeExecution_.sendSelectionToTerminal(true);
+      codeExecution_.sendSelectionToTerminal();
    }
-
-   @Handler 
-   void onSendToTerminalWithoutFocus() 
-   { 
-      codeExecution_.sendSelectionToTerminal(false);
-   } 
-  
+ 
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {

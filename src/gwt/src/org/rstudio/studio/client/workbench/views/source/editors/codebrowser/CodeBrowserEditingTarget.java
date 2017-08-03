@@ -261,15 +261,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler 
    void onSendToTerminal() 
    { 
-      codeExecution_.sendSelectionToTerminal(true);
+      codeExecution_.sendSelectionToTerminal();
    } 
 
-   @Handler 
-   void onSendToTerminalWithoutFocus() 
-   { 
-      codeExecution_.sendSelectionToTerminal(false);
-   } 
-    
    @Handler
    void onPrintSourceDoc()
    {
@@ -449,7 +443,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
       commands.add(commands_.sendToTerminal());
-      commands.add(commands_.sendToTerminalWithoutFocus());
 
       if (SourceWindowManager.isMainSourceWindow())
          commands.add(commands_.popoutDoc());

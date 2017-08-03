@@ -409,7 +409,6 @@ public class TextFileType extends EditableFileType
          results.add(commands.returnDocToMain());
       
       results.add(commands.sendToTerminal());
-      results.add(commands.sendToTerminalWithoutFocus());
 
       return results;
    }

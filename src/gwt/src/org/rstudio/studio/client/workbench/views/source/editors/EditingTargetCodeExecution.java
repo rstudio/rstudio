@@ -161,23 +161,8 @@ public class EditingTargetCodeExecution
       executeRange(range, null, false);
    }
    
-   public void sendSelectionToTerminal(boolean terminalExecuteWhenNotFocused)
+   public void sendSelectionToTerminal()
    {
-      if (terminalExecuteWhenNotFocused && !docDisplay_.isFocused())
-      {
-         // the current editor may be in another window; if one of our source
-         // windows was last focused, use that one instead
-         SourceWindowManager manager = 
-               RStudioGinjector.INSTANCE.getSourceWindowManager();
-         if (!StringUtil.isNullOrEmpty(manager.getLastFocusedSourceWindowId()))
-         {
-            RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCommand(
-                  commands_.sendToTerminalWithoutFocus(), SourceSatellite.NAME_PREFIX + 
-                           manager.getLastFocusedSourceWindowId());
-            return;
-         }
-      }
-
       // send selection from this editor to the terminal
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
