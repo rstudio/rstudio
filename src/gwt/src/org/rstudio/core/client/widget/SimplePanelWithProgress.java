@@ -46,8 +46,13 @@ public class SimplePanelWithProgress extends SimplePanel
       super.setWidget(widget);
       
    }
-   
+
    public void showProgress(int delayMs)
+   {
+      showProgress(delayMs, null);
+   }
+   
+   public void showProgress(int delayMs, String message)
    {
       if (!isProgressShowing())
       {

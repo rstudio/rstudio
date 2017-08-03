@@ -85,6 +85,8 @@ public class ObjectBrowser extends Composite implements RequiresResize
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
 
+      // TODO: this is where we should draw progress
+      
       // update the table then restore expanded nodes
       objectsModel_.update(
          connection,      // connection 
