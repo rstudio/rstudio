@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.rstudio.core.client.widget.ProgressPanel;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
@@ -41,12 +42,14 @@ public class ObjectBrowser extends Composite implements RequiresResize
 {
    public ObjectBrowser()
    {
+      hostPanel_ = new SimplePanelWithProgress();
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
+      hostPanel_.setWidget(scrollPanel_);
       connection_ = null;
        
       // init widget
-      initWidget(scrollPanel_);
+      initWidget(hostPanel_);
    }
   
    public void clear()
@@ -86,9 +89,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
 
       // show progress while updating the connection
-      final ProgressPanel progress = new ProgressPanel();
-      progress.beginProgressOperation(50, "Loading objects");
-      scrollPanel_.setWidget(progress);
+      hostPanel_.showProgress(50, "Loading objects");
             
       // update the table then restore expanded nodes
       objectsModel_.update(
@@ -99,8 +100,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
             public void execute()
             {
                // clear progress and show the object tree again
-               progress.endProgressOperation();
-               scrollPanel_.setWidget(objectsWrapper_);
+               hostPanel_.setWidget(scrollPanel_);
                
                // restore expanded nodes
                TreeNode rootNode = objects_.getRootTreeNode();
@@ -210,6 +210,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private static final TableBrowserMessages MESSAGES 
                               = GWT.create(TableBrowserMessages.class);
    
+   private final SimplePanelWithProgress hostPanel_;
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
    private VerticalPanel objectsWrapper_;
