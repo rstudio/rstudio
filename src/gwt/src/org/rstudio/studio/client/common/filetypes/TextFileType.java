@@ -1,7 +1,7 @@
 /*
  * TextFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -300,13 +300,13 @@ public class TextFileType extends EditableFileType
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
       
-      if (canExecuteCode() || isC())
+      if ((canExecuteCode() && !isScript()) || isC())
       {
          results.add(commands.reindent());
          results.add(commands.showDiagnosticsActiveDocument());
       }
       
-      if (canExecuteCode() && !isC())
+      if (canExecuteCode() && !isC() && !isScript())
       {
          results.add(commands.executeCurrentFunction());
       }
@@ -315,15 +315,19 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
-         results.add(commands.executeLastCode());
-         results.add(commands.extractFunction());
-         results.add(commands.extractLocalVariable());
-         results.add(commands.commentUncomment());
-         results.add(commands.reflowComment());
-         results.add(commands.reformatCode());
-         results.add(commands.renameInScope());
-         results.add(commands.profileCode());
-         results.add(commands.profileCodeWithoutFocus());
+         
+         if (!isScript())
+         {
+            results.add(commands.executeLastCode());
+            results.add(commands.extractFunction());
+            results.add(commands.extractLocalVariable());
+            results.add(commands.commentUncomment());
+            results.add(commands.reflowComment());
+            results.add(commands.reformatCode());
+            results.add(commands.renameInScope());
+            results.add(commands.profileCode());
+            results.add(commands.profileCodeWithoutFocus());
+         }
       }
       
       if (canExecuteAllCode())
@@ -403,6 +407,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.popoutDoc());
       if (!SourceWindowManager.isMainSourceWindow())
          results.add(commands.returnDocToMain());
+      
+      results.add(commands.sendToTerminal());
 
       return results;
    }

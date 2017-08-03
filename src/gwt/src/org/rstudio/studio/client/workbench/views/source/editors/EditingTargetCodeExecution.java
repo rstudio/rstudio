@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -33,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
 
@@ -157,6 +160,25 @@ public class EditingTargetCodeExecution
    {
       executeRange(range, null, false);
    }
+   
+   public void sendSelectionToTerminal()
+   {
+      // send selection from this editor to the terminal
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // current line
+         int row = docDisplay_.getSelectionStart().getRow();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
+         code = code + "\n";
+      events_.fireEvent(new SendToTerminalEvent(code));
+ }
    
    public void profileSelection()
    {

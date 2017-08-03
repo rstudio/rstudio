@@ -223,7 +223,7 @@ public class TerminalPane extends WorkbenchPane
       // if terminal is not selected, and the tab "X" is clicked, the tab receives
       // onSelected but in this case we don't want to create a new terminal
       if (!closingAll_)
-         ensureTerminal();
+         ensureTerminal(null);
    }
 
    @Override
@@ -264,35 +264,47 @@ public class TerminalPane extends WorkbenchPane
       bringToFront();
    }
 
-   private void ensureTerminal()
+   /**
+    * Ensure there's a terminal available, and optionally send text to it when ready. 
+    * @param postCreateText text to send, may be null
+    */
+   private void ensureTerminal(String postCreateText)
    {
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal();
+         createTerminal(postCreateText);
+         return;
       }
-      else if (getSelectedTerminal() == null)
+
+      TerminalSession terminal = getSelectedTerminal();
+      if (terminal == null)
       {
          // No terminal loaded, load the first terminal in the list
          String handle = terminals_.terminalHandleAtIndex(0);
-         if (handle != null)
+         if (handle == null)
          {
-            events_.fireEvent(new SwitchToTerminalEvent(handle));
+            Debug.log("Unexpected null terminal handle");
+            return;
          }
+         events_.fireEvent(new SwitchToTerminalEvent(handle, postCreateText));
+         return;
       }
       else
       {
          setFocusOnVisible();
+         terminal.receivedInput(postCreateText);
       }
    }
 
    @Override
-   public void createTerminal()
+   public void createTerminal(String postCreateText)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
+      postCreateText_ = postCreateText;
       terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
       {
          @Override
@@ -305,6 +317,7 @@ public class TerminalPane extends WorkbenchPane
          {
             Debug.log(msg);
             creatingTerminal_ = false;
+            postCreateText_ = null;
          }
       });
    }
@@ -415,6 +428,7 @@ public class TerminalPane extends WorkbenchPane
 
       // set client state back to startup values
       creatingTerminal_ = false;
+      postCreateText_ = null;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
 
@@ -487,12 +501,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text, String caption)
+   public void sendToTerminal(String text)
    {
-      final TerminalSession terminal = getTerminalWithCaption(caption);
-      if (text == null || terminal == null)
+      if (StringUtil.isNullOrEmpty(text))
          return;
-      terminal.receivedInput(text);
+
+      ensureTerminal(text);
+      activateTerminal();
    }
 
    @Override
@@ -642,7 +657,9 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
+      terminal.receivedInput(postCreateText_);
       creatingTerminal_ = false;
+      postCreateText_ = null;
       updateTerminalToolbar();
    }
    
@@ -699,7 +716,7 @@ public class TerminalPane extends WorkbenchPane
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
-         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
+         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null));
       }
       
       // Remove terminated terminal from dropdown
@@ -747,6 +764,7 @@ public class TerminalPane extends WorkbenchPane
          showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
+         terminal.receivedInput(event.getInputText());
          return;
       }
 
@@ -1043,6 +1061,7 @@ public class TerminalPane extends WorkbenchPane
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
+   private String postCreateText_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
    ToolbarButton clearButton_;
