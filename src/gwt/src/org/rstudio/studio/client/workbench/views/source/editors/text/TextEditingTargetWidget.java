@@ -556,10 +556,17 @@ public class TextEditingTargetWidget
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
       boolean canPreviewFromR = fileType.canPreviewFromR();
+      boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
+      
+      if (isScript && !terminalAllowed)
+      {
+         commands_.executeCode().setEnabled(false);
+         commands_.executeCodeWithoutFocus().setEnabled(false);
+      }
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !isShinyFile());
+            !isShinyFile() && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
@@ -578,7 +585,7 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
-            (canExecuteCode && !fileType.canAuthorContent()) ||
+            (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());   
      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
