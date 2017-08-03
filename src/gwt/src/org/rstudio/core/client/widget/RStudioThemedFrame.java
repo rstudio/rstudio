@@ -37,9 +37,24 @@ public class RStudioThemedFrame extends RStudioFrame
       this(null, null, null, false);
    }
 
-   public RStudioThemedFrame(String url, String customStyle, String urlStyle, boolean removeBodyStyle)
+   public RStudioThemedFrame(
+      String url,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle)
    {
-      super(url);
+      this(url, false, null, customStyle, urlStyle, removeBodyStyle);
+   }
+
+   public RStudioThemedFrame(
+      String url,
+      boolean sandbox,
+      String sandboxAllow,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle)
+   {
+      super(url, sandbox, sandboxAllow);
       
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;
@@ -73,25 +88,25 @@ public class RStudioThemedFrame extends RStudioFrame
          if (customStyle == null) customStyle = "";
          
          customStyle += "\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {\n" +
          "   background: #FFF;\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {\n" +
          "   -webkit-border-radius: 10px;\n" +
          "   background: " + ThemeColors.darkGreyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-track,\n" + 
-         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-track,\n" + 
-         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-corner,\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-track,\n" + 
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-track,\n" + 
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-corner,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {\n" +
          "   background: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
          "}\n" + 
-         ".rstudio-themes-flat.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
-         ".rstudio-themes-flat.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb{\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
+         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb{\n" +
          "   border: solid 3px " + ThemeColors.darkGreyMostInactiveBackground + ";" +
          "}\n";
          

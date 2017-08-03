@@ -30,7 +30,7 @@
     </ui:style>
     <g:HTMLPanel>
       <g:VerticalPanel>
-         <g:Label text="Enter the URL of the RStudio Connect server:">
+         <g:Label text="Enter the public URL of the RStudio Connect server:">
          </g:Label>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
                              cueText="servername.com:3939"

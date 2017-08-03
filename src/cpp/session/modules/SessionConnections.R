@@ -236,33 +236,7 @@ options(connectionObserver = list(
 
    names(snippets) <- tools::file_path_sans_ext(snippetsFiles)
 
-   snippets
-})
-
-.rs.addFunction("connectionSupportedPackages", function() {
-   list(
-      list(
-         name = "ODBC",
-         package = "odbc",
-         version = "1.1.1"
-      ),
-      list(
-         name = "Spark",
-         package = "sparklyr",
-         version = "0.5.6"
-      )
-   )
-})
-
-.rs.addJsonRpcHandler("get_new_connection_context", function() {
-   rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
-
-   snippets <- .rs.connectionReadSnippets()
-
-   connectionList <- list()
-
-   # add snippets to connections list
-   connectionList <- c(connectionList, lapply(names(snippets), function(snippetName) {
+   lapply(names(snippets), function(snippetName) {
       tryCatch({
          snippet <- snippets[[snippetName]]
 
@@ -280,10 +254,91 @@ options(connectionObserver = list(
          warning(e$message)
          NULL
       })
-   }))
+   })
+})
 
-   # add packages to connections list
-   connectionList <- c(connectionList, lapply(rawConnections, function(con) {
+.rs.addFunction("connectionSupportedPackages", function() {
+   list(
+      list(
+         name = "ODBC",
+         package = "odbc",
+         version = "1.1.1"
+      ),
+      list(
+         name = "Spark",
+         package = "sparklyr",
+         version = "0.5.6"
+      )
+   )
+})
+
+.rs.addFunction("connectionReadOdbc", function() {
+   if (.rs.isPackageInstalled("odbc")) {
+      drivers <- data.frame()
+
+      tryCatch({
+         if (exists("list_drivers", envir = asNamespace("odbc"))) {
+            listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
+         }
+         else {
+            listDrivers <- get("odbcListDrivers", envir = asNamespace("odbc"))
+         }
+         drivers <- listDrivers()
+      }, error = function(e) warning(e$message))
+
+      uniqueDrivers <- drivers[!is.na(drivers$attribute) & drivers$attribute == "Driver", ]
+
+      lapply(uniqueDrivers$name, function(driver) {
+         tryCatch({
+            currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
+
+            basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
+            snippetsFile <- file.path(
+               basePath,
+               tolower(driver),
+               "snippets",
+               paste(tolower(driver), ".R", sep = "")
+            )
+            
+            if (file.exists(snippetsFile)) {
+               snippet <- paste(readLines(snippetsFile), collapse = "\n")
+            }
+            else {
+               snippet <- paste(
+                  "library(DBI)\n",
+                  "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+                  "Driver={", driver, "};${1:Parameters}\")",
+                  sep = "")
+            }
+
+            licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+
+            iconData <- .Call("rs_connectionIcon", driver)
+            if (nchar(iconData) == 0)
+               iconData <- .Call("rs_connectionIcon", "ODBC")
+
+            list(
+               package = .rs.scalar(NULL),
+               version = .rs.scalar(NULL),
+               name = .rs.scalar(driver),
+               type = .rs.scalar("Snippet"),
+               snippet = .rs.scalar(snippet),
+               help = .rs.scalar(NULL),
+               iconData = .rs.scalar(iconData),
+               licensed = .rs.scalar(file.exists(licenseFile))
+            )
+         }, error = function(e) {
+            warning(e$message)
+            NULL
+         })
+      })
+   }
+})
+
+.rs.addFunction("connectionReadPackages", function() {
+   rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
+
+   pacakgeConnections <- lapply(rawConnections, function(con) {
       tryCatch({
          ns <- asNamespace(con$package)
 
@@ -335,9 +390,13 @@ options(connectionObserver = list(
          warning(e$message)
          NULL
       })
-   }))
+   })
 
-   # add ODBC DSNs to connections list
+   names(pacakgeConnections) <- NULL
+   pacakgeConnections
+})
+
+.rs.addFunction("connectionReadDSN", function() {
    if (.rs.isPackageInstalled("odbc")) {
       dataSources <- data.frame()
 
@@ -351,9 +410,7 @@ options(connectionObserver = list(
          dataSources <- listSources()
       }, error = function(e) warning(e$message))
 
-      dataSourcesNoSnippet <- unique(Filter(function(e) { !(e %in% names(snippets)) }, dataSources$name))
-
-      connectionList <- c(connectionList, lapply(dataSourcesNoSnippet, function(dataSourceName) {
+      lapply(dataSources$name, function(dataSourceName) {
          tryCatch({
 
             dataSource <- dataSources[dataSources$name == dataSourceName, ]
@@ -383,73 +440,19 @@ options(connectionObserver = list(
             warning(e$message)
             NULL
          })
-      }))
+      })
    }
+})
 
-   # add ODBC drivers to connections list
-   if (.rs.isPackageInstalled("odbc")) {
-      drivers <- data.frame()
-
-      tryCatch({
-         if (exists("list_drivers", envir = asNamespace("odbc"))) {
-            listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
-         }
-         else {
-            listDrivers <- get("odbcListDrivers", envir = asNamespace("odbc"))
-         }
-         drivers <- listDrivers()
-      }, error = function(e) warning(e$message))
-
-      uniqueDrivers <- drivers[!is.na(drivers$attribute) & drivers$attribute == "Driver", ]
-
-      driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, uniqueDrivers$name)
-
-      connectionList <- c(connectionList, lapply(driversNoSnippet, function(driver) {
-         tryCatch({
-            currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
-
-            basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-            snippetsFile <- file.path(
-               basePath,
-               tolower(driver),
-               "snippets",
-               paste(tolower(driver), ".R", sep = "")
-            )
-            
-            if (file.exists(snippetsFile)) {
-               snippet <- paste(readLines(snippetsFile), collapse = "\n")
-            }
-            else {
-               snippet <- paste(
-                  "library(DBI)\n",
-                  "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-                  "Driver={", driver, "};${1:Parameters}\")",
-                  sep = "")
-            }
-
-            licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
-
-            iconData <- .Call("rs_connectionIcon", driver)
-            if (nchar(iconData) == 0)
-               iconData <- .Call("rs_connectionIcon", "ODBC")
-
-            list(
-               package = .rs.scalar(NULL),
-               version = .rs.scalar(NULL),
-               name = .rs.scalar(driver),
-               type = .rs.scalar("Snippet"),
-               snippet = .rs.scalar(snippet),
-               help = .rs.scalar(NULL),
-               iconData = .rs.scalar(iconData),
-               licensed = .rs.scalar(file.exists(licenseFile))
-            )
-         }, error = function(e) {
-            warning(e$message)
-            NULL
-         })
-      }))
-   }
-
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
+   connectionList <- c(
+      list(),
+      .rs.connectionReadSnippets(),  # add snippets to connections list
+      .rs.connectionReadDSN(),       # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),  # add packages to connections list
+      .rs.connectionReadOdbc()       # add ODBC drivers to connections list
+   )
+   
    connectionList <- Filter(function(e) !is.null(e), connectionList)
 
    supportedNotInstsalled <- Filter(function(e) {
@@ -495,7 +498,12 @@ options(connectionObserver = list(
    }
 
    connectionContext <- .rs.rpc.get_new_connection_context()$connectionsList
-   connectionInfo <- Filter(function(e) e$package == package & e$name == name, connectionContext)
+   connectionInfo <- Filter(
+      function(e)
+        identical(as.character(e$package), as.character(package)) &
+        identical(as.character(e$name), as.character(name)),
+      connectionContext
+   )
 
    if (length(connectionInfo) != 1) {
       return(.rs.error(

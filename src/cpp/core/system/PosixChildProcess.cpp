@@ -344,11 +344,20 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // on OSX you need to close all of the terminal handles to get
-      // bash to quit, however some other processes (like svn+ssh
-      // require the signal)
-#ifdef __APPLE__
-      pImpl_->closeAll(false, ERROR_LOCATION);
+#ifndef __APPLE__
+      // On Linux only do this if dealing with a Terminal-pane process.
+      // This is to reduce scope of this change for 1.1
+      // TODO: review post 1.1
+      if (options().smartTerminal)
+      {
+#endif
+         // you need to close all of the terminal handles to get
+         // bash to quit, however some other processes (like svn+ssh
+         // require the signal)
+         pImpl_->closeAll(false, ERROR_LOCATION);
+
+#ifndef __APPLE__
+      }
 #endif
 
       if (::killpg(::getpgid(pImpl_->pid), SIGTERM) == -1)
@@ -389,10 +398,16 @@ Error ChildProcess::terminate()
    }
 }
 
-bool ChildProcess::hasSubprocess() const
+bool ChildProcess::hasNonWhitelistSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return true;
+}
+
+bool ChildProcess::hasWhitelistSubprocess() const
+{
+   // base class doesn't support subprocess-checking; override to implement
+   return false;
 }
 
 core::FilePath ChildProcess::getCwd() const
@@ -765,23 +780,38 @@ AsyncChildProcess::~AsyncChildProcess()
 
 Error AsyncChildProcess::terminate()
 {
-#ifdef __APPLE__
-   if (options().pseudoterminal)
+#ifndef __APPLE__
+   // On Linux only do this if dealing with a Terminal-pane process.
+   // This is to reduce scope of this change for 1.1
+   // TODO: review post 1.1
+   if (options().smartTerminal)
    {
-      pAsyncImpl_->finishedStderr_ = true;
-      pAsyncImpl_->finishedStdout_ = true;
+#endif
+      if (options().pseudoterminal)
+      {
+         pAsyncImpl_->finishedStderr_ = true;
+         pAsyncImpl_->finishedStdout_ = true;
+      }
+#ifndef __APPLE__
    }
 #endif
-
    return ChildProcess::terminate();
 }
 
-bool AsyncChildProcess::hasSubprocess() const
+bool AsyncChildProcess::hasNonWhitelistSubprocess() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
-      return pAsyncImpl_->pSubprocPoll_->hasSubprocess();
+      return pAsyncImpl_->pSubprocPoll_->hasNonWhitelistSubprocess();
    else
       return true;
+}
+
+bool AsyncChildProcess::hasWhitelistSubprocess() const
+{
+   if (pAsyncImpl_->pSubprocPoll_)
+      return pAsyncImpl_->pSubprocPoll_->hasWhitelistSubprocess();
+   else
+      return false;
 }
 
 core::FilePath AsyncChildProcess::getCwd() const
@@ -819,7 +849,8 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-         options().reportHasSubprocs ? core::system::hasSubprocesses : NULL,
+         options().reportHasSubprocs ? core::system::getSubprocesses : NULL,
+         options().subprocWhitelist,
          options().trackCwd ? core::system::currentWorkingDir : NULL));
 
       if (callbacks_.onStarted)
@@ -933,7 +964,8 @@ void AsyncChildProcess::poll()
    {
       if (callbacks_.onHasSubprocs)
       {
-         callbacks_.onHasSubprocs(hasSubprocess());
+         callbacks_.onHasSubprocs(hasNonWhitelistSubprocess(),
+                                  hasWhitelistSubprocess());
       }
       if (callbacks_.reportCwd)
       {

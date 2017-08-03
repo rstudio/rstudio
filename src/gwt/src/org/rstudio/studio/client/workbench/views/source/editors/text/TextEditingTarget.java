@@ -1255,6 +1255,14 @@ public class TextEditingTarget implements
             releaseOnDismiss_, dependencyManager_);
       view_.addResizeHandler(notebook_);
       
+      // apply project properties
+      projConfig_ = document.getProjectConfig();
+      if (projConfig_ != null)
+      {
+         docDisplay_.setUseSoftTabs(projConfig_.useSoftTabs());
+         docDisplay_.setTabSize(projConfig_.getTabSize());
+      }
+      
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
@@ -1306,7 +1314,7 @@ public class TextEditingTarget implements
          }.schedule(100);
       }
 
-      registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);
+      registerPrefs(releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
       
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
@@ -2511,8 +2519,11 @@ public class TextEditingTarget implements
          return;
       }
       
+      boolean stripTrailingWhitespace = (projConfig_ == null)
+            ? prefs_.stripTrailingWhitespace().getValue()
+            : projConfig_.stripTrailingWhitespace();
       
-      if (prefs_.stripTrailingWhitespace().getValue() &&
+      if (stripTrailingWhitespace &&
           !fileType_.isMarkdown() &&
           !name_.getValue().equals("DESCRIPTION"))
       {
@@ -2530,7 +2541,11 @@ public class TextEditingTarget implements
          }
       }
       
-      if (prefs_.autoAppendNewline().getValue() || fileType_.isPython())
+      boolean autoAppendNewline = (projConfig_ == null)
+            ? prefs_.autoAppendNewline().getValue()
+            : projConfig_.ensureTrailingNewline();
+            
+      if (autoAppendNewline || fileType_.isPython())
       {
          String lastLine = docDisplay_.getLine(lineCount - 1);
          if (lastLine.length() != 0)
@@ -2682,6 +2697,11 @@ public class TextEditingTarget implements
       return getPath();
    }
    
+   @Override
+   public FileType getFileType()
+   {
+      return fileType_;
+   }
 
    @Override
    public TextFileType getTextFileType()
@@ -4014,7 +4034,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
-      codeExecution_.executeSelection(true);
+      if (fileType_.isScript())
+         onSendToTerminal();
+      else
+         codeExecution_.executeSelection(true);
    }
    
    @Handler
@@ -4035,6 +4058,12 @@ public class TextEditingTarget implements
       codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
    }
 
+   @Handler
+   void onSendToTerminal()
+   {
+      codeExecution_.sendSelectionToTerminal();
+   }
+ 
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {
@@ -6112,11 +6141,13 @@ public class TextEditingTarget implements
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
                      UIPrefs prefs,
+                     ProjectConfig projectConfig,
                      DocDisplay docDisplay,
                      final SourceDocument sourceDoc)
    {
       registerPrefs(releaseOnDismiss,
                     prefs,
+                    projectConfig,
                     docDisplay,
                     new PrefsContext() {
                         @Override
@@ -6134,6 +6165,7 @@ public class TextEditingTarget implements
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
                      UIPrefs prefs,
+                     final ProjectConfig projectConfig,
                      final DocDisplay docDisplay,
                      final PrefsContext context)
    {
@@ -6166,13 +6198,15 @@ public class TextEditingTarget implements
                   }
                   else
                   {
-                     docDisplay.setUseSoftTabs(arg);
+                     if (projectConfig == null)
+                        docDisplay.setUseSoftTabs(arg);
                   }
                }}));
       releaseOnDismiss.add(prefs.numSpacesForTab().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
-                  docDisplay.setTabSize(arg);
+                  if (projectConfig == null)
+                     docDisplay.setTabSize(arg);
                }}));
       releaseOnDismiss.add(prefs.showMargin().bind(
             new CommandWithArg<Boolean>() {
@@ -6543,6 +6577,7 @@ public class TextEditingTarget implements
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;
+   private ProjectConfig projConfig_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

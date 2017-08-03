@@ -122,6 +122,11 @@ struct RProjectConfig
    std::string defaultOpenDocs;
 };
 
+Error findProjectFile(FilePath filePath,
+                      FilePath* pProjPath);
+
+Error findProjectConfig(FilePath filePath,
+                        RProjectConfig* pConfig);
 
 Error readProjectFile(const FilePath& projectFilePath,
                       RProjectConfig* pConfig,

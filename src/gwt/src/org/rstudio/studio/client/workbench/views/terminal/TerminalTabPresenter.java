@@ -19,8 +19,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -30,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTe
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.gwt.user.client.Command;
@@ -40,6 +39,7 @@ public class TerminalTabPresenter extends BusyPresenter
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
+                                             RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
 
 {
@@ -53,9 +53,10 @@ public class TerminalTabPresenter extends BusyPresenter
       void activateTerminal();
 
       /**
-       * Create a new terminal session.
+       * Create a new terminal session
+       * @param postCreateText text to insert in terminal after created, may be null
        */
-      void createTerminal();
+      void createTerminal(String postCreateText);
 
       /**
        * Terminate current terminal.
@@ -86,7 +87,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text, String caption);
+      void sendToTerminal(String text);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -96,10 +97,18 @@ public class TerminalTabPresenter extends BusyPresenter
       /**
        * Add a terminal to the list.
        * @param cpi information on the terminal
+       * @param hasSession true if a TerminalSession has been created for this terminal
        * caption
        */
-      void addTerminal(ConsoleProcessInfo cpi);
+      void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
+      /**
+       * Remove a terminal from the list.
+       * @param handle terminal to remove
+       * caption
+       */
+      void removeTerminal(String handle);
+
       /**
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
@@ -115,12 +124,12 @@ public class TerminalTabPresenter extends BusyPresenter
 
    @Inject
    public TerminalTabPresenter(final Display view,
-                               GlobalDisplay globalDisplay,
+                               TerminalHelper terminalHelper,
                                UIPrefs uiPrefs)
    {
       super(view);
       view_ = view;
-      globalDisplay_ = globalDisplay;
+      terminalHelper_ = terminalHelper;
       uiPrefs_ = uiPrefs;
    }
 
@@ -187,13 +196,13 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onCreateTerminal(CreateTerminalEvent event)
    {
       onActivateTerminal();
-      view_.createTerminal();
+      view_.createTerminal(event.getPostCreateText());
    }
 
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText(), event.getId());
+      view_.sendToTerminal(event.getText());
    }
 
    @Override
@@ -205,7 +214,19 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onAddTerminal(AddTerminalEvent event)
    {
-      view_.addTerminal(event.getProcessInfo());
+      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
+      
+      if (event.getShow())
+      {
+         onActivateTerminal();
+         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
+      }
+   }
+
+   @Override
+   public void onRemoveTerminal(RemoveTerminalEvent event)
+   {
+      view_.removeTerminal(event.getHandle());
    }
 
    @Override
@@ -222,27 +243,17 @@ public class TerminalTabPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.activeTerminals())
-      {
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-               "Close Terminal(s) ", 
-               "Are you sure you want to close all terminals? Any running jobs " +
-                     "will be stopped.", false, 
-                     new Operation()
+      final String caption = "Close Terminal(s) ";
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
+         @Override
+         public void execute()
          {
-            @Override
-            public void execute()
-            {
-               shutDownTerminals();
-               onConfirmed.execute();
-            }
-         }, null, null, "Close Terminals", "Cancel", true);
-      }
-      else
-      {
-         shutDownTerminals();
-         onConfirmed.execute(); 
-      }
+            shutDownTerminals();
+            onConfirmed.execute();
+         }
+      }, caption, "Are you sure you want to close all terminals? Any running jobs " +
+            "will be stopped",
+            uiPrefs_.terminalBusyMode().getValue());
    }
 
    private void shutDownTerminals()
@@ -257,6 +268,6 @@ public class TerminalTabPresenter extends BusyPresenter
 
    // Injected ---- 
    private final Display view_;
-   private final GlobalDisplay globalDisplay_;
+   private final TerminalHelper terminalHelper_;
    private final UIPrefs uiPrefs_;
 }

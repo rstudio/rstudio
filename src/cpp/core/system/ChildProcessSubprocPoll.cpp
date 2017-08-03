@@ -15,6 +15,8 @@
 
 #include "ChildProcessSubprocPoll.hpp"
 
+#include <boost/foreach.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -35,7 +37,8 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
       boost::posix_time::milliseconds resetRecentDelay,
       boost::posix_time::milliseconds checkSubprocDelay,
       boost::posix_time::milliseconds checkCwdDelay,
-      boost::function<bool (PidType pid)> subProcCheck,
+      boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck,
+      const std::vector<std::string>& subProcWhitelist,
       boost::function<core::FilePath (PidType pid)> cwdCheck)
    :
      pid_(pid),
@@ -43,6 +46,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
      resetRecentOutputAfter_(boost::posix_time::not_a_date_time),
      checkCwdAfter_(boost::posix_time::not_a_date_time),
      hasSubprocess_(true),
+     hasWhitelistSubprocess_(false),
      hasRecentOutput_(true),
      didThrottleSubprocCheck_(false),
      stopped_(false),
@@ -50,6 +54,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
      checkSubprocDelay_(checkSubprocDelay),
      checkCwdDelay_(checkCwdDelay),
      subProcCheck_(subProcCheck),
+     subProcWhitelist_(subProcWhitelist),
      cwdCheck_(cwdCheck)
 {
 }
@@ -112,7 +117,27 @@ bool ChildProcessSubprocPoll::pollSubproc(boost::posix_time::ptime currentTime)
 
    // Enough time has passed, update whether "pid" has subprocesses
    // and restart the timer.
-   hasSubprocess_ = subProcCheck_(pid_);
+   hasSubprocess_ = false;
+   hasWhitelistSubprocess_ = false;
+   std::vector<SubprocInfo> children = subProcCheck_(pid_);
+   BOOST_FOREACH(SubprocInfo proc, children)
+   {
+      bool isWhitelistItem = false;
+      BOOST_FOREACH(std::string whitelistItem, subProcWhitelist_)
+      {
+         if (proc.exe == whitelistItem)
+         {
+            isWhitelistItem = true;
+            hasWhitelistSubprocess_ = true;
+            break;
+         }
+      }
+      if (!isWhitelistItem)
+      {
+         hasSubprocess_ = true;
+      }
+   }
+
    checkSubProcAfter_ = currentTime + checkSubprocDelay_;
    didThrottleSubprocCheck_ = false;
    return true;
@@ -145,9 +170,14 @@ void ChildProcessSubprocPoll::stop()
    stopped_ = true;
 }
 
-bool ChildProcessSubprocPoll::hasSubprocess() const
+bool ChildProcessSubprocPoll::hasNonWhitelistSubprocess() const
 {
    return hasSubprocess_;
+}
+
+bool ChildProcessSubprocPoll::hasWhitelistSubprocess() const
+{
+   return hasWhitelistSubprocess_;
 }
 
 bool ChildProcessSubprocPoll::hasRecentOutput() const

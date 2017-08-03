@@ -18,7 +18,10 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -28,6 +31,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
@@ -161,6 +165,30 @@ public class AppearancePreferencesPane extends PreferencesPane
          });
       }
 
+      // Ligatures are natively supported on Cocoa, but are opt-in on 
+      // QtWebKit
+      if (Desktop.isDesktop() && !BrowseCap.isCocoaDesktop())
+      {
+         // reduce padding on font face element to group with ligature check
+         fontFace_.getElement().getStyle().setMarginBottom(3, Unit.PX);
+         
+         // create checkbox for ligatures
+         useLigatures_ = new CheckBox("Use ligatures");
+         useLigatures_.setValue(uiPrefs.useLigatures().getValue());
+         leftPanel.add(useLigatures_);
+         useLigatures_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               preview_.setUseLigatures(event.getValue());
+            }
+         });
+         
+         // add padding beneath 
+         useLigatures_.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      }
+
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
@@ -193,7 +221,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
-      theme_.getListBox().getElement().getStyle().setHeight(250, Unit.PX);
+      theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
       theme_.addStyleName(res.styles().themeChooser());
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
       
@@ -209,6 +237,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setWidth("278px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+      preview_.setUseLigatures(uiPrefs.useLigatures().getValue());
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
@@ -247,6 +276,14 @@ public class AppearancePreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
+
+      if (useLigatures_ != null)
+      {
+         // restart required to re-render with ligatures
+         restartRequired |= 
+               useLigatures_.getValue() != uiPrefs_.useLigatures().getValue();
+         uiPrefs_.useLigatures().setGlobalValue(useLigatures_.getValue());
+      }
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
@@ -295,6 +332,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
+   private CheckBox useLigatures_;
    private final SelectWidget flatTheme_;
    private EventBus eventBus_;
    private final InfoBar infoBar_;

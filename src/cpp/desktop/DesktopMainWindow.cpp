@@ -104,7 +104,7 @@ MainWindow::MainWindow(QUrl url) :
    desktop::enableFullscreenMode(this, true);
 
    //setContentsMargins(10000, 0, -10000, 0);
-   setStyleSheet(QString::fromUtf8("QMainWindow { background: #e1e2e5; }"));
+   setStyleSheet(QString::fromUtf8("QMainWindow { background: #e1e2e5; } QMenuBar { color: #000000; }"));
 }
 
 QString MainWindow::getSumatraPdfExePath()

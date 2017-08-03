@@ -2201,7 +2201,14 @@ public class RCompletionManager implements CompletionManager
          it.moveToPosition(cursorPos);
          Token token = it.stepBackward();
          if (token != null)
-            currentToken = token;
+         {
+            // don't allow spaces after roxygen keywords
+            boolean isRoxygen =
+                  token.hasType("keyword") &&
+                  token.hasType("virtual-comment");
+            if (!isRoxygen)
+               currentToken = token;
+         }
       }
       
       // Exclude non-string and non-identifier tokens.

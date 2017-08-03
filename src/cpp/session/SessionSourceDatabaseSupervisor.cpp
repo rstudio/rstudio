@@ -75,7 +75,7 @@ FilePath mostRecentUntitledDir()
 
 FilePath persistentTitledDir(bool multiSession = true)
 {
-   if (multiSession && !module_context::activeSession().empty())
+   if (multiSession && options().multiSession() && options().programMode() == kSessionProgramModeServer)
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/t/" + id);
@@ -97,7 +97,7 @@ FilePath oldPersistentTitledDir()
 
 FilePath persistentUntitledDir(bool multiSession = true)
 {
-   if (multiSession && !module_context::activeSession().empty())
+   if (multiSession && options().multiSession() && options().programMode() == kSessionProgramModeServer)
    {
       std::string id = module_context::activeSession().id();
       return sourceDatabaseRoot().complete("per/u/" + id);
@@ -261,7 +261,7 @@ Error createSessionDir()
 Error createSessionDirFromPersistent()
 {
    // note whether we are in multi-session mode
-   bool multiSession = !module_context::activeSession().empty();
+   bool multiSession = options().multiSession() && options().programMode() == kSessionProgramModeServer;
 
    // create new session dir
    Error error = createSessionDir();
@@ -461,7 +461,7 @@ Error attachToSourceDatabase()
 Error saveMostRecentDocuments()
 {
    // only do this for multi-session contexts
-   if (!module_context::activeSession().empty())
+   if (options().multiSession() && options().programMode() == kSessionProgramModeServer)
    {
       // most recent docs is last one wins so we remove and recreate
       FilePath mostRecentDir = mostRecentTitledDir();

@@ -101,7 +101,6 @@ try {
           [os: 'centos6',  arch: 'i386',   flavor: 'server',  variant: ''],
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
-          [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
           [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
@@ -142,8 +141,10 @@ try {
         parallel parallel_containers
 
         // trigger downstream pro-docs build if we're finished building the pro variants
+        // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro') {
           trigger_external_build('IDE/pro-docs')
+          trigger_external_build('IDE/qa-autotest')
         }
 
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"

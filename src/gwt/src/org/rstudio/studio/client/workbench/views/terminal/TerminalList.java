@@ -40,6 +40,33 @@ public class TerminalList implements Iterable<String>,
                                      TerminalSubprocEvent.Handler,
                                      TerminalCwdEvent.Handler
 {
+   private static class TerminalListData
+   {
+      public TerminalListData(ConsoleProcessInfo cpi, boolean hasSession)
+      {
+         cpi_ = cpi;
+         sessionCreated_ = hasSession;
+      }
+      
+      public ConsoleProcessInfo getCPI()
+      {
+         return cpi_;
+      }
+
+      public void setSessionCreated()
+      {
+         sessionCreated_ = true;
+      }
+      
+      public boolean getSessionCreated()
+      {
+         return sessionCreated_;
+      }
+      
+      private ConsoleProcessInfo cpi_;
+      private boolean sessionCreated_;
+   }
+   
    protected TerminalList() 
    {
       RStudioGinjector.INSTANCE.injectMembers(this); 
@@ -63,31 +90,17 @@ public class TerminalList implements Iterable<String>,
     */
    public void addTerminal(TerminalSession term)
    {
-      addTerminal(ConsoleProcessInfo.createTerminalMetadata(
-            term.getHandle(),
-            term.getCaption(),
-            term.getTitle(),
-            term.getSequence(),
-            term.getHasChildProcs(),
-            term.getCols(),
-            term.getRows(),
-            term.getShellType(),
-            term.getAltBufferActive(),
-            term.getCwd(),
-            term.getAutoCloseMode(),
-            term.getZombie(),
-            term.getTrackEnv()));
+      addTerminal(term.getProcInfo(), true);
    }
 
    /**
     * Add metadata from supplied ConsoleProcessInfo
     * @param procInfo metadata to add
     */
-   public void addTerminal(ConsoleProcessInfo procInfo)
+   public void addTerminal(ConsoleProcessInfo procInfo, boolean hasSession)
    {
-      terminals_.put(procInfo.getHandle(), procInfo);
+      terminals_.put(procInfo.getHandle(), new TerminalListData(procInfo, hasSession));
       updateTerminalBusyStatus();
-
    }
 
    /**
@@ -164,6 +177,27 @@ public class TerminalList implements Iterable<String>,
       current.setZombie(zombie);
    }
 
+   public void setExitCode(String handle, int exitCode)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setExitCode(exitCode);
+   }
+
+   /**
+    * update caption
+    * @param handle terminal handle
+    * @param zombie new caption
+    */
+   public void setCaption(String handle, String caption)
+   {
+      ConsoleProcessInfo current = getMetadataForHandle(handle);
+      if (current == null)
+         return;
+      current.setCaption(caption);
+   }
+
    /**
     * Remove given terminal from the list
     * @param handle terminal handle
@@ -180,9 +214,9 @@ public class TerminalList implements Iterable<String>,
     */
    void terminateAll()
    {
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         pConsoleProcessFactory_.get().interruptAndReap(item.getValue().getHandle());
+         pConsoleProcessFactory_.get().interruptAndReap(item.getValue().getCPI().getHandle());
       }
       terminals_.clear();
       updateTerminalBusyStatus();
@@ -205,9 +239,9 @@ public class TerminalList implements Iterable<String>,
    public int indexOfTerminal(String handle)
    {
       int i = 0;
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getHandle().equals(handle))
+         if (item.getValue().getCPI().getHandle().equals(handle))
          {
             return i;
          }
@@ -225,11 +259,11 @@ public class TerminalList implements Iterable<String>,
    public String terminalHandleAtIndex(int i)
    {
       int j = 0;
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
          if (i == j)
          {
-            return item.getValue().getHandle();
+            return item.getValue().getCPI().getHandle();
          }
          j++;
       }
@@ -243,9 +277,9 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean isCaptionAvailable(String caption)
    {
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCaption().equals(caption))
+         if (item.getValue().getCPI().getCaption().equals(caption))
          {
             return false;
          }
@@ -261,11 +295,11 @@ public class TerminalList implements Iterable<String>,
     */
    public String handleForCaption(String caption)
    {
-      for (final java.util.Map.Entry<String, ConsoleProcessInfo> item : terminals_.entrySet())
+      for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCaption().equals(caption))
+         if (item.getValue().getCPI().getCaption().equals(caption))
          {
-            return item.getValue().getHandle();
+            return item.getValue().getCPI().getHandle();
          }
       }
       return null;
@@ -286,11 +320,24 @@ public class TerminalList implements Iterable<String>,
    }
 
    /**
-    * Get metadata for terminal with given handle.
+    * Get ConsoleProcessInfo for terminal with given handle.
     * @param handle handle of terminal of interest
     * @return terminal metadata or null if not found
     */
    private ConsoleProcessInfo getMetadataForHandle(String handle)
+   {
+      TerminalListData data = getFullMetadataForHandle(handle);
+      if (data == null)
+         return null;
+      return data.getCPI();
+   }
+
+   /**
+    * Get metadata for terminal with given handle.
+    * @param handle handle of terminal of interest
+    * @return terminal metadata or null if not found
+    */
+   private TerminalListData getFullMetadataForHandle(String handle)
    {
       return terminals_.get(handle);
    }
@@ -329,7 +376,7 @@ public class TerminalList implements Iterable<String>,
          @Override
          public void onFailure(String msg)
          {
-            Debug.devlog(msg);
+            Debug.log(msg);
          }
       });
 
@@ -369,9 +416,9 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean haveSubprocs()
    {
-      for (final ConsoleProcessInfo item : terminals_.values())
+      for (final TerminalListData item : terminals_.values())
       {
-         if (item.getHasChildProcs())
+         if (item.getCPI().getHasChildProcs())
          {
             return true;
          }
@@ -382,8 +429,23 @@ public class TerminalList implements Iterable<String>,
    private void startTerminal(ConsoleProcessInfo info, 
                               final ResultCallback<Boolean, String> callback)
    {
+      // When terminals are created via the R API, guard against creation of multiple
+      // TerminalSession objects for the same terminal. For terminals created via the
+      // UI, we already guard against this via TerminalPane.creatingTerminal_.
+      TerminalListData existing = getFullMetadataForHandle(info.getHandle());
+      if (existing != null && existing.getSessionCreated())
+      {
+         callback.onSuccess(false);
+         return;
+      }
+
       TerminalSession newSession = new TerminalSession(
             info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/);
+
+      if (existing != null)
+      {
+         existing.setSessionCreated();
+      }
       newSession.connect(callback);
       updateTerminalBusyStatus();
    }
@@ -411,13 +473,36 @@ public class TerminalList implements Iterable<String>,
    {
       setCwd(event.getHandle(), event.getCwd());
    }
+   
+   public String debug_dumpTerminalList()
+   {
+      StringBuilder dump = new StringBuilder();
+     
+      dump.append("Terminal List Count: ");
+      dump.append(terminalCount());
+      dump.append("\n");
+      for (int i = 0; i < terminalCount(); i++)
+      {
+         dump.append("Handle: '");
+         String handle = terminalHandleAtIndex(i);
+         dump.append(handle);
+         dump.append("' Caption: '");
+
+         TerminalListData data = getFullMetadataForHandle(handle);
+         dump.append(data.getCPI().getCaption());
+         dump.append("' Session Created: ");
+         dump.append(data.getSessionCreated());
+         dump.append("\n");
+      }
+      return dump.toString();
+   }
 
    /**
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, ConsoleProcessInfo> terminals_ = 
-                new LinkedHashMap<String, ConsoleProcessInfo>();
+   private LinkedHashMap<String, TerminalListData> terminals_ = 
+                new LinkedHashMap<String, TerminalListData>();
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

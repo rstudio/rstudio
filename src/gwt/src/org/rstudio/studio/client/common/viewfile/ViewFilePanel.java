@@ -97,7 +97,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       docDisplay_.setReadOnly(true);
       
       TextEditingTarget.registerPrefs(releaseOnDismiss_, 
-            uiPrefs, 
+            uiPrefs,
+            null,
             docDisplay_,
             new TextEditingTarget.PrefsContext()
             {

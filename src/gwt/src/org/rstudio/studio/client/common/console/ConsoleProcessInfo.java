@@ -41,27 +41,29 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    protected ConsoleProcessInfo() {}
 
+   // See comment in C++ code about keeping this in sync with SessionConsoleProcessInfo 
+   // constructor for terminal scenario.
    public static final native ConsoleProcessInfo createNewTerminalInfo(
          boolean trackEnv) /*-{
          
       var procInfo = new Object();
 
-      procInfo.handle = null;
-      procInfo.caption = null;
+      procInfo.handle = "";
+      procInfo.caption = "";
       procInfo.show_on_output = false;
       procInfo.interaction_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS;
       procInfo.max_output_lines = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_MAX_OUTPUT_LINES;
       procInfo.buffered_output = "";
       procInfo.exit_code = null;
       procInfo.terminal_sequence = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::SEQUENCE_NEW_TERMINAL;
-      procInfo.allow_restart = false;
-      procInfo.title = null;
+      procInfo.allow_restart = true;
+      procInfo.title = "";
       procInfo.child_procs = true;
       procInfo.shell_type = @org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo::SHELL_DEFAULT,
       procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
       procInfo.channel_id = "";
       procInfo.alt_buffer = false;
-      procInfo.cwd = null;
+      procInfo.cwd = "";
       procInfo.cols = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_COLS;
       procInfo.rows = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_ROWS;
       procInfo.restarted = false;
@@ -71,68 +73,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
       return procInfo;
    }-*/;
-   
-   /**
-    * Creates an object with sufficient metadata to display UI to trigger
-    * recreation of a previous terminal.
-    * @param handle
-    * @param caption
-    * @param title
-    * @param sequence
-    * @param childProcs
-    * @param cols
-    * @param rows
-    * @param shellType
-    * @param altBufferActive
-    * @param cwd
-    * @param autoCloseMode
-    * @param zombie
-    * @param trackEnv
-    * @return
-    */
-   public static final native ConsoleProcessInfo createTerminalMetadata(
-         String handle,
-         String caption,
-         String title,
-         int sequence,
-         boolean childProcs,
-         int cols,
-         int rows,
-         int shellType,
-         boolean altBufferActive,
-         String cwd,
-         int autoCloseMode,
-         boolean zombie,
-         boolean trackEnv) /*-{
-
-      var procInfo = new Object();
-
-      procInfo.handle = handle;
-      procInfo.caption = caption;
-      procInfo.show_on_output = false;
-      procInfo.interaction_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS;
-      procInfo.max_output_lines = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_MAX_OUTPUT_LINES;
-      procInfo.buffered_output = "";
-      procInfo.exit_code = null;
-      procInfo.terminal_sequence = sequence;
-      procInfo.allow_restart = false;
-      procInfo.title = title;
-      procInfo.child_procs = childProcs;
-      procInfo.shell_type = shellType;
-      procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
-      procInfo.channel_id = "";
-      procInfo.alt_buffer = altBufferActive;
-      procInfo.cwd = cwd;
-      procInfo.cols = cols;
-      procInfo.rows = rows;
-      procInfo.restarted = false;
-      procInfo.autoclose = autoCloseMode;
-      procInfo.zombie = zombie;
-      procInfo.track_env = trackEnv;
-
-      return procInfo;
-   }-*/;
-   
+  
    public final native String getHandle() /*-{
       return this.handle;
    }-*/;
@@ -245,5 +186,31 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    public final native void setZombie(boolean zombie) /*-{
       this.zombie = zombie;
+   }-*/;
+
+   public final native void setCaption(String caption) /*-{
+      this.caption = caption;
+   }-*/;
+
+   public final native void setDimensions(int cols, int rows) /*-{
+      this.cols = cols;
+      this.rows = rows;
+   }-*/;
+
+   public final native void setExitCode(int exitCode) /*-{
+      this.exit_code = exitCode;
+   }-*/;
+
+   public final native String getInteractionModeName() /*-{
+      switch (this.interaction_mode) {
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_ALWAYS:
+            return "Always";
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_NEVER:
+            return "Never";
+         case @org.rstudio.studio.client.common.console.ConsoleProcessInfo::INTERACTION_POSSIBLE:
+            return "Possible";
+         default:
+            return "Unknown";
+      }
    }-*/;
 }

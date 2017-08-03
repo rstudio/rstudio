@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 
 public class TextEntryModalDialog extends ModalDialog<String>
 {
@@ -42,6 +43,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
                  numbersOnly ? new NumericTextBox() :
                  new TextBox();
       textBox_.setWidth("100%");
+      DomUtils.disableAutoBehavior(textBox_);
       captionLabel_ = new Label(caption);
 
       extraOption_ = new CheckBox(StringUtil.notNull(extraOptionPrompt));

@@ -137,6 +137,7 @@ public:
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
    boost::optional<int> getExitCode() const { return exitCode_; }
+   void resetExitCode();
 
    // Does this process have child processes?
    void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }

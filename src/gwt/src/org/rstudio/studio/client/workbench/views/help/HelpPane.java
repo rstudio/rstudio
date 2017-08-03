@@ -105,7 +105,19 @@ public class HelpPane extends WorkbenchPane
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioThemedFrame();
+      frame_ = new RStudioThemedFrame(
+         null,
+         ".rstudio-themes-flat.editor_dark h1,\n" +
+         ".rstudio-themes-flat.editor_dark h2,\n" +
+         ".rstudio-themes-flat.editor_dark h3,\n" +
+         ".rstudio-themes-flat.editor_dark h4,\n" +
+         ".rstudio-themes-flat.editor_dark table,\n" +
+         ".rstudio-themes-flat.editor_dark pre {\n" +
+         "  background: none !important;\n" +
+         "  color: white !important;\n" +
+         "}\n",
+         null,
+         false);
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
