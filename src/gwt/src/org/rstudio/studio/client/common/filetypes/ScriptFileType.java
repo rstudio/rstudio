@@ -79,25 +79,6 @@ public class ScriptFileType extends TextFileType
          result.add(commands.sourceActiveDocument());
          result.add(commands.sourceActiveDocumentWithEcho());
       }
-
-      if (canExecuteCode())
-      {
-         result.remove(commands.reindent());
-         result.remove(commands.showDiagnosticsActiveDocument());
-         result.remove(commands.executeCurrentFunction());
-         result.remove(commands.executeLastCode());
-         result.remove(commands.extractFunction());
-         result.remove(commands.extractLocalVariable());
-         result.remove(commands.commentUncomment());
-         result.remove(commands.reflowComment());
-         result.remove(commands.reformatCode());
-         result.remove(commands.renameInScope());
-         result.remove(commands.profileCode());
-         result.remove(commands.profileCodeWithoutFocus());
-         result.remove(commands.sendToTerminal());
-         result.remove(commands.sendToTerminalWithoutFocus());
-      }
-      
       return result;
    }
    

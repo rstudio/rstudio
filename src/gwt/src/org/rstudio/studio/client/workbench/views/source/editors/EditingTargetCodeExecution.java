@@ -188,10 +188,6 @@ public class EditingTargetCodeExecution
          selectionRange = Range.fromPoints(
                Position.create(row, 0),
                Position.create(row, docDisplay_.getLength(row)));
-
-         // if we failed to discover a range, bail
-         if (selectionRange == null)
-            return;
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
       if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))

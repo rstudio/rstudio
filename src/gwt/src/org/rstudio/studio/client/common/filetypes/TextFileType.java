@@ -300,13 +300,13 @@ public class TextFileType extends EditableFileType
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
       
-      if (canExecuteCode() || isC())
+      if ((canExecuteCode() && !isScript()) || isC())
       {
          results.add(commands.reindent());
          results.add(commands.showDiagnosticsActiveDocument());
       }
       
-      if (canExecuteCode() && !isC())
+      if (canExecuteCode() && !isC() && !isScript())
       {
          results.add(commands.executeCurrentFunction());
       }
@@ -315,15 +315,19 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
-         results.add(commands.executeLastCode());
-         results.add(commands.extractFunction());
-         results.add(commands.extractLocalVariable());
-         results.add(commands.commentUncomment());
-         results.add(commands.reflowComment());
-         results.add(commands.reformatCode());
-         results.add(commands.renameInScope());
-         results.add(commands.profileCode());
-         results.add(commands.profileCodeWithoutFocus());
+         
+         if (!isScript())
+         {
+            results.add(commands.executeLastCode());
+            results.add(commands.extractFunction());
+            results.add(commands.extractLocalVariable());
+            results.add(commands.commentUncomment());
+            results.add(commands.reflowComment());
+            results.add(commands.reformatCode());
+            results.add(commands.renameInScope());
+            results.add(commands.profileCode());
+            results.add(commands.profileCodeWithoutFocus());
+         }
       }
       
       if (canExecuteAllCode())
