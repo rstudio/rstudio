@@ -87,7 +87,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text, String caption);
+      void sendToTerminal(String text);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -202,7 +202,7 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText(), event.getId());
+      view_.sendToTerminal(event.getText());
    }
 
    @Override

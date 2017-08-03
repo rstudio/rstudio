@@ -37,9 +37,16 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
    }
    
-   public SwitchToTerminalEvent(String handle)
+   /**
+    * @param handle terminal to switch to
+    * @param input text to send to terminal, may be null
+    * @param setFocus give terminal focus when switching to it
+    */
+   public SwitchToTerminalEvent(String handle, String input, boolean setFocus)
    {
       terminalHandle_ = handle;
+      inputText_ = input;
+      setFocus_ = setFocus;
    }
 
    @Override
@@ -58,8 +65,20 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       return terminalHandle_;
    }
-  
+   
+   public String getInputText()
+   {
+      return inputText_;
+   }
+
+   public boolean setFocus()
+   {
+      return setFocus_;
+   }
+   
    private String terminalHandle_;
+   private String inputText_;
+   private boolean setFocus_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -224,7 +223,7 @@ public class TerminalPane extends WorkbenchPane
       // if terminal is not selected, and the tab "X" is clicked, the tab receives
       // onSelected but in this case we don't want to create a new terminal
       if (!closingAll_)
-         ensureTerminal();
+         ensureTerminal(null, true);
    }
 
    @Override
@@ -265,25 +264,38 @@ public class TerminalPane extends WorkbenchPane
       bringToFront();
    }
 
-   private void ensureTerminal()
+   /**
+    * Ensure there's a terminal available, and optionally send text to it when ready. 
+    * @param postCreateText text to send, may be null
+    * @param setFocus set focus on the terminal
+    */
+   private void ensureTerminal(String postCreateText, boolean setFocus)
    {
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal(null);
+         createTerminal(postCreateText);
+         return;
       }
-      else if (getSelectedTerminal() == null)
+
+      TerminalSession terminal = getSelectedTerminal();
+      if (terminal == null)
       {
          // No terminal loaded, load the first terminal in the list
          String handle = terminals_.terminalHandleAtIndex(0);
-         if (handle != null)
+         if (handle == null)
          {
-            events_.fireEvent(new SwitchToTerminalEvent(handle));
+            Debug.log("Unexpected null terminal handle");
+            return;
          }
+         events_.fireEvent(new SwitchToTerminalEvent(handle, postCreateText, setFocus));
+         return;
       }
       else
       {
-         setFocusOnVisible();
+         if (setFocus)
+            setFocusOnVisible();
+         terminal.receivedInput(postCreateText);
       }
    }
 
@@ -491,29 +503,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text, String caption)
+   public void sendToTerminal(String text)
    {
       if (StringUtil.isNullOrEmpty(text))
          return;
-      
-      TerminalSession terminal;
-      if (StringUtil.isNullOrEmpty(caption))
-      {
-         terminal = getSelectedTerminal();
-         if (terminal == null)
-         {
-            events_.fireEvent(new CreateTerminalEvent(text));
-            return;
-         }
-      }
-      else
-      {
-         terminal = getTerminalWithCaption(caption); 
-         if (terminal == null)
-            return;
-      }
 
-      terminal.receivedInput(text);
+      ensureTerminal(text, uiPrefs_.focusConsoleAfterExec().getValue());
       activateTerminal();
    }
 
@@ -664,10 +659,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
-      if (!StringUtil.isNullOrEmpty(postCreateText_))
-      {
-         terminal.receivedInput(postCreateText_);
-      }
+      terminal.receivedInput(postCreateText_);
       creatingTerminal_ = false;
       postCreateText_ = null;
       updateTerminalToolbar();
@@ -726,7 +718,7 @@ public class TerminalPane extends WorkbenchPane
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
-         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
+         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null, true));
       }
       
       // Remove terminated terminal from dropdown
@@ -772,8 +764,10 @@ public class TerminalPane extends WorkbenchPane
       if (terminal != null)
       {
          showTerminalWidget(terminal);
-         setFocusOnVisible();
+         if (event.setFocus())
+            setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
+         terminal.receivedInput(event.getInputText());
          return;
       }
 

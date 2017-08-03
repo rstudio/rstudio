@@ -84,7 +84,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null, true));
                }
             };
 
@@ -179,7 +179,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String handle = terminals_.handleForCaption(caption);
       if (StringUtil.isNullOrEmpty(handle))
          return;
-      eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null, true));
    }
 
    /**
@@ -224,7 +224,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String prevHandle = getPreviousTerminalHandle();
       if (prevHandle != null)
       {
-         eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
+         eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle, null, true));
       }
    }
 
@@ -236,7 +236,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String nextHandle = getNextTerminalHandle();
       if (nextHandle != null)
       {
-         eventBus_.fireEvent(new SwitchToTerminalEvent(nextHandle));
+         eventBus_.fireEvent(new SwitchToTerminalEvent(nextHandle, null, true));
       }
    }
 
