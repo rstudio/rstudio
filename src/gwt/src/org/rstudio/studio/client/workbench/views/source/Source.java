@@ -3753,7 +3753,8 @@ public class Source implements InsertSourceHandler,
    
    private void manageTerminalCommands()
    {
-      commands_.sendToTerminal().setVisible(session_.getSessionInfo().getAllowShell());
+      if (!session_.getSessionInfo().getAllowShell())
+         commands_.sendToTerminal().setVisible(false);
    }
    
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)

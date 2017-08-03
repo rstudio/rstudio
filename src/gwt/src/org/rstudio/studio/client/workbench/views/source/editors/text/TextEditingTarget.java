@@ -4006,7 +4006,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false);
+      if (fileType_.isScript())
+         onSendToTerminalWithoutFocus();
+      else
+         codeExecution_.executeSelection(false);
    }
 
    @Handler
@@ -4034,7 +4037,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
-      codeExecution_.executeSelection(true);
+      if (fileType_.isScript())
+         onSendToTerminal();
+      else
+         codeExecution_.executeSelection(true);
    }
    
    @Handler

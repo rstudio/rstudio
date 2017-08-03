@@ -138,7 +138,7 @@ public class FileTypeRegistry
 
    public static final TextFileType PYTHON = new ScriptFileType(
      "python", "Python", EditorLanguage.LANG_PYTHON, ".py",new ImageResource2x(ICONS.iconPython2x()),
-     "python", true);
+     "python", false, true);
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
@@ -147,7 +147,7 @@ public class FileTypeRegistry
 
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", new ImageResource2x(ICONS.iconSh2x()),
-         null, false);
+         null, true, false);
    
    public static final TextFileType TOML =
          new TextFileType("toml", "TOML", EditorLanguage.LANG_TOML, ".toml",

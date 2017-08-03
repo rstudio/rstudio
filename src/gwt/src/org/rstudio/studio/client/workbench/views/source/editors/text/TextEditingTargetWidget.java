@@ -560,7 +560,7 @@ public class TextEditingTargetWidget
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
             !isShinyFile());
-      runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
+      runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
       insertChunkMenu_.setVisible(isRMarkdown2);

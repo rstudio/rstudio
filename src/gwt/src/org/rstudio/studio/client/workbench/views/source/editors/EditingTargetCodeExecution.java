@@ -194,6 +194,8 @@ public class EditingTargetCodeExecution
             return;
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
+         code = code + "\n";
       events_.fireEvent(new SendToTerminalEvent(code, null));
  }
    
