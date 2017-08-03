@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
@@ -40,7 +41,6 @@ public class ObjectBrowser extends Composite implements RequiresResize
 {
    public ObjectBrowser()
    {
-      // create scroll panel and set the vertical wrapper as it's widget
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
       connection_ = null;
@@ -85,8 +85,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
 
-      // TODO: this is where we should draw progress
-      
+      // show progress while updating the connection
+      final ProgressPanel progress = new ProgressPanel();
+      progress.beginProgressOperation(50, "Loading objects");
+      scrollPanel_.setWidget(progress);
+            
       // update the table then restore expanded nodes
       objectsModel_.update(
          connection,      // connection 
@@ -95,6 +98,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
             @Override
             public void execute()
             {
+               // clear progress and show the object tree again
+               progress.endProgressOperation();
+               scrollPanel_.setWidget(objectsWrapper_);
+               
+               // restore expanded nodes
                TreeNode rootNode = objects_.getRootTreeNode();
                if (!rootNode.isDestroyed())
                {
@@ -138,11 +146,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
-      VerticalPanel verticalWrapper = new VerticalPanel();
-      verticalWrapper.setWidth("100%");
-      verticalWrapper.add(objects_);
+      objectsWrapper_ = new VerticalPanel();
+      objectsWrapper_.setWidth("100%");
+      objectsWrapper_.add(objects_);
       
-      scrollPanel_.setWidget(verticalWrapper);
+      scrollPanel_.setWidget(objectsWrapper_);
       
       // cache connection
       connection_ = connection;
@@ -204,6 +212,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
+   private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
 }

@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,9 +47,12 @@ public class ProgressPanel extends Composite
       progressSpinner_.getElement().getStyle().setHeight(32, Unit.PX);
       
       progressLabel_ = new Label();
+      progressLabel_.getElement().getStyle().setOpacity(0.5);
 
       VerticalPanel panel = new VerticalPanel();
-      panel.add(progressSpinner_.isSupported() ? progressSpinner_ : progressImage_);
+      Widget spinner = progressSpinner_.isSupported() ? progressSpinner_ : progressImage_;
+      panel.add(spinner);
+      panel.setCellHorizontalAlignment(spinner, DockPanel.ALIGN_CENTER);
       panel.add(progressLabel_);
 
       HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(panel, verticalOffset);
@@ -88,7 +92,7 @@ public class ProgressPanel extends Composite
             if (message != null)
             {
                progressLabel_.setText(message);
-               progressSpinner_.setVisible(true);
+               progressLabel_.setVisible(true);
             }
          }
       };

@@ -324,7 +324,7 @@ public class ConnectionsPresenter extends BasePresenter
          eventBus_.fireEvent(
                new SendToConsoleEvent(connectCode, true));
          
-         display_.showConnectionProgress("Connecting in R Console");
+         display_.showConnectionProgress("Connecting");
       }
       else if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT) ||
                connectVia.equals(ConnectionOptions.CONNECT_NEW_R_NOTEBOOK))

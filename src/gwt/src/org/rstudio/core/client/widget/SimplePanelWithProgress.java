@@ -57,7 +57,7 @@ public class SimplePanelWithProgress extends SimplePanel
       if (!isProgressShowing())
       {
          setWidget(loadProgressPanel_);
-         loadProgressPanel_.beginProgressOperation(delayMs);
+         loadProgressPanel_.beginProgressOperation(delayMs, message);
       }
    }
    
