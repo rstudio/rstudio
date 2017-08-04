@@ -345,9 +345,9 @@ public class ConnectionsPane extends WorkbenchPane
    }
    
    @Override
-   public void showConnectionProgress()
+   public void showConnectionProgress(String message)
    {
-      connectionExplorer_.showConnectionProgress();
+      connectionExplorer_.showConnectionProgress(message);
    }
    
    @Override
