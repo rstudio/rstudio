@@ -31,8 +31,8 @@ This is not used by RStudio, but is kept in source control so you can easily
 examine what changed.
 
 2) `tweak-xterm-css.R` runs at the end of `build-xterm` removing rules 
-from xterm.css requiring theme-specific adjustments to `color:` and/or 
-`background-color:`, saving the result in 
+from xterm.css requiring theme-specific adjustments to `color:`, 
+`background-color:`, and `font-family:`, saving the result in 
 `rstudio/src/gwt/src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm.css`.
 This is the stylesheet used by RStudio's terminal.
 
@@ -56,18 +56,30 @@ styles within have. You must then update `compile-themes.R` to emit
 rules that take these changes into account.
 
 2) If an existing selector's rules have changed such that there is no longer
-a `color:` or `background-color:` declaration, then remove this rule from
-`tweak-xterm-css.R` and `compile-themes.R`.
+a `color:`, `background-color:`, or `font-family:` declaration, then remove 
+this rule from `tweak-xterm-css.R` and `compile-themes.R`. Ignore
+`background-color: transparent;` as those don't require special handling.
 
 3) If the `tweak-xterm.css.R` step failed, adjust that script to match the 
 obsolete selectors, i.e. remove selectors that have been eliminated from 
-`tweak-xterm.css.R` and `compile-themes.R`
+`tweak-xterm.css.R` and `compile-themes.R`.
 
-4) Examine changes in xterm.orig.css from the previous, and find any
-rules containing `color:` and/or `background:`. Update `tweak-xterm.css.R`
-to remove this rule, then update `compile-themes.R` to inject these into
-the stylesheets it creates, with suitable colors substituted (follow 
-existing examples).
+4) Once `build-xterm` runs successfuly and ends with **Done!** examine the
+difference between new and previous
+`rstudio/src/gwt/src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm.css`
+and look for added instances of `color:` or `background-color:` (ignoring
+`background-color: transparent;`).
+
+5) Update `tweak-xterm.css.R` to remove new rules found in step 4, then update
+`compile-themes.R` to inject these into the created stylesheets, with suitable
+colors substituted (follow existing examples).
+
+6) Build the editor stylesheets with `compile-themes.R` and verify that
+they contain the rules removed by `tweak-xterm.cs.R`.
+
+7) The Material theme requires the changes to be manually applied. Select
+changes from another dark theme such as Merbivore Soft and copy them over.
+Be careful to preserve Material's colors.
 
 Evaluting the JavaScript Changes
 -----------------------------------------------------------------------------
@@ -75,6 +87,10 @@ Ideally, this would be completely handled by running the client-side unit
 tests via **ant unittest**. This is not currently the case, however on the
 positive side, XTerm.js 2.x releases have rarely required code changes in 
 RStudio except when we wanted to take advantage of new functionality.
+
+If there are issues, they will likely manifest in `XTermNative.java`. The
+methods `getLocalBuffer` and `currentLine` use xterm.js internals,
+everything else uses officially documented xterm.js APIs.
 
 TODO - author unit tests to more fully evaluate a new xterm.js, 
 or provide more details on non-obvious problems to watch for in manual

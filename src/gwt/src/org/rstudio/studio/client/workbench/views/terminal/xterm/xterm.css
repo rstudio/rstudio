@@ -79,32 +79,25 @@
     text-decoration: none;
 }
 
-
-
-.terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar).focus.xterm-cursor-blink-on .terminal-cursor {
-    background-color: transparent;
-    color: inherit;
-}
-
-.terminal.xterm-cursor-style-bar .terminal-cursor,
-.terminal.xterm-cursor-style-underline .terminal-cursor {
+.terminal .terminal-cursor {
     position: relative;
 }
-.terminal.xterm-cursor-style-bar .terminal-cursor::before {
+
+
+
+
+.terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before {
     top: 0;
-    bottom: 0;
     left: 0;
+    bottom: 0;
     width: 1px;
 }
-.terminal.xterm-cursor-style-underline .terminal-cursor::before {
+
+.terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {
     bottom: 0;
     left: 0;
     right: 0;
     height: 1px;
-}
-.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink.xterm-cursor-blink-on .terminal-cursor::before,
-.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink.xterm-cursor-blink-on .terminal-cursor::before {
-    background-color: transparent;
 }
 
 .terminal .composition-view {
@@ -176,6 +169,10 @@
 
 .terminal .xterm-blink {
     text-decoration: blink;
+}
+
+.terminal .xterm-blink.xterm-underline {
+    text-decoration: blink underline;
 }
 
 .terminal .xterm-hidden {
