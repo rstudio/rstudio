@@ -89,8 +89,9 @@ positive side, XTerm.js 2.x releases have rarely required code changes in
 RStudio except when we wanted to take advantage of new functionality.
 
 If there are issues, they will likely manifest in `XTermNative.java`. The
-methods `getLocalBuffer` and `currentLine` use xterm.js internals,
-everything else uses officially documented xterm.js APIs.
+methods `getLocalBuffer`, `currentLine`, `getCursorX`, and `getCursorY`
+use xterm.js internals, everything else uses officially documented xterm.js 
+APIs.
 
 TODO - author unit tests to more fully evaluate a new xterm.js, 
 or provide more details on non-obvious problems to watch for in manual
