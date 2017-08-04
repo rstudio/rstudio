@@ -172,33 +172,29 @@
   color: #000000;
   font-feature-settings: "liga" 0;
   position: relative;
+  user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
 }
-.terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
-   background-color: #333;
-   color: #CCC;
+.terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor {
+  background-color: #333;
+  color: #CCC;
+}
+.terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,
+.terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {
+  content: '';
+  position: absolute;
+  background-color: #333;
 }
 .terminal:not(.focus) .terminal-cursor {
   outline: 1px solid #333;
   outline-offset: -1px;
-  background-color: transparent;
-}
-.terminal.xterm-cursor-style-bar .terminal-cursor::before,
-.terminal.xterm-cursor-style-underline .terminal-cursor::before {
-   content: "";
-   display: block;
-   position: absolute;
-   background-color: #333;
-}
-.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
-.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
-   background-color: #333;
 }
 .terminal .xterm-selection div {
    position: absolute;
    background-color: #333;
 }
 .terminal .xterm-viewport {
-  /* On OS X this is required in order for the scroll bar to appear fully opaque */
   background-color: #f3f2f3;
   overflow-y: scroll;
 }
