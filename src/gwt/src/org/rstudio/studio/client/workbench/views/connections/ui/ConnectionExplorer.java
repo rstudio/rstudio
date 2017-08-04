@@ -94,9 +94,9 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       eventBus_ = eventBus;
    }
    
-   public void showConnectionProgress()
+   public void showConnectionProgress(String message)
    {
-      containerPanel_.showProgress(50); 
+      containerPanel_.showProgress(50, message); 
    }
    
    public void setConnection(Connection connection, String connectVia)
@@ -139,7 +139,6 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       containerPanel_.onResize();
       codePanel_.onResize();
-      
    }
    
    private void showActivePanel()
