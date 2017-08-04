@@ -23,12 +23,7 @@ def resolve_deps(type, arch, variant) {
         sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
         break
       case "RPM":
-        if (variant == 'SLES') {
-          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-zypper --exclude-qt-sdk && cd ../.."
-        } else {
-          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
-        }
-        break
+        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
   }
 }
 
