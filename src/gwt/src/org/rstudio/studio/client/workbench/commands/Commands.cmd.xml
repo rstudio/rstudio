@@ -690,6 +690,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+         <shortcut refid="sendToTerminal" value="Cmd+Alt+Enter"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
