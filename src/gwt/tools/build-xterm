@@ -18,7 +18,7 @@ XTERM_ADDONS_DIR=./dist/addons
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
 
 # stylesheet
-cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm.css
+cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm-orig.css
 
 # uncompressed js
 cp ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm-uncompressed.js
