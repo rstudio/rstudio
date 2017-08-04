@@ -240,6 +240,7 @@ options(connectionObserver = list(
       tryCatch({
          snippet <- snippets[[snippetName]]
 
+         iconName <- .rs.connectionDBSimilarIcon(snippetName)
          list(
             package = .rs.scalar(NULL),
             version = .rs.scalar(NULL),
@@ -247,7 +248,7 @@ options(connectionObserver = list(
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", iconName)),
             licensed = .rs.scalar(FALSE)
          )
       }, error = function(e) {
@@ -270,6 +271,22 @@ options(connectionObserver = list(
          version = "0.5.6"
       )
    )
+})
+
+.rs.addFunction("connectionDBSimilarIcon", function(name) {
+   allIcons <- dir(.Call("rs_connectionIconsPath", "drivers"))
+   allIconNames <- sub("\\.png", "", allIcons)
+
+   similarIcon <- sapply(allIconNames, function(icon) {
+      grepl(icon, name, ignore.case = TRUE)
+   })
+
+   if (any(similarIcon)) {
+      allIconNames[which(similarIcon)]
+   }
+   else {
+      name
+   }
 })
 
 .rs.addFunction("connectionReadOdbc", function() {
@@ -422,7 +439,8 @@ options(connectionObserver = list(
                "}\")",
                sep = "")
 
-            iconData <- .Call("rs_connectionIcon", dataSource$name)
+            iconName <- .rs.connectionDBSimilarIcon(dataSource$name)
+            iconData <- .Call("rs_connectionIcon", iconName)
             if (nchar(iconData) == 0)
                iconData <- .Call("rs_connectionIcon", "ODBC")
 

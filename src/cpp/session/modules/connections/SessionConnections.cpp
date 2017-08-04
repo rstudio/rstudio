@@ -282,6 +282,19 @@ Error removeConnection(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_connectionIconsPath(SEXP iconGroupSEXP)
+{
+   std::string iconGroup = r::sexp::safeAsString(iconGroupSEXP);
+
+   FilePath path = options()
+     .rResourcesPath()
+     .childPath("connections")
+     .childPath(iconGroup);
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(path.absolutePath(), &rProtect);
+}
+
 Error connectionDisconnect(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -581,6 +594,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
    RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
    RS_REGISTER_CALL_METHOD(rs_connectionAddPackage, 2);
+   RS_REGISTER_CALL_METHOD(rs_connectionIconsPath, 1);
 
    // initialize environment
    initEnvironment();
