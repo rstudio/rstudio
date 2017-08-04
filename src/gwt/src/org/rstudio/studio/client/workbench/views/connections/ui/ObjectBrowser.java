@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
@@ -46,6 +45,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
       hostPanel_.setWidget(scrollPanel_);
+      hostPanel_.setSize("100%", "100%");
       connection_ = null;
        
       // init widget
