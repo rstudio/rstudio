@@ -224,6 +224,15 @@ public class TerminalPane extends WorkbenchPane
       // onSelected but in this case we don't want to create a new terminal
       if (!closingAll_)
          ensureTerminal(null);
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            suppressAutoFocus_ = false;
+         }
+      });
    }
 
    @Override
@@ -260,7 +269,6 @@ public class TerminalPane extends WorkbenchPane
    public void activateTerminal()
    {
       closingAll_ = false;
-      ensureVisible();
       bringToFront();
    }
 
@@ -501,11 +509,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text)
+   public void sendToTerminal(String text, boolean setFocus)
    {
       if (StringUtil.isNullOrEmpty(text))
          return;
 
+      suppressAutoFocus_ = !setFocus;
       ensureTerminal(text);
       activateTerminal();
    }
@@ -921,7 +930,8 @@ public class TerminalPane extends WorkbenchPane
             TerminalSession visibleTerminal = getSelectedTerminal();
             if (visibleTerminal != null)
             {
-               visibleTerminal.setFocus(true);
+               if (!suppressAutoFocus_)
+                  visibleTerminal.setFocus(true);
                activeTerminalToolbarButton_.setActiveTerminal(
                      visibleTerminal.getCaption(), visibleTerminal.getHandle());
                setTerminalTitle(visibleTerminal.getTitle());
@@ -1068,6 +1078,7 @@ public class TerminalPane extends WorkbenchPane
    private HandlerRegistration terminalHasChildProcsHandler_;
    private boolean isRestartInProgress_;
    private boolean closingAll_;
+   private boolean suppressAutoFocus_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;

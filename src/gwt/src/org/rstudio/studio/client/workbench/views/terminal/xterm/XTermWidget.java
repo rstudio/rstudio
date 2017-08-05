@@ -139,7 +139,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    public void clear()
    {
       terminal_.clear();
-      setFocus(true);
    }
 
    /**
