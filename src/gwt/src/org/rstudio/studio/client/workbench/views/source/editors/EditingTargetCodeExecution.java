@@ -176,6 +176,11 @@ public class EditingTargetCodeExecution
       if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
          code = code + "\n";
       events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
+
+      if (noSelection)
+      {
+         moveCursorAfterExecution(selectionRange);
+      }
    }
    
    public void profileSelection()
