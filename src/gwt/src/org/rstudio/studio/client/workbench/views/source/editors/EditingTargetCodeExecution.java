@@ -25,8 +25,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -177,8 +175,13 @@ public class EditingTargetCodeExecution
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
       if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
          code = code + "\n";
-      events_.fireEvent(new SendToTerminalEvent(code));
- }
+      events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
+
+      if (noSelection)
+      {
+         moveCursorAfterExecution(selectionRange);
+      }
+   }
    
    public void profileSelection()
    {

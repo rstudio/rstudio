@@ -38,6 +38,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
       protected Data() {}
       
       public final native String getText() /*-{ return this["text"]; }-*/;
+      public final native boolean getSetFocus() /*-{ return this["set_focus"]; }-*/;
    }
   
    public SendToTerminalEvent()
@@ -46,17 +47,23 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
 
    public SendToTerminalEvent(Data data)
    {
-      this(data.getText());
+      this(data.getText(), data.getSetFocus());
    }
    
-   public SendToTerminalEvent(String text)
+   public SendToTerminalEvent(String text, boolean setFocus)
    {
       text_ = text;
+      setFocus_ = setFocus;
    }
 
    public String getText()
    {
       return text_;
+   }
+   
+   public boolean getSetFocus()
+   {
+      return setFocus_;
    }
    
    @Override
@@ -72,6 +79,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    }
 
    private String text_;
+   private boolean setFocus_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
