@@ -221,9 +221,12 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            forgetPreviousDeployment();
             event.preventDefault();
             event.stopPropagation();
+            display_.showMessage(GlobalDisplay.MSG_INFO, 
+                  "Create New Content", 
+                  "To publish this content to a new location, click the Publish drop-down menu " +
+                  "and choose Other Destination.");
          }
       });
 
@@ -401,6 +404,7 @@ public class RSConnectDeploy extends Composite
    public void setOnDeployDisabled(Command cmd)
    {
       appName_.setOnNameIsInvalid(cmd);
+      onDeployDisabled_ = cmd;
    }
    
    public DeployStyle getStyle()
@@ -687,6 +691,11 @@ public class RSConnectDeploy extends Composite
                         else if (!StringUtil.isNullOrEmpty(info.getError()))
                         {
                            onAppsReceived_.onError(info.getError());
+                        }
+                        else
+                        {
+                           onAppsReceived_.onError("Error retrieving application " + 
+                             fromPrevious_.getAppId() + ".");
                         }
                      }
 
@@ -1213,7 +1222,11 @@ public class RSConnectDeploy extends Composite
          appProgressPanel_.setVisible(false);
          showAppInfo(null);
          if (!StringUtil.isNullOrEmpty(error))
+         {
             showAppError(error);
+            if (onDeployDisabled_ != null)
+               onDeployDisabled_.execute();
+         }
       }
 
       @Override
@@ -1279,6 +1292,7 @@ public class RSConnectDeploy extends Composite
    private boolean asStatic_;
    private int contentType_;
    private Command onDeployEnabled_;
+   private Command onDeployDisabled_;
    private RSConnectDeploymentRecord fromPrevious_;
    private boolean allChecked_ = true;
 

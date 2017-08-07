@@ -362,18 +362,22 @@ public class TextEditingTargetNotebook
       // listen for clicks on notebook progress UI
       registerProgressHandlers();
 
-      // propagate output preference from YAML into doc preference
-      String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
-      if (!StringUtil.isNullOrEmpty(frontMatter))
+      // propagate output preference from YAML into doc preference (only do this if doc is not dirty
+      // to make sure we aren't applying an uncommitted output pref)
+      if (!dirtyState_.getValue())
       {
-         String yamlMode = RmdEditorOptions.getString(frontMatter,
-               CHUNK_OUTPUT_TYPE, null);
-         if (!StringUtil.isNullOrEmpty(yamlMode))
+         String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
+         if (!StringUtil.isNullOrEmpty(frontMatter))
          {
-            String docMode = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
-            if (yamlMode != docMode)
+            String yamlMode = RmdEditorOptions.getString(frontMatter,
+                  CHUNK_OUTPUT_TYPE, null);
+            if (!StringUtil.isNullOrEmpty(yamlMode))
             {
-               docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, yamlMode);
+               String docMode = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
+               if (yamlMode != docMode)
+               {
+                  docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, yamlMode);
+               }
             }
          }
       }

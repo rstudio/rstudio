@@ -4034,7 +4034,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
-      codeExecution_.executeSelection(true);
+      if (fileType_.isScript())
+         onSendToTerminal();
+      else
+         codeExecution_.executeSelection(true);
    }
    
    @Handler
@@ -4055,6 +4058,12 @@ public class TextEditingTarget implements
       codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
    }
 
+   @Handler
+   void onSendToTerminal()
+   {
+      codeExecution_.sendSelectionToTerminal();
+   }
+ 
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {

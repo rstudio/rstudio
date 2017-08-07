@@ -202,7 +202,7 @@
      appList <- rsconnect:::getAppById(id, account, server, hostUrl)
    }, error = function(e) {
       # record the error message when a failure occurs (will be passed to the client for display)
-      errorMessage <- conditionMessage(e)
+      appError <<- conditionMessage(e)
    })
    
    list(error = .rs.scalar(appError), 

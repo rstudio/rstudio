@@ -994,6 +994,7 @@ public class Application implements ApplicationEventHandlers
       commands_.showTerminalInfo().remove();
       commands_.interruptTerminal().remove();
       commands_.sendTerminalToEditor().remove();
+      commands_.sendToTerminal().remove();
    }
 
    private final ApplicationView view_ ;

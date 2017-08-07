@@ -53,9 +53,10 @@ public class TerminalTabPresenter extends BusyPresenter
       void activateTerminal();
 
       /**
-       * Create a new terminal session.
+       * Create a new terminal session
+       * @param postCreateText text to insert in terminal after created, may be null
        */
-      void createTerminal();
+      void createTerminal(String postCreateText);
 
       /**
        * Terminate current terminal.
@@ -86,7 +87,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text, String caption);
+      void sendToTerminal(String text, boolean setFocus);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -195,13 +196,13 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onCreateTerminal(CreateTerminalEvent event)
    {
       onActivateTerminal();
-      view_.createTerminal();
+      view_.createTerminal(event.getPostCreateText());
    }
 
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText(), event.getId());
+      view_.sendToTerminal(event.getText(), event.getSetFocus());
    }
 
    @Override

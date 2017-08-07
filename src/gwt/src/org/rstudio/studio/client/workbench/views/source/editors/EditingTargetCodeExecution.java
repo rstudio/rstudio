@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
 
@@ -156,6 +157,30 @@ public class EditingTargetCodeExecution
    public void executeRange(Range range)
    {
       executeRange(range, null, false);
+   }
+   
+   public void sendSelectionToTerminal()
+   {
+      // send selection from this editor to the terminal
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // current line
+         int row = docDisplay_.getSelectionStart().getRow();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
+         code = code + "\n";
+      events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
+
+      if (noSelection)
+      {
+         moveCursorAfterExecution(selectionRange);
+      }
    }
    
    public void profileSelection()

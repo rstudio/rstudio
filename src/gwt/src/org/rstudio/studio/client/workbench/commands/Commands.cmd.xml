@@ -233,6 +233,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
+         <cmd refid="sendToTerminal"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
@@ -689,6 +690,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+         <shortcut refid="sendToTerminal" value="Cmd+Alt+Enter"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
@@ -2508,7 +2510,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Copy Terminal to _Editor"
         desc="Copy current terminal's buffer to a new editor buffer"/>
- 
+
+   <cmd id="sendToTerminal"
+        label="Send Selection to Terminal"
+        buttonLabel=""
+        menuLabel="Send to Terminal"
+        desc="Send the current line or selection to terminal"/>
+
    <cmd id="browseAddins"
         label="Browse Addins"
         menuLabel="_Browse Addins..."

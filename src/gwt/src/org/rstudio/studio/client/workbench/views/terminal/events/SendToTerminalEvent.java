@@ -27,10 +27,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    public interface Handler extends EventHandler
    {
       /**
-       * Output text to a terminal, specified by terminal name. If given
-       * name does not exist, create it. If name is NULL or empty, output
-       * to currently active terminal (if any). If no terminal is active, then
-       * open one.
+       * Output text to a terminal.
        * @param event contains string data typed by the user
        */
       void onSendToTerminal(SendToTerminalEvent event);
@@ -41,7 +38,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
       protected Data() {}
       
       public final native String getText() /*-{ return this["text"]; }-*/;
-      public final native String getId() /*-{ return this["id"]; }-*/;
+      public final native boolean getSetFocus() /*-{ return this["set_focus"]; }-*/;
    }
   
    public SendToTerminalEvent()
@@ -50,14 +47,13 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
 
    public SendToTerminalEvent(Data data)
    {
-      this(data.getText(), data.getId());
+      this(data.getText(), data.getSetFocus());
    }
    
-   public SendToTerminalEvent(String text, 
-                              String id)
+   public SendToTerminalEvent(String text, boolean setFocus)
    {
       text_ = text;
-      id_ = id;
+      setFocus_ = setFocus;
    }
 
    public String getText()
@@ -65,11 +61,11 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
       return text_;
    }
    
-   public String getId()
+   public boolean getSetFocus()
    {
-      return id_;
+      return setFocus_;
    }
-
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -83,7 +79,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    }
 
    private String text_;
-   private String id_;
+   private boolean setFocus_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

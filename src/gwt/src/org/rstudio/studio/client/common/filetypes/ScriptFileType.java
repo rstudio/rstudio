@@ -1,7 +1,7 @@
 /*
  * ScriptFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,10 +31,11 @@ public class ScriptFileType extends TextFileType
                          String ext, 
                          ImageResource icon,
                          String interpreter,
+                         boolean canExecuteCode,
                          boolean windowsCompatible)
    {
       super(id, label, language, ext, icon,
-            false, false, false, false, false, false, 
+            false, false, canExecuteCode, false, false, false, 
             false, false, false, false, false, false, false);
       interpreter_ = interpreter;
       windowsCompatible_ = windowsCompatible;

@@ -344,11 +344,20 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // on OSX you need to close all of the terminal handles to get
-      // bash to quit, however some other processes (like svn+ssh
-      // require the signal)
-#ifdef __APPLE__
-      pImpl_->closeAll(false, ERROR_LOCATION);
+#ifndef __APPLE__
+      // On Linux only do this if dealing with a Terminal-pane process.
+      // This is to reduce scope of this change for 1.1
+      // TODO: review post 1.1
+      if (options().smartTerminal)
+      {
+#endif
+         // you need to close all of the terminal handles to get
+         // bash to quit, however some other processes (like svn+ssh
+         // require the signal)
+         pImpl_->closeAll(false, ERROR_LOCATION);
+
+#ifndef __APPLE__
+      }
 #endif
 
       if (::killpg(::getpgid(pImpl_->pid), SIGTERM) == -1)
@@ -771,14 +780,21 @@ AsyncChildProcess::~AsyncChildProcess()
 
 Error AsyncChildProcess::terminate()
 {
-#ifdef __APPLE__
-   if (options().pseudoterminal)
+#ifndef __APPLE__
+   // On Linux only do this if dealing with a Terminal-pane process.
+   // This is to reduce scope of this change for 1.1
+   // TODO: review post 1.1
+   if (options().smartTerminal)
    {
-      pAsyncImpl_->finishedStderr_ = true;
-      pAsyncImpl_->finishedStdout_ = true;
+#endif
+      if (options().pseudoterminal)
+      {
+         pAsyncImpl_->finishedStderr_ = true;
+         pAsyncImpl_->finishedStdout_ = true;
+      }
+#ifndef __APPLE__
    }
 #endif
-
    return ChildProcess::terminate();
 }
 
