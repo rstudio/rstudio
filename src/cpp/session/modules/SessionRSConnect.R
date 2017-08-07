@@ -111,9 +111,9 @@
      servers <- servers[
          as.character(servers$name) %in% as.character(accounts$server),]
 
-     # extract names and URLs from the remaining servers
+     # extract names and URLs from the remaining servers (include the virtual server rpubs.com)
      urls <- as.character(servers[["url"]])
-     names <- as.character(servers[["name"]])
+     names <- c(as.character(servers[["name"]]), "rpubs.com")
 
      # compute whether the deployment is orphaned; note that this differs from
      # the definition of "orphaned" used by the rsconnect package in that it
