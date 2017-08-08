@@ -10,8 +10,8 @@ fi
 cd xterm.js
 git clean -dfx
 
-# xterm version 2.9 
-git checkout f5ba386 
+# xterm version 2.9.1
+git checkout a28d9f1
 
 XTERM_DIST_DIR=./dist
 XTERM_ADDONS_DIR=./dist/addons
