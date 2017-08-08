@@ -4035,7 +4035,7 @@ public class TextEditingTarget implements
    void onExecuteCode()
    {
       if (fileType_.isScript())
-         onSendToTerminal();
+         codeExecution_.sendSelectionToTerminal(true);
       else
          codeExecution_.executeSelection(true);
    }
@@ -4061,7 +4061,7 @@ public class TextEditingTarget implements
    @Handler
    void onSendToTerminal()
    {
-      codeExecution_.sendSelectionToTerminal();
+      codeExecution_.sendSelectionToTerminal(false);
    }
  
    @Override
