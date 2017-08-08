@@ -129,7 +129,9 @@ public class ChunkOutputWidget extends Composite
       ChunkDataWidget.injectPagedTableResources();
 
       clear_.addStyleName("rstudio-themes-inverts");
+      clear_.addStyleName("rstudio-classic-inverts");
       expand_.addStyleName("rstudio-themes-inverts");
+      expand_.addStyleName("rstudio-classic-inverts");
       
       if (chunkOutputSize_ == ChunkOutputSize.Default)
       {
