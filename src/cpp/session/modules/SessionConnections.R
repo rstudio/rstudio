@@ -483,9 +483,7 @@ options(connectionObserver = list(
 
 .rs.addFunction("embeddedViewer", function(url)
 {
-   .rs.enqueClientEvent("navigate_shiny_frame", list(
-      "url" = .rs.scalar(url)
-   ))
+   .Call("rs_embeddedViewer", url)
 })
 
 .rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package, name)

@@ -144,6 +144,7 @@ try {
         if (env.JOB_NAME == 'IDE/pro') {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
+          trigger_external_build('IDE/monitor')
         }
 
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"

@@ -44,6 +44,8 @@
 @external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
 @external rstudio-themes-dark-menus;
 
+@external rstudio-classic-inverts;
+
 @external rstudio-animating;
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
@@ -2346,6 +2348,7 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
+.editor_dark img.rstudio-classic-inverts,
 .rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts img,
 .rstudio-themes-flat .rstudio-themes-dark img.rstudio-themes-inverts {
    -webkit-filter: invert(100%);
