@@ -105,6 +105,8 @@ try {
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
         containers = limit_builds(containers)
+        // launch jenkins agents to support the container scale!
+        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size()
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
             def index = i
