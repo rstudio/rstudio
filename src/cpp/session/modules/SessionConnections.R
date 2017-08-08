@@ -272,23 +272,34 @@ options(connectionObserver = list(
    )
 })
 
+.rs.addFunction("connectionReadWindowsRegistry", function() {
+   registryOdbcPath <- "SOFTWARE\\ODBC\\ODBCINST.INI\\"
+
+   registryEntries <- lapply(names(readRegistry(registryOdbcPath)), function(driver) {
+     driverPath <- readRegistry(paste(registryOdbcPath, driver, sep = ""))$Driver
+     list(name = driver, attribute = "Driver", value = driverPath)
+   })
+
+   registryEntriesValue <- Filter(function(e) !is.null(e$value), registryEntries)
+
+   do.call(rbind, lapply(registryEntriesValue, function(e) data.frame(e, stringsAsFactors = FALSE)))
+})
+
 .rs.addFunction("connectionReadOdbc", function() {
    if (.rs.isPackageInstalled("odbc")) {
       drivers <- data.frame()
 
       tryCatch({
-         if (exists("list_drivers", envir = asNamespace("odbc"))) {
-            listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
+         drivers <- get("odbcListDrivers", envir = asNamespace("odbc"))()
+         
+         if (.Platform$OS.type == "windows") {
+            drivers <- rbind(drivers, .rs.connectionReadWindowsRegistry())
          }
-         else {
-            listDrivers <- get("odbcListDrivers", envir = asNamespace("odbc"))
-         }
-         drivers <- listDrivers()
       }, error = function(e) warning(e$message))
 
-      uniqueDrivers <- drivers[!is.na(drivers$attribute) & drivers$attribute == "Driver", ]
+      uniqueDriverNames <- unique(drivers$name)
 
-      lapply(uniqueDrivers$name, function(driver) {
+      lapply(uniqueDriverNames, function(driver) {
          tryCatch({
             currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
 
@@ -300,7 +311,7 @@ options(connectionObserver = list(
                paste(tolower(driver), ".R", sep = "")
             )
             
-            if (file.exists(snippetsFile)) {
+            if (identical(file.exists(snippetsFile), TRUE)) {
                snippet <- paste(readLines(snippetsFile), collapse = "\n")
             }
             else {
@@ -325,7 +336,7 @@ options(connectionObserver = list(
                snippet = .rs.scalar(snippet),
                help = .rs.scalar(NULL),
                iconData = .rs.scalar(iconData),
-               licensed = .rs.scalar(file.exists(licenseFile))
+               licensed = .rs.scalar(identical(file.exists(licenseFile), TRUE))
             )
          }, error = function(e) {
             warning(e$message)
