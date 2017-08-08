@@ -173,7 +173,7 @@ public class EditingTargetCodeExecution
                Position.create(row, docDisplay_.getLength(row)));
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
-      if (!code.isEmpty() && !(code.endsWith("\n") || code.endsWith("\r")))
+      if (!(code.endsWith("\n") || code.endsWith("\r")))
          code = code + "\n";
       events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
 
