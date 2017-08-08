@@ -164,19 +164,25 @@
   -ms-user-select: none;
   -webkit-user-select: none;
 }
-.terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor {
-  background-color: #CCC;
-  color: #1e1e1e;
-}
-.terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,
-.terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {
-  content: '';
-  position: absolute;
-  background-color: #CCC;
+.terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
+   background-color: #CCC;
+   color: #1e1e1e;
 }
 .terminal:not(.focus) .terminal-cursor {
   outline: 1px solid #CCC;
   outline-offset: -1px;
+  background-color: transparent;
+}
+.terminal.xterm-cursor-style-bar .terminal-cursor::before,
+.terminal.xterm-cursor-style-underline .terminal-cursor::before {
+   content: "";
+   display: block;
+   position: absolute;
+   background-color: #CCC;
+}
+.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
+.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
+   background-color: #CCC;
 }
 .terminal .xterm-selection div {
    position: absolute;

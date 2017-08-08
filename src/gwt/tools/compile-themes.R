@@ -216,36 +216,46 @@ create_terminal_cursor_rules <- function(isDark) {
    }
    
    sprintf(paste(sep = "\n",
-                 ".terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor {",
-                 "  background-color: %s;",
-                 "  color: %s;",
-                 "}",
-                 ".terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,",
-                 ".terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {",
-                 "  content: \'\';",
-                 "  position: absolute;",
-                 "  background-color: %s;",
+                 ".terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {",
+                 "   background-color: %s;",
+                 "   color: %s;",
                  "}",
                  ".terminal:not(.focus) .terminal-cursor {",
                  "  outline: 1px solid %s;",
                  "  outline-offset: -1px;",
+                 "  background-color: transparent;",
+                 "}",
+                 ".terminal.xterm-cursor-style-bar .terminal-cursor::before,",
+                 ".terminal.xterm-cursor-style-underline .terminal-cursor::before {",
+                 "   content: \"\";",
+                 "   display: block;",
+                 "   position: absolute;",
+                 "   background-color: %s;",
+                 "}",
+                 ".terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,",
+                 ".terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {",
+                 "   background-color: %s;",
                  "}",
                  ".terminal .xterm-selection div {",
                  "   position: absolute;",
                  "   background-color: %s;",
                  "}"),
            
-           # .terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor
+           # .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor
            termCursorBgColorFirst,
            termCursorBgColorSecond,
-           
-           # .terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,
-           # .terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before
-           termCursorBgColorFirst,
            
            # .terminal:not(.focus) .terminal-cursor
            termCursorBgColorFirst,
            
+           # .terminal.xterm-cursor-style-bar .terminal-cursor::before
+           # .terminal.xterm-cursor-style-underline .terminal-cursor::before
+           termCursorBgColorFirst,
+
+           # .terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
+           # .terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before
+           termCursorBgColorFirst,
+
            # .terminal .xterm-selection div
            termCursorBgColorFirst)
 }
