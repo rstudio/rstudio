@@ -159,7 +159,7 @@ public class EditingTargetCodeExecution
       executeRange(range, null, false);
    }
    
-   public void sendSelectionToTerminal()
+   public void sendSelectionToTerminal(boolean skipBlankLines)
    {
       // send selection from this editor to the terminal
       Range selectionRange = docDisplay_.getSelectionRange();
@@ -179,7 +179,7 @@ public class EditingTargetCodeExecution
 
       if (noSelection)
       {
-         moveCursorAfterExecution(selectionRange, false);
+         moveCursorAfterExecution(selectionRange, skipBlankLines);
       }
    }
    
