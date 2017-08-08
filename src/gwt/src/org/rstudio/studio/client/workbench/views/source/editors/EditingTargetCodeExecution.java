@@ -142,7 +142,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         moveCursorAfterExecution(selectionRange);
+         moveCursorAfterExecution(selectionRange, true);
       }
    }
    
@@ -179,7 +179,7 @@ public class EditingTargetCodeExecution
 
       if (noSelection)
       {
-         moveCursorAfterExecution(selectionRange);
+         moveCursorAfterExecution(selectionRange, false);
       }
    }
    
@@ -258,7 +258,7 @@ public class EditingTargetCodeExecution
    {
       Range range = getRangeFromBehavior(executionBehavior);
       executeRange(range, null, false);
-      moveCursorAfterExecution(range);
+      moveCursorAfterExecution(range, true);
    }
    
    private Range getRangeFromBehavior(String executionBehavior)
@@ -435,11 +435,11 @@ public class EditingTargetCodeExecution
       return true;
    }
    
-   private void moveCursorAfterExecution(Range selectionRange)
+   private void moveCursorAfterExecution(Range selectionRange, boolean skipBlankLines)
    {
       docDisplay_.setCursorPosition(Position.create(
             selectionRange.getEnd().getRow(), 0));
-      if (!docDisplay_.moveSelectionToNextLine(true))
+      if (!docDisplay_.moveSelectionToNextLine(skipBlankLines))
          docDisplay_.moveSelectionToBlankLine();
       docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }
