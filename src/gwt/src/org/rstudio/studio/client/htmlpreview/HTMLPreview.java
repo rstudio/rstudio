@@ -38,7 +38,7 @@ public class HTMLPreview
             // open the window 
             satelliteManager.openSatellite(HTMLPreviewApplication.NAME,     
                                             event.getParams(),
-                                            new Size(850,1100));   
+                                            new Size(1100,1200));   
             
          }  
       });
