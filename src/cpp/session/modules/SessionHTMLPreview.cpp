@@ -392,10 +392,12 @@ private:
       markCompleted();
       outputFile_ = outputFile;
 
+      bool enableSaveAs = isMarkdown() || viewerMode_;
+
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
-                                isMarkdown(),
+                                enableSaveAs,
                                 !isNotebook(),
                                 viewerMode_);
    }
