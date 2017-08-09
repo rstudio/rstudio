@@ -49,5 +49,9 @@ public class HTMLPreviewResult extends JavaScriptObject
    public final native boolean getPreviouslyPublished() /*-{
       return this.previously_published;
    }-*/;
+   
+   public final native boolean getViewerMode() /*-{
+      return this.viewer_mode;
+   }-*/;
 
 }

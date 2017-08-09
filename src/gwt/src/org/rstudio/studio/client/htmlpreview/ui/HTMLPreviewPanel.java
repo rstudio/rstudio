@@ -52,21 +52,29 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Inject
    public HTMLPreviewPanel(Commands commands)
    {
-      LayoutPanel panel = new LayoutPanel();
+      layoutPanel_ = new LayoutPanel();
       
-      Toolbar toolbar = createToolbar(commands);
-      int tbHeight = toolbar.getHeight();
-      panel.add(toolbar);
-      panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopHeight(toolbar, 0, Unit.PX, tbHeight, Unit.PX);
+      toolbar_ = createToolbar(commands);
+      tbHeight_ = toolbar_.getHeight();
+      layoutPanel_.add(toolbar_);
+      layoutPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
+      layoutPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, tbHeight_, Unit.PX);
       
       previewFrame_ = new AnchorableFrame();
       previewFrame_.setSize("100%", "100%");
-      panel.add(previewFrame_);
-      panel.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopBottom(previewFrame_, tbHeight+1, Unit.PX, 0, Unit.PX);
+      layoutPanel_.add(previewFrame_);
+      layoutPanel_.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
       
-      initWidget(panel);
+      setToolbarVisible(false);
+     
+      initWidget(layoutPanel_);
+   }
+   
+   private void setToolbarVisible(boolean visible)
+   {
+      toolbar_.setVisible(visible);
+      int frameTop = visible ? tbHeight_+1 : 0;
+      layoutPanel_.setWidgetTopBottom(previewFrame_, frameTop, Unit.PX, 0, Unit.PX);    
    }
    
    private Toolbar createToolbar(Commands commands)
@@ -235,6 +243,9 @@ public class HTMLPreviewPanel extends ResizeComposite
             FileSystemItem.createFile(result.getHtmlFile()), 
             ThemeStyles.INSTANCE.subtitle(), 
             300);
+      
+     
+      setToolbarVisible(!result.getViewerMode());
       fileLabel_.setText(shortFileName);
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
@@ -267,7 +278,10 @@ public class HTMLPreviewPanel extends ResizeComposite
       findTextBox_.focus();
    }
 
+   private final LayoutPanel layoutPanel_;
    private final AnchorableFrame previewFrame_;
+   private final Toolbar toolbar_;
+   private final int tbHeight_;
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;
