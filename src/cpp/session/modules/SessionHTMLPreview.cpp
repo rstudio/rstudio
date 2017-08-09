@@ -975,25 +975,41 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
-SEXP rs_showPageViewer(SEXP fileSEXP)
+SEXP rs_showPageViewer(SEXP fileSEXP, SEXP selfContainedSEXP)
 {
    try
    {
       // get full path to file
       FilePath filePath = module_context::resolveAliasedPath(r::sexp::safeAsString(fileSEXP));
 
-      // create temp file to write standalone html to (place it within a temp dir
-      // so the default download file name is pretty)
-      FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
-      Error error = viewerTempDir.ensureDirectory();
-      if (error)
-         throw r::exec::RErrorException(r::endUserErrorMessage(error));
-      FilePath viewerFilePath = viewerTempDir.childPath(filePath.filename());
+      // get self-contained argument
+      bool selfContained = r::sexp::asLogical(selfContainedSEXP);
 
-      // create base64 encoded version
-      error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
-      if (error)
-         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      // default viewerFilePath to original file path (change it if self-contained)
+      FilePath viewerFilePath = filePath;
+
+      if (selfContained)
+      {
+         // error if rmarkdown isn't available
+         if (!module_context::isPackageInstalled("rmarkdown"))
+         {
+            throw r::exec::RErrorException(
+               "The rmarkdown package is required for viewing self_contained HTML");
+         }
+
+         // create temp file to write standalone html to (place it within a temp dir
+         // so the default download file name is pretty)
+         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+         Error error = viewerTempDir.ensureDirectory();
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         viewerFilePath = viewerTempDir.childPath(filePath.filename());
+
+         // create base64 encoded version
+         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      }
 
       // emit show page viewer event
       json::Object data;
@@ -1069,7 +1085,7 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
-   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 1);
+   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 2);
 
    using boost::bind;
    using namespace module_context;
