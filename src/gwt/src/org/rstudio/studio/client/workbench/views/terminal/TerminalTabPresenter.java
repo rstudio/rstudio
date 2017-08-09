@@ -103,7 +103,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
       /**
-       * Remove a terminal from the list.
+       * Remove a terminal that was killed via rstudioapi::terminalKill.
        * @param handle terminal to remove
        * caption
        */
