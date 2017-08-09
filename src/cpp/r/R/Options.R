@@ -43,13 +43,12 @@ if (is.null(getOption("viewer"))) {
 
 # default page_viewer option if not already set
 if (is.null(getOption("page_viewer"))) {
-   options(page_viewer = function(file)
+   options(page_viewer = function(file, self_contained = FALSE)
    {
       if (!is.character(file) || (length(file) != 1))
          stop("file must be a single element character vector.", call. = FALSE)
 
-      # show the preview window
-      invisible(.Call("rs_showPageViewer", file))
+      invisible(.Call("rs_showPageViewer", file, isTRUE(self_contained)))
    })
 }
 
