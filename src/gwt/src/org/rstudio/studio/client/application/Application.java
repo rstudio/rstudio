@@ -725,6 +725,8 @@ public class Application implements ApplicationEventHandlers
             RStudioThemes.initializeThemes(uiPrefs_.get(),
                                            Document.get(),
                                            rootPanel_.getElement());
+
+            events_.fireEventToAllSatellites(new ThemeChangedEvent(theme));
          }
       };
 
