@@ -65,7 +65,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       layoutPanel_.add(previewFrame_);
       layoutPanel_.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
       
-      setToolbarVisible(false);
+      setToolbarVisible(true);
      
       initWidget(layoutPanel_);
    }
@@ -81,13 +81,14 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       
-      toolbar.addLeftWidget(new ToolbarLabel("Preview: "));
+      fileCaption_ = new ToolbarLabel("Preview: ");
+      toolbar.addLeftWidget(fileCaption_);
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
       
-      toolbar.addLeftSeparator();
+      fileLabelSeparator_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
       
       showLogButtonSeparator_ = toolbar.addLeftSeparator();
@@ -245,7 +246,11 @@ public class HTMLPreviewPanel extends ResizeComposite
             300);
       
      
-      setToolbarVisible(!result.getViewerMode());
+      boolean viewerMode = result.getViewerMode();
+      fileCaption_.setVisible(!viewerMode);
+      fileLabel_.setVisible(!viewerMode);
+      fileLabelSeparator_.setVisible(!viewerMode);
+      
       fileLabel_.setText(shortFileName);
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
@@ -282,7 +287,9 @@ public class HTMLPreviewPanel extends ResizeComposite
    private final AnchorableFrame previewFrame_;
    private final Toolbar toolbar_;
    private final int tbHeight_;
+   private ToolbarLabel fileCaption_;
    private ToolbarLabel fileLabel_;
+   private Widget fileLabelSeparator_;
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
