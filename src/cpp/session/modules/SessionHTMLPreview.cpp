@@ -977,16 +977,39 @@ void handlePreviewRequest(const http::Request& request,
 
 SEXP rs_showPageViewer(SEXP fileSEXP)
 {
-   json::Object data;
-   data["path"] = r::sexp::safeAsString(fileSEXP);
-   data["encoding"] = "UTF-8";
-   data["is_markdown"] = false;
-   data["requires_knit"] = false;
-   data["is_notebook"] = false;
-   data["viewer_mode"] = true;
+   try
+   {
+      // get full path to file
+      FilePath filePath = module_context::resolveAliasedPath(r::sexp::safeAsString(fileSEXP));
 
-   ClientEvent event(client_events::kShowPageViewerEvent, data);
-   module_context::enqueClientEvent(event);
+      // create temp file to write standalone html to (place it within a temp dir
+      // so the default download file name is pretty)
+      FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+      Error error = viewerTempDir.ensureDirectory();
+      if (error)
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      FilePath viewerFilePath = viewerTempDir.childPath(filePath.filename());
+
+      // create base64 encoded version
+      error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+      if (error)
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+
+      // emit show page viewer event
+      json::Object data;
+      data["path"] = viewerFilePath.absolutePath();
+      data["encoding"] = "UTF-8";
+      data["is_markdown"] = false;
+      data["requires_knit"] = false;
+      data["is_notebook"] = false;
+      data["viewer_mode"] = true;
+      ClientEvent event(client_events::kShowPageViewerEvent, data);
+      module_context::enqueClientEvent(event);
+   }
+   catch(r::exec::RErrorException e)
+   {
+      r::exec::error(e.message());
+   }
 
    return R_NilValue;
 }
