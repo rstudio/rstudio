@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
@@ -164,11 +165,11 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       });
       
-      refreshButtonSeparator_ = toolbar.addRightSeparator();
+      toolbar.addRightSeparator();
 
       ToolbarButton refreshButton = commands.refreshHtmlPreview().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      refreshButton_ = toolbar.addRightWidget(refreshButton);
+      toolbar.addRightWidget(refreshButton);
       
       
       return toolbar;
@@ -237,29 +238,40 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            HTMLPreviewResult result,
-                           boolean enableRefresh,
                            boolean enableShowLog)
    {
-      String shortFileName = StringUtil.shortPathName(
-            FileSystemItem.createFile(result.getHtmlFile()), 
-            ThemeStyles.INSTANCE.subtitle(), 
-            300);
+      Window.setTitle(result.getTitle());
       
+      if (result.getEnableFileLabel()) 
+      {
+         String shortFileName = StringUtil.shortPathName(
+                FileSystemItem.createFile(result.getHtmlFile()), 
+                ThemeStyles.INSTANCE.subtitle(), 
+                300);
+         fileLabel_.setText(shortFileName);
+      }
+      else
+      {
+         fileCaption_.setVisible(false);
+         fileLabel_.setVisible(false);
+         fileLabelSeparator_.setVisible(false);
+      }
      
-      boolean viewerMode = result.getViewerMode();
-      fileCaption_.setVisible(!viewerMode);
-      fileLabel_.setVisible(!viewerMode);
-      fileLabelSeparator_.setVisible(!viewerMode);
-      
-      fileLabel_.setText(shortFileName);
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
       saveHtmlPreviewAsSeparator_.setVisible(result.getEnableSaveAs());
       saveHtmlPreviewAs_.setVisible(result.getEnableSaveAs());
-      publishButton_.setHtmlPreview(result);
+      if (result.getEnablePublish()) 
+         publishButton_.setHtmlPreview(result);
+      else
+         publishButton_.setVisible(false);
       publishButtonSeparator_.setVisible(publishButton_.isVisible());
-      refreshButtonSeparator_.setVisible(enableRefresh);
-      refreshButton_.setVisible(enableRefresh);
+      previewFrame_.navigate(url);
+   }
+   
+   @Override
+   public void reload(String url)
+   {
       previewFrame_.navigate(url);
    }
    
@@ -297,7 +309,5 @@ public class HTMLPreviewPanel extends ResizeComposite
    private RSConnectPublishButton publishButton_;
    private Widget showLogButtonSeparator_;
    private ToolbarButton showLogButton_;
-   private Widget refreshButtonSeparator_;
-   private ToolbarButton refreshButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
