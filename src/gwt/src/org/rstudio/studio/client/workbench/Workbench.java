@@ -605,10 +605,11 @@ public class Workbench implements BusyHandler,
    @Override
    public void onShowPageViewer(ShowPageViewerEvent event) {
       
+      // show the page viewer window
       HTMLPreviewParams params = event.getParams();
-      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params));
-      server_.previewHTML(params, new SimpleRequestCallback<Boolean>());
+      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
       
+      // server will now take care of sending the html_preview_completed event
    }
    
    @Override
