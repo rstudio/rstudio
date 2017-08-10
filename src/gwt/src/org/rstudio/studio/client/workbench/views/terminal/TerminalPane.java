@@ -339,7 +339,40 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void removeTerminal(String handle)
    {
+      // rstudioapi::terminalKill has already killed the process and reaped it.
+
+      // If the terminal being removed was loaded in the UI, and is currently selected,
+      // figure out which terminal to switch to.
+      String newTerminalHandle = null;
+      boolean didCloseCurrent = false;
+      TerminalSession visibleTerminalWidget = getSelectedTerminal();
+      TerminalSession killedTerminalWidget = loadedTerminalWithHandle(handle);
+      if (visibleTerminalWidget != null && killedTerminalWidget != null && 
+            (visibleTerminalWidget == killedTerminalWidget))
+      {
+         didCloseCurrent = true;
+         newTerminalHandle = terminalToShowWhenClosing(handle);
+         if (newTerminalHandle != null)
+         {
+            events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null));
+         }
+      }
+
+      // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
+
+      // If terminal was loaded, remove its pane.
+      if (killedTerminalWidget != null)
+      {
+         terminalSessionsPanel_.remove(killedTerminalWidget);
+      }
+
+      if (newTerminalHandle == null && didCloseCurrent)
+      {
+         activeTerminalToolbarButton_.setNoActiveTerminal();
+         setTerminalTitle("");
+      }
+      updateTerminalToolbar();
    }
 
    @Override
