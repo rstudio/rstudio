@@ -14,4 +14,6 @@
 <module>
   <inherits name="com.google.gwt.dom.DOM"/>
   <public path="public-test"/>
+  <inherits name="com.google.gwt.junit.JUnit"/>
+  <set-property name="gwt.strictCspTestingEnabled" value="true"/>
 </module>

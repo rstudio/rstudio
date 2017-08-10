@@ -81,9 +81,11 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -100,7 +102,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * This class is responsible for hosting JUnit test case execution. There are
@@ -1129,6 +1139,13 @@ public class JUnitShell extends DevMode {
         }
       }
     }
+    BindingProperty strictCspTestingEnabledProperty =
+        module.getProperties().findBindingProp("gwt.strictCspTestingEnabled");
+
+    if (strictCspTestingEnabledProperty != null &&
+        "true".equals(strictCspTestingEnabledProperty.getConstrainedValue())) {
+      addCspFilter("/" + module.getName() + "/*");
+    }
     if (developmentMode) {
       // BACKWARDS COMPATIBILITY: many linkers currently fail in dev mode.
       try {
@@ -1149,6 +1166,32 @@ public class JUnitShell extends DevMode {
     } else {
       compileForWebMode(module, userAgents);
     }
+  }
+
+  /**
+   * Adds a filter to the server that automatically adds Content-Security-Policy HTTP headers to
+   * responses on the given path.
+   */
+  private void addCspFilter(String path) {
+    wac.addFilter(new FilterHolder(new Filter() {
+      @Override
+      public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+          throws IOException, ServletException {
+
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+        httpResponse.addHeader("Content-Security-Policy",
+            "script-src 'nonce-gwt-nonce' 'unsafe-inline' 'strict-dynamic' https: http: " +
+            "'unsafe-eval' 'report-sample'");
+
+        chain.doFilter(request, response);
+      }
+
+      @Override
+      public void init(FilterConfig arg0) throws ServletException { }
+
+      @Override
+      public void destroy() { }
+    }), path, EnumSet.of(DispatcherType.REQUEST));
   }
 
   private void checkArgs() {

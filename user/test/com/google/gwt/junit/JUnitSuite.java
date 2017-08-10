@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.junit.client.CspTest;
 import com.google.gwt.junit.client.DevModeOnCompiledScriptTest;
 import com.google.gwt.junit.client.GWTTestCaseAsyncTest;
 import com.google.gwt.junit.client.GWTTestCaseInheritanceTest;
@@ -67,6 +68,8 @@ public class JUnitSuite {
 
     suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(JUnitShellTest.class);
+
+    suite.addTestSuite(CspTest.class);
 
     return suite;
   }
