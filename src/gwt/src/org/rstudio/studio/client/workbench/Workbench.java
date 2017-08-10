@@ -603,8 +603,8 @@ public class Workbench implements BusyHandler,
    }
    
    @Override
-   public void onShowPageViewer(ShowPageViewerEvent event) {
-      
+   public void onShowPageViewer(ShowPageViewerEvent event) 
+   {   
       // show the page viewer window
       HTMLPreviewParams params = event.getParams();
       eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
