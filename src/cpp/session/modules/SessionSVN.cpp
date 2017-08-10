@@ -142,8 +142,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   core::system::setHomeToUserProfile(&childEnv);
 #endif
 
    // set the SVN_EDITOR if it is available

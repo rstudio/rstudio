@@ -783,8 +783,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
    core::system::environment(&childEnv);
 
    // set HOME to USERPROFILE
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   core::system::setHomeToUserProfile(&childEnv);
 
    // add msys_ssh to path
    core::system::addToPath(&childEnv,
