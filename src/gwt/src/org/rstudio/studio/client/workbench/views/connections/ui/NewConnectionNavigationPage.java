@@ -52,7 +52,7 @@ public class NewConnectionNavigationPage
    {
       super(title, 
             subTitle,
-            "Create Connection",
+            "Connect to Existing Data Sources",
             icon,
             null, 
             createPages(context),
