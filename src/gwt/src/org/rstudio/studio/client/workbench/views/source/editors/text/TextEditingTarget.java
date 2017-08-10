@@ -5186,6 +5186,7 @@ public class TextEditingTarget implements
                                             docUpdateSentinel_.getEncoding(),
                                             fileType_.isMarkdown(),
                                             fileType_.requiresKnit(),
+                                            false,
                                             false);
          }
       });
@@ -5366,7 +5367,8 @@ public class TextEditingTarget implements
                                                docUpdateSentinel_.getEncoding(),
                                                true,
                                                true,
-                                               true);
+                                               true,
+                                               false);
             }
          });
       }
