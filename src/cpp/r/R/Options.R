@@ -43,12 +43,12 @@ if (is.null(getOption("viewer"))) {
 
 # default page_viewer option if not already set
 if (is.null(getOption("page_viewer"))) {
-   options(page_viewer = function(url, self_contained = FALSE)
+   options(page_viewer = function(url)
    {
       if (!is.character(url) || (length(url) != 1))
          stop("url must be a single element character vector.", call. = FALSE)
 
-      invisible(.Call("rs_showPageViewer", url, isTRUE(self_contained)))
+      invisible(.Call("rs_showPageViewer", url))
    })
 }
 
