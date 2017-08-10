@@ -67,9 +67,9 @@ namespace {
 void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
                                const FilePath& sourceFile,
                                const FilePath& htmlFile,
+                               bool enableFileLabel,
                                bool enableSaveAs,
-                               bool enableRefresh,
-                               bool viewerMode)
+                               bool enableReexecute)
 {
    using namespace module_context;
    json::Object resultJson;
@@ -83,10 +83,10 @@ void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
    else
       resultJson["html_file"] = json::Value();
    resultJson["preview_url"] = previewUrl;
+   resultJson["enable_file_label"] = enableFileLabel;
    resultJson["enable_saveas"] = enableSaveAs;
-   resultJson["enable_refresh"] = enableRefresh;
+   resultJson["enable_reexecute"] = enableReexecute;
    resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
-   resultJson["viewer_mode"] = viewerMode;
    ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
    module_context::enqueClientEvent(event);
 }
@@ -420,9 +420,9 @@ private:
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
+                                true,
                                 isMarkdown(),
-                                !isNotebook(),
-                                false);
+                                !isNotebook());
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -987,7 +987,7 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
-SEXP rs_showPageViewer(SEXP fileSEXP, SEXP selfContainedSEXP)
+SEXP rs_showPageViewer(SEXP urlSEXP, SEXP selfContainedSEXP)
 {
    try
    {
@@ -995,36 +995,65 @@ SEXP rs_showPageViewer(SEXP fileSEXP, SEXP selfContainedSEXP)
       if (isPreviewRunning())
          s_pCurrentPreview_->terminate();
 
-      // get full path to file
-      FilePath filePath = module_context::resolveAliasedPath(r::sexp::safeAsString(fileSEXP));
+      // get url
+      std::string url = r::sexp::safeAsString(urlSEXP);
 
-      // get self-contained argument
-      bool selfContained = r::sexp::asLogical(selfContainedSEXP);
+      // paths we will forward via event
+      FilePath filePath, viewerFilePath;
 
-      // default viewerFilePath to original file path (change it if self-contained)
-      FilePath viewerFilePath = filePath;
-
-      if (selfContained)
+      // check for url
+      if (boost::algorithm::starts_with(url, "http"))
       {
-         // error if rmarkdown isn't available
-         if (!module_context::isPackageInstalled("rmarkdown"))
+         // verify local url only
+         if (!boost::algorithm::starts_with(url, "http://localhost") &&
+             !boost::algorithm::starts_with(url, "http://127.0.0.1"))
          {
             throw r::exec::RErrorException(
-               "The rmarkdown package is required for viewing self_contained HTML");
+              "Only localhost URLs are allowed in the page viewer");
          }
 
-         // create temp file to write standalone html to (place it within a temp dir
-         // so the default download file name is pretty)
-         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
-         Error error = viewerTempDir.ensureDirectory();
-         if (error)
-            throw r::exec::RErrorException(r::endUserErrorMessage(error));
-         viewerFilePath = viewerTempDir.childPath(filePath.filename());
+         // port mapping for RStudio Server
+         url = module_context::mapUrlPorts(url);
 
-         // create base64 encoded version
-         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
-         if (error)
-            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      }
+      // otherwise it's a file
+      else
+      {
+         // get full path to file
+         filePath = module_context::resolveAliasedPath(url);
+
+         // get self-contained argument
+         bool selfContained = r::sexp::asLogical(selfContainedSEXP);
+
+         // default viewerFilePath to original file path (change it if self-contained)
+         viewerFilePath = filePath;
+
+         if (selfContained)
+         {
+            // error if rmarkdown isn't available
+            if (!module_context::isPackageInstalled("rmarkdown"))
+            {
+               throw r::exec::RErrorException(
+                  "The rmarkdown package is required for viewing self_contained HTML");
+            }
+
+            // create temp file to write standalone html to (place it within a temp dir
+            // so the default download file name is pretty)
+            FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+            Error error = viewerTempDir.ensureDirectory();
+            if (error)
+               throw r::exec::RErrorException(r::endUserErrorMessage(error));
+            viewerFilePath = viewerTempDir.childPath(filePath.filename());
+
+            // create base64 encoded version
+            error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+            if (error)
+               throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         }
+
+         // set url to file previewer
+         url = kHTMLPreview "/";
+
       }
 
       // emit show page viewer event
@@ -1048,12 +1077,12 @@ SEXP rs_showPageViewer(SEXP fileSEXP, SEXP selfContainedSEXP)
 
       // emit html preview completed event
       enqueHTMLPreviewSucceeded(
-         kHTMLPreview "/",    // preview url
+         url,                 // preview url
          filePath,            // original source file
          viewerFilePath,      // file to show as preview
-         true,                // enable save as
-         true,                // enable refresh
-         true                 // viewer mode
+         false,               // file label
+         !filePath.empty(),   // save as
+         false                // re-execute
        );
    }
    catch(r::exec::RErrorException e)
