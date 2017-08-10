@@ -43,12 +43,15 @@ if (is.null(getOption("viewer"))) {
 
 # default page_viewer option if not already set
 if (is.null(getOption("page_viewer"))) {
-   options(page_viewer = function(file, self_contained = FALSE)
+   options(page_viewer = function(url, title = "RStudio Viewer")
    {
-      if (!is.character(file) || (length(file) != 1))
-         stop("file must be a single element character vector.", call. = FALSE)
-
-      invisible(.Call("rs_showPageViewer", file, isTRUE(self_contained)))
+      if (!is.character(url) || (length(url) != 1))
+         stop("url must be a single element character vector.", call. = FALSE)
+      
+      if (!is.character(title) || (length(title) != 1))
+         stop("title must be a single element character vector.", call. = FALSE)
+      
+      invisible(.Call("rs_showPageViewer", url, title))
    })
 }
 

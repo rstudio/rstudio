@@ -106,7 +106,7 @@ try {
         ]
         containers = limit_builds(containers)
         // launch jenkins agents to support the container scale!
-        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size()
+        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
             def index = i
