@@ -471,11 +471,21 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             keyBuffer_.clear();
 
-            if (XTermWidget.isXTerm(Element.as(event.getEventTarget())))
+            XTermWidget xterm = XTermWidget.tryGetXTerm(Element.as(event.getEventTarget()));
+            if (xterm != null)
             {
                if (binding.getId() == "consoleClear")
                {
-                  // special case; we expect users will try to use Ctrl+L to
+                  if (xterm.xtermAltBufferActive())
+                  {
+                     // If the terminal is running a full-screen program, pass the 
+                     // keystroke through, instead. Otherwise we're potentially
+                     // clearing the main buffer even though user is seeing the alt-
+                     // buffer.
+                     return false;
+                  }
+
+                  // Otherwise, we expect users will try to use Ctrl+L to
                   // clear the terminal, and don't want that to actually
                   // clear the currently hidden console instead
                   event.stopPropagation();
