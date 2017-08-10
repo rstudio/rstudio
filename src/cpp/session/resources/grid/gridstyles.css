@@ -140,6 +140,16 @@ table.dataTable {
     font-weight: normal;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter {
+    border-color: rgb(45,60,75);
+    background: rgb(108,121,131);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .textFilterBox {
+    background: rgb(108,121,131);
+    color: #FFF;
+}
+
 .unfiltered {
     font-style: italic;
     color: #abacad;
@@ -156,6 +166,11 @@ table.dataTable {
     -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
     -moz-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
     box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+}
+
+.rstudio-themes-dark-menus .filterPopup {
+    background: #2f3941;
+    border: solid 1px #4e5c68;
 }
 
 .numericFilterPopup {
@@ -187,6 +202,10 @@ table.dataTable {
 
 .choiceListItem:hover {
     background-color: #bce0fc;
+}
+
+.rstudio-themes-dark-menus .choiceListItem:hover {
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 .filterValue {
