@@ -26,6 +26,10 @@ public class HTMLPreviewResult extends JavaScriptObject
       return this.succeeded;
    }-*/;
    
+   public final native String getTitle() /*-{
+      return this.title;
+   }-*/;
+   
    public final native String getPreviewURL() /*-{
       return this.preview_url;
    }-*/;

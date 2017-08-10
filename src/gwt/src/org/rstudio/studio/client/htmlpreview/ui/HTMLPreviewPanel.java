@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
@@ -239,6 +240,8 @@ public class HTMLPreviewPanel extends ResizeComposite
                            HTMLPreviewResult result,
                            boolean enableShowLog)
    {
+      Window.setTitle(result.getTitle());
+      
       if (result.getEnableFileLabel()) 
       {
          String shortFileName = StringUtil.shortPathName(

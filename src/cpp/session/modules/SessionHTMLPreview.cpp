@@ -64,7 +64,8 @@ namespace html_preview {
 
 namespace {
 
-void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
+void enqueHTMLPreviewSucceeded(const std::string& title,
+                               const std::string& previewUrl,
                                const FilePath& sourceFile,
                                const FilePath& htmlFile,
                                bool enableFileLabel,
@@ -74,6 +75,8 @@ void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
    using namespace module_context;
    json::Object resultJson;
    resultJson["succeeded"] = true;
+   resultJson["title"] = title;
+   resultJson["preview_url"] = previewUrl;
    if (!sourceFile.empty())
       resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
    else
@@ -82,7 +85,6 @@ void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
       resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
    else
       resultJson["html_file"] = json::Value();
-   resultJson["preview_url"] = previewUrl;
    resultJson["enable_file_label"] = enableFileLabel;
    resultJson["enable_saveas"] = enableSaveAs;
    resultJson["enable_reexecute"] = enableReexecute;
@@ -417,7 +419,8 @@ private:
       markCompleted();
       outputFile_ = outputFile;
 
-      enqueHTMLPreviewSucceeded(kHTMLPreview "/",
+      enqueHTMLPreviewSucceeded("RStudio: Preview HTML",
+                                kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
                                 true,
@@ -987,7 +990,7 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
-SEXP rs_showPageViewer(SEXP urlSEXP)
+SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
 {
    try
    {
@@ -995,8 +998,9 @@ SEXP rs_showPageViewer(SEXP urlSEXP)
       if (isPreviewRunning())
          s_pCurrentPreview_->terminate();
 
-      // get url
+      // get url and title
       std::string url = r::sexp::safeAsString(urlSEXP);
+      std::string title = r::sexp::safeAsString(titleSEXP);
 
       // paths we will forward via event
       FilePath filePath, viewerFilePath;
@@ -1060,6 +1064,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP)
 
       // emit html preview completed event
       enqueHTMLPreviewSucceeded(
+         title,               // title
          url,                 // preview url
          filePath,            // original source file
          viewerFilePath,      // file to show as preview
@@ -1131,7 +1136,7 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
-   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 1);
+   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 2);
 
    using boost::bind;
    using namespace module_context;
