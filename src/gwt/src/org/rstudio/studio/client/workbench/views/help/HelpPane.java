@@ -107,12 +107,12 @@ public class HelpPane extends WorkbenchPane
    {
       frame_ = new RStudioThemedFrame(
          null,
+         ".rstudio-themes-flat.editor_dark div#TOC,\n" +
          ".rstudio-themes-flat.editor_dark h1,\n" +
          ".rstudio-themes-flat.editor_dark h2,\n" +
          ".rstudio-themes-flat.editor_dark h3,\n" +
          ".rstudio-themes-flat.editor_dark h4,\n" +
-         ".rstudio-themes-flat.editor_dark table,\n" +
-         ".rstudio-themes-flat.editor_dark pre {\n" +
+         ".rstudio-themes-flat.editor_dark table {\n" +
          "  background: none !important;\n" +
          "  color: white !important;\n" +
          "}\n",
