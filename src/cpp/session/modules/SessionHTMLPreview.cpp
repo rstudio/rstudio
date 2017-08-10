@@ -46,6 +46,7 @@
 #include <r/RJson.hpp>
 #include <r/RUtil.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -70,16 +71,18 @@ public:
                                                 const std::string& encoding,
                                                 bool isMarkdown,
                                                 bool isNotebook,
-                                                bool knit)
+                                                bool knit,
+                                                bool viewerMode)
    {
-      boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile));
+      boost::shared_ptr<HTMLPreview> pPreview(new HTMLPreview(targetFile, viewerMode));
       pPreview->start(encoding, isMarkdown, isNotebook, knit);
       return pPreview;
    }
 
 private:
-   HTMLPreview(const FilePath& targetFile)
+   HTMLPreview(const FilePath& targetFile, bool viewerMode)
       : targetFile_(targetFile),
+        viewerMode_(viewerMode),
         isMarkdown_(false),
         isInternalMarkdown_(false),
         isNotebook_(false),
@@ -389,11 +392,14 @@ private:
       markCompleted();
       outputFile_ = outputFile;
 
+      bool enableSaveAs = isMarkdown() || viewerMode_;
+
       enqueHTMLPreviewSucceeded(kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
-                                isMarkdown(),
-                                !isNotebook());
+                                enableSaveAs,
+                                !isNotebook(),
+                                viewerMode_);
    }
 
    static void enqueHTMLPreviewStarted(const FilePath& targetFile)
@@ -422,7 +428,8 @@ private:
                                          const FilePath& sourceFile,
                                          const FilePath& htmlFile,
                                          bool enableSaveAs,
-                                         bool enableRefresh)
+                                         bool enableRefresh,
+                                         bool viewerMode)
    {
       using namespace module_context;
       json::Object resultJson;
@@ -433,6 +440,7 @@ private:
       resultJson["enable_saveas"] = enableSaveAs;
       resultJson["enable_refresh"] = enableRefresh;
       resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
+      resultJson["viewer_mode"] = viewerMode;
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -444,6 +452,7 @@ private:
 
 private:
    FilePath targetFile_;
+   bool viewerMode_;
    FilePath outputPathTempFile_;
    bool isMarkdown_;
    bool isInternalMarkdown_;
@@ -480,13 +489,14 @@ Error previewHTML(const json::JsonRpcRequest& request,
 {
    // read params
    std::string file, encoding;
-   bool isMarkdown, knit, isNotebook;
+   bool isMarkdown, knit, isNotebook, viewerMode;
    Error error = json::readObjectParam(request.params, 0,
                                        "path", &file,
                                        "encoding", &encoding,
                                        "is_markdown", &isMarkdown,
                                        "requires_knit", &knit,
-                                       "is_notebook", &isNotebook);
+                                       "is_notebook", &isNotebook,
+                                       "viewer_mode", &viewerMode);
 
    if (error)
       return error;
@@ -507,7 +517,8 @@ Error previewHTML(const json::JsonRpcRequest& request,
                                                encoding,
                                                isMarkdown,
                                                isNotebook,
-                                               knit);
+                                               knit,
+                                               viewerMode);
       pResponse->setResult(true);
    }
 
@@ -964,6 +975,62 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
+SEXP rs_showPageViewer(SEXP fileSEXP, SEXP selfContainedSEXP)
+{
+   try
+   {
+      // get full path to file
+      FilePath filePath = module_context::resolveAliasedPath(r::sexp::safeAsString(fileSEXP));
+
+      // get self-contained argument
+      bool selfContained = r::sexp::asLogical(selfContainedSEXP);
+
+      // default viewerFilePath to original file path (change it if self-contained)
+      FilePath viewerFilePath = filePath;
+
+      if (selfContained)
+      {
+         // error if rmarkdown isn't available
+         if (!module_context::isPackageInstalled("rmarkdown"))
+         {
+            throw r::exec::RErrorException(
+               "The rmarkdown package is required for viewing self_contained HTML");
+         }
+
+         // create temp file to write standalone html to (place it within a temp dir
+         // so the default download file name is pretty)
+         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+         Error error = viewerTempDir.ensureDirectory();
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         viewerFilePath = viewerTempDir.childPath(filePath.filename());
+
+         // create base64 encoded version
+         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      }
+
+      // emit show page viewer event
+      json::Object data;
+      data["path"] = viewerFilePath.absolutePath();
+      data["encoding"] = "UTF-8";
+      data["is_markdown"] = false;
+      data["requires_knit"] = false;
+      data["is_notebook"] = false;
+      data["viewer_mode"] = true;
+      ClientEvent event(client_events::kShowPageViewerEvent, data);
+      module_context::enqueClientEvent(event);
+   }
+   catch(r::exec::RErrorException e)
+   {
+      r::exec::error(e.message());
+   }
+
+   return R_NilValue;
+}
+
+
    
 } // anonymous namespace
    
@@ -1018,6 +1085,8 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
+   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 2);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

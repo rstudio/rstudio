@@ -170,6 +170,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTerminalCwd;
       else if (name == "remove_terminal")
          type = session::client_events::kRemoveTerminal;
+      else if (name == "show_page_viewer")
+         type = session::client_events::kShowPageViewerEvent;
 
       if (type != -1)
       {
