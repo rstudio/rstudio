@@ -70,9 +70,8 @@ public class HTMLPreviewPresenter implements IsWidget
       
       void showPreview(String url,
                        HTMLPreviewResult result,
+                       boolean enableRefresh,
                        boolean enableShowLog);
-      
-      void reload(String url);
       
       void print();
       
@@ -185,12 +184,10 @@ public class HTMLPreviewPresenter implements IsWidget
             {
                lastSuccessfulPreview_ = result;
                view_.closeProgress();
-               String url = result.getPreviewURL();
-               if (!url.startsWith("http"))
-                  url = server_.getApplicationURL(url);
                view_.showPreview(
-                  url,
+                  server_.getApplicationURL(result.getPreviewURL()),
                   result,
+                  result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
             }
             else
@@ -238,10 +235,7 @@ public class HTMLPreviewPresenter implements IsWidget
       if (lastSuccessfulPreview_ != null)
       {
          String htmlFile = lastSuccessfulPreview_.getHtmlFile();
-         if (htmlFile != null)
-            globalDisplay_.showHtmlFile(htmlFile);
-         else
-            globalDisplay_.openWindow(lastSuccessfulPreview_.getPreviewURL());
+         globalDisplay_.showHtmlFile(htmlFile);
       }
    }
    
@@ -309,15 +303,8 @@ public class HTMLPreviewPresenter implements IsWidget
    @Handler
    public void onRefreshHtmlPreview()
    {
-      if (lastSuccessfulPreview_.getEnableReexecute())
-      {
-         server_.previewHTML(lastPreviewParams_, 
-                             new SimpleRequestCallback<Boolean>());
-      }
-      else
-      {
-         view_.reload(lastSuccessfulPreview_.getPreviewURL());
-      }
+      server_.previewHTML(lastPreviewParams_, 
+                          new SimpleRequestCallback<Boolean>());
    }
    
    @Handler

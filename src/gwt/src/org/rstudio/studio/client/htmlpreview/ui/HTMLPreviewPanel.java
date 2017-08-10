@@ -164,11 +164,11 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       });
       
-      toolbar.addRightSeparator();
+      refreshButtonSeparator_ = toolbar.addRightSeparator();
 
       ToolbarButton refreshButton = commands.refreshHtmlPreview().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      toolbar.addRightWidget(refreshButton);
+      refreshButton_ = toolbar.addRightWidget(refreshButton);
       
       
       return toolbar;
@@ -237,38 +237,29 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            HTMLPreviewResult result,
+                           boolean enableRefresh,
                            boolean enableShowLog)
    {
-      if (result.getEnableFileLabel()) 
-      {
-         String shortFileName = StringUtil.shortPathName(
-                FileSystemItem.createFile(result.getHtmlFile()), 
-                ThemeStyles.INSTANCE.subtitle(), 
-                300);
-         fileLabel_.setText(shortFileName);
-      }
-      else
-      {
-         fileCaption_.setVisible(false);
-         fileLabel_.setVisible(false);
-         fileLabelSeparator_.setVisible(false);
-      }
+      String shortFileName = StringUtil.shortPathName(
+            FileSystemItem.createFile(result.getHtmlFile()), 
+            ThemeStyles.INSTANCE.subtitle(), 
+            300);
+      
      
+      boolean viewerMode = result.getViewerMode();
+      fileCaption_.setVisible(!viewerMode);
+      fileLabel_.setVisible(!viewerMode);
+      fileLabelSeparator_.setVisible(!viewerMode);
+      
+      fileLabel_.setText(shortFileName);
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
       saveHtmlPreviewAsSeparator_.setVisible(result.getEnableSaveAs());
       saveHtmlPreviewAs_.setVisible(result.getEnableSaveAs());
-      if (result.getEnablePublish()) 
-         publishButton_.setHtmlPreview(result);
-      else
-         publishButton_.setVisible(false);
+      publishButton_.setHtmlPreview(result);
       publishButtonSeparator_.setVisible(publishButton_.isVisible());
-      previewFrame_.navigate(url);
-   }
-   
-   @Override
-   public void reload(String url)
-   {
+      refreshButtonSeparator_.setVisible(enableRefresh);
+      refreshButton_.setVisible(enableRefresh);
       previewFrame_.navigate(url);
    }
    
@@ -306,5 +297,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private RSConnectPublishButton publishButton_;
    private Widget showLogButtonSeparator_;
    private ToolbarButton showLogButton_;
+   private Widget refreshButtonSeparator_;
+   private ToolbarButton refreshButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }
