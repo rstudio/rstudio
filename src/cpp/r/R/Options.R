@@ -41,6 +41,17 @@ if (is.null(getOption("viewer"))) {
    })
 }
 
+# default page_viewer option if not already set
+if (is.null(getOption("page_viewer"))) {
+   options(page_viewer = function(file, self_contained = FALSE)
+   {
+      if (!is.character(file) || (length(file) != 1))
+         stop("file must be a single element character vector.", call. = FALSE)
+
+      invisible(.Call("rs_showPageViewer", file, isTRUE(self_contained)))
+   })
+}
+
 # default shinygadgets.showdialog if not already set
 if (is.null(getOption("shinygadgets.showdialog"))) {
    options(shinygadgets.showdialog = function(caption,
