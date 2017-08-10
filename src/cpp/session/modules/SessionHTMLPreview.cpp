@@ -1009,7 +1009,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
       if (boost::algorithm::starts_with(url, "http"))
       {
          // verify local url only
-         boost::regex re("^http[s]?://(?:localhost|127\\.0\\.0\\.1):([0-9]+).*$");
+         boost::regex re("^http[s]?://(?:localhost|127\\.0\\.0\\.1).*$");
          boost::smatch match;
          if (!regex_utils::search(url, match, re))
          {
