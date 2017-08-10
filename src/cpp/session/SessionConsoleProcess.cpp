@@ -67,6 +67,8 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    {
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
+#else
+   core::system::setHomeToUserProfile(&shellEnv);
 #endif
 
    // ammend shell paths as appropriate

@@ -323,6 +323,10 @@ Error createTerminalExecuteConsoleProc(
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    core::system::getModifiedEnv(env, &childEnv);
+
+#ifdef _WIN32
+   core::system::setHomeToUserProfile(&childEnv);
+#endif
    options.environment = childEnv;
 
    options.smartTerminal = true;
