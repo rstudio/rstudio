@@ -24,6 +24,10 @@
    color: #FFF;
 }
 
+.rstudio-themes-flat.rstudio-themes-dark-menus .helpBodyText span {
+   color: #bfbfbf !important;
+}
+
 .snippetText {
    font-family: fixedWidthFont;
    white-space: pre-wrap;
