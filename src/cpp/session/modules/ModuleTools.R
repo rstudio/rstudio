@@ -326,7 +326,7 @@
    
    # build the conversion command
    pandoc <- file.path(Sys.getenv("RSTUDIO_PANDOC"), "pandoc")
-   command <- paste(c(pandoc, args), collapse = " ")
+   command <- paste(shQuote(c(pandoc, args)), collapse = " ")
    
    # setwd temporarily
    wd <- getwd()
