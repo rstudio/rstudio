@@ -89,6 +89,7 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
 
       if (currentTime - lastPrivateCommand_ > privateCommandTimeout_)
       {
+         LOG_WARNING_MESSAGE("PrivateCommand timeout");
          terminateCapture();
          ops.ptyInterrupt();
          timeout_ = true;

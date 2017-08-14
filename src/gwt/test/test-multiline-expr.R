@@ -84,5 +84,10 @@ dt[ , sequence := seq_len( nrow( dt ) )
        
        ][ , uniform := runif( nrow( dt ) ) ]
 
+# 13: multi-line strings
+mlstring <- "first
+second
+third"
+
 # cursor should end here after executing all lines
 EOF

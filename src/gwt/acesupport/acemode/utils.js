@@ -106,17 +106,34 @@ var Unicode = require("ace/unicode").packages;
 
       var rules = HighlightRules.$rules;
 
+      // some highlight modes (notably, YAML) can have rules
+      // that manipulate a stack of saved states -- in the
+      // context of YAML, this is done to handle e.g. multiline
+      // strings (tracking the indent used for those strings).
+      // we need to clear that stack whenever we switch from one
+      // mode to another.
+      var onMatch = function(value, state, stack, line) {
+         stack.splice(0);
+         return this.token;
+      }
+
+      // define the highlight rules that allow us to transition
+      // into the embedded mode
       for (var i = 0; i < startStates.length; i++) {
          rules[startStates[i]].unshift({
             token: "support.function.codebegin",
             regex: reStart,
+            onMatch: onMatch,
             next: prefix + "-start"
          });
       }
 
+      // call into Ace to embed rules with given 'prefix', and
+      // define the rule that's used to return to parent mode
       HighlightRules.embedRules(EmbedRules, prefix + "-", [{
          token: "support.function.codeend",
          regex: reEnd,
+         onMatch: onMatch,
          next: "start"
       }]);
       

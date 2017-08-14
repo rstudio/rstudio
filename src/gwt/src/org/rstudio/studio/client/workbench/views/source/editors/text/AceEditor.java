@@ -3279,6 +3279,10 @@ public class AceEditor implements DocDisplay,
       // discover start of current statement
       while (startRow >= startRowLimit)
       {
+         // if we've hit the start of the document, bail
+         if (startRow <= 0)
+            break;
+         
          // if the row starts with an open bracket, expand to its match
          if (rowStartsWithClosingBracket(startRow))
          {
@@ -3289,12 +3293,23 @@ public class AceEditor implements DocDisplay,
                continue;
             }
          }
-         else if (startRow >= 0 && rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         
+         // keep going if the line is empty or previous ends w/binary op
+         if (rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
          {
             startRow--;
             continue;
          }
          
+         // keep going if we're in a multiline string
+         String state = getSession().getState(startRow - 1);
+         if (state.equals("qstring") || state.equals("qqstring"))
+         {
+            startRow--;
+            continue;
+         }
+         
+         // bail out of the loop -- we've found the start of the statement
          break;
       }
       
@@ -3337,6 +3352,14 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
+         {
+            endRow++;
+            continue;
+         }
+         
+         // continue search if we're in a multi-line string
+         String state = getSession().getState(endRow);
+         if (state.equals("qstring") || state.equals("qqstring"))
          {
             endRow++;
             continue;
