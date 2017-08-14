@@ -267,6 +267,9 @@ create_terminal_rule <- function(background, foreground) {
                  "  color: %s;",
                  "  font-feature-settings: \"liga\" 0;",
                  "  position: relative;",
+                 "  user-select: none;",
+                 "  -ms-user-select: none;",
+                 "  -webkit-user-select: none;",
                  "}"),
            background, foreground)
 }
@@ -274,7 +277,6 @@ create_terminal_rule <- function(background, foreground) {
 create_terminal_viewport_rule <- function(background) {
    sprintf(paste(sep = "\n",
                  ".terminal .xterm-viewport {",
-                 "  /* On OS X this is required in order for the scroll bar to appear fully opaque */",
                  "  background-color: %s;",
                  "  overflow-y: scroll;",
                  "}"),

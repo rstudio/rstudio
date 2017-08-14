@@ -23,12 +23,7 @@ def resolve_deps(type, arch, variant) {
         sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
         break
       case "RPM":
-        if (variant == 'SLES') {
-          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-zypper --exclude-qt-sdk && cd ../.."
-        } else {
-          sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
-        }
-        break
+        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
   }
 }
 
@@ -99,9 +94,10 @@ try {
           [os: 'precise',  arch: 'i386',   flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'i386',   flavor: 'server',  variant: ''],
+          [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
+          [os: 'centos6',  arch: 'i386',   flavor: 'server',  variant: 'SLES'],
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
-          [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
           [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
@@ -109,6 +105,8 @@ try {
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
         containers = limit_builds(containers)
+        // launch jenkins agents to support the container scale!
+        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
             def index = i
@@ -146,6 +144,7 @@ try {
         if (env.JOB_NAME == 'IDE/pro') {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
+          trigger_external_build('IDE/monitor')
         }
 
         slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"

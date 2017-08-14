@@ -171,6 +171,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RequestDocumentSave = "request_document_save";
    public static final String RequestOpenProject = "request_open_project";
    public static final String OpenFileDialog = "open_file_dialog";
+   public static final String ShowPageViewer = "show_page_viewer";
    
    protected ClientEvent()
    {

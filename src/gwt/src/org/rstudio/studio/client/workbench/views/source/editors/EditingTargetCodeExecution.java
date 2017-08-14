@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
 
@@ -141,7 +142,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         moveCursorAfterExecution(selectionRange);
+         moveCursorAfterExecution(selectionRange, true);
       }
    }
    
@@ -156,6 +157,30 @@ public class EditingTargetCodeExecution
    public void executeRange(Range range)
    {
       executeRange(range, null, false);
+   }
+   
+   public void sendSelectionToTerminal(boolean skipBlankLines)
+   {
+      // send selection from this editor to the terminal
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // current line
+         int row = docDisplay_.getSelectionStart().getRow();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      if (!(code.endsWith("\n") || code.endsWith("\r")))
+         code = code + "\n";
+      events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
+
+      if (noSelection)
+      {
+         moveCursorAfterExecution(selectionRange, skipBlankLines);
+      }
    }
    
    public void profileSelection()
@@ -233,7 +258,7 @@ public class EditingTargetCodeExecution
    {
       Range range = getRangeFromBehavior(executionBehavior);
       executeRange(range, null, false);
-      moveCursorAfterExecution(range);
+      moveCursorAfterExecution(range, true);
    }
    
    private Range getRangeFromBehavior(String executionBehavior)
@@ -410,11 +435,11 @@ public class EditingTargetCodeExecution
       return true;
    }
    
-   private void moveCursorAfterExecution(Range selectionRange)
+   private void moveCursorAfterExecution(Range selectionRange, boolean skipBlankLines)
    {
       docDisplay_.setCursorPosition(Position.create(
             selectionRange.getEnd().getRow(), 0));
-      if (!docDisplay_.moveSelectionToNextLine(true))
+      if (!docDisplay_.moveSelectionToNextLine(skipBlankLines))
          docDisplay_.moveSelectionToBlankLine();
       docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }

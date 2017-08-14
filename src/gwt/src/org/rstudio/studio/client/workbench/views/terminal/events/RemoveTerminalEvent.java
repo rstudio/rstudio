@@ -20,6 +20,9 @@ import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent.Handler;
 
+/**
+ * Eliminate a terminal that was killed via rstudioapi::terminalKill.
+ */
 public class RemoveTerminalEvent extends GwtEvent<Handler>
 {
    public static class Data extends JavaScriptObject

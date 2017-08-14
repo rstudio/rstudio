@@ -162,6 +162,8 @@ private:
    ErrorLocation location_;
 };
 
+// set $HOME to $USERPROFILE
+void setHomeToUserProfile(core::system::Options* pChildEnv);
 
 #endif
 

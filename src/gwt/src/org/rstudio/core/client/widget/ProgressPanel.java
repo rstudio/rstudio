@@ -1,7 +1,7 @@
 /*
  * ProgressPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -42,13 +45,21 @@ public class ProgressPanel extends Composite
       progressSpinner_ = new ProgressSpinner(getSpinnerColor());
       progressSpinner_.getElement().getStyle().setWidth(32, Unit.PX);
       progressSpinner_.getElement().getStyle().setHeight(32, Unit.PX);
+      
+      progressLabel_ = new Label();
+      progressLabel_.getElement().getStyle().setOpacity(0.5);
 
-      HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(
-         progressSpinner_.isSupported() ? progressSpinner_ : progressImage_, 
-         verticalOffset);
+      VerticalPanel panel = new VerticalPanel();
+      Widget spinner = progressSpinner_.isSupported() ? progressSpinner_ : progressImage_;
+      panel.add(spinner);
+      panel.setCellHorizontalAlignment(spinner, DockPanel.ALIGN_CENTER);
+      panel.add(progressLabel_);
 
+      HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(panel, verticalOffset);
+      
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
+      progressLabel_.setVisible(false);
 
       progressPanel.setSize("100%", "100%");
       progressPanel.addStyleName(ThemeStyles.INSTANCE.progressPanel());
@@ -56,14 +67,20 @@ public class ProgressPanel extends Composite
 
       initWidget(progressPanel);
    }
-   
+
    public void beginProgressOperation(int delayMs)
+   {
+      beginProgressOperation(delayMs, null);
+   }
+   
+   public void beginProgressOperation(int delayMs, final String message)
    {
       clearTimer();
 
       progressSpinner_.setColorType(getSpinnerColor());
       progressSpinner_.setVisible(false);
       progressImage_.setVisible(false);
+      progressLabel_.setVisible(false);
 
       timer_ = new Timer() {
          public void run() {
@@ -72,6 +89,11 @@ public class ProgressPanel extends Composite
 
             progressImage_.setVisible(true);
             progressSpinner_.setVisible(true);
+            if (message != null)
+            {
+               progressLabel_.setText(message);
+               progressLabel_.setVisible(true);
+            }
          }
       };
       timer_.schedule(delayMs);
@@ -82,6 +104,7 @@ public class ProgressPanel extends Composite
       clearTimer();
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
+      progressLabel_.setVisible(false);
    }
 
    private int getSpinnerColor()
@@ -103,5 +126,6 @@ public class ProgressPanel extends Composite
 
    private final Widget progressImage_ ;
    private final ProgressSpinner progressSpinner_;
+   private final Label progressLabel_;
    private Timer timer_;
 }

@@ -46,6 +46,7 @@
 #include <r/RJson.hpp>
 #include <r/RUtil.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -62,6 +63,35 @@ namespace modules {
 namespace html_preview {
 
 namespace {
+
+void enqueHTMLPreviewSucceeded(const std::string& title,
+                               const std::string& previewUrl,
+                               const FilePath& sourceFile,
+                               const FilePath& htmlFile,
+                               bool enableFileLabel,
+                               bool enableSaveAs,
+                               bool enableReexecute)
+{
+   using namespace module_context;
+   json::Object resultJson;
+   resultJson["succeeded"] = true;
+   resultJson["title"] = title;
+   resultJson["preview_url"] = previewUrl;
+   if (!sourceFile.empty())
+      resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
+   else
+      resultJson["source_file"] = json::Value();
+   if (!htmlFile.empty())
+      resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
+   else
+      resultJson["html_file"] = json::Value();
+   resultJson["enable_file_label"] = enableFileLabel;
+   resultJson["enable_saveas"] = enableSaveAs;
+   resultJson["enable_reexecute"] = enableReexecute;
+   resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
+   ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
+   module_context::enqueClientEvent(event);
+}
 
 class HTMLPreview : public async_r::AsyncRProcess
 {
@@ -389,9 +419,11 @@ private:
       markCompleted();
       outputFile_ = outputFile;
 
-      enqueHTMLPreviewSucceeded(kHTMLPreview "/",
+      enqueHTMLPreviewSucceeded("RStudio: Preview HTML",
+                                kHTMLPreview "/",
                                 targetFile(),
                                 htmlPreviewFile(),
+                                true,
                                 isMarkdown(),
                                 !isNotebook());
    }
@@ -414,25 +446,6 @@ private:
    {
       json::Object resultJson;
       resultJson["succeeded"] = false;
-      ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
-      module_context::enqueClientEvent(event);
-   }
-
-   static void enqueHTMLPreviewSucceeded(const std::string& previewUrl,
-                                         const FilePath& sourceFile,
-                                         const FilePath& htmlFile,
-                                         bool enableSaveAs,
-                                         bool enableRefresh)
-   {
-      using namespace module_context;
-      json::Object resultJson;
-      resultJson["succeeded"] = true;
-      resultJson["source_file"] = module_context::createAliasedPath(sourceFile);
-      resultJson["html_file"] = module_context::createAliasedPath(htmlFile);
-      resultJson["preview_url"] = previewUrl;
-      resultJson["enable_saveas"] = enableSaveAs;
-      resultJson["enable_refresh"] = enableRefresh;
-      resultJson["previously_published"] = !previousRpubsUploadId(htmlFile).empty();
       ClientEvent event(client_events::kHTMLPreviewCompletedEvent, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -469,6 +482,9 @@ std::string deriveNotebookPath(const std::string& path)
 // current preview (stays around after the preview executes so it can
 // serve the web content back)
 boost::shared_ptr<HTMLPreview> s_pCurrentPreview_;
+
+// current page_viewer html file
+std::string s_currentPageViewerFile;
 
 bool isPreviewRunning()
 {
@@ -508,6 +524,8 @@ Error previewHTML(const json::JsonRpcRequest& request,
                                                isMarkdown,
                                                isNotebook,
                                                knit);
+      s_currentPageViewerFile = std::string();
+
       pResponse->setResult(true);
    }
 
@@ -911,8 +929,8 @@ void handleInternalMarkdownPreviewRequest(
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
 {
-   // if there isn't a current preview this is an error
-   if (!s_pCurrentPreview_)
+   // if there isn't a current preview or page viewer file this is an error
+   if (!s_pCurrentPreview_ && s_currentPageViewerFile.empty())
    {
       pResponse->setNotFoundError(request.uri());
       return;
@@ -928,7 +946,11 @@ void handlePreviewRequest(const http::Request& request,
    // if it is empty then this is the main request
    if (path.empty())
    {
-      if (s_pCurrentPreview_->isMarkdown())
+      if (!s_currentPageViewerFile.empty())
+      {
+         pResponse->setFile(FilePath(s_currentPageViewerFile), request);
+      }
+      else if (s_pCurrentPreview_->isMarkdown())
       {
          if (s_pCurrentPreview_->isInternalMarkdown())
             handleInternalMarkdownPreviewRequest(request, pResponse);
@@ -958,11 +980,108 @@ void handlePreviewRequest(const http::Request& request,
    // request for dependent file
    else
    {
-      FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      FilePath filePath;
+      if (!s_currentPageViewerFile.empty())
+         filePath = FilePath(s_currentPageViewerFile).parent().childPath(path);
+      else
+         filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
       addFileSpecificHeaders(filePath, pResponse);
       pResponse->setFile(filePath, request);
    }
 }
+
+SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
+{
+   try
+   {
+      // terminate any running preview
+      if (isPreviewRunning())
+         s_pCurrentPreview_->terminate();
+
+      // get url and title
+      std::string url = r::sexp::safeAsString(urlSEXP);
+      std::string title = r::sexp::safeAsString(titleSEXP);
+
+      // paths we will forward via event
+      FilePath filePath, viewerFilePath;
+
+      // check for url
+      if (boost::algorithm::starts_with(url, "http"))
+      {
+         // verify local url only
+         boost::regex re("^http[s]?://(?:localhost|127\\.0\\.0\\.1).*$");
+         boost::smatch match;
+         if (!regex_utils::search(url, match, re))
+         {
+            throw r::exec::RErrorException(
+              "Only localhost URLs are allowed in the page viewer");
+         }
+
+         // port mapping for RStudio Server
+         url = module_context::mapUrlPorts(url);
+
+      }
+      // otherwise it's a file
+      else
+      {
+         // get full path to file
+         filePath = module_context::resolveAliasedPath(url);
+
+         // create temp file to write standalone html to (place it within a temp dir
+         // so the default download file name is pretty)
+         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+         Error error = viewerTempDir.ensureDirectory();
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         viewerFilePath = viewerTempDir.childPath(filePath.filename());
+
+         // create base64 encoded version
+         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+
+         // set url to file previewer
+         url = kHTMLPreview "/";
+      }
+
+      // emit show page viewer event
+      json::Object data;
+      data["path"] = viewerFilePath.absolutePath();
+      data["encoding"] = "UTF-8";
+      data["is_markdown"] = false;
+      data["requires_knit"] = false;
+      data["is_notebook"] = false;
+      ClientEvent event(client_events::kShowPageViewerEvent, data);
+      module_context::enqueClientEvent(event);
+
+      // we need to give the first event time to be delivered so that
+      // the preview succeeded event handler is set up
+      using namespace boost::posix_time;
+      boost::this_thread::sleep(milliseconds(500));
+
+      // set the current viewer file path (required so we can
+      // serve back the file and it's dependencies
+      s_currentPageViewerFile = viewerFilePath.absolutePath();
+
+      // emit html preview completed event
+      enqueHTMLPreviewSucceeded(
+         title,               // title
+         url,                 // preview url
+         filePath,            // original source file
+         viewerFilePath,      // file to show as preview
+         false,               // file label
+         !filePath.empty(),   // save as
+         false                // re-execute
+       );
+   }
+   catch(r::exec::RErrorException e)
+   {
+      r::exec::error(e.message());
+   }
+
+   return R_NilValue;
+}
+
 
    
 } // anonymous namespace
@@ -1018,6 +1137,8 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
+   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 2);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

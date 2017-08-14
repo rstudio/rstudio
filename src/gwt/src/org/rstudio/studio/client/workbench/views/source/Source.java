@@ -377,6 +377,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.notebookClearOutput());
       dynamicCommands_.add(commands.notebookClearAllOutput());
       dynamicCommands_.add(commands.notebookToggleExpansion());
+      dynamicCommands_.add(commands.sendToTerminal());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -3592,6 +3593,8 @@ public class Source implements InsertSourceHandler,
       // manage multi-tab commands
       manageMultiTabCommands();
       
+      manageTerminalCommands();
+      
       activeCommands_ = newCommands;
       
       // give the active editor a chance to manage commands
@@ -3747,7 +3750,12 @@ public class Source implements InsertSourceHandler,
       commands_.saveAllSourceDocs().setEnabled(false);
    }
    
-  
+   private void manageTerminalCommands()
+   {
+      if (!session_.getSessionInfo().getAllowShell())
+         commands_.sendToTerminal().setVisible(false);
+   }
+   
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
    {
       HashSet<AppCommand> temp = new HashSet<AppCommand>(commands);

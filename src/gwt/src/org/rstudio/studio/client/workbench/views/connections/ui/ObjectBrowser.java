@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
@@ -40,13 +41,15 @@ public class ObjectBrowser extends Composite implements RequiresResize
 {
    public ObjectBrowser()
    {
-      // create scroll panel and set the vertical wrapper as it's widget
+      hostPanel_ = new SimplePanelWithProgress();
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
+      hostPanel_.setWidget(scrollPanel_);
+      hostPanel_.setSize("100%", "100%");
       connection_ = null;
        
       // init widget
-      initWidget(scrollPanel_);
+      initWidget(hostPanel_);
    }
   
    public void clear()
@@ -85,6 +88,9 @@ public class ObjectBrowser extends Composite implements RequiresResize
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
 
+      // show progress while updating the connection
+      hostPanel_.showProgress(50, "Loading objects");
+            
       // update the table then restore expanded nodes
       objectsModel_.update(
          connection,      // connection 
@@ -93,6 +99,10 @@ public class ObjectBrowser extends Composite implements RequiresResize
             @Override
             public void execute()
             {
+               // clear progress and show the object tree again
+               hostPanel_.setWidget(scrollPanel_);
+               
+               // restore expanded nodes
                TreeNode rootNode = objects_.getRootTreeNode();
                if (!rootNode.isDestroyed())
                {
@@ -136,11 +146,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
-      VerticalPanel verticalWrapper = new VerticalPanel();
-      verticalWrapper.setWidth("100%");
-      verticalWrapper.add(objects_);
+      objectsWrapper_ = new VerticalPanel();
+      objectsWrapper_.setWidth("100%");
+      objectsWrapper_.add(objects_);
       
-      scrollPanel_.setWidget(verticalWrapper);
+      scrollPanel_.setWidget(objectsWrapper_);
       
       // cache connection
       connection_ = connection;
@@ -200,8 +210,10 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private static final TableBrowserMessages MESSAGES 
                               = GWT.create(TableBrowserMessages.class);
    
+   private final SimplePanelWithProgress hostPanel_;
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
+   private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
 }

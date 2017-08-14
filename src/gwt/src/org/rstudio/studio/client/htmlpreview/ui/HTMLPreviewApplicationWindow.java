@@ -51,7 +51,7 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      Window.setTitle("RStudio: Preview HTML");
+      Window.setTitle("RStudio");
       
       // create the presenter and activate it with the passed params
       HTMLPreviewParams htmlPreviewParams = params.<HTMLPreviewParams>cast();

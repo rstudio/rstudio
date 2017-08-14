@@ -37,9 +37,14 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
    }
    
-   public SwitchToTerminalEvent(String handle)
+   /**
+    * @param handle terminal to switch to
+    * @param input text to send to terminal, may be null
+    */
+   public SwitchToTerminalEvent(String handle, String input)
    {
       terminalHandle_ = handle;
+      inputText_ = input;
    }
 
    @Override
@@ -58,8 +63,14 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       return terminalHandle_;
    }
-  
+   
+   public String getInputText()
+   {
+      return inputText_;
+   }
+
    private String terminalHandle_;
+   private String inputText_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

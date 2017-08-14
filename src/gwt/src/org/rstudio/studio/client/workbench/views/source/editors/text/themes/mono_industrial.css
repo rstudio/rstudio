@@ -155,6 +155,9 @@
   color: #ffffff;
   font-feature-settings: "liga" 0;
   position: relative;
+  user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
 }
 .terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
    background-color: #CCC;
@@ -181,7 +184,6 @@
    background-color: #CCC;
 }
 .terminal .xterm-viewport {
-  /* On OS X this is required in order for the scroll bar to appear fully opaque */
   background-color: #222C28;
   overflow-y: scroll;
 }
