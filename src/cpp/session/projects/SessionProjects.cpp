@@ -663,6 +663,15 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 
 }  // anonymous namespace
 
+void onClientInit(const json::Object& errorToSend)
+{
+   // enque the error
+   if (!errorToSend.empty())
+   {
+      ClientEvent event(client_events::kOpenProjectError, errorToSend);
+      module_context::enqueClientEvent(event);
+   }
+}
 
 void startup(const std::string& firstProjectPath)
 {
@@ -756,13 +765,12 @@ void startup(const std::string& firstProjectPath)
          error.addProperty("user-msg", userErrMsg);
          LOG_ERROR(error);
 
-         // enque the error
-         json::Object openProjError;
-         openProjError["project"] = module_context::createAliasedPath(
+         json::Object openProjectError;
+         openProjectError["project"] = module_context::createAliasedPath(
                                                             projectFilePath);
-         openProjError["message"] = userErrMsg;
-         ClientEvent event(client_events::kOpenProjectError, openProjError);
-         module_context::enqueClientEvent(event);
+         openProjectError["message"] = userErrMsg;
+
+         module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
    }
 

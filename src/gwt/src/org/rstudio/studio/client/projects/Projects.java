@@ -799,6 +799,13 @@ public class Projects implements OpenProjectFileHandler,
       // show error dialog
       String msg = "Project '" + event.getProject() + "' " +
                    "could not be opened: " + event.getMessage();
+      
+      if (session_.getSessionInfo().getAllowOpenSharedProjects())
+      {
+         msg += "\n\nEnsure the project URL is correct; if it is, contact the project" +
+               " owner to request access.";
+      }       
+      
       globalDisplay_.showErrorMessage("Error Opening Project", msg);
        
       // remove from mru list
