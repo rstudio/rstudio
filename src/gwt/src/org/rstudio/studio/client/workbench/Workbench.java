@@ -114,7 +114,8 @@ public class Workbench implements BusyHandler,
                     DependencyManager dm,                     // force gin to create
                     ApplicationVisibility av,                 // force gin to create
                     RmdOutput rmdOutput,                      // force gin to create    
-                    ProjectTemplateRegistryProvider provider) // force gin to create
+                    ProjectTemplateRegistryProvider provider, // force gin to create
+                    WorkbenchServerOperations serverOperations) // force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -131,6 +132,7 @@ public class Workbench implements BusyHandler,
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
       newSession_ = newSession;
+      serverOperations_ = serverOperations;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -314,6 +316,7 @@ public class Workbench implements BusyHandler,
    {
       newSession_.openNewSession(globalDisplay_, 
                                  workbenchContext_, 
+                                 serverOperations_,
                                  projectOpener_,
                                  server_);
    }
@@ -603,6 +606,7 @@ public class Workbench implements BusyHandler,
    }
    
    private final Server server_;
+   private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;
    private final Session session_;
    private final Provider<UIPrefs> pPrefs_;

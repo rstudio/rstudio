@@ -19,11 +19,13 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.ProjectOpener;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 public class WorkbenchNewSession
 {    
    public void openNewSession(GlobalDisplay globalDisplay,
                               WorkbenchContext workbenchContext,
+                              final WorkbenchServerOperations serverOperations,
                               ProjectOpener projectOpener,
                               ApplicationServerOperations server)
    {
