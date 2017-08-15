@@ -52,6 +52,27 @@ void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 
 core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);
 
+Error random(uint32_t numBytes, std::vector<unsigned char>* pOut);
+
+Error aesEncrypt(const std::vector<unsigned char>& data,
+                 const std::vector<unsigned char>& key,
+                 const std::vector<unsigned char>& iv,
+                 std::vector<unsigned char>* pEncrypted);
+
+Error aesDecrypt(const std::vector<unsigned char>& data,
+                 const std::vector<unsigned char>& key,
+                 const std::vector<unsigned char>& iv,
+                 std::vector<unsigned char>* pDecrypted);
+
+Error encryptDataAsBase64EncodedString(const std::string& input,
+                                       const std::string& key,
+                                       std::string* pIv,
+                                       std::string* pEncrypted);
+
+Error decryptBase64EncodedString(const std::string& input,
+                                 const std::string& key,
+                                 const std::string& ivStr,
+                                 std::string* pDecrypted);
          
 } // namespace crypto
 } // namespace system

@@ -243,9 +243,27 @@ void remove(const http::Request& request,
    pResponse->addCookie(cookie);
 }
 
+const std::string& getKey()
+{
+   return s_secureCookieKey;
+}
+
 Error initialize()
 {
-   return key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey);
+   Error error = key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey);
+   if (error)
+      return error;
+
+   // ensure the key is at least 128 bits (16 bytes) in strength
+   // this is good security practice, and encryption and decryption
+   // operations require a key of that size at least
+   if (s_secureCookieKey.size() < 16)
+   {
+      LOG_ERROR_MESSAGE("secure-cookie-key specified is not strong enough! It must be at least 128 bits (16 bytes/characters) long!");
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   return Success();
 }
 
 

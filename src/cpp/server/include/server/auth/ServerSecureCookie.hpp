@@ -65,6 +65,8 @@ void remove(const http::Request& request,
 
 core::Error initialize();
 
+const std::string& getKey();
+
 } // namespace secure_cookie
 } // namespace auth
 } // namespace server

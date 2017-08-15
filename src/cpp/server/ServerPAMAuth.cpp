@@ -14,7 +14,6 @@
  */
 #include "ServerPAMAuth.hpp"
 
-
 #include <core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
@@ -50,7 +49,8 @@ bool canSetSignInCookies();
 bool canStaySignedIn();
 void onUserAuthenticated(const std::string& username,
                          const std::string& password);
-void onUserUnauthenticated(const std::string& username);
+void onUserUnauthenticated(const std::string& username,
+                           bool signedOut = false);
 
 namespace {
 
@@ -413,7 +413,7 @@ void signOut(const http::Request& request,
                               "",
                               username));
 
-      onUserUnauthenticated(username);
+      onUserUnauthenticated(username, true);
    }
 
    auth::secure_cookie::remove(request,
@@ -463,7 +463,6 @@ bool pamLogin(const std::string& username, const std::string& password)
    return result.exitStatus == 0;
 }
 
-
 Error initialize()
 {
    // register ourselves as the auth handler
@@ -483,10 +482,14 @@ Error initialize()
    uri_handlers::addBlocking(kDoSignIn, doSignIn);
    uri_handlers::addBlocking(kPublicKey, publicKey);
 
+   // initialize overlay
+   Error error = overlay::initialize();
+   if (error)
+      return error;
+
    // initialize crypto
    return core::system::crypto::rsaInit();
 }
-
 
 } // namespace pam_auth
 } // namespace server

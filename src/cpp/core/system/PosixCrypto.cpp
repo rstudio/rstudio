@@ -22,6 +22,7 @@
 #include <openssl/hmac.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
@@ -37,6 +38,10 @@
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
+
+// openssl encrypt/decrypt constants
+#define kEncrypt 1
+#define kDecrypt 0
 
 using namespace rstudio::core;
 
@@ -246,6 +251,94 @@ Error base64Decode(const std::string& data,
      
 }
 
+Error aesEncrypt(const std::vector<unsigned char>& data,
+                 const std::vector<unsigned char>& key,
+                 const std::vector<unsigned char>& iv,
+                 std::vector<unsigned char>* pEncrypted)
+{
+   // allow enough space in output buffer for additional block
+   pEncrypted->resize(data.size() + EVP_MAX_BLOCK_LENGTH);
+   int outlen = 0;
+   int bytesEncrypted = 0;
+
+   EVP_CIPHER_CTX ctx;
+   EVP_CIPHER_CTX_init(&ctx);
+   EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kEncrypt);
+
+   // perform the encryption
+   if(!EVP_CipherUpdate(&ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], data.size()))
+   {
+      EVP_CIPHER_CTX_cleanup(&ctx);
+      return lastCryptoError(ERROR_LOCATION);
+   }
+   bytesEncrypted += outlen;
+
+   // perform final flush including left-over padding
+   if(!EVP_CipherFinal_ex(&ctx, &(pEncrypted->operator[](outlen)), &outlen))
+   {
+      EVP_CIPHER_CTX_cleanup(&ctx);
+      return lastCryptoError(ERROR_LOCATION);
+   }
+   bytesEncrypted += outlen;
+
+   EVP_CIPHER_CTX_cleanup(&ctx);
+
+   // resize the container to the amount of actual bytes encrypted (including padding)
+   pEncrypted->resize(bytesEncrypted);
+
+   return Success();
+}
+
+Error aesDecrypt(const std::vector<unsigned char>& data,
+                 const std::vector<unsigned char>& key,
+                 const std::vector<unsigned char>& iv,
+                 std::vector<unsigned char>* pDecrypted)
+{
+   pDecrypted->resize(data.size());
+   int outlen = 0;
+   int bytesDecrypted = 0;
+
+   EVP_CIPHER_CTX ctx;
+   EVP_CIPHER_CTX_init(&ctx);
+   EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kDecrypt);
+
+   // perform the decryption
+   if(!EVP_CipherUpdate(&ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], data.size()))
+   {
+      EVP_CIPHER_CTX_cleanup(&ctx);
+      return lastCryptoError(ERROR_LOCATION);
+   }
+   bytesDecrypted += outlen;
+
+   // perform final flush
+   if(!EVP_CipherFinal_ex(&ctx, &(pDecrypted->operator[](outlen)), &outlen))
+   {
+      EVP_CIPHER_CTX_cleanup(&ctx);
+      return lastCryptoError(ERROR_LOCATION);
+   }
+   bytesDecrypted += outlen;
+
+   EVP_CIPHER_CTX_cleanup(&ctx);
+
+   // resize the container to the amount of actual bytes decrypted (padding is removed)
+   pDecrypted->resize(bytesDecrypted);
+
+   return Success();
+}
+
+Error random(uint32_t numBytes,
+             std::vector<unsigned char>* pOut)
+{
+   pOut->resize(numBytes);
+
+   if (!RAND_bytes(&(pOut->operator[](0)), numBytes))
+   {
+      return lastCryptoError(ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
 namespace {
 RSA* s_pRSA;
 std::string s_modulo;
@@ -331,6 +424,74 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
 
    plainTextBytes.resize(bytesRead);
    pPlainText->assign(plainTextBytes.begin(), plainTextBytes.end());
+
+   return Success();
+}
+
+Error encryptDataAsBase64EncodedString(const std::string& input,
+                                       const std::string& keyStr,
+                                       std::string* pIv,
+                                       std::string* pEncrypted)
+{
+   // copy data into vector
+   std::vector<unsigned char> data;
+   std::copy(input.begin(), input.end(), std::back_inserter(data));
+
+   // copy key into vector
+   std::vector<unsigned char> key;
+   std::copy(keyStr.begin(), keyStr.end(), std::back_inserter(key));
+
+   // create a random initialization vector for a little added security
+   std::vector<unsigned char> iv;
+   Error error = core::system::crypto::random(256, &iv);
+   if (error)
+      return error;
+
+   // encrypt the input
+   std::vector<unsigned char> encrypted;
+   error = core::system::crypto::aesEncrypt(data, key, iv, &encrypted);
+   if (error)
+      return error;
+
+   // base 64 encode the IV used for encryption
+   error = core::system::crypto::base64Encode(iv, pIv);
+   if (error)
+      return error;
+
+   // base 64 encode encrypted result
+   return core::system::crypto::base64Encode(encrypted, pEncrypted);
+}
+
+Error decryptBase64EncodedString(const std::string& input,
+                                 const std::string& keyStr,
+                                 const std::string& ivStr,
+                                 std::string* pDecrypted)
+{
+   // copy key into vector
+   std::vector<unsigned char> key;
+   std::copy(keyStr.begin(), keyStr.end(), std::back_inserter(key));
+
+   // decode initialization vector
+   std::vector<unsigned char> iv;
+   Error error = core::system::crypto::base64Decode(ivStr, &iv);
+   if (error)
+      return error;
+
+   // decode encrypted input
+   std::vector<unsigned char> decoded;
+   error = core::system::crypto::base64Decode(input, &decoded);
+   if (error)
+      return error;
+
+   // decrypt decoded input
+   std::vector<unsigned char> decrypted;
+   error = core::system::crypto::aesDecrypt(decoded, key, iv, &decrypted);
+   if (error)
+      return error;
+
+   // covert the decrypted bytes into the original string
+   pDecrypted->reserve(decrypted.size());
+   std::copy(decrypted.begin(), decrypted.end(), std::back_inserter(*pDecrypted));
 
    return Success();
 }
