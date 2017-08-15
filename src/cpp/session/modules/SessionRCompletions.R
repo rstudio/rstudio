@@ -2400,6 +2400,9 @@ assign(x = ".rs.acCompletionTypes",
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
+      if (inherits(object, "python.builtin.object"))
+         return(.rs.emptyCompletions())
+      
       if (length(object))
       {
          objectNames <- .rs.getNames(object)
