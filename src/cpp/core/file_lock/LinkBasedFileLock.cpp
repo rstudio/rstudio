@@ -417,8 +417,8 @@ Error LinkBasedFileLock::release()
    if (error)
       LOG_ERROR(error);
    
-   pImpl_->lockFilePath = FilePath();
    lockRegistration().deregisterLock(lockFilePath);
+   pImpl_->lockFilePath = FilePath();
    return error;
 }
 
