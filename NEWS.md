@@ -84,6 +84,7 @@
 * Highlight markdown inside ROxygen comments
 * Minor fixes to C++ syntax highlighting
 * Added syntax highlighting for TOML files
+* Provide autocompletion support for R6 'new()' methods
 * Improve performance of autocompletion for installed packages
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
