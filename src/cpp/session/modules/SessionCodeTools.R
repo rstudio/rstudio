@@ -1942,3 +1942,9 @@
       error = function(e) NULL
    )
 })
+
+.rs.addFunction("isExternalPointer", function(object)
+{
+   identical(typeof(object), "externalptr")
+})
+
