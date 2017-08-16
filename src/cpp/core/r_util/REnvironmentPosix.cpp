@@ -146,7 +146,8 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
                         const config_utils::Variables& scriptVars,
                         std::string* pRHome,
                         std::string* pRLibPath,
-                        std::string* pErrMsg)
+                        std::string* pErrMsg,
+                        const std::string& prelaunchScript = "")
 {
    config_utils::Variables::const_iterator it = scriptVars.find("R_HOME_DIR");
    if (it != scriptVars.end())
