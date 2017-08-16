@@ -335,33 +335,30 @@ private:
          AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
          AsyncUriHandlerFunction handlerFunc = handler.function();
 
-         if (handlerFunc)
-         {
-            if (!handler.isProxyHandler())
-            {
-               // check to ensure the request is for a supported method
-               // proxy handlers do not perform this checking as we
-               // flow all traffic like a proxy
-               const std::string& method = pRequest->method();
-               if (method != "GET" &&
-                   method != "PUT" &&
-                   method != "POST")
-               {
-                  // invalid method - fail out
-                  LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
-                  pConnection->response().setStatusCode(http::status::MethodNotAllowed);
-                  return;
-               }
-            }
+         // if no handler was assigned but we have a default, use it instead
+         if (!handlerFunc && defaultHandler_)
+            handlerFunc = defaultHandler_;
 
-            // call the handler
-            handlerFunc(pAsyncConnection) ;
-         }
-         else if (defaultHandler_)
+         if (!handler.isProxyHandler())
          {
-            // call the default handler
-            defaultHandler_(pAsyncConnection);
+            // check to ensure the request is for a supported method
+            // proxy handlers do not perform this checking as we
+            // flow all traffic like a proxy
+            const std::string& method = pRequest->method();
+            if (method != "GET" &&
+                method != "PUT" &&
+                method != "POST")
+            {
+               // invalid method - fail out
+               LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
+               pConnection->response().setStatusCode(http::status::MethodNotAllowed);
+               return;
+            }
          }
+
+         // call handler if we have one
+         if (handlerFunc)
+            handlerFunc(pAsyncConnection) ;
          else
          {
             // log error
