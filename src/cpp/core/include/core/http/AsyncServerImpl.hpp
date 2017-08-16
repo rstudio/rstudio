@@ -80,6 +80,13 @@ public:
       BOOST_ASSERT(!running_);
       abortOnResourceError_ = abortOnResourceError;
    }
+
+   virtual void addProxyHandler(const std::string& prefix,
+                                const AsyncUriHandlerFunction& handler)
+   {
+      BOOST_ASSERT(!running_);
+      uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler, true));
+   }
    
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler)
@@ -325,11 +332,30 @@ private:
 
          // call the appropriate handler to generate a response
          std::string uri = pRequest->uri();
-         AsyncUriHandlerFunction handler = uriHandlers_.handlerFor(uri);
-         if (handler)
+         AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
+         AsyncUriHandlerFunction handlerFunc = handler.function();
+
+         if (handlerFunc)
          {
+            if (!handler.isProxyHandler())
+            {
+               // check to ensure the request is for a supported method
+               // proxy handlers do not perform this checking as we
+               // flow all traffic like a proxy
+               const std::string& method = pRequest->method();
+               if (method != "GET" &&
+                   method != "PUT" &&
+                   method != "POST")
+               {
+                  // invalid method - fail out
+                  LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
+                  pConnection->response().setStatusCode(http::status::MethodNotAllowed);
+                  return;
+               }
+            }
+
             // call the handler
-            handler(pAsyncConnection) ;
+            handlerFunc(pAsyncConnection) ;
          }
          else if (defaultHandler_)
          {

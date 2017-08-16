@@ -193,7 +193,7 @@ void httpServerAddHandlers()
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
-      uri_handlers::add("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
+      uri_handlers::addProxyHandler("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
 
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
@@ -322,6 +322,12 @@ void add(const std::string& prefix,
          const http::AsyncUriHandlerFunction& handler)
 {
    s_pHttpServer->addHandler(prefix, handler);
+}
+
+void addProxyHandler(const std::string& prefix,
+                     const http::AsyncUriHandlerFunction& handler)
+{
+   s_pHttpServer->addProxyHandler(prefix, handler);
 }
 
 void addBlocking(const std::string& prefix,
