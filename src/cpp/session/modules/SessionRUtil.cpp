@@ -13,8 +13,6 @@
  *
  */
 
-#define R_INTERNAL_FUNCTIONS
-
 #include <session/SessionRUtil.hpp>
 
 #include <core/Error.hpp>
