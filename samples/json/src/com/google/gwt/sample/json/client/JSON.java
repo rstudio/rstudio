@@ -65,7 +65,7 @@ public class JSON implements EntryPoint {
     public void onResponseReceived(Request request, Response response) {
       String responseText = response.getText();
       try {
-        JSONValue jsonValue = JSONParser.parse(responseText);
+        JSONValue jsonValue = JSONParser.parseStrict(responseText);
         displayJSONObject(jsonValue);
       } catch (JSONException e) {
         displayParseError(responseText);

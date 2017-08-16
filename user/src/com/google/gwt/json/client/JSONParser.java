@@ -46,8 +46,7 @@ public class JSONParser {
    *           <code>null</code>
    * @throws IllegalArgumentException if <code>jsonString</code> is empty
    * 
-   * @deprecated use {@link #parseStrict(String)} or
-   *             {@link #parseLenient(String)}
+   * @deprecated use {@link #parseStrict(String)}
    */
   @Deprecated
   public static JSONValue parse(String jsonString) {
@@ -65,7 +64,9 @@ public class JSONParser {
    * @throws NullPointerException if <code>jsonString</code> is
    *           <code>null</code>
    * @throws IllegalArgumentException if <code>jsonString</code> is empty
+   * @deprecated use {@link #parseStrict(String)}
    */
+  @Deprecated
   public static JSONValue parseLenient(String jsonString) {
     return parse(jsonString, false);
   }
