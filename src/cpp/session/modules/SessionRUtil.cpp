@@ -13,6 +13,8 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <session/SessionRUtil.hpp>
 
 #include <core/Error.hpp>
@@ -31,7 +33,7 @@
 
 #include <core/YamlUtil.hpp>
 
-#include "modules/shiny/SessionShiny.hpp"
+#include "shiny/SessionShiny.hpp"
 
 namespace rstudio {
 
@@ -124,13 +126,28 @@ SEXP rs_fromJSON(SEXP objectSEXP)
    return r::sexp::create(jsonValue, &protect);
 }
 
+SEXP rs_isNullExternalPointer(SEXP objectSEXP)
+{
+   using namespace r::sexp;
+   
+   Protect protect;
+   return create(isNullExternalPointer(objectSEXP), &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
+   RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
    
-   return Success();
+   using boost::bind;
+   using namespace module_context;
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(sourceModuleRFile, "SessionRUtil.R"));
+   return initBlock.execute();
 }
 
 } // namespace r_utils

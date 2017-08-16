@@ -665,9 +665,8 @@
    } 
    else
    {
-      # check the object itself for a null pointer
-      .rs.isExternalPointer(obj) &&
-         capture.output(base::print.default(obj)) == "<pointer: 0x0>"
+      # check if object itself is a null external pointer
+      .rs.isNullExternalPointer(obj)
    }
 })
 

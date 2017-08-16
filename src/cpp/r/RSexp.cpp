@@ -666,6 +666,18 @@ SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val)
    return Rf_setAttrib(object, Rf_install(attrib.c_str()), val);
 }
 
+bool isExternalPointer(SEXP object)
+{
+   return TYPEOF(object) == EXTPTRSXP;
+}
+
+bool isNullExternalPointer(SEXP object)
+{
+   return
+         isExternalPointer(object) &&
+         R_ExternalPtrAddr(object) == NULL;
+}
+
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
 {
    return R_MakeWeakRefC(key, val, fun, onexit);
