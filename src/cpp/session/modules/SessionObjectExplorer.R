@@ -862,9 +862,9 @@
       output <- sprintf("S4 object of class %s", class(object))
       more <- FALSE
    }
-   else if (inherits(object, "externalptr"))
+   else if (.rs.isExternalPointer(object))
    {
-      output <- capture.output(print(unclass(object)))
+      output <- capture.output(base::print.default(object))
       more <- FALSE
    }
    
