@@ -30,6 +30,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
+import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
@@ -471,14 +472,15 @@ public class RCompletionManager implements CompletionManager
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
                // If we're in markdown mode, only autocomplete in '```{r',
-               // '[](', or '`r |' contexts
+               // '[](', '`r |', or '.*:..' (emoji) contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
                   String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
-                      (Pattern.create(".*`r").test(currentLine) &&
-                            StringUtil.countMatches(currentLine, '`') % 2 == 1)))
+                      (Pattern.create(".*`r").test(currentLine) && StringUtil.countMatches(currentLine, '`') % 2 == 1) ||
+                      Pattern.create(".*[:][a-zA-Z0-9_]+").test(currentLine)
+                      ))
                      return false;
                }
 
@@ -1443,16 +1445,16 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
 
+      // Markdown mode + emoji completions
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
+            firstLine.matches(".*[:][a-zA-Z0-9_]+"))
+         return getAutocompletionContextForEmoji(firstLine);
+
       // If we're in Markdown mode and have an appropriate string, try to get
       // file completions
       if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
             firstLine.matches(".*\\[.*\\]\\(.*"))
          return getAutocompletionContextForFileMarkdownLink(firstLine);
-
-      // Markdown mode + emoji completions
-      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
-            firstLine.matches(".*[:][a-zA-Z0-9_]*"))
-         return getAutocompletionContextForEmoji(firstLine);
 
       // Get the token at the cursor position.
       String tokenRegex = ".*[^" +
@@ -1470,8 +1472,13 @@ public class RCompletionManager implements CompletionManager
       if (firstLineStripped.indexOf('\'') != -1 ||
           firstLineStripped.indexOf('"') != -1)
       {
-         isFileCompletion = true;
-         addAutocompletionContextForFile(context, firstLine);
+        // is this an emoji completions
+        if( firstLine.matches(".*[:][a-zA-Z0-9_]+") ){
+          return getAutocompletionContextForEmoji(firstLine);
+        } else {
+          isFileCompletion = true;
+          addAutocompletionContextForFile(context, firstLine);
+        }
       }
 
       // If this line starts with '```{', then we're completing chunk options
