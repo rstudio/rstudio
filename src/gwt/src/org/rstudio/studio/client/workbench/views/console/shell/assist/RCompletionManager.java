@@ -1475,17 +1475,10 @@ public class RCompletionManager implements CompletionManager
         // is this an emoji completions
         if( firstLine.matches(".*[:][a-zA-Z0-9_]+") ){
           return getAutocompletionContextForEmoji(firstLine);
-<<<<<<< HEAD
         }
 
         isFileCompletion = true;
         addAutocompletionContextForFile(context, firstLine);
-=======
-        } else {
-          isFileCompletion = true;
-          addAutocompletionContextForFile(context, firstLine);
-        }
->>>>>>> e558a36f24b7b19b50574fe0a20fcc613bcd1c65
       }
 
       // If this line starts with '```{', then we're completing chunk options
