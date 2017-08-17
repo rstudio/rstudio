@@ -45,6 +45,9 @@ public:
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler) = 0;
 
+   virtual void addProxyHandler(const std::string& prefix,
+                                const AsyncUriHandlerFunction& handler) = 0;
+
 
    virtual void addBlockingHandler(const std::string& prefix,
                                    const UriHandlerFunction& handler) = 0;

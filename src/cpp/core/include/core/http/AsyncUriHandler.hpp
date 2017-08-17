@@ -40,11 +40,12 @@ typedef boost::function<void(
 class AsyncUriHandler
 {
 public:
+   AsyncUriHandler() : isProxyHandler_(false) {} // other members default initialized
 
-public:
    AsyncUriHandler(const std::string& prefix,
-                   AsyncUriHandlerFunction function)
-       : prefix_(prefix), function_(function)
+                   AsyncUriHandlerFunction function,
+                   bool isProxyHandler = false)
+       : prefix_(prefix), function_(function), isProxyHandler_(isProxyHandler)
    {
    }
 
@@ -67,9 +68,15 @@ public:
       function_(pConnection);
    }
 
+   bool isProxyHandler() const
+   {
+      return isProxyHandler_;
+   }
+
 private:
    std::string prefix_;
    AsyncUriHandlerFunction function_ ;
+   bool isProxyHandler_;
 
 };
 
@@ -83,7 +90,7 @@ public:
       uriHandlers_.push_back(handler);
    }
 
-   AsyncUriHandlerFunction handlerFor(const std::string& uri) const
+   AsyncUriHandler handlerFor(const std::string& uri) const
    {
       std::vector<AsyncUriHandler>::const_iterator handler =
             std::find_if(
@@ -92,11 +99,11 @@ public:
               boost::bind(&AsyncUriHandler::matches, _1, uri));
       if ( handler != uriHandlers_.end() )
       {
-         return handler->function();
+         return *handler;
       }
       else
       {
-         return AsyncUriHandlerFunction();
+         return AsyncUriHandler();
       }
    }
 
