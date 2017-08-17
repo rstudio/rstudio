@@ -60,7 +60,8 @@ enum DistEvtType
    DistEvtShutdownSessions,
    DistEvtKillSessions,
    DistEvtPamPasswordUpdated,
-   DistEvtPamPasswordRemoved
+   DistEvtPamPasswordRemoved,
+   DistEvtSuspendSessions
 };
 
 class DistributedEvent
