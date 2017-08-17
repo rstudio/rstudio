@@ -65,6 +65,7 @@ assign(x = ".rs.acCompletionTypes",
           KEYWORD     = 22,
           OPTION      = 23,
           DATASET     = 24,
+          EMOJI       = 25,
           CONTEXT     = 99
        )
 )
@@ -2486,12 +2487,16 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsEmoji", function(token)
 {
+  results <- emo::ji_completion(token)
+
   completions <- .rs.makeCompletions(
      token = token,
-     results = emo::ji_completion(token),
+     results = unname(results),
+     packages = names(results),
      quote = FALSE,
-     type = .rs.acCompletionTypes$STRING,
-     overrideInsertParens = TRUE
+     type = .rs.acCompletionTypes$EMOJI,
+     overrideInsertParens = TRUE,
+     excludeOtherCompletions = TRUE
   )
 })
 

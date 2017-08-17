@@ -1475,10 +1475,10 @@ public class RCompletionManager implements CompletionManager
         // is this an emoji completions
         if( firstLine.matches(".*[:][a-zA-Z0-9_]+") ){
           return getAutocompletionContextForEmoji(firstLine);
-        } else {
-          isFileCompletion = true;
-          addAutocompletionContextForFile(context, firstLine);
         }
+
+        isFileCompletion = true;
+        addAutocompletionContextForFile(context, firstLine);
       }
 
       // If this line starts with '```{', then we're completing chunk options
@@ -2068,8 +2068,9 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
 
-         if (!RCompletionType.isFileType(qualifiedName.type))
-         {
+         if (qualifiedName.type == RCompletionType.EMOJI){
+              value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
+         } else if (!RCompletionType.isFileType(qualifiedName.type)) {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
             else if (!value.matches(".*[=:]\\s*$") &&
