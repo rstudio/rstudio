@@ -576,7 +576,7 @@ assign(x = ".rs.acCompletionTypes",
       # the 'initialize()' method instead.
       if (.rs.isR6NewMethod(object))
          object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
-      
+
       matchedCall <- .rs.matchCall(object, functionCall)
 
       # Try to figure out what function arguments are
@@ -1792,6 +1792,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   documentId,
                                                   line)
 {
+
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
    token <- .rs.setEncodingUnknownToUTF8(token)
@@ -1907,6 +1908,10 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
    }
+
+   # emoji
+   if (.rs.acContextTypes$EMOJI %in% type)
+      return(.rs.getCompletionsEmoji(token))
 
    # help
    if (.rs.acContextTypes$HELP %in% type)
@@ -2317,7 +2322,7 @@ assign(x = ".rs.acCompletionTypes",
                                                                     string,
                                                                     cursorPos)
 {
-   result <- tryCatch(
+  result <- tryCatch(
 
       expr = {
          parsed <- parse(text = string)[[1]]
@@ -2481,7 +2486,13 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsEmoji", function(token)
 {
-    emo::ji_completion(token)
+  completions <- .rs.makeCompletions(
+     token = token,
+     results = emo::ji_completion(token),
+     quote = FALSE,
+     type = .rs.acCompletionTypes$STRING,
+     overrideInsertParens = TRUE
+  )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
