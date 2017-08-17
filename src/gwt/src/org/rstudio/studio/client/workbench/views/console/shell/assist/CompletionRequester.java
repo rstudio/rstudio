@@ -865,6 +865,14 @@ public class CompletionRequester
                RES.styles().completion(),
                name);
 
+         // emoji aliases
+         if( type == RCompletionType.EMOJI ){
+           SafeHtmlUtil.appendSpan(
+                 sb,
+                 RES.styles().packageName(),
+                 ":" + source + ":");
+         }
+
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
          // isn't a package but rather some custom DollarNames scope)
