@@ -210,7 +210,7 @@ class DOMImplStandardBase extends DOMImplStandard {
   public int getAbsoluteLeft(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
     double left = rect != null ? rect.getSubPixelLeft()
-        + elem.getOwnerDocument().getBody().getScrollLeft()
+        + getScrollLeft(elem.getOwnerDocument())
         : getAbsoluteLeftUsingOffsets(elem);
     return toInt32(left);
   }
@@ -219,17 +219,10 @@ class DOMImplStandardBase extends DOMImplStandard {
   public int getAbsoluteTop(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
     double top = rect != null ? rect.getSubPixelTop()
-        + elem.getOwnerDocument().getBody().getScrollTop()
+        + getScrollTop(elem.getOwnerDocument())
         : getAbsoluteTopUsingOffsets(elem);
     return toInt32(top);
   }
-
-  @Override
-  public native int getScrollLeft(Document doc) /*-{
-    // Safari always applies document scrolling to the body element, even in strict mode.
-    // The behavior of Chrome depends of the doctype mode.
-    return doc.documentElement.scrollLeft || doc.body.scrollLeft;
-  }-*/;
 
   @Override
   public int getScrollLeft(Element elem) {
@@ -241,27 +234,10 @@ class DOMImplStandardBase extends DOMImplStandard {
   }
 
   @Override
-  public native int getScrollTop(Document doc) /*-{
-    // Safari always applies document scrolling to the body element, even in strict mode.
-    // The behavior of Chrome depends of the doctype mode.
-    return doc.documentElement.scrollTop || doc.body.scrollTop;
-  }-*/;
-
-  @Override
   public native int getTabIndex(Element elem) /*-{ 
     // tabIndex is undefined for divs and other non-focusable elements prior to
     // Safari 4.
     return typeof elem.tabIndex != 'undefined' ? elem.tabIndex : -1;
-  }-*/;
-
-  @Override
-  public native void setScrollLeft(Document doc, int left) /*-{
-    // Safari always applies document scrolling to the body element, even in strict mode. The
-    // behavior of Chrome depends of the doctype mode.
-    // This instruction will be ignored by safari and chrome in quirks mode.
-    doc.documentElement.scrollLeft = left;
-    // Will be ignored by chrome in strict mode.
-    doc.body.scrollLeft = left;
   }-*/;
 
   @Override
@@ -271,16 +247,6 @@ class DOMImplStandardBase extends DOMImplStandard {
     }
     super.setScrollLeft(elem, left);
   }
-
-  @Override
-  public native void setScrollTop(Document doc, int top) /*-{
-    // Safari always applies document scrolling to the body element, even in strict mode. The
-    // behavior of Chrome depends of the doctype mode.
-    // This instruction will be ignored by safari and by chrome in quirks mode.
-    doc.documentElement.scrollTop = top;
-    // Will be ignored by chrome in strict mode.
-    doc.body.scrollTop = top;
-  }-*/;
 
   protected native boolean isRTL(Element elem) /*-{
     return elem.ownerDocument.defaultView.getComputedStyle(elem, '').direction == 'rtl';

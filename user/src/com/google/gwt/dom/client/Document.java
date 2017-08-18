@@ -1413,6 +1413,7 @@ public class Document extends Node {
    * @return the height of the document's scrollable area
    */
   public final int getScrollHeight() {
+    // TODO(dramaix): Use document.scrollingElement when its available. See getScrollLeft().
     return getViewportElement().getScrollHeight();
   }
 
@@ -1445,6 +1446,7 @@ public class Document extends Node {
    * @return the width of the document's scrollable area
    */
   public final int getScrollWidth() {
+    // TODO(dramaix): Use document.scrollingElement when its available. See getScrollLeft().
     return getViewportElement().getScrollWidth();
   }
 
