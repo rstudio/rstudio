@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -61,11 +61,11 @@ public class NewConnectionInstallPackagePage
 
    @Inject
    private void initialize(DependencyManager dependencyManager,
-                           ConnectionsPresenter connectionsPresenter,
+                           Commands commands,
                            ConnectionsServerOperations server)
    {
       dependencyManager_ = dependencyManager;
-      connectionsPresenter_ = connectionsPresenter;
+      commands_ = commands;
       server_ = server;
    }
 
@@ -87,7 +87,8 @@ public class NewConnectionInstallPackagePage
                      public void onResponseReceived(Void empty)
                      {
                         wizard.closeDialog();
-                        connectionsPresenter_.onNewConnection();
+                        
+                        commands_.newConnection().execute();
                      }
                      
                      @Override
@@ -138,6 +139,6 @@ public class NewConnectionInstallPackagePage
 
    private NewConnectionInfo info_;
    private DependencyManager dependencyManager_;
-   private ConnectionsPresenter connectionsPresenter_;
+   private Commands commands_;
    private ConnectionsServerOperations server_;
 }
