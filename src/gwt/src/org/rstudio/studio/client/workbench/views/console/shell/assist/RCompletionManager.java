@@ -1124,6 +1124,11 @@ public class RCompletionManager implements CompletionManager
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
 
+   private boolean isEmojiCompletion(String line )
+   {
+      return line.matches(".*[:][a-zA-Z0-9_]+$") ;
+   }
+
    /**
     * If false, the suggest operation was aborted
     */
@@ -1154,6 +1159,8 @@ public class RCompletionManager implements CompletionManager
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
       // the majority of cases
+      //
+      // unless it's an emoji completion
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       if (cursorToken.hasType("string"))
       {
@@ -1161,7 +1168,7 @@ public class RCompletionManager implements CompletionManager
          boolean isSingleLineString =
                cursorTokenValue.startsWith("'") ||
                cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         if (!isSingleLineString && !isEmojiCompletion(firstLine))
             return false;
       }
 
@@ -1434,7 +1441,6 @@ public class RCompletionManager implements CompletionManager
       return true;
    }
 
-
    private AutocompletionContext getAutocompletionContext()
    {
       AutocompletionContext context = new AutocompletionContext();
@@ -1445,9 +1451,24 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
 
+      // if we are in a multi line string this has to be an emoji completion
+      // otherwise we would not be there
+      //
+      // it is a bit hacky to have to test this again here when we just did
+      // it in the parent scope
+      Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (cursorToken.hasType("string"))
+      {
+         String cursorTokenValue = cursorToken.getValue();
+         boolean isSingleLineString =
+               cursorTokenValue.startsWith("'") ||
+               cursorTokenValue.startsWith("\"");
+         if (!isSingleLineString)
+            return getAutocompletionContextForEmoji(firstLine);
+      }
+
       // Markdown mode + emoji completions
-      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
-            firstLine.matches(".*[:][a-zA-Z0-9_]+"))
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) && isEmojiCompletion(firstLine))
          return getAutocompletionContextForEmoji(firstLine);
 
       // If we're in Markdown mode and have an appropriate string, try to get
@@ -1473,7 +1494,7 @@ public class RCompletionManager implements CompletionManager
           firstLineStripped.indexOf('"') != -1)
       {
         // is this an emoji completions
-        if( firstLine.matches(".*[:][a-zA-Z0-9_]+") ){
+        if( isEmojiCompletion(firstLine) ){
           return getAutocompletionContextForEmoji(firstLine);
         }
 
