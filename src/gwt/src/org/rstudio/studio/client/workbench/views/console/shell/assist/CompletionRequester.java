@@ -164,6 +164,7 @@ public class CompletionRequester
 
       // Transform the token once beforehand for completions.
       final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenEmoji = token.substring(token.lastIndexOf(':') + 1);
       final String tokenFuzzy = fuzzy(tokenSub);
 
       for (QualifiedName qname : cachedResult.completions)
@@ -173,6 +174,13 @@ public class CompletionRequester
          {
             if (StringUtil.isSubsequence(basename(qname.name), tokenFuzzy, true))
                newCompletions.add(qname);
+         }
+         else if( qname.type == RCompletionType.EMOJI)
+         {
+            // narrowing based on the .source
+            if( qname.source.contains(tokenEmoji) ){
+                newCompletions.add(qname);
+            }
          }
          else
          {
