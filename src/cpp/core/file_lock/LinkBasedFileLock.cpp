@@ -294,7 +294,8 @@ Error writeLockFile(const FilePath& lockFilePath)
       // but not all NFS support ::link()
       int fd = ::open(
                lockFilePath.absolutePathNative().c_str(),
-               O_WRONLY | O_CREAT | O_EXCL);
+               O_WRONLY | O_CREAT | O_EXCL,
+               0755);
       
       if (fd == -1)
       {
