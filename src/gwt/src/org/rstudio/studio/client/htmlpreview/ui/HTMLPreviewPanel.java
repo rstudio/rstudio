@@ -266,13 +266,13 @@ public class HTMLPreviewPanel extends ResizeComposite
       else
          publishButton_.setVisible(false);
       publishButtonSeparator_.setVisible(publishButton_.isVisible());
-      previewFrame_.navigate(url);
+      navigate(url);
    }
    
    @Override
    public void reload(String url)
    {
-      previewFrame_.navigate(url);
+      navigate(url);
    }
    
    @Override
@@ -295,6 +295,13 @@ public class HTMLPreviewPanel extends ResizeComposite
       findTextBox_.focus();
    }
 
+   private void navigate(String url)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setViewerUrl(url);
+      previewFrame_.navigate(url);
+   }
+   
    private final LayoutPanel layoutPanel_;
    private final AnchorableFrame previewFrame_;
    private final Toolbar toolbar_;
