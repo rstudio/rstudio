@@ -2487,7 +2487,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsEmoji", function(token)
 {
-  results <- emo::ji_completion(token)
+  results <- emo::ji_completion(sub("^[:]","", token))
 
   completions <- .rs.makeCompletions(
      token = token,

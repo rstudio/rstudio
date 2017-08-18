@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.r.Signature
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.core.client.Debug ;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1337,7 +1338,7 @@ public class RCompletionManager implements CompletionManager
          String line)
    {
       int index = line.lastIndexOf(':');
-      String token = line.substring(index + 1);
+      String token = line.substring(index);
 
       AutocompletionContext result = new AutocompletionContext(
             token,
@@ -2080,7 +2081,6 @@ public class RCompletionManager implements CompletionManager
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
 
-
          // Don't insert the `::` following a package completion if there is
          // already a `:` following the cursor
          if (textFollowingCursorIsColon)
@@ -2090,7 +2090,7 @@ public class RCompletionManager implements CompletionManager
             value = value + "/";
 
          if (qualifiedName.type == RCompletionType.EMOJI){
-              value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
+            value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
          } else if (!RCompletionType.isFileType(qualifiedName.type)) {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
