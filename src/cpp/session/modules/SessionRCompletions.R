@@ -2487,17 +2487,19 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsEmoji", function(token)
 {
-  results <- emo::ji_completion(sub("^[:]","", token))
+  tryCatch( {
+      results <- emo::ji_completion(sub("^[:]","", token))
+      .rs.makeCompletions(
+         token = token,
+         results = unname(results),
+         packages = names(results),
+         quote = FALSE,
+         type = .rs.acCompletionTypes$EMOJI,
+         overrideInsertParens = TRUE,
+         excludeOtherCompletions = TRUE
+      )
+  }, error = .rs.emptyCompletions() )
 
-  completions <- .rs.makeCompletions(
-     token = token,
-     results = unname(results),
-     packages = names(results),
-     quote = FALSE,
-     type = .rs.acCompletionTypes$EMOJI,
-     overrideInsertParens = TRUE,
-     excludeOtherCompletions = TRUE
-  )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
