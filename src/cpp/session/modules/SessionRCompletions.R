@@ -113,6 +113,11 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
 {
+    # short circuit if this looks like emoji completion
+    if( grepl( "[:][a-zA-Z0-9_]+$", token ) ){
+        return(.rs.getCompletionsEmoji(token))
+    }
+
    emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
 
    # fix up tokenization

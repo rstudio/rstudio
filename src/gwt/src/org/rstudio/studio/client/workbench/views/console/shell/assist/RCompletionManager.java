@@ -1154,7 +1154,7 @@ public class RCompletionManager implements CompletionManager
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
       // unless it's an emoji completion
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine) && !isEmojiCompletion(firstLine))
+      if (isLineInComment(firstLine) && !( isLineInRoxygenComment(firstLine) || isEmojiCompletion(firstLine)) )
          return false;
 
       // don't autocomplete if the cursor lies within the text of a
@@ -2096,11 +2096,8 @@ public class RCompletionManager implements CompletionManager
             value = value + "/";
 
          if (qualifiedName.type == RCompletionType.EMOJI){
-             // tokens are set to "" on comments
-             // so no need to replace in that case
-             if( value != ""){
-                value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
-             }
+             // tokens are set to "" on comments, fix that
+             value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
          } else if (!RCompletionType.isFileType(qualifiedName.type)) {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
@@ -2275,6 +2272,8 @@ public class RCompletionManager implements CompletionManager
          return "";
 
       String tokenValue = currentToken.getValue();
+      if( tokenValue.matches( "^\\s*#+'\\s+$" ))
+        return "" ;
 
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
 
