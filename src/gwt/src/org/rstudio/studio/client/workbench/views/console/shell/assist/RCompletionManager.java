@@ -1153,7 +1153,8 @@ public class RCompletionManager implements CompletionManager
 
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
+      // unless it's an emoji completion
+      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine) && !isEmojiCompletion(firstLine))
          return false;
 
       // don't autocomplete if the cursor lies within the text of a
@@ -1466,6 +1467,11 @@ public class RCompletionManager implements CompletionManager
                cursorTokenValue.startsWith("\"");
          if (!isSingleLineString)
             return getAutocompletionContextForEmoji(firstLine);
+      }
+
+      // emoji in comment
+      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine) && isEmojiCompletion(firstLine)){
+         return getAutocompletionContextForEmoji(firstLine);
       }
 
       // Markdown mode + emoji completions
@@ -2090,7 +2096,11 @@ public class RCompletionManager implements CompletionManager
             value = value + "/";
 
          if (qualifiedName.type == RCompletionType.EMOJI){
-            value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
+             // tokens are set to "" on comments
+             // so no need to replace in that case
+             if( value != ""){
+                value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
+             }
          } else if (!RCompletionType.isFileType(qualifiedName.type)) {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
@@ -2261,7 +2271,7 @@ public class RCompletionManager implements CompletionManager
       }
 
       // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "text", "punctuation"))
+      if (currentToken.hasType("operator", "text", "punctuation"))
          return "";
 
       String tokenValue = currentToken.getValue();
