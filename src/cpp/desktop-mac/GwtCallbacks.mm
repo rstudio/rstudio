@@ -995,11 +995,6 @@ private:
 
 - (void) setViewerUrl: (NSString*) url
 {
-   // set it for myself (in case I am hosting the page_viewer)
-   WebViewController* webViewController = (WebViewController*)self;
-   [webViewController setViewerURL: url];
-
-   // set it for the main frame
    [[MainFrameController instance] setViewerURL: url];
 }
 
