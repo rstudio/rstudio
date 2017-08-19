@@ -78,7 +78,7 @@ public abstract class RegexFilter implements Serializable {
       include = (c == '+');
     }
     Pattern p = Pattern.compile(regex);
-    values.add(regex);
+    values.add((include ? '+' : '-') + regex);
     typePatterns.add(p);
     includeType.add(include);
   }
