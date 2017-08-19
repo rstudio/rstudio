@@ -21,7 +21,7 @@ import org.rstudio.core.client.resources.StaticDataResource;
 public interface AceThemeResources extends ClientBundle
 {
    AceThemeResources INSTANCE = GWT.create(AceThemeResources.class);
-
+   
    @Source("ambiance.css")
    StaticDataResource ambiance();
 
@@ -45,7 +45,7 @@ public interface AceThemeResources extends ClientBundle
 
    @Source("dawn.css")
    StaticDataResource dawn();
-
+   
    @Source("dracula.css")
    StaticDataResource dracula();
 
@@ -114,5 +114,5 @@ public interface AceThemeResources extends ClientBundle
 
    @Source("xcode.css")
    StaticDataResource xcode();
-
+   
 }
