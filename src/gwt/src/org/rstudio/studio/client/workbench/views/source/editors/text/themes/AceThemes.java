@@ -42,7 +42,7 @@ public class AceThemes
    public static final String COBALT = "Cobalt";
    public static final String CRIMSON_EDITOR = "Crimson Editor";
    public static final String DAWN = "Dawn";
-   public static final String DAWN = "Dracula";
+   public static final String DRACULA = "Dracula";
    public static final String DREAMWEAVER = "Dreamweaver";
    public static final String ECLIPSE = "Eclipse";
    public static final String IDLE_FINGERS = "Idle Fingers";
@@ -65,7 +65,7 @@ public class AceThemes
    public static final String TWILIGHT = "Twilight";
    public static final String VIBRANT_INK = "Vibrant Ink";
    public static final String XCODE = "Xcode";
-
+   
    @Inject
    public AceThemes(AceThemeResources res,
                     final Provider<UIPrefs> prefs,
@@ -76,7 +76,7 @@ public class AceThemes
       darkThemes_ = new HashMap<String, Boolean>();
       events_ = events;
       prefs_ = prefs;
-
+      
       addTheme(AMBIANCE, res.ambiance(), true);
       addTheme(CHAOS, res.chaos(), true);
       addTheme(CHROME, res.chrome(), false);
@@ -85,6 +85,7 @@ public class AceThemes
       addTheme(COBALT, res.cobalt(), true);
       addTheme(CRIMSON_EDITOR, res.crimson_editor(), false);
       addTheme(DAWN, res.dawn(), false);
+      addTheme(DRACULA, res.dracula(), false);
       addTheme(DREAMWEAVER, res.dreamweaver(), false);
       addTheme(ECLIPSE, res.eclipse(), false);
       addTheme(IDLE_FINGERS, res.idle_fingers(), true);
@@ -137,7 +138,7 @@ public class AceThemes
       if (isDark)
          darkThemes_.put(name, true);
    }
-
+   
    public boolean isDark(String themeName)
    {
       if (themeName == null)
@@ -145,27 +146,27 @@ public class AceThemes
       else
          return darkThemes_.containsKey(themeName);
    }
-
+   
    private void applyTheme(Document document, final String themeName)
    {
       Element oldStyleEl = document.getElementById(linkId_);
       if (oldStyleEl != null)
          oldStyleEl.removeFromParent();
-
+      
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
       currentStyleEl.setHref(getThemeUrl(themeName));
       document.getBody().appendChild(currentStyleEl);
-
+      
       addDarkClassIfNecessary(document, themeName);
-
+      
       if (prefs_.get().useLigatures().getValue())
          document.getBody().addClassName("editor_ligatures");
       else
          document.getBody().removeClassName("editor_ligatures");
-
+      
       // Deferred so that the browser can render the styles.
       new Timer()
       {
@@ -186,7 +187,7 @@ public class AceThemes
    {
       applyTheme(document, prefs_.get().theme().getValue());
    }
-
+   
    public void addDarkClassIfNecessary(Document document, String themeName)
    {
       if (isDark(themeName))
