@@ -402,10 +402,12 @@ public class ViewerPresenter extends BasePresenter
    
    private void updateZoomWindow(String url)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop()) {
+         Desktop.getFrame().setViewerUrl(url);
          Desktop.getFrame().reloadViewerZoomWindow(url);
-      else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
+      } else if ((zoomWindow_ != null) && !zoomWindow_.isClosed()) {
          zoomWindow_.setLocationHref(url);
+      }
    }
    
    private void stop(boolean interruptR)

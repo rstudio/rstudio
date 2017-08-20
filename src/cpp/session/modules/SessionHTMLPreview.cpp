@@ -1016,24 +1016,16 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
          // get full path to file
          filePath = module_context::resolveAliasedPath(url);
 
-         // if it's already in the session temp dir then use the path directly
-         if (module_context::isSessionTempPath(filePath))
-         {
-            viewerFilePath = filePath;
-         }
-         else
-         {
-            // create temp file to write standalone html to (place it within a temp dir
-            // so the default download file name is pretty)
-            FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
-            Error error = viewerTempDir.ensureDirectory();
-            if (error)
-               throw r::exec::RErrorException(r::endUserErrorMessage(error));
-            viewerFilePath = viewerTempDir.childPath(filePath.filename());
-         }
+         // create temp file to write standalone html to (place it within a temp dir
+         // so the default download file name is pretty)
+         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+         Error error = viewerTempDir.ensureDirectory();
+         if (error)
+            throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         viewerFilePath = viewerTempDir.childPath(filePath.filename());
 
          // create base64 encoded version
-         Error error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
          if (error)
             throw r::exec::RErrorException(r::endUserErrorMessage(error));
 
@@ -1067,6 +1059,14 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
          !filePath.empty(),   // save as
          false                // re-execute
        );
+
+      // return the path to the viewer file if it's a file, otherwise
+      // return the URL
+      r::sexp::Protect rProtect;
+      if (!viewerFilePath.empty())
+         return r::sexp::create(viewerFilePath.absolutePath(), &rProtect);
+      else
+         return r::sexp::create(url, &rProtect);
    }
    catch(r::exec::RErrorException e)
    {
