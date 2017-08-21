@@ -85,7 +85,7 @@ public class AceThemes
       addTheme(COBALT, res.cobalt(), true);
       addTheme(CRIMSON_EDITOR, res.crimson_editor(), false);
       addTheme(DAWN, res.dawn(), false);
-      addTheme(DRACULA, res.dracula(), false);
+      addTheme(DRACULA, res.dracula(), true);
       addTheme(DREAMWEAVER, res.dreamweaver(), false);
       addTheme(ECLIPSE, res.eclipse(), false);
       addTheme(IDLE_FINGERS, res.idle_fingers(), true);
