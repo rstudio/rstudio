@@ -263,6 +263,24 @@ public class TerminalSession extends XTermWidget
       socket_.dispatchOutput(output, doLocalEcho());
    }
 
+   public void receivedSendToTerminal(String input)
+   {
+      // tweak line endings 
+      String inputText = input;
+      if (inputText != null && BrowseCap.isWindowsDesktop())
+      {
+         int shellType = getProcInfo().getShellType();
+         if (shellType == TerminalShellInfo.SHELL_CMD32 ||
+               shellType == TerminalShellInfo.SHELL_CMD64 ||
+               shellType == TerminalShellInfo.SHELL_PS32 ||
+               shellType == TerminalShellInfo.SHELL_PS64)
+         {
+            inputText = StringUtil.normalizeNewLinesToCR(inputText);
+         }
+      }
+      receivedInput(inputText);
+   }
+   
    @Override
    public void receivedInput(String input)
    {
