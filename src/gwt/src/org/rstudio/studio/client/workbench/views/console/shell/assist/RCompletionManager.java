@@ -30,6 +30,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
+import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
@@ -88,13 +89,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.r.Signature
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.core.client.Debug ;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class RCompletionManager implements CompletionManager
-{  
+{
    // globally suppress F1 and F2 so no default browser behavior takes those
    // keystrokes (e.g. Help in Chrome)
    static
@@ -116,12 +118,12 @@ public class RCompletionManager implements CompletionManager
          }
       });
    }
-   
+
    public void onPaste(PasteEvent event)
    {
       popup_.hide();
    }
-   
+
    public RCompletionManager(InputEditorDisplay input,
                              NavigableSourceEditor navigableSourceEditor,
                              CompletionPopupDisplay popup,
@@ -133,7 +135,7 @@ public class RCompletionManager implements CompletionManager
                              boolean isConsole)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       input_ = input ;
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
@@ -148,7 +150,7 @@ public class RCompletionManager implements CompletionManager
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
-      
+
       handlers_.add(input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
          {
@@ -174,7 +176,7 @@ public class RCompletionManager implements CompletionManager
                context_.onSelection(event.getSelectedItem()) ;
          }
       }));
-      
+
       handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
@@ -185,23 +187,23 @@ public class RCompletionManager implements CompletionManager
                showHelpDeferred(context_, lastSelectedItem_, 600);
          }
       }));
-      
+
       handlers_.add(popup_.addMouseDownHandler(new MouseDownHandler() {
          public void onMouseDown(MouseDownEvent event)
          {
             ignoreNextInputBlur_ = true ;
          }
       }));
-      
+
       handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
-         
+
          @Override
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             docDisplay_.setPopupVisible(true);
          }
       }));
-      
+
       handlers_.add(popup_.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
@@ -217,16 +219,16 @@ public class RCompletionManager implements CompletionManager
             });
          }
       }));
-      
+
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          private boolean wasSigtipShowing_ = false;
-         
+
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
             RCompletionToolTip toolTip = sigTipManager_.getToolTip();
-            
+
             if (event.isAttached())
             {
                if (toolTip != null && toolTip.isShowing())
@@ -246,9 +248,9 @@ public class RCompletionManager implements CompletionManager
             }
          }
       }));
-      
+
    }
-   
+
    @Inject
    public void initialize(GlobalDisplay globalDisplay,
                           FileTypeRegistry fileTypeRegistry,
@@ -262,7 +264,7 @@ public class RCompletionManager implements CompletionManager
       helpStrategy_ = helpStrategy;
       uiPrefs_ = uiPrefs;
    }
-   
+
    public void detach()
    {
       handlers_.removeHandler();
@@ -275,25 +277,25 @@ public class RCompletionManager implements CompletionManager
    {
       popup_.hide();
    }
-   
+
    public void codeCompletion()
    {
       if (initFilter_ == null || initFilter_.shouldComplete(null))
          beginSuggest(true, false, true);
    }
-   
+
    public void goToHelp()
    {
-      InputEditorLineWithCursorPosition linePos = 
+      InputEditorLineWithCursorPosition linePos =
             InputEditorUtil.getLineWithCursorPosition(input_);
 
       server_.getHelpAtCursor(
             linePos.getLine(), linePos.getPosition(),
             new SimpleRequestCallback<Void>("Help"));
    }
-   
+
    public void goToFunctionDefinition()
-   {   
+   {
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
       AceEditor editor = (AceEditor) docDisplay_;
@@ -306,29 +308,29 @@ public class RCompletionManager implements CompletionManager
             // token (obstensibly a funciton name)
             if (cursor.isLeftBracket())
                cursor.moveToPreviousToken();
-            
+
             // if the previous token is an extraction operator, we shouldn't
             // navigate (as this isn't the 'full' function name)
             if (cursor.moveToPreviousToken())
             {
                if (cursor.isExtractionOperator())
                   return;
-               
+
                cursor.moveToNextToken();
             }
-            
+
             // if this is a string, try resolving that string as a file name
             if (cursor.hasType("string"))
             {
                String tokenValue = cursor.currentValue();
                String path = tokenValue.substring(1, tokenValue.length() - 1);
                FileSystemItem filePath = FileSystemItem.createFile(path);
-               
+
                // This will show a dialog error if no such file exists; this
                // seems the most appropriate action in such a case.
                fileTypeRegistry_.editFile(filePath);
             }
-            
+
             String functionName = cursor.currentValue();
             JsArray<ScopeFunction> scopes =
                   editor.getAllFunctionScopes();
@@ -347,70 +349,70 @@ public class RCompletionManager implements CompletionManager
             }
          }
       }
-      
+
       // intra-file navigation failed -- hit the server and find a definition
       // in the project index
-      
+
       // determine current line and cursor position
-      InputEditorLineWithCursorPosition lineWithPos = 
+      InputEditorLineWithCursorPosition lineWithPos =
                       InputEditorUtil.getLineWithCursorPosition(input_);
-      
+
       // delayed progress indicator
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             globalDisplay_, 1000, "Searching for function definition...");
-      
+
       server_.getObjectDefinition(
          lineWithPos.getLine(),
-         lineWithPos.getPosition(), 
+         lineWithPos.getPosition(),
          new ServerRequestCallback<ObjectDefinition>() {
             @Override
             public void onResponseReceived(ObjectDefinition def)
             {
                 // dismiss progress
                 progress.dismiss();
-                    
+
                 // if we got a hit
                 if (def.getObjectName() != null)
-                {   
+                {
                    // search locally if a function navigator was provided
                    if (navigableSourceEditor_ != null)
                    {
                       // try to search for the function locally
-                      SourcePosition position = 
+                      SourcePosition position =
                          navigableSourceEditor_.findFunctionPositionFromCursor(
                                                          def.getObjectName());
                       if (position != null)
                       {
-                         navigableSourceEditor_.navigateToPosition(position, 
+                         navigableSourceEditor_.navigateToPosition(position,
                                                                    true);
                          return; // we're done
                       }
 
                    }
-                   
+
                    // if we didn't satisfy the request using a function
                    // navigator and we got a file back from the server then
                    // navigate to the file/loc
-                   if (def.getObjectType() == 
+                   if (def.getObjectType() ==
                          FileFunctionDefinition.OBJECT_TYPE)
-                   {  
-                      FileFunctionDefinition fileDef = 
+                   {
+                      FileFunctionDefinition fileDef =
                             def.getObjectData().cast();
-                      fileTypeRegistry_.editFile(fileDef.getFile(), 
+                      fileTypeRegistry_.editFile(fileDef.getFile(),
                                                  fileDef.getPosition());
                    }
-                   
-                   // if we didn't get a file back see if we got a 
+
+                   // if we didn't get a file back see if we got a
                    // search path definition
                    else if (def.getObjectType() ==
                               SearchPathFunctionDefinition.OBJECT_TYPE)
                    {
-                      SearchPathFunctionDefinition searchDef = 
+                      SearchPathFunctionDefinition searchDef =
                             def.getObjectData().cast();
                       eventBus_.fireEvent(
                             new CodeBrowserNavigationEvent(searchDef));
                    }
-                   
+
                    // finally, check to see if it's a data frame
                    else if (def.getObjectType() == DataDefinition.OBJECT_TYPE)
                    {
@@ -424,29 +426,29 @@ public class RCompletionManager implements CompletionManager
             public void onError(ServerError error)
             {
                progress.dismiss();
-               
+
                globalDisplay_.showErrorMessage("Error Searching for Function",
                                                error.getUserMessage());
             }
          });
    }
-   
+
    public boolean previewKeyDown(NativeEvent event)
    {
       suggestTimer_.cancel();
-      
+
       if (sigTipManager_.previewKeyDown(event))
          return true;
-      
+
       if (isDisabled())
          return false;
-      
+
       /**
        * KEYS THAT MATTER
        *
        * When popup not showing:
        * Tab - attempt completion (handled in Console.java)
-       * 
+       *
        * When popup showing:
        * Esc - dismiss popup
        * Enter/Tab - accept current selection
@@ -454,7 +456,7 @@ public class RCompletionManager implements CompletionManager
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
        * All others - dismiss popup
        */
-      
+
       nativeEvent_ = event;
 
       int keycode = event.getKeyCode();
@@ -465,23 +467,24 @@ public class RCompletionManager implements CompletionManager
          // don't allow ctrl + space for completions in Emacs mode
          if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
             return false;
-         
+
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
                // If we're in markdown mode, only autocomplete in '```{r',
-               // '[](', or '`r |' contexts
+               // '[](', '`r |', or '.*:..' (emoji) contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
                   String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
-                      (Pattern.create(".*`r").test(currentLine) &&
-                            StringUtil.countMatches(currentLine, '`') % 2 == 1)))
+                      (Pattern.create(".*`r").test(currentLine) && StringUtil.countMatches(currentLine, '`') % 2 == 1) ||
+                      Pattern.create(".*[:][a-zA-Z0-9_]+").test(currentLine)
+                      ))
                      return false;
                }
-               
+
                // If we're in tex mode, only provide completions in chunks
                if (DocumentMode.isCursorInTexMode(docDisplay_))
                {
@@ -515,7 +518,7 @@ public class RCompletionManager implements CompletionManager
          // bail on modifier keys
          if (KeyboardHelper.isModifierKey(keycode))
             return false;
-         
+
          // allow emacs-style navigation of popup entries
          if (modifier == KeyboardShortcut.CTRL)
          {
@@ -525,7 +528,7 @@ public class RCompletionManager implements CompletionManager
             case KeyCodes.KEY_N: return popup_.selectNext();
             }
          }
-         
+
          else if (modifier == KeyboardShortcut.NONE)
          {
             if (keycode == KeyCodes.KEY_ESCAPE)
@@ -533,7 +536,7 @@ public class RCompletionManager implements CompletionManager
                invalidatePendingRequests() ;
                return true ;
             }
-            
+
             // NOTE: It is possible for the popup to still be showing, but
             // showing offscreen with no values. We only grab these keys
             // when the popup is both showing, and has completions.
@@ -551,7 +554,7 @@ public class RCompletionManager implements CompletionManager
                      return true ;
                   }
                }
-               
+
                else if (keycode == KeyCodes.KEY_TAB)
                {
                   QualifiedName value = popup_.getSelectedValue() ;
@@ -559,12 +562,12 @@ public class RCompletionManager implements CompletionManager
                   {
                      if (value.type == RCompletionType.DIRECTORY)
                         context_.suggestOnAccept_ = true;
-                     
+
                      context_.onSelection(value);
                      return true;
                   }
                }
-               
+
                else if (keycode == KeyCodes.KEY_UP)
                   return popup_.selectPrev() ;
                else if (keycode == KeyCodes.KEY_DOWN)
@@ -577,7 +580,7 @@ public class RCompletionManager implements CompletionManager
                   return popup_.selectFirst();
                else if (keycode == KeyCodes.KEY_END)
                   return popup_.selectLast();
-               
+
                if (keycode == 112) // F1
                {
                   context_.showHelpTopic() ;
@@ -589,12 +592,12 @@ public class RCompletionManager implements CompletionManager
                   return true;
                }
             }
-            
+
          }
-         
+
          if (canContinueCompletions(event))
             return false;
-         
+
          // if we insert a '/', we're probably forming a directory --
          // pop up completions
          if (keycode == 191 && modifier == KeyboardShortcut.NONE)
@@ -602,27 +605,27 @@ public class RCompletionManager implements CompletionManager
             input_.insertCode("/");
             return beginSuggest(true, true, false);
          }
-         
+
          // continue showing completions on backspace
          if (keycode == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE &&
              !docDisplay_.inMultiSelectMode())
          {
             int cursorColumn = input_.getCursorPosition().getColumn();
             String currentLine = docDisplay_.getCurrentLine();
-            
+
             // only suggest if the character previous to the cursor is an R identifier
             // also halt suggestions if we're about to remove the only character on the line
             if (cursorColumn > 0)
             {
                char ch = currentLine.charAt(cursorColumn - 2);
                char prevCh = currentLine.charAt(cursorColumn - 3);
-               
+
                boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
                      (ch == ':' && prevCh == ':') ||
                      ch == '$' ||
                      ch == '@' ||
                      ch == '/'; // for file completions
-               
+
                if (currentLine.length() > 0 &&
                      cursorColumn > 0 &&
                      isAcceptableCharSequence)
@@ -641,7 +644,7 @@ public class RCompletionManager implements CompletionManager
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-                  
+
                   return beginSuggest(false, false, false);
                }
             }
@@ -651,14 +654,14 @@ public class RCompletionManager implements CompletionManager
                return true;
             }
          }
-         
+
          invalidatePendingRequests();
          return false ;
       }
-      
+
       return false ;
    }
-   
+
    private boolean isValidForRIdentifier(char c) {
       return (c >= 'a' && c <= 'z') ||
              (c >= 'A' && c <= 'Z') ||
@@ -666,30 +669,30 @@ public class RCompletionManager implements CompletionManager
              (c == '.') ||
              (c == '_');
    }
-   
+
    private boolean checkCanAutoPopup(char c, int lookbackLimit)
    {
       if (docDisplay_.isVimModeOn() &&
             !docDisplay_.isVimInInsertMode())
          return false;
-      
+
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
-      
+
       // Don't auto-popup when the cursor is within a string
       if (docDisplay_.isCursorInSingleLineString())
          return false;
-      
+
       // Don't auto-popup if there is a character following the cursor
       // (this implies an in-line edit and automatic popups are likely to
       // be annoying)
       if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
          return false;
-      
+
       boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
-      
+
       if (isConsole_ && !uiPrefs_.alwaysCompleteInConsole().getValue())
          canAutoPopup = false;
 
@@ -706,16 +709,16 @@ public class RCompletionManager implements CompletionManager
       }
 
       return canAutoPopup;
-      
+
    }
-   
+
    public boolean previewKeyPress(char c)
    {
       suggestTimer_.cancel();
-      
+
       if (isDisabled())
          return false;
-      
+
       if (popup_.isShowing())
       {
          // If insertion of this character completes an available suggestion,
@@ -723,7 +726,7 @@ public class RCompletionManager implements CompletionManager
          // apply that.
          QualifiedName selectedItem =
                popup_.getSelectedValue();
-         
+
          // NOTE: We should strip off trailing colons so that in-line edits of
          // package completions, e.g.
          //
@@ -734,7 +737,7 @@ public class RCompletionManager implements CompletionManager
                selectedItem.name.replaceAll(":",  "").equals(token_ + c))
          {
             String fullToken = token_ + c;
-            
+
             // Find prefix matches -- there should only be one if we really
             // want this behaviour (ie the current selection)
             int prefixMatchCount = 0;
@@ -748,25 +751,25 @@ public class RCompletionManager implements CompletionManager
                      break;
                }
             }
-            
+
             if (prefixMatchCount == 1)
             {
                // We place the completion list offscreen to ensure that
-               // backspace events are handled later. 
+               // backspace events are handled later.
                popup_.placeOffscreen();
                return false;
             }
          }
-         
+
          if (c == ':')
          {
             suggestTimer_.schedule(false, true, false);
             return false;
          }
-         
+
          if (c == ' ')
             return false;
-         
+
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can
          // enter the document.
@@ -779,27 +782,27 @@ public class RCompletionManager implements CompletionManager
             }
          });
          return false;
-         
+
       }
       else
       {
          // Bail if we're not in R mode
          if (!DocumentMode.isCursorInRMode(docDisplay_))
             return false;
-         
+
          // Bail if we're in a single-line string
          if (docDisplay_.isCursorInSingleLineString())
             return false;
-         
+
          // if there's a selection, bail
-         if (input_.hasSelection()) 
+         if (input_.hasSelection())
             return false;
-         
+
          // Bail if there is an alpha-numeric character
          // following the cursor
          if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
             return false;
-         
+
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
@@ -807,7 +810,7 @@ public class RCompletionManager implements CompletionManager
 
          if (!autoPopupEnabled)
             return false;
-         
+
          // Immediately display completions after '$', '::', etc.
          char prevChar = docDisplay_.getCurrentLine().charAt(
                input_.getCursorPosition().getColumn() - 1);
@@ -823,7 +826,7 @@ public class RCompletionManager implements CompletionManager
             {
                return false;
             }
-            
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -834,10 +837,10 @@ public class RCompletionManager implements CompletionManager
             });
             return false;
          }
-         
+
          // Check for a valid number of R identifier characters for autopopup
          boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
-         
+
          // Attempt to pop up completions immediately after a function call.
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
@@ -847,13 +850,13 @@ public class RCompletionManager implements CompletionManager
                   "[" + RegexUtil.wordCharacter() + "._]",
                   false,
                   true);
-            
+
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
-            
+
             sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
          }
-         
+
          if (
                (canAutoPopup) ||
                isSweaveCompletion(c))
@@ -864,7 +867,7 @@ public class RCompletionManager implements CompletionManager
       }
       return false ;
    }
-   
+
    @SuppressWarnings("unused")
    private boolean isRoxygenTagValidHere()
    {
@@ -906,9 +909,9 @@ public class RCompletionManager implements CompletionManager
       {
          return false ;
       }
-      
+
       int keyCode = event.getKeyCode() ;
-      
+
       if (keyCode >= 'a' && keyCode <= 'z')
          return true ;
       else if (keyCode >= 'A' && keyCode <= 'Z')
@@ -919,15 +922,15 @@ public class RCompletionManager implements CompletionManager
          return true ;
       else if (KeyboardHelper.isUnderscore(event))
          return true;
-      
+
       if (event.getShiftKey())
          return false ;
-      
+
       if (keyCode >= '0' && keyCode <= '9')
          return true ;
       if (keyCode == 190) // period
          return true ;
-      
+
       return false ;
    }
 
@@ -940,18 +943,18 @@ public class RCompletionManager implements CompletionManager
                                           boolean hidePopup)
    {
       invalidation_.invalidate();
-      
+
       if (hidePopup && popup_.isShowing())
       {
          popup_.hide();
          popup_.clearHelp(false);
       }
-      
+
       if (flushCache)
          requester_.flushCache() ;
    }
-   
-   
+
+
    // Things we need to form an appropriate autocompletion:
    //
    // 1. The token to the left of the cursor,
@@ -959,7 +962,7 @@ public class RCompletionManager implements CompletionManager
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
    class AutocompletionContext {
-      
+
       // Be sure to sync these with 'SessionCodeTools.R'!
       public static final int TYPE_UNKNOWN = 0;
       public static final int TYPE_FUNCTION = 1;
@@ -975,7 +978,8 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
       public static final int TYPE_PACKAGE = 13;
-      
+      public static final int TYPE_EMOJI = 14;
+
       public AutocompletionContext(
             String token,
             List<String> assocData,
@@ -989,7 +993,7 @@ public class RCompletionManager implements CompletionManager
          numCommas_ = numCommas;
          functionCallString_ = functionCallString;
       }
-      
+
       public AutocompletionContext(
             String token,
             ArrayList<String> assocData,
@@ -1001,7 +1005,7 @@ public class RCompletionManager implements CompletionManager
          numCommas_ = Arrays.asList(0);
          functionCallString_ = "";
       }
-      
+
       public AutocompletionContext(
             String token,
             String assocData,
@@ -1013,8 +1017,8 @@ public class RCompletionManager implements CompletionManager
          numCommas_ = Arrays.asList(0);
          functionCallString_ = "";
       }
-      
-      
+
+
       public AutocompletionContext(
             String token,
             int dataType)
@@ -1025,7 +1029,7 @@ public class RCompletionManager implements CompletionManager
          numCommas_ = Arrays.asList(0);
          functionCallString_ = "";
       }
-      
+
       public AutocompletionContext()
       {
          token_ = "";
@@ -1084,19 +1088,19 @@ public class RCompletionManager implements CompletionManager
       {
          this.functionCallString_ = functionCallString;
       }
-      
+
       public void add(String assocData, Integer dataType, Integer numCommas)
       {
          assocData_.add(assocData);
          dataType_.add(dataType);
          numCommas_.add(numCommas);
       }
-      
+
       public void add(String assocData, Integer dataType)
       {
          add(assocData, dataType, 0);
       }
-      
+
       public void add(String assocData)
       {
          add(assocData, AutocompletionContext.TYPE_UNKNOWN, 0);
@@ -1107,20 +1111,25 @@ public class RCompletionManager implements CompletionManager
       private List<Integer> dataType_;
       private List<Integer> numCommas_;
       private String functionCallString_;
-      
+
    }
-   
+
    private boolean isLineInRoxygenComment(String line)
    {
       Pattern pattern = Pattern.create("^\\s*#+'");
       return pattern.test(line);
    }
-   
+
    private boolean isLineInComment(String line)
    {
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
-   
+
+   private boolean isEmojiCompletion(String line )
+   {
+      return line.matches(".*[:][a-zA-Z0-9_]+$") ;
+   }
+
    /**
     * If false, the suggest operation was aborted
     */
@@ -1129,28 +1138,31 @@ public class RCompletionManager implements CompletionManager
                                 boolean canAutoInsert)
    {
       suggestTimer_.cancel();
-      
+
       if (!input_.isSelectionCollapsed())
          return false ;
-      
+
       invalidatePendingRequests(flushCache, false);
-      
+
       InputEditorSelection selection = input_.getSelection();
       if (selection == null)
          return false;
-      
+
       int cursorCol = selection.getStart().getPosition();
       String firstLine = input_.getText().substring(0, cursorCol);
-      
+
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
+      // unless it's an emoji completion
+      if (isLineInComment(firstLine) && !( isLineInRoxygenComment(firstLine) || isEmojiCompletion(firstLine)) )
          return false;
-      
+
       // don't autocomplete if the cursor lies within the text of a
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
       // the majority of cases
+      //
+      // unless it's an emoji completion
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       if (cursorToken.hasType("string"))
       {
@@ -1158,10 +1170,10 @@ public class RCompletionManager implements CompletionManager
          boolean isSingleLineString =
                cursorTokenValue.startsWith("'") ||
                cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         if (!isSingleLineString && !isEmojiCompletion(firstLine))
             return false;
       }
-      
+
       // don't auto-complete with tab on lines with only whitespace,
       // if the insertion character was a tab (unless the user has opted in)
       if (!uiPrefs_.allowTabMultilineCompletion().getValue())
@@ -1171,9 +1183,9 @@ public class RCompletionManager implements CompletionManager
             if (firstLine.matches("^\\s*$"))
                return false;
       }
-      
+
       AutocompletionContext context = getAutocompletionContext();
-      
+
       // Fix up the context token for non-file completions -- e.g. in
       //
       //    foo<-rn
@@ -1182,48 +1194,48 @@ public class RCompletionManager implements CompletionManager
       // but is effectively a bandaid until the autocompletion revamp.
       if (context.getToken().startsWith("-"))
          context.setToken(context.getToken().substring(1));
-      
+
       // fix up roxygen autocompletion for case where '@' is snug against
       // the comment marker
       if (context.getToken().equals("'@"))
          context.setToken(context.getToken().substring(1));
-      
+
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoInsert);
-      
+
       RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          TokenCursor cursor = codeModel.getTokenCursor();
-         
+
          if (cursor.moveToPosition(input_.getCursorPosition()))
          {
             String token = "";
             if (cursor.hasType("identifier"))
                token = cursor.currentValue();
-            
+
             String cursorPos = "left";
             if (cursor.currentValue() == "=")
                cursorPos = "right";
-            
+
             TokenCursor clone = cursor.cloneCursor();
             if (clone.moveToPreviousToken())
                if (clone.currentValue() == "=")
                   cursorPos = "right";
-            
+
             // Try to get a dplyr join completion
             DplyrJoinContext joinContext =
                   codeModel.getDplyrJoinContextFromInfixChain(cursor);
-            
+
             // If that failed, try a non-infix lookup
             if (joinContext == null)
             {
                String joinString =
                      getDplyrJoinString(editor, cursor);
-               
+
                if (!StringUtil.isNullOrEmpty(joinString))
                {
                   requester_.getDplyrJoinCompletionsString(
@@ -1243,22 +1255,22 @@ public class RCompletionManager implements CompletionManager
                      implicit,
                      context_);
                return true;
-               
+
             }
-            
+
             // Try to see if there's an object name we should use to supplement
             // completions
             if (cursor.moveToPosition(input_.getCursorPosition()))
                infixData = codeModel.getDataFromInfixChain(cursor);
          }
       }
-      
+
       String filePath = getSourceDocumentPath();
       String docId = getSourceDocumentId();
-      
+
       // Provide 'line' for R custom completers
       String line = docDisplay_.getCurrentLineUpToCursor();
-      
+
       requester_.getCompletions(
             context.getToken(),
             context.getAssocData(),
@@ -1277,7 +1289,7 @@ public class RCompletionManager implements CompletionManager
 
       return true ;
    }
-   
+
    private String getDplyrJoinString(
          AceEditor editor,
          TokenCursor cursor)
@@ -1287,13 +1299,13 @@ public class RCompletionManager implements CompletionManager
          int commaCount = cursor.findOpeningBracketCountCommas("(", true);
          if (commaCount == -1)
             break;
-         
+
          if (!cursor.moveToPreviousToken())
             return "";
 
          if (!cursor.currentValue().matches(".*join$"))
             continue;
-         
+
          if (commaCount < 2)
             return "";
 
@@ -1312,8 +1324,8 @@ public class RCompletionManager implements CompletionManager
       }
       return "";
    }
-   
-   
+
+
    private void addAutocompletionContextForFile(AutocompletionContext context,
                                                 String line)
    {
@@ -1322,35 +1334,49 @@ public class RCompletionManager implements CompletionManager
       context.add(token, AutocompletionContext.TYPE_FILE);
       context.setToken(token);
    }
-   
+
+   private AutocompletionContext getAutocompletionContextForEmoji(
+         String line)
+   {
+      int index = line.lastIndexOf(':');
+      String token = line.substring(index);
+
+      AutocompletionContext result = new AutocompletionContext(
+            token,
+            token,
+            AutocompletionContext.TYPE_EMOJI);
+
+      return result;
+   }
+
    private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
          String line)
    {
       int index = line.lastIndexOf('(');
       String token = line.substring(index + 1);
-      
+
       AutocompletionContext result = new AutocompletionContext(
             token,
             token,
             AutocompletionContext.TYPE_FILE);
-      
+
       // NOTE: we overload the meaning of the function call string for file
       // completions, to signal whether we should generate files relative to
       // the current working directory, or to the file being used for
       // completions
       result.setFunctionCallString("useFile");
       return result;
-      
+
    }
-   
-   
+
+
    private void addAutocompletionContextForNamespace(
          String token,
          AutocompletionContext context)
    {
          String[] splat = token.split(":{2,3}");
          String left = "";
-         
+
          if (splat.length <= 0)
          {
             left = "";
@@ -1359,42 +1385,42 @@ public class RCompletionManager implements CompletionManager
          {
             left = splat[0];
          }
-         
+
          int type = token.contains(":::") ?
                AutocompletionContext.TYPE_NAMESPACE_ALL :
                   AutocompletionContext.TYPE_NAMESPACE_EXPORTED;
-               
+
          context.add(left, type);
    }
-   
-   
+
+
    private boolean addAutocompletionContextForDollar(AutocompletionContext context)
    {
       // Establish an evaluation context by looking backwards
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return false;
-      
+
       CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
-      
+
       TokenCursor cursor = codeModel.getTokenCursor();
-         
+
       if (!cursor.moveToPosition(input_.getCursorPosition()))
          return false;
-      
+
       // Move back to the '$'
       while (cursor.currentValue() != "$" && cursor.currentValue() != "@")
          if (!cursor.moveToPreviousToken())
             return false;
-      
+
       int type = cursor.currentValue() == "$" ?
             AutocompletionContext.TYPE_DOLLAR :
             AutocompletionContext.TYPE_AT;
-      
+
       // Put a cursor here
       TokenCursor contextEndCursor = cursor.cloneCursor();
-      
+
       // We allow for arbitrary elements previous, so we want to get e.g.
       //
       //     env::foo()$bar()[1]$baz
@@ -1405,104 +1431,133 @@ public class RCompletionManager implements CompletionManager
       // (the completion is still occurring in a '$' context, so we do want
       // to exclude completions from other scopes)
       String data = "";
-      
+
       if (cursor.moveToPreviousToken() && cursor.findStartOfEvaluationContext())
       {
          data = editor.getTextForRange(Range.fromPoints(
                cursor.currentPosition(),
                contextEndCursor.currentPosition()));
       }
-      
+
       context.add(data, type);
       return true;
    }
-   
-   
+
    private AutocompletionContext getAutocompletionContext()
    {
       AutocompletionContext context = new AutocompletionContext();
-      
+
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
-      
+
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
-      
+
+      // if we are in a multi line string this has to be an emoji completion
+      // otherwise we would not be there
+      //
+      // it is a bit hacky to have to test this again here when we just did
+      // it in the parent scope
+      Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (cursorToken.hasType("string"))
+      {
+         String cursorTokenValue = cursorToken.getValue();
+         boolean isSingleLineString =
+               cursorTokenValue.startsWith("'") ||
+               cursorTokenValue.startsWith("\"");
+         if (!isSingleLineString)
+            return getAutocompletionContextForEmoji(firstLine);
+      }
+
+      // emoji in comment
+      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine) && isEmojiCompletion(firstLine)){
+         return getAutocompletionContextForEmoji(firstLine);
+      }
+
+      // Markdown mode + emoji completions
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) && isEmojiCompletion(firstLine))
+         return getAutocompletionContextForEmoji(firstLine);
+
       // If we're in Markdown mode and have an appropriate string, try to get
       // file completions
       if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
             firstLine.matches(".*\\[.*\\]\\(.*"))
          return getAutocompletionContextForFileMarkdownLink(firstLine);
-      
+
       // Get the token at the cursor position.
       String tokenRegex = ".*[^" +
          RegexUtil.wordCharacter() +
          "._:$@'\"`-]";
       String token = firstLine.replaceAll(tokenRegex, "");
-      
+
       // If we're completing an object within a string, assume it's a
       // file-system completion. Note that we may need other contextual information
       // to decide if e.g. we only want directories.
       String firstLineStripped = StringUtil.stripBalancedQuotes(
             StringUtil.stripRComment(firstLine));
-      
+
       boolean isFileCompletion = false;
-      if (firstLineStripped.indexOf('\'') != -1 || 
+      if (firstLineStripped.indexOf('\'') != -1 ||
           firstLineStripped.indexOf('"') != -1)
       {
-         isFileCompletion = true;
-         addAutocompletionContextForFile(context, firstLine);
+        // is this an emoji completions
+        if( isEmojiCompletion(firstLine) ){
+          return getAutocompletionContextForEmoji(firstLine);
+        }
+
+        isFileCompletion = true;
+        addAutocompletionContextForFile(context, firstLine);
       }
-      
+
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
          return new AutocompletionContext(firstLine, AutocompletionContext.TYPE_CHUNK);
-      
+
       // If this line starts with a '?', assume it's a help query
       if (firstLine.matches("^\\s*[?].*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
-      
+
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_ROXYGEN);
-      
+
       // If the token has '$' or '@', add in the autocompletion context --
       // note that we still need parent contexts to give more information
       // about the appropriate completion
       if (token.contains("$") || token.contains("@"))
          addAutocompletionContextForDollar(context);
-      
+
       // If the token has '::' or ':::', add that context. Note that
       // we still need outer contexts (so that e.g., if we try
       // 'debug(stats::rnorm)' we know not to auto-insert parens)
       if (token.contains("::"))
          addAutocompletionContextForNamespace(token, context);
-      
+
       // If this is not a file completion, we need to further strip and
       // then set the token. Note that the token will have already been
       // set if this is a file completion.
       token = token.replaceAll(".*[$@:]", "");
       if (!isFileCompletion)
          context.setToken(token);
-      
+
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return context;
-      
+
       CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
-      
+
       // We might need to grab content from further up in the document than
       // the current cursor position -- so tokenize ahead.
       codeModel.tokenizeUpToRow(row + 100);
-      
+
       // Make a token cursor and place it at the first token previous
       // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
       if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
          return context;
-      
+
       // Check to see if the token following the cursor is a `::` or `:::`.
       // If that's the case, then we probably only want to complete package
       // names.
@@ -1518,9 +1573,9 @@ public class RCompletionManager implements CompletionManager
          }
          tokenCursor.moveToPreviousToken();
       }
-      
+
       TokenCursor startCursor = tokenCursor.cloneCursor();
-      
+
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion.
       int initialNumCommas = 0;
@@ -1528,7 +1583,7 @@ public class RCompletionManager implements CompletionManager
       {
          int commaCount = tokenCursor.findOpeningBracketCountCommas(
                new String[]{ "[", "(" }, true);
-         
+
          // commaCount == -1 implies we failed to find an opening bracket
          if (commaCount == -1)
          {
@@ -1543,7 +1598,7 @@ public class RCompletionManager implements CompletionManager
             initialNumCommas = commaCount;
          }
       }
-      
+
       // Figure out whether we're looking at '(', '[', or '[[',
       // and place the token cursor on the first token preceding.
       TokenCursor endOfDecl = tokenCursor.cloneCursor();
@@ -1558,12 +1613,12 @@ public class RCompletionManager implements CompletionManager
       {
          if (!tokenCursor.moveToPreviousToken())
             return context;
-         
+
          if (tokenCursor.currentValue() == "[")
          {
             if (!endOfDecl.moveToPreviousToken())
                return context;
-            
+
             initialDataType = AutocompletionContext.TYPE_DOUBLE_BRACKET;
             if (!tokenCursor.moveToPreviousToken())
                return context;
@@ -1573,21 +1628,21 @@ public class RCompletionManager implements CompletionManager
             initialDataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
       }
-      
+
       // Get the string marking the function or data
       if (!tokenCursor.findStartOfEvaluationContext())
          return context;
-      
+
       // Try to get the function call string -- either there's
       // an associated closing paren we can use, or we should just go up
       // to the current cursor position.
-      
+
       // First, attempt to determine where the closing paren is located. If
       // this fails, we'll just use the start cursor's position (and later
       // attempt to finish the expression to make it parsable)
       Position endPos = startCursor.currentPosition();
       endPos.setColumn(endPos.getColumn() + startCursor.currentValue().length());
-      
+
       // try to look forward for closing paren
       if (endOfDecl.currentValue() == "(")
       {
@@ -1598,7 +1653,7 @@ public class RCompletionManager implements CompletionManager
             endPos.setColumn(endPos.getColumn() + 1);
          }
       }
-      
+
       // We can now set the function call string.
       //
       // We strip out the current statement under the cursor, so that
@@ -1611,23 +1666,23 @@ public class RCompletionManager implements CompletionManager
          String value = clone.currentValue();
          if (value.indexOf(",") != -1 || value.equals("("))
             break;
-         
+
          if (clone.bwdToMatchingToken())
             continue;
-         
+
       } while (clone.moveToPreviousToken());
       Position startPosition = clone.currentPosition();
-      
+
       // Include the opening paren if that's what we found
       if (clone.currentValue().equals("("))
          startPosition.setColumn(startPosition.getColumn() + 1);
-      
+
       String beforeText = editor.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(),
             startPosition));
-      
+
       // Now, attempt to find the end of the current statement.
-      // Look for the ',' or ')' that ends the statement for the 
+      // Look for the ',' or ')' that ends the statement for the
       // currently active argument.
       boolean lookupSucceeded = false;
       while (clone.moveToNextToken())
@@ -1638,16 +1693,16 @@ public class RCompletionManager implements CompletionManager
             lookupSucceeded = true;
             break;
          }
-         
+
          // Bail if we find a closing paren (we should walk over matched
          // pairs properly, so finding one implies that we have a parse error).
          if (value.equals("]") || value.equals("}"))
             break;
-         
+
          if (clone.fwdToMatchingToken())
             continue;
       }
-      
+
       String afterText = "";
       if (lookupSucceeded)
       {
@@ -1655,10 +1710,10 @@ public class RCompletionManager implements CompletionManager
                clone.currentPosition(),
                endPos));
       }
-      
+
       context.setFunctionCallString(
             (beforeText + afterText).trim());
-      
+
       // Try to identify whether we're producing autocompletions for
       // a _named_ function argument; if so, produce completions tuned to
       // that argument.
@@ -1666,7 +1721,7 @@ public class RCompletionManager implements CompletionManager
       do
       {
          String argsValue = argsCursor.currentValue();
-         
+
          // Bail if we encounter tokens that we don't expect as part
          // of the current expression -- this implies we're not really
          // within a named argument, although this isn't perfect.
@@ -1682,28 +1737,28 @@ public class RCompletionManager implements CompletionManager
          {
             break;
          }
-         
+
          // If we encounter an '=', we assume that this is
          // a function argument.
          if (argsValue.equals("=") && argsCursor.moveToPreviousToken())
          {
             if (!isFileCompletion)
                context.setToken(token);
-            
+
             context.add(
                   argsCursor.currentValue(),
                   AutocompletionContext.TYPE_ARGUMENT,
                   0);
             return context;
          }
-         
+
       } while (argsCursor.moveToPreviousToken());
-      
+
       String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
                   endOfDecl.currentPosition())).trim();
-      
+
       // And the first context
       context.add(initialData, initialDataType, initialNumCommas);
 
@@ -1716,18 +1771,18 @@ public class RCompletionManager implements CompletionManager
          int commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
          if (commaCount == -1)
             break;
-         
+
          numCommas = commaCount;
-         
+
          TokenCursor declEnd = tokenCursor.cloneCursor();
          if (!tokenCursor.moveToPreviousToken())
             return context;
-         
+
          if (tokenCursor.currentValue() == "[")
          {
             if (!declEnd.moveToPreviousToken())
                return context;
-            
+
             dataType = AutocompletionContext.TYPE_DOUBLE_BRACKET;
             if (!tokenCursor.moveToPreviousToken())
                return context;
@@ -1736,28 +1791,28 @@ public class RCompletionManager implements CompletionManager
          {
             dataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
-         
+
          tokenCursor.findStartOfEvaluationContext();
-         
+
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
                   declEnd.currentPosition())).trim();
-         
+
          context.add(assocData, dataType, numCommas);
       }
-      
+
       return context;
-      
+
    }
-   
+
    private void showSnippetHelp(QualifiedName item,
                                 CompletionPopupDisplay popup)
    {
       popup.displaySnippetHelp(
             snippets_.getSnippetContents(item.name));
    }
-   
+
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1773,7 +1828,7 @@ public class RCompletionManager implements CompletionManager
          selection_ = selection ;
          canAutoAccept_ = canAutoAccept;
       }
-      
+
       public void showHelp(QualifiedName selectedItem)
       {
          if (selectedItem.type == RCompletionType.SNIPPET)
@@ -1781,14 +1836,14 @@ public class RCompletionManager implements CompletionManager
          else
             helpStrategy_.showHelp(selectedItem, popup_);
       }
-      
+
       public void showHelpTopic()
       {
          QualifiedName selectedItem = popup_.getSelectedValue();
          // TODO: Show help should navigate to snippet file?
          if (selectedItem.type != RCompletionType.SNIPPET)
             helpStrategy_.showHelpTopic(selectedItem);
-            
+
       }
 
       @Override
@@ -1796,9 +1851,9 @@ public class RCompletionManager implements CompletionManager
       {
          if (invalidationToken_.isInvalid())
             return ;
-         
+
          RCompletionManager.this.popup_.showErrorMessage(
-                  error.getUserMessage(), 
+                  error.getUserMessage(),
                   new PopupPositioner(input_.getCursorBounds(), popup_)) ;
       }
 
@@ -1807,29 +1862,29 @@ public class RCompletionManager implements CompletionManager
       {
          if (invalidationToken_.isInvalid())
             return ;
-         
+
          // Only display the top completions
          final QualifiedName[] results =
                completions.completions.toArray(new QualifiedName[0]);
-         
+
          if (results.length == 0)
          {
             popup_.clearCompletions();
             boolean lastInputWasTab =
                   (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
-            
+
             boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
-            
+
             if (lastInputWasTab && lineIsWhitespace)
             {
                docDisplay_.insertCode("\t");
                return;
             }
-            
+
             if (canAutoAccept_)
             {
                popup_.showErrorMessage(
-                     "(No matches)", 
+                     "(No matches)",
                      new PopupPositioner(input_.getCursorBounds(), popup_));
             }
             else
@@ -1839,10 +1894,10 @@ public class RCompletionManager implements CompletionManager
                // failed completion, e.g. 'stats::rna' -> 'stats::rn'
                popup_.placeOffscreen();
             }
-            
+
             return ;
          }
-         
+
          // If there is only one result and the name is identical to the
          // current token, then implicitly accept that completion. we hide
          // the popup to ensure that backspace can re-load completions from
@@ -1856,7 +1911,7 @@ public class RCompletionManager implements CompletionManager
                snippets_.applySnippet(completions.token, results[0].name);
                return;
             }
-            
+
             popup_.placeOffscreen();
             return;
          }
@@ -1885,18 +1940,18 @@ public class RCompletionManager implements CompletionManager
                   false);
          }
       }
-      
+
       private void onSelection(QualifiedName qname)
       {
          suggestTimer_.cancel();
          final String value = qname.name ;
-         
+
          if (invalidationToken_.isInvalid())
             return;
-         
+
          requester_.flushCache() ;
          helpStrategy_.clearCache();
-         
+
          if (value == null)
          {
             assert false : "Selected comp value is null" ;
@@ -1904,9 +1959,9 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         
+
          // For in-line edits, we don't want to auto-popup after replacement
-         if (suggestOnAccept_ || 
+         if (suggestOnAccept_ ||
                (qname.name.endsWith(":") &&
                      docDisplay_.getCharacterAtCursor() != ':'))
          {
@@ -1926,9 +1981,9 @@ public class RCompletionManager implements CompletionManager
             popup_.setHelpVisible(false);
             docDisplay_.setFocus(true);
          }
-         
+
       }
-      
+
       // For input of the form 'something$foo' or 'something@bar', quote the
       // element following '@' if it's a non-syntactic R symbol; otherwise
       // return as is
@@ -1939,11 +1994,11 @@ public class RCompletionManager implements CompletionManager
          else
             return "`" + string + "`";
       }
-      
+
       private void applyValueRmdOption(final String value)
       {
          suggestTimer_.cancel();
-         
+
          // If there is no token but spaces have been inserted, then compensate
          // for that. This is necessary as we allow for spaces in the completion,
          // and completions auto-popup after ',' so e.g. on
@@ -1962,7 +2017,7 @@ public class RCompletionManager implements CompletionManager
             while (startPos < currentLine.length() &&
                   currentLine.charAt(startPos) == ' ')
                ++startPos;
-            
+
             input_.setSelection(new InputEditorSelection(
                   selection_.getStart().movePosition(startPos, false),
                   input_.getSelection().getEnd()));
@@ -1973,7 +2028,7 @@ public class RCompletionManager implements CompletionManager
                   selection_.getStart().movePosition(-token_.length(), true),
                   input_.getSelection().getEnd()));
          }
-         
+
          input_.replaceSelection(value, true);
          token_ = value;
          selection_ = input_.getSelection();
@@ -1982,27 +2037,27 @@ public class RCompletionManager implements CompletionManager
       private void applyValue(final QualifiedName qualifiedName)
       {
          String completionToken = getCurrentCompletionToken();
-         
+
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
-         
+
          if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
             return;
          }
-         
+
          if (qualifiedName.type == RCompletionType.SNIPPET)
          {
             snippets_.applySnippet(completionToken, qualifiedName.name);
             return;
          }
-         
+
          boolean insertParen =
                uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
                RCompletionType.isFunctionType(qualifiedName.type);
-         
+
          // Don't insert a paren if there is already a '(' following
          // the cursor
          AceEditor editor = (AceEditor) input_;
@@ -2025,27 +2080,28 @@ public class RCompletionManager implements CompletionManager
                      cursor.currentValue() == "::" ||
                      cursor.currentValue() == ":::";
             }
-            
+
          }
 
          String value = qualifiedName.name;
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
-         
-         
+
          // Don't insert the `::` following a package completion if there is
          // already a `:` following the cursor
          if (textFollowingCursorIsColon)
             value = value.replaceAll(":", "");
-         
+
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
-         
-         if (!RCompletionType.isFileType(qualifiedName.type))
-         {
+
+         if (qualifiedName.type == RCompletionType.EMOJI){
+             // tokens are set to "" on comments, fix that
+             value = completionToken.replaceAll( "[:][a-zA-Z0-9_]+$", value ) ;
+         } else if (!RCompletionType.isFileType(qualifiedName.type)) {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
-            else if (!value.matches(".*[=:]\\s*$") && 
+            else if (!value.matches(".*[=:]\\s*$") &&
                   !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
                   source != "<file>" &&
                   source != "<directory>" &&
@@ -2062,20 +2118,20 @@ public class RCompletionManager implements CompletionManager
           * logic works the second time, we need to reset the
           * selection.
           */
-         
+
          // There might be multiple cursors. Get the position of each cursor.
          Range[] ranges = editor.getNativeSelection().getAllRanges();
-         
+
          // Determine the replacement value.
          boolean shouldInsertParens = insertParen &&
                !overrideInsertParens_ &&
                !textFollowingCursorIsOpenParen;
-         
+
          boolean insertMatching = uiPrefs_.insertMatching().getValue();
          boolean needToMoveCursorInsideParens = false;
          if (shouldInsertParens)
          {
-            // Munge the value -- determine whether we want to append '()' 
+            // Munge the value -- determine whether we want to append '()'
             // for e.g. function completions, and so on.
             if (textFollowingCursorIsClosingParen || !insertMatching)
             {
@@ -2100,7 +2156,7 @@ public class RCompletionManager implements CompletionManager
                value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
             }
          }
-         
+
          // Loop over all of the active cursors, and replace.
          for (Range range : ranges)
          {
@@ -2111,35 +2167,35 @@ public class RCompletionManager implements CompletionManager
             Position replaceStart = Position.create(
                   replaceEnd.getRow(),
                   replaceEnd.getColumn() - completionToken.length());
-            
+
             editor.replaceRange(
                   Range.fromPoints(replaceStart, replaceEnd),
                   value);
-            
+
          }
-         
+
          // Set the active selection, and update the token.
          token_ = value;
          selection_ = input_.getSelection();
-         
+
          // Move the cursor(s) back inside parens if necessary.
          if (needToMoveCursorInsideParens)
             editor.moveCursorLeft();
-         
+
          if (RCompletionType.isFunctionType(qualifiedName.type))
-            sigTipManager_.displayToolTip(qualifiedName.name, 
+            sigTipManager_.displayToolTip(qualifiedName.name,
                                           qualifiedName.source,
                                           qualifiedName.helpHandler);
       }
-      
+
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
-      
+
    }
-   
+
    private String getSourceDocumentPath()
    {
       if (rContext_ == null)
@@ -2147,7 +2203,7 @@ public class RCompletionManager implements CompletionManager
       else
          return StringUtil.notNull(rContext_.getPath());
    }
-   
+
    private String getSourceDocumentId()
    {
       if (rContext_ != null)
@@ -2155,14 +2211,14 @@ public class RCompletionManager implements CompletionManager
       else
          return "";
    }
-   
+
    public void showHelpDeferred(final CompletionRequestContext context,
                                 final QualifiedName item,
                                 int milliseconds)
    {
       if (helpRequest_ != null && helpRequest_.isRunning())
          helpRequest_.cancel();
-      
+
       helpRequest_ = new Timer() {
          @Override
          public void run()
@@ -2173,23 +2229,23 @@ public class RCompletionManager implements CompletionManager
       };
       helpRequest_.schedule(milliseconds);
    }
-   
+
    String getCurrentCompletionToken()
    {
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return "";
-      
+
       // TODO: Better handling of completions within markdown mode, e.g.
       // `r foo`
       if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
          return token_;
-      
+
       Position cursorPos = editor.getCursorPosition();
       Token currentToken = editor.getSession().getTokenAt(cursorPos);
       if (currentToken == null)
          return "";
-      
+
       // If the user has inserted some spaces, the cursor might now lie
       // on a 'text' token. In that case, find the previous token and
       // use that for completion.
@@ -2210,28 +2266,30 @@ public class RCompletionManager implements CompletionManager
                currentToken = token;
          }
       }
-      
+
       // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "text", "punctuation"))
+      if (currentToken.hasType("operator", "text", "punctuation"))
          return "";
-      
+
       String tokenValue = currentToken.getValue();
-      
+      if( tokenValue.matches( "^\\s*#+'\\s+$" ))
+        return "" ;
+
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
-      
+
       return subsetted + suffix;
    }
-   
+
    private boolean isDisabled()
    {
       // Disable the completion manager while a snippet tabstop
       // manager is active
       if (docDisplay_.isSnippetsTabStopManagerActive())
          return true;
-      
+
       return false;
    }
-   
+
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
@@ -2248,7 +2306,7 @@ public class RCompletionManager implements CompletionManager
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;
    private String token_ ;
-   
+
    private final DocDisplay docDisplay_;
    private final SnippetHelper snippets_;
    private final boolean isConsole_;
@@ -2257,15 +2315,15 @@ public class RCompletionManager implements CompletionManager
    private CompletionRequestContext context_ ;
    private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
-   
+
    private final SignatureToolTipManager sigTipManager_;
-   
+
    private NativeEvent nativeEvent_;
-   
+
    private QualifiedName lastSelectedItem_;
    private Timer helpRequest_;
    private final SuggestionTimer suggestTimer_;
-   
+
    private static class SuggestionTimer
    {
       SuggestionTimer(RCompletionManager manager, UIPrefs uiPrefs)
@@ -2284,7 +2342,7 @@ public class RCompletionManager implements CompletionManager
             }
          };
       }
-      
+
       public void schedule(boolean flushCache,
                            boolean implicit,
                            boolean canAutoInsert)
@@ -2294,21 +2352,21 @@ public class RCompletionManager implements CompletionManager
          canAutoInsert_ = canAutoInsert;
          timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
       }
-      
+
       public void cancel()
       {
          timer_.cancel();
       }
-      
+
       private final RCompletionManager manager_;
       private final UIPrefs uiPrefs_;
       private final Timer timer_;
-      
+
       private boolean flushCache_;
       private boolean implicit_;
       private boolean canAutoInsert_;
-      
+
    }
-   
+
    private final HandlerRegistrations handlers_;
 }

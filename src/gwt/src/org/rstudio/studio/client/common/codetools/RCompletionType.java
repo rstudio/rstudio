@@ -41,10 +41,11 @@ public class RCompletionType
    public static final int KEYWORD     = 22;
    public static final int OPTION      = 23;
    public static final int DATASET     = 24;
-   
+   public static final int EMOJI       = 25;
+
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;
-   
+
    public static boolean isFunctionType(int type)
    {
       return type == FUNCTION ||
@@ -52,7 +53,7 @@ public class RCompletionType
              type == S4_METHOD ||
              type == R5_METHOD;
    }
-   
+
    public static boolean isFileType(int type)
    {
       return type == FILE ||
