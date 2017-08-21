@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -548,6 +549,8 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       suppressAutoFocus_ = !setFocus;
+      if (BrowseCap.isWindowsDesktop())
+         text = StringUtil.normalizeNewLinesToCR(text);
       ensureTerminal(text);
       activateTerminal();
    }
