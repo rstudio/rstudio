@@ -87,6 +87,7 @@ struct RProjectConfig
         customScriptPath(),
         tutorialPath(),
         quitChildProcessesOnExit(DefaultValue),
+        executeRprofile(true),
         defaultOpenDocs()
    {
    }
@@ -119,6 +120,7 @@ struct RProjectConfig
    std::string customScriptPath;
    std::string tutorialPath;
    int quitChildProcessesOnExit;
+   bool executeRprofile;
    std::string defaultOpenDocs;
 };
 

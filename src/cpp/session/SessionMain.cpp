@@ -198,6 +198,19 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
+bool executeRprofile()
+{
+   bool executeRprofile = true;
+
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      executeRprofile = projContext.config().executeRprofile;
+   }
+
+   return executeRprofile;
+}
+
 bool quitChildProcesses()
 {
    // allow project override
@@ -1798,6 +1811,7 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      rOptions.rProfileOnStart = executeRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
       rOptions.sessionScope = options.sessionScope();

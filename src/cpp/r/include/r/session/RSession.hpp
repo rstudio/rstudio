@@ -64,6 +64,7 @@ struct ROptions
          autoReloadSource(false),
          restoreWorkspace(true),
          saveWorkspace(SA_SAVEASK),
+         rProfileOnStart(true),
          rProfileOnResume(false)
    {
    }
@@ -86,6 +87,7 @@ struct ROptions
    bool autoReloadSource ;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
+   bool rProfileOnStart;
    bool rProfileOnResume;
    core::r_util::SessionScope sessionScope;
 };

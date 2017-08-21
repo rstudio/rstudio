@@ -36,7 +36,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    {        
       sessionInfo_ = session.getSessionInfo();
 
-      Grid grid = new Grid(5, 2);
+      Grid grid = new Grid(6, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());
       grid.setCellSpacing(8);
 
@@ -56,8 +56,11 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       grid.setWidget(3, 0, new Label("Always save history (even if not saving .RData)"));
       grid.setWidget(3, 1, alwaysSaveHistory_ = new YesNoAskDefault(false));
 
+      // execute .Rprofile
+      grid.setWidget(4, 0, executeRprofile_ = new CheckBox("Execute .Rprofile on session start"));
+      
       // quit child processes
-      grid.setWidget(4, 0, quitChildProcessesOnExit_ = new CheckBox("Quit child processes on exit"));
+      grid.setWidget(5, 0, quitChildProcessesOnExit_ = new CheckBox("Quit child processes on exit"));
 
       add(grid);
    }
@@ -83,6 +86,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       alwaysSaveHistory_.setSelectedIndex(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
       rVersion_ = config.getRVersion();
+      executeRprofile_.setValue(config.getExecuteRprofile());
       
       // check or uncheck the checkbox for child processes based on the configuration value
       // if default is specified, we need to use the current session setting
@@ -113,6 +117,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedIndex());
       config.setTutorialPath(tutorialPath_);
       config.setRVersion(rVersion_);
+      config.setExecuteRprofile(executeRprofile_.getValue());
       
       // turn the quit child processes checkbox from a boolean into the 
       // YesNoAsk value that it should be in the configuration
@@ -161,6 +166,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
+   private CheckBox executeRprofile_;
    private CheckBox quitChildProcessesOnExit_;
    private SessionInfo sessionInfo_;
    
