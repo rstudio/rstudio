@@ -103,6 +103,7 @@
 * Remove Packrat package sync notifications; replace with Check Library Status command
 * Add support for ligature coding fonts in RStudio Desktop for Windows and Linux
 * Added page viewer (accessible via getOption("page_viewer")) for viewing web content in an external window.
+* Add editor theme Dracula (thanks to [Fabian Mundt](https://github.com/inventionate))
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
