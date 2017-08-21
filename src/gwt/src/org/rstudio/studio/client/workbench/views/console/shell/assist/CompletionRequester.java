@@ -164,6 +164,7 @@ public class CompletionRequester
       
       // Transform the token once beforehand for completions.
       final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenEmoji = token.substring(token.lastIndexOf(':') + 1);
       final String tokenFuzzy = fuzzy(tokenSub);
       
       for (QualifiedName qname : cachedResult.completions)
@@ -174,6 +175,13 @@ public class CompletionRequester
             if (StringUtil.isSubsequence(basename(qname.name), tokenFuzzy, true))
                newCompletions.add(qname);
          }
+         else if(qname.type == RCompletionType.EMOJI)
+         {
+            // narrowing based on the .source
+            if( qname.source.contains(tokenEmoji) ){
+               newCompletions.add(qname) ;
+            }
+         } 
          else
          {
             if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
@@ -864,6 +872,15 @@ public class CompletionRequester
                sb,
                RES.styles().completion(),
                name);
+
+         // Display the alias, e.g. :cat: for the emoji completions
+         if( type == RCompletionType.EMOJI ){
+            SafeHtmlUtil.appendSpan( 
+               sb, 
+               RES.styles().packageName(), 
+               ":" + source + ":"
+            ) ;
+         }
 
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"

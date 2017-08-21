@@ -31,7 +31,8 @@ assign(x = ".rs.acContextTypes",
           ROXYGEN            = 10,
           HELP               = 11,
           ARGUMENT           = 12,
-          PACKAGE            = 13
+          PACKAGE            = 13, 
+          EMOJI              = 14
        )
 )
 
@@ -64,6 +65,7 @@ assign(x = ".rs.acCompletionTypes",
           KEYWORD     = 22,
           OPTION      = 23,
           DATASET     = 24,
+          EMOJI       = 25,
           CONTEXT     = 99
        )
 )
@@ -1905,6 +1907,10 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.acContextTypes$HELP %in% type)
       return(.rs.getCompletionsHelp(token))
    
+   # help
+   if (.rs.acContextTypes$EMOJI %in% type)
+      return(.rs.getCompletionsEmoji(token))
+   
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token, line))
@@ -2467,6 +2473,22 @@ assign(x = ".rs.acCompletionTypes",
       else
          .rs.emptyCompletions()
    )
+})
+
+.rs.addFunction("getCompletionsEmoji", function(token){
+   tryCatch({
+      results <- emo::ji_completion( sub( "^[:]", "", token ) )
+      .rs.makeCompletions(
+         token = token, 
+         results = unname(results),
+         packages = names(results), # this is not a pkg, but we use this to store the matched emoji aliases
+         quote = FALSE, 
+         type = .rs.acCompletionTypes$EMOJI, 
+         excludeOtherCompletions = TRUE
+      )
+   }, error = function(e){
+      .rs.emptyCompletions()
+   })
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
