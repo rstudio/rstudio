@@ -77,9 +77,9 @@ colors substituted (follow existing examples).
 6) Build the editor stylesheets with `compile-themes.R` and verify that
 they contain the rules removed by `tweak-xterm.cs.R`.
 
-7) The Material theme requires the changes to be manually applied. Select
+7) The Material and Dracula themes require the changes to be manually applied. Select
 changes from another dark theme such as Merbivore Soft and copy them over.
-Be careful to preserve Material's colors.
+Be careful to preserve foreground and background colors.
 
 Evaluting the JavaScript Changes
 -----------------------------------------------------------------------------
