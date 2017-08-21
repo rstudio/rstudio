@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -302,7 +301,7 @@ public class TerminalPane extends WorkbenchPane
       else
       {
          setFocusOnVisible();
-         terminal.receivedInput(postCreateText);
+         terminal.receivedSendToTerminal(postCreateText);
       }
    }
 
@@ -549,8 +548,6 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       suppressAutoFocus_ = !setFocus;
-      if (BrowseCap.isWindowsDesktop())
-         text = StringUtil.normalizeNewLinesToCR(text);
       ensureTerminal(text);
       activateTerminal();
    }
@@ -702,7 +699,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
-      terminal.receivedInput(postCreateText_);
+      terminal.receivedSendToTerminal(postCreateText_);
       creatingTerminal_ = false;
       postCreateText_ = null;
       updateTerminalToolbar();
@@ -809,7 +806,7 @@ public class TerminalPane extends WorkbenchPane
          showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
-         terminal.receivedInput(event.getInputText());
+         terminal.receivedSendToTerminal(event.getInputText());
          return;
       }
 
