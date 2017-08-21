@@ -1494,7 +1494,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    bool loadInitFile = false;
    if (restartContext().hasSessionState())
    {
-      loadInitFile = restartContext().rProfileOnRestore();
+      loadInitFile = restartContext().rProfileOnRestore() && options.rProfileOnStart;
    }
    else
    {
