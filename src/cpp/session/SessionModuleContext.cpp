@@ -931,7 +931,7 @@ FilePath oldScopedScratchPath()
 
 std::string rLibsUser()
 {
-   return system::getenv("R_LIBS_USER");
+   return core::system::getenv("R_LIBS_USER");
 }
    
 bool isVisibleUserFile(const FilePath& filePath)
