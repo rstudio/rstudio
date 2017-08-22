@@ -47,6 +47,10 @@ import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
+import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerHandler;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
@@ -85,7 +89,8 @@ public class Workbench implements BusyHandler,
                                   ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler,
                                   AdminNotificationHandler,
-                                  OpenFileDialogEvent.Handler
+                                  OpenFileDialogEvent.Handler,
+                                  ShowPageViewerHandler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -150,6 +155,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
       eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
+      eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -600,6 +606,16 @@ public class Workbench implements BusyHandler,
    }
    
    @Override
+   public void onShowPageViewer(ShowPageViewerEvent event) 
+   {   
+      // show the page viewer window
+      HTMLPreviewParams params = event.getParams();
+      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
+      
+      // server will now take care of sending the html_preview_completed event
+   }
+   
+   @Override
    public void onExecuteUserCommand(ExecuteUserCommandEvent event)
    {
       server_.executeUserCommand(event.getCommandName(), new VoidServerRequestCallback());
@@ -623,6 +639,5 @@ public class Workbench implements BusyHandler,
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
-   private boolean nearQuotaWarningShown_ = false;
-   
+   private boolean nearQuotaWarningShown_ = false; 
 }

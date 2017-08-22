@@ -47,15 +47,21 @@ namespace terminal {
  *
  * Once PrivateCommand::hasCaptured() returns false, the output of the private command is available
  * via getPrivateOutput().
+ *
+ * Capture mode stays enabled briefly after the expected output has been received so it can
+ * suppress the prompt that is displayed after the hidden command is executed. Sometimes
+ * this prompt arrives in the same output string as the end of the input, but sometimes it
+ * doesn't and user would see a mysterious extra prompt.
  */
 class PrivateCommand : boost::noncopyable
 {
 public:
    PrivateCommand(
          const std::string& command,
-         int privateCommandDelayMs = 2000, // min delay between private commands
-         int waitAfterCommandDelayMs = 1500, // min delay after user command
+         int privateCommandDelayMs = 3000, // min delay between private commands
+         int waitAfterCommandDelayMs = 2000, // min delay after user command
          int privateCommandTimeoutMs = 1200, // timeout for private command
+         int postCommandTimeoutMs = 120, // how long to suppress output after private command done
          bool oncePerUserCommand = true); // only run private command after user has hit <enter>
 
    // Give private command opportunity to capture terminal; returns true if it does (or already did).
@@ -102,6 +108,9 @@ private:
    // When did user last hit Enter at the end of a line of input?
    boost::posix_time::ptime lastEnterTime_;
 
+   // When did we successfully receive the expected private output?
+   boost::posix_time::ptime outputReceivedTime_;
+
    // Is there a partially-typed command?
    bool pendingCommand_;
 
@@ -126,9 +135,15 @@ private:
    // how long after a private command is started do we allow for the result to be delivered?
    boost::posix_time::milliseconds privateCommandTimeout_;
 
+   // How long after expected output received do we continue to suppress showing output?
+   // Keep very short but long enough for shells that send the prompt shown after the
+   // private command in a separate output event, otherwise user sees duplicate prompts
+   boost::posix_time::milliseconds postCommandTimeout_;
+
    // parse details
    size_t firstCRLF_; // end of command
    size_t outputStart_; // start of output
+   size_t outputEnd_; // end of output
 
    // did last private command timeout?
    bool timeout_;

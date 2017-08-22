@@ -87,7 +87,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text);
+      void sendToTerminal(String text, boolean setFocus);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -103,7 +103,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
       /**
-       * Remove a terminal from the list.
+       * Remove a terminal that was killed via rstudioapi::terminalKill.
        * @param handle terminal to remove
        * caption
        */
@@ -202,7 +202,7 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText());
+      view_.sendToTerminal(event.getText(), event.getSetFocus());
    }
 
    @Override

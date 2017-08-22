@@ -224,6 +224,15 @@ public class TerminalPane extends WorkbenchPane
       // onSelected but in this case we don't want to create a new terminal
       if (!closingAll_)
          ensureTerminal(null);
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            suppressAutoFocus_ = false;
+         }
+      });
    }
 
    @Override
@@ -260,7 +269,6 @@ public class TerminalPane extends WorkbenchPane
    public void activateTerminal()
    {
       closingAll_ = false;
-      ensureVisible();
       bringToFront();
    }
 
@@ -293,7 +301,7 @@ public class TerminalPane extends WorkbenchPane
       else
       {
          setFocusOnVisible();
-         terminal.receivedInput(postCreateText);
+         terminal.receivedSendToTerminal(postCreateText);
       }
    }
 
@@ -331,7 +339,40 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void removeTerminal(String handle)
    {
+      // rstudioapi::terminalKill has already killed the process and reaped it.
+
+      // If the terminal being removed was loaded in the UI, and is currently selected,
+      // figure out which terminal to switch to.
+      String newTerminalHandle = null;
+      boolean didCloseCurrent = false;
+      TerminalSession visibleTerminalWidget = getSelectedTerminal();
+      TerminalSession killedTerminalWidget = loadedTerminalWithHandle(handle);
+      if (visibleTerminalWidget != null && killedTerminalWidget != null && 
+            (visibleTerminalWidget == killedTerminalWidget))
+      {
+         didCloseCurrent = true;
+         newTerminalHandle = terminalToShowWhenClosing(handle);
+         if (newTerminalHandle != null)
+         {
+            events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null));
+         }
+      }
+
+      // Remove terminated terminal from dropdown
       terminals_.removeTerminal(handle);
+
+      // If terminal was loaded, remove its pane.
+      if (killedTerminalWidget != null)
+      {
+         terminalSessionsPanel_.remove(killedTerminalWidget);
+      }
+
+      if (newTerminalHandle == null && didCloseCurrent)
+      {
+         activeTerminalToolbarButton_.setNoActiveTerminal();
+         setTerminalTitle("");
+      }
+      updateTerminalToolbar();
    }
 
    @Override
@@ -501,11 +542,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text)
+   public void sendToTerminal(String text, boolean setFocus)
    {
       if (StringUtil.isNullOrEmpty(text))
          return;
 
+      suppressAutoFocus_ = !setFocus;
       ensureTerminal(text);
       activateTerminal();
    }
@@ -657,7 +699,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
-      terminal.receivedInput(postCreateText_);
+      terminal.receivedSendToTerminal(postCreateText_);
       creatingTerminal_ = false;
       postCreateText_ = null;
       updateTerminalToolbar();
@@ -764,7 +806,7 @@ public class TerminalPane extends WorkbenchPane
          showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
-         terminal.receivedInput(event.getInputText());
+         terminal.receivedSendToTerminal(event.getInputText());
          return;
       }
 
@@ -921,7 +963,8 @@ public class TerminalPane extends WorkbenchPane
             TerminalSession visibleTerminal = getSelectedTerminal();
             if (visibleTerminal != null)
             {
-               visibleTerminal.setFocus(true);
+               if (!suppressAutoFocus_)
+                  visibleTerminal.setFocus(true);
                activeTerminalToolbarButton_.setActiveTerminal(
                      visibleTerminal.getCaption(), visibleTerminal.getHandle());
                setTerminalTitle(visibleTerminal.getTitle());
@@ -1068,6 +1111,7 @@ public class TerminalPane extends WorkbenchPane
    private HandlerRegistration terminalHasChildProcsHandler_;
    private boolean isRestartInProgress_;
    private boolean closingAll_;
+   private boolean suppressAutoFocus_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;

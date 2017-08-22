@@ -1029,12 +1029,13 @@ public class ObjectExplorerDataGrid
    
    private void setFocusDeferred(final boolean focused)
    {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleFinally(new ScheduledCommand()
       {
          @Override
          public void execute()
          {
             setFocus(focused);
+            restoreScrollPosition();
          }
       });
    }
@@ -1165,6 +1166,8 @@ public class ObjectExplorerDataGrid
    
    private void synchronize()
    {
+      saveScrollPosition();
+      
       final String filter = StringUtil.notNull(filter_).trim();
       
       // only include visible data in the table
@@ -1305,6 +1308,18 @@ public class ObjectExplorerDataGrid
       }
    }
    
+   private void saveScrollPosition()
+   {
+      scrollPosition_ = getScrollPanel().getScrollPosition();
+   }
+   
+   private void restoreScrollPosition()
+   {
+      if (scrollPosition_ != -1)
+         getScrollPanel().setScrollPosition(scrollPosition_);
+      scrollPosition_ = -1;
+   }
+   
    // Members ----
    
    private final ObjectExplorerHandle handle_;
@@ -1319,6 +1334,7 @@ public class ObjectExplorerDataGrid
    
    private final ListDataProvider<Data> dataProvider_;
    
+   private int scrollPosition_ = -1;
    private TableRowElement hoveredRow_;
    private boolean showAttributes_;
    private String filter_;

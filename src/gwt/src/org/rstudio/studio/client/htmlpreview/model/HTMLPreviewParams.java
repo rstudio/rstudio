@@ -26,7 +26,7 @@ public class HTMLPreviewParams extends JavaScriptObject
                                                        String encoding,
                                                        boolean isMarkdown,
                                                        boolean requiresKnit,
-                                                       boolean isNotebook)/*-{
+                                                       boolean isNotebook) /*-{
       var params = new Object();
       params.path = path;
       params.encoding = encoding;

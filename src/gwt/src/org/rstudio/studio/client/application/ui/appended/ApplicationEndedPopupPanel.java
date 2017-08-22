@@ -216,6 +216,10 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    
    private void reloadApplication()
    {
+      if (reloading_)
+         return;
+      reloading_ = true;
+      
       if (Desktop.isDesktop())
       {
          Desktop.getFrame().launchSession(true);
@@ -289,4 +293,6 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
    @UiField
    SimplePanel content_;
+   
+   private boolean reloading_ = false;
 }

@@ -216,44 +216,34 @@ create_terminal_cursor_rules <- function(isDark) {
    }
    
    sprintf(paste(sep = "\n",
-                 ".terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {",
-                 "   background-color: %s;",
-                 "   color: %s;",
+                 ".terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor {",
+                 "  background-color: %s;",
+                 "  color: %s;",
+                 "}",
+                 ".terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,",
+                 ".terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {",
+                 "  content: \'\';",
+                 "  position: absolute;",
+                 "  background-color: %s;",
                  "}",
                  ".terminal:not(.focus) .terminal-cursor {",
                  "  outline: 1px solid %s;",
                  "  outline-offset: -1px;",
-                 "  background-color: transparent;",
-                 "}",
-                 ".terminal.xterm-cursor-style-bar .terminal-cursor::before,",
-                 ".terminal.xterm-cursor-style-underline .terminal-cursor::before {",
-                 "   content: \"\";",
-                 "   display: block;",
-                 "   position: absolute;",
-                 "   background-color: %s;",
-                 "}",
-                 ".terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,",
-                 ".terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {",
-                 "   background-color: %s;",
                  "}",
                  ".terminal .xterm-selection div {",
                  "   position: absolute;",
                  "   background-color: %s;",
                  "}"),
            
-           # .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor
+           # .terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor
            termCursorBgColorFirst,
            termCursorBgColorSecond,
            
-           # .terminal:not(.focus) .terminal-cursor
+           # .terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,
+           # .terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before
            termCursorBgColorFirst,
            
-           # .terminal.xterm-cursor-style-bar .terminal-cursor::before
-           # .terminal.xterm-cursor-style-underline .terminal-cursor::before
-           termCursorBgColorFirst,
-
-           # .terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
-           # .terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before
+           # .terminal:not(.focus) .terminal-cursor
            termCursorBgColorFirst,
 
            # .terminal .xterm-selection div
@@ -267,6 +257,9 @@ create_terminal_rule <- function(background, foreground) {
                  "  color: %s;",
                  "  font-feature-settings: \"liga\" 0;",
                  "  position: relative;",
+                 "  user-select: none;",
+                 "  -ms-user-select: none;",
+                 "  -webkit-user-select: none;",
                  "}"),
            background, foreground)
 }
@@ -274,7 +267,6 @@ create_terminal_rule <- function(background, foreground) {
 create_terminal_viewport_rule <- function(background) {
    sprintf(paste(sep = "\n",
                  ".terminal .xterm-viewport {",
-                 "  /* On OS X this is required in order for the scroll bar to appear fully opaque */",
                  "  background-color: %s;",
                  "  overflow-y: scroll;",
                  "}"),

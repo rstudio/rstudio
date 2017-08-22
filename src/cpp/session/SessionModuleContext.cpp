@@ -170,6 +170,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTerminalCwd;
       else if (name == "remove_terminal")
          type = session::client_events::kRemoveTerminal;
+      else if (name == "show_page_viewer")
+         type = session::client_events::kShowPageViewerEvent;
 
       if (type != -1)
       {
@@ -2140,6 +2142,24 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
    return fileCopy.call();
 }
 
+bool isSessionTempPath(FilePath filePath)
+{
+   // get the real path
+   Error error = core::system::realPath(filePath, &filePath);
+   if (error)
+      LOG_ERROR(error);
+
+   // get the session temp dir real path; needed since the file path above is
+   // also a real path--e.g. on OS X, it refers to /private/tmp rather than
+   // /tmp
+   FilePath tempDir;
+   error = core::system::realPath(module_context::tempDir(), &tempDir);
+   if (error)
+      LOG_ERROR(error);
+
+   return filePath.isWithin(tempDir);
+}
+
 std::string sessionTempDirUrl(const std::string& sessionTempPath)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
@@ -2209,7 +2229,7 @@ json::Object plotExportFormat(const std::string& name,
 Error createSelfContainedHtml(const FilePath& sourceFilePath,
                               const FilePath& targetFilePath)
 {
-   r::exec::RFunction func("rmarkdown:::pandoc_self_contained_html");
+   r::exec::RFunction func(".rs.pandocSelfContainedHtml");
    func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();

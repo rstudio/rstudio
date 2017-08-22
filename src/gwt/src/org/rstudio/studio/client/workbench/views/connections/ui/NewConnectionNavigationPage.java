@@ -52,7 +52,7 @@ public class NewConnectionNavigationPage
    {
       super(title, 
             subTitle,
-            "Create Connection",
+            "Connect to Existing Data Sources",
             icon,
             null, 
             createPages(context),
@@ -79,11 +79,13 @@ public class NewConnectionNavigationPage
          if (!connectionInfo.getLicensed() || 
              RStudioGinjector.INSTANCE.getSession().getSessionInfo().getSupportDriverLicensing()) {
 
+            String subTitle = connectionInfo.getName() + " via " + connectionInfo.getSource();
+
             if (connectionInfo.getType() == "Shiny") {
-               pages.add(new NewConnectionShinyPage(connectionInfo));
+               pages.add(new NewConnectionShinyPage(connectionInfo, subTitle));
             }
             else if (connectionInfo.getType() == "Snippet") {
-               pages.add(new NewConnectionSnippetPage(connectionInfo));
+               pages.add(new NewConnectionSnippetPage(connectionInfo, subTitle));
             }
             else if (connectionInfo.getType() == "Install") {
                pages.add(new NewConnectionInstallPackagePage(connectionInfo));

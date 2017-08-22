@@ -602,7 +602,7 @@ well as menu structures (for main menu and popup menus).
          
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
-         <shortcut refid="activateTerminal" value="Ctrl+Shift+T"/>
+         <shortcut refid="activateTerminal" value="Alt+Shift+T"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
          <shortcut refid="activateFiles" value="Ctrl+5"/>
@@ -690,6 +690,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+         <shortcut refid="sendToTerminal" value="Cmd+Alt+Enter"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
@@ -735,8 +736,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
-         <shortcut refid="newTerminal" value="Alt+Shift+T"/>
-         <shortcut refid="renameTerminal" value="Alt+Shift+R"/>
+         <shortcut refid="newTerminal" value="Alt+Shift+R"/>
          <shortcut refid="clearTerminalScrollbackBuffer" value="Ctrl+Shift+L"/>
          <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>

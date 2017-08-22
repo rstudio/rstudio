@@ -261,7 +261,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler 
    void onSendToTerminal() 
    { 
-      codeExecution_.sendSelectionToTerminal();
+      codeExecution_.sendSelectionToTerminal(false);
    } 
 
    @Handler

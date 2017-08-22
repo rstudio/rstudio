@@ -292,3 +292,56 @@
 .rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 })
+
+
+.rs.addFunction("pandocSelfContainedHtml", function(input, output) {
+   
+   # make input file path absolute
+   input <- normalizePath(input)
+   
+   # ensure output file exists and make it's path absolute
+   if (!file.exists(output))
+      file.create(output)
+   output <- normalizePath(output)
+   
+   # create a simple body-only template
+   template <- tempfile(fileext = ".html")
+   writeLines("$body$", template)
+   
+   # convert from markdown to html to get base64 encoding
+   # (note there is no markdown in the source document but
+   # we still need to do this "conversion" to get the
+   # base64 encoding)
+   args <- c(input)
+   args <- c(args, "--from", "markdown_strict")
+   args <- c(args, "--output", output)
+   
+   # set stack size
+   stack_size <- getOption("pandoc.stack.size", default = "512m")
+   args <- c(c("+RTS", paste0("-K", stack_size), "-RTS"), args)
+   
+   # additional options
+   args <- c(args, "--self-contained")
+   args <- c(args, "--template", template)
+   
+   # build the conversion command
+   pandoc <- file.path(Sys.getenv("RSTUDIO_PANDOC"), "pandoc")
+   command <- paste(shQuote(c(pandoc, args)), collapse = " ")
+   
+   # setwd temporarily
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(dirname(input))
+   
+   # execute it
+   result <- system(command)
+   if (result != 0) {
+      stop("pandoc document conversion failed with error ", result,
+           call. = FALSE)
+   }
+   
+   # return output file
+   invisible(output)
+})
+
+

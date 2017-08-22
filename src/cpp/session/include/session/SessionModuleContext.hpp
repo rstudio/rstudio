@@ -747,6 +747,8 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
 
+bool isSessionTempPath(core::FilePath filePath);
+
 std::string sessionTempDirUrl(const std::string& sessionTempPath);
 
 core::Error uniqueSaveStem(const core::FilePath& directoryPath,

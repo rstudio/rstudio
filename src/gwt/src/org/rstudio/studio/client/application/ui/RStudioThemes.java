@@ -84,7 +84,7 @@ public class RStudioThemes
       if (rstudioTheme == "classic") return rstudioTheme;
 
       RegExp keyReg = RegExp.compile(
-         "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
+         "ambiance|chaos|clouds midnight|cobalt|dracula|idle fingers|kr theme|" +
          "material|merbivore soft|merbivore|mono industrial|monokai|" +
          "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
          "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");

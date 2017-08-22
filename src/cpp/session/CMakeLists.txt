@@ -83,7 +83,6 @@ set (SESSION_SOURCE_FILES
    SessionPasswordManager.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
-   SessionRUtil.cpp
    SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
@@ -135,6 +134,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionRParser.cpp
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
+   modules/SessionRUtil.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSnippets.cpp
    modules/SessionSource.cpp

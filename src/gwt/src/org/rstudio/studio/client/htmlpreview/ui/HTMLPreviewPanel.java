@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
@@ -52,34 +53,43 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Inject
    public HTMLPreviewPanel(Commands commands)
    {
-      LayoutPanel panel = new LayoutPanel();
+      layoutPanel_ = new LayoutPanel();
       
-      Toolbar toolbar = createToolbar(commands);
-      int tbHeight = toolbar.getHeight();
-      panel.add(toolbar);
-      panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopHeight(toolbar, 0, Unit.PX, tbHeight, Unit.PX);
+      toolbar_ = createToolbar(commands);
+      tbHeight_ = toolbar_.getHeight();
+      layoutPanel_.add(toolbar_);
+      layoutPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
+      layoutPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, tbHeight_, Unit.PX);
       
       previewFrame_ = new AnchorableFrame();
       previewFrame_.setSize("100%", "100%");
-      panel.add(previewFrame_);
-      panel.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopBottom(previewFrame_, tbHeight+1, Unit.PX, 0, Unit.PX);
+      layoutPanel_.add(previewFrame_);
+      layoutPanel_.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
       
-      initWidget(panel);
+      setToolbarVisible(true);
+     
+      initWidget(layoutPanel_);
+   }
+   
+   private void setToolbarVisible(boolean visible)
+   {
+      toolbar_.setVisible(visible);
+      int frameTop = visible ? tbHeight_+1 : 0;
+      layoutPanel_.setWidgetTopBottom(previewFrame_, frameTop, Unit.PX, 0, Unit.PX);    
    }
    
    private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new Toolbar();
       
-      toolbar.addLeftWidget(new ToolbarLabel("Preview: "));
+      fileCaption_ = new ToolbarLabel("Preview: ");
+      toolbar.addLeftWidget(fileCaption_);
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
       fileLabel_.getElement().getStyle().setMarginRight(7, Unit.PX);
       toolbar.addLeftWidget(fileLabel_);
       
-      toolbar.addLeftSeparator();
+      fileLabelSeparator_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.openHtmlExternal().createToolbarButton());
       
       showLogButtonSeparator_ = toolbar.addLeftSeparator();
@@ -155,11 +165,11 @@ public class HTMLPreviewPanel extends ResizeComposite
          
       });
       
-      refreshButtonSeparator_ = toolbar.addRightSeparator();
+      toolbar.addRightSeparator();
 
       ToolbarButton refreshButton = commands.refreshHtmlPreview().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      refreshButton_ = toolbar.addRightWidget(refreshButton);
+      toolbar.addRightWidget(refreshButton);
       
       
       return toolbar;
@@ -228,23 +238,41 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            HTMLPreviewResult result,
-                           boolean enableRefresh,
                            boolean enableShowLog)
    {
-      String shortFileName = StringUtil.shortPathName(
-            FileSystemItem.createFile(result.getHtmlFile()), 
-            ThemeStyles.INSTANCE.subtitle(), 
-            300);
-      fileLabel_.setText(shortFileName);
+      Window.setTitle(result.getTitle());
+      
+      if (result.getEnableFileLabel()) 
+      {
+         String shortFileName = StringUtil.shortPathName(
+                FileSystemItem.createFile(result.getHtmlFile()), 
+                ThemeStyles.INSTANCE.subtitle(), 
+                300);
+         fileLabel_.setText(shortFileName);
+      }
+      else
+      {
+         fileCaption_.setVisible(false);
+         fileLabel_.setVisible(false);
+         fileLabelSeparator_.setVisible(false);
+      }
+     
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
       saveHtmlPreviewAsSeparator_.setVisible(result.getEnableSaveAs());
       saveHtmlPreviewAs_.setVisible(result.getEnableSaveAs());
-      publishButton_.setHtmlPreview(result);
+      if (result.getEnablePublish()) 
+         publishButton_.setHtmlPreview(result);
+      else
+         publishButton_.setVisible(false);
       publishButtonSeparator_.setVisible(publishButton_.isVisible());
-      refreshButtonSeparator_.setVisible(enableRefresh);
-      refreshButton_.setVisible(enableRefresh);
-      previewFrame_.navigate(url);
+      navigate(url);
+   }
+   
+   @Override
+   public void reload(String url)
+   {
+      navigate(url);
    }
    
    @Override
@@ -267,8 +295,20 @@ public class HTMLPreviewPanel extends ResizeComposite
       findTextBox_.focus();
    }
 
+   private void navigate(String url)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setViewerUrl(url);
+      previewFrame_.navigate(url);
+   }
+   
+   private final LayoutPanel layoutPanel_;
    private final AnchorableFrame previewFrame_;
+   private final Toolbar toolbar_;
+   private final int tbHeight_;
+   private ToolbarLabel fileCaption_;
    private ToolbarLabel fileLabel_;
+   private Widget fileLabelSeparator_;
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
@@ -276,7 +316,5 @@ public class HTMLPreviewPanel extends ResizeComposite
    private RSConnectPublishButton publishButton_;
    private Widget showLogButtonSeparator_;
    private ToolbarButton showLogButton_;
-   private Widget refreshButtonSeparator_;
-   private ToolbarButton refreshButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
 }

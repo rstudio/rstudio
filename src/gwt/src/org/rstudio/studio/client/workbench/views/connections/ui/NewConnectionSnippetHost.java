@@ -206,6 +206,7 @@ public class NewConnectionSnippetHost extends Composite
       boolean showAdvancedButton = visibleRows > maxRows_;
       visibleRows = Math.min(visibleRows, maxRows_);
 
+      visibleParams = Math.min(visibleParams, snippetParts.size());
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
             new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 

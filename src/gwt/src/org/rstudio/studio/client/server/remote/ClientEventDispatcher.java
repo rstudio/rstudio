@@ -56,6 +56,8 @@ import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.packages.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
@@ -935,6 +937,11 @@ public class ClientEventDispatcher
          {
             OpenFileDialogEvent.Data data = event.getData();
             eventBus_.fireEvent(new OpenFileDialogEvent(data));
+         }
+         else if (type.equals(ClientEvent.ShowPageViewer))
+         {
+            HTMLPreviewParams params = event.getData();
+            eventBus_.fireEvent(new ShowPageViewerEvent(params));
          }
          else
          {
