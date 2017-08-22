@@ -1347,7 +1347,7 @@ public class ObjectExplorerDataGrid
    private static final int DEFAULT_NAME_COLUMN_WIDTH = 180;
    private static final int DEFAULT_TYPE_COLUMN_WIDTH = 180;
    
-   private static final int DEFAULT_ROW_LIMIT = 200;
+   private static final int DEFAULT_ROW_LIMIT = 1000;
    
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
