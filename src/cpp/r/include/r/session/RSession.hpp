@@ -64,8 +64,9 @@ struct ROptions
          autoReloadSource(false),
          restoreWorkspace(true),
          saveWorkspace(SA_SAVEASK),
-         rProfileOnStart(true),
-         rProfileOnResume(false)
+         disableRProfileOnStart(false),
+         rProfileOnResume(false),
+         packratEnabled(false)
    {
    }
    core::FilePath userHomePath;
@@ -87,9 +88,10 @@ struct ROptions
    bool autoReloadSource ;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
-   bool rProfileOnStart;
+   bool disableRProfileOnStart;
    bool rProfileOnResume;
    core::r_util::SessionScope sessionScope;
+   bool packratEnabled;
 };
       
 struct RInitInfo

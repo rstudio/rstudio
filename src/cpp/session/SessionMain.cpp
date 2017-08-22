@@ -198,17 +198,17 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
-bool executeRprofile()
+bool disableExecuteRprofile()
 {
-   bool executeRprofile = true;
+   bool disableExecuteRprofile = false;
 
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      executeRprofile = projContext.config().executeRprofile;
+      disableExecuteRprofile = projContext.config().disableExecuteRprofile;
    }
 
-   return executeRprofile;
+   return disableExecuteRprofile;
 }
 
 bool quitChildProcesses()
@@ -1811,9 +1811,10 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
-      rOptions.rProfileOnStart = executeRprofile();
+      rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
+      rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       
       // r callbacks

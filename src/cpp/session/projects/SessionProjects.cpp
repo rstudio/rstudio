@@ -298,7 +298,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["custom_script_path"] = config.customScriptPath;
    configJson["tutorial_path"] = config.tutorialPath;
    configJson["quit_child_processes_on_exit"] = config.quitChildProcessesOnExit;
-   configJson["execute_rprofile"] = config.executeRprofile;
+   configJson["disable_execute_rprofile"] = config.disableExecuteRprofile;
 
    return configJson;
 }
@@ -531,7 +531,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = json::readObject(configJson, "execute_rprofile", &(config.executeRprofile));
+   error = json::readObject(configJson, "disable_execute_rprofile", &(config.disableExecuteRprofile));
    if (error)
       return error;
 

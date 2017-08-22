@@ -1494,16 +1494,17 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    bool loadInitFile = false;
    if (restartContext().hasSessionState())
    {
-      loadInitFile = restartContext().rProfileOnRestore() && options.rProfileOnStart;
+      loadInitFile = restartContext().rProfileOnRestore() && !options.disableRProfileOnStart;
    }
    else
    {
       // we run the .Rprofile if this is a brand new session and
-      // we are in a project and the ExecuteProfile setting is set, or we are not in a project
+      // we are in a project and the DisableExecuteProfile setting is not set, or we are not in a project
       // alternatively, if we are resuming a session and the option is set to possibly run the .Rprofile
-      // we will only run it if the ExecuteProfile project setting is set (or we are not in a project)
-      loadInitFile = (!s_suspendedSessionPath.exists() && options.rProfileOnStart)
-                     || (options.rProfileOnResume && options.rProfileOnStart)
+      // we will only run it if the DisableExecuteProfile project setting is not set (or we are not in a project)
+      // finally, if this is a packrat project, we always run the Rprofile as it is required for correct operation
+      loadInitFile = (!options.disableRProfileOnStart && (!s_suspendedSessionPath.exists() || options.rProfileOnResume))
+                     || options.packratEnabled
                      || r::session::state::packratModeEnabled(s_suspendedSessionPath);
    }
 

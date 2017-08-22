@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRVersion;
@@ -56,8 +57,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       grid.setWidget(3, 0, new Label("Always save history (even if not saving .RData)"));
       grid.setWidget(3, 1, alwaysSaveHistory_ = new YesNoAskDefault(false));
 
-      // execute .Rprofile
-      grid.setWidget(4, 0, executeRprofile_ = new CheckBox("Execute .Rprofile on session start"));
+      // disable execute .Rprofile
+      grid.setWidget(4, 0, disableExecuteRprofile_ = new CheckBox("Disable .Rprofile execution on session start/resume"));
       
       // quit child processes
       grid.setWidget(5, 0, quitChildProcessesOnExit_ = new CheckBox("Quit child processes on exit"));
@@ -81,12 +82,22 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    protected void initialize(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
+      PackratContext context = options.getPackratContext();
       restoreWorkspace_.setSelectedIndex(config.getRestoreWorkspace());
       saveWorkspace_.setSelectedIndex(config.getSaveWorkspace());
       alwaysSaveHistory_.setSelectedIndex(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
       rVersion_ = config.getRVersion();
-      executeRprofile_.setValue(config.getExecuteRprofile());
+      
+      // if we are in packrat mode, disable the ability to set the disable execute Rprofile setting
+      // the Rprofile always executes on session start in this case as it is required by packrat
+      if (context != null && context.isModeOn())
+      {
+         disableExecuteRprofile_.setEnabled(false);
+         disableExecuteRprofile_.setValue(false);
+      }
+      else
+         disableExecuteRprofile_.setValue(config.getDisableExecuteRprofile());
       
       // check or uncheck the checkbox for child processes based on the configuration value
       // if default is specified, we need to use the current session setting
@@ -117,7 +128,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedIndex());
       config.setTutorialPath(tutorialPath_);
       config.setRVersion(rVersion_);
-      config.setExecuteRprofile(executeRprofile_.getValue());
+      config.setDisableExecuteRprofile(disableExecuteRprofile_.getValue());
       
       // turn the quit child processes checkbox from a boolean into the 
       // YesNoAsk value that it should be in the configuration
@@ -166,7 +177,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
-   private CheckBox executeRprofile_;
+   private CheckBox disableExecuteRprofile_;
    private CheckBox quitChildProcessesOnExit_;
    private SessionInfo sessionInfo_;
    
