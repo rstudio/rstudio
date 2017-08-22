@@ -1027,9 +1027,11 @@ PackratContext packratContext()
                   projectPath).call(&context.modeOn);
          if (error)
             LOG_ERROR(error);
+
+         // cache results in project directory to make packrat status information available on session start
+         persistentState().settings().set("packratEnabled", context.modeOn);
       }
    }
-
    return context;
 }
 

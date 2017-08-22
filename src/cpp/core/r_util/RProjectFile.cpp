@@ -758,6 +758,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract execute rprofile
+   it = dcfFields.find("DisableExecuteRprofile");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->disableExecuteRprofile)))
+         return requiredFieldError("DisableExecuteRprofile", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->disableExecuteRprofile = false;
+   }
+
    // extract default open docs
    it = dcfFields.find("DefaultOpenDocs");
    if (it != dcfFields.end())
@@ -957,6 +969,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format quitChildProcFmt("\nQuitChildProcessesOnExit: %1%\n");
       contents.append(boost::str(quitChildProcFmt % yesNoAskValueToString(config.quitChildProcessesOnExit)));
+   }
+
+   // add DisableExecuteRprofile if it's not the default
+   if (config.disableExecuteRprofile)
+   {
+      contents.append("DisableExecuteRprofile: Yes\n");
    }
 
    // add default open docs if it's present

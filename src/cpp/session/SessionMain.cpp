@@ -198,6 +198,19 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
+bool disableExecuteRprofile()
+{
+   bool disableExecuteRprofile = false;
+
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      disableExecuteRprofile = projContext.config().disableExecuteRprofile;
+   }
+
+   return disableExecuteRprofile;
+}
+
 bool quitChildProcesses()
 {
    // allow project override
@@ -1798,8 +1811,10 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
+      rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       
       // r callbacks

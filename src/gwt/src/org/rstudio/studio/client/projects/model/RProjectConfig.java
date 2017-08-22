@@ -81,6 +81,14 @@ public class RProjectConfig extends JavaScriptObject
       this.quit_child_processes_on_exit = quitChildProcessesOnExit;
    }-*/;  
    
+   public native final boolean getDisableExecuteRprofile() /*-{
+      return this.disable_execute_rprofile;
+   }-*/;
+   
+   public native final void setDisableExecuteRprofile(boolean disableExecuteRprofile) /*-{
+      this.disable_execute_rprofile = disableExecuteRprofile;
+   }-*/;
+   
    public native final boolean getEnableCodeIndexing() /*-{
       return this.enable_code_indexing;
    }-*/;  
