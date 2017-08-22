@@ -111,6 +111,8 @@ core::FilePath tempFile(const std::string& prefix,
 
 core::FilePath tempDir();
 
+std::string rLibsUser();
+
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 

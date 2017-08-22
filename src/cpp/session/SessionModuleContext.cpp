@@ -928,6 +928,11 @@ FilePath oldScopedScratchPath()
    else
       return userScratchPath();
 }
+
+std::string rLibsUser()
+{
+   return core::system::getenv("R_LIBS_USER");
+}
    
 bool isVisibleUserFile(const FilePath& filePath)
 {

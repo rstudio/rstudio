@@ -510,4 +510,8 @@ public class SessionInfo extends JavaScriptObject
    public final native String getDefaultRSConnectServer() /*-{
       return this.default_rsconnect_server;
    }-*/;
+   
+   public final native String getRLibsUser() /*-{
+      return this.r_libs_user;
+   }-*/;
 }
