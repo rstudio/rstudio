@@ -301,7 +301,7 @@ public class TerminalPane extends WorkbenchPane
       else
       {
          setFocusOnVisible();
-         terminal.receivedInput(postCreateText);
+         terminal.receivedSendToTerminal(postCreateText);
       }
    }
 
@@ -699,7 +699,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
-      terminal.receivedInput(postCreateText_);
+      terminal.receivedSendToTerminal(postCreateText_);
       creatingTerminal_ = false;
       postCreateText_ = null;
       updateTerminalToolbar();
@@ -806,7 +806,7 @@ public class TerminalPane extends WorkbenchPane
          showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
-         terminal.receivedInput(event.getInputText());
+         terminal.receivedSendToTerminal(event.getInputText());
          return;
       }
 
