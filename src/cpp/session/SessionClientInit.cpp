@@ -126,12 +126,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["temp_dir"] = tempDir.absolutePath();
 
    // R_LIBS_USER
-   std::string rLibsUser;
-   error = module_context::rLibsUser(&rLibsUser);
-   if (error)
-      LOG_ERROR(error);
-   else
-      sessionInfo["r_libs_user"] = rLibsUser;
+   std::string rLibsUser = module_context::rLibsUser();
+   sessionInfo["r_libs_user"] = rLibsUser;
    
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
