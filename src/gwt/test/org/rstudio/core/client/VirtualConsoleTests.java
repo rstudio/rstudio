@@ -23,6 +23,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
 
+// Note on test coverage: the VirtualConsole has two side effects; it operates on a 
+// DOM, if supplied, and also maintains an internal string with the output results.
+// The "consolify" tests are testing the internal string only, and most of the other
+// tests are only testing the DOM. Ideally these should all be extended to do both.
+
 public class VirtualConsoleTests extends GWTTestCase
 {
    @Override
@@ -37,18 +42,24 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("foo", simple);
    }
    
-   public void testBackspace()
+   public void testEmbeddedBackspace()
    {
       String backspace = VirtualConsole.consolify("bool\bk");
       Assert.assertEquals("book", backspace);
    }
-   
+
+   public void testTrailingBackspace()
+   {
+      String backspace = VirtualConsole.consolify("bool\bk");
+      Assert.assertEquals("book", backspace);
+   }
+    
    public void testCarriageReturn()
    {
       String cr = VirtualConsole.consolify("hello\rj");
       Assert.assertEquals("jello", cr);
    }
-   
+
    public void testNewlineCarrigeReturn()
    {
       String cr = VirtualConsole.consolify("L1\nL2\rL3");
@@ -704,4 +715,22 @@ public class VirtualConsoleTests extends GWTTestCase
       String expected ="<span class=\"myStyle\"><ESC>[35mHello</span>";
       Assert.assertEquals(expected, AnsiCode.prettyPrint(ele.getInnerHTML()));
    }
-}
+
+   public void testMultipleCarriageReturn()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("hello world\r           \rgoodbye");
+      Assert.assertEquals("<span>goodbye    </span>", ele.getInnerHTML());
+      Assert.assertEquals("goodbye    ", vc.toString());
+   }
+
+   public void testNonDestructiveBackspace()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("hello world\b\b\b\b\b");
+      Assert.assertEquals("<span>hello world</span>", ele.getInnerHTML());
+      Assert.assertEquals("hello world", vc.toString());
+   }
+  }
