@@ -1993,7 +1993,7 @@ bool canBuildCpp()
    options.environment = childEnv;
 
    core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd.commandString(), options, &result);
+   error = core::system::runCommand(rCmd.shellCommand(), options, &result);
    if (error)
    {
       LOG_ERROR(error);

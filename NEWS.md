@@ -139,6 +139,7 @@
 * Fixed runtime crashes in R packages that use Boost libraries
 * Fixed startup crashes associated with Boost regular expressions
 * Fixed an issue where scroll position in History pane could be lost when losing focus
+* Fixed an issue where RStudio would fail to discover build tools if R was not on PATH
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
 * Color errors in the R console correctly when resuming a session
