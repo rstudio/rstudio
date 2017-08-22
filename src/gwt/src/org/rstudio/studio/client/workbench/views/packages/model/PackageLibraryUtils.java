@@ -38,7 +38,7 @@ public class PackageLibraryUtils
          projectDir = sessionInfo.getActiveProjectDir();
       
       String rLibsUser = sessionInfo.getRLibsUser();
-      boolean hasRLibsUser = (rLibsUser != null && !rLibsUser.isEmpty());
+      boolean hasRLibsUser = !StringUtil.isNullOrEmpty(rLibsUser);
       
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
