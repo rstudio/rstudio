@@ -47,7 +47,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String backspace = VirtualConsole.consolify("bool\bk");
       Assert.assertEquals("book", backspace);
    }
-
+   
    public void testTrailingBackspace()
    {
       String backspace = VirtualConsole.consolify("bool\bk");
@@ -59,7 +59,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String cr = VirtualConsole.consolify("hello\rj");
       Assert.assertEquals("jello", cr);
    }
-
+   
    public void testNewlineCarrigeReturn()
    {
       String cr = VirtualConsole.consolify("L1\nL2\rL3");
@@ -733,4 +733,4 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>hello world</span>", ele.getInnerHTML());
       Assert.assertEquals("hello world", vc.toString());
    }
-  }
+}
