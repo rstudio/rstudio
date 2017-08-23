@@ -586,12 +586,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
       {
          ReplaceRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new ReplaceRangesEvent(data));
+         fireEventForDocument(data.getId(), new ReplaceRangesEvent(data));
       }
       else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
       {
          SetSelectionRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new SetSelectionRangesEvent(data));
+         fireEventForDocument(data.getId(), new SetSelectionRangesEvent(data));
       }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
@@ -800,6 +800,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    // Private methods ---------------------------------------------------------
+   
+   private void fireEventForDocument(String docId, CrossWindowEvent<?> event)
+   {
+      if (StringUtil.isNullOrEmpty(docId))
+      {
+         fireEventToLastFocusedWindow(event);
+         return;
+      }
+      
+      String windowId = getWindowIdOfDocId(docId);
+      if (StringUtil.isNullOrEmpty(windowId))
+         events_.fireEventToMainWindow(event);
+      else
+         fireEventToSourceWindow(windowId, event, false);
+   }
    
    private void fireEventToSourceWindow(String windowId, 
          CrossWindowEvent<?> evt,
