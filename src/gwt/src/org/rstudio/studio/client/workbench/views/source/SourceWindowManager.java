@@ -586,12 +586,30 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
       {
          ReplaceRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new ReplaceRangesEvent(data));
+         ReplaceRangesEvent newEvent = new ReplaceRangesEvent(data);
+         if (StringUtil.isNullOrEmpty(data.getId()))
+         {
+            fireEventToLastFocusedWindow(newEvent);
+         }
+         else
+         {
+            events_.fireEventToMainWindow(newEvent);
+            events_.fireEventToAllSatellites(newEvent);
+         }
       }
       else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
       {
          SetSelectionRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new SetSelectionRangesEvent(data));
+         SetSelectionRangesEvent newEvent = new SetSelectionRangesEvent(data);
+         if (StringUtil.isNullOrEmpty(data.getId()))
+         {
+            fireEventToLastFocusedWindow(newEvent);
+         }
+         else
+         {
+            events_.fireEventToMainWindow(newEvent);
+            events_.fireEventToAllSatellites(newEvent);
+         }
       }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
