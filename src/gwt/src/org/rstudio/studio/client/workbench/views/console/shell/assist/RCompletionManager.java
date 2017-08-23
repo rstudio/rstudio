@@ -1454,9 +1454,9 @@ public class RCompletionManager implements CompletionManager
       // it is a bit hacky to have to test this here again when we just did
       // it in the parent scope. perhaps this calls for some refactoring
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition()) ;
-      if( cursorToken.hasType("string"))
+      if (cursorToken.hasType("string"))
       {
-         if( ! isSingleLineString(cursorToken.getValue()) ) 
+         if (!isSingleLineString(cursorToken.getValue())) 
             return getAutocompletionContextForEmoji(firstLine);
       }
       
@@ -1468,7 +1468,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       // Markdown mode + emoji completion
-      if( DocumentMode.isCursorInMarkdownMode(docDisplay_) && isEmojiCompletion(firstLine)){
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) && isEmojiCompletion(firstLine)){
          return getAutocompletionContextForEmoji(firstLine);
       }
       
@@ -1494,7 +1494,7 @@ public class RCompletionManager implements CompletionManager
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
       {
-         if( isEmojiCompletion(firstLine)){
+         if (isEmojiCompletion(firstLine)){
             return getAutocompletionContextForEmoji(firstLine) ;
          }
          
@@ -2032,7 +2032,7 @@ public class RCompletionManager implements CompletionManager
          String completionToken = getCurrentCompletionToken();
          
          // handle the case where the token is #' |
-         if( qualifiedName.type == RCompletionType.ROXYGEN && completionToken.startsWith("#'")){
+         if (qualifiedName.type == RCompletionType.ROXYGEN && completionToken.startsWith("#'")){
             completionToken = "" ;
          }
          
@@ -2094,7 +2094,7 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
-         if( qualifiedName.type == RCompletionType.EMOJI){
+         if (qualifiedName.type == RCompletionType.EMOJI){
             value = completionToken.replaceAll("[:][a-zA-Z0-9_]+$", value) ;
          } 
          else if (!RCompletionType.isFileType(qualifiedName.type))

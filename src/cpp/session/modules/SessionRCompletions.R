@@ -2475,9 +2475,9 @@ assign(x = ".rs.acCompletionTypes",
    )
 })
 
-.rs.addFunction("getCompletionsEmoji", function(token){
+.rs.addFunction("getCompletionsEmoji", function(token) {
    tryCatch({
-      results <- emo::ji_completion( sub( "^[:]", "", token ) )
+      results <- emo::ji_completion(sub("^[:]", "", token))
       .rs.makeCompletions(
          token = token, 
          results = unname(results),
@@ -2486,7 +2486,7 @@ assign(x = ".rs.acCompletionTypes",
          type = .rs.acCompletionTypes$EMOJI, 
          excludeOtherCompletions = TRUE
       )
-   }, error = function(e){
+   }, error = function(e) {
       .rs.emptyCompletions()
    })
 })

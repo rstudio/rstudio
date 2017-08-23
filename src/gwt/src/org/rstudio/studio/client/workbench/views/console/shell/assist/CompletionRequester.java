@@ -175,10 +175,10 @@ public class CompletionRequester
             if (StringUtil.isSubsequence(basename(qname.name), tokenFuzzy, true))
                newCompletions.add(qname);
          }
-         else if(qname.type == RCompletionType.EMOJI)
+         else if (qname.type == RCompletionType.EMOJI)
          {
             // narrowing based on the .source
-            if( qname.source.contains(tokenEmoji) ){
+            if (qname.source.contains(tokenEmoji)){
                newCompletions.add(qname) ;
             }
          } 
@@ -874,7 +874,7 @@ public class CompletionRequester
                name);
 
          // Display the alias, e.g. :cat: for the emoji completions
-         if( type == RCompletionType.EMOJI ){
+         if ( type == RCompletionType.EMOJI ){
             SafeHtmlUtil.appendSpan( 
                sb, 
                RES.styles().packageName(), 
