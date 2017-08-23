@@ -479,7 +479,7 @@ public class RCompletionManager implements CompletionManager
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
                       (Pattern.create(".*`r").test(currentLine) && StringUtil.countMatches(currentLine, '`') % 2 == 1) ||
-                      Pattern.create(".*[:][a-zA-Z0-9_]+").test(currentLine)
+                      Pattern.create(".*[:][a-zA-Z0-9_]*").test(currentLine)
                       ))
                      return false;
                }
@@ -1126,7 +1126,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isEmojiCompletion(String line)
    {
-      return line.matches(".*[:][a-zA-Z0-9_]+$") ;
+      return line.matches(".*[:][a-zA-Z0-9_]*$") ;
    }
    
    /**
@@ -2095,7 +2095,7 @@ public class RCompletionManager implements CompletionManager
             value = value + "/";
          
          if (qualifiedName.type == RCompletionType.EMOJI){
-            value = completionToken.replaceAll("[:][a-zA-Z0-9_]+$", value) ;
+            value = completionToken.replaceAll("[:][a-zA-Z0-9_]*$", value) ;
          } 
          else if (!RCompletionType.isFileType(qualifiedName.type))
          {
