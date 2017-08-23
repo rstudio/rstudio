@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
@@ -284,6 +285,22 @@ public class EditingTargetCodeExecution
          // the region to execute
          range = docDisplay_.getMultiLineExpr(
                docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
+         
+         // expand to include comments (10 lines max)
+         int startRow = range.getStart().getRow();
+         for (int i = 0; i < 10; i++)
+         {
+            if (startRow == 0)
+               break;
+            
+            String line = docDisplay_.getLine(startRow - 1);
+            Pattern pattern = Pattern.create("^\\s*#");
+            if (!pattern.test(line))
+               break;
+            
+            startRow--;
+         }
+         range.getStart().setRow(startRow);
       }
       else if (executionBehavior == UIPrefsAccessor.EXECUTE_PARAGRAPH)
       {

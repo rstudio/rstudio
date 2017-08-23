@@ -84,6 +84,7 @@
 * Highlight markdown inside ROxygen comments
 * Minor fixes to C++ syntax highlighting
 * Added syntax highlighting for TOML files
+* Provide autocompletion support for R6 'new()' methods
 * Improve performance of autocompletion for installed packages
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
@@ -102,6 +103,7 @@
 * Remove Packrat package sync notifications; replace with Check Library Status command
 * Add support for ligature coding fonts in RStudio Desktop for Windows and Linux
 * Added page viewer (accessible via getOption("page_viewer")) for viewing web content in an external window.
+* Add editor theme Dracula (thanks to [Fabian Mundt](https://github.com/inventionate))
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -137,6 +139,7 @@
 * Fixed runtime crashes in R packages that use Boost libraries
 * Fixed startup crashes associated with Boost regular expressions
 * Fixed an issue where scroll position in History pane could be lost when losing focus
+* Fixed an issue where RStudio would fail to discover build tools if R was not on PATH
 * Improve stability of crashed session recovery system
 * Fixed issues arising from restoring a session suspended with a different R version
 * Color errors in the R console correctly when resuming a session

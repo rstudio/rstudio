@@ -1122,7 +1122,15 @@ public class StringUtil
    public static final native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
    }-*/;
-   
+
+   /**
+    * Convert string line endings to carriage returns to mimic keyboard entry
+    * of text on Windows.
+    */
+   public static final native String normalizeNewLinesToCR(String string) /*-{
+      return string.replace(/\r\n|\n\r|\n/g, "\r");
+   }-*/;
+    
    public static final native JsArrayString split(String string, String delimiter) /*-{
       return string.split(delimiter);
    }-*/;

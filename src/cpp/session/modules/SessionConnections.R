@@ -248,7 +248,8 @@ options(connectionObserver = list(
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
             iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
-            licensed = .rs.scalar(FALSE)
+            licensed = .rs.scalar(FALSE),
+            source = .rs.scalar("Snippet")
          )
       }, error = function(e) {
          warning(e$message)
@@ -336,7 +337,8 @@ options(connectionObserver = list(
                snippet = .rs.scalar(snippet),
                help = .rs.scalar(NULL),
                iconData = .rs.scalar(iconData),
-               licensed = .rs.scalar(identical(file.exists(licenseFile), TRUE))
+               licensed = .rs.scalar(identical(file.exists(licenseFile), TRUE)),
+               source = .rs.scalar("ODBC")
             )
          }, error = function(e) {
             warning(e$message)
@@ -395,7 +397,8 @@ options(connectionObserver = list(
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(con$help),
             iconData = .rs.scalar(iconData),
-            licensed = .rs.scalar(FALSE)
+            licensed = .rs.scalar(FALSE),
+            source = .rs.scalar("Package")
          )
       }, error = function(e) {
          warning(e$message)
@@ -445,7 +448,8 @@ options(connectionObserver = list(
                snippet = .rs.scalar(snippet),
                help = .rs.scalar(NULL),
                iconData = .rs.scalar(iconData),
-               licensed = .rs.scalar(FALSE)
+               licensed = .rs.scalar(FALSE),
+               source = .rs.scalar("DSN")
             )
          }, error = function(e) {
             warning(e$message)

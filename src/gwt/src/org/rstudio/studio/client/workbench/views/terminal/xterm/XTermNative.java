@@ -105,11 +105,11 @@ public class XTermNative extends JavaScriptObject
    }-*/;
    
    public final native int cursorX() /*-{
-      return this.x;
+      return this.buffer.x;
    }-*/;
    
    public final native int cursorY() /*-{
-      return this.y;
+      return this.buffer.y;
    }-*/;
  
    public final native boolean altBufferActive() /*-{
@@ -127,7 +127,7 @@ public class XTermNative extends JavaScriptObject
    }-*/;
     
    public final native String currentLine() /*-{
-      lineBuf = this.lines.get(this.y + this.ybase);
+      lineBuf = this.buffer.lines.get(this.y + this.ybase);
       if (!lineBuf) // resize may be in progress
          return null;
       current = "";
@@ -142,7 +142,7 @@ public class XTermNative extends JavaScriptObject
    public final native String getLocalBuffer() /*-{
       buffer = "";
       for (row = 0; row < this.rows; row++) {
-         lineBuf = this.lines.get(row);
+         lineBuf = this.buffer.lines.get(row);
          if (!lineBuf) // resize may be in progress
             return null;
       

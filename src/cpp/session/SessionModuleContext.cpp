@@ -2136,6 +2136,24 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
    return fileCopy.call();
 }
 
+bool isSessionTempPath(FilePath filePath)
+{
+   // get the real path
+   Error error = core::system::realPath(filePath, &filePath);
+   if (error)
+      LOG_ERROR(error);
+
+   // get the session temp dir real path; needed since the file path above is
+   // also a real path--e.g. on OS X, it refers to /private/tmp rather than
+   // /tmp
+   FilePath tempDir;
+   error = core::system::realPath(module_context::tempDir(), &tempDir);
+   if (error)
+      LOG_ERROR(error);
+
+   return filePath.isWithin(tempDir);
+}
+
 std::string sessionTempDirUrl(const std::string& sessionTempPath)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)

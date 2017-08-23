@@ -570,6 +570,12 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!is.null(object) && is.function(object))
    {
+      # If we're attempting to get completions for an R6 'new()' function,
+      # then use a separate code path to derive that -- derive formals from
+      # the 'initialize()' method instead.
+      if (.rs.isR6NewMethod(object))
+         object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
+      
       matchedCall <- .rs.matchCall(object, functionCall)
       
       # Try to figure out what function arguments are
@@ -2400,6 +2406,9 @@ assign(x = ".rs.acCompletionTypes",
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
+      if (inherits(object, "python.builtin.object"))
+         return(.rs.emptyCompletions())
+      
       if (length(object))
       {
          objectNames <- .rs.getNames(object)

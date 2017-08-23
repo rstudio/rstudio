@@ -110,7 +110,7 @@ try {
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
             def index = i
-            parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}"] = {
+            parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
                 node('ide') {
                     stage('prepare ws/container'){

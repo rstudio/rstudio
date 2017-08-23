@@ -603,7 +603,7 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    core::system::ProcessOptions options;
    options.workingDir = srcPath.parent();
    options.environment = env;
-   return core::system::runCommand(rCmd.commandString(), options, pResult);
+   return core::system::runCommand(rCmd.shellCommand(), options, pResult);
 }
 
 bool RCompilationDatabase::isProjectTranslationUnit(

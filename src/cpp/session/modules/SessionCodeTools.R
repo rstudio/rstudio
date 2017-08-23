@@ -1913,3 +1913,38 @@
    fmt <- "'%s' is not a length-one character vector"
    stop(sprintf(fmt, .rs.deparse(substitute(object))), call. = FALSE)
 })
+
+.rs.addFunction("isR6NewMethod", function(object)
+{
+   if (!is.function(object))
+      return(FALSE)
+   
+   envir <- environment(object)
+   if (!inherits(envir, "R6ClassGenerator"))
+      return(FALSE)
+   
+   identical(object, envir$new)
+})
+
+.rs.addFunction("getR6ClassGeneratorMethod", function(object, method)
+{
+   if (is.function(object))
+      object <- environment(object)
+   
+   if (!is.environment(object))
+      return(NULL)
+   
+   if (!inherits(object, "R6ClassGenerator"))
+      return(NULL)
+   
+   tryCatch(
+      object$public_methods[[method]],
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("isExternalPointer", function(object)
+{
+   identical(typeof(object), "externalptr")
+})
+

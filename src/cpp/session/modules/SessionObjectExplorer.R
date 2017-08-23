@@ -25,6 +25,10 @@
    VIRTUAL    = "virtual"
 ))
 
+# NOTE: this should be synchronized with DEFAULT_ROW_LIMIT
+# in ObjectExplorerDataGrid.java
+.rs.setVar("explorer.defaultRowLimit", 1000)
+
 # this environment holds data objects currently open within
 # a viewer tab; this environment will be persisted across
 # RStudio sessions
@@ -51,7 +55,7 @@
       tags      = tags,
       recursive = 1,
       start     = start + 1,   # 0 -> 1-based indexing,
-      end       = start + 200  # 200 elements inclusive
+      end       = start + .rs.explorer.defaultRowLimit
    )
    
    # generate inspection result
@@ -210,7 +214,7 @@
                                                    tags = character(),
                                                    recursive = FALSE,
                                                    start = 1,
-                                                   end = 200)
+                                                   end = .rs.explorer.defaultRowLimit)
 {
    list(
       name      = name,
@@ -239,7 +243,7 @@
       tags      = tags,
       recursive = recursive,
       start     = 1,
-      end       = 200
+      end       = .rs.explorer.defaultRowLimit
    )
 })
 
@@ -862,9 +866,9 @@
       output <- sprintf("S4 object of class %s", class(object))
       more <- FALSE
    }
-   else if (inherits(object, "externalptr"))
+   else if (.rs.isExternalPointer(object))
    {
-      output <- capture.output(print(unclass(object)))
+      output <- capture.output(base::print.default(object))
       more <- FALSE
    }
    

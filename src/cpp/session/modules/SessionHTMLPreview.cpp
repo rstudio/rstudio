@@ -484,7 +484,6 @@ std::string deriveNotebookPath(const std::string& path)
 boost::shared_ptr<HTMLPreview> s_pCurrentPreview_;
 
 // current page_viewer html file
-std::string s_currentPageViewerFile;
 
 bool isPreviewRunning()
 {
@@ -524,8 +523,6 @@ Error previewHTML(const json::JsonRpcRequest& request,
                                                isMarkdown,
                                                isNotebook,
                                                knit);
-      s_currentPageViewerFile = std::string();
-
       pResponse->setResult(true);
    }
 
@@ -929,8 +926,8 @@ void handleInternalMarkdownPreviewRequest(
 void handlePreviewRequest(const http::Request& request,
                           http::Response* pResponse)
 {
-   // if there isn't a current preview or page viewer file this is an error
-   if (!s_pCurrentPreview_ && s_currentPageViewerFile.empty())
+   // if there isn't a current preview this is an error
+   if (!s_pCurrentPreview_)
    {
       pResponse->setNotFoundError(request.uri());
       return;
@@ -946,11 +943,7 @@ void handlePreviewRequest(const http::Request& request,
    // if it is empty then this is the main request
    if (path.empty())
    {
-      if (!s_currentPageViewerFile.empty())
-      {
-         pResponse->setFile(FilePath(s_currentPageViewerFile), request);
-      }
-      else if (s_pCurrentPreview_->isMarkdown())
+      if (s_pCurrentPreview_->isMarkdown())
       {
          if (s_pCurrentPreview_->isInternalMarkdown())
             handleInternalMarkdownPreviewRequest(request, pResponse);
@@ -980,11 +973,7 @@ void handlePreviewRequest(const http::Request& request,
    // request for dependent file
    else
    {
-      FilePath filePath;
-      if (!s_currentPageViewerFile.empty())
-         filePath = FilePath(s_currentPageViewerFile).parent().childPath(path);
-      else
-         filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
+      FilePath filePath = s_pCurrentPreview_->targetDirectory().childPath(path);
       addFileSpecificHeaders(filePath, pResponse);
       pResponse->setFile(filePath, request);
    }
@@ -1019,9 +1008,9 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
 
          // port mapping for RStudio Server
          url = module_context::mapUrlPorts(url);
-
       }
-      // otherwise it's a file
+
+      // otherwise it's a file in the filesystem
       else
       {
          // get full path to file
@@ -1040,8 +1029,9 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
          if (error)
             throw r::exec::RErrorException(r::endUserErrorMessage(error));
 
-         // set url to file previewer
-         url = kHTMLPreview "/";
+         // set url to localhost previewer
+         std::string tempPath = viewerFilePath.relativePath(module_context::tempDir());
+         url = module_context::sessionTempDirUrl(tempPath);
       }
 
       // emit show page viewer event
@@ -1059,10 +1049,6 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
       using namespace boost::posix_time;
       boost::this_thread::sleep(milliseconds(500));
 
-      // set the current viewer file path (required so we can
-      // serve back the file and it's dependencies
-      s_currentPageViewerFile = viewerFilePath.absolutePath();
-
       // emit html preview completed event
       enqueHTMLPreviewSucceeded(
          title,               // title
@@ -1073,6 +1059,14 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
          !filePath.empty(),   // save as
          false                // re-execute
        );
+
+      // return the path to the viewer file if it's a file, otherwise
+      // return the URL
+      r::sexp::Protect rProtect;
+      if (!viewerFilePath.empty())
+         return r::sexp::create(viewerFilePath.absolutePath(), &rProtect);
+      else
+         return r::sexp::create(url, &rProtect);
    }
    catch(r::exec::RErrorException e)
    {
