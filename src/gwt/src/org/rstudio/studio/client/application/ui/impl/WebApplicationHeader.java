@@ -252,7 +252,6 @@ public class WebApplicationHeader extends Composite
          outerPanel_.add(logoAnchor_);
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          outerPanel_.add(menubarPanel);
-         mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
          preferredHeight_ = 45;
          showProjectMenu(true);
       }
