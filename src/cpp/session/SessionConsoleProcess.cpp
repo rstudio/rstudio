@@ -71,11 +71,6 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
 
-   // Unset rpostback-askpass values set by rstudio::session::modules::git::initialize().
-   // These are not needed in an interactive terminal where prompting can happen inline.
-   core::system::unsetenv(&shellEnv, "GIT_ASKPASS");
-   core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
-
    // ammend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 
