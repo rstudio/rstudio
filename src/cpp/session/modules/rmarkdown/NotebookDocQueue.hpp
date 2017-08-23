@@ -36,6 +36,14 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+// possible sources for specifying the working directory in a notebook execution queue
+enum WorkingDirSource
+{
+   DefaultDir    = 0,    // working directory was unspecified (default)
+   GlobalDir     = 1,    // working dir was specified by the IDE (globally)
+   SetupChunkDir = 2     // working dir was specified by the doc's setup chunk
+};
+
 class NotebookDocQueue : boost::noncopyable
 {
 public:
@@ -53,7 +61,8 @@ public:
 
    core::json::Object defaultChunkOptions() const;
    void setDefaultChunkOptions(const core::json::Object& options);
-   void setWorkingDir (const std::string& workingDir);
+   void setWorkingDir(const std::string& workingDir, WorkingDirSource source);
+   WorkingDirSource getWorkingDirSource();
    void setExternalChunks(const core::json::Object& chunks);
 
    // accessors
@@ -85,6 +94,7 @@ private:
    // the working directory in which to execute chunks (note that this will be
    // empty unless manually specified)
    core::FilePath workingDir_;
+   WorkingDirSource workingDirSource_;
 
    // the queue of chunks to be executed 
    std::list<boost::shared_ptr<NotebookQueueUnit> > queue_;

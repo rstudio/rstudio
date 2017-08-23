@@ -599,7 +599,7 @@ private:
 
          // update running queue if present
          if (!queue_.empty() && !workingDir.empty())
-            queue_.front()->setWorkingDir(workingDir);
+            queue_.front()->setWorkingDir(workingDir, SetupChunkDir);
       }
       else if (!error)
       {
@@ -609,8 +609,10 @@ private:
                kChunkWorkingDir, json::Value());
          if (error)
             LOG_ERROR(error);
-         if (!queue_.empty())
-            queue_.front()->setWorkingDir("");
+
+         // if the running queue got its working directory from the setup chunk, clear it
+         if (!queue_.empty() && queue_.front()->getWorkingDirSource() == SetupChunkDir)
+            queue_.front()->setWorkingDir("", SetupChunkDir);
       }
 
       error = r::exec::RFunction(".rs.defaultChunkOptions")
