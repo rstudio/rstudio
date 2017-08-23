@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -174,6 +174,8 @@ public class WebApplicationHeader extends Composite
          {
             SessionInfo sessionInfo = session.getSessionInfo();
             
+            hostedMode_ = !sessionInfo.getAllowFullUI();
+            
             // complete toolbar initialization
             toolbar_.completeInitialization(sessionInfo);
              
@@ -230,6 +232,7 @@ public class WebApplicationHeader extends Composite
     
    public void showToolbar(boolean showToolbar)
    {
+      toolbarVisible_ = showToolbar;
       outerPanel_.clear();
       
       if (showToolbar)
@@ -259,7 +262,7 @@ public class WebApplicationHeader extends Composite
    
    public boolean isToolbarVisible()
    {
-      return !projectMenuButton_.isVisible();
+      return toolbarVisible_;
    }
    
    public void focusGoToFunction()
@@ -269,6 +272,10 @@ public class WebApplicationHeader extends Composite
    
    private void showProjectMenu(boolean show)
    {
+      if (hostedMode_)
+      {
+         show = false;
+      }
       projectMenuSeparator_.setVisible(show);
       projectMenuButton_.setVisible(show);
    }
@@ -384,7 +391,7 @@ public class WebApplicationHeader extends Composite
    private void initCommandsPanel(final SessionInfo sessionInfo)
    {  
       // add username 
-      if (sessionInfo.getShowIdentity())
+      if (sessionInfo.getShowIdentity() && sessionInfo.getAllowFullUI())
       {
          ToolbarLabel usernameLabel = new ToolbarLabel();
          usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
@@ -411,7 +418,8 @@ public class WebApplicationHeader extends Composite
       
       overlay_.addCommands(this);
       
-      headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
+      if (sessionInfo.getAllowFullUI())
+         headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
 
    private Widget createCommandSeparator()
@@ -538,4 +546,6 @@ public class WebApplicationHeader extends Composite
    private GlobalDisplay globalDisplay_;
    private Commands commands_; 
    private WebApplicationHeaderOverlay overlay_;
+   private boolean hostedMode_;
+   private boolean toolbarVisible_;
 }

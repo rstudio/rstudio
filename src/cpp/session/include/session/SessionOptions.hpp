@@ -379,6 +379,11 @@ public:
       return allowPresentationCommands_;
    }
 
+   bool allowFullUI() const
+   {
+      return allowOverlay() || allowFullUI_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -637,6 +642,7 @@ private:
    bool allowExternalPublish_;
    bool allowPublish_;
    bool allowPresentationCommands_;
+   bool allowFullUI_;
 
    // user info
    bool showUserIdentity_;
