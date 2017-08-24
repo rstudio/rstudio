@@ -203,4 +203,6 @@ public interface ThemeStyles extends CssResource
    String tabIcon();
    
    String menuCheckable();
+   
+   String noLogo();
 }

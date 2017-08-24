@@ -78,7 +78,7 @@ public class WebApplicationHeader extends Composite
                   final Commands commands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
-                  ThemeResources themeResources,
+                  final ThemeResources themeResources,
                   final Session session,
                   Provider<CodeSearch> pCodeSearch)
    {
@@ -176,6 +176,12 @@ public class WebApplicationHeader extends Composite
             
             hostedMode_ = !sessionInfo.getAllowFullUI();
             
+            if (hostedMode_)
+            {
+               mainMenu_.addStyleName(themeResources.themeStyles().noLogo());
+               toolbar_.addStyleName(themeResources.themeStyles().noLogo());
+            }
+            
             // complete toolbar initialization
             toolbar_.completeInitialization(sessionInfo);
              
@@ -237,9 +243,12 @@ public class WebApplicationHeader extends Composite
       
       if (showToolbar)
       {
-         logoAnchor_.getElement().removeAllChildren();
-         logoAnchor_.getElement().appendChild(logoLarge_.getElement());
-         outerPanel_.add(logoAnchor_);
+         if (!hostedMode_)
+         {
+            logoAnchor_.getElement().removeAllChildren();
+            logoAnchor_.getElement().appendChild(logoLarge_.getElement());
+            outerPanel_.add(logoAnchor_);
+         }
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
          outerPanel_.add(headerPanel);
          preferredHeight_ = 65;
@@ -247,9 +256,12 @@ public class WebApplicationHeader extends Composite
       }
       else
       {
-         logoAnchor_.getElement().removeAllChildren();
-         logoAnchor_.getElement().appendChild(logoSmall_.getElement());
-         outerPanel_.add(logoAnchor_);
+         if (!hostedMode_)
+         {
+            logoAnchor_.getElement().removeAllChildren();
+            logoAnchor_.getElement().appendChild(logoSmall_.getElement());
+            outerPanel_.add(logoAnchor_);
+         }
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          outerPanel_.add(menubarPanel);
          preferredHeight_ = 45;
