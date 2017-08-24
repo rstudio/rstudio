@@ -32,7 +32,8 @@ public class JsExceptionTest extends ThrowableTestBase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  @Override
+  // Override removed here to make the test compile in J2CL.
+  // @Override
   public void runTest() throws Throwable {
     // Do not run  these tests in JVM.
     if (TestUtils.isJvm()) {
