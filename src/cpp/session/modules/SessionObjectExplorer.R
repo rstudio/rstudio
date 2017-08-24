@@ -25,6 +25,10 @@
    VIRTUAL    = "virtual"
 ))
 
+# NOTE: this should be synchronized with DEFAULT_ROW_LIMIT
+# in ObjectExplorerDataGrid.java
+.rs.setVar("explorer.defaultRowLimit", 1000)
+
 # this environment holds data objects currently open within
 # a viewer tab; this environment will be persisted across
 # RStudio sessions
@@ -51,7 +55,7 @@
       tags      = tags,
       recursive = 1,
       start     = start + 1,   # 0 -> 1-based indexing,
-      end       = start + 200  # 200 elements inclusive
+      end       = start + .rs.explorer.defaultRowLimit
    )
    
    # generate inspection result
@@ -98,7 +102,8 @@
    }
    else if (is.character(object) || is.numeric(object) ||
             is.raw(object) || is.complex(object) ||
-            is.list(object) || is.environment(object))
+            is.list(object) || is.environment(object) ||
+            is.factor(object))
    {
       type <- paste(type, sprintf("[%s]", length(object)))
    }
@@ -210,7 +215,7 @@
                                                    tags = character(),
                                                    recursive = FALSE,
                                                    start = 1,
-                                                   end = 200)
+                                                   end = .rs.explorer.defaultRowLimit)
 {
    list(
       name      = name,
@@ -239,7 +244,7 @@
       tags      = tags,
       recursive = recursive,
       start     = 1,
-      end       = 200
+      end       = .rs.explorer.defaultRowLimit
    )
 })
 

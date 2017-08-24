@@ -851,6 +851,9 @@ public class ObjectExplorerDataGrid
       else if (n == 3)
          buttonWidth = 48;
 
+      // add a bit of extra padding for the scroll bar
+      buttonWidth += 12;
+      
       int totalWidth = getOffsetWidth();
       int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
       
@@ -1310,13 +1313,13 @@ public class ObjectExplorerDataGrid
    
    private void saveScrollPosition()
    {
-      scrollPosition_ = getScrollPanel().getScrollPosition();
+      scrollPosition_ = getScrollPanel().getVerticalScrollPosition();
    }
    
    private void restoreScrollPosition()
    {
       if (scrollPosition_ != -1)
-         getScrollPanel().setScrollPosition(scrollPosition_);
+         getScrollPanel().setVerticalScrollPosition(scrollPosition_);
       scrollPosition_ = -1;
    }
    
@@ -1347,7 +1350,9 @@ public class ObjectExplorerDataGrid
    private static final int DEFAULT_NAME_COLUMN_WIDTH = 180;
    private static final int DEFAULT_TYPE_COLUMN_WIDTH = 180;
    
-   private static final int DEFAULT_ROW_LIMIT = 200;
+   // NOTE: this should be synchronized with '.rs.explorer.defaultRowLimit' in
+   // SessionObjectExplorer.R
+   private static final int DEFAULT_ROW_LIMIT = 1000;
    
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";

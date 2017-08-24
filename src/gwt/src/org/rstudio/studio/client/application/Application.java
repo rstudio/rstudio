@@ -762,6 +762,11 @@ public class Application implements ApplicationEventHandlers
          commands_.showShellDialog().remove();
          removeTerminalCommands();
       }
+      
+      if (!sessionInfo.getAllowFullUI())
+      {
+         removeProjectCommands();
+      }
 
       if (!sessionInfo.getAllowPackageInstallation())
       {
@@ -1009,6 +1014,31 @@ public class Application implements ApplicationEventHandlers
       commands_.sendTerminalToEditor().remove();
       commands_.sendToTerminal().remove();
    }
+
+   private void removeProjectCommands()
+   {
+      commands_.openProject().remove();
+      commands_.newProject().remove();
+      commands_.closeProject().remove();
+      commands_.openProjectInNewWindow().remove();
+      commands_.clearRecentProjects().remove();
+      commands_.quitSession().remove();
+      commands_.projectMru0().remove();
+      commands_.projectMru1().remove();
+      commands_.projectMru2().remove();
+      commands_.projectMru3().remove();
+      commands_.projectMru4().remove();
+      commands_.projectMru5().remove();
+      commands_.projectMru6().remove();
+      commands_.projectMru7().remove();
+      commands_.projectMru8().remove();
+      commands_.projectMru9().remove();
+      commands_.projectMru10().remove();
+      commands_.projectMru11().remove();
+      commands_.projectMru12().remove();
+      commands_.projectMru13().remove();
+      commands_.projectMru14().remove();
+    }
 
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

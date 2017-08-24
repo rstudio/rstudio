@@ -233,9 +233,12 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(new AddinsToolbarButton());
       
       // project popup menu
-      ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
+      if (sessionInfo.getAllowFullUI())
+      {
+         ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
-      addRightWidget(projectMenu.getToolbarButton());
+         addRightWidget(projectMenu.getToolbarButton());
+      }
    }
    
    @Override

@@ -652,6 +652,10 @@ pre {
    margin-left: 58px;
 }
 
+.rstudio-themes-flat .mainMenu.noLogo {
+   margin-left: 6px;
+}
+
 .mainMenu .gwt-MenuItem {
    padding: 5px 9px 5px 9px;
    height: 15px;
@@ -1486,6 +1490,15 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
  @else { .webGlobalToolbar {
       margin-left: 55px;
       padding-right: 51px;
+   }
+ }
+
+ @if user.agent gecko1_8 { .webGlobalToolbar.noLogo {
+      margin-left: 2px;
+   }
+ }
+ @else { .webGlobalToolbar.noLogo {
+      margin-left: 4px;
    }
  }
 
