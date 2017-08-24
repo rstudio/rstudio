@@ -3323,6 +3323,7 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(
       token = token,
       results = results.sorted,
-      packages = packages.sorted
+      packages = packages.sorted,
+      type = attr(results, "type")
    )
 })
