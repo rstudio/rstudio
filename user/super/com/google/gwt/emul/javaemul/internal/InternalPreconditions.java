@@ -83,10 +83,13 @@ public final class InternalPreconditions {
       getProperty("jre.checks.checkLevel") == "NORMAL";
   // NORMAL or OPTIMIZED
   private static final boolean LEVEL_OPT_OR_HIGHER =
-      getProperty("jre.checks.checkLevel") == "OPTIMIZED" || LEVEL_NORMAL_OR_HIGHER;
+      getProperty("jre.checks.checkLevel") == "OPTIMIZED"
+          || getProperty("jre.checks.checkLevel") == "NORMAL";
   // NORMAL or OPTIMIZED or MINIMAL
   private static final boolean LEVEL_MINIMAL_OR_HIGHER =
-      getProperty("jre.checks.checkLevel") == "MINIMAL" || LEVEL_OPT_OR_HIGHER;
+      getProperty("jre.checks.checkLevel") == "MINIMAL"
+          || getProperty("jre.checks.checkLevel") == "OPTIMIZED"
+          || getProperty("jre.checks.checkLevel") == "NORMAL";
 
   static {
     if (!LEVEL_MINIMAL_OR_HIGHER) {
