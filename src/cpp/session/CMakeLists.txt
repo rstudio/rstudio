@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -28,12 +28,15 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
+
+# we often install embedded versions of these packages but don't do so currently
+
 # if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
 #   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
 # endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
-  message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
-endif()
+# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
+#   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
+# endif()
 
 # verify libclang is installed
 if(WIN32)

@@ -1,8 +1,24 @@
+@external rstudio-themes-flat;
+
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
 .panel {
    width: 100%;
    padding: 0 7px 0 7px;
    margin-top: 10px;
    overflow: visible;
+}
+
+.rstudio-themes-flat .panel {
+   padding: 0 8px 0 8px;
 }
 
 @sprite .left {
@@ -15,4 +31,44 @@
 
 @sprite .right {
    gwt-image: 'menubarRight';
+}
+
+.rstudio-themes-flat .center > table > tbody > tr > td {
+   border-bottom: none;
+}
+
+.rstudio-themes-flat .left {
+   display: none;
+}
+
+.rstudio-themes-flat .right {
+   display: none;
+}
+
+.rstudio-themes-flat .center {
+   color: #FFF;
+   border-radius: 3px;
+   border: solid 1px #000;
+   height: 28px;
+   padding: 0px;
+}
+
+.rstudio-themes-flat .center > table {
+   padding: 0px;
+   height: 27px;
+}
+
+.rstudio-themes-flat .rstudio-themes-default .center {
+   background: THEME_DEFAULT_BACKGROUND;
+   border-color: THEME_DEFAULT_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .center {
+   background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .center {
+   background: THEME_ALTERNATE_BACKGROUND;
+   border-color: THEME_ALTERNATE_BORDER;
 }

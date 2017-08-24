@@ -851,6 +851,9 @@ public class ObjectExplorerDataGrid
       else if (n == 3)
          buttonWidth = 48;
 
+      // add a bit of extra padding for the scroll bar
+      buttonWidth += 12;
+      
       int totalWidth = getOffsetWidth();
       int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
       
@@ -1310,13 +1313,13 @@ public class ObjectExplorerDataGrid
    
    private void saveScrollPosition()
    {
-      scrollPosition_ = getScrollPanel().getScrollPosition();
+      scrollPosition_ = getScrollPanel().getVerticalScrollPosition();
    }
    
    private void restoreScrollPosition()
    {
       if (scrollPosition_ != -1)
-         getScrollPanel().setScrollPosition(scrollPosition_);
+         getScrollPanel().setVerticalScrollPosition(scrollPosition_);
       scrollPosition_ = -1;
    }
    
