@@ -133,6 +133,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
                false /*zombie*/,
                session::userSettings().terminalTrackEnv()));
 
+   pCpi->setHasChildProcs(false);
+
    std::string handle;
    Error error = createTerminalConsoleProc(pCpi, &handle);
    if (error)
