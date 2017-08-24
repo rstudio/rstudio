@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer.view;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
@@ -852,9 +851,8 @@ public class ObjectExplorerDataGrid
       else if (n == 3)
          buttonWidth = 48;
 
-      // add a bit of extra padding on Windows for the scroll bar
-      if (BrowseCap.isWindowsDesktop())
-         buttonWidth += 24;
+      // add a bit of extra padding for the scroll bar
+      buttonWidth += 12;
       
       int totalWidth = getOffsetWidth();
       int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
