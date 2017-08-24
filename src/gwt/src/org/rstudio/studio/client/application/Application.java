@@ -1022,6 +1022,7 @@ public class Application implements ApplicationEventHandlers
       commands_.closeProject().remove();
       commands_.openProjectInNewWindow().remove();
       commands_.clearRecentProjects().remove();
+      commands_.quitSession().remove();
       commands_.projectMru0().remove();
       commands_.projectMru1().remove();
       commands_.projectMru2().remove();
