@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -355,32 +354,21 @@ public class TerminalList implements Iterable<String>,
    /**
     * Reconnect to a known terminal.
     * @param handle
+    * @param callback result of reconnect attempt
     * @return true if terminal was known and reconnect initiated
     */
-   public boolean reconnectTerminal(String handle)
+   public void reconnectTerminal(String handle,
+                                 final ResultCallback<Boolean, String> callback) 
    {
       ConsoleProcessInfo existing = getMetadataForHandle(handle);
       if (existing == null)
       {
-         return false;
+         callback.onFailure("Tried to switch to unknown terminal handle"); 
+         return;
       }
 
       existing.setHandle(handle);
-      startTerminal(existing, new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected) 
-         {
-         }
-
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.log(msg);
-         }
-      });
-
-      return true;
+      startTerminal(existing, callback); 
    }
 
    /**
