@@ -160,6 +160,10 @@
       )
     }
   })
+  rm(list = "print.knitr_kable",
+     envir = as.environment("tools:rstudio"),
+     inherits = FALSE
+  )   
 })
 
 .rs.addFunction("readDataCapture", function(path)
