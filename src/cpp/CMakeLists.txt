@@ -33,6 +33,12 @@ add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 # they currently do not work with our source
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
 
+
+# the non-strict masking option was identified as a potentially crashing 
+# issue due to reliance on undefined C++ behavior, and was removed entirely in 
+# websocketpp 0.7 (RStudio is using 0.5.1 at this time)
+add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
+
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
