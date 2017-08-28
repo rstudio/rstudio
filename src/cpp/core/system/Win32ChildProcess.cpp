@@ -157,7 +157,8 @@ struct ChildProcess::Impl
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
         closeProcess_(&hProcess, ERROR_LOCATION),
         pid(static_cast<PidType>(-1)),
-        ctrlC(0x03)
+        ctrlC(0x03),
+        terminated(false)
    {
    }
 
@@ -168,6 +169,7 @@ struct ChildProcess::Impl
    PidType pid;
    WinPty pty;
    char ctrlC;
+   bool terminated;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
@@ -669,12 +671,13 @@ void AsyncChildProcess::poll()
    // call onContinue
    if (callbacks_.onContinue)
    {
-      if (!callbacks_.onContinue(*this))
+      if (!callbacks_.onContinue(*this) && !pImpl_->terminated)
       {
-         // terminate the proces
+         // terminate the process
          Error error = terminate();
          if (error)
             LOG_ERROR(error);
+         pImpl_->terminated = true;
       }
    }
 
