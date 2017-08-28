@@ -125,6 +125,7 @@ public class EnvironmentPane extends WorkbenchPane
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton);
       
+      ToolbarPopupMenuButton monitoringButton;
 
       return toolbar;
    }

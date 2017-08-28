@@ -334,7 +334,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
-   sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
+   // if we're currently monitoring the environment for changes, load the most
+   // recent state
+   bool monitoring = modules::environment::monitoring();
+   sessionInfo["environment_monitoring"] = monitoring;
+   sessionInfo["environment_state"] = monitoring ?
+      modules::environment::environmentStateAsJson() :
+      json::Value();
+
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 
    // send whether we should show the user identity

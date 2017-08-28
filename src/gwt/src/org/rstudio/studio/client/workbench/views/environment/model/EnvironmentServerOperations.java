@@ -62,6 +62,9 @@ public interface EnvironmentServerOperations
    
    void getEnvironmentState(
               ServerRequestCallback<EnvironmentContextData> requestCallback);
+   
+   void setEnvironmentMonitoring(boolean monitoring,
+              ServerRequestCallback<Void> requestCallback);
 
    void getObjectContents(
               String objectName,

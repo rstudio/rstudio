@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,11 @@ EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 // so that we can query this from R, without 'hiding' the
 // browser state by pushing new contexts / frames on the stack
 bool s_browserActive = false;
+
+// are we currently monitoring the environment? this is almost always true, but can be 
+// disabled by the user to help mitigate pathological cases in which environment monitoring
+// has undesirable side effects.
+bool s_monitoring = true;
 
 namespace {
 
@@ -620,6 +625,10 @@ void onDetectChanges(module_context::ChangeSource source)
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
+   // Ignore if not monitoring
+   if (!s_monitoring)
+      return;
+
    s_pEnvironmentMonitor->checkForChanges();
 }
 
@@ -630,6 +639,10 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
+
+   // Ignore if not monitoring
+   if (!s_monitoring)
+      return;
 
    int depth = 0;
    SEXP environmentTop = NULL;
@@ -769,6 +782,16 @@ void initEnvironmentMonitoring()
          }
       }
    }
+}
+
+Error setEnvironmentMonitoring(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   bool monitoring = false;
+   Error error = json::readParam(request.params, 0, &monitoring);
+   if (error)
+      return error;
+   return Success();
 }
 
 // Remove the given objects from the currently monitored environment.
@@ -987,6 +1010,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_environment_state", getEnv))
       (bind(registerRpcMethod, "get_object_contents", getObjectContents))
       (bind(registerRpcMethod, "requery_context", requeryCtx))
+      (bind(registerRpcMethod, "set_environment_monitoring", setEnvironmentMonitoring))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();
