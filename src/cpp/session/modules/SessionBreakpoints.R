@@ -440,7 +440,7 @@
 # when executed, has the same effect as sourcing the file.
 .rs.addFunction("makeSourceEquivFunction", function(filename, encoding, envir = globalenv())
 {
-   content <- suppressWarnings(parse(filename, encoding))
+   content <- suppressWarnings(parse(filename, encoding = encoding))
 
    # Create an empty function to host the expressions in the file
    fun <- function() 
