@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Operation;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -93,7 +95,23 @@ public class EnvironmentPane extends WorkbenchPane
             session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
-      environmentMonitoring_ = environmentState.environmentMonitoring();
+      
+      environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
+      ValueChangeHandler<Boolean> onMonitorChange = new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (refreshButton_ == null)
+               return;
+
+            // when the monitoring state changes, update the UI accordingly
+            refreshButton_.setLeftImage(event.getValue() ?
+                  commands_.refreshEnvironment().getImageResource() :
+                  ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x());
+         }
+      };
+      environmentMonitoring_.addValueChangeHandler(onMonitorChange);
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -124,9 +142,9 @@ public class EnvironmentPane extends WorkbenchPane
       
       toolbar.addRightSeparator();
 
-      ToolbarButton refreshButton = commands_.refreshEnvironment().createToolbarButton();
-      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      toolbar.addRightWidget(refreshButton);
+      refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
       
       ToolbarPopupMenuButton monitoringButton = new ToolbarPopupMenuButton(false, false);
       monitoringButton.addMenuItem(new MonitoringMenuItem(true), "");
@@ -629,7 +647,7 @@ public class EnvironmentPane extends WorkbenchPane
       @Override
       public boolean isChecked()
       {
-         return monitoring_ == environmentMonitoring_;
+         return monitoring_ == environmentMonitoring_.getValue();
       }
 
       @Override
@@ -640,7 +658,7 @@ public class EnvironmentPane extends WorkbenchPane
             @Override
             public void onResponseReceived(Void v)
             {
-               environmentMonitoring_ = monitoring_;
+               environmentMonitoring_.setValue(monitoring_, true);
             }
 
             @Override
@@ -662,11 +680,13 @@ public class EnvironmentPane extends WorkbenchPane
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
    private final UIPrefs prefs_;
+   private final Value<Boolean> environmentMonitoring_;
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
    private ToolbarButton environmentButton_;
    private ToolbarButton viewButton_;
+   private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;
@@ -675,5 +695,4 @@ public class EnvironmentPane extends WorkbenchPane
    private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
    private boolean environmentIsLocal_;
-   private boolean environmentMonitoring_;
 }
