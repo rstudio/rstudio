@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -31,6 +32,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
@@ -548,24 +550,48 @@ public class EnvironmentPresenter extends BasePresenter
    public void onOpenDataFile(OpenDataFileEvent event)
    {
       final String dataFilePath = event.getFile().getPath();
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-           "Confirm Load RData",
+      if (dataFilePath.endsWith(".rds"))
+      {
+         globalDisplay_.promptForText(
+               "Load R Object",
+               "Load '" + dataFilePath + "' into an R object named:",
+               FilePathUtils.fileNameSansExtension(dataFilePath),
+               new ProgressOperationWithInput<String>()
+               {
+                  @Override
+                  public void execute(String input, ProgressIndicator indicator)
+                  {
+                     if (!RegexUtil.isSyntacticRIdentifier(input))
+                        input = "`" + input.replaceAll("`", "\\\\`") + "`";
+                     
+                     consoleDispatcher_.executeCommand(
+                           input + " <- readRDS",
+                           dataFilePath);
+                     indicator.onCompleted();
+                  }
+               });
+      }
+      else
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+              "Confirm Load RData",
 
-           "Do you want to load the R data file \"" + dataFilePath + "\" " +
-           "into the global environment?",
+              "Do you want to load the R data file \"" + dataFilePath + "\" " +
+              "into the global environment?",
 
-           new ProgressOperation() {
-              public void execute(ProgressIndicator indicator)
-              {
-                 consoleDispatcher_.executeCommand(
-                         "load",
-                         FileSystemItem.createFile(dataFilePath));
+              new ProgressOperation() {
+                 public void execute(ProgressIndicator indicator)
+                 {
+                    consoleDispatcher_.executeCommand(
+                            "load",
+                            FileSystemItem.createFile(dataFilePath));
 
-                 indicator.onCompleted();
-              }
-           },
+                    indicator.onCompleted();
+                 }
+              },
 
-           true);
+              true);
+      }
    }
 
    @Override

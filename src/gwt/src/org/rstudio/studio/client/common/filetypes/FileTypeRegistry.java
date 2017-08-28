@@ -266,6 +266,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
    
    public static final RDataType RDATA = new RDataType();
+   public static final RDSDataType RDS = new RDSDataType();
    public static final RProjectType RPROJECT = new RProjectType();
 
    public static final DataFrameType DATAFRAME = new DataFrameType();
@@ -371,6 +372,7 @@ public class FileTypeRegistry
       register("*.rd", RD, new ImageResource2x(icons.iconRd2x()));
       register("*.rdata", RDATA, new ImageResource2x(icons.iconRdata2x()));
       register("*.rda", RDATA, new ImageResource2x(icons.iconRdata2x()));
+      register("*.rds", RDS, new ImageResource2x(icons.iconRdata2x()));
       register("*.Rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.mmd", MERMAID, new ImageResource2x(icons.iconMermaid2x()));
