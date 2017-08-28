@@ -322,7 +322,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("R6", "2.0"));
       deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("shiny", "1.0"));
+      deps.add(Dependency.cranPackage("shiny", "1.0", true));
       return deps;
          }
    
