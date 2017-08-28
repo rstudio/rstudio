@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,12 +22,14 @@ import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -91,6 +93,7 @@ public class EnvironmentPane extends WorkbenchPane
             session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
+      environmentMonitoring_ = environmentState.environmentMonitoring();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -125,7 +128,12 @@ public class EnvironmentPane extends WorkbenchPane
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton);
       
-      ToolbarPopupMenuButton monitoringButton;
+      ToolbarPopupMenuButton monitoringButton = new ToolbarPopupMenuButton(false, false);
+      monitoringButton.addMenuItem(new MonitoringMenuItem(true), "");
+      monitoringButton.addMenuItem(new MonitoringMenuItem(false), "");
+      monitoringButton.addSeparator();
+      monitoringButton.addMenuItem(commands_.refreshEnvironment().createMenuItem(false), "");
+      toolbar.addRightWidget(monitoringButton);
 
       return toolbar;
    }
@@ -603,6 +611,50 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
+   private class MonitoringMenuItem extends CheckableMenuItem
+   {
+      public MonitoringMenuItem(boolean monitoring)
+      {
+         monitoring_ = monitoring;
+      }
+
+      @Override
+      public String getLabel()
+      {
+         return monitoring_ ?
+               "Refresh the environment automatically" :
+               "Refresh only when requested";
+      }
+
+      @Override
+      public boolean isChecked()
+      {
+         return monitoring_ == environmentMonitoring_;
+      }
+
+      @Override
+      public void onInvoked()
+      {
+         server_.setEnvironmentMonitoring(monitoring_, new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               environmentMonitoring_ = monitoring_;
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Could not change monitoring state", 
+                     error.getMessage());
+            }
+         });
+      }
+
+      private final boolean monitoring_;
+   }
+   
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
@@ -623,4 +675,5 @@ public class EnvironmentPane extends WorkbenchPane
    private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
    private boolean environmentIsLocal_;
+   private boolean environmentMonitoring_;
 }

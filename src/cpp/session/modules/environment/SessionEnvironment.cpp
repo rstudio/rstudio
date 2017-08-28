@@ -480,6 +480,7 @@ json::Value environmentNames(SEXP env)
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
    int depth,
+   bool includeContents,
    LineDebugState* pLineDebugState)
 {
    json::Object varJson;
@@ -487,8 +488,12 @@ json::Object commonEnvironmentStateData(
    std::string functionCode;
    bool inFunctionEnvironment = false;
 
+   // emit the current list of values in the environment, but only if not monitoring (as the intent
+   // of the monitoring switch is to avoid implicit environment listing)
+   varJson["environment_monitoring"] = s_monitoring;
+   varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
+   
    varJson["context_depth"] = depth;
-   varJson["environment_list"] = environmentListAsJson();
    varJson["call_frames"] = callFramesAsJson(pLineDebugState);
    varJson["function_name"] = "";
 
@@ -575,7 +580,7 @@ void enqueContextDepthChangedEvent(int depth,
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, pLineDebugState));
+                      commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -616,6 +621,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(commonEnvironmentStateData(*pContextDepth,
+                                                   true, // include contents
                                                    pLineDebugState.get()));
    return Success();
 }
@@ -639,10 +645,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
-
-   // Ignore if not monitoring
-   if (!s_monitoring)
-      return;
 
    int depth = 0;
    SEXP environmentTop = NULL;
@@ -791,6 +793,10 @@ Error setEnvironmentMonitoring(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &monitoring);
    if (error)
       return error;
+
+   // save the user's requested monitoring state
+   s_monitoring = monitoring;
+
    return Success();
 }
 
@@ -923,7 +929,9 @@ json::Value environmentStateAsJson()
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inBrowseContext())
       contextDepth = 0;
-   return commonEnvironmentStateData(contextDepth, NULL);
+   return commonEnvironmentStateData(contextDepth, 
+         s_monitoring, // include contents if actively monitoring
+         NULL);
 }
 
 SEXP rs_isBrowserActive()
