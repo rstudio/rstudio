@@ -102,13 +102,8 @@ public class EnvironmentPane extends WorkbenchPane
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
-            if (refreshButton_ == null)
-               return;
-
             // when the monitoring state changes, update the UI accordingly
-            refreshButton_.setLeftImage(event.getValue() ?
-                  commands_.refreshEnvironment().getImageResource() :
-                  ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x());
+            setRefreshButtonState(event.getValue());
          }
       };
       environmentMonitoring_.addValueChangeHandler(onMonitorChange);
@@ -145,6 +140,7 @@ public class EnvironmentPane extends WorkbenchPane
       refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton_);
+      setRefreshButtonState(environmentMonitoring_.getValue());
       
       ToolbarPopupMenuButton monitoringButton = new ToolbarPopupMenuButton(false, false);
       monitoringButton.addMenuItem(new MonitoringMenuItem(true), "");
@@ -261,6 +257,14 @@ public class EnvironmentPane extends WorkbenchPane
          commands_.clearWorkspace().setEnabled(true); 
       else
          commands_.clearWorkspace().setEnabled(false);
+   }
+
+   @Override
+   public void setEnvironmentMonitoring(boolean monitoring)
+   {
+      if (monitoring == environmentMonitoring_.getValue())
+         return;
+      environmentMonitoring_.setValue(monitoring, true);
    }
 
    @Override
@@ -634,14 +638,23 @@ public class EnvironmentPane extends WorkbenchPane
       public MonitoringMenuItem(boolean monitoring)
       {
          monitoring_ = monitoring;
+         environmentMonitoring_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> arg0)
+            {
+               onStateChanged();
+            }
+         });
+         onStateChanged();
       }
 
       @Override
       public String getLabel()
       {
          return monitoring_ ?
-               "Refresh the environment automatically" :
-               "Refresh only when requested";
+                  "Refresh the environment automatically" :
+                  "Refresh only when requested";
       }
 
       @Override
@@ -671,6 +684,17 @@ public class EnvironmentPane extends WorkbenchPane
       }
 
       private final boolean monitoring_;
+   }
+   
+   private void setRefreshButtonState(boolean monitoring)
+   {
+      if (refreshButton_ == null)
+         return;
+
+      refreshButton_.setLeftImage(monitoring ?
+            commands_.refreshEnvironment().getImageResource() :
+            new ImageResource2x(
+               ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x()));
    }
    
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";

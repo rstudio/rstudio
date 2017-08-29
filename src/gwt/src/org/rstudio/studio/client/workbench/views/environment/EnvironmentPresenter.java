@@ -105,6 +105,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
+      void setEnvironmentMonitoring(boolean monitoring);
       void setCallFrames(JsArray<CallFrame> frames, boolean autoSize);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
@@ -208,6 +209,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             loadNewContextState(event.getContextDepth(), 
                   event.getEnvironmentName(),
+                  event.environmentMonitoring(),
                   event.getFunctionEnvName(),
                   event.environmentIsLocal(),
                   event.getCallFrames(),
@@ -615,6 +617,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.environmentName(),
+            environmentState.environmentMonitoring(),
             environmentState.functionEnvName(),
             environmentState.environmentIsLocal(),
             environmentState.callFrames(),
@@ -654,6 +657,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
+         boolean environmentMonitoring,
          String functionEnvName,
          boolean isLocalEvironment, 
          JsArray<CallFrame> callFrames,
@@ -664,6 +668,7 @@ public class EnvironmentPresenter extends BasePresenter
       environmentName_ = environmentName;
       functionEnvName_ = functionEnvName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
+      view_.setEnvironmentMonitoring(environmentMonitoring);
       if (callFrames != null && 
           callFrames.length() > 0 &&
           contextDepth > 0)
