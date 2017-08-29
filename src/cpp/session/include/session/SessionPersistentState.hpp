@@ -52,6 +52,10 @@ public:
    std::string activeEnvironmentName() const;
    void setActiveEnvironmentName(std::string environmentName);
 
+   // environment monitor state
+   bool environmentMonitoring() const;
+   void setEnvironmentMonitoring(bool monitoring);
+
    // resolved hashes (for Packrat libraries and lockfiles)
    std::string getStoredHash(const std::string& hashName) const;
    void setStoredHash(const std::string& hashName, 

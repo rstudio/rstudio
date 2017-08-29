@@ -762,6 +762,9 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
 
 void initEnvironmentMonitoring()
 {
+   // Restore monitoring state
+   s_monitoring = persistentState().environmentMonitoring();
+
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
@@ -796,6 +799,7 @@ Error setEnvironmentMonitoring(const json::JsonRpcRequest& request,
 
    // save the user's requested monitoring state
    s_monitoring = monitoring;
+   persistentState().setEnvironmentMonitoring(s_monitoring);
 
    return Success();
 }
