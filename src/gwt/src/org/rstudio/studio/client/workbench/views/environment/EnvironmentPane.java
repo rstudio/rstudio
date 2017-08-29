@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -146,7 +147,18 @@ public class EnvironmentPane extends WorkbenchPane
       monitoringButton.addMenuItem(new MonitoringMenuItem(true), "");
       monitoringButton.addMenuItem(new MonitoringMenuItem(false), "");
       monitoringButton.addSeparator();
-      monitoringButton.addMenuItem(commands_.refreshEnvironment().createMenuItem(false), "");
+
+      monitoringButton.addMenuItem(new MenuItem(
+            AppCommand.formatMenuLabel(null, "Refresh Now", null),
+            true, // as HTML
+            new Scheduler.ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  commands_.refreshEnvironment().execute();
+               }
+            }), "");
       toolbar.addRightWidget(monitoringButton);
 
       return toolbar;
@@ -653,8 +665,8 @@ public class EnvironmentPane extends WorkbenchPane
       public String getLabel()
       {
          return monitoring_ ?
-                  "Refresh the environment automatically" :
-                  "Refresh only when requested";
+                  "Refresh Automatically" :
+                  "Manual Refresh Only";
       }
 
       @Override
