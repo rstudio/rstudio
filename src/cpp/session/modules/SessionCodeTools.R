@@ -1948,3 +1948,7 @@
    identical(typeof(object), "externalptr")
 })
 
+.rs.addFunction("fileInfo", function(..., extra_cols = TRUE)
+{
+   suppressWarnings(file.info(..., extra_cols = extra_cols))
+})
