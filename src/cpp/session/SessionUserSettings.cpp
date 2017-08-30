@@ -788,7 +788,7 @@ FilePath UserSettings::gitExePath() const
 {
    std::string dir = settings_.get("vcsGitExePath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
@@ -802,7 +802,7 @@ FilePath UserSettings::svnExePath() const
 {
    std::string dir = settings_.get("vcsSvnExePath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
@@ -816,7 +816,7 @@ FilePath UserSettings::vcsTerminalPath() const
 {
    std::string dir = settings_.get("vcsTerminalPath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
