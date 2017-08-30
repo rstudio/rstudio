@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -550,7 +551,8 @@ public class EnvironmentPresenter extends BasePresenter
    public void onOpenDataFile(OpenDataFileEvent event)
    {
       final String dataFilePath = event.getFile().getPath();
-      if (dataFilePath.endsWith(".rds"))
+      
+      if (Pattern.create("[.]rds$", "i").test(dataFilePath))
       {
          globalDisplay_.promptForText(
                "Load R Object",
