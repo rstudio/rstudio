@@ -519,17 +519,14 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(id = "", show = TRUE) {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
+.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE) {
+   if (!is.null(caption) && (!is.character(caption) || (length(caption) != 1)))
+      stop("'caption' must be NULL or a character vector of length one")
 
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalCreate", id, show)
+   .Call("rs_terminalCreate", caption, show)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {
@@ -558,10 +555,7 @@
 })
 
 .rs.addApiFunction("terminalActivate", function(id = NULL, show = TRUE) {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id) || (length(id) != 1))
+   if (!is.null(id) && (!is.character(id) || (length(id) != 1)))
       stop("'id' must be NULL or a character vector of length one")
 
    if (!is.logical(show))

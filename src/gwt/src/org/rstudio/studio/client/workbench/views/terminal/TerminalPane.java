@@ -306,18 +306,24 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createTerminal(String postCreateText)
+   public void createTerminal(final String postCreateText)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
-      postCreateText_ = postCreateText;
       terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
       {
          @Override
          public void onSuccess(Boolean connected)
          {
+            TerminalSession terminal = getSelectedTerminal(); 
+            if (terminal == null) 
+            { 
+               Debug.log("No selected terminal after creation"); 
+               return; 
+            } 
+            terminal.receivedInput(postCreateText);
          }
          
          @Override
@@ -325,7 +331,6 @@ public class TerminalPane extends WorkbenchPane
          {
             Debug.log(msg);
             creatingTerminal_ = false;
-            postCreateText_ = null;
          }
       });
    }
@@ -469,7 +474,6 @@ public class TerminalPane extends WorkbenchPane
 
       // set client state back to startup values
       creatingTerminal_ = false;
-      postCreateText_ = null;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
 
@@ -699,9 +703,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.writeRestartSequence();
       }
-      terminal.receivedSendToTerminal(postCreateText_);
       creatingTerminal_ = false;
-      postCreateText_ = null;
       updateTerminalToolbar();
    }
    
@@ -795,12 +797,10 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void onSwitchToTerminal(SwitchToTerminalEvent event)
+   public void onSwitchToTerminal(final SwitchToTerminalEvent event)
    {
-      String handle = event.getTerminalHandle();
-
       // If terminal was already loaded, just make it visible
-      TerminalSession terminal = loadedTerminalWithHandle(handle);
+      TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
       if (terminal != null)
       {
          showTerminalWidget(terminal);
@@ -811,12 +811,25 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      if (terminals_.reconnectTerminal(handle))
+      terminals_.reconnectTerminal(event.getTerminalHandle(), new ResultCallback<Boolean, String>()
       {
-         return;
-      }
-
-      Debug.logWarning("Tried to switch to unknown terminal handle");
+         @Override 
+         public void onSuccess(Boolean connected)  
+         { 
+            TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle()); 
+            if (terminal == null) 
+            { 
+               Debug.log("Terminal not found after switching"); 
+               return; 
+            } 
+            terminal.receivedInput(event.getInputText()); 
+         } 
+         @Override 
+         public void onFailure(String msg) 
+         { 
+            Debug.log(msg); 
+         } 
+      });
    }
 
    @Override
@@ -1104,7 +1117,6 @@ public class TerminalPane extends WorkbenchPane
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
    private boolean creatingTerminal_;
-   private String postCreateText_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
    ToolbarButton clearButton_;

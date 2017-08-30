@@ -31,6 +31,8 @@ import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -212,15 +214,23 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onAddTerminal(AddTerminalEvent event)
+   public void onAddTerminal(final AddTerminalEvent event)
    {
-      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
-      
       if (event.getShow())
-      {
          onActivateTerminal();
-         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
-      }
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
+            if (event.getShow())
+            {
+               view_.activateNamedTerminal(event.getProcessInfo().getCaption());
+            }
+         }
+      });
    }
 
    @Override

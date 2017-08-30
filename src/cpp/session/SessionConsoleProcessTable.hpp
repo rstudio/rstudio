@@ -41,9 +41,9 @@ ConsoleProcessPtr getVisibleProc();
 void clearVisibleProc();
 void setVisibleProc(const std::string& handle);
 
-// Build a list of all process captions (captions are used as unique IDs by
+// Build a list of all process handles (handles are used as unique IDs by
 // the Terminal R API)
-std::vector<std::string> getAllCaptions();
+std::vector<std::string> getAllHandles();
 
 // Determine next terminal sequence number and default name
 std::pair<int, std::string> nextTerminalName();

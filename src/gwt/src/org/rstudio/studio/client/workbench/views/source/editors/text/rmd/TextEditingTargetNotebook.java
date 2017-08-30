@@ -333,6 +333,10 @@ public class TextEditingTargetNotebook
          @Override
          public void onSaveFile(SaveFileEvent event)
          {
+            // ignore autosaves
+            if (event.isAutosave())
+               return;
+            
             // propagate output preference from YAML into doc preference
             String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
             if (!StringUtil.isNullOrEmpty(frontMatter))
