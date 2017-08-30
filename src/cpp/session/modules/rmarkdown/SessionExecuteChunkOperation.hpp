@@ -205,7 +205,7 @@ private:
                target);
       
       // write to temporary file (for streaming output)
-      FilePath tempFile = module_context::tempFile("chunk-output-", "");
+      FilePath tempFile = module_context::tempFile("chunk-output-", "txt");
       RemoveOnExitScope scope(tempFile, ERROR_LOCATION);
       notebook::appendConsoleOutput(
                outputType == OUTPUT_STDOUT ? kChunkConsoleOutput : kChunkConsoleError,
@@ -279,7 +279,7 @@ core::Error runChunk(const std::string& docId,
    typedef core::shell_utils::ShellCommand ShellCommand;
    
    // write code to temporary file
-   FilePath scriptPath = module_context::tempFile("chunk-code", "");
+   FilePath scriptPath = module_context::tempFile("chunk-code-", "txt");
    Error error = core::writeStringToFile(scriptPath, code);
    if (error)
    {
