@@ -282,9 +282,15 @@ public class ImplementJsVarargs {
     private VarargsReplacer replacer;
     private JLocal argumentsCopyVariable;
 
+    private boolean needsVarArgsPrologue(JMethod x) {
+      // Native methods in general do not have bodies except for constructors; no code is generated
+      // from them, safe and convenient to skip here.
+      return x.isJsNative() || !x.isJsMethodVarargs();
+    }
+
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      if (!x.isJsMethodVarargs()) {
+      if (needsVarArgsPrologue(x)) {
         return false;
       }
       varargsParameter = Iterables.getLast(x.getParams());
@@ -334,7 +340,7 @@ public class ImplementJsVarargs {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (!x.isJsMethodVarargs()) {
+      if (needsVarArgsPrologue(x)) {
         return;
       }
       // rename the varargs variable to _arguments_.

@@ -103,14 +103,20 @@ public class JsTypeVarargsTest extends GWTTestCase {
 
   @JsType(isNative = true, namespace = GLOBAL, name = "Object")
   static class NativeJsType {
+    NativeJsType() { }
+    NativeJsType(int j, NativeJsType... args) { }
   }
 
   @JsType(isNative = true, namespace = GLOBAL,
       name = "JsTypeVarargsTest_MyNativeJsTypeVarargsConstructor")
-  static class NativeJsTypeWithVarargsConstructor {
+  static class NativeJsTypeWithVarargsConstructor extends NativeJsType {
     public Object a;
     public int b;
     NativeJsTypeWithVarargsConstructor(int i, Object... args) { }
+
+    NativeJsTypeWithVarargsConstructor(int i, NativeJsType... args) {
+      super(1, args);
+    }
   }
 
   static class SubclassNativeWithVarargsConstructor extends NativeJsTypeWithVarargsConstructor {
@@ -127,7 +133,7 @@ public class JsTypeVarargsTest extends GWTTestCase {
   static class SubSubclassNativeWithVarargsConstructor
       extends SubclassNativeWithVarargsConstructor {
     SubSubclassNativeWithVarargsConstructor() {
-      super(0, new Object[0]);
+      super(0, new NativeJsType[0]);
     }
 
     Object varargsMethod(int i, Object... args) {
@@ -286,6 +292,21 @@ public class JsTypeVarargsTest extends GWTTestCase {
     Object[] params = new Object[] { object, null };
     assertSame(object, doSideEffect(object).varargsMethod(0, params));
     assertSame(1, sideEffectCount);
+  }
+
+  static class SubclassNativeWithNativeVarargsConstructor
+      extends NativeJsTypeWithVarargsConstructor {
+    public NativeJsType[] ctorargs;
+    SubclassNativeWithNativeVarargsConstructor(int i, NativeJsType... args) {
+      super(i, args);
+      ctorargs = args;
+    }
+  }
+
+  public void testVarargsCall_nativeVarargs() {
+    SubclassNativeWithNativeVarargsConstructor object =
+        new SubclassNativeWithNativeVarargsConstructor(0, new NativeJsType[0]);
+    assertEquals(0, object.ctorargs.length);
   }
 
   static class UninstantiatedClass {

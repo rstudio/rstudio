@@ -816,7 +816,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public JField getClassLiteralField(JType type) {
     return classLiteralFieldsByType.get(
-        type.isJsoType() ? getJavaScriptObject() : type);
+        (type.isJsNative() || type.isJsoType()) ? getJavaScriptObject() : type);
   }
 
   public List<JDeclaredType> getDeclaredTypes() {
