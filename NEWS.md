@@ -80,6 +80,7 @@
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
+* Added UI for loading '.rds' files when clicked in Files pane
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
 * Minor fixes to C++ syntax highlighting
