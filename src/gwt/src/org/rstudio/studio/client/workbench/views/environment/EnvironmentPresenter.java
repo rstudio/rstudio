@@ -106,6 +106,7 @@ public class EnvironmentPresenter extends BasePresenter
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
       void setEnvironmentMonitoring(boolean monitoring);
+      boolean environmentMonitoring();
       void setCallFrames(JsArray<CallFrame> frames, boolean autoSize);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
@@ -196,7 +197,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
             {
-               refreshView();
+               refreshViewIfEnabled();
             }
          }
       });
@@ -590,7 +591,7 @@ public class EnvironmentPresenter extends BasePresenter
          if (environmentList == null ||
              environmentList.length() == 0)
          {
-            refreshView();
+            refreshViewIfEnabled();
          }
          else
          {
@@ -835,6 +836,16 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.clearObjects();
       view_.addObjects(objects);
+   }
+   
+   /***
+    * Refreshes the state of the environment, but only if the environment is currently being 
+    * monitored (otherwise it's pointless to ask for a new object list as one won't be returned)
+    */
+   private void refreshViewIfEnabled()
+   {
+      if (view_ == null || view_.environmentMonitoring())
+         refreshView();
    }
     
    private void refreshView()

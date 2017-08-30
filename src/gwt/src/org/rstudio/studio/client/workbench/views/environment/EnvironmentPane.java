@@ -280,6 +280,12 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   public boolean environmentMonitoring()
+   {
+      return environmentMonitoring_.getValue();
+   }
+
+   @Override
    public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       objects_.setCallFrames(frameList, autoSize);
