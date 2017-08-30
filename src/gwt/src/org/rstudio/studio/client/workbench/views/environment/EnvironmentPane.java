@@ -143,12 +143,12 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addRightWidget(refreshButton_);
       setRefreshButtonState(environmentMonitoring_.getValue());
       
-      ToolbarPopupMenuButton monitoringButton = new ToolbarPopupMenuButton(false, false);
-      monitoringButton.addMenuItem(new MonitoringMenuItem(true), "");
-      monitoringButton.addMenuItem(new MonitoringMenuItem(false), "");
-      monitoringButton.addSeparator();
+      ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
+      refreshMenu.addItem(new MonitoringMenuItem(true));
+      refreshMenu.addItem(new MonitoringMenuItem(false));
+      refreshMenu.addSeparator();
 
-      monitoringButton.addMenuItem(new MenuItem(
+      refreshMenu.addItem(new MenuItem(
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             new Scheduler.ScheduledCommand()
@@ -158,8 +158,8 @@ public class EnvironmentPane extends WorkbenchPane
                {
                   commands_.refreshEnvironment().execute();
                }
-            }), "");
-      toolbar.addRightWidget(monitoringButton);
+            }));
+      toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
 
       return toolbar;
    }
