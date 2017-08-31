@@ -46,6 +46,44 @@ void handleTemplateRequest(const FilePath& templatePath,
 
 }
 
+Error renderTemplate(const core::FilePath& templateFile,
+                     const std::map<std::string, std::string> &vars,
+                     std::ostream& os)
+{
+   // open input stream to template
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = templateFile.open_r(&pIfs);
+   if (error)
+      return error;
+
+   try
+   {
+      // ensure that errors are reported with exceptions (compatible
+      // with behavior of boost::iostreams::copy)
+      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+      os.exceptions(std::istream::failbit | std::istream::badbit);
+
+      // create a filtered stream w/ the template filter and std::ostream
+      boost::iostreams::filtering_ostream filteredStream ;
+      text::TemplateFilter templateFilter(vars);
+      filteredStream.push(templateFilter);
+      filteredStream.push(os);
+
+      // process the template
+      boost::iostreams::copy(*pIfs, filteredStream, 128);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("template-path", templateFile);
+      return error;
+   }
+
+   return Success();
+}
+
 void handleSecureTemplateRequest(const std::string& username,
                                  const FilePath& progressPagePath,
                                  const http::Request& request,
