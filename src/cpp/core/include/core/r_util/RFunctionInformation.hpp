@@ -198,6 +198,7 @@ struct PackageInformation
    std::string package;
    std::vector<std::string> exports;
    std::vector<int> types;
+   std::vector<std::string> datasets;
    FunctionInformationMap functionInfo;
 };
 

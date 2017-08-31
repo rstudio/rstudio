@@ -173,13 +173,15 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
    //    "package": <single package name>
    //    "exports": <array of object names in the namespace>,
    //    "types": <array of types (see .rs.acCompletionTypes)>,
-   //    "function_info": {big ugly object with function info}
+   //    "function_info": {big ugly object with function info},
+   //    "data" <array of dataset names>
    // }
    for (std::size_t i = 0; i < n; ++i)
    {
       json::Array exportsJson;
       json::Array typesJson;
       json::Object functionInfoJson;
+      json::Array datasetsJson;
       
       core::r_util::PackageInformation pkgInfo;
 
@@ -215,7 +217,8 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
                                      "package", &pkgInfo.package,
                                      "exports", &exportsJson,
                                      "types", &typesJson,
-                                     "function_info", &functionInfoJson);
+                                     "function_info", &functionInfoJson,
+                                     "datasets", &datasetsJson);
 
       if (error)
       {
@@ -233,6 +236,9 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 
       if (!fillFunctionInfo(functionInfoJson, pkgInfo.package, &(pkgInfo.functionInfo)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
+      
+      if (!json::fillVectorString(datasetsJson, &(pkgInfo.datasets)))
+         LOG_ERROR_MESSAGE("Failed to read JSON 'data' array to vector");
       
       // Update the index
       core::r_util::RSourceIndex::addPackageInformation(pkgInfo.package, pkgInfo);
