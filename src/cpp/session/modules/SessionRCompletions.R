@@ -3089,10 +3089,25 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getInferredCompletions", function(packages = character(),
                                                    simplify = TRUE)
 {
-   result <- .Call("rs_getInferredCompletions", as.character(packages))
-   if (simplify && length(result) == 1)
-      return(result[[1]])
-   result
+   # get completions from database
+   completionList <- .Call("rs_getInferredCompletions",
+                           as.character(packages),
+                           PACKAGE = "(embedding)")
+   
+   # append dataset completions on to export vector
+   completionList <- lapply(completionList, function(completion) {
+      datasetTypes <- rep.int(.rs.acCompletionTypes$DATASET, length(completion$datasets))
+      completion$exports  <- c(completion$exports, completion$datasets)
+      completion$types    <- c(completion$types, datasetTypes)
+      completion$datasets <- NULL
+      completion
+   })
+   
+   # simplify if requested
+   if (simplify && length(completionList) == 1)
+      return(completionList[[1]])
+   
+   completionList
 })
 
 .rs.addFunction("getCompletionsLibraryContextArgumentNames", function(token,

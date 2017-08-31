@@ -1267,12 +1267,16 @@
       )
    })
    
+   # List data objects exported by this package
+   datasets <- .rs.listDatasetsProvidedByPackage(package)
+   
    # Generate the output
    output <- list(
       package = I(package),
       exports = exports,
       types = types,
-      function_info = functionInfo
+      function_info = functionInfo,
+      datasets = datasets
    )
    
    # Write the JSON to stdout; parent processes
@@ -1951,4 +1955,25 @@
 .rs.addFunction("fileInfo", function(..., extra_cols = TRUE)
 {
    suppressWarnings(file.info(..., extra_cols = extra_cols))
+})
+
+.rs.addFunction("listDatasetsProvidedByPackage", function(package)
+{
+   # verify we have a non-empty length-one string
+   if (!is.character(package) || length(package) != 1 || !nzchar(package))
+      return(character())
+   
+   # find the installed package location (returns empty vector on failure)
+   location <- find.package(package, quiet = TRUE)
+   if (!length(location) || !file.exists(location))
+      return(character())
+   
+   # construct path to datalist file
+   datalist <- file.path(location, "data/datalist")
+   if (!file.exists(datalist))
+      return(character())
+   
+   # read the names of the provided objects
+   readLines(datalist, warn = FALSE)
+   
 })

@@ -412,6 +412,7 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
       builder.add("exports", pkgInfo.exports);
       builder.add("types", pkgInfo.types);
       builder.add("functions", core::r_util::infoToFormalMap(pkgInfo.functionInfo));
+      builder.add("datasets", pkgInfo.datasets);
       parent.add(*it, builder);
    }
    

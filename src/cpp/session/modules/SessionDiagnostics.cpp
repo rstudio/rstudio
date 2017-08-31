@@ -157,8 +157,8 @@ void addInferredSymbols(const FilePath& filePath,
       const PackageInformation& completions =
             pIndex->getPackageInformation(package);
       
-      pSymbols->insert(completions.exports.begin(),
-                       completions.exports.end());
+      core::algorithm::append(pSymbols, completions.exports);
+      core::algorithm::append(pSymbols, completions.datasets);
    }
    
    // make 'shiny' implicitly available in shiny documents
@@ -200,9 +200,8 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
             RSourceIndex::getPackageInformation(package);
       
       DEBUG("--- Adding " << pkgInfo.exports.size() << " symbols");
-      pSymbols->insert(
-               pkgInfo.exports.begin(),
-               pkgInfo.exports.end());
+      core::algorithm::append(pSymbols, pkgInfo.exports);
+      core::algorithm::append(pSymbols, pkgInfo.datasets);
    }
 }
 
