@@ -254,12 +254,12 @@ Error initialize()
    if (error)
       return error;
 
-   // ensure the key is at least 128 bits (16 bytes) in strength
-   // this is good security practice, and encryption and decryption
+   // ensure the key is at least 256 bits (32 bytes) in strength
+   // this is good security practice, and our encryption and decryption
    // operations require a key of that size at least
-   if (s_secureCookieKey.size() < 16)
+   if (s_secureCookieKey.size() < 32)
    {
-      LOG_ERROR_MESSAGE("secure-cookie-key specified is not strong enough! It must be at least 128 bits (16 bytes/characters) long!");
+      LOG_ERROR_MESSAGE("secure-cookie-key specified is not strong enough! It must be at least 256 bits (32 bytes/characters) long!");
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
 
