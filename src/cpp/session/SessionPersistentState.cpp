@@ -135,5 +135,15 @@ void PersistentState::setStoredHash(const std::string& hashName,
    settings_.set(hashName + "Hash", hashValue);
 }
 
+bool PersistentState::environmentMonitoring() const
+{
+   return settings_.getBool("environmentMonitoring", true);
+}
+
+void PersistentState::setEnvironmentMonitoring(bool monitoring)
+{
+   return settings_.set("environmentMonitoring", monitoring);
+}
+
 } // namespace session
 } // namespace rstudio

@@ -85,6 +85,11 @@ public class ContextDepthChangedEvent extends
       return contextData_.environmentIsLocal();
    }
    
+   public boolean environmentMonitoring()
+   {
+      return contextData_.environmentMonitoring();
+   }
+   
    public boolean isServerInitiated()
    {
       return serverInitiated_;

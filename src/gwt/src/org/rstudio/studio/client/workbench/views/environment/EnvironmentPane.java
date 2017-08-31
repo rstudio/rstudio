@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,18 +20,23 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -91,6 +96,18 @@ public class EnvironmentPane extends WorkbenchPane
             session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
+      
+      environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
+      ValueChangeHandler<Boolean> onMonitorChange = new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            // when the monitoring state changes, update the UI accordingly
+            setRefreshButtonState(event.getValue());
+         }
+      };
+      environmentMonitoring_.addValueChangeHandler(onMonitorChange);
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -121,10 +138,28 @@ public class EnvironmentPane extends WorkbenchPane
       
       toolbar.addRightSeparator();
 
-      ToolbarButton refreshButton = commands_.refreshEnvironment().createToolbarButton();
-      refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      toolbar.addRightWidget(refreshButton);
+      refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+      setRefreshButtonState(environmentMonitoring_.getValue());
       
+      ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
+      refreshMenu.addItem(new MonitoringMenuItem(true));
+      refreshMenu.addItem(new MonitoringMenuItem(false));
+      refreshMenu.addSeparator();
+
+      refreshMenu.addItem(new MenuItem(
+            AppCommand.formatMenuLabel(null, "Refresh Now", null),
+            true, // as HTML
+            new Scheduler.ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  commands_.refreshEnvironment().execute();
+               }
+            }));
+      toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
 
       return toolbar;
    }
@@ -234,6 +269,20 @@ public class EnvironmentPane extends WorkbenchPane
          commands_.clearWorkspace().setEnabled(true); 
       else
          commands_.clearWorkspace().setEnabled(false);
+   }
+
+   @Override
+   public void setEnvironmentMonitoring(boolean monitoring)
+   {
+      if (monitoring == environmentMonitoring_.getValue())
+         return;
+      environmentMonitoring_.setValue(monitoring, true);
+   }
+
+   @Override
+   public boolean environmentMonitoring()
+   {
+      return environmentMonitoring_.getValue();
    }
 
    @Override
@@ -602,6 +651,70 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
+   private class MonitoringMenuItem extends CheckableMenuItem
+   {
+      public MonitoringMenuItem(boolean monitoring)
+      {
+         monitoring_ = monitoring;
+         environmentMonitoring_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> arg0)
+            {
+               onStateChanged();
+            }
+         });
+         onStateChanged();
+      }
+
+      @Override
+      public String getLabel()
+      {
+         return monitoring_ ?
+                  "Refresh Automatically" :
+                  "Manual Refresh Only";
+      }
+
+      @Override
+      public boolean isChecked()
+      {
+         return monitoring_ == environmentMonitoring_.getValue();
+      }
+
+      @Override
+      public void onInvoked()
+      {
+         server_.setEnvironmentMonitoring(monitoring_, new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               environmentMonitoring_.setValue(monitoring_, true);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Could not change monitoring state", 
+                     error.getMessage());
+            }
+         });
+      }
+
+      private final boolean monitoring_;
+   }
+   
+   private void setRefreshButtonState(boolean monitoring)
+   {
+      if (refreshButton_ == null)
+         return;
+
+      refreshButton_.setLeftImage(monitoring ?
+            commands_.refreshEnvironment().getImageResource() :
+            new ImageResource2x(
+               ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x()));
+   }
+   
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
@@ -609,11 +722,13 @@ public class EnvironmentPane extends WorkbenchPane
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
    private final UIPrefs prefs_;
+   private final Value<Boolean> environmentMonitoring_;
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
    private ToolbarButton environmentButton_;
    private ToolbarButton viewButton_;
+   private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;

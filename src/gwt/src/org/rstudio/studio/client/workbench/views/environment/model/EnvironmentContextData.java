@@ -56,4 +56,8 @@ public class EnvironmentContextData extends JavaScriptObject
    public final native String functionEnvName() /*-{
       return this.function_environment_name;
    }-*/;
+   
+   public final native boolean environmentMonitoring() /*-{
+      return this.environment_monitoring;
+   }-*/;
 }

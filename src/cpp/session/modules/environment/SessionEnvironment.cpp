@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,11 @@ EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 // so that we can query this from R, without 'hiding' the
 // browser state by pushing new contexts / frames on the stack
 bool s_browserActive = false;
+
+// are we currently monitoring the environment? this is almost always true, but can be 
+// disabled by the user to help mitigate pathological cases in which environment monitoring
+// has undesirable side effects.
+bool s_monitoring = true;
 
 namespace {
 
@@ -475,6 +480,7 @@ json::Value environmentNames(SEXP env)
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
    int depth,
+   bool includeContents,
    LineDebugState* pLineDebugState)
 {
    json::Object varJson;
@@ -482,8 +488,12 @@ json::Object commonEnvironmentStateData(
    std::string functionCode;
    bool inFunctionEnvironment = false;
 
+   // emit the current list of values in the environment, but only if not monitoring (as the intent
+   // of the monitoring switch is to avoid implicit environment listing)
+   varJson["environment_monitoring"] = s_monitoring;
+   varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
+   
    varJson["context_depth"] = depth;
-   varJson["environment_list"] = environmentListAsJson();
    varJson["call_frames"] = callFramesAsJson(pLineDebugState);
    varJson["function_name"] = "";
 
@@ -570,7 +580,7 @@ void enqueContextDepthChangedEvent(int depth,
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, pLineDebugState));
+                      commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -611,6 +621,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(commonEnvironmentStateData(*pContextDepth,
+                                                   true, // include contents
                                                    pLineDebugState.get()));
    return Success();
 }
@@ -619,6 +630,10 @@ void onDetectChanges(module_context::ChangeSource source)
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
+
+   // Ignore if not monitoring
+   if (!s_monitoring)
+      return;
 
    s_pEnvironmentMonitor->checkForChanges();
 }
@@ -747,6 +762,9 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
 
 void initEnvironmentMonitoring()
 {
+   // Restore monitoring state
+   s_monitoring = persistentState().environmentMonitoring();
+
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
@@ -769,6 +787,21 @@ void initEnvironmentMonitoring()
          }
       }
    }
+}
+
+Error setEnvironmentMonitoring(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   bool monitoring = false;
+   Error error = json::readParam(request.params, 0, &monitoring);
+   if (error)
+      return error;
+
+   // save the user's requested monitoring state
+   s_monitoring = monitoring;
+   persistentState().setEnvironmentMonitoring(s_monitoring);
+
+   return Success();
 }
 
 // Remove the given objects from the currently monitored environment.
@@ -900,7 +933,9 @@ json::Value environmentStateAsJson()
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inBrowseContext())
       contextDepth = 0;
-   return commonEnvironmentStateData(contextDepth, NULL);
+   return commonEnvironmentStateData(contextDepth, 
+         s_monitoring, // include contents if actively monitoring
+         NULL);
 }
 
 SEXP rs_isBrowserActive()
@@ -987,6 +1022,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_environment_state", getEnv))
       (bind(registerRpcMethod, "get_object_contents", getObjectContents))
       (bind(registerRpcMethod, "requery_context", requeryCtx))
+      (bind(registerRpcMethod, "set_environment_monitoring", setEnvironmentMonitoring))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();
