@@ -184,26 +184,16 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      // copy ui.R and server.R into the project
-      const char * const kUI = "ui.R";
-      const char * const kServer = "server.R";
-      std::string shinyVer;
-      if (module_context::isPackageVersionInstalled("shiny", "0.9"))
-         shinyVer = "shiny-0.9";
-      else
-         shinyVer = "shiny";
-      FilePath shinyDir = session::options().rResourcesPath().childPath(
-                                                     "templates/" + shinyVer);
-      error = shinyDir.childPath(kUI).copy(appDir.childPath(kUI));
-      if (error)
-         LOG_ERROR(error);
-      error = shinyDir.childPath(kServer).copy(appDir.childPath(kServer));
+      // copy app.R into the project
+      FilePath shinyDir = session::options().rResourcesPath()
+            .childPath("templates/shiny");
+      
+      error = shinyDir.childPath("app.R").copy(appDir.childPath("app.R"));
       if (error)
          LOG_ERROR(error);
 
       // add first run actions for the source files
-      addFirstRunDoc(projectFilePath, kUI);
-      addFirstRunDoc(projectFilePath, kServer);
+      addFirstRunDoc(projectFilePath, "app.R");
 
       // create the project file
       return r_util::writeProjectFile(projectFilePath,

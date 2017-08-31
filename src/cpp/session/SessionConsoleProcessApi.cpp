@@ -36,14 +36,14 @@ namespace console_process {
 
 namespace {
 
-// findProcByCaption that reports an R error for unknown caption
-ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
+// findProcByHandle that reports an R error for unknown terminal handle
+ConsoleProcessPtr findProcByHandleReportUnknown(const std::string& handle)
 {
-   ConsoleProcessPtr proc = findProcByCaption(caption);
+   ConsoleProcessPtr proc = findProcByHandle(handle);
    if (proc == NULL)
    {
-      std::string error("Unknown terminal '");
-      error += caption;
+      std::string error("Unknown terminal identifier '");
+      error += handle;
       error += "'";
       r::exec::error(error);
    }
@@ -83,7 +83,7 @@ std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
 
 // R APIs ---------------------------------------------------------------
 
-// Return vector of all terminal ids (captions)
+// Return vector of all terminal ids (handles)
 SEXP rs_terminalList()
 {
    r::sexp::Protect protect;
@@ -91,12 +91,12 @@ SEXP rs_terminalList()
    if (!session::options().allowShell())
       return R_NilValue;
 
-   return r::sexp::create(getAllCaptions(), &protect);
+   return r::sexp::create(getAllHandles(), &protect);
 }
 
-// Create a terminal with given id (caption). If null, create with automatically
-// generated name. Returns resulting name in either case.
-SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
+// Create a terminal with given caption. If null, create with automatically
+// generated name.
+SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP)
 {
    r::sexp::Protect protect;
 
@@ -104,15 +104,17 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
       return R_NilValue;
 
    std::pair<int, std::string> termSequence = nextTerminalName();
-   std::string terminalId = r::sexp::asString(typeSEXP);
-   if (terminalId.empty())
+   std::string terminalCaption;
+   if (!r::sexp::isNull(captionSEXP))
+      terminalCaption = r::sexp::asString(captionSEXP);
+   if (terminalCaption.empty())
    {
-      terminalId = termSequence.second;
+      terminalCaption = termSequence.second;
    }
-   else if (findProcByCaption(terminalId) != NULL)
+   else if (findProcByCaption(terminalCaption) != NULL)
    {
-      std::string msg = "Terminal id already in use: '";
-      msg += terminalId;
+      std::string msg = "Terminal caption already in use: '";
+      msg += terminalCaption;
       msg += "'";
       r::exec::error(msg);
       return R_NilValue;
@@ -122,7 +124,7 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
 
    boost::shared_ptr<ConsoleProcessInfo> pCpi(
             new ConsoleProcessInfo(
-               terminalId,
+               terminalCaption,
                std::string() /*title*/,
                std::string() /*handle*/,
                termSequence.first,
@@ -132,6 +134,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
                core::system::kDefaultCols, core::system::kDefaultRows,
                false /*zombie*/,
                session::userSettings().terminalTrackEnv()));
+
+   pCpi->setHasChildProcs(false);
 
    std::string handle;
    Error error = createTerminalConsoleProc(pCpi, &handle);
@@ -171,7 +175,7 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
-   return r::sexp::create(terminalId, &protect);
+   return r::sexp::create(handle, &protect);
 }
 
 // Returns busy state of a terminal (i.e. does the shell have any child
@@ -187,7 +191,7 @@ SEXP rs_terminalBusy(SEXP terminalsSEXP)
    std::vector<bool> isBusy;
    BOOST_FOREACH(const std::string& terminalId, terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
       if (proc == NULL)
       {
          isBusy.push_back(false);
@@ -210,7 +214,7 @@ SEXP rs_terminalRunning(SEXP terminalsSEXP)
    std::vector<bool> isRunning;
    BOOST_FOREACH(const std::string& terminalId, terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
       if (proc == NULL)
       {
          isRunning.push_back(false);
@@ -228,7 +232,7 @@ SEXP rs_terminalContext(SEXP terminalSEXP)
 
    std::string terminalId = r::sexp::asString(terminalSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   ConsoleProcessPtr proc = findProcByHandle(terminalId);
    if (proc == NULL)
    {
       return R_NilValue;
@@ -268,7 +272,7 @@ SEXP rs_terminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    std::string terminalId = r::sexp::asString(idSEXP);
    bool stripAnsi = r::sexp::asLogical(stripSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
    if (proc == NULL)
       return R_NilValue;
 
@@ -286,7 +290,7 @@ SEXP rs_terminalKill(SEXP terminalsSEXP)
    std::string handle;
    BOOST_FOREACH(const std::string& terminalId, terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
       if (proc != NULL)
       {
          handle = proc->handle();
@@ -318,14 +322,14 @@ SEXP rs_terminalVisible()
    if (proc == NULL)
       return R_NilValue;
 
-   return r::sexp::create(proc->getCaption(), &protect);
+   return r::sexp::create(proc->handle(), &protect);
 }
 
 SEXP rs_terminalClear(SEXP idSEXP)
 {
    std::string terminalId = r::sexp::asString(idSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
    if (proc == NULL)
       return R_NilValue;
 
@@ -335,7 +339,7 @@ SEXP rs_terminalClear(SEXP idSEXP)
    // send the event to the client; if not connected, it will get the cleared
    // server-side buffer next time it connects.
    json::Object eventData;
-   eventData["id"] = terminalId;
+   eventData["id"] = proc->getCaption();
 
    ClientEvent clearNamedTerminalEvent(client_events::kClearTerminal, eventData);
    module_context::enqueClientEvent(clearNamedTerminalEvent);
@@ -349,7 +353,7 @@ SEXP rs_terminalSend(SEXP idSEXP, SEXP textSEXP)
    std::string terminalId = r::sexp::asString(idSEXP);
    std::string text = r::sexp::asString(textSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
    if (!proc)
       return R_NilValue;
 
@@ -366,15 +370,18 @@ SEXP rs_terminalSend(SEXP idSEXP, SEXP textSEXP)
 // Activate a terminal to ensure it is running (and optionally visible).
 SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
 {
-   std::string terminalId = r::sexp::asString(idSEXP);
+   std::string terminalId;
+   if (!r::sexp::isNull(idSEXP))
+      terminalId = r::sexp::asString(idSEXP);
    bool show = r::sexp::asLogical(showSEXP);
 
    if (!session::options().allowShell())
       return R_NilValue;
 
+   std::string caption;
    if (!terminalId.empty())
    {
-      ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+      ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
       if (!proc)
          return R_NilValue;
 
@@ -396,12 +403,13 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
             return R_NilValue;
          }
       }
+      caption = proc->getCaption();
    }
 
    if (show)
    {
       json::Object eventData;
-      eventData["id"] = terminalId;
+      eventData["id"] = caption;
 
       ClientEvent activateTerminalEvent(client_events::kActivateTerminal, eventData);
       module_context::enqueClientEvent(activateTerminalEvent);
@@ -511,7 +519,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
-   return r::sexp::create(ptrProc->getCaption(), &protect);
+   return r::sexp::create(handle, &protect);
 }
 
 // Return terminal exit codes
@@ -521,7 +529,7 @@ SEXP rs_terminalExitCode(SEXP idSEXP)
 
    std::string terminalId = r::sexp::asString(idSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
+   ConsoleProcessPtr proc = findProcByHandle(terminalId);
    if (proc == NULL)
    {
       return R_NilValue;

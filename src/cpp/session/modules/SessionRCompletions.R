@@ -315,7 +315,7 @@ assign(x = ".rs.acCompletionTypes",
    dirPaths <- .rs.listFilesFuzzy(directory, tokenName)
    if (directoriesOnly)
    {
-      dirInfo <- file.info(dirPaths)
+      dirInfo <- .rs.fileInfo(dirPaths)
       dirPaths <- dirPaths[dirInfo$isdir]
    }
    absolutePaths <- sort(union(absolutePaths, dirPaths))
@@ -366,7 +366,7 @@ assign(x = ".rs.acCompletionTypes",
    # Otherwise, query the file info for the set of completions we're using
    else
    {
-      isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+      isDir <- .rs.fileInfo(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
       type <- ifelse(isDir,
                      .rs.acCompletionTypes$DIRECTORY,
                      .rs.acCompletionTypes$FILE)
@@ -2724,7 +2724,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyUILastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyUICompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -2844,7 +2844,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyServerLastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyServerCompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -3309,20 +3309,26 @@ assign(x = ".rs.acCompletionTypes",
    utils:::.completeToken()
    results <- utils:::.retrieveCompletions()
    
+   packages <- NULL
+   type <- .rs.formCompletionVector(attr(results, "type"), .rs.acCompletionTypes$UNKNOWN, length(results))
+   if (type[[1]] %in% c(.rs.acCompletionTypes$UNKNOWN, .rs.acCompletionTypes$FUNCTION)) {
    packages <- sub('^package:', '', .rs.which(results))
    
    # ensure spaces around =
    results <- sub("=$", " = ", results)
    
-   choose = packages == '.GlobalEnv'
-   results.sorted = c(results[choose], results[!choose])
-   packages.sorted = c(packages[choose], packages[!choose])
+     choose <- packages == '.GlobalEnv'
+     results <- c(results[choose], results[!choose])
+     packages <- c(packages[choose], packages[!choose])
+     type <- c(type[choose], type[!choose])
    
-   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
+     packages <- sub('^\\.GlobalEnv$', '', packages)
+   }
    
    .rs.makeCompletions(
       token = token,
-      results = results.sorted,
-      packages = packages.sorted
+      results = results,
+      packages = packages,
+      type = type
    )
 })

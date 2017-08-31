@@ -128,7 +128,6 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             cbPush_.setVisible(!isNone);
          }
       });
-      setRemotes(remotesInfo);
       
       btnAddRemote_ = new SmallButton("Add Remote...");
       btnAddRemote_.addClickHandler(new ClickHandler()
@@ -167,6 +166,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       cbPush_ = new CheckBox("Sync branch with remote");
       cbPush_.setVisible(!sbRemote_.getValue().equals(REMOTE_NONE));
       cbPush_.setValue(true);
+      
+      setRemotes(remotesInfo);
       
       Grid ctrBranch = new Grid(1, 2);
       ctrBranch.setWidth("100%");
@@ -216,6 +217,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       sbRemote_.setChoices(choices);
       sbRemote_.setValue(activeRemote);
+      
+      cbPush_.setVisible(choices.length > 1);
    }
 
    @Override
