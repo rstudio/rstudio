@@ -19,7 +19,6 @@ import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -34,12 +33,10 @@ public class BottomScrollPanel extends ScrollPanel
    {
       scrolling_ = false;
       
-      // on high-dpi Windows, with a zoom factor, there
-      // was a frequent off-by-one (internal rounding error?)
-      // causing failure to set scrolledToBottom_
-      vDelta_ = 0;
-      if (BrowseCap.isWindowsDesktop())
-         vDelta_ = 1;
+      // Provide a close-enough zone for determining if scrolled
+      // to the bottom; allows for small rounding errors that have
+      // been seen on zoomed high-DPI displays.
+      final int vFudge = 4;
       addScrollHandler(new ScrollHandler()
       {
          public void onScroll(ScrollEvent event)
@@ -51,10 +48,10 @@ public class BottomScrollPanel extends ScrollPanel
             scrolledToBottom_ = 
              
              (Math.abs(getVerticalScrollPosition() - 
-                       getMaximumVerticalScrollPosition()) <= vDelta_) || 
+                       getMaximumVerticalScrollPosition()) <= vFudge) || 
               
              (Math.abs((getVerticalScrollPosition() + getOffsetHeight()) - 
-                        getElement().getScrollHeight()) <= vDelta_);
+                        getElement().getScrollHeight()) <= vFudge);
          }
       });
    }
@@ -132,5 +129,4 @@ public class BottomScrollPanel extends ScrollPanel
    private boolean scrolling_;
    private Integer vScroll_;
    private int hScroll_;
-   private int vDelta_;
 }
