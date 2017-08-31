@@ -1,7 +1,7 @@
 /*
  * BottomScrollPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -32,6 +33,13 @@ public class BottomScrollPanel extends ScrollPanel
    public BottomScrollPanel()
    {
       scrolling_ = false;
+      
+      // on high-dpi Windows, with a zoom factor, there
+      // was a frequent off-by-one (internal rounding error?)
+      // causing failure to set scrolledToBottom_
+      vDelta_ = 0;
+      if (BrowseCap.isWindowsDesktop())
+         vDelta_ = 1;
       addScrollHandler(new ScrollHandler()
       {
          public void onScroll(ScrollEvent event)
@@ -42,11 +50,11 @@ public class BottomScrollPanel extends ScrollPanel
             
             scrolledToBottom_ = 
              
-             (getVerticalScrollPosition() == 
-              getMaximumVerticalScrollPosition() || 
+             (Math.abs(getVerticalScrollPosition() - 
+                       getMaximumVerticalScrollPosition()) <= vDelta_) || 
               
-             ((getVerticalScrollPosition() + getOffsetHeight()) ==
-              getElement().getScrollHeight()));
+             (Math.abs((getVerticalScrollPosition() + getOffsetHeight()) - 
+                        getElement().getScrollHeight()) <= vDelta_);
          }
       });
    }
@@ -124,4 +132,5 @@ public class BottomScrollPanel extends ScrollPanel
    private boolean scrolling_;
    private Integer vScroll_;
    private int hScroll_;
+   private int vDelta_;
 }
