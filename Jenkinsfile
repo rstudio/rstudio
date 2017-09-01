@@ -146,10 +146,10 @@ try {
           trigger_external_build('IDE/monitor')
         }
 
-        slackSend channel: SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
+        slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
     }
 
 } catch(err) {
-   slackSend channel: SLACK_CHANNEL, color: 'bad', message: "${messagePrefix} failed: ${err}"
+   slackSend channel: params.SLACK_CHANNEL, color: 'bad', message: "${messagePrefix} failed: ${err}"
    error("failed: ${err}")
 }
