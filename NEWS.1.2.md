@@ -1,5 +1,9 @@
 ## v1.2 - Release Notes
 
+### Miscellaneous
+
+* Added option to temporarily disable environment pane refreshing
+
 ### RStudio Server Pro
 
 * Overhauled R versions, allowing you to specify version labels, load environment modules, and execute a prelaunch script when loading specific versions.
