@@ -1,7 +1,7 @@
 /*
  * BottomScrollPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,11 @@ public class BottomScrollPanel extends ScrollPanel
    public BottomScrollPanel()
    {
       scrolling_ = false;
+      
+      // Provide a close-enough zone for determining if scrolled
+      // to the bottom; allows for small rounding errors that have
+      // been seen on zoomed high-DPI displays.
+      final int vFudge = 4;
       addScrollHandler(new ScrollHandler()
       {
          public void onScroll(ScrollEvent event)
@@ -42,11 +47,11 @@ public class BottomScrollPanel extends ScrollPanel
             
             scrolledToBottom_ = 
              
-             (getVerticalScrollPosition() == 
-              getMaximumVerticalScrollPosition() || 
+             (Math.abs(getVerticalScrollPosition() - 
+                       getMaximumVerticalScrollPosition()) <= vFudge) || 
               
-             ((getVerticalScrollPosition() + getOffsetHeight()) ==
-              getElement().getScrollHeight()));
+             (Math.abs((getVerticalScrollPosition() + getOffsetHeight()) - 
+                        getElement().getScrollHeight()) <= vFudge);
          }
       });
    }
