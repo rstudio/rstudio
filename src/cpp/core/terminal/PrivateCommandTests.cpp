@@ -111,6 +111,8 @@ context("Private Terminal Command Tests")
       cmd.output(kEol);
       cmd.output(cmd.getBOM());
       cmd.output(kEol);
+      cmd.output("ignorespace");
+      cmd.output(kEol);
       cmd.output(results);
 
       // verify we can't get results until EOM is seen
@@ -364,6 +366,41 @@ context("Private Terminal Command Tests")
       expect_false(cmd.hasCaptured());
    }
 
+   test_that("private command stops if wrong HISTCONTROL returned")
+   {
+      PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+      std::string results = "one=two\nthree=four\nfive=six\n";
+
+      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
+
+      // mimic shell echoing back the command
+      cmd.output(cmd.getFullCommand());
+      cmd.output(kEol);
+      cmd.output(cmd.getBOM());
+      cmd.output(kEol);
+      cmd.output("ignoredups");
+      cmd.output(kEol);
+      cmd.output(results);
+      cmd.output(cmd.getEOM());
+      cmd.output(kEol);
+      cmd.output(kPrompt);
+
+      boost::this_thread::sleep(milliseconds(kPostTimeout));
+      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
+
+      // verify the captured output matches expectation
+      std::string captureResult = cmd.getPrivateOutput();
+      expect_true(captureResult == results);
+
+      // wait then try to do another capture
+      boost::this_thread::sleep(milliseconds(kPrivate * 2));
+      cmd.userInput("user command\n");
+      boost::this_thread::sleep(milliseconds(kUser * 2));
+      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
+      captureResult = cmd.getPrivateOutput();
+      expect_true(captureResult.empty());
+   }
 }
 
 } // end namespace tests
