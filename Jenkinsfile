@@ -88,19 +88,12 @@ try {
     timestamps {
         def containers = [
           [os: 'precise',  arch: 'amd64',  flavor: 'desktop', variant: 'trusty'],
-          [os: 'precise',  arch: 'i386',   flavor: 'desktop', variant: 'trusty'],
           [os: 'precise',  arch: 'amd64',  flavor: 'server',  variant: ''],
-          [os: 'precise',  arch: 'i386',   flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'centos6',  arch: 'i386',   flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
-          [os: 'centos6',  arch: 'i386',   flavor: 'server',  variant: 'SLES'],
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'centos7',  arch: 'i386',   flavor: 'desktop', variant: ''],
           [os: 'xenial',   arch: 'amd64',  flavor: 'desktop', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'desktop', variant: 'xenial'],
           [os: 'xenial',   arch: 'amd64',  flavor: 'server', variant: 'xenial'],
-          [os: 'xenial',   arch: 'i386',   flavor: 'server', variant: 'xenial'],
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
         containers = limit_builds(containers)
