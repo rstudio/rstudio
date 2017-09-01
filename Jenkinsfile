@@ -8,16 +8,12 @@ properties([
                               numToKeepStr: '100')),
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
                 string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '2', description: 'RStudio Minor Version'),
-                //string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
                 string(name: 'FLAVOR_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching FLAVOR')
                 ])
 ])
-
-// inject the build number as patch version temporarily
-def RSTUDIO_VERSION_PATCH = env.BUILD_NUMBER
 
 def resolve_deps(type, arch, variant) {
   def linux_bin = (arch == 'i386') ? 'linux32' : '' // only required in centos-land.
@@ -31,7 +27,7 @@ def resolve_deps(type, arch, variant) {
 }
 
 def compile_package(type, flavor, variant) {
-  def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
+  def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${env.BUILD_NUMBER}"
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 }
 
@@ -63,7 +59,7 @@ def limit_builds(containers) {
   for (int i = 0; i < containers.size(); i++) {
     def it = containers[i]
     // negate-fest. String.contains() can't work in the positive with empty strings
-    if (!(!it.os.contains(OS_FILTER) || !it.arch.contains(ARCH_FILTER) || !it.flavor.contains(FLAVOR_FILTER))) {
+    if (!(!it.os.contains(params.OS_FILTER) || !it.arch.contains(params.ARCH_FILTER) || !it.flavor.contains(params.FLAVOR_FILTER))) {
       limited_containers << it
     }
   }
@@ -78,14 +74,14 @@ def prepareWorkspace(){ // accessory to clean workspace and checkout
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
-  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR', value: RSTUDIO_VERSION_MAJOR),
-                                                  string(name: 'RSTUDIO_VERSION_MINOR', value: RSTUDIO_VERSION_MINOR),
-                                                  string(name: 'RSTUDIO_VERSION_PATCH', value: RSTUDIO_VERSION_PATCH),
+  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR', value: params.RSTUDIO_VERSION_MAJOR),
+                                                  string(name: 'RSTUDIO_VERSION_MINOR', value: params.RSTUDIO_VERSION_MINOR),
+                                                  string(name: 'RSTUDIO_VERSION_PATCH', value: env.BUILD_NUMBER),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
 // make a nicer slack message
-rstudioVersion = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}"
+rstudioVersion = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}"
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
 
 try {
@@ -118,7 +114,7 @@ try {
                 node('ide') {
                     stage('prepare ws/container'){
                       prepareWorkspace()
-                      def image_tag = "${current_container.os}-${current_container.arch}-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}"
+                      def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
                       container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
                     }
                     container.inside() {
