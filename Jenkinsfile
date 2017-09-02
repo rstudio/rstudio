@@ -81,7 +81,7 @@ def trigger_external_build(build_name, wait = false) {
 }
 
 // make a nicer slack message
-rstudioVersion = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}"
+rstudioVersion = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${env.BUILD_NUMBER}"
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
 
 try {
