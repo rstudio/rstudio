@@ -234,8 +234,8 @@ bool waitForIndexLock(const FilePath& workingDir)
    core::system::nfs::statWithCacheClear(lockPath, &cleared, &info);
 #endif
    
-   // otherwise, retry for 1s
-   for (std::size_t i = 0; i < 5; ++i)
+   // otherwise, retry for ~5s
+   for (std::size_t i = 0; i < 10; ++i)
    {
       // if there's no lockfile, we can proceed
       if (!lockPath.exists())
@@ -267,7 +267,7 @@ bool waitForIndexLock(const FilePath& workingDir)
          break;
 
       // sleep for a bit, then retry
-      boost::this_thread::sleep(milliseconds(200));
+      boost::this_thread::sleep(milliseconds(500));
       ++retryCount;
    }
    
