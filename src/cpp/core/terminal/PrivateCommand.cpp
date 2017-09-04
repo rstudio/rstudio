@@ -17,6 +17,8 @@
 
 #include <core/system/System.hpp>
 
+#include <boost/algorithm/string/trim.hpp>
+
 namespace rstudio {
 namespace core {
 namespace terminal {
@@ -65,15 +67,18 @@ PrivateCommand::PrivateCommand(const std::string& command,
      privateCommandTimeout_(privateCommandTimeoutMs),
      postCommandTimeout_(postCommandTimeoutMs),
      firstCRLF_(std::string::npos),
+     histcontrol_(std::string::npos),
      outputStart_(std::string::npos),
      outputEnd_(std::string::npos),
-     timeout_(false)
+     timeout_(false),
+     detectedWrongHistControl_(false)
 {
    outputBOM_ = core::system::generateShortenedUuid();
    outputEOM_ = core::system::generateShortenedUuid();
 
    std::string commandBefore_ = " echo ";
    commandBefore_ += outputBOM_;
+   commandBefore_ += " && echo $HISTCONTROL";
    std::string commandAfter_ = "echo ";
    commandAfter_ += outputEOM_;
 
@@ -110,6 +115,9 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
    }
    else
    {
+      if (detectedWrongHistControl_)
+         return false;
+
       if (hasChildProcs)
          return false;
 
@@ -201,16 +209,42 @@ bool PrivateCommand::output(const std::string& output)
       firstCRLF_ += kEol.length();
    }
 
-   // find the start of output
-   if (outputStart_ == std::string::npos)
+   // find the echoed BOM
+   if (histcontrol_ == std::string::npos)
    {
       std::string bomLine = outputBOM_ + kEol;
-      outputStart_ = privateCommandOutput_.find(bomLine, firstCRLF_);
+      histcontrol_ = privateCommandOutput_.find(bomLine, firstCRLF_);
+      if (histcontrol_ == std::string::npos)
+      {
+         return true;
+      }
+      histcontrol_ += bomLine.length();
+   }
+
+   // next line has HISTCONTROL value
+   if (outputStart_ == std::string::npos)
+   {
+      outputStart_ = privateCommandOutput_.find(kEol, histcontrol_);
       if (outputStart_ == std::string::npos)
       {
          return true;
       }
-      outputStart_ += bomLine.length();
+
+      std::string histcontrolValue = privateCommandOutput_.substr(
+               histcontrol_, outputStart_ - histcontrol_);
+      boost::algorithm::trim(histcontrolValue);
+      outputStart_ += kEol.length();
+      if (histcontrolValue != "ignorespace" && histcontrolValue != "ignoreboth")
+      {
+         // turn off future private commands for lifetime of this object to prevent
+         // accumulation of "not-quite-private" commands in shell history
+
+         std::string msg = "Private command disabled, unsupported $HISTCONTROL: [";
+         msg += histcontrolValue;
+         msg += "]";
+         LOG_WARNING_MESSAGE(msg);
+         detectedWrongHistControl_ = true;
+      }
    }
 
    // find the end of output
@@ -249,6 +283,7 @@ void PrivateCommand::resetParse()
 {
    outputReceivedTime_ = boost::posix_time::not_a_date_time;
    firstCRLF_ = std::string::npos;
+   histcontrol_ = std::string::npos;
    outputStart_ = std::string::npos;
    outputEnd_ = std::string::npos;
    privateCommandOutput_.clear();
