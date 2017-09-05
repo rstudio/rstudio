@@ -209,8 +209,16 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
 
+      
+      String[] themeOptions = themes.getThemeNames();
+      for (int idxTheme = 0; idxTheme < themeOptions.length; idxTheme++) {
+         if (themeOptions[idxTheme] == "TextMate") {
+            themeOptions[idxTheme] = "TextMate (default)";
+         }
+      }
+      
       theme_ = new SelectWidget("Editor theme:",
-                                themes.getThemeNames(),
+                                themeOptions,
                                 themes.getThemeNames(),
                                 false);
       theme_.getListBox().addChangeHandler(new ChangeHandler()
