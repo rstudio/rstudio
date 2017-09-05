@@ -180,7 +180,7 @@ var renderCellContents = function(data, type, row, meta) {
   if (meta.col < cachedFilterValues.length) {
     var colSearch = cachedFilterValues[meta.col];
     if (colSearch.indexOf("character|") === 0) {
-      colSearch = parseSearchString(colSearch);
+      colSearch = decodeURIComponent(parseSearchString(colSearch));
       var colIdx = data.toLowerCase().indexOf(colSearch.toLowerCase());
       if (colIdx >= 0) {
         return highlightSearchMatch(data, colSearch, colIdx);
@@ -431,7 +431,7 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
     input.value = searchvals[1];
 
   var updateView = debounce(function() {
-      table.columns(idx).search("character|" + input.value).draw();
+      table.columns(idx).search("character|" + encodeURIComponent(input.value)).draw();
     }, 200);
   input.addEventListener("keyup", function(evt) {
     updateView();
