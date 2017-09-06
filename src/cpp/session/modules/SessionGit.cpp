@@ -96,6 +96,34 @@ const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
                            ((uint64_t)7 << 32) |
                            ((uint64_t)2 << 16);
 
+
+// for read-only git operations, use a different index.lock file so that they
+// don't intefere with the execution of regular git operations (e.g. because
+// we often call git status in the background, even while a git commit
+// is running)
+core::system::Options readonlyGitOptions()
+{
+   core::system::Options options;
+   options.push_back(std::make_pair("GIT_INDEX_FILE", ".git/rstudio"));
+   return options;
+}
+
+int s_readonlyScope = 0;
+
+class ReadonlyGitOperationScope
+{
+public:
+   ReadonlyGitOperationScope()
+   {
+      ++s_readonlyScope;
+   }
+   
+   ~ReadonlyGitOperationScope()
+   {
+      --s_readonlyScope;
+   }
+};
+
 core::system::ProcessOptions procOptions()
 {
    core::system::ProcessOptions options;
@@ -108,6 +136,10 @@ core::system::ProcessOptions procOptions()
    // get current environment for modification prior to passing to child
    core::system::Options childEnv;
    core::system::environment(&childEnv);
+   
+   // append other environment variables
+   if (s_readonlyScope)
+      core::algorithm::append(&childEnv, readonlyGitOptions());
 
    // add git bin dir to PATH if necessary
    std::string nonPathGitBinDir = git::nonPathGitBinDir();
@@ -179,8 +211,6 @@ struct RemoteBranchInfo
       }
    }
 };
-
-class Git;
 
 std::vector<PidType> s_pidsToTerminate_;
 
@@ -278,9 +308,25 @@ Error gitExec(const ShellArgs& args,
               const core::FilePath& workingDir,
               core::system::ProcessResult* pResult)
 {
+   // initialize a separate index for read-only operations (this ensure
+   // that git won't try to lock an index during e.g. a commit)
+   if (s_readonlyScope)
+   {
+      FilePath source = workingDir.childPath(".git/index");
+      FilePath target = workingDir.childPath(".git/rstudio");
+      Error error = source.copy(target);
+      if (error)
+         LOG_ERROR(error);
+      
+      RemoveOnExitScope scope(target, ERROR_LOCATION);
+   }
+   
    // if we see an 'index.lock' file within the associated
    // git repository, try waiting a bit until it's removed
-   waitForIndexLock(workingDir);
+   if (!s_readonlyScope)
+   {
+      waitForIndexLock(workingDir);
+   }
    
    core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
@@ -476,6 +522,8 @@ public:
    core::Error status(const FilePath& dir,
                       StatusResult* pStatusResult)
    {
+      ReadonlyGitOperationScope scope;
+      
       using namespace boost;
 
       // objects to be populated from git's output
@@ -661,6 +709,8 @@ public:
    core::Error listBranches(std::vector<std::string>* pBranches,
                             boost::optional<size_t>* pActiveBranchIndex)
    {
+      ReadonlyGitOperationScope scope;
+      
       std::vector<std::string> lines;
 
       std::string output;
@@ -686,6 +736,8 @@ public:
    
    core::Error listRemotes(json::Array* pRemotes)
    {
+      ReadonlyGitOperationScope scope;
+      
       std::string output;
       Error error = runGit(ShellArgs() << "remote" << "--verbose", &output);
       if (error)
@@ -886,6 +938,8 @@ public:
 
    Error currentBranch(std::string* pBranch)
    {
+      ReadonlyGitOperationScope scope;
+      
       std::vector<std::string> branches;
       boost::optional<size_t> index;
       Error error = listBranches(&branches, &index);
@@ -909,6 +963,8 @@ public:
                     std::string* pRemote,
                     std::string* pMerge)
    {
+      ReadonlyGitOperationScope scope;
+      
       int exitStatus;
       Error error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".remote",
                            pRemote,
@@ -1000,6 +1056,8 @@ public:
                         bool ignoreWhitespace,
                         std::string* pOutput)
    {
+      ReadonlyGitOperationScope scope;
+      
       Error error = doDiffFile(filePath, NULL, mode, contextLines, ignoreWhitespace, pOutput);
       if (error)
          return error;
@@ -1137,6 +1195,9 @@ public:
                    const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
+      ReadonlyGitOperationScope scope;
+      
+      
       ShellArgs args = ShellArgs() << "log" << "--encoding=UTF-8"
                        << "--pretty=raw" << "--decorate=full"
                        << "--date-order";
@@ -1339,6 +1400,8 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
+      ReadonlyGitOperationScope scope;
+      
       ShellArgs args = ShellArgs() << "show" << "--pretty=oneline" << "-M";
       if (s_gitVersion >= GIT_1_7_2)
          args << "-c";
@@ -1351,6 +1414,8 @@ public:
                                 const std::string& filename,
                                 std::string* pOutput)
    {
+      ReadonlyGitOperationScope scope;
+      
       boost::format fmt("%1%:%2%");
       ShellArgs args =
             ShellArgs() << "show" << boost::str(fmt % rev % filename);
@@ -1360,6 +1425,8 @@ public:
 
    virtual core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
    {
+      ReadonlyGitOperationScope scope;
+      
       // default to none
       *pRemoteBranchInfo = RemoteBranchInfo();
 
