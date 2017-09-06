@@ -1677,8 +1677,6 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 Error vcsCheckout(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string id;
    Error error = json::readParams(request.params, &id);
    if (error)
@@ -1697,8 +1695,6 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit scope;
-   
    std::string branch, remote;
    Error error = json::readParams(request.params, &branch, &remote);
    if (error)
@@ -1773,8 +1769,6 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
 Error vcsCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string commitMsg;
    bool amend, signOff;
    Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
