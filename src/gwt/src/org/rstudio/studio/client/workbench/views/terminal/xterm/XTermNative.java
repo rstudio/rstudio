@@ -211,8 +211,8 @@ public class XTermNative extends JavaScriptObject
          // https://developer.mozilla.org/en-US/docs/Web/Events/wheel#Listening_to_this_event_across_browser
          self = nativeTerm_;
          nativeTerm_.element.addEventListener('mousewheel', function (ev) {
-         if (self.mouseEvents)
-            return;
+            if (self.mouseEvents)
+               return;
 
             // create a normalized 'wheel' event object
             var event = {
