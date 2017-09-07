@@ -23,10 +23,9 @@ import com.google.gwt.dom.client.Element;
 /**
  * <code>JavaScriptObject</code> wrapper for xterm.js
  * 
- * Code in this class that depends on implementation details of xterm.js
- * is marked with XTERM_IMP. Be careful of these when updating to a 
- * newer xterm.js build. The rest is using documented APIs found on
- * https://xtermjs.org/docs/api/terminal/
+ * Reliance on xterm.js implementation details is marked with XTERM_IMP.
+ * Be careful of these when updating to a newer xterm.js build.
+ * The rest uses documented APIs: https://xtermjs.org/docs/api/terminal/
  */
 public class XTermNative extends JavaScriptObject
 {
@@ -194,11 +193,14 @@ public class XTermNative extends JavaScriptObject
     * @param container HTML element to attach to
     * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
     * @param focus <code>true</code> to give terminal focus by default
-    * @param supportMousewheel <code> true to handle legacy mousewheel event
+    * @param supportMousewheel <code>true</code> to handle legacy mousewheel event
     * 
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container, boolean blink, boolean focus, boolean supportMousewheel) /*-{
+   public static native XTermNative createTerminal(Element container, 
+                                                   boolean blink,
+                                                   boolean focus,
+                                                   boolean supportMousewheel) /*-{
       var nativeTerm_ = new $wnd.Terminal({cursorBlink: blink});
       nativeTerm_.open(container, focus);
 
