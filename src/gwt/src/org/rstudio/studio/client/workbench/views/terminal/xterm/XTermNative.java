@@ -216,12 +216,19 @@ public class XTermNative extends JavaScriptObject
 
             // create a normalized 'wheel' event object
             var event = {
+               // keep a ref to the original event object
+               ev: ev,
                target: ev.target || ev.srcElement,
                type: "wheel",
                deltaMode: ev.type == "MozMousePixelScroll" ? 0 : 1,
                deltaX: 0,
                deltaY: 0,
-               deltaZ: 0
+               deltaZ: 0,
+               preventDefault: function() {
+                  ev.preventDefault ?
+                  ev.preventDefault() :
+                  ev.returnValue = false;
+               }
             };
 
             // calculate deltaY (and deltaX) according to the event
