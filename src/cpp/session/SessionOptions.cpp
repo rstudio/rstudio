@@ -685,7 +685,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    // On OSX we keep the postback scripts over in the MacOS directory
    // rather than in the Resources directory -- make this adjustment
    // when the default postback path has been passed
-   if (*pPath == kDefaultPostbackPath)
+   if (*pPath == kDefaultPostbackPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
       *pPath = path.absolutePath();
@@ -699,7 +699,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                 std::string* pPath)
 {
-   if (*pPath == kDefaultPandocPath)
+   if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/pandoc");
       *pPath = path.absolutePath();
@@ -713,7 +713,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 void Options::resolveRsclangPath(const FilePath& resourcePath,
                                  std::string* pPath)
 {
-   if (*pPath == kDefaultRsclangPath)
+   if (*pPath == kDefaultRsclangPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/rsclang");
       *pPath = path.absolutePath();
