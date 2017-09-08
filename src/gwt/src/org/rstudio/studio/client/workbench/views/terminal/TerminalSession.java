@@ -68,15 +68,18 @@ public class TerminalSession extends XTermWidget
     * @param info terminal metadata
     * @param cursorBlink should terminal cursor blink
     * @param focus should terminal automatically get focus
+    * @param createdbyApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info, 
                           boolean cursorBlink, 
-                          boolean focus)
+                          boolean focus,
+                          boolean createdByApi)
    {
       super(cursorBlink, focus);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
+      createdByApi_ = createdByApi;
       hasChildProcs_ = new Value<Boolean>(info.getHasChildProcs());
       
       setTitle(info.getTitle());
@@ -690,7 +693,10 @@ public class TerminalSession extends XTermWidget
       case TerminalShellInfo.SHELL_CMD64:
       case TerminalShellInfo.SHELL_PS32:
       case TerminalShellInfo.SHELL_PS64:
-         return false;
+         // Do load the buffer if terminal was just created via API, as
+         // the initial message and prompt may have been sent before the
+         // client/server channel was opened.
+         return createdByApi_;
 
       default:
          return true;
@@ -853,6 +859,7 @@ public class TerminalSession extends XTermWidget
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
+   private boolean createdByApi_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

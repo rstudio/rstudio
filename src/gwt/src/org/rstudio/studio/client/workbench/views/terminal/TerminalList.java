@@ -348,7 +348,7 @@ public class TerminalList implements Iterable<String>,
    {
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
             uiPrefs_.terminalTrackEnvironment().getValue());
-      startTerminal(info, callback);
+      startTerminal(info, false /*createdByApi*/, callback);
    }
 
    /**
@@ -358,6 +358,7 @@ public class TerminalList implements Iterable<String>,
     * @return true if terminal was known and reconnect initiated
     */
    public void reconnectTerminal(String handle,
+                                 boolean createdByApi,
                                  final ResultCallback<Boolean, String> callback) 
    {
       ConsoleProcessInfo existing = getMetadataForHandle(handle);
@@ -368,7 +369,7 @@ public class TerminalList implements Iterable<String>,
       }
 
       existing.setHandle(handle);
-      startTerminal(existing, callback); 
+      startTerminal(existing, createdByApi, callback); 
    }
 
    /**
@@ -415,6 +416,7 @@ public class TerminalList implements Iterable<String>,
    }
 
    private void startTerminal(ConsoleProcessInfo info, 
+                              boolean createdByApi,
                               final ResultCallback<Boolean, String> callback)
    {
       // When terminals are created via the R API, guard against creation of multiple
@@ -428,7 +430,7 @@ public class TerminalList implements Iterable<String>,
       }
 
       TerminalSession newSession = new TerminalSession(
-            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/);
+            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, createdByApi);
 
       if (existing != null)
       {

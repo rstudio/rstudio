@@ -391,12 +391,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateNamedTerminal(String caption)
+   public void activateNamedTerminal(String caption, boolean createdByApi)
    {
       if (StringUtil.isNullOrEmpty(caption))
          return;
       
-      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption, createdByApi);
    }
 
    @Override
@@ -837,7 +837,8 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      terminals_.reconnectTerminal(event.getTerminalHandle(), new ResultCallback<Boolean, String>()
+      terminals_.reconnectTerminal(event.getTerminalHandle(), event.createdByApi(),
+            new ResultCallback<Boolean, String>()
       {
          @Override 
          public void onSuccess(Boolean connected)  
