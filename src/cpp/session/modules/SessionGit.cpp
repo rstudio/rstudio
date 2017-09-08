@@ -3211,11 +3211,14 @@ core::Error initialize()
    }
    else
    {
-#ifdef _WIN32
+#if defined(_WIN32)
       // Windows probably unlikely to have either ssh-agent or askpass
       interceptAskPass = true;
+#elif defined(__APPLE__)
+      // newer versions of macOS no longer provide ssh-askpass
+      interceptAskPass = core::system::getenv("SSH_ASKPASS").empty();
 #else
-      // Everything fine on Mac and Linux
+      // Everything fine on Linux
       interceptAskPass = false;
 #endif
    }
