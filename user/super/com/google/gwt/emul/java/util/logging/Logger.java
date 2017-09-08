@@ -27,14 +27,29 @@ import java.util.function.Supplier;
 public class Logger {
   public static final String GLOBAL_LOGGER_NAME = "global";
 
-  private static final String LOG_LEVEL = System.getProperty("jre.logging.logLevel");
-  private static final boolean LOGGING_INFO = LOG_LEVEL.equals("INFO");
-  private static final boolean LOGGING_WARNING = LOG_LEVEL.equals("WARNING");
-  private static final boolean LOGGING_SEVERE = LOG_LEVEL.equals("SEVERE");
-  private static final boolean LOGGING_OFF = LOG_LEVEL.equals("OFF");
+  private static final boolean LOGGING_OFF;
+  private static final boolean ALL_ENABLED;
+  private static final boolean INFO_ENABLED;
+  private static final boolean WARNING_ENABLED;
+  private static final boolean SEVERE_ENABLED;
 
   static {
-    assertLoggingValues();
+    // '==' instead of equals makes it compile out faster.
+
+    String level = System.getProperty("jre.logging.logLevel");
+    if (level != "ALL"
+        && level != "INFO"
+        && level != "WARNING"
+        && level != "SEVERE"
+        && level != "OFF") {
+      throw new AssertionError("Undefined value for jre.logging.logLevel: '" + level + "'");
+    }
+
+    LOGGING_OFF = level == "OFF";
+    ALL_ENABLED = level == "ALL";
+    INFO_ENABLED = level == "ALL" || level == "INFO";
+    WARNING_ENABLED = level == "ALL" || level == "INFO" || level == "WARNING";
+    SEVERE_ENABLED = level == "ALL" || level == "INFO" || level == "WARNING" || level == "SEVERE";
   }
 
   public static Logger getGlobal() {
@@ -44,28 +59,13 @@ public class Logger {
   public static Logger getLogger(String name) {
     // Use shortcut if logging is disabled to avoid parent logger creations in LogManager
     if (LOGGING_OFF) {
-      return new Logger(name, null);
+      return new Logger(null, null);
     }
     return LogManager.getLogManager().ensureLogger(name);
   }
 
-  static void assertLoggingValues() {
-    if (LOG_LEVEL.equals("ALL")
-        || LOG_LEVEL.equals("INFO")
-        || LOG_LEVEL.equals("WARNING")
-        || LOG_LEVEL.equals("SEVERE")
-        || LOG_LEVEL.equals("OFF")) {
-      return;
-    }
-
-    throw new AssertionError(
-        "Undefined value for jre.logging.logLevel: '"
-            + LOG_LEVEL
-            + "'. Allowed values are ALL, INFO, WARNING, SEVERE, OFF");
-  }
-
   private List<Handler> handlers;
-  private Level level = null;
+  private Level level;
   private String name;
   private Logger parent;  // Should never be null except in the RootLogger
   private boolean useParentHandlers;
@@ -88,98 +88,98 @@ public class Logger {
   }
 
   public void config(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.CONFIG, msg);
   }
 
   public void config(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.CONFIG, msgSupplier);
   }
 
   public void fine(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINE, msg);
   }
 
   public void fine(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINE, msgSupplier);
   }
 
   public void finer(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINER, msg);
   }
 
   public void finer(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINER, msgSupplier);
   }
 
   public void finest(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINEST, msg);
   }
 
   public void finest(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
+    if (!ALL_ENABLED) {
       return;
     }
     log(Level.FINEST, msgSupplier);
   }
 
   public void info(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (!INFO_ENABLED) {
       return;
     }
     log(Level.INFO, msg);
   }
 
   public void info(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (!INFO_ENABLED) {
       return;
     }
     log(Level.INFO, msgSupplier);
   }
 
   public void warning(String msg) {
-    if (LOGGING_OFF || LOGGING_SEVERE) {
+    if (!WARNING_ENABLED) {
       return;
     }
     log(Level.WARNING, msg);
   }
 
   public void warning(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF || LOGGING_SEVERE) {
+    if (!WARNING_ENABLED) {
       return;
     }
     log(Level.WARNING, msgSupplier);
   }
 
   public void severe(String msg) {
-    if (LOGGING_OFF) {
+    if (!SEVERE_ENABLED) {
       return;
     }
     log(Level.SEVERE, msg);
   }
 
   public void severe(Supplier<String> msgSupplier) {
-    if (LOGGING_OFF) {
+    if (!SEVERE_ENABLED) {
       return;
     }
     log(Level.SEVERE, msgSupplier);
@@ -210,16 +210,16 @@ public class Logger {
   }
 
   public boolean isLoggable(Level messageLevel) {
-    if (LOGGING_OFF) {
-      return false;
-    } else if (LOGGING_SEVERE) {
-      return messageLevel.intValue() >= Level.SEVERE.intValue();
-    } else if (LOGGING_WARNING) {
-      return messageLevel.intValue() >= Level.WARNING.intValue();
-    } else if (LOGGING_INFO) {
-      return messageLevel.intValue() >= Level.INFO.intValue();
-    } else {
+    if (ALL_ENABLED) {
       return messageLevel.intValue() >= getEffectiveLevel().intValue();
+    } else if (INFO_ENABLED) {
+      return messageLevel.intValue() >= Level.INFO.intValue();
+    } else if (WARNING_ENABLED) {
+      return messageLevel.intValue() >= Level.WARNING.intValue();
+    } else if (SEVERE_ENABLED) {
+      return messageLevel.intValue() >= Level.SEVERE.intValue();
+    } else {
+      return false;
     }
   }
 
