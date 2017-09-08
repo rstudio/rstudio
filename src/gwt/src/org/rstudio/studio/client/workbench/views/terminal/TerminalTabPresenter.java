@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -31,8 +32,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -50,9 +49,17 @@ public class TerminalTabPresenter extends BusyPresenter
    public interface Display extends WorkbenchView
    {
       /**
-       * Ensure terminal pane is visible.
+       * Callback when Display is selected
        */
-      void activateTerminal();
+      interface DisplaySelectedCallback {
+         void displaySelected();
+      }
+
+      /**
+       * Ensure terminal pane is visible. Callback to perform actions after pane has
+       * been made visible and received onSelected.
+       */
+      void activateTerminal(DisplaySelectedCallback callback);
 
       /**
        * Create a new terminal session
@@ -122,6 +129,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * Send current terminal's buffer to a new editor buffer.
        */
       void sendTerminalToEditor();
+
+      /**
+       * Ensure there is at least one terminal.
+       */
+      void ensureTerminal();
    }
 
    @Inject
@@ -138,12 +150,9 @@ public class TerminalTabPresenter extends BusyPresenter
    @Handler
    public void onActivateTerminal()
    {
-      if (!uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(true);
-         uiPrefs_.writeUIPrefs();
-      }
-      view_.activateTerminal();
+      // "Move focus to terminal" command; does same thing as clicking the 
+      // terminal tab
+      view_.activateTerminal(null);
    }
 
    @Handler
@@ -195,10 +204,17 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onCreateTerminal(CreateTerminalEvent event)
+   public void onCreateTerminal(final CreateTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.createTerminal(event.getPostCreateText());
+      // New Terminal command, always creates a new terminal
+      view_.activateTerminal(new Display.DisplaySelectedCallback()
+      {
+         @Override
+         public void displaySelected()
+         {
+            view_.createTerminal(event.getPostCreateText());
+         }
+      });
    }
 
    @Override
@@ -216,21 +232,21 @@ public class TerminalTabPresenter extends BusyPresenter
    @Override
    public void onAddTerminal(final AddTerminalEvent event)
    {
+      // A new terminal was created server-side via the API. Now add it to the
+      // client side terminal list
+      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
       if (event.getShow())
-         onActivateTerminal();
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
-         @Override
-         public void execute()
+         // And optionally bring tab forward and select the requested terminal
+         view_.activateTerminal(new Display.DisplaySelectedCallback()
          {
-            view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
-            if (event.getShow())
+            @Override
+            public void displaySelected()
             {
                view_.activateNamedTerminal(event.getProcessInfo().getCaption());
             }
-         }
-      });
+         });
+      }
    }
 
    @Override
@@ -240,10 +256,21 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onActivateNamedTerminal(ActivateNamedTerminalEvent event)
+   public void onActivateNamedTerminal(final ActivateNamedTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.activateNamedTerminal(event.getId());
+      // Request to display the terminal tab and optionally select a specific terminal; if
+      // no terminal is specified, then make sure there is an active terminal
+      view_.activateTerminal(new Display.DisplaySelectedCallback()
+      {
+         @Override
+         public void displaySelected()
+         {
+            if (StringUtil.isNullOrEmpty(event.getId()))
+               view_.ensureTerminal();
+            else
+               view_.activateNamedTerminal(event.getId());
+         }
+      });
    }
 
    public void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
@@ -268,11 +295,6 @@ public class TerminalTabPresenter extends BusyPresenter
 
    private void shutDownTerminals()
    {
-      if (uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(false);
-         uiPrefs_.writeUIPrefs();
-      }
       view_.terminateAllTerminals();
    }
 
