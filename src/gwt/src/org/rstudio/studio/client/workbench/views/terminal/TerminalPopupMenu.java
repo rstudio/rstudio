@@ -174,12 +174,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       });
    }
    
-   public void setActiveTerminalByCaption(String caption)
+   public void setActiveTerminalByCaption(String caption, boolean createdByApi)
    {
       String handle = terminals_.handleForCaption(caption);
       if (StringUtil.isNullOrEmpty(handle))
          return;
-      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null));
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null, createdByApi));
    }
 
    /**
