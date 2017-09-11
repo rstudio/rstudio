@@ -25,7 +25,7 @@
   color: #606060;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .dataGridOddRowCell img {
+.rstudio-themes-flat .rstudio-themes-dark .dataGridCell img {
    filter: brightness(90%) saturate(90%);
 }
 
