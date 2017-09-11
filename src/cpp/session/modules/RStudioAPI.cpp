@@ -26,6 +26,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
 
@@ -140,15 +141,34 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    int type = r::sexp::asInteger(typeSEXP);
    std::string caption = r::sexp::asString(captionSEXP);
    std::string label = r::sexp::asString(labelSEXP);
-   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP, ""));
+   std::string path = r::sexp::asString(pathSEXP);
    std::string filter = r::sexp::asString(filterSEXP);
    bool existing = r::sexp::asLogical(existingSEXP);
+   
+   // default to all files when filter is empty
+   if (filter.empty())
+      filter = "All Files (*)";
+   
+   // when path is empty, use project path if available, user home path
+   // otherwise
+   FilePath filePath;
+   if (path.empty())
+   {
+      if (projects::projectContext().hasProject())
+         filePath = projects::projectContext().directory();
+      else
+         filePath = module_context::userHomePath();
+   }
+   else
+   {
+      filePath = module_context::resolveAliasedPath(path);
+   }
    
    json::Object data;
    data["type"] = type;
    data["caption"] = caption;
    data["label"] = label;
-   data["file"] = module_context::createFileSystemItem(path);
+   data["file"] = module_context::createFileSystemItem(filePath);
    data["filter"] = filter;
    data["existing"] = existing;
    ClientEvent event(client_events::kOpenFileDialog, data);
