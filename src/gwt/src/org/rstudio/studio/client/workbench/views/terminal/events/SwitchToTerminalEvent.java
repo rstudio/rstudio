@@ -45,6 +45,14 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       terminalHandle_ = handle;
       inputText_ = input;
+      createdByApi_ = false;
+   }
+
+   public SwitchToTerminalEvent(String handle, String input, boolean createdByApi)
+   {
+      terminalHandle_ = handle;
+      inputText_ = input;
+      createdByApi_ = createdByApi;
    }
 
    @Override
@@ -68,9 +76,15 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       return inputText_;
    }
+   
+   public boolean createdByApi()
+   {
+      return createdByApi_;
+   }
 
    private String terminalHandle_;
    private String inputText_;
+   private boolean createdByApi_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

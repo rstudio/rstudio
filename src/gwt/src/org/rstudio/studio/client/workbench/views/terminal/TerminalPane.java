@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter.Display;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -217,22 +218,23 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onSelected()
    {
-      // terminal tab was selected
       super.onSelected();
       
-      // if terminal is not selected, and the tab "X" is clicked, the tab receives
-      // onSelected but in this case we don't want to create a new terminal
-      if (!closingAll_)
-         ensureTerminal(null);
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      if (selectedCallback_ != null)
       {
-         @Override
-         public void execute()
-         {
-            suppressAutoFocus_ = false;
-         }
-      });
+         // terminal tab was shown programatically
+         selectedCallback_.displaySelected();
+         selectedCallback_ = null;
+      }
+      else
+      {
+         // user clicked the tab
+
+         // if terminal is not selected, and the tab "X" is clicked, the tab receives
+         // onSelected but in this case we don't want to create a new terminal
+         if (!closingAll_)
+            ensureTerminal(null);
+      }
    }
 
    @Override
@@ -266,12 +268,20 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateTerminal()
+   public void activateTerminal(DisplaySelectedCallback callback)
    {
+      selectedCallback_ = callback;
+      setShowTerminalPref(true);
       closingAll_ = false;
       bringToFront();
    }
 
+   @Override
+   public void ensureTerminal()
+   {
+      ensureTerminal(null);
+   }
+   
    /**
     * Ensure there's a terminal available, and optionally send text to it when ready. 
     * @param postCreateText text to send, may be null
@@ -381,12 +391,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateNamedTerminal(String caption)
+   public void activateNamedTerminal(String caption, boolean createdByApi)
    {
       if (StringUtil.isNullOrEmpty(caption))
          return;
       
-      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption, createdByApi);
    }
 
    @Override
@@ -466,6 +476,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void terminateAllTerminals()
    {
+      setShowTerminalPref(false);
       closingAll_ = true;
       
       // kill any terminal server processes, and remove them from the server-
@@ -546,14 +557,29 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text, boolean setFocus)
+   public void sendToTerminal(final String text, boolean setFocus)
    {
       if (StringUtil.isNullOrEmpty(text))
          return;
 
       suppressAutoFocus_ = !setFocus;
-      ensureTerminal(text);
-      activateTerminal();
+      activateTerminal(new Display.DisplaySelectedCallback()
+      {
+         @Override
+         public void displaySelected()
+         {
+            ensureTerminal(text);
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  suppressAutoFocus_ = false;
+               }
+            });
+         }
+      });
+      
    }
 
    @Override
@@ -811,7 +837,8 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      terminals_.reconnectTerminal(event.getTerminalHandle(), new ResultCallback<Boolean, String>()
+      terminals_.reconnectTerminal(event.getTerminalHandle(), event.createdByApi(),
+            new ResultCallback<Boolean, String>()
       {
          @Override 
          public void onSuccess(Boolean connected)  
@@ -1112,6 +1139,15 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
+   private void setShowTerminalPref(boolean show)
+   {
+      if (uiPrefs_.showTerminalTab().getValue() != show)
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(show);
+         uiPrefs_.writeUIPrefs();
+      }
+   }
+
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
@@ -1124,6 +1160,7 @@ public class TerminalPane extends WorkbenchPane
    private boolean isRestartInProgress_;
    private boolean closingAll_;
    private boolean suppressAutoFocus_;
+   private DisplaySelectedCallback selectedCallback_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;
