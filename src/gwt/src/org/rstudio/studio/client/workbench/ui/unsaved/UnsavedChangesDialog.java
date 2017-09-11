@@ -104,7 +104,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       targets_ = dirtyTargets;
       
       setOkButtonCaption("Save Selected");
-           	     
+      
       addLeftButton(new ThemedButton("Don't Save", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -114,7 +114,13 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                                        new ArrayList<UnsavedChangesTarget>(),
                                        false));
          } 
-      }));    
+      }));
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
+      focusOkButton();
    }
 
    @Override
@@ -169,7 +175,6 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          panel.setCellHeight(chkAlwaysSave_, "30px");
          panel.setCellVerticalAlignment(chkAlwaysSave_,
                                         HasVerticalAlignment.ALIGN_MIDDLE);
-
       }
       
       return panel;
