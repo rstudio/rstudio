@@ -979,7 +979,7 @@ void handlePreviewRequest(const http::Request& request,
    }
 }
 
-SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
+SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
 {
    try
    {
@@ -987,9 +987,10 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
       if (isPreviewRunning())
          s_pCurrentPreview_->terminate();
 
-      // get url and title
+      // get parameters
       std::string url = r::sexp::safeAsString(urlSEXP);
       std::string title = r::sexp::safeAsString(titleSEXP);
+      bool selfContained = r::sexp::asLogical(selfContainedSEXP);
 
       // paths we will forward via event
       FilePath filePath, viewerFilePath;
@@ -1016,19 +1017,28 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
          // get full path to file
          filePath = module_context::resolveAliasedPath(url);
 
-         // create temp file to write standalone html to (place it within a temp dir
-         // so the default download file name is pretty)
-         FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
-         Error error = viewerTempDir.ensureDirectory();
-         if (error)
-            throw r::exec::RErrorException(r::endUserErrorMessage(error));
-         viewerFilePath = viewerTempDir.childPath(filePath.filename());
+         // make it self_contained if it isn't already
+         if (!selfContained)
+         {
+            // create temp file to write standalone html to (place it within a temp dir
+            // so the default download file name is pretty)
+            FilePath viewerTempDir = module_context::tempFile("page-viewer", "dir");
+            Error error = viewerTempDir.ensureDirectory();
+            if (error)
+               throw r::exec::RErrorException(r::endUserErrorMessage(error));
+            viewerFilePath = viewerTempDir.childPath(filePath.filename());
 
-         // create base64 encoded version
-         error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
-         if (error)
-            throw r::exec::RErrorException(r::endUserErrorMessage(error));
-
+            // create base64 encoded version
+            error = module_context::createSelfContainedHtml(filePath, viewerFilePath);
+            if (error)
+               throw r::exec::RErrorException(r::endUserErrorMessage(error));
+         }
+         // if it's already self contained then just set the viewerFilePath to filePath
+         else
+         {
+             viewerFilePath = filePath;
+         }
+          
          // set url to localhost previewer
          std::string tempPath = viewerFilePath.relativePath(module_context::tempDir());
          url = module_context::sessionTempDirUrl(tempPath);
@@ -1047,7 +1057,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP)
       // we need to give the first event time to be delivered so that
       // the preview succeeded event handler is set up
       using namespace boost::posix_time;
-      boost::this_thread::sleep(milliseconds(500));
+      boost::this_thread::sleep(milliseconds(200));
 
       // emit html preview completed event
       enqueHTMLPreviewSucceeded(
@@ -1131,7 +1141,7 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
-   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 2);
+   RS_REGISTER_CALL_METHOD(rs_showPageViewer, 3);
 
    using boost::bind;
    using namespace module_context;
