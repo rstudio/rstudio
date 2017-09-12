@@ -299,8 +299,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().setViewerUrl(url);
-      // use setUrl rather than navigate to deal with same origin policy
-      previewFrame_.setUrl(url);
+      previewFrame_.navigate(url);
    }
    
    private final LayoutPanel layoutPanel_;
