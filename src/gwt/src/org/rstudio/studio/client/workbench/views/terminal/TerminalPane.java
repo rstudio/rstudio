@@ -333,7 +333,7 @@ public class TerminalPane extends WorkbenchPane
                Debug.log("No selected terminal after creation"); 
                return; 
             } 
-            terminal.receivedInput(postCreateText);
+            terminal.receivedSendToTerminal(postCreateText);
          }
          
          @Override
@@ -849,7 +849,7 @@ public class TerminalPane extends WorkbenchPane
                Debug.log("Terminal not found after switching"); 
                return; 
             } 
-            terminal.receivedInput(event.getInputText()); 
+            terminal.receivedSendToTerminal(event.getInputText()); 
          } 
          @Override 
          public void onFailure(String msg) 
