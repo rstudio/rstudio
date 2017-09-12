@@ -41,6 +41,7 @@ import com.google.gwt.emultest.java.lang.SystemTest;
 import com.google.gwt.emultest.java.lang.ThrowableStackTraceEmulTest;
 import com.google.gwt.emultest.java.lang.ThrowableTest;
 import com.google.gwt.emultest.java.lang.TypeTest;
+import com.google.gwt.emultest.java.lang.reflect.ArrayTest;
 import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.MathContextWithObfuscatedEnumsTest;
 import com.google.gwt.emultest.java.math.RoundingModeTest;
@@ -90,6 +91,9 @@ import org.junit.runners.Suite.SuiteClasses;
   ThrowableTest.class,
   ThrowableStackTraceEmulTest.class,
   TypeTest.class,
+
+  // java.lang.reflect
+  ArrayTest.class,
 
   //-- java.math
   // BigDecimal is tested in {@link BigDecimalSuite}
