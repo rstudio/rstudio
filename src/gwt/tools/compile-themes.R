@@ -1015,7 +1015,18 @@ for (file in themeFiles) {
          replace = foreground
       )
    }
-      
+
+   ## Tweak chaos on dark -- we want the margin column to not overlap the chunk
+   if (identical(basename(file), "chaos.css"))
+   {
+      content <- add_content(
+         content,
+         ".ace_print-margin {",
+         "  width: 0px;",
+         "}",
+         replace = ""
+      )
+   }
    
    ## Generate a color used for chunks, e.g. in .Rmd documents.
    backgroundRgb <- parse_css_color(background)
