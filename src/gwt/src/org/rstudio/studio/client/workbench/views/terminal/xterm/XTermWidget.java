@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.StringSink;
@@ -41,6 +43,8 @@ import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -80,9 +84,11 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().addClassName(XTERM_CLASS);
       getElement().addClassName("ace_editor");
 
+      boolean legacyMouseWheel = BrowseCap.isWindowsDesktop() || BrowseCap.isLinuxDesktop();
+
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink, focus);
+      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink, focus, legacyMouseWheel);
       terminal_.addClass("ace_editor");
       terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
@@ -139,7 +145,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    public void clear()
    {
       terminal_.clear();
-      setFocus(true);
    }
 
    /**
@@ -296,7 +301,7 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    public boolean cursorAtEOL()
    {
-      if (altBufferActive())
+      if (xtermAltBufferActive())
       {
          return false;
       }
@@ -326,10 +331,18 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
    
    /**
+    * @return Local terminal buffer
+    */
+   public String getLocalBuffer()
+   {
+      return terminal_.getLocalBuffer();
+   }
+   
+   /**
     * Is the terminal showing the alternate full-screen buffer?
     * @return true if full-screen buffer is active
     */
-   public boolean altBufferActive()
+   public boolean xtermAltBufferActive()
    {
       return terminal_.altBufferActive();
    }
@@ -341,18 +354,45 @@ public class XTermWidget extends Widget implements RequiresResize,
    {
       terminal_.showPrimaryBuffer();
    }
-   
-   public static boolean isXTerm(Element el)
+
+   /**
+    * Switch terminal to alt-buffer
+    */
+   public void showAltBuffer()
+   {
+      terminal_.showAltBuffer();
+   }
+    
+   /**
+    * @param el Element to test, may be null
+    * @return If element is part of an XTermWidget, return that widget, otherwise null.
+    */
+   public static XTermWidget tryGetXTerm(Element el)
    {
       while (el != null)
       {
          if (el.hasClassName(XTERM_CLASS))
-            return true;
+         {
+            EventListener listener = DOM.getEventListener(el);
+            if (listener == null)
+            {
+               Debug.log("Unexpected failure to get XTERM_CLASS listener");
+            }
+            else if (listener instanceof XTermWidget)
+            {
+               return (XTermWidget) listener;
+            }
+            else
+            {
+               Debug.log("Unexpected: XTERM_CLASS listener was not an XTermWidget");
+            }
+            return null;
+         }
          el = el.getParentElement();
       }
-      return false;
+      return null;
    }
-   
+
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
    {

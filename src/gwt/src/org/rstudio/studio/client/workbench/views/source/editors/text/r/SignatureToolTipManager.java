@@ -503,11 +503,7 @@ public class SignatureToolTipManager
    
    private void resolvePositionAndShow(String signature, Position position)
    {
-      // Default to displaying before cursor; however, display above
-      // if doing so would place the tooltip too close (or off) of
-      // the window.
-      toolTip_.setText(signature);
-      setTooltipPosition(position);
+      toolTip_.resolvePositionAndShow(signature, position);
    }
    
    private void setTooltipPosition(Position position)

@@ -452,6 +452,7 @@ public class AceEditor implements DocDisplay,
                   case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
                   case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
                   case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
+                  case AceEditorCommandEvent.INSERT_SNIPPET:             insertSnippet();            break;
                   }
                }
             });
@@ -467,11 +468,10 @@ public class AceEditor implements DocDisplay,
       if (StringUtil.isNullOrEmpty(selectionValue))
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         clearEmacsMark();
       }
       else
       {
@@ -486,17 +486,20 @@ public class AceEditor implements DocDisplay,
          return;
       
       Position cursorPos = getCursorPosition();
-      setSelectionRange(Range.fromPoints(
+      Range yankRange = Range.fromPoints(
             Position.create(cursorPos.getRow(), 0),
-            cursorPos));
+            cursorPos);
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         commands_.cutDummy().execute();
-         if (isEmacsModeOn()) clearEmacsMark();
+         String text = getTextForRange(yankRange);
+         Desktop.getFrame().setClipboardText(text);
+         replaceRange(yankRange, "");
+         clearEmacsMark();
       }
       else
       {
+         setSelectionRange(yankRange);
          yankedText_ = getSelectionValue();
          replaceSelection("");
       }
@@ -508,6 +511,7 @@ public class AceEditor implements DocDisplay,
          return;
       
       Position cursorPos = getCursorPosition();
+      Range yankRange = null;
       String line = getLine(cursorPos.getRow());
       int lineLength = line.length();
       
@@ -517,25 +521,27 @@ public class AceEditor implements DocDisplay,
       String rest = line.substring(cursorPos.getColumn());
       if (rest.trim().isEmpty())
       {
-         setSelectionRange(Range.fromPoints(
+         yankRange = Range.fromPoints(
                cursorPos,
-               Position.create(cursorPos.getRow() + 1, 0)));
+               Position.create(cursorPos.getRow() + 1, 0));
       }
       else
       {
-         setSelectionRange(Range.fromPoints(
+         yankRange = Range.fromPoints(
                cursorPos,
-               Position.create(cursorPos.getRow(), lineLength)));
+               Position.create(cursorPos.getRow(), lineLength));
       }
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         Desktop.getFrame().clipboardCut();
-         if (isEmacsModeOn())
-            clearEmacsMark();
+         String text = getTextForRange(yankRange);
+         Desktop.getFrame().setClipboardText(text);
+         replaceRange(yankRange, "");
+         clearEmacsMark();
       }
       else
       {
+         setSelectionRange(yankRange);
          yankedText_ = getSelectionValue();
          replaceSelection("");
       }
@@ -546,7 +552,7 @@ public class AceEditor implements DocDisplay,
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && isEmacsModeOn())
       {
          Desktop.getFrame().clipboardPaste();
       }
@@ -3273,6 +3279,10 @@ public class AceEditor implements DocDisplay,
       // discover start of current statement
       while (startRow >= startRowLimit)
       {
+         // if we've hit the start of the document, bail
+         if (startRow <= 0)
+            break;
+         
          // if the row starts with an open bracket, expand to its match
          if (rowStartsWithClosingBracket(startRow))
          {
@@ -3283,12 +3293,23 @@ public class AceEditor implements DocDisplay,
                continue;
             }
          }
-         else if (startRow >= 0 && rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         
+         // keep going if the line is empty or previous ends w/binary op
+         if (rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
          {
             startRow--;
             continue;
          }
          
+         // keep going if we're in a multiline string
+         String state = getSession().getState(startRow - 1);
+         if (state.equals("qstring") || state.equals("qqstring"))
+         {
+            startRow--;
+            continue;
+         }
+         
+         // bail out of the loop -- we've found the start of the statement
          break;
       }
       
@@ -3336,11 +3357,23 @@ public class AceEditor implements DocDisplay,
             continue;
          }
          
+         // continue search if we're in a multi-line string
+         String state = getSession().getState(endRow);
+         if (state.equals("qstring") || state.equals("qqstring"))
+         {
+            endRow++;
+            continue;
+         }
+         
          // we had balanced brackets and no trailing binary operator; bail
          break;
       }
       
-      
+      // if we're unbalanced at this point, that means we tried to
+      // expand in an unclosed expression -- just execute the current
+      // line rather than potentially executing unintended code
+      if (parenCount + braceCount + bracketCount > 0)
+         return Range.create(pos.getRow(), 0, pos.getRow() + 1, 0);
       
       // shrink selection for empty lines at borders
       while (startRow < endRow && rowIsEmptyOrComment(startRow))
@@ -3588,6 +3621,12 @@ public class AceEditor implements DocDisplay,
    /*-{
       return editor.tabstopManager != null;
    }-*/;
+   
+   private void insertSnippet()
+   {
+      if (!snippets_.onInsertSnippet())
+         blockOutdent();
+   }
    
    @Override
    public boolean onInsertSnippet()

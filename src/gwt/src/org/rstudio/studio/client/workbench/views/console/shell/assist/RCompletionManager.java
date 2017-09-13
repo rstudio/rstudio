@@ -1135,7 +1135,7 @@ public class RCompletionManager implements CompletionManager
       
       invalidatePendingRequests(flushCache, false);
       
-      InputEditorSelection selection = input_.getSelection() ;
+      InputEditorSelection selection = input_.getSelection();
       if (selection == null)
          return false;
       
@@ -1146,6 +1146,21 @@ public class RCompletionManager implements CompletionManager
       // of roxygen comments (e.g. at "#' |")
       if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
          return false;
+      
+      // don't autocomplete if the cursor lies within the text of a
+      // multi-line string. the logic here isn't perfect (ideally, we'd detect
+      // whether we're in the 'qstring' or 'qqstring' state), but this will catch
+      // the majority of cases
+      Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (cursorToken.hasType("string"))
+      {
+         String cursorTokenValue = cursorToken.getValue();
+         boolean isSingleLineString =
+               cursorTokenValue.startsWith("'") ||
+               cursorTokenValue.startsWith("\"");
+         if (!isSingleLineString)
+            return false;
+      }
       
       // don't auto-complete with tab on lines with only whitespace,
       // if the insertion character was a tab (unless the user has opted in)
@@ -2186,7 +2201,14 @@ public class RCompletionManager implements CompletionManager
          it.moveToPosition(cursorPos);
          Token token = it.stepBackward();
          if (token != null)
-            currentToken = token;
+         {
+            // don't allow spaces after roxygen keywords
+            boolean isRoxygen =
+                  token.hasType("keyword") &&
+                  token.hasType("virtual-comment");
+            if (!isRoxygen)
+               currentToken = token;
+         }
       }
       
       // Exclude non-string and non-identifier tokens.

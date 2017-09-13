@@ -17,35 +17,30 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class TerminalTabPresenter extends BusyPresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
-                                             CreateNamedTerminalEvent.Handler,
+                                             AddTerminalEvent.Handler,
+                                             RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
 
 {
@@ -54,14 +49,23 @@ public class TerminalTabPresenter extends BusyPresenter
    public interface Display extends WorkbenchView
    {
       /**
-       * Ensure terminal pane is visible.
+       * Callback when Display is selected
        */
-      void activateTerminal();
+      interface DisplaySelectedCallback {
+         void displaySelected();
+      }
 
       /**
-       * Create a new terminal session.
+       * Ensure terminal pane is visible. Callback to perform actions after pane has
+       * been made visible and received onSelected.
        */
-      void createTerminal();
+      void activateTerminal(DisplaySelectedCallback callback);
+
+      /**
+       * Create a new terminal session
+       * @param postCreateText text to insert in terminal after created, may be null
+       */
+      void createTerminal(String postCreateText);
 
       /**
        * Terminate current terminal.
@@ -92,7 +96,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text, String caption);
+      void sendToTerminal(String text, boolean setFocus);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -100,44 +104,56 @@ public class TerminalTabPresenter extends BusyPresenter
       void interruptTerminal();
       
       /**
-       * Create a new terminal with given caption.
-       * @param caption requested terminal caption, or null to autogenerate
+       * Add a terminal to the list.
+       * @param cpi information on the terminal
+       * @param hasSession true if a TerminalSession has been created for this terminal
        * caption
        */
-      void createNamedTerminal(String caption);
+      void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
+      /**
+       * Remove a terminal that was killed via rstudioapi::terminalKill.
+       * @param handle terminal to remove
+       * caption
+       */
+      void removeTerminal(String handle);
+
       /**
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
        * @param caption
+       * @param createdByApi terminal just created via rstudioapi?
        */
-      void activateNamedTerminal(String caption);
+      void activateNamedTerminal(String caption, boolean createdByApi);
+      
+      /**
+       * Send current terminal's buffer to a new editor buffer.
+       */
+      void sendTerminalToEditor();
+
+      /**
+       * Ensure there is at least one terminal.
+       */
+      void ensureTerminal();
    }
 
    @Inject
    public TerminalTabPresenter(final Display view,
-                               final Session session,
-                               GlobalDisplay globalDisplay,
-                               UIPrefs uiPrefs,
-                               Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+                               TerminalHelper terminalHelper,
+                               UIPrefs uiPrefs)
    {
       super(view);
       view_ = view;
-      session_ = session;
-      globalDisplay_ = globalDisplay;
+      terminalHelper_ = terminalHelper;
       uiPrefs_ = uiPrefs;
-      pConsoleProcessFactory_ = pConsoleProcessFactory;
    }
 
    @Handler
    public void onActivateTerminal()
    {
-      if (!uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(true);
-         uiPrefs_.writeUIPrefs();
-      }
-      view_.activateTerminal();
+      // "Move focus to terminal" command; does same thing as clicking the 
+      // terminal tab
+      view_.activateTerminal(null);
    }
 
    @Handler
@@ -181,22 +197,31 @@ public class TerminalTabPresenter extends BusyPresenter
    {
       view_.interruptTerminal();
    }
-
-   public void initialize()
+   
+   @Handler
+   public void onSendTerminalToEditor()
    {
+      view_.sendTerminalToEditor();
    }
 
    @Override
-   public void onCreateTerminal(CreateTerminalEvent event)
+   public void onCreateTerminal(final CreateTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.createTerminal();
+      // New Terminal command, always creates a new terminal
+      view_.activateTerminal(new Display.DisplaySelectedCallback()
+      {
+         @Override
+         public void displaySelected()
+         {
+            view_.createTerminal(event.getPostCreateText());
+         }
+      });
    }
 
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText(), event.getId());
+      view_.sendToTerminal(event.getText(), event.getSetFocus());
    }
 
    @Override
@@ -206,115 +231,77 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onCreateNamedTerminal(CreateNamedTerminalEvent event)
+   public void onAddTerminal(final AddTerminalEvent event)
    {
-      view_.createNamedTerminal(event.getId());
+      // A new terminal was created server-side via the API. Now add it to the
+      // client side terminal list
+      view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
+      if (event.getShow())
+      {
+         // And optionally bring tab forward and select the requested terminal
+         view_.activateTerminal(new Display.DisplaySelectedCallback()
+         {
+            @Override
+            public void displaySelected()
+            {
+               view_.activateNamedTerminal(event.getProcessInfo().getCaption(),
+                                           true /*createdByApi*/);
+            }
+         });
+      }
    }
 
    @Override
-   public void onActivateNamedTerminal(ActivateNamedTerminalEvent event)
+   public void onRemoveTerminal(RemoveTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.activateNamedTerminal(event.getId());
+      view_.removeTerminal(event.getHandle());
    }
 
-   public void onSessionInit(SessionInitEvent sie)
+   @Override
+   public void onActivateNamedTerminal(final ActivateNamedTerminalEvent event)
    {
-      JsArray<ConsoleProcessInfo> procs =
-            session_.getSessionInfo().getConsoleProcesses();
-      final ArrayList<ConsoleProcessInfo> procList = new ArrayList<ConsoleProcessInfo>();
-
-      for (int i = 0; i < procs.length(); i++)
+      // Request to display the terminal tab and optionally select a specific terminal; if
+      // no terminal is specified, then make sure there is an active terminal
+      view_.activateTerminal(new Display.DisplaySelectedCallback()
       {
-         final ConsoleProcessInfo proc = procs.get(i);
-         if (proc.isTerminal())
+         @Override
+         public void displaySelected()
          {
-            addTerminalProcInfo(procList, proc);
+            if (StringUtil.isNullOrEmpty(event.getId()))
+               view_.ensureTerminal();
+            else
+               view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
          }
-      }
+      });
+   }
+
+   public void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
+   {
       view_.repopulateTerminals(procList);
-   }
-
-   /**
-    * Add process to list of processes, sorted in ascending order by
-    * terminal sequence number. If duplicate sequence numbers are
-    * encountered, all but the first will have the process killed.
-    * 
-    * @param terminalProcs (in/out) sorted list of terminal processes
-    * @param procInfo process to insert in the list
-    */
-   private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
-                                    ConsoleProcessInfo procInfo)
-   {
-      int newSequence = procInfo.getTerminalSequence();
-      if (newSequence < 1)
-      {
-         Debug.logWarning("Invalid terminal sequence " + newSequence + 
-               ", killing unrecognized process");
-         pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
-         return;
-      }
-
-      for (int i = 0; i < procInfoList.size(); i++)
-      {
-         int currentSequence = procInfoList.get(i).getTerminalSequence();
-
-         if (newSequence == currentSequence)
-         {
-            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
-                  ", killing duplicate process");
-            pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
-            return;
-         }
-
-         if (newSequence < currentSequence)
-         {
-            procInfoList.add(i, procInfo);
-            return;
-         }
-      }
-      procInfoList.add(procInfo);
    }
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.activeTerminals())
-      {
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-               "Close Terminal(s) ", 
-               "Are you sure you want to close all terminals? Any running jobs " +
-                     "will be stopped.", false, 
-                     new Operation()
+      final String caption = "Close Terminal(s) ";
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
+         @Override
+         public void execute()
          {
-            @Override
-            public void execute()
-            {
-               shutDownTerminals();
-               onConfirmed.execute();
-            }
-         }, null, null, "Close Terminals", "Cancel", true);
-      }
-      else
-      {
-         shutDownTerminals();
-         onConfirmed.execute(); 
-      }
+            shutDownTerminals();
+            onConfirmed.execute();
+         }
+      }, caption, "Are you sure you want to close all terminals? Any running jobs " +
+            "will be stopped",
+            uiPrefs_.terminalBusyMode().getValue());
    }
 
    private void shutDownTerminals()
    {
-      if (uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(false);
-         uiPrefs_.writeUIPrefs();
-      }
       view_.terminateAllTerminals();
    }
 
    // Injected ---- 
-   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final Display view_;
-   private final Session session_;
-   private final GlobalDisplay globalDisplay_;
+   private final TerminalHelper terminalHelper_;
    private final UIPrefs uiPrefs_;
 }

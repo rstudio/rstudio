@@ -171,13 +171,16 @@ const int kRStudioAPIShowDialogCompleted = 152;
 const int kObjectExplorerEvent = 153;
 const int kSendToTerminal = 154;
 const int kClearTerminal = 155;
-const int kCreateNamedTerminal = 156;
+const int kAddTerminal = 156;
 const int kActivateTerminal = 157;
 const int kTerminalCwd = 158;
 const int kAdminNotification = 159;
 const int kRequestDocumentSave = 160;
 const int kRequestDocumentSaveCompleted = 161;
 const int kRequestOpenProject = 162;
+const int kOpenFileDialog = 163;
+const int kRemoveTerminal = 164;
+const int kShowPageViewerEvent = 165;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -475,8 +478,8 @@ std::string ClientEvent::typeName() const
          return "send_to_terminal";
       case client_events::kClearTerminal:
          return "clear_terminal";
-      case client_events::kCreateNamedTerminal:
-         return "create_named_terminal";
+      case client_events::kAddTerminal:
+         return "add_terminal";
       case client_events::kActivateTerminal:
          return "activate_terminal";
       case client_events::kTerminalCwd:
@@ -489,6 +492,12 @@ std::string ClientEvent::typeName() const
          return "request_document_save_completed";
       case client_events::kRequestOpenProject:
          return "request_open_project";
+      case client_events::kOpenFileDialog:
+         return "open_file_dialog";
+      case client_events::kRemoveTerminal:
+         return "remove_terminal";
+      case client_events::kShowPageViewerEvent:
+         return "show_page_viewer";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

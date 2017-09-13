@@ -26,6 +26,10 @@ public class HTMLPreviewResult extends JavaScriptObject
       return this.succeeded;
    }-*/;
    
+   public final native String getTitle() /*-{
+      return this.title;
+   }-*/;
+   
    public final native String getPreviewURL() /*-{
       return this.preview_url;
    }-*/;
@@ -38,16 +42,23 @@ public class HTMLPreviewResult extends JavaScriptObject
       return this.html_file;
    }-*/;
    
+   public final native boolean getEnableFileLabel() /*-{
+      return this.enable_file_label;
+   }-*/;
+   
    public final native boolean getEnableSaveAs() /*-{
       return this.enable_saveas;
    }-*/;
    
-   public final native boolean getEnableRefresh() /*-{
-      return this.enable_refresh;
+   public final native boolean getEnableReexecute() /*-{
+      return this.enable_reexecute;
+   }-*/;
+   
+   public final native boolean getEnablePublish() /*-{
+      return this.succeeded && (this.source_file !== null);
    }-*/;
 
    public final native boolean getPreviouslyPublished() /*-{
       return this.previously_published;
    }-*/;
-
 }

@@ -1,7 +1,7 @@
 /*
  * SimplePanelWithProgress.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,13 +46,18 @@ public class SimplePanelWithProgress extends SimplePanel
       super.setWidget(widget);
       
    }
-   
+
    public void showProgress(int delayMs)
+   {
+      showProgress(delayMs, null);
+   }
+   
+   public void showProgress(int delayMs, String message)
    {
       if (!isProgressShowing())
       {
          setWidget(loadProgressPanel_);
-         loadProgressPanel_.beginProgressOperation(delayMs);
+         loadProgressPanel_.beginProgressOperation(delayMs, message);
       }
    }
    

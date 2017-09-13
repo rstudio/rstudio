@@ -31,11 +31,11 @@ import com.google.gwt.user.client.ui.Widget;
 public class NewConnectionSnippetPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionSnippetPage(final NewConnectionInfo info)
+   public NewConnectionSnippetPage(final NewConnectionInfo info, String subTitle)
    {
       super(
          info.getName(),
-         "",
+         subTitle,
          info.getName() + " Connection",
          StringUtil.isNullOrEmpty(info.iconData()) ? null : new ImageResourceUrl(
             new SafeUri()

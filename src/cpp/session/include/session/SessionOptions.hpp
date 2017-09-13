@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -379,6 +379,11 @@ public:
       return allowPresentationCommands_;
    }
 
+   bool allowFullUI() const
+   {
+      return allowOverlay() || allowFullUI_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -496,6 +501,11 @@ public:
    std::string launcherToken() const
    {
       return launcherToken_;
+   }
+
+   std::string defaultRSConnectServer()
+   {
+      return defaultRSConnectServer_;
    }
 
    std::string getOverlayOption(const std::string& name)
@@ -632,6 +642,7 @@ private:
    bool allowExternalPublish_;
    bool allowPublish_;
    bool allowPresentationCommands_;
+   bool allowFullUI_;
 
    // user info
    bool showUserIdentity_;
@@ -654,6 +665,9 @@ private:
 
    // monitor
    std::string monitorSharedSecret_;
+
+   // connect
+   std::string defaultRSConnectServer_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

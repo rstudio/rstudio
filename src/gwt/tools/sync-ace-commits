@@ -106,6 +106,7 @@ git merge \
     origin/patch/line-widget-performance \
     origin/patch/emacs-click-position \
     origin/patch/accent-input \
+    origin/patch/tokenizer-onmatch-line \
     -m "merge once more"
 
 ## git merge \

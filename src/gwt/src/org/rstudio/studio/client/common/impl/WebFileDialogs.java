@@ -44,7 +44,6 @@ public class WebFileDialogs implements FileDialogs
       openFile(caption, fsContext, initialFilePath, filter, false, operation);
    }
    
-   
    public void openFile(String caption,
                         FileSystemContext fsContext,
                         FileSystemItem initialFilePath,
@@ -52,7 +51,19 @@ public class WebFileDialogs implements FileDialogs
                         boolean canChooseDirectories,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
+      openFile(caption, "Open", fsContext, initialFilePath, filter, canChooseDirectories, operation);
+   }
+   
+   public void openFile(String caption,
+                        String label,
+                        FileSystemContext fsContext,
+                        FileSystemItem initialFilePath,
+                        String filter,
+                        boolean canChooseDirectories,
+                        ProgressOperationWithInput<FileSystemItem> operation)
+   {
       OpenFileDialog dialog = new OpenFileDialog(caption,
+                                                 label,
                                                  fsContext,
                                                  filter,
                                                  canChooseDirectories,
@@ -84,7 +95,19 @@ public class WebFileDialogs implements FileDialogs
                         boolean forceDefaultExtension,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
+      saveFile(caption, "Save", fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
+   }
+   
+   public void saveFile(String caption,
+                        String buttonLabel,
+                        FileSystemContext fsContext,
+                        FileSystemItem initialFilePath,
+                        String defaultExtension,
+                        boolean forceDefaultExtension,
+                        ProgressOperationWithInput<FileSystemItem> operation)
+   {
       SaveFileDialog dialog = new SaveFileDialog(caption,
+                                                 buttonLabel,
                                                  fsContext,
                                                  defaultExtension,
                                                  forceDefaultExtension,
@@ -100,7 +123,17 @@ public class WebFileDialogs implements FileDialogs
                             FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
+      chooseFolder(caption, "Choose", fsContext, initialDir, operation);
+   }
+   
+   public void chooseFolder(String caption,
+                            String label,
+                            FileSystemContext fsContext,
+                            FileSystemItem initialDir,
+                            ProgressOperationWithInput<FileSystemItem> operation)
+   {
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2(caption,
+                                                           label,
                                                            fsContext,
                                                            true,
                                                            operation);

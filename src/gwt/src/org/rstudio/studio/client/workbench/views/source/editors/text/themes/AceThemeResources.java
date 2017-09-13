@@ -45,6 +45,9 @@ public interface AceThemeResources extends ClientBundle
 
    @Source("dawn.css")
    StaticDataResource dawn();
+   
+   @Source("dracula.css")
+   StaticDataResource dracula();
 
    @Source("dreamweaver.css")
    StaticDataResource dreamweaver();

@@ -316,9 +316,18 @@
         else
           return(paste("Oracle R frame:", sqlTable))
       }
-      else if (is(obj, "externalptr"))
+      else if (.rs.isExternalPointer(obj))
       {
-         return("External pointer")
+         class <- class(obj)
+         if (length(class) && !identical(class, "externalptr"))
+         {
+            fmt <- "External pointer of class '%s'"
+            return(sprintf(fmt, class[[1]]))
+         }
+         else
+         {
+            return("External pointer")
+         }
       }
       else if (is.data.frame(obj))
       {
@@ -656,8 +665,8 @@
    } 
    else
    {
-      # check the object itself for a null pointer
-      inherits(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
+      # check if object itself is a null external pointer
+      .rs.isNullExternalPointer(obj)
    }
 })
 

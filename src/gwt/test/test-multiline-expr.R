@@ -84,5 +84,15 @@ dt[ , sequence := seq_len( nrow( dt ) )
        
        ][ , uniform := runif( nrow( dt ) ) ]
 
+# 13: multi-line strings
+mlstring <- "first
+second
+third"
+
+# 14: roxygen comments could confuse the multiline
+# expression system; e.g.
+#' [name](link)
+statement <- 1 + 1
+
 # cursor should end here after executing all lines
 EOF

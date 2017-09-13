@@ -35,8 +35,8 @@ public interface RSConnectServerOperations
    void getRSConnectAppList(String accountName, String server,
                ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
 
-   void getRSConnectApp(String appId, String accountName, String server,
-               ServerRequestCallback<RSConnectApplicationInfo> requestCallback);
+   void getRSConnectApp(String appId, String accountName, String server, String hostUrl,
+               ServerRequestCallback<RSConnectApplicationResult> requestCallback);
    
    void getRSConnectDeployments(String sourceFile, String outputFile,
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
@@ -46,7 +46,7 @@ public interface RSConnectServerOperations
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void publishContent(RSConnectPublishSource source, 
-               String account, String server, String appName, String appTitle,
+               String account, String server, String appName, String appTitle, String appId,
                RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
    

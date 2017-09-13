@@ -152,14 +152,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
-      deps.add(Dependency.embeddedPackage("rsconnect"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.8.5"));
       
       withDependencies(
         "Publishing",
         userAction,
         userPrompt,
         deps.toArray(new Dependency[deps.size()]),
-        true, // we want the embedded rsconnect package to be updated if needed
+        true, // silently update any embedded packages needed (none at present)
         onCompleted
       );
    }
@@ -322,7 +322,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("R6", "2.0"));
       deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("shiny", "0.13", true));
+      deps.add(Dependency.cranPackage("shiny", "1.0", true));
       return deps;
          }
    

@@ -156,6 +156,7 @@ private:
 
 
 - (NSString*) getOpenFileName: (NSString*) caption
+                        label: (NSString*) label
                           dir: (NSString*) dir
                        filter: (NSString*) filter
          canChooseDirectories: (Boolean) canChooseDirectories
@@ -164,6 +165,7 @@ private:
    
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
+   [open setPrompt: label];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseDirectories: canChooseDirectories];
@@ -192,13 +194,15 @@ private:
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
-              dir: (NSString* ) dir
-              defaultExtension: (NSString*) defaultExtension
-              forceDefaultExtension: (Boolean) forceDefaultExtension
+                        label: (NSString*) label
+                          dir: (NSString* ) dir
+             defaultExtension: (NSString*) defaultExtension
+        forceDefaultExtension: (Boolean) forceDefaultExtension
 {
    dir = resolveAliasedPath(dir);
    
    NSSavePanel *save = [NSSavePanel savePanel];
+   [save setPrompt: label];
    
    BOOL hasDefaultExtension = defaultExtension != nil &&
                               [defaultExtension length] > 0;
@@ -250,11 +254,14 @@ private:
    return [self runFileDialog: save];
 }
 
-- (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
+- (NSString*) getExistingDirectory: (NSString*) caption
+                             label: (NSString*) label
+                               dir: (NSString*) dir
 {
    dir = resolveAliasedPath(dir);
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
+   [open setPrompt: label];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
@@ -350,6 +357,19 @@ private:
 - (void) clipboardPaste
 {
    [self performClipboardAction: @selector(paste:)];
+}
+
+- (void) setClipboardText: (NSString*) text
+{
+   NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+   [pasteboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: nil];
+   [pasteboard setString: text forType: NSStringPboardType];
+}
+
+- (NSString*) getClipboardText
+{
+   NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+   return [pasteboard stringForType: NSStringPboardType];
 }
 
 - (NSString*) getUriForPath: (NSString*) path
@@ -690,8 +710,12 @@ private:
       imageFileType = NSPNGFileType;
    }
    
+   
    // write to file
-   NSBitmapImageRep *imageRep = (NSBitmapImageRep*) [[image representations] objectAtIndex: 0];
+   CGImageRef cgRef = [image CGImageForProposedRect: NULL
+                                            context: nil
+                                              hints: nil];
+   NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithCGImage: cgRef];
    NSData *data = [imageRep representationUsingType: imageFileType properties: properties];
    if (![data writeToFile: targetPath atomically: NO])
    {
@@ -1142,88 +1166,12 @@ enum RS_NSActivityOptions : uint64_t
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
-   if (sel == @selector(browseUrl:))
-      return @"browseUrl";
-   else if (sel == @selector(getOpenFileName:dir:filter:canChooseDirectories:))
-      return @"getOpenFileName";
-   else if (sel == @selector(getSaveFileName:dir:defaultExtension:forceDefaultExtension:))
-      return @"getSaveFileName";
-   else if (sel == @selector(getExistingDirectory:dir:))
-      return @"getExistingDirectory";
-   else if (sel == @selector(getUriForPath:))
-      return @"getUriForPath";
-   else if (sel == @selector(onWorkbenchInitialized:))
-      return @"onWorkbenchInitialized";
-   else if (sel == @selector(showFolder:))
-      return @"showFolder";
-   else if (sel == @selector(showFile:))
-      return @"showFile";
-   else if (sel == @selector(showWordDoc:))
-      return @"showWordDoc";
-   else if (sel == @selector(showPDF:pdfPage:))
-      return @"showPDF";
-   else if (sel == @selector(openMinimalWindow:url:width:height:))
-      return @"openMinimalWindow";
-   else if (sel == @selector(activateMinimalWindow:))
-      return @"activateMinimalWindow";
-   else if (sel == @selector(activateSatelliteWindow:))
-      return @"activateSatelliteWindow";
-   else if (sel == @selector(prepareForSatelliteWindow:x:y:width:height:))
-      return @"prepareForSatelliteWindow";
-   else if (sel == @selector(copyImageToClipboard:top:width:height:))
-      return @"copyImageToClipboard";
-   else if (sel == @selector(copyPageRegionToClipboard:top:width:height:))
-      return @"copyPageRegionToClipboard";
-   else if (sel == @selector(exportPageRegionToFile:format:left:top:width:height:))
-      return @"exportPageRegionToFile";
-   else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
-      return @"showMessageBox";
-   else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))
-      return @"promptForText";
-   else if (sel == @selector(cleanClipboard:))
-      return @"cleanClipboard";
-   else if (sel == @selector(setPendingQuit:))
-      return @"setPendingQuit";
-   else if (sel == @selector(openProjectInNewWindow:))
-      return @"openProjectInNewWindow";
-   else if (sel == @selector(openSessionInNewWindow:))
-      return @"openSessionInNewWindow";
-   else if (sel == @selector(openTerminal:workingDirectory:extraPathEntries:))
-      return @"openTerminal";
-   else if (sel == @selector(setFixedWidthFont:))
-      return @"setFixedWidthFont";
-   else if (sel == @selector(setZoomLevel:))
-      return @"setZoomLevel";
-   else if (sel == @selector(externalSynctexPreview:page:))
-      return @"externalSynctexPreview";
-   else if (sel == @selector(externalSynctexView:srcFile:line:column:))
-      return @"externalSynctexView";
-   else if (sel == @selector(launchSession:))
-      return @"launchSession";
-   else if (sel == @selector(setViewerUrl:))
-      return @"setViewerUrl";
-   else if (sel == @selector(setShinyDialogUrl:))
-      return @"setShinyDialogUrl";
-   else if (sel == @selector(filterText:))
-      return @"filterText";
-   else if (sel == @selector(setBusy:))
-      return @"setBusy";
-   else if (sel == @selector(setWindowTitle:))
-      return @"setWindowTitle";
-   else if (sel == @selector(reloadViewerZoomWindow:))
-      return @"reloadViewerZoomWindow";
-   else if (sel == @selector(prepareForNamedWindow:allowExternalNavigate:))
-      return @"prepareForNamedWindow";
-   else if (sel == @selector(closeNamedWindow:))
-      return @"closeNamedWindow";
-   else if (sel == @selector(undo:))
-      return @"undo";
-   else if (sel == @selector(redo:))
-      return @"redo";
-   else if (sel == @selector(setPendingProject:))
-      return @"setPendingProject";
-      
-   return nil;
+   NSString* selectorName = NSStringFromSelector(sel);
+   NSUInteger location = [selectorName rangeOfString: @":"].location;
+   if (location == NSNotFound)
+      location = [selectorName length];
+   NSString* methodName = [selectorName substringToIndex: location];
+   return methodName;
 }
 
 + (BOOL)isSelectorExcludedFromWebScript: (SEL) sel

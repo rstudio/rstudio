@@ -316,6 +316,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
+   sessionInfo["allow_full_ui"] = options.allowFullUI();
 
    // publishing may be disabled globally or just for external services, and
    // via configuration options or environment variables
@@ -386,6 +387,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["quit_child_processes_on_exit"] = options.quitChildProcessesOnExit();
    
    sessionInfo["git_commit_large_file_size"] = options.gitCommitLargeFileSize();
+
+   sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

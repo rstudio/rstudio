@@ -26,6 +26,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
 
@@ -35,9 +36,10 @@ namespace modules {
 namespace rstudioapi {
 
 namespace {
-}
-
 module_context::WaitForMethodFunction s_waitForShowDialog;
+module_context::WaitForMethodFunction s_waitForOpenFileDialog;
+} // end anonymous namespace
+
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
@@ -128,15 +130,76 @@ SEXP rs_showDialog(SEXP titleSEXP,
    return R_NilValue;
 }
 
+SEXP rs_openFileDialog(SEXP typeSEXP,
+                       SEXP captionSEXP,
+                       SEXP labelSEXP,
+                       SEXP pathSEXP,
+                       SEXP filterSEXP,
+                       SEXP existingSEXP)
+{
+   // extract components
+   int type = r::sexp::asInteger(typeSEXP);
+   std::string caption = r::sexp::asString(captionSEXP);
+   std::string label = r::sexp::asString(labelSEXP);
+   std::string path = r::sexp::asString(pathSEXP);
+   std::string filter = r::sexp::asString(filterSEXP);
+   bool existing = r::sexp::asLogical(existingSEXP);
+   
+   // default to all files when filter is empty
+   if (filter.empty())
+      filter = "All Files (*)";
+   
+   // when path is empty, use project path if available, user home path
+   // otherwise
+   FilePath filePath;
+   if (path.empty())
+   {
+      if (projects::projectContext().hasProject())
+         filePath = projects::projectContext().directory();
+      else
+         filePath = module_context::userHomePath();
+   }
+   else
+   {
+      filePath = module_context::resolveAliasedPath(path);
+   }
+   
+   json::Object data;
+   data["type"] = type;
+   data["caption"] = caption;
+   data["label"] = label;
+   data["file"] = module_context::createFileSystemItem(filePath);
+   data["filter"] = filter;
+   data["existing"] = existing;
+   ClientEvent event(client_events::kOpenFileDialog, data);
+   
+   json::JsonRpcRequest request;
+   if (!s_waitForOpenFileDialog(&request, event))
+      return R_NilValue;
+   
+   std::string selection;
+   Error error = json::readParams(request.params, &selection);
+   if (error)
+       LOG_ERROR(error);
+
+   if (selection.empty())
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(selection, &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
    // register waitForMethod handler
-   s_waitForShowDialog = module_context::registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForShowDialog     = registerWaitForMethod("rstudioapi_show_dialog_completed");
+   s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
 
    RS_REGISTER_CALL_METHOD(rs_showDialog, 8);
+   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 6);
 
    return Success();
 }

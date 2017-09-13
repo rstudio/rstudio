@@ -47,65 +47,77 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          {
             // escaped '@' sign
             token : "comment",
-            regex : "@@"
+            regex : "@@",
+            merge : false
          },
          {
             // latex-style keyword
             token : "keyword",
-            regex : "\\\\[a-zA-Z0-9]+"
+            regex : "\\\\[a-zA-Z0-9]+",
+            merge : false
          },
          {
             // roxygen tag accepting a parameter
             token : ["keyword", "comment"],
             regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
+            merge : false,
             next  : "rd-highlight"
          },
          {
             // generic roxygen tag
             token : "keyword",
-            regex : "@(?!@)[^ ]*"
+            regex : "@(?!@)[^ ]*",
+            merge : false
          },
          {
             // markdown link with =
             token : ["paren.keyword.operator", "comment"],
             regex : "(\\[)(=)",
+            merge : false,
             next  : "markdown-link"
          },
          {
             // markdown link
             token : "paren.keyword.operator",
             regex : "\\[",
+            merge : false,
             next  : "markdown-link"
          },
          {
             // markdown: `code`
             token : ["support.function", "support.function", "support.function"],
-            regex : "(`+)(.*?[^`])(\\1)"
+            regex : "(`+)(.*?[^`])(\\1)",
+            merge : false
          },
          {
             // markdown: __strong__
             token: ["comment", "constant.language.boolean"],
-            regex: "(\\s+|^)(__.+?__)\\b"
+            regex: "(\\s+|^)(__.+?__)\\b",
+            merge: false
          },
          {
             // markdown: _emphasis_
             token: ["comment", "constant.language.boolean"],
-            regex: "(\\s+|^)(_(?=[^_])(?:(?:\\\\.)|(?:[^_\\\\]))*?_)\\b"
+            regex: "(\\s+|^)(_(?=[^_])(?:(?:\\\\.)|(?:[^_\\\\]))*?_)\\b",
+            merge: false
          },
          {
             // markdown: **strong**
             token: ["constant.numeric"],
-            regex: "([*][*].+?[*][*])"
+            regex: "([*][*].+?[*][*])",
+            merge: false
          },
          {
             // markdown: *emphasis*
             token: ["constant.numeric"],
-            regex: "([*](?=[^*])(?:(?:\\\\.)|(?:[^*\\\\]))*?[*])"
+            regex: "([*](?=[^*])(?:(?:\\\\.)|(?:[^*\\\\]))*?[*])",
+            merge: false
          },
          {
             // highlight brackets
             token : "paren.keyword.operator",
-            regex : "(?:" + reLhsBracket + "|" + reRhsBracket + ")"
+            regex : "(?:" + reLhsBracket + "|" + reRhsBracket + ")",
+            merge: false
          },
          {
             defaultToken: "comment"

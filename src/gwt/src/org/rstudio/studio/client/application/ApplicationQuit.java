@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRC
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -87,7 +88,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           SourceShim sourceShim,
                           Provider<UIPrefs> pUiPrefs,
                           Commands commands,
-                          Binder binder)
+                          Binder binder,
+                          TerminalHelper terminalHelper)
    {
       // save references
       server_ = server;
@@ -96,6 +98,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
       pUiPrefs_ = pUiPrefs;
+      terminalHelper_ = terminalHelper;
       
       // bind to commands
       binder.bind(commands, this);
@@ -126,13 +129,15 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
-      boolean busy = workbenchContext_.isServerBusy() || workbenchContext_.isTerminalBusy();
+      int busyMode = pUiPrefs_.get().terminalBusyMode().getValue();
+
+      boolean busy = workbenchContext_.isServerBusy() || terminalHelper_.warnBeforeClosing(busyMode);
       String msg = null;
       if (busy)
       {
-         if (workbenchContext_.isServerBusy() && !workbenchContext_.isTerminalBusy())
+         if (workbenchContext_.isServerBusy() && !terminalHelper_.warnBeforeClosing(busyMode))
             msg = "The R session is currently busy.";
-         else if (workbenchContext_.isServerBusy() && workbenchContext_.isTerminalBusy())
+         else if (workbenchContext_.isServerBusy() && terminalHelper_.warnBeforeClosing(busyMode))
             msg = "The R session and the terminal are currently busy.";
          else 
             msg = "The terminal is currently busy.";
@@ -460,11 +465,18 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Handler
    public void onRestartR()
    {   
-      boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
-      eventBus_.fireEvent(new SuspendAndRestartEvent(
-                                 SuspendOptions.createSaveMinimal(saveChanges),
-                                 null));  
-
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
+            eventBus_.fireEvent(new SuspendAndRestartEvent(
+                  SuspendOptions.createSaveMinimal(saveChanges),
+                  null));  
+         }
+      }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
+         pUiPrefs_.get().terminalBusyMode().getValue());
    }
    
    @Handler
@@ -800,8 +812,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;
-   
+   private final TerminalHelper terminalHelper_;
    private SaveAction saveAction_ = SaveAction.saveAsk();
-
+   
    private boolean suspendingAndRestarting_ = false;
 }

@@ -26,6 +26,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -46,6 +47,10 @@ import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
+import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerHandler;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
@@ -66,6 +71,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -82,7 +88,9 @@ public class Workbench implements BusyHandler,
                                   InstallRtoolsEvent.Handler,
                                   ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler,
-                                  AdminNotificationHandler
+                                  AdminNotificationHandler,
+                                  OpenFileDialogEvent.Handler,
+                                  ShowPageViewerHandler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -144,6 +152,8 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ShinyGadgetDialogEvent.TYPE, this);
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
+      eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
+      eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -395,7 +405,7 @@ public class Workbench implements BusyHandler,
       }
       else
       {
-         onNewTerminal();
+         eventBus_.fireEvent(new ActivateNamedTerminalEvent());
       }
    }
    
@@ -506,6 +516,72 @@ public class Workbench implements BusyHandler,
                                  adminNotificationAcknowledged(notification.getId()));
    }
    
+   @Override
+   public void onOpenFileDialog(OpenFileDialogEvent event)
+   {
+      final ProgressOperationWithInput<FileSystemItem> onSelected =
+            new ProgressOperationWithInput<FileSystemItem>()
+      {
+         @Override
+         public void execute(FileSystemItem input,
+                             ProgressIndicator indicator)
+         {
+            indicator.onCompleted();
+            
+            server_.openFileDialogCompleted(
+                  input == null ? "" : input.getPath(),
+                  new VoidServerRequestCallback());
+         }
+      };
+      
+      String caption = event.getCaption();
+      String label = event.getLabel();
+      int type = event.getType();
+      FileSystemItem initialFilePath = event.getFile();
+      String filter = event.getFilter();
+      boolean selectExisting = event.selectExisting();
+      
+      if (type == OpenFileDialogEvent.TYPE_SELECT_FILE)
+      {
+         if (selectExisting)
+         {
+            fileDialogs_.openFile(
+                  caption,
+                  label,
+                  fsContext_,
+                  initialFilePath,
+                  filter,
+                  false,
+                  onSelected);
+         }
+         else
+         {
+            fileDialogs_.saveFile(
+                  caption,
+                  label,
+                  fsContext_,
+                  initialFilePath,
+                  "",
+                  false,
+                  onSelected);
+         }
+      }
+      else if (type == OpenFileDialogEvent.TYPE_SELECT_DIRECTORY)
+      {
+         fileDialogs_.chooseFolder(
+               caption,
+               label,
+               fsContext_,
+               initialFilePath,
+               onSelected);
+      }
+      else
+      {
+         assert false: "unexpected file dialog type '" + type + "'";
+         server_.openFileDialogCompleted(null, new VoidServerRequestCallback());
+      }
+   }
+   
    private Operation adminNotificationAcknowledged(final String id)
    {
       return new Operation() {
@@ -524,6 +600,16 @@ public class Workbench implements BusyHandler,
          Desktop.getFrame().installRtools(event.getVersion(),
                                           event.getInstallerPath());  
       }
+   }
+   
+   @Override
+   public void onShowPageViewer(ShowPageViewerEvent event) 
+   {   
+      // show the page viewer window
+      HTMLPreviewParams params = event.getParams();
+      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
+      
+      // server will now take care of sending the html_preview_completed event
    }
    
    @Override
@@ -549,6 +635,5 @@ public class Workbench implements BusyHandler,
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
-   private boolean nearQuotaWarningShown_ = false;
-   
+   private boolean nearQuotaWarningShown_ = false; 
 }

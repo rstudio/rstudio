@@ -61,13 +61,20 @@
 })
 
 .rs.addFunction("getCustomRenderFunction", function(file) {
+  # read the contents of the file
   lines <- readLines(file, warn = FALSE)
-
+  
+  # mark the encoding if it's available
+  properties <- .rs.getSourceDocumentProperties(file)
+  if (identical(properties$encoding, "UTF-8"))
+    Encoding(lines) <- "UTF-8"
+  
   yamlFrontMatter <- tryCatch(
     rmarkdown:::parse_yaml_front_matter(lines),
-    error=function(e) {
-       list()
-    })
+    error = function(e) {
+      list()
+    }
+  )
 
   if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
@@ -111,21 +118,29 @@
 # whether it's up to date (e.g. for input.Rmd producing input.html, see whether
 # input.html exists and has been written since input.Rmd)
 .rs.addFunction("getRmdOutputInfo", function(target) {
-  # compute the name of the output file
-  lines <- readLines(target, warn = FALSE)
-  outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
-  outputFormat <- rmarkdown:::create_output_format(
-                                    outputFormat$name, outputFormat$options)
-  outputFile <- rmarkdown:::pandoc_output_file(target, outputFormat$pandoc)
-  outputPath <- file.path(dirname(target), outputFile) 
-
-  # ensure output file exists
-  current <- file.exists(outputPath) && 
-             file.info(outputPath)$mtime >= file.info(target)$mtime
   
-  return(list(
-    output_file = .rs.scalar(outputPath),
-    is_current  = .rs.scalar(current)))
+   # read the contents of the file
+   lines <- readLines(target, warn = FALSE)
+   
+   # mark the encoding if it's available
+   properties <- .rs.getSourceDocumentProperties(target)
+   if (identical(properties$encoding, "UTF-8"))
+      Encoding(lines) <- "UTF-8"
+   
+   # compute the name of the output file
+   outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
+   outputFormat <- rmarkdown:::create_output_format(outputFormat$name, outputFormat$options)
+   outputFile <- rmarkdown:::pandoc_output_file(target, outputFormat$pandoc)
+   outputPath <- file.path(dirname(target), outputFile) 
+   
+   # ensure output file exists
+   current <- file.exists(outputPath) && 
+      file.info(outputPath)$mtime >= file.info(target)$mtime
+   
+   list(
+      output_file = .rs.scalar(outputPath),
+      is_current  = .rs.scalar(current)
+   )
 })
 
 # given a path to a folder on disk, return information about the R Markdown
@@ -191,16 +206,30 @@
          }
          else if (is.character(val) && length(val) == 1) 
          {
-            # if it's a character value, check to see if it's a backtick
-            # expression
-            if (identical(substr(val, 1, 1), "`") &&
-                identical(substr(val, nchar(val), nchar(val)), "`")) 
+            needsPlaceholder <- (function() {
+               
+               # if it's a character value, check to see if it's a backtick
+               # expression
+               if (identical(substr(val, 1, 1), "`") &&
+                   identical(substr(val, nchar(val), nchar(val)), "`"))
+               {
+                  return(TRUE)
+               }
+               
+               # if it's a tagged value, placeholder
+               if (grepl("^[!]", val))
+                  return(TRUE)
+               
+               FALSE
+            })()
+            
+            if (needsPlaceholder)
             {
                # replace the backtick expression with an identifier
                key <- .Call("rs_generateShortUuid")
                exprs[[key]] <<- val
                key
-            } 
+            }
             else 
             {
                # leave other character expressions as-is
@@ -237,9 +266,11 @@
    data <- list()
    parseError <- ""
    parseSucceeded <- FALSE
+   
    tryCatch(
    {
-      data <- .rs.scalarListFromList(yaml::yaml.load(yaml))
+      handlers <- list(r = function(x) paste("!r", x))
+      data <- .rs.scalarListFromList(yaml::yaml.load(yaml, handlers = handlers))
       parseSucceeded <- TRUE
    },
    error = function(e)

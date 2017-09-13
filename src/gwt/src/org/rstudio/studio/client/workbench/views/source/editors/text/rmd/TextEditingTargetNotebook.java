@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetNotebook.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -171,6 +171,10 @@ public class TextEditingTargetNotebook
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
+            // ignore if it already matches target mode
+            if (docDisplay_.showChunkOutputInline() == (event.getValue() == CHUNK_OUTPUT_INLINE))
+               return;
+            
             // propagate to YAML
             String yaml = RmdEditorOptions.set(
                   YamlFrontMatter.getFrontMatter(docDisplay_), 
@@ -329,6 +333,10 @@ public class TextEditingTargetNotebook
          @Override
          public void onSaveFile(SaveFileEvent event)
          {
+            // ignore autosaves
+            if (event.isAutosave())
+               return;
+            
             // propagate output preference from YAML into doc preference
             String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
             if (!StringUtil.isNullOrEmpty(frontMatter))
@@ -358,15 +366,23 @@ public class TextEditingTargetNotebook
       // listen for clicks on notebook progress UI
       registerProgressHandlers();
 
-      // propagate output preference from YAML into doc preference
-      String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
-      if (!StringUtil.isNullOrEmpty(frontMatter))
+      // propagate output preference from YAML into doc preference (only do this if doc is not dirty
+      // to make sure we aren't applying an uncommitted output pref)
+      if (!dirtyState_.getValue())
       {
-         String mode = RmdEditorOptions.getString(frontMatter,
-               CHUNK_OUTPUT_TYPE, null);
-         if (!StringUtil.isNullOrEmpty(mode))
+         String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
+         if (!StringUtil.isNullOrEmpty(frontMatter))
          {
-            docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, mode);
+            String yamlMode = RmdEditorOptions.getString(frontMatter,
+                  CHUNK_OUTPUT_TYPE, null);
+            if (!StringUtil.isNullOrEmpty(yamlMode))
+            {
+               String docMode = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
+               if (yamlMode != docMode)
+               {
+                  docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, yamlMode);
+               }
+            }
          }
       }
    }

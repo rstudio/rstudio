@@ -71,31 +71,54 @@ namespace {
 
 bool isWithinIgnoredDirectory(const FilePath& filePath)
 {
+   using namespace projects;
+   
    // we only index (and ignore) directories within the current project
-   if (!projects::projectContext().hasProject())
+   if (!projectContext().hasProject())
       return false;
    
-   FilePath projDir = projects::projectContext().directory();
-   for (FilePath parentPath = filePath.parent();
+   FilePath projDir = projectContext().directory();
+   FilePath parentPath = filePath.parent();
+   std::string websiteDir = module_context::websiteOutputDir();
+   bool isPackageProject = projectContext().isPackageProject();
+   
+   // allow plain files living within the 'revdep' folder
+   if (isPackageProject &&
+       parentPath.filename() == "revdep" &&
+       !filePath.isDirectory())
+   {
+      return false;
+   }
+   
+   // look through parent directories recursively to see
+   // if this is an ignored folder
+   // TODO: it would be better to encode this as a filter that
+   // disables traversing of sub-directories we don't want to index
+   for (;
         !parentPath.empty() && parentPath != projDir;
         parentPath = parentPath.parent())
    {
-      // cmake build directory
-      if (parentPath.childPath("cmake_install.cmake").exists())
-         return true;
-      
-      std::string filename = parentPath.filename();
+      std::string parentName = parentPath.filename();
       
       // node_modules
-      if (filename == "node_modules")
+      if (parentName == "node_modules")
+         return true;
+      
+      // websites
+      if (parentName == websiteDir)
          return true;
       
       // packrat
-      if (filename == "packrat" && parentPath.childPath("packrat.lock").exists())
+      if (parentName == "packrat" &&
+          parentPath.childPath("packrat.lock").exists())
+         return true;
+      
+      // cmake build directory
+      if (parentPath.childPath("cmake_install.cmake").exists())
          return true;
 
-      // websites
-      if (filename == module_context::websiteOutputDir())
+      // revdep sub-directories
+      if (isPackageProject && parentName == "revdep")
          return true;
    }
    
@@ -892,7 +915,7 @@ private:
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
                ext == ".json" || ext == ".tex" ||
-               ext == ".scala" ||
+               ext == ".toml" || ext == ".scala" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||

@@ -1,7 +1,7 @@
 /*
  * FileTypeRegistry.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -138,7 +138,7 @@ public class FileTypeRegistry
 
    public static final TextFileType PYTHON = new ScriptFileType(
      "python", "Python", EditorLanguage.LANG_PYTHON, ".py",new ImageResource2x(ICONS.iconPython2x()),
-     "python", true);
+     "python", false, true);
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
@@ -147,13 +147,18 @@ public class FileTypeRegistry
 
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", new ImageResource2x(ICONS.iconSh2x()),
-         null, false);
+         null, true, false);
+   
+   public static final TextFileType TOML =
+         new TextFileType("toml", "TOML", EditorLanguage.LANG_TOML, ".toml",
+                          new ImageResource2x(ICONS.iconToml2x()), false, false, false, false, false,
+                          false, false, false, false, false, false, false, false);
    
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yml",
                           new ImageResource2x(ICONS.iconYaml2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
-
+   
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
                           new ImageResource2x(ICONS.iconXml2x()), false, false, false, false, false,
@@ -261,6 +266,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
    
    public static final RDataType RDATA = new RDataType();
+   public static final RDSDataType RDS = new RDSDataType();
    public static final RProjectType RPROJECT = new RProjectType();
 
    public static final DataFrameType DATAFRAME = new DataFrameType();
@@ -366,6 +372,7 @@ public class FileTypeRegistry
       register("*.rd", RD, new ImageResource2x(icons.iconRd2x()));
       register("*.rdata", RDATA, new ImageResource2x(icons.iconRdata2x()));
       register("*.rda", RDATA, new ImageResource2x(icons.iconRdata2x()));
+      register("*.rds", RDS, new ImageResource2x(icons.iconRdata2x()));
       register("*.Rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.mmd", MERMAID, new ImageResource2x(icons.iconMermaid2x()));
@@ -374,6 +381,8 @@ public class FileTypeRegistry
       register("*.py", PYTHON, new ImageResource2x(icons.iconPython2x()));
       register("*.sql", SQL, new ImageResource2x(icons.iconSql2x()));
       register("*.sh", SH, new ImageResource2x(icons.iconSh2x()));
+      register("*.tml", TOML, new ImageResource2x(icons.iconToml2x()));
+      register("*.toml", TOML, new ImageResource2x(icons.iconToml2x()));
       register("*.yml", YAML, new ImageResource2x(icons.iconYaml2x()));
       register("*.yaml", YAML, new ImageResource2x(icons.iconYaml2x()));
       register("*.xml", XML, new ImageResource2x(icons.iconXml2x()));

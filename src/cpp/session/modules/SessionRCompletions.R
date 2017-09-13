@@ -109,12 +109,44 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
-.rs.addFunction("attemptRoxygenTagCompletion", function(token)
+.rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
 {
-   # Allow for roxygen completions when no token is available
-   match <- token == "" || grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
-   if (!match)
-      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
+   
+   # fix up tokenization
+   if (grepl("^\\s*#+'\\s*$", line) && token == "'")
+      token <- ""
+   
+   # draw from 'man-roxygen' folder for '@template' completions
+   if (grepl("^\\s*#+'\\s*@template\\s+", line))
+   {
+      projDir <- .rs.getProjectDirectory()
+      if (is.null(projDir))
+         return(emptyCompletions)
+      
+      manRoxygen <- file.path(projDir, "man-roxygen")
+      if (!utils::file_test("-d", manRoxygen))
+         return(emptyCompletions)
+      
+      completions <- .rs.getCompletionsFile(token, path = manRoxygen, quote = FALSE)
+      completions$results <- sub("[.][rR]$", "", completions$results)
+      return(completions)
+   }
+   
+   # allow the token to be empty only if we're attempting completions
+   # at the start of the line
+   if (token == "")
+   {
+      match <- grepl("^\\s*#+'\\s*$", line)
+      if (!match)
+         return(emptyCompletions)
+   }
+   else
+   {
+      match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
+      if (!match)
+         return(emptyCompletions)
+   }
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
@@ -283,7 +315,7 @@ assign(x = ".rs.acCompletionTypes",
    dirPaths <- .rs.listFilesFuzzy(directory, tokenName)
    if (directoriesOnly)
    {
-      dirInfo <- file.info(dirPaths)
+      dirInfo <- .rs.fileInfo(dirPaths)
       dirPaths <- dirPaths[dirInfo$isdir]
    }
    absolutePaths <- sort(union(absolutePaths, dirPaths))
@@ -334,7 +366,7 @@ assign(x = ".rs.acCompletionTypes",
    # Otherwise, query the file info for the set of completions we're using
    else
    {
-      isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+      isDir <- .rs.fileInfo(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
       type <- ifelse(isDir,
                      .rs.acCompletionTypes$DIRECTORY,
                      .rs.acCompletionTypes$FILE)
@@ -538,6 +570,12 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!is.null(object) && is.function(object))
    {
+      # If we're attempting to get completions for an R6 'new()' function,
+      # then use a separate code path to derive that -- derive formals from
+      # the 'initialize()' method instead.
+      if (.rs.isR6NewMethod(object))
+         object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
+      
       matchedCall <- .rs.matchCall(object, functionCall)
       
       # Try to figure out what function arguments are
@@ -1875,7 +1913,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
-      return(.rs.attemptRoxygenTagCompletion(token))
+      return(.rs.attemptRoxygenTagCompletion(token, line))
    
    # install.packages
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
@@ -2368,6 +2406,9 @@ assign(x = ".rs.acCompletionTypes",
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
+      if (inherits(object, "python.builtin.object"))
+         return(.rs.emptyCompletions())
+      
       if (length(object))
       {
          objectNames <- .rs.getNames(object)
@@ -2683,7 +2724,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyUILastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyUICompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -2803,7 +2844,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyServerLastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyServerCompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -3268,20 +3309,26 @@ assign(x = ".rs.acCompletionTypes",
    utils:::.completeToken()
    results <- utils:::.retrieveCompletions()
    
+   packages <- NULL
+   type <- .rs.formCompletionVector(attr(results, "type"), .rs.acCompletionTypes$UNKNOWN, length(results))
+   if (type[[1]] %in% c(.rs.acCompletionTypes$UNKNOWN, .rs.acCompletionTypes$FUNCTION)) {
    packages <- sub('^package:', '', .rs.which(results))
    
    # ensure spaces around =
    results <- sub("=$", " = ", results)
    
-   choose = packages == '.GlobalEnv'
-   results.sorted = c(results[choose], results[!choose])
-   packages.sorted = c(packages[choose], packages[!choose])
+     choose <- packages == '.GlobalEnv'
+     results <- c(results[choose], results[!choose])
+     packages <- c(packages[choose], packages[!choose])
+     type <- c(type[choose], type[!choose])
    
-   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
+     packages <- sub('^\\.GlobalEnv$', '', packages)
+   }
    
    .rs.makeCompletions(
       token = token,
-      results = results.sorted,
-      packages = packages.sorted
+      results = results,
+      packages = packages,
+      type = type
    )
 })

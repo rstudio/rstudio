@@ -59,6 +59,8 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <core/RegexUtils.hpp>
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -721,12 +723,18 @@ Error terminateProcess(PidType pid)
       return Success();
 }
 
-bool hasSubprocessesViaPgrep(PidType pid)
+std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
 {
-   // pgrep -P ppid returns 0 if there are matches, non-zero
-   // otherwise
+   std::vector<SubprocInfo> subprocs;
+
+   // pgrep -P ppid -l returns 0 if there are matches, non-zero
+   // otherwise; output is one line per direct child process,
+   // for example:
+   //
+   // 23432 sleep
+   // 23433 mycommand
    shell_utils::ShellCommand cmd("pgrep");
-   cmd << "-P" << pid;
+   cmd << "-P" << pid << "-l";
 
    core::system::ProcessOptions options;
    options.detachSession = true;
@@ -737,36 +745,89 @@ bool hasSubprocessesViaPgrep(PidType pid)
                             &result);
    if (error)
    {
-      // err on the side of assuming child processes, so we don't kill
-      // a job unintentionally
       LOG_ERROR(error);
-      return true;
+      return subprocs;
    }
-   return result.exitStatus == 0;
+
+   if (result.exitStatus == 0)
+   {
+      boost::regex re("^(\\d+)\\s+(.+)");
+      std::vector<std::string> lines = algorithm::split(result.stdOut, "\n");
+      BOOST_FOREACH(const std::string& line, lines)
+      {
+         if (boost::algorithm::trim_copy(line).empty())
+         {
+            continue;
+         }
+
+         boost::smatch matches;
+         if (regex_utils::match(line, matches, re))
+         {
+            SubprocInfo info;
+            info.pid = safe_convert::stringTo<PidType>(matches[1], -1);
+            if (info.pid != -1)
+            {
+               info.exe = matches[2];
+               subprocs.push_back(info);
+            }
+         }
+         else
+         {
+            std::string msg = "Unrecognized output from pgrep -l: '";
+            msg += line;
+            msg += "'";
+            LOG_ERROR_MESSAGE(msg);
+         }
+      }
+   }
+   return subprocs;
 }
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
-bool hasSubprocessesMac(PidType pid)
+
+std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
 {
+   std::vector<SubprocInfo> subprocs;
+
    int result = proc_listchildpids(pid, NULL, 0);
    if (result > 0)
    {
-      // have fetch details to get accurate result
-      std::vector<int> buffer;
-      buffer.reserve(result);
-      result = proc_listchildpids(pid, &buffer[0], buffer.capacity() * sizeof(int));
-   }
-   return result > 0;
-}
-#endif
+      std::vector<PidType> buffer(result, 0);
+      result = proc_listchildpids(pid, &buffer[0], buffer.size() * sizeof(PidType));
+      for (int i = 0; i < result; i++)
+      {
+         PidType childPid = buffer[i];
+         if (childPid == 0)
+            continue;
 
-#ifdef HAVE_PROCSELF
-bool hasSubprocessesViaProcFs(PidType pid)
+         SubprocInfo info;
+         info.pid = childPid;
+
+         // Try to get exe
+         std::string path(PROC_PIDPATHINFO_MAXSIZE, '\0');
+         proc_pidpath(childPid, &path[0], path.length());
+         path.resize(strlen(&path[0]));
+         if (!path.empty())
+         {
+            core::FilePath exePath(path);
+            info.exe = exePath.filename();
+         }
+         subprocs.push_back(info);
+      }
+   }
+   return subprocs;
+}
+
+#else
+
+std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
 {
+   std::vector<SubprocInfo> subprocs;
+
    core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
-      return true; // err on the side of assuming child processes exist
+      return getSubprocessesViaPgrep(pid);
    }
 
    // We iterate all /proc/###/stat files, where ### is a process id.
@@ -791,7 +852,7 @@ bool hasSubprocessesViaProcFs(PidType pid)
    if (error)
    {
       LOG_ERROR(error);
-      return true; // err on the side of assuming child processes exist
+      return subprocs;
    }
 
    BOOST_FOREACH(const FilePath& child, children)
@@ -820,14 +881,14 @@ bool hasSubprocessesViaProcFs(PidType pid)
          continue;
       }
 
-      size_t i = contents.find_last_of(')');
-      if (i == std::string::npos)
+      size_t closingParen = contents.find_last_of(')');
+      if (closingParen == std::string::npos)
       {
          LOG_ERROR_MESSAGE("no closing parenthesis");
          continue;
       }
 
-      i = contents.find_first_of("0123456789", i);
+      size_t i = contents.find_first_of("0123456789", closingParen);
       if (i == std::string::npos)
       {
          LOG_ERROR_MESSAGE("no integer after closing parenthesis");
@@ -841,34 +902,56 @@ bool hasSubprocessesViaProcFs(PidType pid)
          continue;
       }
 
-      // extremely unexpected/unlikely, but make sure we don't have some funky
-      // super-large integer here that could cause lexical_cast to throw
       size_t ppidLen = j - i;
-      if (ppidLen > 9)
+      PidType ppid = safe_convert::stringTo<PidType>(contents.substr(i, ppidLen), -1);
+      if (ppid == -1)
       {
-         LOG_ERROR_MESSAGE("stat file ppid too large");
+         LOG_ERROR_MESSAGE("unrecognized parent process id");
          continue;
       }
-      int ppid = boost::lexical_cast<int>(contents.substr(i, ppidLen));
-      if (ppid == pid)
-         return true;
-   }
-   return false;
-}
-#endif // HAVE_PROCSELF
+      if (ppid != pid)
+      {
+         continue;
+      }
 
-bool hasSubprocesses(PidType pid)
+      size_t openParen = contents.find_first_of('(');
+      if (openParen == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("no opening parenthesis");
+         continue;
+      }
+      if (openParen < 2) // at a minimum, "# (foo)"
+      {
+         LOG_ERROR_MESSAGE("no pid before exe name");
+         continue;
+      }
+      if (closingParen < openParen)
+      {
+         LOG_ERROR_MESSAGE("closing paren before open paren");
+         continue;
+      }
+
+      SubprocInfo info;
+      info.exe = contents.substr(openParen + 1, closingParen - openParen - 1);
+      info.pid = safe_convert::stringTo<PidType>(contents.substr(0, openParen - 1), -1);
+      if (info.pid == -1)
+      {
+         LOG_ERROR_MESSAGE("unrecognized child process id");
+         continue;
+      }
+      subprocs.push_back(info);
+   }
+
+   return subprocs;
+}
+#endif // !__APPLE__
+
+std::vector<SubprocInfo> getSubprocesses(PidType pid)
 {
 #ifdef __APPLE__
-   return hasSubprocessesMac(pid);
+   return getSubprocessesMac(pid);
 #else // Linux
-
-#ifdef HAVE_PROCSELF
-   return hasSubprocessesViaProcFs(pid);
-#else
-   return hasSubprocessesViaPgrep(pid);
-#endif
-
+   return getSubprocessesViaProcFs(pid);
 #endif
 }
 
@@ -917,13 +1000,13 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
-#ifdef HAVE_PROCSELF
+#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid)
 {
    core::FilePath procFsPath("/proc");
    if (!procFsPath.exists())
    {
-      return FilePath();
+      return currentWorkingDirViaLsof(pid);
    }
 
    std::string procId = safe_convert::numberToString(pid);
@@ -937,14 +1020,14 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
    else
       return FilePath();
 }
-#endif // HAVE_PROCSELF
+#endif // !__APPLE__
 
 FilePath currentWorkingDir(PidType pid)
 {
-#ifdef HAVE_PROCSELF
-   return currentWorkingDirViaProcFs(pid);
-#else
+#ifdef __APPLE__
    return currentWorkingDirViaLsof(pid);
+#else
+   return currentWorkingDirViaProcFs(pid);
 #endif
 }
 

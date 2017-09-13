@@ -89,16 +89,18 @@ context("Private Terminal Command Tests")
    const std::string kPrompt = "fake-prompt someuser$ ";
    const bool kHasChildProcess = true;
    const bool kNoChildProcess = false;
-   const int kPrivate = 25;
-   const int kUser = 25;
-   const int kTimeout = 25;
+   const int kPrivate = 25; // min delay between private commands
+   const int kUser = 25; // min delay after user command
+   const int kTimeout = 25; // private command timeout
+   const int kPostTimeout = 25; // how long to suppress output after private command is done
+
    const bool kOncePerUserEnter = true;
    const bool kNotOncePerUserEnter = false;
 
    // this tests the overall functionality of the expected usage pattern
    test_that("command output successfully parsed and returned")
    {
-      PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       std::string results = "one=two\nthree=four\nfive=six\n";
 
@@ -117,6 +119,12 @@ context("Private Terminal Command Tests")
       // close off the output
       cmd.output(cmd.getEOM());
       cmd.output(kEol);
+      cmd.output(kPrompt);
+
+      // trying to capture now should return true because final timeout hasn't expired
+      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
+
+      boost::this_thread::sleep(milliseconds(kPostTimeout));
 
       // trying to capture now should return false, meaning we can get the output
       expect_false(cmd.onTryCapture(ops, kNoChildProcess));
@@ -131,7 +139,7 @@ context("Private Terminal Command Tests")
 
    test_that("basic assumptions are true")
    {
-      PrivateCommand cmd1(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd1(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       expect_false(cmd1.hasCaptured());
       expect_true(cmd1.getPrivateOutput().empty());
@@ -139,7 +147,7 @@ context("Private Terminal Command Tests")
       expect_true(cmd1.getPrivateOutput().empty());
       expect_false(cmd1.hasCaptured());
 
-      PrivateCommand cmd2(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd2(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_false(cmd2.hasCaptured());
       expect_true(cmd2.getPrivateOutput().empty());
@@ -150,7 +158,7 @@ context("Private Terminal Command Tests")
 
    test_that("no capture if terminal has child process")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       expect_false(cmd.onTryCapture(ops, kHasChildProcess));
       expect_false(cmd.hasCaptured());
@@ -159,7 +167,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) no capture if terminal has child process")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_false(cmd.onTryCapture(ops, kHasChildProcess));
       expect_false(cmd.hasCaptured());
@@ -168,7 +176,7 @@ context("Private Terminal Command Tests")
 
    test_that("no capture if user hasn't hit <enter>")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("partial user command");
       expect_false(cmd.onTryCapture(ops, kNoChildProcess));
@@ -184,7 +192,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) no capture if user has entered a command but there is a child process")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       cmd.userInput("user command\n");
       expect_false(cmd.onTryCapture(ops, kHasChildProcess));
@@ -200,7 +208,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command not issued after user command, no child process, but too soon")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       cmd.userInput("user command\n");
       expect_false(cmd.onTryCapture(ops, kNoChildProcess));
@@ -208,7 +216,7 @@ context("Private Terminal Command Tests")
 
    test_that("command issued if user has entered a command and post-user-command timeout expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("user command\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -223,7 +231,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command issued, user has entered a command, post-user-cmd timeout expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       cmd.userInput("user command\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -237,7 +245,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command issued immediately w/o user command entered")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
       expect_true(ops.writes.size() == 1);
@@ -246,7 +254,7 @@ context("Private Terminal Command Tests")
 
    test_that("command not issued if user hasn't entered a new command since last private comand")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("user command one\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -261,7 +269,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command reissued if private command delay has expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
       cmd.terminateCapture();
@@ -273,7 +281,7 @@ context("Private Terminal Command Tests")
 
    test_that("command not issued if private command interval hasn't expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("user command one\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -287,7 +295,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command not issued if private command interval hasn't expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       cmd.userInput("user command one\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -301,7 +309,7 @@ context("Private Terminal Command Tests")
 
    test_that("command issued if private command interval has expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("user command one\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -316,7 +324,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) command issued if private command interval has expired")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       cmd.userInput("user command one\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -331,7 +339,7 @@ context("Private Terminal Command Tests")
 
    test_that("private command terminated if taking too long")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
       cmd.userInput("user command\n");
       boost::this_thread::sleep(milliseconds(kUser * 2));
@@ -346,7 +354,7 @@ context("Private Terminal Command Tests")
 
    test_that("(NotEnter) private command terminated if taking too long")
    {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kNotOncePerUserEnter);
+      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
 

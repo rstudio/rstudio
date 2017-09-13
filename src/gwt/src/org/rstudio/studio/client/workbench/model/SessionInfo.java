@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -367,6 +367,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
+   public final native boolean getAllowFullUI() /*-{
+      return this.allow_full_ui;
+   }-*/;
+  
    public final native boolean getAllowExternalPublish() /*-{
       return this.allow_external_publish;
    }-*/;
@@ -505,5 +509,9 @@ public class SessionInfo extends JavaScriptObject
    
    public final native int getGitCommitLargeFileSize() /*-{
       return this.git_commit_large_file_size;
+   }-*/;
+   
+   public final native String getDefaultRSConnectServer() /*-{
+      return this.default_rsconnect_server;
    }-*/;
 }

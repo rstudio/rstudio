@@ -41,13 +41,12 @@ ConsoleProcessPtr getVisibleProc();
 void clearVisibleProc();
 void setVisibleProc(const std::string& handle);
 
-// Build a list of all process captions (captions are used as unique IDs by
+// Build a list of all process handles (handles are used as unique IDs by
 // the Terminal R API)
-std::vector<std::string> getAllCaptions();
+std::vector<std::string> getAllHandles();
 
-// Determine next terminal sequence, used when creating terminal name
-// via rstudioapi: mimics what happens in client code.
-std::string nextTerminalName();
+// Determine next terminal sequence number and default name
+std::pair<int, std::string> nextTerminalName();
 
 // Get list of all process metadata
 core::json::Array allProcessesAsJson();
@@ -64,6 +63,19 @@ core::Error reapConsoleProcess(const ConsoleProcess& proc);
 
 // Initialize ConsoleProcess list and APIs
 core::Error internalInitialize();
+
+// Create a ConsoleProcess and add it to the table. Final parameter returns handle.
+core::Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
+                                      std::string* pHandle);
+
+// Create a ConsoleProcess for a non-interactive job displayed in the terminal. Final parameter
+// returns handle.
+core::Error createTerminalExecuteConsoleProc(
+      const std::string& title,
+      const std::string& command,
+      const std::string& currentDir,
+      const core::system::Options& env,
+      std::string* pHandle);
 
 } // namespace console_process
 } // namespace session

@@ -35,8 +35,10 @@ deleteTwoLineRule <- function(content, ruleName1, ruleName2, ruleName3, ruleName
    content
 }
 
-deleteRule <- function(content, ruleName1, ruleName2 = NULL) {
-   if (!is.null(ruleName2)) {
+deleteRule <- function(content, ruleName1, ruleName2 = NULL, ruleName3 = NULL) {
+   if (!is.null(ruleName2) && !is.null(ruleName3)) {
+      match <- paste("^\\s*\\.", ruleName1, "\\s*\\.", ruleName2, "\\s*", ruleName3, "\\s*{", sep = "")
+   } else if (!is.null(ruleName2)) {
       match <- paste("^\\s*\\.", ruleName1, "\\s*\\.", ruleName2, "\\s*{", sep = "")
    } else {
       match <- paste("^\\s*\\.", ruleName1, "\\s*{", sep = "")
@@ -50,16 +52,14 @@ deleteRule <- function(content, ruleName1, ruleName2 = NULL) {
 ## Make the adjustments
 content <- deleteRule(content, "terminal")
 content <- deleteRule(content,
-               "terminal\\.focus:not\\(\\.xterm-cursor-style-underline\\):not\\(\\.xterm-cursor-style-bar\\)",
+               "terminal\\.xterm-cursor-style-block\\.focus:not\\(\\.xterm-cursor-blink-on\\)",
                "terminal-cursor")
 content <- deleteTwoLineRule(content,
-               "terminal\\.xterm-cursor-style-bar", "terminal-cursor::before",
-               "terminal\\.xterm-cursor-style-underline", "terminal-cursor::before")
-content <- deleteTwoLineRule(content,
-               "terminal\\.xterm-cursor-style-bar\\.focus\\.xterm-cursor-blink", "terminal-cursor::before",
-               "terminal\\.xterm-cursor-style-underline\\.focus\\.xterm-cursor-blink", "terminal-cursor::before")
+               "terminal\\.focus\\.xterm-cursor-style-bar:not\\(\\.xterm-cursor-blink-on\\)", "terminal-cursor::before",
+               "terminal\\.focus\\.xterm-cursor-style-underline:not\\(\\.xterm-cursor-blink-on\\)", "terminal-cursor::before")
 content <- deleteRule(content, "terminal", "xterm-viewport")
 content <- deleteRule(content, "terminal:not\\(\\.focus\\)", "terminal-cursor")
+content <- deleteRule(content, "terminal", "xterm-selection", "div")
 
 ## Write it out.
 outputPath <- file.path(outDir, baseName)

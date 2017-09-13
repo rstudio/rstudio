@@ -55,31 +55,35 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
                    std::vector<std::string>* pUnrecognized,
-                   bool* pHelp);
+                   bool* pHelp,
+                   bool allowUnregisteredConfigOptions = false);
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           char * const argv[],
-                          bool* pHelp)
+                          bool* pHelp,
+                          bool allowUnregisteredConfigOptions = false)
 {
-   return read(optionsDescription, argc, argv, NULL, pHelp);
+   return read(optionsDescription, argc, argv, NULL, pHelp, allowUnregisteredConfigOptions);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           char * const argv[],
-                          std::vector<std::string>* pUnrecognized)
+                          std::vector<std::string>* pUnrecognized,
+                          bool allowUnregisteredConfigOptions = false)
 {
    bool help;
-   return read(optionsDescription, argc, argv, pUnrecognized, &help);
+   return read(optionsDescription, argc, argv, pUnrecognized, &help, allowUnregisteredConfigOptions);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
-                          char * const argv[])
+                          char * const argv[],
+                          bool allowUnregisteredConfigOptions = false)
 {
    bool help;
-   return read(optionsDescription, argc, argv, &help);
+   return read(optionsDescription, argc, argv, &help, allowUnregisteredConfigOptions);
 }
 
 void reportError(const std::string& errorMessage,

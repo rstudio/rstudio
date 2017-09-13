@@ -58,11 +58,12 @@ public class RStudioThemes
          if (themeName.contains("dark")) {
             document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
-            
-            if (usesScrollbars()) {
-               element.addClassName("rstudio-themes-scrollbars");
-            }
          }
+
+         if (usesScrollbars()) {
+            element.addClassName("rstudio-themes-scrollbars");
+         }
+            
          element.addClassName("rstudio-themes-" + themeName);
       }
    }
@@ -83,7 +84,7 @@ public class RStudioThemes
       if (rstudioTheme == "classic") return rstudioTheme;
 
       RegExp keyReg = RegExp.compile(
-         "ambiance|chaos|clouds midnight|cobalt|idle fingers|kr theme|" +
+         "ambiance|chaos|clouds midnight|cobalt|dracula|idle fingers|kr theme|" +
          "material|merbivore soft|merbivore|mono industrial|monokai|" +
          "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
          "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");

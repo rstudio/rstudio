@@ -1,7 +1,7 @@
 /*
  * RSConnectLocalAccount.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.TextBoxWithCue;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,6 +39,14 @@ public class RSConnectLocalAccount extends Composite
    public RSConnectLocalAccount()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      
+      // apply the default server if one is registered
+      Session session = RStudioGinjector.INSTANCE.getSession();
+      ElementIds.assignElementId(serverUrl_.getElement(), ElementIds.RSC_SERVER_URL);
+      if (session != null && session.getSessionInfo() != null)
+      {
+         serverUrl_.setText(session.getSessionInfo().getDefaultRSConnectServer());
+      }
    }
    
    public String getServerUrl() 

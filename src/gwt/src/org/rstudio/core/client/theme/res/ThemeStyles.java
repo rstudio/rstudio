@@ -72,6 +72,7 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonPushed();
    String emptyProjectMenu();
    String menuSubheader();
+   String menuItemSubtitle();
 
    String menuRightImage();
    
@@ -202,4 +203,6 @@ public interface ThemeStyles extends CssResource
    String tabIcon();
    
    String menuCheckable();
+   
+   String noLogo();
 }

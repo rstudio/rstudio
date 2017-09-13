@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.packages.model;
 
 import org.rstudio.studio.client.packrat.model.PackratContext;
-import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -32,13 +31,5 @@ public class PackageState extends JavaScriptObject
    
    public final native PackratContext getPackratContext() /*-{
       return this.packrat_context;
-   }-*/;
-   
-   public final native JsArray<PackratPackageAction> getRestoreActions() /*-{
-      return this.restore_actions ? this.restore_actions : [];
-   }-*/;
-
-   public final native JsArray<PackratPackageAction> getSnapshotActions() /*-{
-      return this.snapshot_actions ? this.snapshot_actions : [];
    }-*/;
 }

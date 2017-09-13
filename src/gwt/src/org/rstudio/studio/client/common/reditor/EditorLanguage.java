@@ -52,6 +52,8 @@ public class EditorLanguage
          "mode/c_cpp", true);
    public static final EditorLanguage LANG_STAN = new EditorLanguage(
          "mode/stan", false, true);
+   public static final EditorLanguage LANG_YAML = new EditorLanguage(
+         "mode/yaml", false, true);
    
    // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
@@ -68,8 +70,8 @@ public class EditorLanguage
          "mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
          "ace/mode/sh", false, false);
-   public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "ace/mode/yaml", false, false);
+   public static final EditorLanguage LANG_TOML = new EditorLanguage(
+         "ace/mode/toml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
          "ace/mode/xml", false, false);
    

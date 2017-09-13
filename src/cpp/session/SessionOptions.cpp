@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -216,7 +216,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "quit child processes on session exit")
       ("session-first-project-template-path",
        value<std::string>(&firstProjectTemplatePath_)->default_value(""),
-       "first project template path");
+       "first project template path")
+      ("default-rsconnect-server",
+       value<std::string>(&defaultRSConnectServer_)->default_value(""),
+       "default RStudio Connect server URL");
 
    // allow options
    options_description allow("allow");
@@ -259,7 +262,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
         "allow publishing content")
       ("allow-presentation-commands",
          value<bool>(&allowPresentationCommands_)->default_value(false),
-       "allow presentation commands");
+       "allow presentation commands")
+      ("allow-full-ui",
+         value<bool>(&allowFullUI_)->default_value(true),
+       "allow full standalone ui mode");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
@@ -679,7 +685,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    // On OSX we keep the postback scripts over in the MacOS directory
    // rather than in the Resources directory -- make this adjustment
    // when the default postback path has been passed
-   if (*pPath == kDefaultPostbackPath)
+   if (*pPath == kDefaultPostbackPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
       *pPath = path.absolutePath();
@@ -693,7 +699,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                 std::string* pPath)
 {
-   if (*pPath == kDefaultPandocPath)
+   if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/pandoc");
       *pPath = path.absolutePath();
@@ -707,7 +713,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 void Options::resolveRsclangPath(const FilePath& resourcePath,
                                  std::string* pPath)
 {
-   if (*pPath == kDefaultRsclangPath)
+   if (*pPath == kDefaultRsclangPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = resourcePath.parent().complete("MacOS/rsclang");
       *pPath = path.absolutePath();

@@ -55,7 +55,7 @@ const bool restarted = false;
 const bool zombie = false;
 const bool trackEnv = false;
 
-const size_t maxLines = kDefaultTerminalMaxOutputLines;
+const int maxLines = kDefaultTerminalMaxOutputLines;
 
 bool testHandle(const std::string& handle)
 {
@@ -101,32 +101,32 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK_FALSE(caption.compare(cpi.getCaption()));
       CHECK_FALSE(title.compare(cpi.getTitle()));
       CHECK_FALSE(handle1.compare(cpi.getHandle()));
-      CHECK(cpi.getTerminalSequence() == sequence);
-      CHECK(cpi.getAllowRestart() == true);
-      CHECK(cpi.getInteractionMode() == InteractionAlways);
-      CHECK(cpi.getMaxOutputLines() == maxLines);
+      CHECK((cpi.getTerminalSequence() == sequence));
+      CHECK((cpi.getAllowRestart() == true));
+      CHECK((cpi.getInteractionMode() == InteractionAlways));
+      CHECK((cpi.getMaxOutputLines() == maxLines));
 
       CHECK_FALSE(cpi.getShowOnOutput());
       CHECK_FALSE(cpi.getExitCode());
       CHECK(cpi.getHasChildProcs());
-      CHECK(cpi.getShellType() == shellType);
-      CHECK(cpi.getChannelMode() == Rpc);
+      CHECK((cpi.getShellType() == shellType));
+      CHECK((cpi.getChannelMode() == Rpc));
       CHECK(cpi.getChannelId().empty());
-      CHECK(cpi.getAltBufferActive() == altActive);
-      CHECK(cpi.getCwd() == cwd);
-      CHECK(cpi.getCols() == cols);
-      CHECK(cpi.getRows() == rows);
+      CHECK((cpi.getAltBufferActive() == altActive));
+      CHECK((cpi.getCwd() == cwd));
+      CHECK((cpi.getCols() == cols));
+      CHECK((cpi.getRows() == rows));
 
       CHECK_FALSE(cpi.getRestarted());
       cpi.setRestarted(true);
       CHECK(cpi.getRestarted());
 
-      CHECK(cpi.getAutoClose() == DefaultAutoClose);
+      CHECK((cpi.getAutoClose() == DefaultAutoClose));
       cpi.setAutoClose(NeverAutoClose);
-      CHECK(cpi.getAutoClose() == NeverAutoClose);
+      CHECK((cpi.getAutoClose() == NeverAutoClose));
 
-      CHECK(cpi.getZombie() == zombie);
-      CHECK(cpi.getTrackEnv() == trackEnv);
+      CHECK((cpi.getZombie() == zombie));
+      CHECK((cpi.getTrackEnv() == trackEnv));
    }
 
    SECTION("Generate a handle")
@@ -157,40 +157,40 @@ TEST_CASE("ConsoleProcessInfo")
 
       int altSequence = sequence + 1;
       cpi.setTerminalSequence(altSequence);
-      CHECK(altSequence == cpi.getTerminalSequence());
+      CHECK((altSequence == cpi.getTerminalSequence()));
 
       bool altAllowRestart = false;
       cpi.setAllowRestart(altAllowRestart);
-      CHECK(altAllowRestart == cpi.getAllowRestart());
+      CHECK((altAllowRestart == cpi.getAllowRestart()));
 
       InteractionMode altMode = InteractionNever;
-      CHECK_FALSE(altMode == mode);
+      CHECK_FALSE((altMode == mode));
       cpi.setInteractionMode(altMode);
-      CHECK(altMode == cpi.getInteractionMode());
+      CHECK((altMode == cpi.getInteractionMode()));
 
       int altMax = maxLines + 1;
       cpi.setMaxOutputLines(altMax);
-      CHECK(altMax == cpi.getMaxOutputLines());
+      CHECK((altMax == cpi.getMaxOutputLines()));
 
       bool altShowOnOutput = !cpi.getShowOnOutput();
       cpi.setShowOnOutput(altShowOnOutput);
-      CHECK(altShowOnOutput == cpi.getShowOnOutput());
+      CHECK((altShowOnOutput == cpi.getShowOnOutput()));
 
       bool altHasChildProcs = !cpi.getHasChildProcs();
       cpi.setHasChildProcs(altHasChildProcs);
-      CHECK(altHasChildProcs == cpi.getHasChildProcs());
+      CHECK((altHasChildProcs == cpi.getHasChildProcs()));
 
       ChannelMode altChannelMode = Websocket;
       std::string altChannelModeId = "Some other id";
       cpi.setChannelMode(altChannelMode, altChannelModeId);
-      CHECK(altChannelMode == cpi.getChannelMode());
+      CHECK((altChannelMode == cpi.getChannelMode()));
       CHECK(!altChannelModeId.compare(cpi.getChannelId()));
 
       cpi.setCwd(altCwd);
-      CHECK(altCwd == cpi.getCwd());
+      CHECK((altCwd == cpi.getCwd()));
 
       cpi.setAutoClose(AlwaysAutoClose);
-      CHECK(cpi.getAutoClose() == AlwaysAutoClose);
+      CHECK((cpi.getAutoClose() == AlwaysAutoClose));
 
       cpi.setZombie(true);
       CHECK(cpi.getZombie());
@@ -207,7 +207,7 @@ TEST_CASE("ConsoleProcessInfo")
       const int exitCode = 14;
       cpi.setExitCode(exitCode);
       CHECK(cpi.getExitCode());
-      CHECK(exitCode == *cpi.getExitCode());
+      CHECK((exitCode == *cpi.getExitCode()));
    }
 
    SECTION("Save and load console proc metadata")
@@ -340,7 +340,7 @@ TEST_CASE("ConsoleProcessInfo")
 
       // pad to exactly one chunk
       firstChunk += 'a';
-      CHECK(firstChunk.length() == kOutputBufferSize);
+      CHECK((firstChunk.length() == kOutputBufferSize));
       cpi.appendToOutputBuffer("a");
       loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
       CHECK_FALSE(moreAvailable);
@@ -359,13 +359,13 @@ TEST_CASE("ConsoleProcessInfo")
 
       // finish second chunk and add a single character as third chunk
       std::string finishSecond(kOutputBufferSize - secondChunk.length(), 'b');
-      CHECK(finishSecond.length() + secondChunk.length() == kOutputBufferSize);
+      CHECK((finishSecond.length() + secondChunk.length() == kOutputBufferSize));
       cpi.appendToOutputBuffer(finishSecond);
 
       // try to read non-existent third chunk
       std::string thirdChunk = cpi.getSavedBufferChunk(3, &moreAvailable);
       CHECK_FALSE(moreAvailable);
-      CHECK(thirdChunk.length() == 0);
+      CHECK((thirdChunk.length() == 0));
 
       // add a single character third chunk and read it
       thirdChunk = "c";
@@ -528,7 +528,7 @@ TEST_CASE("ConsoleProcessInfo")
 
       // line count includes any partial lines at the end (even a zero-
       // length line after a final \n)
-      CHECK(cpi.getBufferLineCount() == lines + 1);
+      CHECK((cpi.getBufferLineCount() == lines + 1));
 
       // cleanup
       cpi.deleteLogFile();

@@ -315,6 +315,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
       
          // theme
          theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
+
+         // flat theme
+         getFlatTheme().setGlobalValue(newUiPrefs.getFlatTheme().getGlobalValue());
       
          // default encoding
          defaultEncoding().setGlobalValue(

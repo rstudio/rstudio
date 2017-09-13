@@ -41,6 +41,23 @@ if (is.null(getOption("viewer"))) {
    })
 }
 
+# default page_viewer option if not already set
+if (is.null(getOption("page_viewer"))) {
+   options(page_viewer = function(url, title = "RStudio Viewer", self_contained = FALSE)
+   {
+      if (!is.character(url) || (length(url) != 1))
+         stop("url must be a single element character vector.", call. = FALSE)
+      
+      if (!is.character(title) || (length(title) != 1))
+         stop("title must be a single element character vector.", call. = FALSE)
+      
+      if (!is.logical(self_contained) || (length(self_contained) != 1))
+         stop("self_contained must be a single element logical vector.", call. = FALSE)
+      
+      invisible(.Call("rs_showPageViewer", url, title, self_contained))
+   })
+}
+
 # default shinygadgets.showdialog if not already set
 if (is.null(getOption("shinygadgets.showdialog"))) {
    options(shinygadgets.showdialog = function(caption,

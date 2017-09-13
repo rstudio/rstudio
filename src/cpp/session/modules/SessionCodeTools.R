@@ -440,17 +440,23 @@
    if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
+   # Helper function for evaluating an expression with warnings + messages
+   # suppressed, and errors coerced to NULL
+   quietly <- function(expr) {
+      withCallingHandlers(
+         tryCatch(expr, error = function(e) NULL),
+         warning = function(e) invokeRestart("muffleWarning"),
+         message = function(e) invokeRestart("muffleMessage")
+      )
+   }
+   
    if (is.character(name) && is.character(envir))
    {
       # If envir is the name of something on the search path, get it from there
       pos <- match(envir, search(), nomatch = -1L)
       if (pos >= 0)
       {
-         object <- tryCatch(
-            get(name, pos = pos),
-            error = function(e) NULL
-         )
-         
+         object <- quietly(get(name, pos = pos))
          if (!is.null(object))
             return(.rs.resolveAliasedSymbol(object))
       }
@@ -458,11 +464,7 @@
       # Otherwise, maybe envir is the name of a package -- search there
       if (envir %in% loadedNamespaces())
       {
-         object <- tryCatch(
-            get(name, envir = asNamespace(envir)),
-            error = function(e) NULL
-         )
-         
+         object <- quietly(get(name, envir = asNamespace(envir)))
          if (!is.null(object))
             return(.rs.resolveAliasedSymbol(object))
       }
@@ -470,23 +472,13 @@
    
    if (is.character(name))
    {
-      name <- .rs.stripSurrounding(name)
-      name <- tryCatch(
-         suppressWarnings(parse(text = name)),
-         error = function(e) NULL
-      )
-      
+      name <- quietly(parse(text = .rs.stripSurrounding(name)))
       if (is.null(name))
          return(NULL)
    }
    
    if (is.language(name))
-   {
-      result <- tryCatch(
-         eval(name, envir = envir),
-         error = function(e) NULL
-      )
-   }
+      result <- quietly(eval(name, envir = envir))
    
    .rs.resolveAliasedSymbol(result)
    
@@ -494,19 +486,17 @@
 
 .rs.addFunction("getFunctionArgumentNames", function(object)
 {
+   # for primitive objects, 'args()' can be used to extract
+   # a function object with compatible prototype -- although
+   # primitive functions that power control flow (e.g. `if()`,
+   # `return()` can return NULL)
    if (is.primitive(object))
-   {
-      ## Only closures have formals, not primitive functions.
-      result <- tryCatch({
-        names(formals(args(object)))
-      }, error = function(e) {
-         character()
-      })
-   }
-   else
-   {
+      object <- args(object)
+   
+   result <- character()
+   if (is.function(object))
       result <- names(formals(object))
-   }
+   
    result
 })
 
@@ -1922,4 +1912,43 @@
    
    fmt <- "'%s' is not a length-one character vector"
    stop(sprintf(fmt, .rs.deparse(substitute(object))), call. = FALSE)
+})
+
+.rs.addFunction("isR6NewMethod", function(object)
+{
+   if (!is.function(object))
+      return(FALSE)
+   
+   envir <- environment(object)
+   if (!inherits(envir, "R6ClassGenerator"))
+      return(FALSE)
+   
+   identical(object, envir$new)
+})
+
+.rs.addFunction("getR6ClassGeneratorMethod", function(object, method)
+{
+   if (is.function(object))
+      object <- environment(object)
+   
+   if (!is.environment(object))
+      return(NULL)
+   
+   if (!inherits(object, "R6ClassGenerator"))
+      return(NULL)
+   
+   tryCatch(
+      object$public_methods[[method]],
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("isExternalPointer", function(object)
+{
+   identical(typeof(object), "externalptr")
+})
+
+.rs.addFunction("fileInfo", function(..., extra_cols = TRUE)
+{
+   suppressWarnings(file.info(..., extra_cols = extra_cols))
 })

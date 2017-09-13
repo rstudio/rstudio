@@ -32,6 +32,7 @@ import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -1045,6 +1046,18 @@ public class DomUtils
    {
       return getCharacterWidth(ele.getClientWidth(), ele.getOffsetWidth(), 
             style);
+   }
+   
+   public static void disableAutoBehavior(Element ele)
+   {
+      ele.setAttribute("autocomplete", "off");
+      ele.setAttribute("autocorrect", "off");
+      ele.setAttribute("autocapitalize", "off");
+   }
+   
+   public static void disableAutoBehavior(Widget w)
+   {
+      disableAutoBehavior(w.getElement());
    }
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

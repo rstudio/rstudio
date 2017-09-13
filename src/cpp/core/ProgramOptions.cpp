@@ -81,7 +81,8 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
                    std::vector<std::string>* pUnrecognized,
-                   bool* pHelp)
+                   bool* pHelp,
+                   bool allowUnregisteredConfigOptions)
 {
    *pHelp = false;
    std::string configFile;
@@ -141,7 +142,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          try
          {
             // parse config file
-            store(parse_config_file(*pIfs, optionsDescription.configFile), vm) ;
+            store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm) ;
             notify(vm) ;
          }
          catch(const std::exception& e)

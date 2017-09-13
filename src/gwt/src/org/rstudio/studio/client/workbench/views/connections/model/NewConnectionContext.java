@@ -44,6 +44,10 @@ public class NewConnectionContext extends JavaScriptObject
          return this["name"];
       }-*/;
 
+      public final native String getSource() /*-{
+         return this["source"];
+      }-*/;
+
       public final native String getType() /*-{
          return this["type"];
       }-*/;

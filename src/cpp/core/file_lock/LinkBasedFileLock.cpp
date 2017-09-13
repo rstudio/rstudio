@@ -54,8 +54,7 @@ namespace core {
 
 namespace {
 
-const char * const kFileLockPrefix =
-      ".rstudio-lock-41c29";
+const char * const kFileLockPrefix = ".rstudio-lock-41c29";
 
 std::string pidString()
 {
@@ -260,8 +259,9 @@ Error writeLockFile(const FilePath& lockFilePath)
       LOG_ERROR(error);
    
    // ensure the proxy file is created, and remove it when we're done
+   std::string pid = pidString();
    RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
-   error = core::writeStringToFile(proxyPath, pidString());
+   error = core::writeStringToFile(proxyPath, pid);
    if (error)
    {
       // log the error since it isn't expected and could get swallowed
@@ -277,19 +277,50 @@ Error writeLockFile(const FilePath& lockFilePath)
             proxyPath.absolutePathNative().c_str(),
             lockFilePath.absolutePathNative().c_str());
    
-   // log errors (remove this if it is too noisy on NFS)
+   // detect link failure
    if (status == -1)
    {
-      int errorNumber = errno;
-      
       // verbose logging
+      int errorNumber = errno;
       LOG("ERROR: ::link() failed (errno " << errorNumber << ")" << std::endl <<
           "Attempted to link:" << std::endl << " - " <<
           "'" << proxyPath.absolutePathNative() << "'" <<
           " => " <<
           "'" << lockFilePath.absolutePathNative() << "'");
       
-      LOG_ERROR(systemError(errorNumber, ERROR_LOCATION));
+      // if this failed, we should still make a best-effort attempt to acquire
+      // a lock by creating a file using O_CREAT | O_EXCL. note that we prefer
+      // ::link() since older NFSes provide more guarantees as to its atomicity,
+      // but not all NFS support ::link()
+      int fd = ::open(
+               lockFilePath.absolutePathNative().c_str(),
+               O_WRONLY | O_CREAT | O_EXCL,
+               0755);
+      
+      if (fd == -1)
+      {
+         // verbose logging
+         int errorNumber = errno;
+         LOG("ERROR: ::open() failed (errno " << errorNumber << ")" <<
+             std::endl << "Attempted to open:" << std::endl << " - " <<
+             "'" << lockFilePath.absolutePathNative() << "'");
+         
+         return systemError(errorNumber, ERROR_LOCATION);
+      }
+      
+      // acquired file descriptor -- now try writing our pid to the file
+      // (save error number in case it fails and we need to report)
+      int status = ::write(fd, pid.c_str(), pid.size());
+      errorNumber = errno;
+      
+      // close file descriptor
+      ::close(fd);
+      
+      // report if an error occurred during write
+      if (status)
+         return systemError(errorNumber, ERROR_LOCATION);
+      
+      return Success();
    }
 
    struct stat info;
@@ -417,8 +448,8 @@ Error LinkBasedFileLock::release()
    if (error)
       LOG_ERROR(error);
    
-   pImpl_->lockFilePath = FilePath();
    lockRegistration().deregisterLock(lockFilePath);
+   pImpl_->lockFilePath = FilePath();
    return error;
 }
 

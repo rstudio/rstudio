@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -434,6 +435,20 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool terminalAutoclose = readPref<bool>(prefs, "terminal_autoclose", true);
    pTerminalAutoclose_.reset(new bool(terminalAutoclose));
 
+   bool terminalTrackEnv = readPref<bool>(prefs, "terminal_track_env", true);
+   pTerminalTrackEnv_.reset(new bool(terminalTrackEnv));
+
+   int terminalBusyMode = readPref<int>(prefs, "busy_detection", core::system::busy_detection::Always);
+   pTerminalBusyMode_.reset(new int(terminalBusyMode));
+
+   core::json::Array defWhitelist;
+   defWhitelist.push_back("tmux");
+   defWhitelist.push_back("screen");
+   json::Array terminalBusyWhitelist = readPref<core::json::Array>(prefs,
+                                                                   "busy_whitelist",
+                                                                   defWhitelist);
+   pTerminalBusyWhitelist_.reset(new json::Array(terminalBusyWhitelist));
+
    syncConsoleColorEnv();
 }
 
@@ -652,6 +667,28 @@ bool UserSettings::terminalAutoclose() const
    return readUiPref<bool>(pTerminalAutoclose_);
 }
 
+bool UserSettings::terminalTrackEnv() const
+{
+   return readUiPref<bool>(pTerminalTrackEnv_);
+}
+
+core::system::busy_detection::Mode UserSettings::terminalBusyMode() const
+{
+   return static_cast<core::system::busy_detection::Mode>(readUiPref<int>(pTerminalBusyMode_));
+}
+
+std::vector<std::string> UserSettings::terminalBusyWhitelist() const
+{
+   json::Array whitelistJson = readUiPref<json::Array>(pTerminalBusyWhitelist_);
+   std::vector<std::string> whitelist;
+   BOOST_FOREACH(const json::Value& exeJson, whitelistJson)
+   {
+      if (json::isType<std::string>(exeJson))
+         whitelist.push_back(exeJson.get_str());
+   }
+   return whitelist;
+}
+
 CRANMirror UserSettings::cranMirror() const
 {
    // get the settings
@@ -787,16 +824,6 @@ FilePath UserSettings::vcsTerminalPath() const
 void UserSettings::setVcsTerminalPath(const FilePath& terminalPath)
 {
    settings_.set("vcsTerminalPath", terminalPath.absolutePath());
-}
-
-bool UserSettings::vcsUseGitBash() const
-{
-   return settings_.getBool("vcsUseGitBash", true);
-}
-
-void UserSettings::setVcsUseGitBash(bool useGitBash)
-{
-   settings_.set("vcsUseGitBash", useGitBash);
 }
 
 bool UserSettings::cleanTexi2DviOutput() const

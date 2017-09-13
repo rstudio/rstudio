@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.htmlpreview;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
@@ -35,11 +38,20 @@ public class HTMLPreview
          @Override
          public void onShowHTMLPreview(ShowHTMLPreviewEvent event)
          {
-            // open the window 
-            satelliteManager.openSatellite(HTMLPreviewApplication.NAME,     
-                                            event.getParams(),
-                                            new Size(850,1100));   
-            
+            WindowEx win = satelliteManager.getSatelliteWindowObject(HTMLPreviewApplication.NAME);
+            if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+            {
+               satelliteManager.forceReopenSatellite(HTMLPreviewApplication.NAME, 
+                                                     event.getParams(),
+                                                     true);
+            }
+            else
+            {
+               satelliteManager.openSatellite(HTMLPreviewApplication.NAME,     
+                                              event.getParams(),
+                                              new Size(1100,1200));
+                                              
+            } 
          }  
       });
    }

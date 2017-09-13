@@ -25,6 +25,10 @@
    VIRTUAL    = "virtual"
 ))
 
+# NOTE: this should be synchronized with DEFAULT_ROW_LIMIT
+# in ObjectExplorerDataGrid.java
+.rs.setVar("explorer.defaultRowLimit", 1000)
+
 # this environment holds data objects currently open within
 # a viewer tab; this environment will be persisted across
 # RStudio sessions
@@ -51,7 +55,7 @@
       tags      = tags,
       recursive = 1,
       start     = start + 1,   # 0 -> 1-based indexing,
-      end       = start + 200  # 200 elements inclusive
+      end       = start + .rs.explorer.defaultRowLimit
    )
    
    # generate inspection result
@@ -98,7 +102,8 @@
    }
    else if (is.character(object) || is.numeric(object) ||
             is.raw(object) || is.complex(object) ||
-            is.list(object) || is.environment(object))
+            is.list(object) || is.environment(object) ||
+            is.factor(object))
    {
       type <- paste(type, sprintf("[%s]", length(object)))
    }
@@ -210,7 +215,7 @@
                                                    tags = character(),
                                                    recursive = FALSE,
                                                    start = 1,
-                                                   end = 200)
+                                                   end = .rs.explorer.defaultRowLimit)
 {
    list(
       name      = name,
@@ -239,7 +244,7 @@
       tags      = tags,
       recursive = recursive,
       start     = 1,
-      end       = 200
+      end       = .rs.explorer.defaultRowLimit
    )
 })
 
@@ -294,6 +299,11 @@
                                                             context = NULL,
                                                             children = NULL)
 {
+   # because 'object' can be missing, and attempts to directly
+   # evaluate missing objects will fail, we use a silly bit of indirection
+   # whenever introspecting that object
+   . <- environment()
+   
    # extract pertinent values from context
    name      <- context$name
    access    <- context$access
@@ -307,29 +317,30 @@
       children <- list()
    
    # determine whether this is an S4 object
-   s4 <- isS4(object)
+   s4 <- isS4(.$object)
    
    # figure out whether this object is expandable
    # (note that the client will still need to refine behavior
    # depending on whether attributes are being shown)
-   n <- length(object)
+   n <- length(.$object)
    expandable <-
       
+      
       # is this an R list / environment with children?
-      (is.recursive(object) && !is.primitive(object) && n > 0) ||
+      (is.recursive(.$object) && !is.primitive(.$object) && n > 0) ||
       
       # is this an S4 object with one or more slots?
-      (s4 && length(.rs.slotNames(object)) > 0) ||
+      (s4 && length(.rs.slotNames(.$object)) > 0) ||
       
       # is this a named atomic vector?
-      (is.atomic(object) && !is.null(names(object)) && n > 0) ||
+      (is.atomic(.$object) && !is.null(names(.$object)) && n > 0) ||
       
       # do we have relevant attributes?
-      .rs.explorer.hasRelevantAttributes(object)
+      .rs.explorer.hasRelevantAttributes(.$object)
    
    # extract attributes when relevant
    attributes <- NULL
-   if (context$recursive && .rs.explorer.hasRelevantAttributes(object))
+   if (context$recursive && .rs.explorer.hasRelevantAttributes(.$object))
    {
       childName <- "(attributes)"
       childAccess <- "attributes(#)"
@@ -338,29 +349,29 @@
                                                       childName,
                                                       childAccess,
                                                       childTags)
-      childResult <- .rs.explorer.inspectObject(attributes(object), childContext)
+      childResult <- .rs.explorer.inspectObject(attributes(.$object), childContext)
       attributes <- childResult
    }
    
    # elements dictating how this should be displayed in UI
    display <- list(
       name = .rs.scalar(name),
-      type = .rs.scalar(.rs.explorer.objectType(object)),
-      desc = .rs.scalar(.rs.explorer.objectDesc(object))
+      type = .rs.scalar(.rs.explorer.objectType(.$object)),
+      desc = .rs.scalar(.rs.explorer.objectDesc(.$object))
    )
    
    # create inspection result
    list(
-      address    = .rs.scalar(.rs.objectAddress(object)),
-      type       = .rs.scalar(typeof(object)),
-      class      = class(object),
-      length     = .rs.scalar(length(object)),
+      address    = .rs.scalar(.rs.objectAddress(.$object)),
+      type       = .rs.scalar(typeof(.$object)),
+      class      = class(.$object),
+      length     = .rs.scalar(length(.$object)),
       access     = .rs.scalar(access),
-      recursive  = .rs.scalar(is.recursive(object)),
+      recursive  = .rs.scalar(is.recursive(.$object)),
       expandable = .rs.scalar(expandable),
-      atomic     = .rs.scalar(is.atomic(object)),
-      named      = .rs.scalar(!is.null(names(object))),
-      s4         = .rs.scalar(isS4(object)),
+      atomic     = .rs.scalar(is.atomic(.$object)),
+      named      = .rs.scalar(!is.null(names(.$object))),
+      s4         = .rs.scalar(s4),
       tags       = as.character(tags),
       display    = display,
       attributes = attributes,
@@ -424,6 +435,11 @@
 .rs.addFunction("explorer.inspectObject", function(object,
                                                    context = .rs.explorer.createContext())
 {
+   # check for missingness (can occur when inspecting an object
+   # recursively that contain keys which map to missing objects)
+   if (missing(object) || identical(object, quote(expr = )))
+      return(.rs.explorer.createInspectionResult(quote(expr = ), context))
+   
    # check for a custom registered inspector for this object's class
    result <- .rs.explorer.callCustomInspector(object, context)
    if (!is.null(result))
@@ -525,9 +541,19 @@
       
       children <- lapply(keys, function(key)
       {
-         value <- object[[key]]
+         # we need special handling for '...'
+         if (inherits(object[[key]], "..."))
+         {
+            value <- eval(quote(pairlist(...)), envir = object)
+            access <- sprintf("eval(quote(pairlist(...)), envir = #)")
+         }
+         else
+         {
+            value <- object[[key]]
+            access <- sprintf("#[[\"%s\"]]", key)
+         }
+         
          name <- key
-         access <- sprintf("#[[\"%s\"]]", key)
          tags <- character()
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
          result <- .rs.explorer.inspectObject(value, childContext)
@@ -760,7 +786,10 @@
    }
    else if (is.symbol(object))
    {
-      output <- .rs.surround(object, with = "`")
+      output <- if (identical(object, quote(expr = )))
+         "<missing>"
+      else
+         .rs.surround(object, with = "`")
       more <- FALSE
    }
    else if (is.data.frame(object))
@@ -773,6 +802,11 @@
          "data.frame"
       
       output <- sprintf(fmt, name, nrow(object), ncol(object))
+      more <- FALSE
+   }
+   else if (is.pairlist(object))
+   {
+      output <- sprintf("Pairlist of length %i", length(object))
       more <- FALSE
    }
    else if (is.list(object))
@@ -833,9 +867,9 @@
       output <- sprintf("S4 object of class %s", class(object))
       more <- FALSE
    }
-   else if (inherits(object, "externalptr"))
+   else if (.rs.isExternalPointer(object))
    {
-      output <- capture.output(print(unclass(object)))
+      output <- capture.output(base::print.default(object))
       more <- FALSE
    }
    

@@ -70,7 +70,10 @@ public:
    // Does this process have any subprocesses? True if there are
    // subprocesses, if it hasn't been checked yet, or if the process
    // isn't configured to check for subprocesses.
-   virtual bool hasSubprocess() const;
+   virtual bool hasNonWhitelistSubprocess() const;
+
+   // Does this process have any subprocesses that match the whitelist?
+   virtual bool hasWhitelistSubprocess() const;
 
    // What is current working directory of this process? Empty if unknown
    // or not configured to track cwd.
@@ -218,7 +221,8 @@ public:
    // override of terminate (allow special handling for unix pty termination)
    virtual Error terminate();
 
-   virtual bool hasSubprocess() const;
+   virtual bool hasNonWhitelistSubprocess() const;
+   virtual bool hasWhitelistSubprocess() const;
    virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
 

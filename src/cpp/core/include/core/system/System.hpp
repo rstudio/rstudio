@@ -162,6 +162,8 @@ private:
    ErrorLocation location_;
 };
 
+// set $HOME to $USERPROFILE
+void setHomeToUserProfile(core::system::Options* pChildEnv);
 
 #endif
 
@@ -276,8 +278,14 @@ void abort();
 
 Error terminateProcess(PidType pid);
 
-// Returns true if pid has one or more subprocesses
-bool hasSubprocesses(PidType pid);
+struct SubprocInfo
+{
+   PidType pid;
+   std::string exe;
+};
+
+// Return list of child processes, by executable filename and pid
+std::vector<SubprocInfo> getSubprocesses(PidType pid);
 
 // Get current-working directory of a process; returns empty FilePath
 // if unable to determine cwd

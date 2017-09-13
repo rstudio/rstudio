@@ -28,16 +28,20 @@ if(EXISTS "/etc/redhat-release")
 endif()
 
 
-# detect Xenial (Ubuntu 16) if package variant not explicitly provided
+# detect Xenial (Ubuntu 16) or debian 9 if package variant not explicitly provided
 if(RSTUDIO_PACKAGE_VARIANT STREQUAL "")
    find_program(LSB_RELEASE_EXEC lsb_release)
    if(LSB_RELEASE_EXEC)
-       exec_program(lsb_release ARGS -r 
-                    OUTPUT_VARIABLE UBUNTU_VER)
-       string(FIND "${UBUNTU_VER}" "16.04" UBUNTU_VER_POS)
-       if (UBUNTU_VER_POS GREATER 0)
-           set(RSTUDIO_PACKAGE_VARIANT "xenial")
-       endif()
+      exec_program(lsb_release ARGS -r 
+                   OUTPUT_VARIABLE LSB_VER)
+      string(FIND "${LSB_VER}" "16.04" XENIAL_VER_POS)
+      if(XENIAL_VER_POS GREATER 0)
+         set(RSTUDIO_PACKAGE_VARIANT "xenial")
+      endif()
+      string(FIND "${LSB_VER}" "9.0" STRETCH_VER_POS)
+      if(STRETCH_VER_POS GREATER 0)
+         set(RSTUDIO_PACKAGE_VARIANT "stretch")
+      endif()
    endif()
 endif()
 
@@ -106,6 +110,8 @@ if(RSTUDIO_SERVER)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
    elseif(RSTUDIO_PACKAGE_VARIANT STREQUAL "xenial")
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}xenial-")
+   elseif(RSTUDIO_PACKAGE_VARIANT STREQUAL "stretch")
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}stretch-")
    elseif(IS_RHEL_5)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
    elseif(IS_RHEL) 

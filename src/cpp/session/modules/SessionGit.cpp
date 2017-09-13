@@ -122,8 +122,7 @@ core::system::ProcessOptions procOptions()
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   core::system::setHomeToUserProfile(&childEnv);
 #endif
 
    // set custom environment
@@ -1678,8 +1677,6 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 Error vcsCheckout(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string id;
    Error error = json::readParams(request.params, &id);
    if (error)
@@ -1698,8 +1695,6 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit scope;
-   
    std::string branch, remote;
    Error error = json::readParams(request.params, &branch, &remote);
    if (error)
@@ -1774,8 +1769,6 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
 Error vcsCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string commitMsg;
    bool amend, signOff;
    Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
@@ -3218,11 +3211,14 @@ core::Error initialize()
    }
    else
    {
-#ifdef _WIN32
+#if defined(_WIN32)
       // Windows probably unlikely to have either ssh-agent or askpass
       interceptAskPass = true;
+#elif defined(__APPLE__)
+      // newer versions of macOS no longer provide ssh-askpass
+      interceptAskPass = core::system::getenv("SSH_ASKPASS").empty();
 #else
-      // Everything fine on Mac and Linux
+      // Everything fine on Linux
       interceptAskPass = false;
 #endif
    }

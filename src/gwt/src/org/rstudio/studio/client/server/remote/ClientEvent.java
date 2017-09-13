@@ -163,12 +163,15 @@ class ClientEvent extends JavaScriptObject
    public static final String ObjectExplorerEvent = "object_explorer_event";
    public static final String SendToTerminal = "send_to_terminal";
    public static final String ClearTerminal = "clear_terminal";
-   public static final String CreateNamedTerminal = "create_named_terminal";
+   public static final String AddTerminal = "add_terminal";
+   public static final String RemoveTerminal = "remove_terminal";
    public static final String ActivateTerminal = "activate_terminal";
    public static final String TerminalCwd = "terminal_cwd";
    public static final String AdminNotification = "admin_notification";
    public static final String RequestDocumentSave = "request_document_save";
    public static final String RequestOpenProject = "request_open_project";
+   public static final String OpenFileDialog = "open_file_dialog";
+   public static final String ShowPageViewer = "show_page_viewer";
    
    protected ClientEvent()
    {

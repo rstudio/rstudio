@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -167,6 +167,8 @@ public abstract class
    public abstract AppCommand pasteLastYank();
    public abstract AppCommand insertAssignmentOperator();
    public abstract AppCommand insertPipeOperator();
+   public abstract AppCommand openNextFileOnFilesystem();
+   public abstract AppCommand openPreviousFileOnFilesystem();
  
    // Projects
    public abstract AppCommand newProject();
@@ -360,6 +362,7 @@ public abstract class
    public abstract AppCommand packratBundle();
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
+   public abstract AppCommand packratCheckStatus();
 
    // Version control
    public abstract AppCommand versionControlHelp();
@@ -393,6 +396,8 @@ public abstract class
    public abstract AppCommand nextTerminal();
    public abstract AppCommand showTerminalInfo();
    public abstract AppCommand interruptTerminal();
+   public abstract AppCommand sendTerminalToEditor();
+   public abstract AppCommand sendToTerminal();
     
    // Help
    public abstract AppCommand helpBack();

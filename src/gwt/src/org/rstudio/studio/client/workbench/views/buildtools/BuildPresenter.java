@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter 
 {
@@ -93,7 +94,8 @@ public class BuildPresenter extends BasePresenter
                          FileTypeRegistry fileTypeRegistry,
                          Session session,
                          DependencyManager dependencyManager,
-                         SourceBuildHelper sourceBuildHelper)
+                         SourceBuildHelper sourceBuildHelper,
+                         TerminalHelper terminalHelper)
    {
       super(display);
       view_ = display;
@@ -105,6 +107,7 @@ public class BuildPresenter extends BasePresenter
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
       sourceBuildHelper_ = sourceBuildHelper;
+      terminalHelper_ = terminalHelper;
       session_ = session;
       dependencyManager_ = dependencyManager;
         
@@ -341,6 +344,24 @@ public class BuildPresenter extends BasePresenter
    
    private void executeBuild(final String type, final String subType)
    {
+      if (type != "build-all" && type != "rebuild-all")
+      {
+         executeBuildNoBusyCheck(type, subType);
+         return;
+      }
+      
+      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
+         @Override
+         public void execute()
+         {
+            executeBuildNoBusyCheck(type, subType);
+         }
+      }, "Build", "Terminal jobs will be terminated. Are you sure?", 
+            uiPrefs_.terminalBusyMode().getValue());
+   }
+
+   private void executeBuildNoBusyCheck(final String type, final String subType)
+   {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
       workbenchContext_.setBuildInProgress(true);
@@ -349,25 +370,25 @@ public class BuildPresenter extends BasePresenter
          public void execute()
          {
             server_.startBuild(type, subType, 
-                               new SimpleRequestCallback<Boolean>() {
+                  new SimpleRequestCallback<Boolean>() {
                @Override
                public void onResponseReceived(Boolean response)
                {
 
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   super.onError(error);
                   workbenchContext_.setBuildInProgress(false);
                }
-              
+
             });
          }
       }, "Build");
    }
-   
+
    void onStopBuild()
    {
        server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
@@ -433,4 +454,5 @@ public class BuildPresenter extends BasePresenter
    private final FileTypeRegistry fileTypeRegistry_;
    private final SourceBuildHelper sourceBuildHelper_;
    private final WorkbenchContext workbenchContext_;
+   private final TerminalHelper terminalHelper_;
 }

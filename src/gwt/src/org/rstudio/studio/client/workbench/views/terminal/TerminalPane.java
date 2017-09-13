@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -39,10 +41,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter.Display;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
@@ -77,8 +80,7 @@ public class TerminalPane extends WorkbenchPane
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
-                                     TerminalSubprocEvent.Handler,
-                                     TerminalCwdEvent.Handler
+                                     TerminalSubprocEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -100,7 +102,6 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
-      events_.addHandler(TerminalCwdEvent.TYPE, this);
 
       events.addHandler(RestartStatusEvent.TYPE, 
                           new RestartStatusEvent.Handler()
@@ -162,8 +163,9 @@ public class TerminalPane extends WorkbenchPane
       commands_.closeTerminal().setEnabled(false);
       commands_.renameTerminal().setEnabled(false);
       commands_.clearTerminalScrollbackBuffer().setEnabled(false);
-      commands_.showTerminalInfo().setEnabled(false);
+      commands_.showTerminalInfo().setEnabled(true);
       commands_.interruptTerminal().setEnabled(false);
+      commands_.sendTerminalToEditor().setEnabled(false);
 
       return toolbar;
    }
@@ -190,7 +192,7 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  if (!visibleTerminal.altBufferActive())
+                  if (!visibleTerminal.xtermAltBufferActive())
                   {
                      // not running a full-screen program
                      interruptable = true;
@@ -216,9 +218,23 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onSelected()
    {
-      // terminal tab was selected
       super.onSelected();
-      ensureTerminal();
+      
+      if (selectedCallback_ != null)
+      {
+         // terminal tab was shown programatically
+         selectedCallback_.displaySelected();
+         selectedCallback_ = null;
+      }
+      else
+      {
+         // user clicked the tab
+
+         // if terminal is not selected, and the tab "X" is clicked, the tab receives
+         // onSelected but in this case we don't want to create a new terminal
+         if (!closingAll_)
+            ensureTerminal(null);
+      }
    }
 
    @Override
@@ -252,66 +268,135 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateTerminal()
+   public void activateTerminal(DisplaySelectedCallback callback)
    {
-      ensureVisible();
+      selectedCallback_ = callback;
+      setShowTerminalPref(true);
+      closingAll_ = false;
       bringToFront();
    }
 
-   private void ensureTerminal()
+   @Override
+   public void ensureTerminal()
+   {
+      ensureTerminal(null);
+   }
+   
+   /**
+    * Ensure there's a terminal available, and optionally send text to it when ready. 
+    * @param postCreateText text to send, may be null
+    */
+   private void ensureTerminal(String postCreateText)
    {
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal();
+         createTerminal(postCreateText);
+         return;
       }
-      else if (getSelectedTerminal() == null)
+
+      TerminalSession terminal = getSelectedTerminal();
+      if (terminal == null)
       {
          // No terminal loaded, load the first terminal in the list
          String handle = terminals_.terminalHandleAtIndex(0);
-         if (handle != null)
+         if (handle == null)
          {
-            events_.fireEvent(new SwitchToTerminalEvent(handle));
+            Debug.log("Unexpected null terminal handle");
+            return;
          }
+         events_.fireEvent(new SwitchToTerminalEvent(handle, postCreateText));
+         return;
       }
       else
       {
          setFocusOnVisible();
+         terminal.receivedSendToTerminal(postCreateText);
       }
    }
 
    @Override
-   public void createTerminal()
+   public void createTerminal(final String postCreateText)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
-      terminals_.createNewTerminal();
-   }
-
-   @Override
-   public void createNamedTerminal(String caption)
-   {
-      if (creatingTerminal_)
-         return;
-
-      creatingTerminal_ = true;
-      
-      if (!terminals_.createNamedTerminal(caption))
+      terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
       {
-         // Name was not available. 
-         creatingTerminal_ = false;
-      }
+         @Override
+         public void onSuccess(Boolean connected)
+         {
+            TerminalSession terminal = getSelectedTerminal(); 
+            if (terminal == null) 
+            { 
+               Debug.log("No selected terminal after creation"); 
+               return; 
+            } 
+            terminal.receivedSendToTerminal(postCreateText);
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.log(msg);
+            creatingTerminal_ = false;
+         }
+      });
    }
 
    @Override
-   public void activateNamedTerminal(String caption)
+   public void addTerminal(ConsoleProcessInfo cpi, boolean hasSession)
+   {
+      terminals_.addTerminal(cpi, hasSession);
+   }
+
+   @Override
+   public void removeTerminal(String handle)
+   {
+      // rstudioapi::terminalKill has already killed the process and reaped it.
+
+      // If the terminal being removed was loaded in the UI, and is currently selected,
+      // figure out which terminal to switch to.
+      String newTerminalHandle = null;
+      boolean didCloseCurrent = false;
+      TerminalSession visibleTerminalWidget = getSelectedTerminal();
+      TerminalSession killedTerminalWidget = loadedTerminalWithHandle(handle);
+      if (visibleTerminalWidget != null && killedTerminalWidget != null && 
+            (visibleTerminalWidget == killedTerminalWidget))
+      {
+         didCloseCurrent = true;
+         newTerminalHandle = terminalToShowWhenClosing(handle);
+         if (newTerminalHandle != null)
+         {
+            events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null));
+         }
+      }
+
+      // Remove terminated terminal from dropdown
+      terminals_.removeTerminal(handle);
+
+      // If terminal was loaded, remove its pane.
+      if (killedTerminalWidget != null)
+      {
+         terminalSessionsPanel_.remove(killedTerminalWidget);
+      }
+
+      if (newTerminalHandle == null && didCloseCurrent)
+      {
+         activeTerminalToolbarButton_.setNoActiveTerminal();
+         setTerminalTitle("");
+      }
+      updateTerminalToolbar();
+   }
+
+   @Override
+   public void activateNamedTerminal(String caption, boolean createdByApi)
    {
       if (StringUtil.isNullOrEmpty(caption))
          return;
       
-      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption);
+      activeTerminalToolbarButton_.setActiveTerminalByCaption(caption, createdByApi);
    }
 
    @Override
@@ -330,7 +415,7 @@ public class TerminalPane extends WorkbenchPane
       // connected until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
       {
-         terminals_.addTerminal(procInfo);
+         terminals_.addTerminal(procInfo, false /*hasSession*/);
       }
    }
 
@@ -391,6 +476,9 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void terminateAllTerminals()
    {
+      setShowTerminalPref(false);
+      closingAll_ = true;
+      
       // kill any terminal server processes, and remove them from the server-
       // side list of known processes, and client-side list
       terminals_.terminateAll();
@@ -469,12 +557,29 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void sendToTerminal(String text, String caption)
+   public void sendToTerminal(final String text, boolean setFocus)
    {
-      final TerminalSession terminal = getTerminalWithCaption(caption);
-      if (text == null || terminal == null)
+      if (StringUtil.isNullOrEmpty(text))
          return;
-      terminal.receivedInput(text);
+
+      suppressAutoFocus_ = !setFocus;
+      activateTerminal(new Display.DisplaySelectedCallback()
+      {
+         @Override
+         public void displaySelected()
+         {
+            ensureTerminal(text);
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  suppressAutoFocus_ = false;
+               }
+            });
+         }
+      });
+      
    }
 
    @Override
@@ -492,13 +597,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void showTerminalInfo()
    {
-      final TerminalSession visibleTerminal = getSelectedTerminal();
-      if (visibleTerminal == null)
-      {
-         return;
-      }
-
-      visibleTerminal.showTerminalInfo();
+      new TerminalInfoDialog(debug_dumpTerminalContext(), getSelectedTerminal()).showModal();
    }
    
    @Override
@@ -512,6 +611,85 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.interruptTerminal();
    }
    
+   @Override
+   public void sendTerminalToEditor()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+ 
+      visibleTerminal.getBuffer(true /*stripAnsi*/, new ResultCallback<String, String>()
+      {
+         @Override
+         public void onSuccess(String buffer)
+         {
+            if (buffer.isEmpty())
+               return;
+
+            // open a new tab for the terminal buffer copy
+            events_.fireEvent(new NewWorkingCopyEvent(FileTypeRegistry.TEXT,
+                  null /*path*/,
+                  buffer));
+         }
+         
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.log(msg);
+         }
+      });
+   }
+   
+   public String debug_dumpTerminalContext()
+   {
+      StringBuilder dump = new StringBuilder();
+
+      if (terminalSessionsPanel_ != null)
+      {
+         int total = getLoadedTerminalCount();
+         dump.append("Loaded TerminalSessions: ");
+         dump.append(total);
+         dump.append("\n");
+         for (int i = 0; i < total; i++)
+         {
+            TerminalSession session = getLoadedTerminalAtIndex(i);
+            if (session == null)
+            {
+               dump.append("null\n");
+            }
+            else
+            {
+               dump.append("Handle: '");
+               String handle = session.getHandle();
+               if (handle == null)
+               {
+                  dump.append("null");
+               }
+               else
+               {
+                  dump.append(handle);
+               }
+               dump.append("' Caption: '");
+               String caption = session.getCaption();
+               if (caption == null)
+               {
+                  dump.append("null");
+               }
+               else
+               {
+                  dump.append(caption);
+               }
+               dump.append("'\n");
+            }
+         }
+         
+         dump.append("\n");
+         dump.append(terminals_.debug_dumpTerminalList());
+      }
+      
+      return dump.toString();
+   }
+
    /**
     * Rename the currently visible terminal (client-side only).
     * 
@@ -525,13 +703,11 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // The caption lives in multiple places:
-      // (1) the TerminalSession for connected terminals
-      // (2) the dropdown menu label
-      // (3) the TerminalMetadata held in terminals_
-      visibleTerminal.setCaption(newCaption);
+      // (1) the dropdown menu label
+      // (2) the ConsoleProcessInfo held in terminals_
       activeTerminalToolbarButton_.setActiveTerminal(
             newCaption, visibleTerminal.getHandle());
-      terminals_.addTerminal(visibleTerminal);
+      terminals_.setCaption(visibleTerminal.getHandle(), newCaption);
    }
 
    @Override
@@ -561,8 +737,9 @@ public class TerminalPane extends WorkbenchPane
     * Cleanup after process with given handle has terminated.
     * @param handle identifier for process that exited
     * @param processExited true if process exited on server; false if client-side is forcing exit
+    * @param exitCode exit code if known (-1 if not known)
     */
-   private void cleanupAfterTerminate(String handle, boolean processExited)
+   private void cleanupAfterTerminate(String handle, boolean processExited, int exitCode)
    {
       if (terminals_.indexOfTerminal(handle) == -1)
       {
@@ -591,13 +768,16 @@ public class TerminalPane extends WorkbenchPane
 
          if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_NEVER)
          {
+            terminals_.setExitCode(handle, exitCode);
+            terminals_.setZombie(handle, true);
             TerminalSession terminal = loadedTerminalWithHandle(handle);
             if (terminal != null)
             {
                terminal.showZombieMessage();
                terminal.disconnect(true /*permanent*/);
-               server_.processSetZombie(handle,  new VoidServerRequestCallback());
             }
+
+            events_.fireEvent(new TerminalSubprocEvent(handle, false));
             return;
          }
       }
@@ -606,7 +786,7 @@ public class TerminalPane extends WorkbenchPane
       String newTerminalHandle = terminalToShowWhenClosing(handle);
       if (newTerminalHandle != null)
       {
-         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle));
+         events_.fireEvent(new SwitchToTerminalEvent(newTerminalHandle, null));
       }
       
       // Remove terminated terminal from dropdown
@@ -632,38 +812,51 @@ public class TerminalPane extends WorkbenchPane
    public void onServerProcessExit(ServerProcessExitEvent event)
    {
       // Notification from server that a process exited.
-      cleanupAfterTerminate(event.getProcessHandle(), true);
+      cleanupAfterTerminate(event.getProcessHandle(), true, event.getExitCode());
    }
 
    @Override
    public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
    {
       // Notification from a TerminalSession that it is being forcibly closed.
-      cleanupAfterTerminate(event.getTerminalWidget().getHandle(), false);
+      cleanupAfterTerminate(event.getTerminalWidget().getHandle(), false, -1);
    }
 
    @Override
-   public void onSwitchToTerminal(SwitchToTerminalEvent event)
+   public void onSwitchToTerminal(final SwitchToTerminalEvent event)
    {
-      String handle = event.getTerminalHandle();
-
       // If terminal was already loaded, just make it visible
-      TerminalSession terminal = loadedTerminalWithHandle(handle);
+      TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
       if (terminal != null)
       {
          showTerminalWidget(terminal);
          setFocusOnVisible();
          ensureConnected(terminal); // needed after session suspend/resume
+         terminal.receivedSendToTerminal(event.getInputText());
          return;
       }
 
       // Reconnect to server?
-      if (terminals_.reconnectTerminal(handle))
+      terminals_.reconnectTerminal(event.getTerminalHandle(), event.createdByApi(),
+            new ResultCallback<Boolean, String>()
       {
-         return;
-      }
-
-      Debug.logWarning("Tried to switch to unknown terminal handle");
+         @Override 
+         public void onSuccess(Boolean connected)  
+         { 
+            TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle()); 
+            if (terminal == null) 
+            { 
+               Debug.log("Terminal not found after switching"); 
+               return; 
+            } 
+            terminal.receivedSendToTerminal(event.getInputText()); 
+         } 
+         @Override 
+         public void onFailure(String msg) 
+         { 
+            Debug.log(msg); 
+         } 
+      });
    }
 
    @Override
@@ -782,6 +975,9 @@ public class TerminalPane extends WorkbenchPane
    {
       if (StringUtil.isNullOrEmpty(caption))
       {
+         if (terminalSessionsPanel_ == null)
+            return null;
+         
          Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
          if (visibleWidget instanceof TerminalSession)
          {
@@ -807,7 +1003,8 @@ public class TerminalPane extends WorkbenchPane
             TerminalSession visibleTerminal = getSelectedTerminal();
             if (visibleTerminal != null)
             {
-               visibleTerminal.setFocus(true);
+               if (!suppressAutoFocus_)
+                  visibleTerminal.setFocus(true);
                activeTerminalToolbarButton_.setActiveTerminal(
                      visibleTerminal.getCaption(), visibleTerminal.getHandle());
                setTerminalTitle(visibleTerminal.getTitle());
@@ -868,7 +1065,19 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void execute()
          {
-            terminal.connect();
+            terminal.connect(new ResultCallback<Boolean, String>()
+            {
+               @Override
+               public void onSuccess(Boolean connected) 
+               {
+               }
+
+               @Override
+               public void onFailure(String msg)
+               {
+                  Debug.log(msg);
+               }
+            });
          }
       });
    }
@@ -881,16 +1090,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.setHasChildProcs(event.hasSubprocs());
       }
-   }
-
-   @Override
-   public void onTerminalCwd(TerminalCwdEvent event)
-   {
-      TerminalSession terminal = loadedTerminalWithHandle(event.getHandle());
-      if (terminal != null)
-      {
-         terminal.setCwd(event.getCwd());
-      }
+      updateTerminalToolbar();
    }
 
    private void showTerminalWidget(TerminalSession terminal)
@@ -939,6 +1139,15 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
+   private void setShowTerminalPref(boolean show)
+   {
+      if (uiPrefs_.showTerminalTab().getValue() != show)
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(show);
+         uiPrefs_.writeUIPrefs();
+      }
+   }
+
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
@@ -949,6 +1158,9 @@ public class TerminalPane extends WorkbenchPane
    ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
    private boolean isRestartInProgress_;
+   private boolean closingAll_;
+   private boolean suppressAutoFocus_;
+   private DisplaySelectedCallback selectedCallback_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;

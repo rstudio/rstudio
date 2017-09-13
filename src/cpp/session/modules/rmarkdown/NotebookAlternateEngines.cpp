@@ -136,7 +136,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
    
    // prepare cache output file (use tempfile on failure)
-   FilePath targetPath = module_context::tempFile("rcpp-cache", "");
+   FilePath targetPath = module_context::tempFile("rcpp-cache", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
    if (error)
       LOG_ERROR(error);
@@ -213,7 +213,7 @@ Error executeStanEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
    
    // prepare console output file -- use tempfile on failure
-   FilePath targetPath = module_context::tempFile("stan-cache-", "");
+   FilePath targetPath = module_context::tempFile("stan-cache-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
    if (error)
       LOG_ERROR(error);
@@ -227,7 +227,7 @@ Error executeStanEngineChunk(const std::string& docId,
                         targetPath)); 
    
    // write code to file
-   FilePath tempFile = module_context::tempFile("stan-", ".stan");
+   FilePath tempFile = module_context::tempFile("stan-", "stan");
    error = writeStringToFile(tempFile, code + "\n");
    if (error)
    {
@@ -357,7 +357,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
 
    // prepare console output file -- use tempfile on failure
-   FilePath consolePath = module_context::tempFile("data-console-", "");
+   FilePath consolePath = module_context::tempFile("data-console-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &consolePath);
    if (error)
       LOG_ERROR(error);

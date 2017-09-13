@@ -1,7 +1,7 @@
 /*
  * Packages.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -80,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
+import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.CleanUnusedDialog;
 
@@ -88,7 +88,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -116,8 +115,6 @@ public class Packages
   
       void setObserver(PackagesDisplayObserver observer) ;
       void setProgress(boolean showProgress);
-      
-      void setActions(ArrayList<Action> actions);
    }
    
    @Inject
@@ -586,6 +583,50 @@ public class Packages
             });
    }
    
+   @Handler
+   public void onPackratCheckStatus()
+   {
+      packratServer_.getPackratActions(new ServerRequestCallback<PackratActions>()
+      {
+         @Override
+         public void onResponseReceived(PackratActions actions)
+         {
+            if (actions.getRestoreActions().length() > 0 &&
+                actions.getSnapshotActions().length() > 0)
+            {
+               // restore/snapshot both present -- need to pick one
+               resolvePackratConflicts(
+                     actions.getRestoreActions(),
+                     actions.getSnapshotActions());
+            }
+            else if (actions.getRestoreActions().length() > 0)
+            {
+               confirmPackratActions(actions.getRestoreActions(),
+                                     "Restore", "restore");
+            }
+            else if (actions.getSnapshotActions().length() > 0)
+            {
+               confirmPackratActions(actions.getSnapshotActions(),
+                                     "Snapshot", "snapshot");
+            }
+            else 
+            {
+               // no restore actions or snapshot actions
+               globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+                     "Up to Date", 
+                     "The Packrat library is up to date.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error checking Packrat library status", 
+                  error.getMessage());
+         }
+      });
+   }
+   
    public void removePackage(final PackageInfo packageInfo)
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -1036,126 +1077,6 @@ public class Packages
             }).showModal();
    }
    
-   private void setViewActions(final PackageState packageState)
-   {
-      ArrayList<Action> actions = new ArrayList<Action>();
-      // if we have both restore and snapshot actions possible, we need to 
-      // have the user manually pick one
-      if (packageState.getRestoreActions().length() > 0 &&
-          packageState.getSnapshotActions().length() > 0)
-      {
-         ArrayList<PackratPackageAction> allActions = 
-                 new ArrayList<PackratPackageAction>();
-         JsArrayUtil.fillList(packageState.getRestoreActions(), allActions);
-         JsArrayUtil.fillList(packageState.getSnapshotActions(), allActions);
-         actions.add(new Action(conflictMessageFromActions(allActions),
-               "Resolve...",
-               new Command() 
-               {
-                  @Override
-                  public void execute()
-                  {
-                     resolvePackratConflicts(
-                           packageState.getRestoreActions(),
-                           packageState.getSnapshotActions());
-                  }
-               }));
-      }
-      else if (packageState.getRestoreActions().length() > 0) 
-      {
-         actions.add(new Action(messageFromActions(
-               packageState.getRestoreActions()),
-               "Update Library...", 
-               new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     confirmPackratActions(packageState.getRestoreActions(),
-                                           "Restore", "restore");
-                  }
-               }));
-      }
-      else if (packageState.getSnapshotActions().length() > 0) 
-      {
-         actions.add(new Action(messageFromActions(
-               packageState.getSnapshotActions()),
-               "Update Packrat...", 
-               new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     confirmPackratActions(packageState.getSnapshotActions(),
-                                           "Snapshot", "snapshot");
-                  }
-               }));
-      }
-      view_.setActions(actions);
-   }
-   
-   private String conflictMessageFromActions(List<PackratPackageAction> actions)
-   {
-      // count the unique packages involved
-      Set<String> packageNames = new TreeSet<String>();
-      for (PackratPackageAction action: actions)
-      {
-         packageNames.add(action.getPackage());
-      }
-      
-      if (packageNames.size() == 1)
-         return "Package '" + actions.get(0).getPackage() + "' out of sync";
-      else
-         return packageNames.size() + " packages out of sync";
-   }
-   
-   private String messageFromActions(JsArray<PackratPackageAction> actions)
-   {
-      if (actions.length() == 1)
-      {
-         // If there's just one action, show it
-         PackratPackageAction action = actions.get(0);
-         return StringUtil.capitalize(action.getAction()) + " '" + 
-                action.getPackage() + "'";
-      }
-      else
-      {
-         return summarizeActions(actions);
-      }
-   }
-   
-   private String summarizeActions(JsArray<PackratPackageAction> actions)
-   {
-      String summary = "";
-      Map<String, Integer> actionCounts = new TreeMap<String, Integer>();
-      for (int i = 0; i < actions.length(); i++)
-      {
-         PackratPackageAction action = actions.get(i);
-         String actionName = action.getAction();
-         if (actionCounts.containsKey(actionName))
-            actionCounts.put(actionName, actionCounts.get(actionName) + 1);
-         else 
-            actionCounts.put(actionName, 1);
-      }
-      String actionNames[] = actionCounts.keySet().toArray(new String[]{});
-      for (int i = 0; i < actionNames.length; i++)
-      {
-         String actionName = actionNames[i];
-         if (i == 0)
-            summary += StringUtil.capitalize(actionName);
-         else
-            summary += actionName;
-         summary += " ";
-         if (actionCounts.get(actionName).equals(1))
-            summary += "1 package";
-         else
-            summary += actionCounts.get(actionName) + " packages";
-         if (i < actionNames.length - 2)
-            summary += ", ";
-         if (i == actionNames.length - 2)
-            summary += ", and ";
-      }
-      return summary;
-   }
-
    private TreeMap<String, PackratPackageAction> createMapFromActions(
          JsArray<PackratPackageAction> actions)
    {
@@ -1241,22 +1162,11 @@ public class Packages
          }
       });
       
-      // mark packages out of sync if they have pending actions, and mark 
-      // which packages are first in their respective libraries
-      // (used later to render headers)
-      Set<String> outOfSyncPackages = new TreeSet<String>();
-      getPackageNamesFromActions(newState.getRestoreActions(), 
-                                 outOfSyncPackages);
-      getPackageNamesFromActions(newState.getSnapshotActions(),
-                                 outOfSyncPackages);
+      // Mark  which packages are first in their respective libraries (used
+      // later to render headers)
       PackageLibraryType libraryType = PackageLibraryType.None;
       for (PackageInfo pkgInfo: allPackages_)
       {
-         if (pkgInfo.getInPackratLibary() && 
-             outOfSyncPackages.contains(pkgInfo.getName()))
-         {
-            pkgInfo.setOutOfSync(true);
-         }
          PackageLibraryType pkgLibraryType = PackageLibraryUtils.typeOfLibrary(
                session_, pkgInfo.getLibrary());
          if (pkgLibraryType != libraryType)
@@ -1269,7 +1179,6 @@ public class Packages
       packratContext_ = newState.getPackratContext();
       view_.setProgress(false);
       setViewPackageList();
-      setViewActions(newState);
    }
    
    private void getPackageNamesFromActions(
