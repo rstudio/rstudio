@@ -226,6 +226,8 @@ public:
    bool reuseSessionsForProjectLinks() const;
    void setReuseSessionsForProjectLinks(bool reuse);
 
+   void syncConsoleColorEnv() const;
+
 private:
 
    void onSettingsFileChanged(
