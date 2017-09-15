@@ -57,9 +57,10 @@ capture.output({
       cppDiag <- paste("../bin/diagnostics", ext, sep="")
   }
   
-  if (file.exists(cppDiag))
+  if (file.exists(cppDiag)) {
     diag <- system(cppDiag, intern=TRUE)
-  cat(diag, sep="\n")
+    cat(diag, sep="\n")
+  }
   
   
 }, file=diagnosticsFile)

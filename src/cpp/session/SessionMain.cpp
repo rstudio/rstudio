@@ -1784,6 +1784,9 @@ int main (int argc, char * const argv[])
       if (!options.rDocDirOverride().empty())
          core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
+      // set ANSI support environment variable before running code from .Rprofile
+      userSettings().syncConsoleColorEnv();
+
       // r options
       rstudio::r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
