@@ -2727,21 +2727,19 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="buildAll"
-        label="Build and Reload"
-        buttonLabel="Build &amp; Reload"
-        menuLabel="_Build and Reload"
-        desc="Build and reload the package"
-        windowMode="background"/>
-        context="packageDevelopment"
-        windowMode="main"/>
+        label="Install and Restart"
+        buttonLabel="Install and Restart"
+        menuLabel="_Install and Restart"
+        desc="Install the package and restart R"
+        windowMode="main"
+        context="packageDevelopment"/>
 
    <cmd id="rebuildAll"
         label="Clean and Rebuild"
         menuLabel="Clean and _Rebuild"
         desc="Clean previous output and rebuild all"
-        windowMode="background"/>
-        context="packageDevelopment"
-        windowMode="main"/>
+        windowMode="main"
+        context="packageDevelopment"/>
 
    <cmd id="cleanAll"
         label="Clean All"
@@ -2783,7 +2781,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="testPackage"
         menuLabel="_Test Package"
         desc="Run tests for package"
-        windowMode="background"/>
+        windowMode="background"
         context="packageDevelopment"/>
 
    <cmd id="stopBuild"
