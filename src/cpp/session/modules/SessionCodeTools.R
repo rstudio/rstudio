@@ -329,18 +329,14 @@
       class <- substring(method, nchar(generic) + 2)
       
       call <- substitute(
-         utils::getS3method(generic, class),
+         utils::getS3method(generic, class, optional = TRUE),
          list(generic = generic, class = class)
       )
       
-      tryCatch(
-         eval(call, envir = globalenv()),
-         error = function(e) NULL
-      )
-      
+      eval(call, envir = globalenv())
    })
-   names(defns) <- rownames(info)
    
+   names(defns) <- rownames(info)
    defns
 })
 
