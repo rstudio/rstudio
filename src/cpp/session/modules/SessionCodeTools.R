@@ -269,6 +269,71 @@
    FALSE
 })
 
+.rs.addFunction("getUseMethodGeneric", function(x)
+{
+   if (is.function(x))
+      x <- body(x)
+   
+   if (!is.call(x))
+      return(NULL)
+   
+   UseMethod <- as.name("UseMethod")
+   generic <- NULL
+   .rs.recursiveSearch(x, function(node) {
+      
+      if (!is.call(node))
+         return(FALSE)
+      
+      lhs <- node[[1]]
+      if (!identical(lhs, UseMethod))
+         return(FALSE)
+      
+      generic <<- as.character(node[[2]])
+      TRUE
+   })
+   
+   generic
+})
+
+.rs.addFunction("getS3MethodDefinitions", function(generic)
+{
+   if (is.function(generic))
+      generic <- .rs.getUseMethodGeneric(generic)
+   
+   if (!is.character(generic))
+      return(NULL)
+   
+   call <- substitute(
+      methods(generic),
+      list(generic = generic)
+   )
+   
+   methods <- eval(call, envir = globalenv())
+   info <- attr(methods, "info")
+   if (!is.data.frame(info))
+      return(NULL)
+   
+   defns <- lapply(seq_len(nrow(info)), function(i) {
+      method <- rownames(info)[[i]]
+      generic <- info$generic[[i]]
+      class <- substring(method, nchar(generic) + 2)
+      
+      call <- substitute(
+         utils::getS3method(generic, class),
+         list(generic = generic, class = class)
+      )
+      
+      tryCatch(
+         eval(call, envir = globalenv()),
+         error = function(e) NULL
+      )
+      
+   })
+   names(defns) <- rownames(info)
+   
+   defns
+})
+
 .rs.addFunction("getS3MethodsForFunction", function(func, envir = parent.frame())
 {
   tryCatch({
@@ -1246,11 +1311,9 @@
          .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
       })
       
-      # Figure out which functions perform NSE. TODO: Figure out which
-      # arguments are actually involved in NSE.
-      performsNse <- as.integer(
-         .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
-      )
+      # Figure out which functions perform NSE.
+      # TODO: Figure out which arguments are actually involved in NSE.
+      performsNse <- .rs.performsNonstandardEvaluation(f)
       
       formalInfo <- lapply(seq_along(formalNames), function(i) {
          as.integer(c(
@@ -1263,7 +1326,7 @@
       list(
          formal_names = formalNames,
          formal_info  = formalInfo,
-         performs_nse = I(performsNse)
+         performs_nse = I(as.integer(performsNse))
       )
    })
    
@@ -1285,17 +1348,24 @@
 
 .rs.setVar("nse.primitives", c(
    "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq", "lazy_dots"
+   "enquote", "bquote", "evalq", "lazy_dots", "compat_as_lazy_dots",
+   "select_vars", "quo", "quos", "enquo", "named_quos"
 ))
 
-.rs.addFunction("performsNonstandardEvaluation", function(functionBody)
+.rs.addFunction("performsNonstandardEvaluation", function(object)
 {
-   # Allow callers to just pass in functions
-   if (is.function(functionBody))
-      functionBody <- body(functionBody)
+   # For S3 generics, search methods as well as the generic for
+   # potential usages of non-standard evaluation.
+   methods <- .rs.getS3MethodDefinitions(object)
+   for (method in methods)
+      if (.rs.performsNonstandardEvaluation(method))
+         return(TRUE)
+   
+   if (is.function(object))
+      object <- body(object)
    
    nsePrimitives <- .rs.getVar("nse.primitives")
-   .rs.recursiveSearch(functionBody,
+   .rs.recursiveSearch(object,
                        .rs.performsNonstandardEvaluationImpl,
                        nsePrimitives = nsePrimitives)
 })
