@@ -281,15 +281,25 @@
    generic <- NULL
    .rs.recursiveSearch(x, function(node) {
       
-      if (!is.call(node))
+      if (!is.call(node) || length(node) < 2 || length(node) > 3)
          return(FALSE)
       
       lhs <- node[[1]]
       if (!identical(lhs, UseMethod))
          return(FALSE)
       
-      generic <<- as.character(node[[2]])
-      TRUE
+      matched <- tryCatch(
+         match.call(function(generic, object) {}, node),
+         error = function(e) NULL
+      )
+      
+      if (is.character(matched[["generic"]]))
+      {
+         generic <<- matched[["generic"]]
+         return(TRUE)
+      }
+      
+      FALSE
    })
    
    generic
