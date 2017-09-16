@@ -134,7 +134,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void openTerminal(String terminalPath,
                      String workingDirectory,
-                     String extraPathEntries);
+                     String extraPathEntries,
+                     int shellType);
 
    String getFixedWidthFontList();
    String getFixedWidthFont();

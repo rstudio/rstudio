@@ -885,6 +885,7 @@ private:
 - (void) openTerminal: (NSString*) terminalPath
          workingDirectory: (NSString*) workingDirectory
          extraPathEntries: (NSString*) extraPathEntries
+         shellType: (int) shellType
 {
    // append extra path entries to our path before launching
    if ([extraPathEntries length] > 0)
