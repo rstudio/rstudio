@@ -127,7 +127,8 @@ public class JavaScriptObject {
   }
 
   /**
-   * Returns <code>true</code> if the objects are JavaScript identical
+   * Calls a native JS <code>equals</code> method if any, otherwise
+   * returns <code>true</code> if the objects are JavaScript identical
    * (triple-equals).
    */
   @Override
@@ -139,7 +140,8 @@ public class JavaScriptObject {
   }
 
   /**
-   * Uses a monotonically increasing counter to assign a hash code to the
+   * Calls a native JS <code>hashCode</code> method if any, otherwise
+   * uses a monotonically increasing counter to assign a hash code to the
    * underlying JavaScript object. Do not call this method on non-modifiable
    * JavaScript objects.
    *
