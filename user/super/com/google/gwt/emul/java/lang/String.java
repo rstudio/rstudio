@@ -718,7 +718,7 @@ public final class String implements Comparable<String>, CharSequence,
 
   // See the notes in lowerCase pair.
   public String toUpperCase() {
-    return asNativeString().toLocaleUpperCase();
+    return asNativeString().toUpperCase();
   }
 
   // See the notes in lowerCase pair.
