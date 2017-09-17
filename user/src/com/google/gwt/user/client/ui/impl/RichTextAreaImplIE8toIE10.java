@@ -35,7 +35,7 @@ public class RichTextAreaImplIE8toIE10 extends RichTextAreaImplStandard {
   @Override
   public Element createElement() {
     Element elem = super.createElement();
-    elem.setPropertyString("src", "javascript:''");
+    elem.setPropertyString("src", "about:blank");
     return elem;
   }
 

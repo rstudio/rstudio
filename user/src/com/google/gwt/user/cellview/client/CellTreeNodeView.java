@@ -1192,6 +1192,7 @@ class CellTreeNodeView<T> extends UIObject {
       contentContainer.appendChild(emptyMessageElem);
 
       showMoreElem = Document.get().createAnchorElement();
+      // CellTree prevents strict-CSP violation by cancelling event default action.
       showMoreElem.setHref("javascript:;");
       showMoreElem.setInnerText(messages.showMore());
       setStyleName(showMoreElem, tree.getStyle().cellTreeShowMoreButton(), true);

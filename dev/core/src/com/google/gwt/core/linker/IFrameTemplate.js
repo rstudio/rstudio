@@ -176,8 +176,7 @@ function __MODULE_FUNC__() {
     if (!frameInjected) {
       frameInjected = true;
       var iframe = $doc.createElement('iframe');
-      // Prevents mixed mode security in IE6/7.
-      iframe.src = "javascript:''";
+      iframe.src = "about:blank";
       iframe.id = "__MODULE_NAME__";
       iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
       iframe.tabIndex = -1;

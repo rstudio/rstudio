@@ -79,6 +79,6 @@ public class NamedFrameTest extends GWTTestCase {
   }
 
   public void testDefaultSrc() {
-    assertEquals("javascript:''", new NamedFrame("defaultSrc").getUrl());
+    assertEquals("about:blank", new NamedFrame("defaultSrc").getUrl());
   }
 }

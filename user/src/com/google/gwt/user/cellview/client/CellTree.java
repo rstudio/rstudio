@@ -737,8 +737,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     final boolean isClick = BrowserEvents.CLICK.equals(eventType);
     final CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null) {
+      Element showMoreElem = nodeView.getShowMoreElement();
       if (isMouseDown) {
-        Element showMoreElem = nodeView.getShowMoreElement();
         if (!nodeView.isRootNode() && nodeView.getImageElement().isOrHasChild(target)) {
           // Open the node when the open image is clicked.
           nodeView.setOpen(!nodeView.isOpen(), true);
@@ -748,6 +748,9 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
           nodeView.showMore();
           return;
         }
+      } else if (isClick && showMoreElem != null && showMoreElem.isOrHasChild(target)) {
+        // Prevents strict-CSP violation due to javascript:'' link target
+        event.preventDefault();
       }
 
       // Forward the event to the cell
