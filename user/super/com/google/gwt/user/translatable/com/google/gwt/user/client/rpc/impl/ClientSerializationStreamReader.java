@@ -145,6 +145,10 @@ public final class ClientSerializationStreamReader extends
   private static int readVersion(String encodedString) {
     String versionStr =
         encodedString.substring(encodedString.lastIndexOf(",") + 1, encodedString.lastIndexOf("]"));
+    int pos = versionStr.lastIndexOf("[");
+    if (pos >= 0) {
+        versionStr = versionStr.substring(pos + 1);
+    }
     return Integer.parseInt(versionStr.trim());
   }
 

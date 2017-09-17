@@ -74,6 +74,25 @@ public class WebModeClientSerializationStreamReaderTest extends RpcTestBase {
     assertTrue(Double.isNaN(reader.readDouble()));
   }
 
+  /**
+   * Tests edge-case where version is moved to single item in concatenated array.
+   *
+   * See https://github.com/gwtproject/gwt/issues/9536
+   */
+  public void testParsingVersion7ArrayConcats() throws SerializationException {
+    ClientSerializationStreamReader reader = new ClientSerializationStreamReader(null);
+
+    String encoded = "[42,[],0].concat([7])";
+
+    assertEquals(7, readVersion(encoded));
+
+    reader.prepareToRead(encoded);
+
+    assertEquals(7, reader.getVersion());
+
+    assertEquals(42, reader.readInt());
+  }
+
   private native int readVersion(String encoded)/*-{
     return @com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::readVersion(Ljava/lang/String;)(encoded);
   }-*/;
