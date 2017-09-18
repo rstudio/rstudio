@@ -124,16 +124,17 @@ try {
                 }
             }
         }
-        // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source') {
+        // trigger desktop builds if we're in open-source repo
+        if (env.JOB_NAME == 'IDE/open-source-pipeline') {
           trigger_external_build('IDE/macos')
           trigger_external_build('IDE/windows')
         }
         parallel parallel_containers
 
-        // trigger downstream pro-docs build if we're finished building the pro variants
+        // trigger downstream pro artifact builds if we're finished building
+        // the pro variants
         // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro') {
+        if (env.JOB_NAME == 'IDE/pro-pipeline') {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/monitor')
