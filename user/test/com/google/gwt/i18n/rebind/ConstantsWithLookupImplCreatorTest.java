@@ -161,7 +161,7 @@ public class ConstantsWithLookupImplCreatorTest extends TestCase {
     expected.outdent();
     expected.println("}");
 
-    expected.println("if(arg0.equals(\"intEntry\")) {");
+    expected.println("if (arg0.equals(\"intEntry\")) {");
     expected.indent();
     expected.println("int answer = intEntry();");
     // Needed because the return template use '\n'
@@ -193,7 +193,7 @@ public class ConstantsWithLookupImplCreatorTest extends TestCase {
     expected.outdent();
     expected.println("}");
 
-    expected.println("if(arg0.equals(\"lookupMethod1\")) {");
+    expected.println("if (arg0.equals(\"lookupMethod1\")) {");
     expected.indent();
     expected.print("String answer = lookupMethod1();");
     expected.print("\n");
@@ -203,7 +203,7 @@ public class ConstantsWithLookupImplCreatorTest extends TestCase {
     expected.outdent();
     expected.println("}");
 
-    expected.println("if(arg0.equals(\"lookupMethod2\")) {");
+    expected.println("if (arg0.equals(\"lookupMethod2\")) {");
     expected.indent();
     expected.print("String answer = lookupMethod2();");
     expected.print("\n");
@@ -213,7 +213,7 @@ public class ConstantsWithLookupImplCreatorTest extends TestCase {
     expected.outdent();
     expected.println("}");
 
-    expected.println("if(arg0.equals(\"lookupMethod3\")) {");
+    expected.println("if (arg0.equals(\"lookupMethod3\")) {");
     expected.indent();
     expected.print("String answer = lookupMethod3();");
     expected.print("\n");
