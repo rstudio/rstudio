@@ -31,4 +31,8 @@ public class TerminalOptions extends JavaScriptObject
    public native final String getExtraPathEntries() /*-{
       return this.extra_path_entries;
    }-*/;
+
+   public native final int getShellType() /*-{
+      return this.shell_type;
+   }-*/;
 }
