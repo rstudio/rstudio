@@ -82,8 +82,24 @@ public final class Array {
   }
 
   public static double getDouble(Object array, int index) {
-    checkArgument(array instanceof double[]);
-    return getDoubleImpl(array, index);
+    if (array instanceof double[]) {
+      return getDoubleImpl(array, index);
+    } else if (array instanceof byte[]) {
+      return getByteImpl(array, index);
+    } else if (array instanceof char[]) {
+      return getCharImpl(array, index);
+    } else if (array instanceof float[]) {
+      return getFloatImpl(array, index);
+    } else if (array instanceof int[]) {
+      return getIntImpl(array, index);
+    } else if (array instanceof long[]) {
+      return getLongImpl(array, index);
+    } else if (array instanceof short[]) {
+      return getShortImpl(array, index);
+    } else {
+      checkArgument(false);
+      return 0;
+    }
   }
 
   private static double getDoubleImpl(Object array, int index) {
@@ -92,8 +108,22 @@ public final class Array {
   }
 
   public static float getFloat(Object array, int index) {
-    checkArgument(array instanceof float[]);
-    return getFloatImpl(array, index);
+    if (array instanceof float[]) {
+      return getFloatImpl(array, index);
+    } else if (array instanceof byte[]) {
+      return getByteImpl(array, index);
+    } else if (array instanceof char[]) {
+      return getCharImpl(array, index);
+    } else if (array instanceof int[]) {
+      return getIntImpl(array, index);
+    } else if (array instanceof long[]) {
+      return getLongImpl(array, index);
+    } else if (array instanceof short[]) {
+      return getShortImpl(array, index);
+    } else {
+      checkArgument(false);
+      return 0;
+    }
   }
 
   private static float getFloatImpl(Object array, int index) {
@@ -102,8 +132,18 @@ public final class Array {
   }
 
   public static int getInt(Object array, int index) {
-    checkArgument(array instanceof int[]);
-    return getIntImpl(array, index);
+    if (array instanceof int[]) {
+      return getIntImpl(array, index);
+    } else if (array instanceof byte[]) {
+      return getByteImpl(array, index);
+    } else if (array instanceof char[]) {
+      return getCharImpl(array, index);
+    } else if (array instanceof short[]) {
+      return getShortImpl(array, index);
+    } else {
+      checkArgument(false);
+      return 0;
+    }
   }
 
   private static int getIntImpl(Object array, int index) {
@@ -117,8 +157,20 @@ public final class Array {
   }
 
   public static long getLong(Object array, int index) {
-    checkArgument(array instanceof long[]);
-    return getLongImpl(array, index);
+    if (array instanceof long[]) {
+      return getLongImpl(array, index);
+    } else if (array instanceof byte[]) {
+      return getByteImpl(array, index);
+    } else if (array instanceof char[]) {
+      return getCharImpl(array, index);
+    } else if (array instanceof int[]) {
+      return getIntImpl(array, index);
+    } else if (array instanceof short[]) {
+      return getShortImpl(array, index);
+    } else {
+      checkArgument(false);
+      return 0;
+    }
   }
 
   private static long getLongImpl(Object array, int index) {
@@ -127,8 +179,14 @@ public final class Array {
   }
 
   public static short getShort(Object array, int index) {
-    checkArgument(array instanceof short[]);
-    return getShortImpl(array, index);
+    if (array instanceof short[]) {
+      return getShortImpl(array, index);
+    } else if (array instanceof byte[]) {
+      return getByteImpl(array, index);
+    } else {
+      checkArgument(false);
+      return 0;
+    }
   }
 
   private static short getShortImpl(Object array, int index) {
@@ -137,26 +195,29 @@ public final class Array {
   }
 
   public static void set(Object array, int index, Object value) {
-    if (array instanceof boolean[]) {
-      setBooleanImpl(array, index, (Boolean) value);
-    } else if (array instanceof byte[]) {
-      setByteImpl(array, index, (Byte) value);
-    } else if (array instanceof char[]) {
-      setCharImpl(array, index, (Character) value);
-    } else if (array instanceof double[]) {
-      setDoubleImpl(array, index, (Double) value);
-    } else if (array instanceof float[]) {
-      setFloatImpl(array, index, (Float) value);
-    } else if (array instanceof int[]) {
-      setIntImpl(array, index, (Integer) value);
-    } else if (array instanceof long[]) {
-      setLongImpl(array, index, (Long) value);
-    } else if (array instanceof short[]) {
-      setShortImpl(array, index, (Short) value);
-    } else {
-      checkArgument(array instanceof Object[]);
+    if (array instanceof Object[]) {
       Object[] typedArray = (Object[]) array;
       typedArray[index] = value;
+    } else {
+      if (value instanceof Boolean) {
+        setBoolean(array, index, ((Boolean) value).booleanValue());
+      } else if (value instanceof Byte) {
+        setByte(array, index, ((Byte) value).byteValue());
+      } else if (value instanceof Character) {
+        setChar(array, index, ((Character) value).charValue());
+      } else if (value instanceof Short) {
+        setShort(array, index, ((Short) value).shortValue());
+      } else if (value instanceof Integer) {
+        setInt(array, index, ((Integer) value).intValue());
+      } else if (value instanceof Long) {
+        setLong(array, index, ((Long) value).longValue());
+      } else if (value instanceof Float) {
+        setFloat(array, index, ((Float) value).floatValue());
+      } else if (value instanceof Double) {
+        setDouble(array, index, ((Double) value).doubleValue());
+      } else {
+        checkArgument(false);
+      }
     }
   }
 
@@ -171,8 +232,21 @@ public final class Array {
   }
 
   public static void setByte(Object array, int index, byte value) {
-    checkArgument(array instanceof byte[]);
-    setByteImpl(array, index, value);
+    if (array instanceof byte[]) {
+      setByteImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else if (array instanceof int[]) {
+      setIntImpl(array, index, value);
+    } else if (array instanceof long[]) {
+      setLongImpl(array, index, value);
+    } else if (array instanceof short[]) {
+      setShortImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setByteImpl(Object array, int index, byte value) {
@@ -181,8 +255,19 @@ public final class Array {
   }
 
   public static void setChar(Object array, int index, char value) {
-    checkArgument(array instanceof char[]);
-    setCharImpl(array, index, value);
+    if (array instanceof char[]) {
+      setCharImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else if (array instanceof int[]) {
+      setIntImpl(array, index, value);
+    } else if (array instanceof long[]) {
+      setLongImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setCharImpl(Object array, int index, char value) {
@@ -201,8 +286,13 @@ public final class Array {
   }
 
   public static void setFloat(Object array, int index, float value) {
-    checkArgument(array instanceof float[]);
-    setFloatImpl(array, index, value);
+    if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setFloatImpl(Object array, int index, float value) {
@@ -211,8 +301,17 @@ public final class Array {
   }
 
   public static void setInt(Object array, int index, int value) {
-    checkArgument(array instanceof int[]);
-    setIntImpl(array, index, value);
+    if (array instanceof int[]) {
+      setIntImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else if (array instanceof long[]) {
+      setLongImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setIntImpl(Object array, int index, int value) {
@@ -221,8 +320,15 @@ public final class Array {
   }
 
   public static void setLong(Object array, int index, long value) {
-    checkArgument(array instanceof long[]);
-    setLongImpl(array, index, value);
+    if (array instanceof long[]) {
+      setLongImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setLongImpl(Object array, int index, long value) {
@@ -231,8 +337,19 @@ public final class Array {
   }
 
   public static void setShort(Object array, int index, short value) {
-    checkArgument(array instanceof short[]);
-    setShortImpl(array, index, value);
+    if (array instanceof short[]) {
+      setShortImpl(array, index, value);
+    } else if (array instanceof double[]) {
+      setDoubleImpl(array, index, value);
+    } else if (array instanceof float[]) {
+      setFloatImpl(array, index, value);
+    } else if (array instanceof int[]) {
+      setIntImpl(array, index, value);
+    } else if (array instanceof long[]) {
+      setLongImpl(array, index, value);
+    } else {
+      checkArgument(false);
+    }
   }
 
   private static void setShortImpl(Object array, int index, short value) {

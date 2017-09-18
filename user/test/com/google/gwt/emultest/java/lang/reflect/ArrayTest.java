@@ -143,6 +143,12 @@ public final class ArrayTest extends GWTTestCase {
     }
 
     assertEquals(1.0d, Array.getDouble(new double[] {1.0d}, 0));
+    assertEquals(1.0d, Array.getDouble(new float[] {1.0f}, 0));
+    assertEquals(1.0d, Array.getDouble(new byte[] {1}, 0));
+    assertEquals(1.0d, Array.getDouble(new char[] {1}, 0));
+    assertEquals(1.0d, Array.getDouble(new int[] {1}, 0));
+    assertEquals(1.0d, Array.getDouble(new long[] {1}, 0));
+    assertEquals(1.0d, Array.getDouble(new short[] {1}, 0));
   }
 
   public void testGetFloat() {
@@ -165,6 +171,11 @@ public final class ArrayTest extends GWTTestCase {
     }
 
     assertEquals(1.0f, Array.getFloat(new float[] {1.0f}, 0));
+    assertEquals(1.0f, Array.getFloat(new byte[] {1}, 0));
+    assertEquals(1.0f, Array.getFloat(new char[] {1}, 0));
+    assertEquals(1.0f, Array.getFloat(new int[] {1}, 0));
+    assertEquals(1.0f, Array.getFloat(new long[] {1}, 0));
+    assertEquals(1.0f, Array.getFloat(new short[] {1}, 0));
   }
 
   public void testGetInt() {
@@ -187,6 +198,9 @@ public final class ArrayTest extends GWTTestCase {
     }
 
     assertEquals(1, Array.getInt(new int[] {1}, 0));
+    assertEquals(1, Array.getInt(new byte[] {1}, 0));
+    assertEquals(1, Array.getInt(new char[] {1}, 0));
+    assertEquals(1, Array.getInt(new short[] {1}, 0));
   }
 
   public void testGetLength() {
@@ -222,6 +236,10 @@ public final class ArrayTest extends GWTTestCase {
     }
 
     assertEquals(1L, Array.getLong(new long[] {1L}, 0));
+    assertEquals(1L, Array.getLong(new byte[] {1}, 0));
+    assertEquals(1L, Array.getLong(new char[] {1}, 0));
+    assertEquals(1L, Array.getLong(new int[] {1}, 0));
+    assertEquals(1L, Array.getLong(new short[] {1}, 0));
   }
 
   public void testGetShort() {
@@ -244,6 +262,7 @@ public final class ArrayTest extends GWTTestCase {
     }
 
     assertEquals((short) 1, Array.getShort(new short[] {(short) 1}, 0));
+    assertEquals((short) 1, Array.getShort(new short[] {1}, 0));
   }
 
   public void testSet() {
@@ -294,6 +313,39 @@ public final class ArrayTest extends GWTTestCase {
     short[] shortArray = new short[1];
     Array.set(shortArray, 0, (short) 1);
     assertEquals((short) 1, shortArray[0]);
+
+    // test widening
+    long[] otherLongArray = new long[10];
+    Array.set(otherLongArray, 0, (byte) 2);
+    assertEquals(2L, otherLongArray[0]);
+
+    Array.set(otherLongArray, 1, (short) 3);
+    assertEquals(3L, otherLongArray[1]);
+
+    Array.set(otherLongArray, 2, (char) 4);
+    assertEquals(4L, otherLongArray[2]);
+
+    Array.set(otherLongArray, 3, 5);
+    assertEquals(5L, otherLongArray[3]);
+
+    double[] otherDoubleArray = new double[10];
+    Array.set(otherDoubleArray, 0, (byte) 2);
+    assertEquals(2d, otherDoubleArray[0], 0.00001);
+
+    Array.set(otherDoubleArray, 1, (short) 3);
+    assertEquals(3d, otherDoubleArray[1], 0.00001);
+
+    Array.set(otherDoubleArray, 2, (char) 4);
+    assertEquals(4d, otherDoubleArray[2], 0.00001);
+
+    Array.set(otherDoubleArray, 3, 5);
+    assertEquals(5d, otherDoubleArray[3], 0.00001);
+
+    Array.set(otherDoubleArray, 4, (float) 6);
+    assertEquals(6d, otherDoubleArray[4], 0.00001);
+
+    Array.set(otherDoubleArray, 5, (double) 7);
+    assertEquals(7d, otherDoubleArray[5], 0.00001);
   }
 
   public void testSetBoolean() {
@@ -328,10 +380,29 @@ public final class ArrayTest extends GWTTestCase {
     } catch (RuntimeException expected) {
     }
 
-    byte[] array = new byte[1];
+    byte[] bArray = new byte[1];
+    Array.setByte(bArray, 0, (byte) 1);
+    assertEquals((byte) 1, bArray[0]);
 
-    Array.setByte(array, 0, (byte) 1);
-    assertEquals((byte) 1, array[0]);
+    double[] dArray = new double[1];
+    Array.setByte(dArray, 0, (byte) 1);
+    assertEquals((byte) 1, (byte) dArray[0]);
+
+    float[] fArray = new float[1];
+    Array.setByte(fArray, 0, (byte) 1);
+    assertEquals((byte) 1, (byte) fArray[0]);
+
+    int[] iArray = new int[1];
+    Array.setByte(iArray, 0, (byte) 1);
+    assertEquals((byte) 1, (byte) iArray[0]);
+
+    long[] lArray = new long[1];
+    Array.setByte(lArray, 0, (byte) 1);
+    assertEquals((byte) 1, (byte) lArray[0]);
+
+    short[] sArray = new short[1];
+    Array.setByte(sArray, 0, (byte) 1);
+    assertEquals((byte) 1, (byte) sArray[0]);
   }
 
   public void testSetChar() {
@@ -351,6 +422,22 @@ public final class ArrayTest extends GWTTestCase {
 
     Array.setChar(array, 0, 'a');
     assertEquals('a', array[0]);
+
+    double[] dArray = new double[1];
+    Array.setChar(dArray, 0, (char) 1);
+    assertEquals((byte) 1, (byte) dArray[0]);
+
+    float[] fArray = new float[1];
+    Array.setChar(fArray, 0, (char) 1);
+    assertEquals((byte) 1, (byte) fArray[0]);
+
+    int[] iArray = new int[1];
+    Array.setChar(iArray, 0, (char) 1);
+    assertEquals((byte) 1, (byte) iArray[0]);
+
+    long[] lArray = new long[1];
+    Array.setChar(lArray, 0, (char) 1);
+    assertEquals((byte) 1, (byte) lArray[0]);
   }
 
   public void testSetDouble() {
@@ -389,6 +476,10 @@ public final class ArrayTest extends GWTTestCase {
 
     Array.setFloat(array, 0, 1.0f);
     assertEquals(1.0f, array[0]);
+
+    double[] dArray = new double[1];
+    Array.setFloat(dArray, 0, 1);
+    assertEquals((float) 1, (float) dArray[0]);
   }
 
   public void testSetInt() {
@@ -408,6 +499,18 @@ public final class ArrayTest extends GWTTestCase {
 
     Array.setInt(array, 0, 1);
     assertEquals(1, array[0]);
+
+    double[] dArray = new double[1];
+    Array.setInt(dArray, 0, 1);
+    assertEquals(1, (int) dArray[0]);
+
+    float[] fArray = new float[1];
+    Array.setInt(fArray, 0, 1);
+    assertEquals(1, (int) fArray[0]);
+
+    long[] lArray = new long[1];
+    Array.setInt(lArray, 0, 1);
+    assertEquals(1, (int) lArray[0]);
   }
 
   public void testSetLong() {
@@ -427,6 +530,14 @@ public final class ArrayTest extends GWTTestCase {
 
     Array.setLong(array, 0, 1L);
     assertEquals(1L, array[0]);
+
+    double[] dArray = new double[1];
+    Array.setLong(dArray, 0, 1);
+    assertEquals(1L, (long) dArray[0]);
+
+    float[] fArray = new float[1];
+    Array.setLong(fArray, 0, 1);
+    assertEquals(1L, (long) fArray[0]);
   }
 
   public void testSetShort() {
@@ -446,5 +557,21 @@ public final class ArrayTest extends GWTTestCase {
 
     Array.setShort(array, 0, (short) 1);
     assertEquals((short) 1, array[0]);
+
+    int[] iArray = new int[1];
+    Array.setShort(iArray, 0, (short) 1);
+    assertEquals((short) 1, (short) iArray[0]);
+
+    double[] dArray = new double[1];
+    Array.setShort(dArray, 0, (short) 1);
+    assertEquals((short) 1, (short) dArray[0]);
+
+    float[] fArray = new float[1];
+    Array.setShort(fArray, 0, (short) 1);
+    assertEquals((short) 1, (short) fArray[0]);
+
+    long[] lArray = new long[1];
+    Array.setShort(lArray, 0, (short) 1);
+    assertEquals((short) 1, (short) lArray[0]);
   }
 }
