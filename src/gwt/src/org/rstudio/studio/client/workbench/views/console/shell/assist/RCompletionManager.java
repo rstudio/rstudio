@@ -472,13 +472,15 @@ public class RCompletionManager implements CompletionManager
             {
                // If we're in markdown mode, only autocomplete in '```{r',
                // '[](', or '`r |' contexts
+               // or emoji contexts :..| 
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
                   String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
-                      (Pattern.create(".*`r").test(currentLine) &&
-                            StringUtil.countMatches(currentLine, '`') % 2 == 1)))
+                      (Pattern.create(".*`r").test(currentLine) && StringUtil.countMatches(currentLine, '`') % 2 == 1) ||
+                      Pattern.create(".*[:][a-zA-Z0-9_]*").test(currentLine)
+                      ))
                      return false;
                }
                
@@ -975,6 +977,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
       public static final int TYPE_PACKAGE = 13;
+      public static final int TYPE_EMOJI = 14 ;
       
       public AutocompletionContext(
             String token,
@@ -1121,6 +1124,11 @@ public class RCompletionManager implements CompletionManager
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
    
+   private boolean isEmojiCompletion(String line)
+   {
+      return line.matches(".*[:][a-zA-Z0-9_]*$") ;
+   }
+   
    /**
     * If false, the suggest operation was aborted
     */
@@ -1142,15 +1150,16 @@ public class RCompletionManager implements CompletionManager
       int cursorCol = selection.getStart().getPosition();
       String firstLine = input_.getText().substring(0, cursorCol);
       
-      // never autocomplete in (non-roxygen) comments, or at the start
-      // of roxygen comments (e.g. at "#' |")
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
+      // only complete comments on roxygen or emoji
+      if (isLineInComment(firstLine) && !( isLineInRoxygenComment(firstLine) || isEmojiCompletion(firstLine)))
          return false;
       
       // don't autocomplete if the cursor lies within the text of a
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
       // the majority of cases
+      // 
+      // unless it's an emoji completion
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       if (cursorToken.hasType("string"))
       {
@@ -1158,7 +1167,7 @@ public class RCompletionManager implements CompletionManager
          boolean isSingleLineString =
                cursorTokenValue.startsWith("'") ||
                cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         if (!isSingleLineString && !isEmojiCompletion(firstLine))
             return false;
       }
       
@@ -1323,6 +1332,13 @@ public class RCompletionManager implements CompletionManager
       context.setToken(token);
    }
    
+   private AutocompletionContext getAutocompletionContextForEmoji( String line )
+   {
+      String token = line.substring(line.lastIndexOf(":")) ;
+      
+      return new AutocompletionContext( token, token, AutocompletionContext.TYPE_EMOJI);
+   }
+   
    private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
          String line)
    {
@@ -1417,6 +1433,10 @@ public class RCompletionManager implements CompletionManager
       return true;
    }
    
+   private boolean isSingleLineString( String line )
+   {
+      return line.startsWith("''") || line.startsWith("\"") ;
+   }
    
    private AutocompletionContext getAutocompletionContext()
    {
@@ -1427,6 +1447,30 @@ public class RCompletionManager implements CompletionManager
       
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      
+      // if we are in a multi line string and we are here, then this must be
+      // an emoji completion
+      // 
+      // it is a bit hacky to have to test this here again when we just did
+      // it in the parent scope. perhaps this calls for some refactoring
+      Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition()) ;
+      if (cursorToken.hasType("string"))
+      {
+         if (!isSingleLineString(cursorToken.getValue())) 
+            return getAutocompletionContextForEmoji(firstLine);
+      }
+      
+      // emoji in comment. This includes emoji in roxygen comments because
+      // #' :cat 
+      // calls for emoji completion
+      if (isLineInComment(firstLine) && isEmojiCompletion(firstLine)){
+         return getAutocompletionContextForEmoji(firstLine);
+      }
+      
+      // Markdown mode + emoji completion
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) && isEmojiCompletion(firstLine)){
+         return getAutocompletionContextForEmoji(firstLine);
+      }
       
       // If we're in Markdown mode and have an appropriate string, try to get
       // file completions
@@ -1450,6 +1494,10 @@ public class RCompletionManager implements CompletionManager
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
       {
+         if (isEmojiCompletion(firstLine)){
+            return getAutocompletionContextForEmoji(firstLine) ;
+         }
+         
          isFileCompletion = true;
          addAutocompletionContextForFile(context, firstLine);
       }
@@ -1983,6 +2031,11 @@ public class RCompletionManager implements CompletionManager
       {
          String completionToken = getCurrentCompletionToken();
          
+         // handle the case where the token is #' |
+         if (qualifiedName.type == RCompletionType.ROXYGEN && completionToken.startsWith("#'")){
+            completionToken = "" ;
+         }
+         
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
@@ -2041,7 +2094,10 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
-         if (!RCompletionType.isFileType(qualifiedName.type))
+         if (qualifiedName.type == RCompletionType.EMOJI){
+            value = completionToken.replaceAll("[:][a-zA-Z0-9_]*$", value) ;
+         } 
+         else if (!RCompletionType.isFileType(qualifiedName.type))
          {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
@@ -2212,7 +2268,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "text", "punctuation"))
+      if (currentToken.hasType("operator", "text", "punctuation"))
          return "";
       
       String tokenValue = currentToken.getValue();
