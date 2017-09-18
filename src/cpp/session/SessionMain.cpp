@@ -509,6 +509,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
+      (bind(sourceModuleRFile, "SessionPatches.R"))
    
       // unsupported functions
       (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))

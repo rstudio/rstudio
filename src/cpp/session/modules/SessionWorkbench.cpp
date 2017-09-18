@@ -636,6 +636,11 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
    FilePath terminalPath;
 
+   // Shell type is needed on Windows to make additional shell-type
+   // specific tweaks, see DesktopGwtCallback.cpp::openTerminal
+   console_process::TerminalShell::TerminalShellType shellType =
+         console_process::TerminalShell::DefaultShell;
+
 #if defined(_WIN32)
 
    // Use default terminal setting for shell
@@ -644,6 +649,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
    if (shells.getInfo(userSettings().defaultTerminalShellValue(), &shell))
    {
+      shellType = shell.type;
       terminalPath = shell.path;
    }
 
@@ -653,6 +659,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
       console_process::TerminalShell sysShell;
       if (console_process::AvailableTerminalShells::getSystemShell(&sysShell))
       {
+         shellType = shell.type;
          terminalPath = sysShell.path;
       }
    }
@@ -678,6 +685,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    optionsJson["working_directory"] =
                   module_context::shellWorkingDirectory().absolutePath();
    optionsJson["extra_path_entries"] = extraPathEntries;
+   optionsJson["shell_type"] = shellType;
    pResponse->setResult(optionsJson);
 
    return Success();
