@@ -40,9 +40,6 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# remove users/groups with colliding jenkins ids
-RUN userdel systemd-bus-proxy && userdel systemd-network && groupdel input
-
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
