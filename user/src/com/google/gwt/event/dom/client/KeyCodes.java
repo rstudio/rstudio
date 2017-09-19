@@ -437,6 +437,16 @@ public class KeyCodes {
   public static final int KEY_WIN_IME = 229;
 
   /**
+   * Key code for open square bracket, [.
+   */
+  public static final int KEY_OPEN_BRACKET = 219;
+
+  /**
+   * Key code for close square bracket, ].
+   */
+  public static final int KEY_CLOSE_BRACKET = 221;
+
+  /**
    * Determines if a key code is an arrow key.
    */
   public static boolean isArrowKey(int code) {
