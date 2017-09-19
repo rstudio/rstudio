@@ -49,8 +49,9 @@ RUN mkdir -p /opt/RStudio-QtSDK && \
 # remove any previous users with conflicting IDs
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
-RUN docker/jenkins/clean-uid.sh $JENKINS_UID && \
-    docker/jenkins/clean-gid.sh $JENKINS_GID
+COPY docker/jenkins/*.sh /tmp/
+RUN /tmp/clean-uid.sh $JENKINS_UID && \
+    /tmp/clean-gid.sh $JENKINS_GID
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 RUN groupadd -g $JENKINS_GID jenkins && \
