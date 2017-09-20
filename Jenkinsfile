@@ -125,7 +125,7 @@ try {
             }
         }
         // trigger desktop builds if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline') {
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
           trigger_external_build('IDE/macos')
           trigger_external_build('IDE/windows')
         }
@@ -134,7 +134,7 @@ try {
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants
         // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro-pipeline') {
+        if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/monitor')
