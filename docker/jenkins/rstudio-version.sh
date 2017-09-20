@@ -11,16 +11,27 @@
 #    formatted as:
 #
 #    major.minor.patch
+# 
+#    On S3, the file 'oss-patch.csv' contains a list of open source commits and
+#    their associated patch versions, both as a baseline for determining future
+#    patch versions and so that subsequent Pro builds can determine their
+#    derivative versions.
 #
 # 2. The build number of RStudio Pro is formatted as follows:
 #
 #    major.minor.patch-suffix
 #
 #    where "major.minor.patch" is the version of RStudio Open Source from which
-#    the Pro repo is currently derived, and "suffix" is the number of builds of
-#    Pro that have been made based on the associated open source version.
+#    the Pro repo is derived, and "suffix" is the number of builds of Pro that
+#    have been made based on the associated open source version.
+#
+# The script is typically used by the build script to bump the build versions,
+# but it can also be invoked manually. Pass "debug" as the last parameter to
+# see what the script would do (in this mode debug output is written and no
+# changes are saved to S3).
 
 if [[ "$#" -lt 2 ]]; then
+    # TODO: add "set" command to move forward 
     echo "Usage: rstudio-version.sh [get|bump] [major.minor] [debug]"
     exit 1
 fi
@@ -117,6 +128,9 @@ case "$ACTION" in
     ;;
     
     bump)
+
+    # record date for timestamp in CSV
+    TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S')
         
     if [[ $OPEN_SOURCE = true ]]; then
 
@@ -129,7 +143,7 @@ case "$ACTION" in
         rm -f /tmp/history-prepend.csv && touch /tmp/history-prepend.csv
         for ((i = 0; i <= PATCH_INDEX - 1; i++)); do
             log "Marking commit ${COMMITS[$i]} for patch $VERSION.$PATCH"     
-            echo "${COMMITS[$i]},$PATCH" >> /tmp/history-prepend.csv
+            echo "${COMMITS[$i]},$PATCH,$TIMESTAMP" >> /tmp/history-prepend.csv
         done
 
         # now prepend and push to s3
@@ -149,7 +163,7 @@ case "$ACTION" in
         SUFFIX=$(($SUFFIX+1))
 
         # prepend and push to s3
-        echo "$PATCH,$SUFFIX" > /tmp/suffix-prepend.csv
+        echo "$PATCH,$SUFFIX,$TIMESTAMP" > /tmp/suffix-prepend.csv
         cat /tmp/suffix-prepend.csv /tmp/pro-suffix.csv > /tmp/pro-updated.csv
         if [[ $DEBUG = true ]]; then
             echo "Push updated suffix to S3"
