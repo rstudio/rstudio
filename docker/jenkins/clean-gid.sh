@@ -15,4 +15,10 @@ GROUPINFO=(${GROUPINFO//:/ })
 GROUPNAME="${GROUPINFO[0]}"
 
 echo "Removing group $GROUPNAME with conflicting id $GROUPID"
-groupdel $GROUPNAME
+
+# use appropriate command for group deletion
+if hash groupdel 2>/dev/null; then
+    groupdel $GROUPNAME
+elif hash delgroup 2>/dev/null; then
+    delgroup $GROUPNAME
+fi
