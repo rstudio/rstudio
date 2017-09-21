@@ -10,6 +10,11 @@ RUN set -x \
     && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/' >> /etc/apt/sources.list \
     && apt-get update
 
+# add ppa repository so we can install java 8 (not in any official repo for precise)
+RUN apt-get update \
+  && apt-get install -y software-properties-common python-software-properties \
+  && add-apt-repository ppa:openjdk-r/ppa 
+
 RUN apt-get update \
   && apt-get install -y \
     ant \
@@ -28,7 +33,7 @@ RUN apt-get update \
     libpango1.0-dev \
     libssl-dev \
     libxslt1-dev \
-    openjdk-7-jdk \
+    openjdk-8-jdk \
     pkg-config \
     r-base \
     sudo \
@@ -37,8 +42,8 @@ RUN apt-get update \
     wget \
     zlib1g-dev
 
-# precise defaults to java6, swap to java7
-RUN update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15

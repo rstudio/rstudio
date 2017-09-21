@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetThemeHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetThemeHelper
 {  
@@ -72,7 +73,12 @@ public class TextEditingTargetThemeHelper
  
    private void syncToEditorTheme(TextEditingTarget editingTarget)
    {
-      Element editorContainer = editingTarget.asWidget().getElement();
+      // ensure we're passed a real widget
+      Widget editingWidget = editingTarget.asWidget();
+      if (editingWidget == null)
+         return;
+      
+      Element editorContainer = editingWidget.getElement();
       Element[] aceContentElements =
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
       

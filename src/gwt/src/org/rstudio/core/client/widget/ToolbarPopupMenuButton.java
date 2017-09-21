@@ -103,7 +103,7 @@ public class ToolbarPopupMenuButton extends ToolbarButton
    
    public void setText(String text, boolean fireEvent)
    {
-      boolean changed = !text_.equals(text);
+      boolean changed = text_ == null || !text_.equals(text);
       
       text_ = text;
       if (showText_)
