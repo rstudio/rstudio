@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -271,6 +272,14 @@ public class ObjectBrowserModel implements TreeViewModel
       
       private void listObjects(final CommandWithArg<JsArray<DatabaseObject>> onCompleted)
       {
+         objectListContinuations_.add(onCompleted);
+         if (objectListContinuations_.size() > 1)
+         {
+            // if we're currently waiting for objects to come back, just leave this one on the stack
+            return;
+         }
+         
+         // create the specifier
          ConnectionObjectSpecifier specifier = null;
          if (parent_ == null)
             specifier = new ConnectionObjectSpecifier();
@@ -286,7 +295,24 @@ public class ObjectBrowserModel implements TreeViewModel
                {
                   for (int i = 0; i < objects.length(); i++)
                      objects.get(i).setParent(parent_);
-                  onCompleted.execute(objects);
+                  
+                  // execute each continuation, w/ try/catch so that any that throw exceptions
+                  // won't prevent execution of further continuations (nor leave us with a stack
+                  // of uncompleted continuations)
+                  for (CommandWithArg<JsArray<DatabaseObject>> cmd: objectListContinuations_)
+                  {
+                     try
+                     {
+                        cmd.execute(objects);
+                     }
+                     catch (Exception e)
+                     {
+                        Debug.logException(e);
+                     }
+                  }
+                  
+                  // clear completed continuations
+                  objectListContinuations_.clear();
                   dequeNodeExpansion(parent_);
                }
                
@@ -294,6 +320,7 @@ public class ObjectBrowserModel implements TreeViewModel
                public void onError(ServerError error)
                {
                   super.onError(error);
+                  objectListContinuations_.clear();
                   clearData();
                }
             });
@@ -456,6 +483,9 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private ConnectionsServerOperations server_;
    private EventBus eventBus_;
+
+   private final ArrayList<CommandWithArg<JsArray<DatabaseObject>>> objectListContinuations_ = 
+         new ArrayList<CommandWithArg<JsArray<DatabaseObject>>>();
    
    private static NoSelectionModel<DatabaseObject> noObjectSelectionModel_ = 
          new NoSelectionModel<DatabaseObject>();

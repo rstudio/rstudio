@@ -402,7 +402,8 @@ public class Workbench implements BusyHandler,
             {
                Desktop.getFrame().openTerminal(options.getTerminalPath(),
                      options.getWorkingDirectory(),
-                     options.getExtraPathEntries());
+                     options.getExtraPathEntries(),
+                     options.getShellType());
             }
          });
       }

@@ -156,7 +156,8 @@ public slots:
 
    void openTerminal(QString terminalPath,
                      QString workingDirectory,
-                     QString extraPathEntries);
+                     QString extraPathEntries,
+                     int shellType);
 
    QString getFixedWidthFontList();
    QString getFixedWidthFont();

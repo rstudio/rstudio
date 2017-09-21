@@ -57,7 +57,14 @@ public class AddinsToolbarButton extends ToolbarButton
    {
       super("Addins",
             CoreResources.INSTANCE.iconEmpty(),
-            new ScrollableToolbarPopupMenu(),
+            new ScrollableToolbarPopupMenu() 
+            {
+               @Override
+               protected int getMaxHeight()
+               {
+                  return 500;
+               }
+            },
             false);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
