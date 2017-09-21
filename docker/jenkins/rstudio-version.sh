@@ -51,9 +51,13 @@ function log() {
     fi
 }
 
+if [[ $DEBUG = false ]]; then
+    EXTRA_CP_ARGS=--quiet
+fi
+
 # get historical open source patch versions from AWS; this file is a CSV that
 # contains each open source commit and the patch version associated with it
-aws s3 cp s3://rstudio-ide-build/version/$VERSION/oss-patch.csv /tmp/oss-patch.csv --quiet
+aws s3 cp s3://rstudio-ide-build/version/$VERSION/oss-patch.csv /tmp/oss-patch.csv $EXTRA_CP_ARGS
 
 if [[ -e "upstream/VERSION" ]]; then
     # only one upstream commit (RStudio Pro, which is downstream)
@@ -168,7 +172,7 @@ case "$ACTION" in
         if [[ $DEBUG = true ]]; then
             echo "Push updated suffix to S3"
         else
-            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv --quiet
+            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv $EXTRA_CP_ARGS
         fi
 
         # echo newly created version
