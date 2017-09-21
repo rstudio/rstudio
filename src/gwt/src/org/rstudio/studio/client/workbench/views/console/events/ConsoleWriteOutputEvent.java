@@ -30,12 +30,12 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
    
    public String getOutput()
    {
-      return output_.getText();
+      return output_.text;
    }
 
    public String getConsole()
    {
-      return output_.getConsole();
+      return output_.console;
    }
    
    @Override

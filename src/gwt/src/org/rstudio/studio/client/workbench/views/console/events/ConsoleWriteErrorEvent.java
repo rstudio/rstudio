@@ -30,12 +30,12 @@ public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
    
    public String getError()
    {
-      return error_.getText();
+      return error_.text;
    }
    
    public String getConsole()
    {
-      return error_.getConsole();
+      return error_.console;
    }
    
    @Override
