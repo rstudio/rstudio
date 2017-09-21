@@ -121,7 +121,7 @@ try {
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
-                        def components = rstudioVersion.split(',')
+                        def components = rstudioVersion.split('\\.')
 
                         // extract major / minor version
                         rstudioVersionMajor = components[0]
@@ -130,7 +130,7 @@ try {
                         // extract patch and suffix if present
                         def patch = components[2].split('-')
                         rstudioVersionPatch = patch[0]
-                        if (patch.length() > 1) 
+                        if (patch.length > 1) 
                             rstudioVersionSuffix = patch[1]
                         else
                             rstudioVersionSuffix = 0
