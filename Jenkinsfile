@@ -90,6 +90,12 @@ def trigger_external_build(build_name, wait = false) {
 // make a nicer slack message
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
 
+// forward declare version vars
+rstudioVersionMajor  = 0
+rstudioVersionMinor  = 0
+rstudioVersionPatch  = 0
+rstudioVersionSuffix = 0
+
 try {
     timestamps {
         def containers = [
@@ -107,8 +113,8 @@ try {
         spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
 
         // create the version we're about to build
-        node('ide') {
-            stage('prep for versioning') {
+        node('docker') {
+            stage('set up versioning') {
                 prepareWorkspace()
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
                 container.inside() {
