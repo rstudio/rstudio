@@ -109,9 +109,6 @@ try {
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
         containers = limit_builds(containers)
-        // launch jenkins agents to support the container scale!
-        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
-
         // create the version we're about to build
         node('docker') {
             stage('set up versioning') {
@@ -120,9 +117,11 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "./docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                          script: "./docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR} debug",
                           returnStdout: true
                         ).trim()
+                        echo "RStudio build version:"
+                        echo $rstudioVersion
                         def components = rstudioVersion.split(',')
 
                         // extract major / minor version
@@ -143,6 +142,9 @@ try {
                 }
             }
         }
+
+        // launch jenkins agents to support the container scale!
+        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
 
         // build each variant in parallel
         def parallel_containers = [:]
