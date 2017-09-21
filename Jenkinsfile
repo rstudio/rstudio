@@ -117,11 +117,10 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "./docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR} debug",
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR} debug",
                           returnStdout: true
                         ).trim()
-                        echo "RStudio build version:"
-                        echo $rstudioVersion
+                        echo "RStudio build version: ${rstudioVersion}"
                         def components = rstudioVersion.split(',')
 
                         // extract major / minor version
