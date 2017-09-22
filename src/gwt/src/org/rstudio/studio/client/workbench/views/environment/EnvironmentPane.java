@@ -151,14 +151,7 @@ public class EnvironmentPane extends WorkbenchPane
       refreshMenu.addItem(new MenuItem(
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
-            new Scheduler.ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  commands_.refreshEnvironment().execute();
-               }
-            }));
+            () -> commands_.refreshEnvironment().execute()));
       toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
 
       return toolbar;

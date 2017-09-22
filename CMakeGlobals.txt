@@ -1,7 +1,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,11 @@ else()
   set(CPACK_PACKAGE_VERSION_PATCH $ENV{RSTUDIO_VERSION_PATCH})
 endif()
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+# pick up suffix if present
+if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "")
+   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
+endif()
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)

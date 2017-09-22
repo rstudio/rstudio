@@ -1,7 +1,7 @@
 /*
  * ConsoleText.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,27 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.console.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-public class ConsoleText extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class ConsoleText 
 {
-   protected ConsoleText()
-   {
-   }
-   
-   public static final native ConsoleText create(
-         String text, String console) /*-{
-      return {
-         "text"   : text,
-         "console": console
-      }
-   }-*/;
-   
-   public final native String getText() /*-{
-      return this.text;
-   }-*/;
-   
-   public final native String getConsole() /*-{
-      return this.console;
-   }-*/;
+   public String text;
+   public String console;
 }

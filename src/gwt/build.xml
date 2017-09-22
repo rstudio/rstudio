@@ -19,7 +19,7 @@
             classname="com.google.javascript.jscomp.ant.CompileTask"
             classpath="./tools/compiler/compiler.jar"/>
    <!-- Configure path to GWT SDK -->
-   <property name="gwt.sdk" value="lib/gwt/2.7.0"/>
+   <property name="gwt.sdk" value="lib/gwt/2.8.1"/>
 
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
@@ -135,7 +135,7 @@
    <target name="draft" description="Compile using GWT's draft mode">
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
-         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
+         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile -Xnamespace NONE" />
       </antcall>
    </target>
 

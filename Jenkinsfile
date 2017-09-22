@@ -27,7 +27,13 @@ def resolve_deps(type, arch, variant) {
 }
 
 def compile_package(type, flavor, variant) {
-  def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${env.BUILD_NUMBER}"
+  // start with major, minor, and patch versions
+  def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
+
+  // add version suffix if present
+  if (rstudioVersionSuffix != 0) {
+   env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}" 
+  }
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 }
 
@@ -80,9 +86,15 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
+
 // make a nicer slack message
-rstudioVersion = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${env.BUILD_NUMBER}"
-messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
+messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
+
+// forward declare version vars
+rstudioVersionMajor  = 0
+rstudioVersionMinor  = 0
+rstudioVersionPatch  = 0
+rstudioVersionSuffix = 0
 
 try {
     timestamps {
@@ -97,8 +109,43 @@ try {
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
         containers = limit_builds(containers)
+        // create the version we're about to build
+        node('docker') {
+            stage('set up versioning') {
+                prepareWorkspace()
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
+                container.inside() {
+                    stage('bump version') {
+                        def rstudioVersion = sh (
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                          returnStdout: true
+                        ).trim()
+                        echo "RStudio build version: ${rstudioVersion}"
+                        def components = rstudioVersion.split('\\.')
+
+                        // extract major / minor version
+                        rstudioVersionMajor = components[0]
+                        rstudioVersionMinor = components[1]
+
+                        // extract patch and suffix if present
+                        def patch = components[2].split('-')
+                        rstudioVersionPatch = patch[0]
+                        if (patch.length > 1) 
+                            rstudioVersionSuffix = patch[1]
+                        else
+                            rstudioVersionSuffix = 0
+
+                        // update slack message to include build version
+                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
+                    }
+                }
+            }
+        }
+
         // launch jenkins agents to support the container scale!
         spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
+
+        // build each variant in parallel
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
             def index = i

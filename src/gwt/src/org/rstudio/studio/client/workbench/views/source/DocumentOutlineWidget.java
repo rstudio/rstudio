@@ -461,7 +461,7 @@ public class DocumentOutlineWidget extends Composite
    
    private boolean isActiveNode(Scope node)
    {
-      return node != null && node.equals(currentVisibleScope_);
+      return node != null && currentVisibleScope_ != null && node.equals(currentVisibleScope_);
    }
    
    private final DockLayoutPanel container_;
