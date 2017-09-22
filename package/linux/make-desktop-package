@@ -28,8 +28,13 @@ else
 fi
 PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
-# copy rstudio dir to local (versioned) dir and make tarball
+# form version string; append suffix if present
 VERSIONED_RSTUDIO=rstudio-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}
+if [ -n "$RSTUDIO_VERSION_SUFFIX" ]; then
+    VERSIONED_RSTUDIO="$VERSIONED_RSTUDIO-$RSTUDIO_VERSION_SUFFIX"
+fi
+
+# copy rstudio dir to local (versioned) dir and make tarball
 rm -rf ${VERSIONED_RSTUDIO}
 cp -R ${PACKAGE_ROOT}/usr/lib/rstudio ${VERSIONED_RSTUDIO}
 
