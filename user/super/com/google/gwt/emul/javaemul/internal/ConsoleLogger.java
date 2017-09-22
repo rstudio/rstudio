@@ -90,7 +90,7 @@ public class ConsoleLogger {
 
   @JsType(isNative = true, namespace = "<window>", name = "Function")
   private interface LogFn {
-    void call(Console objThis, Object... args);
+    void call(Object objThis, Object... args);
   }
 
   @JsType(isNative = true, namespace = "<window>", name = "console")
@@ -104,5 +104,5 @@ public class ConsoleLogger {
   // Using <window> due to https://code.google.com/archive/p/fbug/issues/2914 but probably not
   // necessary anymore.
   @JsProperty(namespace = "<window>", name = "console")
-  private static native Console getConsole();
+  private static native Object getConsole();
 }
