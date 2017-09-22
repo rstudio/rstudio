@@ -45,8 +45,6 @@
       <zipfileset file="${gwt.build.lib}/gwt-api-checker.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/requestfactory*.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/gwt-elemental.jar" prefix="${project.distname}" />
-      <!-- jni libs-->
-      <zipfileset dir="${gwt.build.jni}/windows" prefix="${project.distname}" />
 
       <!-- external libs -->
       <zipfileset file="${gwt.tools}/lib/javax/validation/validation-api-1.0.0.GA.jar" prefix="${project.distname}" />

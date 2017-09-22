@@ -42,7 +42,6 @@
     <call-subproject subproject="codeserver" subtarget="build"/>
     <call-subproject subproject="requestfactory" subtarget="build"/>
     <call-subproject subproject="servlet" subtarget="build"/>
-    <call-subproject subproject="jni" subtarget="build"/>
   </target>
 
   <target name="dist" depends="build, doc" description="[action] Make all the distributions">
@@ -94,10 +93,6 @@
     <gwt.ant dir="servlet"/>
   </target>
 
-  <target name="jni" description="[subdir] Builds (or runs ${target} if set) jni for all platforms">
-    <gwt.ant dir="jni"/>
-  </target>
-
   <target name="doc" description="[subdir] Builds (or runs ${target} if set) the doc">
     <call-subproject subproject="user" subtarget="build"/>
     <gwt.ant dir="doc"/>
@@ -121,7 +116,6 @@
     <call-subproject subproject="requestfactory" subtarget="build"/>
     <call-subproject subproject="servlet" subtarget="build"/>
     <call-subproject subproject="tools" subtarget="build"/>
-    <call-subproject subproject="jni" subtarget="build"/>
     <call-subproject subproject="samples" subtarget="build"/>
   </target>
 
