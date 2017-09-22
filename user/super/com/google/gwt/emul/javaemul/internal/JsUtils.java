@@ -31,6 +31,9 @@ public class JsUtils {
   @JsMethod(namespace = "<window>")
   public static native int parseInt(String s, int radix);
 
+  @JsMethod(namespace = "<window>", name = "typeof")
+  public static native String typeOf(Object obj);
+
   public static native boolean isUndefined(Object value) /*-{
     return value === undefined;
   }-*/;
@@ -62,10 +65,6 @@ public class JsUtils {
       // This may throw exception in strict mode.
       map[key] = value;
     } catch(ignored) { }
-  }-*/;
-
-  public static native String typeOf(Object o) /*-{
-    return typeof o;
   }-*/;
 }
 

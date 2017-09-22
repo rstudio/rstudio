@@ -24,7 +24,7 @@ import jsinterop.annotations.JsType;
  */
 public class ConsoleLogger {
   public static ConsoleLogger createIfSupported() {
-    return getConsole() != null ? new ConsoleLogger() : null;
+    return JsUtils.typeOf(getConsole()).equals("undefined") ? null : new ConsoleLogger();
   }
 
   public void log(String level, String message) {
@@ -101,6 +101,8 @@ public class ConsoleLogger {
     public static LogFn groupEnd;
   }
 
-  @JsProperty(namespace = "<window>", name = "window.console")
+  // Using <window> due to https://code.google.com/archive/p/fbug/issues/2914 but probably not
+  // necessary anymore.
+  @JsProperty(namespace = "<window>", name = "console")
   private static native Console getConsole();
 }
