@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.GwtVersion;
-import com.google.gwt.dev.shell.ie.CheckForUpdatesIE6;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -40,7 +39,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -56,7 +54,7 @@ import javax.xml.parsers.ParserConfigurationException;
  * Orchestrates a best-effort attempt to find out if a new version of GWT is
  * available.
  */
-public class CheckForUpdates {
+public final class CheckForUpdates {
 
   /**
    * Returns the result of an update check.
@@ -78,7 +76,6 @@ public class CheckForUpdates {
 
   // System properties used by CheckForUpdates
   protected static final String PROPERTY_DEBUG_HTTP_GET = "gwt.debugLowLevelHttpGet";
-  protected static final String PROPERTY_FORCE_NONNATIVE = "gwt.forceVersionCheckNonNative";
   protected static final String PROPERTY_PREFS_NAME = "gwt.prefsPathName";
   protected static final String PROPERTY_QUERY_URL = "gwt.forceVersionCheckURL";
 
@@ -158,12 +155,7 @@ public class CheckForUpdates {
 
   public static CheckForUpdates createUpdateChecker(TreeLogger logger,
       String entryPoint) {
-    // Windows has a custom implementation to handle proxies.
-    if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
-      return new CheckForUpdatesIE6(logger, entryPoint);
-    } else {
-      return new CheckForUpdates(logger, entryPoint);
-    }
+    return new CheckForUpdates(logger, entryPoint);
   }
 
   public static void logUpdateAvailable(TreeLogger logger,
@@ -312,7 +304,7 @@ public class CheckForUpdates {
       // See if new version is available.
       //
       String url = queryURL + "?v=" + myVersion.toString() + "&id="
-          + firstLaunch + "&r=" + About.getGwtSvnRev();
+          + firstLaunch + "&r=" + About.getGwtGitRev();
       if (entryPoint != null) {
         url += "&e=" + entryPoint;
       }
@@ -321,17 +313,8 @@ public class CheckForUpdates {
 
       // Do the HTTP GET.
       //
-      byte[] response;
       String fullUserAgent = makeUserAgent();
-      if (System.getProperty(PROPERTY_FORCE_NONNATIVE) == null) {
-        // Use subclass.
-        //
-        response = doHttpGet(branch, fullUserAgent, url);
-      } else {
-        // Use the pure Java version, but it probably doesn't work with proxies.
-        //
-        response = httpGetNonNative(branch, fullUserAgent, url);
-      }
+      byte[] response = doHttpGet(branch, fullUserAgent, url);
 
       if (response == null || response.length == 0) {
         // Problem. Quietly fail.
@@ -354,32 +337,7 @@ public class CheckForUpdates {
     return null;
   }
 
-  /**
-   * Default implementation just uses the platform-independent method. A
-   * subclass should override this method for platform-dependent proxy handling,
-   * for example.
-   *
-   * @param branch TreeLogger to use
-   * @param userAgent user agent string to send in request
-   * @param url URL to fetch
-   * @return byte array of response, or null if an error
-   */
-  protected byte[] doHttpGet(TreeLogger branch, String userAgent, String url) {
-    return httpGetNonNative(branch, userAgent, url);
-  }
-
-  /**
-   * This default implementation uses regular Java HTTP, which doesn't deal with
-   * proxies automagically. See the IE6 subclasses for an implementation that
-   * does deal with proxies.
-   *
-   * @param branch TreeLogger to use
-   * @param userAgent user agent string to send in request
-   * @param url URL to fetch
-   * @return byte array of response, or null if an error
-   */
-  protected byte[] httpGetNonNative(TreeLogger branch, String userAgent,
-      String url) {
+  private byte[] doHttpGet(TreeLogger branch, String userAgent, String url) {
     Throwable caught;
     InputStream is = null;
     try {
