@@ -107,7 +107,7 @@ fi
 
 # for pro, we need to determine the version suffix as well
 if [[ $PRO = true ]]; then
-    SUFFIX=1
+    SUFFIX=0
     aws s3 cp s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv /tmp/pro-suffix.csv --quiet
     while read PRO_SUFFIX; do
         ENTRY=(${PRO_SUFFIX//,/ })

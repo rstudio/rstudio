@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;

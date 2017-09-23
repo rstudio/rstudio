@@ -75,7 +75,17 @@ fi
 
 if [ -n "$VERSION" ]; then 
     SPLIT=(${VERSION//\./ })
-    ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]} RSTUDIO_VERSION_PATCH=${SPLIT[2]}"
+    PATCH="${SPLIT[2]}"
+    # determine major and minor versions
+    ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]}"
+
+    # supply suffix if embedded in patch
+    if [[ $PATCH == *"-"* ]]; then
+        PATCH=(${PATCH//-/ })
+        ENV="$ENV RSTUDIO_VERSION_PATCH=${PATCH[0]} RSTUDIO_VERSION_SUFFIX=${PATCH[1]}"
+    else
+        ENV="$ENV RSTUDIO_VERSION_PATCH=$PATCH"
+    fi
 fi
 
 # run compile step

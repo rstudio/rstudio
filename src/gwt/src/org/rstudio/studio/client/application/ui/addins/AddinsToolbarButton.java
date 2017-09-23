@@ -33,7 +33,6 @@ import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
-import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -274,11 +273,9 @@ public class AddinsToolbarButton extends ToolbarButton
    }
    
    @Inject
-   private void initialize(Commands commands,
-                           AddinsCommandManager manager,
+   private void initialize(AddinsCommandManager manager,
                            AddinExecutor executor)
    {
-      commands_ = commands;
       manager_ = manager;
       executor_ = executor;
    }
@@ -291,7 +288,6 @@ public class AddinsToolbarButton extends ToolbarButton
    private int menuWidth_ = 0;
    
    // Injected ----
-   private Commands commands_;
    private AddinsCommandManager manager_;
    private AddinExecutor executor_;
    

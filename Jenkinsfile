@@ -38,7 +38,13 @@ def compile_package(type, flavor, variant) {
 }
 
 def s3_upload(type, flavor, os, arch) {
+  // copy installer to s3
   sh "aws s3 cp package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+
+  // add installer-less tarball if desktop
+  if (flavor == "desktop") {
+      sh "aws s3 cp package/linux/build-${flavor.capitalize()}-${type}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  }
 }
 
 def jenkins_user_build_args() {
