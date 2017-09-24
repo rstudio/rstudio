@@ -1,7 +1,6 @@
 ## GWT
 
-  [![nightly-java7](https://img.shields.io/jenkins/s/http/build.gwtproject.org/gwt.svg?label=nightly-java7)](http://build.gwtproject.org/job/gwt/)
-  [![nightly-java8](https://img.shields.io/jenkins/s/http/build.gwtproject.org/gwt-java8.svg?label=nightly-java8)](http://build.gwtproject.org/job/gwt-java8/)
+  [![nightly](https://img.shields.io/jenkins/s/http/build.gwtproject.org/gwt.svg?label=nightly)](http://build.gwtproject.org/job/gwt/)
   [![gitter](https://img.shields.io/badge/gitter.im-Join%20Chat-green.svg)](https://gitter.im/gwtproject/gwt/)
   [![irc](https://img.shields.io/badge/irc:%20chat.freenode.net-%23%23gwt-green.svg)](https://webchat.freenode.net/)
 
@@ -12,7 +11,7 @@
 
   For a more detailed documentation visit our [web site](http://gwtproject.org).
   If you are interested in contributing with the project, please read the
-  [Making GWT better](http://gwtproject.gquery.org/makinggwtbetter.html)
+  [Making GWT better](http://gwtproject.org/makinggwtbetter.html)
   section.
 
 ### Building the GWT SDK:
@@ -55,7 +54,7 @@
    everything including tests, to check APIs, and to verify code style.
    It shouldn't take longer than 3-4 minutes.
 
-   `$ ant compile.tests apicheck checkstyle -Dprecompile.disable=true`
+   `$ ant compile.tests apicheck checkstyle
 
 ### How to run GWT tests
 
