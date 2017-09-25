@@ -2,6 +2,7 @@
 
 ### Miscellaneous
 
+* Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
 * Added option to temporarily disable environment pane refreshing
 
 ### RStudio Server Pro
