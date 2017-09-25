@@ -47,6 +47,13 @@ public class StringUtil
       out.append(value);
       return out.toString();
    }
+   
+   public static String create(String source)
+   {
+      if (source == null)
+         return null;
+      return new String(source);
+   }
 
    public static int parseInt(String value, int defaultValue)
    {
