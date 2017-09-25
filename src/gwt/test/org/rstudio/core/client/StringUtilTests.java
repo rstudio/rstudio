@@ -16,6 +16,7 @@ package org.rstudio.core.client;
 
 import java.util.Date;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
 
@@ -36,8 +37,10 @@ public class StringUtilTests extends GWTTestCase
       try 
       {
     	  StringUtil.padRight(orig, minWidth);
-    	  fail("Expected NullPointerException to be thrown");
-      } catch (NullPointerException ex) { }
+    	  fail("Expected exception to be thrown");
+      } 
+      catch (NullPointerException ex) { }
+      catch (JavaScriptException ex) { }
    }
 
    public void testPadRightEmptyInput()
