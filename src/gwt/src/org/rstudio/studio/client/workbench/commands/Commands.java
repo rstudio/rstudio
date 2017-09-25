@@ -98,6 +98,8 @@ public abstract class
    public abstract AppCommand openShinyCheatSheet();
    public abstract AppCommand openRoxygenQuickReference();
    public abstract AppCommand openSparklyrCheatSheet();
+   public abstract AppCommand openPurrrCheatSheet();
+   public abstract AppCommand browseCheatSheets();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();

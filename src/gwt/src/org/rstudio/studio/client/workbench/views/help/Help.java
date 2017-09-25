@@ -274,6 +274,16 @@ public class Help extends BasePresenter implements ShowHelpHandler
       openCheatSheet("sparklyr_cheat_sheet");
    }
    
+   void onOpenPurrrCheatSheet()
+   {
+      openCheatSheet("purrr_cheat_sheet");
+   }
+   
+   void onBrowseCheatSheets()
+   {
+      globalDisplay_.openWindow("https://www.rstudio.com/resources/cheatsheets/");
+   }
+   
    private void openCheatSheet(String name)
    {
       globalDisplay_.openRStudioLink(name, false);
