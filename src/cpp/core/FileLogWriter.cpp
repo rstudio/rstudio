@@ -1,7 +1,7 @@
 /*
  * FileLogWriter.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,10 @@
 
 #include <core/FileLogWriter.hpp>
 
-
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/Thread.hpp>
 
 namespace rstudio {
 namespace core {
@@ -65,10 +65,14 @@ void FileLogWriter::log(const std::string& programIdentity,
    if (logLevel > logLevel_)
       return;
 
-   rotateLogFile();
+   LOCK_MUTEX(mutex_)
+   {
+      rotateLogFile();
 
-   // Swallow errors--we can't do anything anyway
-   core::appendToFile(logFile_, formatLogEntry(programIdentity, message));
+      // Swallow errors--we can't do anything anyway
+      core::appendToFile(logFile_, formatLogEntry(programIdentity, message));
+   }
+   END_LOCK_MUTEX
 }
 
 

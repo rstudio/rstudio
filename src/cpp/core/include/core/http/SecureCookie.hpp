@@ -1,7 +1,7 @@
 /*
- * ServerSecureCookie.hpp
+ * SecureCookie.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SERVER_AUTH_SECURE_COOKIE_HPP
-#define SERVER_AUTH_SECURE_COOKIE_HPP
+#ifndef CORE_HTTP_SECURE_COOKIE_HPP
+#define CORE_HTTP_SECURE_COOKIE_HPP
 
 #include <string>
 #include <boost/optional.hpp>
@@ -26,17 +26,22 @@ namespace core {
    namespace http {
       class Request;
       class Response;
+      class Cookie;
    }
 }
 }
 
-using namespace rstudio::core;
-
 namespace rstudio {
-namespace server {
-namespace auth {
-
+namespace core {
+namespace http {
 namespace secure_cookie {
+
+http::Cookie createSecureCookie(const std::string& name,
+                                const std::string& value,
+                                const core::http::Request& request,
+                                const boost::posix_time::time_duration& validDuration,
+                                const std::string& path,
+                                bool secure);
 
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name);
@@ -48,7 +53,8 @@ void set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const std::string& path,
-         http::Response* pResponse);
+         http::Response* pResponse,
+         bool secure);
 
 void set(const std::string& name,
          const std::string& value,
@@ -56,7 +62,8 @@ void set(const std::string& name,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
          const std::string& path,
-         http::Response* pResponse);
+         http::Response* pResponse,
+         bool secure);
 
 void remove(const http::Request& request,
             const std::string& name,
@@ -68,8 +75,8 @@ core::Error initialize();
 const std::string& getKey();
 
 } // namespace secure_cookie
-} // namespace auth
-} // namespace server
+} // namespace http
+} // namespace core
 } // namespace rstudio
 
-#endif // SERVER_AUTH_SECURE_COOKIE_HPP
+#endif // CORE_HTTP_SECURE_COOKIE_HPP
