@@ -84,23 +84,24 @@ def prepareWorkspace(){ // accessory to clean workspace and checkout
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
+// forward declare version vars
+rstudioVersionMajor  = 0
+rstudioVersionMinor  = 0
+rstudioVersionPatch  = 0
+rstudioVersionSuffix = 0
+
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
-  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR', value: params.RSTUDIO_VERSION_MAJOR),
-                                                  string(name: 'RSTUDIO_VERSION_MINOR', value: params.RSTUDIO_VERSION_MINOR),
-                                                  string(name: 'RSTUDIO_VERSION_PATCH', value: env.BUILD_NUMBER),
+  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
+                                                  string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
+                                                  string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
+                                                  string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
 
 // make a nicer slack message
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
-
-// forward declare version vars
-rstudioVersionMajor  = 0
-rstudioVersionMinor  = 0
-rstudioVersionPatch  = 0
-rstudioVersionSuffix = 0
 
 try {
     timestamps {
@@ -191,6 +192,8 @@ try {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/monitor')
+          trigger_external_build('IDE/macos-pro')
+          trigger_external_build('IDE/windows-pro')
         }
 
         slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"

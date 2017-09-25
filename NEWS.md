@@ -2,6 +2,8 @@
 
 ### Miscellaneous
 
+* Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
+* Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 
 ### RStudio Server Pro

@@ -1,7 +1,7 @@
 /*
- * ServerSecureKeyFile.hpp
+ * SecureKeyFile.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SERVER_SECURE_KEY_FILE_HPP
-#define SERVER_SECURE_KEY_FILE_HPP
+#ifndef CORE_SECURE_KEY_FILE_HPP
+#define CORE_SECURE_KEY_FILE_HPP
 
 #include <string>
 
@@ -25,7 +25,7 @@ class Error;
 }
 
 namespace rstudio {
-namespace server {
+namespace core {
 namespace key_file {
   
 core::Error readSecureKeyFile(const std::string& file, std::string* pContents);
@@ -34,5 +34,5 @@ core::Error readSecureKeyFile(const std::string& file, std::string* pContents);
 } // namespace server
 } // namespace rstudio
 
-#endif // SERVER_SECURE_KEY_FILE_HPP
+#endif // CORE_SECURE_KEY_FILE_HPP
 

@@ -27,6 +27,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/http/SecureCookie.hpp>
+
 #include <core/text/TemplateFilter.hpp>
 
 #include <monitor/MonitorClient.hpp>
@@ -35,7 +37,6 @@
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
-#include <server/auth/ServerSecureCookie.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
@@ -44,6 +45,8 @@
 namespace rstudio {
 namespace server {
 namespace pam_auth {
+
+using namespace rstudio::core;
 
 bool canSetSignInCookies();
 bool canStaySignedIn();
@@ -148,7 +151,7 @@ std::string getUserIdentifier(const core::http::Request& request)
    if (server::options().authNone())
       return core::system::username();
    else
-      return auth::secure_cookie::readSecureCookie(request, kUserId);
+      return core::http::secure_cookie::readSecureCookie(request, kUserId);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -225,10 +228,10 @@ void refreshCredentialsThenContinue(
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
-   auth::secure_cookie::remove(request,
-                               kUserId,
-                               "/",
-                               pResponse);
+   core::http::secure_cookie::remove(request,
+                                     kUserId,
+                                     "/",
+                                     pResponse);
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -288,16 +291,17 @@ void setSignInCookies(const core::http::Request& request,
    else
       expiry = boost::none;
 
-   auth::secure_cookie::set(kUserId,
-                            username,
-                            request,
-                            boost::posix_time::time_duration(24*staySignedInDays,
-                                                             0,
-                                                             0,
-                                                             0),
-                            expiry,
-                            "/",
-                            pResponse);
+   core::http::secure_cookie::set(kUserId,
+                                  username,
+                                  request,
+                                  boost::posix_time::time_duration(24*staySignedInDays,
+                                                                   0,
+                                                                   0,
+                                                                   0),
+                                  expiry,
+                                  "/",
+                                  pResponse,
+                                  options().getOverlayOption("ssl-enabled") == "1");
 
    // add cross site request forgery detection cookie
    auth::csrf::setCSRFTokenCookie(request, pResponse);
@@ -416,10 +420,10 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username, true);
    }
 
-   auth::secure_cookie::remove(request,
-                               kUserId,
-                               "/",
-                               pResponse);
+   core::http::secure_cookie::remove(request,
+                                     kUserId,
+                                     "/",
+                                     pResponse);
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }

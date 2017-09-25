@@ -241,7 +241,9 @@ if (UNIX)
    if(RSTUDIO_SERVER)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          DistributedEvents.cpp
+         SecureKeyFile.cpp
          SocketRpc.cpp
+         http/SecureCookie.cpp
          system/PosixCrypto.cpp
          system/Pam.cpp
       )

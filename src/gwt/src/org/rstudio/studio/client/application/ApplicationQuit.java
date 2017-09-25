@@ -713,7 +713,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                // failed). Now do the real quit.
 
                // notify the desktop frame that we are about to quit
-               String switchToProject = new String(switchToProject_);
+               String switchToProject = StringUtil.create(switchToProject_);
                if (Desktop.isDesktop())
                {
                   if (Desktop.getFrame().isCocoa() && 

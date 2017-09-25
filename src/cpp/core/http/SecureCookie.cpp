@@ -1,7 +1,7 @@
 /*
  * ServerSecureCookie.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-#include <server/auth/ServerSecureCookie.hpp>
+
 
 #include <sys/stat.h>
 
@@ -27,23 +27,22 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/http/URL.hpp>
-#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Util.hpp>
-
+#include <core/http/Cookie.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
 
-#include <server/ServerOptions.hpp>
-#include <server/ServerSecureKeyFile.hpp>
+#include <core/http/SecureCookie.hpp>
+#include <core/SecureKeyFile.hpp>
 
 namespace rstudio {
-namespace server {
-namespace auth {
+namespace core {
+namespace http {
 namespace secure_cookie {
 
 namespace {
@@ -63,12 +62,31 @@ Error base64HMAC(const std::string& value,
    return hashWithSecureKey(value + expires, pHMAC);
 }
 
-http::Cookie createSecureCookie(
-                          const std::string& name,
-                          const std::string& value,
-                          const core::http::Request& request,
-                          const boost::posix_time::time_duration& validDuration,
-                          const std::string& path)
+} // anonymous namespace
+
+Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
+{
+   // get cookie key
+   // NOTE: threadsafe because we never modify s_secureCookieKey and
+   // the c_str accessor just returns a pointer to the internal data
+   const char * cookieKey = s_secureCookieKey.c_str();
+
+   // compute hmac for the message
+   std::vector<unsigned char> hmac;
+   Error error = core::system::crypto::HMAC_SHA2(message, cookieKey, &hmac);
+   if (error)
+      return error;
+
+   // base 64 encode it
+   return core::system::crypto::base64Encode(hmac, pHMAC);
+}
+
+http::Cookie createSecureCookie(const std::string& name,
+                                const std::string& value,
+                                const core::http::Request& request,
+                                const boost::posix_time::time_duration& validDuration,
+                                const std::string& path,
+                                bool secure)
 {
    // generate expires string
    std::string expires = http::util::httpDate(
@@ -101,27 +119,7 @@ http::Cookie createSecureCookie(
                        signedCookieValue,
                        path,
                        true, // HTTP only
-                       // secure if delivered via SSL
-                       options().getOverlayOption("ssl-enabled") == "1");
-}
-
-} // anonymous namespace
-
-Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
-{
-   // get cookie key
-   // NOTE: threadsafe because we never modify s_secureCookieKey and
-   // the c_str accessor just returns a pointer to the internal data
-   const char * cookieKey = s_secureCookieKey.c_str();
-
-   // compute hmac for the message
-   std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA2(message, cookieKey, &hmac);
-   if (error)
-      return error;
-
-   // base 64 encode it
-   return core::system::crypto::base64Encode(hmac, pHMAC);
+                       secure);
 }
 
 std::string readSecureCookie(const core::http::Request& request,
@@ -191,7 +189,8 @@ void set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const std::string& path,
-         http::Response* pResponse)
+         http::Response* pResponse,
+         bool secure)
 {
    secure_cookie::set(name,
                       value,
@@ -199,7 +198,8 @@ void set(const std::string& name,
                       validDuration,
                       boost::none,
                       path,
-                      pResponse);
+                      pResponse,
+                      secure);
 }
 
 void set(const std::string& name,
@@ -208,14 +208,16 @@ void set(const std::string& name,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
          const std::string& path,
-         http::Response* pResponse)
+         http::Response* pResponse,
+         bool secure)
 {
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
                                             value,
                                             request,
                                             validDuration,
-                                            path);
+                                            path,
+                                            secure);
 
    // expire from browser as requested
    if (cookieExpiresDays.is_initialized())
@@ -268,6 +270,6 @@ Error initialize()
 
 
 } // namespace secure_cookie
-} // namespace auth
-} // namespace server
+} // namespace http
+} // namespace core
 } // namespace rstudio

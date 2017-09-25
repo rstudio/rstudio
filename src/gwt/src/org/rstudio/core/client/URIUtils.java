@@ -22,7 +22,7 @@ public class URIUtils
    public static String addQueryParam(String url, String name, String value)
    {
       // first split into base and anchor
-      String base = new String(url);
+      String base = StringUtil.create(url);
       String anchor = new String();
       int anchorPos = base.indexOf('#');
       if (anchorPos != -1)

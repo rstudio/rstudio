@@ -6,9 +6,10 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '100'))
   }
   parameters {
-      string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version')
-      string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version')
-      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_MAJOR',  defaultValue: '1', description: 'RStudio Major Version')
+      string(name: 'RSTUDIO_VERSION_MINOR',  defaultValue: '1', description: 'RStudio Minor Version')
+      string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_SUFFIX', defaultValue: '0', description: 'RStudio Pro Suffix Version')
       string(name: 'SLACK_CHANNEL', defaultValue: '@steve', description: 'Slack channel to publish build message.')
   }
   environment {
@@ -33,7 +34,10 @@ pipeline {
           withCredentials([string(credentialsId: 'ide-keychain-passphrase', variable: 'KEYCHAIN_PASSPHRASE')]){
             sh 'security unlock-keychain -p $KEYCHAIN_PASSPHRASE && security set-keychain-settings' // turn off timeout
           }
-          def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH}"
+          def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${params.RSTUDIO_VERSION_PATCH}"
+          if (params.RSTUDIO_VERSION_SUFFIX != 0) {
+            env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
+          }
           sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
         }
       }

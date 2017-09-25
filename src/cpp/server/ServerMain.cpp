@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
@@ -41,7 +42,6 @@
 
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
-#include <server/auth/ServerSecureCookie.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 #include <server/ServerOptions.hpp>
@@ -436,7 +436,7 @@ int main(int argc, char * const argv[])
       core::system::crypto::initialize();
 
       // initialize secure cookie module
-      error = auth::secure_cookie::initialize();
+      error = core::http::secure_cookie::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

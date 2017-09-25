@@ -1,7 +1,7 @@
 /*
- * ServerSecureKeyFile.cpp
+ * SecureKeyFile.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,10 +19,10 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
 
-#include <server/ServerSecureKeyFile.hpp>
+#include <core/SecureKeyFile.hpp>
 
 namespace rstudio {
-namespace server {
+namespace core {
 namespace key_file {
 
 core::Error readSecureKeyFile(const std::string& file, std::string* pContents)

@@ -472,11 +472,14 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="openRStudioIDECheatSheet"/>'
             <cmd refid="openDataTransformationCheatSheet"/>
             <cmd refid="openDataVisualizationCheatSheet"/>
+            <cmd refid="openPurrrCheatSheet"/>
             <cmd refid="openPackageDevelopmentCheatSheet"/>
             <cmd refid="openShinyCheatSheet"/>
             <cmd refid="openSparklyrCheatSheet"/>
             <cmd refid="openRMarkdownCheatSheet"/>
             <cmd refid="openRMarkdownReferenceGuide"/>
+            <separator/>
+            <cmd refid="browseCheatSheets"/>
          </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
@@ -1747,6 +1750,11 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Data Visualization with ggplot2"
          desc="Data visualization with ggplot2"
          context="help"/>
+         
+    <cmd id="openPurrrCheatSheet"
+         menuLabel="List manipulation with purrr"
+         desc="List manipulation with purrr"
+         context="help"/>
 
     <cmd id="openPackageDevelopmentCheatSheet"
          menuLabel="Package Development with devtools"
@@ -1786,6 +1794,11 @@ well as menu structures (for main menu and popup menus).
     <cmd id="openShinyCheatSheet"
          menuLabel="Web Applications with shiny"
          desc="Build web applications with Shiny"
+         context="help"/>
+         
+    <cmd id="browseCheatSheets"
+         menuLabel="Browse Cheatsheets..."
+         desc="Browse available cheatsheets in your web browser"
          context="help"/>
 
    <cmd id="knitDocument"

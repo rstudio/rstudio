@@ -37,12 +37,10 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
-   ServerSecureKeyFile.cpp
    ServerSessionProxy.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerCSRFToken.cpp
-   auth/ServerSecureCookie.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
