@@ -192,6 +192,8 @@ try {
           trigger_external_build('IDE/pro-docs')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/monitor')
+          trigger_external_build('IDE/macos-pro')
+          trigger_external_build('IDE/windows-pro')
         }
 
         slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
