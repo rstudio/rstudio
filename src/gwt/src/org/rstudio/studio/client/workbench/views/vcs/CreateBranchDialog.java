@@ -192,9 +192,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_.add(cbPush_);
    }
    
-   public void setRemotes(JsArray<RemotesInfo> remotes)
+   public void setRemotes(JsArray<RemotesInfo> remotesInfo)
    {
-      setRemotes(null, remotes);
+      setRemotes(null, remotesInfo);
    }
    
    public void setRemotes(String activeRemote,
@@ -204,14 +204,38 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       List<String> remotes = new ArrayList<String>();
       for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
+      {
          if (!remotes.contains(info.getRemote()))
+         {
+            String remote = info.getRemote();
             remotes.add(info.getRemote());
+            if (activeRemote == null && info.isActive())
+               activeRemote = remote;
+         }
+      }
       
       String[] choices = new String[remotes.size() + 1];
       for (int i = 0; i < remotes.size(); i++)
          choices[i] = remotes.get(i);
       choices[remotes.size()] = REMOTE_NONE;
       
+      // if we haven't set an active remote, try defaulting to the one called
+      // 'origin' (if it exists)
+      if (activeRemote == null)
+      {
+         for (int i = 0; i < choices.length; i++)
+         {
+            if (REMOTE_ORIGIN.equals(choices[i]))
+            {
+               activeRemote = REMOTE_ORIGIN;
+               break;
+            }
+         }
+      }
+      
+      // if we still haven't found anything, just default to the first entry
+      // (note that because we always add the (none) remote there will always
+      // be an entry available here)
       if (activeRemote == null)
          activeRemote = choices[0];
       
@@ -250,4 +274,5 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    private final CheckBox cbPush_;
    
    private static final String REMOTE_NONE = "(None)";
+   private static final String REMOTE_ORIGIN = "origin";
 }
