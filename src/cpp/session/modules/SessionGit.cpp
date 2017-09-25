@@ -686,8 +686,41 @@ public:
    
    core::Error listRemotes(json::Array* pRemotes)
    {
+      Error error;
+      
+      // learn the remote associated with the current
+      // branch (if any)
+      std::vector<std::string> branches;
+      boost::optional<std::size_t> index;
+      error = listBranches(&branches, &index);
+      if (error)
+         LOG_ERROR(error);
+      
+      // extract the active branch and tracking remote
+      std::string activeRemote;
+      if (index)
+      {
+         std::string activeBranch = branches[*index];
+         if (!activeBranch.empty())
+         {
+            std::string configKey = std::string() +
+                  "branch." + activeBranch + ".remote";
+
+            std::string output;
+            Error error = runGit(
+                     ShellArgs() << "config" << configKey,
+                     &output);
+
+            if (error)
+               LOG_ERROR(error);
+
+            activeRemote = string_utils::trimWhitespace(output);
+         }
+      }
+      
+      // list the available branches
       std::string output;
-      Error error = runGit(ShellArgs() << "remote" << "--verbose", &output);
+      error = runGit(ShellArgs() << "remote" << "--verbose", &output);
       if (error)
          return error;
       
@@ -695,6 +728,7 @@ public:
       if (trimmed.empty())
          return Success();
       
+      // split and parse remotes output
       boost::regex reSpaces("\\s+");
       std::vector<std::string> splat = split(trimmed);
       BOOST_FOREACH(const std::string& line, splat)
@@ -722,6 +756,7 @@ public:
          objectJson["remote"] = string_utils::trimWhitespace(remote);
          objectJson["url"] = string_utils::trimWhitespace(url);
          objectJson["type"] = string_utils::trimWhitespace(type);
+         objectJson["active"] = string_utils::trimWhitespace(remote) == activeRemote;
          pRemotes->push_back(objectJson);
       }
 
