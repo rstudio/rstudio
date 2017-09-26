@@ -8,6 +8,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/Version.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -1027,11 +1028,8 @@ private:
    NSString *systemVersion =
    [systemVersionDictionary objectForKey:@"ProductVersion"];
    
-   std::string version(
-                       [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-   
-   return boost::algorithm::starts_with(version, "10.9") ||
-          boost::algorithm::starts_with(version, "10.10");
+   core::Version currentVersion([systemVersion cStringUsingEncoding: NSASCIIStringEncoding]);
+   return currentVersion >= Version("10.9");
 }
 
 - (Boolean) isCentOS
