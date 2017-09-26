@@ -557,7 +557,7 @@ public class TerminalPane extends WorkbenchPane
       suppressAutoFocus_ = !setFocus;
       activateTerminal(() -> {
          ensureTerminal(text);
-         Scheduler.get().scheduleDeferred(() -> { suppressAutoFocus_ = false; });
+         Scheduler.get().scheduleDeferred(() -> suppressAutoFocus_ = false);
       });
    }
 
