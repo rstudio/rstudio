@@ -229,32 +229,6 @@ void showFileError(const QString& action,
                   msg);
 }
 
-void launchRStudio(const std::vector<std::string>& args)
-{
-#ifdef _WIN32
-   core::system::ProcessOptions options;
-   options.breakawayFromJob = true;
-   options.detachProcess = true;
-   Error error = core::system::runProgram(
-      desktop::options().executablePath().absolutePath(),
-      args,
-      "",
-      options,
-      NULL);
-   if (error)
-      LOG_ERROR(error);
-#else
-   QStringList argList;
-   BOOST_FOREACH(const std::string& arg, args)
-   {
-      argList.append(QString::fromStdString(arg));
-   }
-   QString exePath = QString::fromUtf8(
-      desktop::options().executablePath().absolutePath().c_str());
-   QProcess::startDetached(exePath, argList);
-#endif
-}
-
 bool isFixedWidthFont(const QFont& font)
 {
    QFontMetrics metrics(font);

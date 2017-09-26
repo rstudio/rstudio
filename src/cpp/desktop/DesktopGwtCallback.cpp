@@ -973,15 +973,14 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 {
    std::vector<std::string> args;
    args.push_back(resolveAliasedPath(projectFilePath).toStdString());
-   launchRStudio(args);
+   pMainWindow_->launchRStudio(args);
 }
 
 void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
 {
    workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-   core::system::setenv(kRStudioInitialWorkingDir,
-                        workingDirectoryPath.toStdString());
-   launchRStudio();
+   pMainWindow_->launchRStudio(std::vector<std::string>(),
+                               workingDirectoryPath.toStdString());
 }
 
 void GwtCallback::openTerminal(QString terminalPath,

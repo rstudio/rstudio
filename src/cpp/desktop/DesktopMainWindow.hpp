@@ -25,6 +25,7 @@
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
+#include "DesktopApplicationLaunch.hpp"
 
 namespace rstudio {
 namespace desktop {
@@ -42,6 +43,8 @@ public:
    QString getSumatraPdfExePath();
    void evaluateJavaScript(QString jsCode);
    void launchSession(bool reload);
+   void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
+                      const std::string& initialDir = std::string());
 
 public slots:
    void quit();
@@ -77,6 +80,9 @@ private:
    // call launchProcess back on it)
    void setSessionLauncher(SessionLauncher* pSessionLauncher);
 
+   // same for application launches
+   void setAppLauncher(ApplicationLaunch* pAppLauncher);
+
    // allow SessionLauncher to give us a reference to the currently
    // active rsession process so that we can use it in closeEvent handling
    void setSessionProcess(QProcess* pSessionProcess);
@@ -93,6 +99,7 @@ private:
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
+   ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 };
 
