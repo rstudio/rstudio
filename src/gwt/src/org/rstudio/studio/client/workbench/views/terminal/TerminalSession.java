@@ -546,14 +546,7 @@ public class TerminalSession extends XTermWidget
                   // terminal sessions and there was a resize.
                   // A delay is needed to give the xterm.js implementation an
                   // opportunity to be ready for this.
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        onResize();
-                     }
-                  });
+                  Scheduler.get().scheduleDeferred(() -> onResize());
                }
             }
 
