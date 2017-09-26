@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
@@ -136,7 +137,7 @@ public class MessageDialog extends ModalDialogBase
    
    public static Label labelForMessage(String message)
    {
-      Label label = new MultiLineLabel(message);
+      Label label = new MultiLineLabel(StringUtil.notNull(message));
       label.setStylePrimaryName(
                      ThemeResources.INSTANCE.themeStyles().dialogMessage());
       return label;
