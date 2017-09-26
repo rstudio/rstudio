@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter.Display;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -50,7 +49,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubproc
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -172,48 +170,42 @@ public class TerminalPane extends WorkbenchPane
    
    private void updateTerminalToolbar()
    {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            boolean interruptable = false;
-            boolean closable = false;
-            boolean clearable = false;
+      Scheduler.get().scheduleDeferred(() -> {
+         boolean interruptable = false;
+         boolean closable = false;
+         boolean clearable = false;
 
-            final TerminalSession visibleTerminal = getSelectedTerminal();
-            if (visibleTerminal != null)
+         final TerminalSession visibleTerminal = getSelectedTerminal();
+         if (visibleTerminal != null)
+         {
+            clearable = true;
+            if (!visibleTerminal.getHasChildProcs())
             {
-               clearable = true;
-               if (!visibleTerminal.getHasChildProcs())
+               // nothing running in current terminal
+               closable = true;
+            }
+            else
+            {
+               if (!visibleTerminal.xtermAltBufferActive())
                {
-                  // nothing running in current terminal
-                  closable = true;
+                  // not running a full-screen program
+                  interruptable = true;
+                  closable = false;
                }
                else
                {
-                  if (!visibleTerminal.xtermAltBufferActive())
-                  {
-                     // not running a full-screen program
-                     interruptable = true;
-                     closable = false;
-                  }
-                  else
-                  {
-                     // running a full-screen program
-                     closable = true;
-                     interruptable = false;
-                     clearable = false;
-                  }
+                  // running a full-screen program
+                  closable = true;
+                  interruptable = false;
+                  clearable = false;
                }
             }
-            interruptButton_.setVisible(interruptable);
-            closeButton_.setVisible(closable);
-            clearButton_.setVisible(clearable);
          }
+         interruptButton_.setVisible(interruptable);
+         closeButton_.setVisible(closable);
+         clearButton_.setVisible(clearable);
       });
-
-    }
+   }
 
    @Override
    public void onSelected()
@@ -222,7 +214,7 @@ public class TerminalPane extends WorkbenchPane
       
       if (selectedCallback_ != null)
       {
-         // terminal tab was shown programatically
+         // terminal tab was shown programmatically
          selectedCallback_.displaySelected();
          selectedCallback_ = null;
       }
@@ -563,23 +555,10 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       suppressAutoFocus_ = !setFocus;
-      activateTerminal(new Display.DisplaySelectedCallback()
-      {
-         @Override
-         public void displaySelected()
-         {
-            ensureTerminal(text);
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  suppressAutoFocus_ = false;
-               }
-            });
-         }
+      activateTerminal(() -> {
+         ensureTerminal(text);
+         Scheduler.get().scheduleDeferred(() -> suppressAutoFocus_ = false);
       });
-      
    }
 
    @Override
@@ -995,20 +974,15 @@ public class TerminalPane extends WorkbenchPane
     */
    public void setFocusOnVisible()
    {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
+      Scheduler.get().scheduleDeferred(() -> {
+         TerminalSession visibleTerminal = getSelectedTerminal();
+         if (visibleTerminal != null)
          {
-            TerminalSession visibleTerminal = getSelectedTerminal();
-            if (visibleTerminal != null)
-            {
-               if (!suppressAutoFocus_)
-                  visibleTerminal.setFocus(true);
-               activeTerminalToolbarButton_.setActiveTerminal(
-                     visibleTerminal.getCaption(), visibleTerminal.getHandle());
-               setTerminalTitle(visibleTerminal.getTitle());
-            }
+            if (!suppressAutoFocus_)
+               visibleTerminal.setFocus(true);
+            activeTerminalToolbarButton_.setActiveTerminal(
+                  visibleTerminal.getCaption(), visibleTerminal.getHandle());
+            setTerminalTitle(visibleTerminal.getTitle());
          }
       });
    }
@@ -1060,27 +1034,22 @@ public class TerminalPane extends WorkbenchPane
          return;
       }
 
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
+      Scheduler.get().scheduleDeferred(() -> {
+         terminal.connect(new ResultCallback<Boolean, String>()
          {
-            terminal.connect(new ResultCallback<Boolean, String>()
+            @Override
+            public void onSuccess(Boolean connected) 
             {
-               @Override
-               public void onSuccess(Boolean connected) 
-               {
-               }
+            }
 
-               @Override
-               public void onFailure(String msg)
-               {
-                  Debug.log(msg);
-               }
-            });
-         }
+            @Override
+            public void onFailure(String msg)
+            {
+               Debug.log(msg);
+            }
+         });
       });
-   }
+}
 
    @Override
    public void onTerminalSubprocs(TerminalSubprocEvent event)

@@ -208,14 +208,7 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onCreateTerminal(final CreateTerminalEvent event)
    {
       // New Terminal command, always creates a new terminal
-      view_.activateTerminal(new Display.DisplaySelectedCallback()
-      {
-         @Override
-         public void displaySelected()
-         {
-            view_.createTerminal(event.getPostCreateText());
-         }
-      });
+      view_.activateTerminal(() -> view_.createTerminal(event.getPostCreateText()));
    }
 
    @Override
@@ -239,15 +232,9 @@ public class TerminalTabPresenter extends BusyPresenter
       if (event.getShow())
       {
          // And optionally bring tab forward and select the requested terminal
-         view_.activateTerminal(new Display.DisplaySelectedCallback()
-         {
-            @Override
-            public void displaySelected()
-            {
-               view_.activateNamedTerminal(event.getProcessInfo().getCaption(),
-                                           true /*createdByApi*/);
-            }
-         });
+         view_.activateTerminal(
+               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption(), 
+                                                 true /*createdByApi*/));
       }
    }
 
@@ -262,16 +249,11 @@ public class TerminalTabPresenter extends BusyPresenter
    {
       // Request to display the terminal tab and optionally select a specific terminal; if
       // no terminal is specified, then make sure there is an active terminal
-      view_.activateTerminal(new Display.DisplaySelectedCallback()
-      {
-         @Override
-         public void displaySelected()
-         {
-            if (StringUtil.isNullOrEmpty(event.getId()))
-               view_.ensureTerminal();
-            else
-               view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
-         }
+      view_.activateTerminal(() -> {
+         if (StringUtil.isNullOrEmpty(event.getId()))
+            view_.ensureTerminal();
+         else
+            view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
       });
    }
 
