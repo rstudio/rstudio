@@ -18,6 +18,8 @@
 
 #include "3rdparty/qtsingleapplication/QtSingleApplication"
 
+#include "DesktopApplicationLaunch.hpp"
+
 namespace rstudio {
 namespace desktop {
 
@@ -27,14 +29,19 @@ class PosixApplication : public QtSingleApplication
 public:
 
    PosixApplication(QString appName, int& argc, char* argv[])
-    : QtSingleApplication(appName, argc, argv)
+    : QtSingleApplication(appName, argc, argv),
+      pAppLauncher_(NULL)
    {
-      setApplicationName(appName);
    }
 
    QString startupOpenFileRequest() const
    {
       return startupOpenFileRequest_;
+   }
+
+   void setAppLauncher(ApplicationLaunch* pAppLauncher)
+   {
+       pAppLauncher_ = pAppLauncher;
    }
 
 signals:
@@ -45,9 +52,8 @@ protected:
 
 private:
     QString startupOpenFileRequest_;
-
+    ApplicationLaunch* pAppLauncher_;
 };
-
 
 
 } // namespace desktop

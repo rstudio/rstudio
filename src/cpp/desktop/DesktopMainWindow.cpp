@@ -131,6 +131,12 @@ void MainWindow::launchSession(bool reload)
    }
 }
 
+void MainWindow::launchRStudio(const std::vector<std::string> &args,
+                               const std::string& initialDir)
+{
+    pAppLauncher_->launchRStudio(args, initialDir);
+}
+
 void MainWindow::onCloseWindowShortcut()
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
@@ -327,6 +333,11 @@ void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
 void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 {
    pCurrentSessionProcess_ = pSessionProcess;
+}
+
+void MainWindow::setAppLauncher(ApplicationLaunch *pAppLauncher)
+{
+    pAppLauncher_ = pAppLauncher;
 }
 
 // allow SessionLauncher to collect restart requests from GwtCallback

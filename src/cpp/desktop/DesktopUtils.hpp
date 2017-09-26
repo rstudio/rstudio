@@ -67,8 +67,6 @@ void showFileError(const QString& action,
                    const QString& file,
                    const QString& error);
 
-void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>());
-
 bool isFixedWidthFont(const QFont& font);
 
 void openUrl(const QUrl& url);
