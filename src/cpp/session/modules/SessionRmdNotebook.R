@@ -627,6 +627,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     opts <- .rs.mergeLists(opts,
                            eval(substitute(knitr:::parse_params(code)),
                                 envir = .GlobalEnv))
+
+    # convert language name objects to plain characters (these can occur in
+    # malformed expressions, and cause scalar conversion below to fail)
+    names <- vapply(opts, is.name, TRUE)
+    opts[names] <- as.character(opts[names])
   },
   error = function(e) {})
 
