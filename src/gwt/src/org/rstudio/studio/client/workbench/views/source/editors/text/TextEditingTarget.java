@@ -2432,11 +2432,11 @@ public class TextEditingTarget implements
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
                      final Command saveCommand = new Command() {
-
                         @Override
                         public void execute()
                         {
-                           if (!getPath().equals(saveItem.getPath()))
+                           if (getPath() != null &&
+                               !getPath().equals(saveItem.getPath()))
                            {
                               // breakpoints are file-specific, so when saving
                               // as a different file, clear the display of
