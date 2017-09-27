@@ -18,6 +18,10 @@
 
 #include <QWidget>
 
+#include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
+#include <core/r_util/RUserData.hpp>
+
 #include "DesktopOptions.hpp"
 
 /*
@@ -203,6 +207,32 @@ bool ApplicationLaunch::nativeEvent(const QByteArray & eventType,
       return true;
    }
    return QWidget::nativeEvent(eventType, message, result);
+}
+
+void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
+                                      const std::string& initialDir)
+{
+   core::system::ProcessOptions options;
+   options.breakawayFromJob = true;
+   options.detachProcess = true;
+
+   // supply initial dir to child process if specified
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   if (!initialDir.empty())
+   {
+      core::system::setenv(&childEnv, kRStudioInitialWorkingDir, initialDir);
+      options.environment = childEnv;
+   }
+
+   core::Error error = core::system::runProgram(
+      desktop::options().executablePath().absolutePath(),
+      args,
+      "",
+      options,
+      NULL);
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace desktop

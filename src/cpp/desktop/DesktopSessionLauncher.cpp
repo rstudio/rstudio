@@ -117,6 +117,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    pMainWindow_ = new MainWindow(url);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
+   pMainWindow_->setAppLauncher(pAppLaunch);
    pAppLaunch->setActivationWindow(pMainWindow_);
 
    desktop::options().restoreMainWindowBounds(pMainWindow_);
