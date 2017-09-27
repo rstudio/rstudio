@@ -1854,8 +1854,10 @@ public class GwtAstBuilder {
       // Comparator<T>.
       // The first argument serves as the qualifier, so for example, the method dispatch looks
       // like this: int compare(T a, T b) { a.compareTo(b); }
-      if (!hasQualifier && !referredMethod.isStatic() && instance == null &&
-          samMethod.getParams().size() == referredMethod.getParams().size() + 1) {
+      if (!hasQualifier
+          && !referredMethod.isStatic()
+          && !referredMethod.isConstructor()
+          && instance == null) {
         // the instance qualifier is the first parameter in this case.
         // Needs to be cast the actual type due to generics.
         instance = new JCastOperation(info, typeMap.get(referredMethodBinding.declaringClass),
@@ -1890,8 +1892,14 @@ public class GwtAstBuilder {
       // interface Foo { m(int x, int y); } bound to reference foo(int... args)
       // if varargs and incoming param is not already a var-arg, we'll need to convert
       // trailing args of the target interface into an array
+      boolean isVarargArgumentSuppliedDirectlyAsAnArray =
+          referredMethodBinding.isVarargs()
+              && samBinding.parameters.length == referredMethodBinding.parameters.length
+              && samBinding.parameters[varArg]
+                  .isCompatibleWith(referredMethodBinding.parameters[varArg]);
+
       if (referredMethodBinding.isVarargs()
-          && !samBinding.parameters[varArg].isArrayType()) {
+          && !isVarargArgumentSuppliedDirectlyAsAnArray) {
         varArgInitializers = Lists.newArrayList();
       }
 
@@ -1900,14 +1908,23 @@ public class GwtAstBuilder {
         JExpression paramExpr = param.makeRef(info);
         // params may need to be boxed or unboxed
         TypeBinding destParam = null;
-        // The method declared in the functional interface might have more parameters than the
-        // method referred by the method reference. In the case of an instance method without
+
+        int declarationParameterOffset =
+            declarationSamBinding.parameters.length
+                - referredMethodBinding.parameters.length;
+        // The method declared in the functional interface might have more or less parameters than
+        // the method referred by the method reference. In the case of an instance method without
         // an explicit qualifier (A::m vs instance::m) the method in the functional interface will
         // have an additional parameter for the instance preceding all the method parameters.
+        // So truncate the value of the index to refer to the right parameter.
+        int declarationParameterIndex = Math.max(0,
+            Math.min(
+                paramNumber
+                    + declarationParameterOffset,
+                declarationSamBinding.parameters.length - 1)
+        );
         TypeBinding samParameterBinding =
-            declarationSamBinding.parameters[paramNumber
-                + (declarationSamBinding.parameters.length
-                - referredMethodBinding.parameters.length)];
+            declarationSamBinding.parameters[declarationParameterIndex];
         // if it is not the trailing param or varargs, or interface method is already varargs
         if (varArgInitializers == null
             || !referredMethodBinding.isVarargs()
@@ -4408,11 +4425,11 @@ public class GwtAstBuilder {
   }
 
   private boolean hasQualifier(ReferenceExpression x) {
-    return (Boolean) accessPrivateField(JdtPrivateHacks.haveReceiverField, x);
+    return !x.isTypeAccess();
   }
 
   private TypeBinding getCollectionElementTypeBinding(ForeachStatement x) {
-  return (TypeBinding) accessPrivateField(JdtPrivateHacks.collectionElementTypeField, x);
+    return (TypeBinding) accessPrivateField(JdtPrivateHacks.collectionElementTypeField, x);
   }
 
   private Object accessPrivateField(Field field, ASTNode astNode) {
@@ -4428,10 +4445,6 @@ public class GwtAstBuilder {
      * Reflective access to {@link ForeachStatement#collectionElementType}.
      */
     private static final Field collectionElementTypeField;
-    /**
-     * Reflective access to {@link ReferenceExpression#haveReceiver}.
-     */
-    private static final Field haveReceiverField;
 
     static {
       try {
@@ -4442,14 +4455,6 @@ public class GwtAstBuilder {
         throw new RuntimeException(
             "Unexpectedly unable to access ForeachStatement.collectionElementType via reflection",
             e);
-      }
-
-      try {
-        haveReceiverField = ReferenceExpression.class.getDeclaredField("haveReceiver");
-        haveReceiverField.setAccessible(true);
-      } catch (Exception e) {
-        throw new RuntimeException(
-            "Unexpectedly unable to access ReferenceExpression.haveReceiver via reflection", e);
       }
     }
   }

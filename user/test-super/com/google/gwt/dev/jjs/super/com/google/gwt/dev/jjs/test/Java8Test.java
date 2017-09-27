@@ -1453,6 +1453,26 @@ public class Java8Test extends GWTTestCase {
     V apply(T t, U u);
   }
 
+  @FunctionalInterface
+  interface MyFunction3<T, U, V, W> {
+    W apply(T t, U u, V v);
+  }
+
+  @FunctionalInterface
+  interface IntFunction1<U> {
+    U apply(int t);
+  }
+
+  @FunctionalInterface
+  interface IntFunction2<V> {
+    V apply(int t, int u);
+  }
+
+  @FunctionalInterface
+  interface IntFunction3<W> {
+    W apply(int t, int u, int v);
+  }
+
   public void testMethodReference_implementedInSuperclass() {
     MyFunction1<StringBuilder, String> toString = StringBuilder::toString;
     assertEquals("Hello", toString.apply(new StringBuilder("Hello")));
@@ -1463,6 +1483,145 @@ public class Java8Test extends GWTTestCase {
   public void testMethodReference_genericTypeParameters() {
     testMethodReference_genericTypeParameters(
         new Some<String>("Hell", concat), "Hell", "o", concat);
+  }
+
+  static String concat(String... strs) {
+    String result = "";
+    for (String s : strs) {
+      result += s;
+    }
+    return result;
+  }
+
+  static String anotherConcat(String s1, String s2, String... strs) {
+    String result = s1 + s2;
+    for (String s : strs) {
+      result += s;
+    }
+    return result;
+  }
+
+  public String instanceConcat(String... strs) {
+    String result = "";
+    for (String s : strs) {
+      result += s;
+    }
+    return result;
+  }
+
+  public String anotherInstanceConcat(String s1, String... strs) {
+    String result = s1;
+    for (String s : strs) {
+      result += s;
+    }
+    return result;
+  }
+
+  private static class ClassWithVarArgsConstructor {
+    private class Inner {
+      private int sum;
+      Inner(int i, Integer... nums) {
+        this.sum = ClassWithVarArgsConstructor.this.sum + i;
+        for (Integer n: nums) {
+          sum += n;
+        }
+      }
+    }
+
+    private int sum;
+    ClassWithVarArgsConstructor(int i, Integer... nums) {
+      sum = i;
+      for (Integer n: nums) {
+        sum += n;
+      }
+    }
+
+    private MyFunction1<Integer, Inner> createInner1Param() {
+      return (MyFunction1<Integer, Inner>) Inner::new;
+    }
+
+    private MyFunction2<Integer, Integer, Inner> createInner2Param() {
+      return (MyFunction2<Integer, Integer, Inner>) Inner::new;
+    }
+
+    private MyFunction3<Integer, Integer, Integer, Inner> createInner3Param() {
+      return (MyFunction3<Integer, Integer, Integer, Inner>) Inner::new;
+    }
+
+    private MyFunction2<Integer, Integer[], Inner> createInner2ParamArray() {
+      return (MyFunction2<Integer, Integer[], Inner>) Inner::new;
+    }
+
+    private IntFunction1<Inner> createInner1IntParam() {
+      return (IntFunction1<Inner>) Inner::new;
+    }
+
+    private IntFunction2<Inner> createInner2IntParam() {
+      return (IntFunction2<Inner>) Inner::new;
+    }
+
+    private IntFunction3<Inner> createInner3IntParam() {
+      return (IntFunction3<Inner>) Inner::new;
+    }
+  }
+
+  public void testMethodReference_varargs() {
+    // More functional arguments than varargs
+    MyFunction2<String, String, String> concat = Java8Test::concat;
+    assertEquals("ab", concat.apply("a", "b"));
+
+    // Less functional arguments than varargs
+    MyFunction2<String, String, String> anotherConcat = Java8Test::anotherConcat;
+    assertEquals("ab", anotherConcat.apply("a", "b"));
+
+    MyFunction2<Java8Test, String, String> instanceConcat = Java8Test::instanceConcat;
+    assertEquals("a", instanceConcat.apply(this, "a"));
+
+    MyFunction2<Java8Test, String, String> anotherInstanceConcat = Java8Test::anotherInstanceConcat;
+    assertEquals("a", anotherInstanceConcat.apply(this, "a"));
+
+    // constructor varargs
+    MyFunction1<Integer, ClassWithVarArgsConstructor> constructor1Param =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(1, constructor1Param.apply(1).sum);
+
+    MyFunction2<Integer, Integer, ClassWithVarArgsConstructor> constructor2Param =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(3, constructor2Param.apply(1, 2).sum);
+
+    MyFunction3<Integer, Integer, Integer, ClassWithVarArgsConstructor> constructor3Param =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(6, constructor3Param.apply(1, 2, 3).sum);
+
+    MyFunction2<Integer, Integer[], ClassWithVarArgsConstructor> constructor2ParamArray =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(6, constructor2ParamArray.apply(1, new Integer[] {2, 3}).sum);
+
+    // constructor varargs + autoboxing
+    IntFunction1<ClassWithVarArgsConstructor> constructor1IntParam =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(1, constructor1IntParam.apply(1).sum);
+
+    IntFunction2<ClassWithVarArgsConstructor> constructor2IntParam =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(3, constructor2IntParam.apply(1, 2).sum);
+
+    IntFunction3<ClassWithVarArgsConstructor> constructor3IntParam =
+        ClassWithVarArgsConstructor::new;
+    assertEquals(6, constructor3IntParam.apply(1, 2, 3).sum);
+
+    ClassWithVarArgsConstructor outer = new ClassWithVarArgsConstructor(1);
+
+    // inner class constructor varargs
+    assertEquals(2, outer.createInner1Param().apply(1).sum);
+    assertEquals(4, outer.createInner2Param().apply(1, 2).sum);
+    assertEquals(7, outer.createInner3Param().apply(1, 2, 3).sum);
+    assertEquals(7, outer.createInner2ParamArray().apply(1, new Integer[] {2, 3}).sum);
+    
+    // inner class constructor varargs + autoboxing
+    assertEquals(2, outer.createInner1IntParam().apply(1).sum);
+    assertEquals(4, outer.createInner2IntParam().apply(1, 2).sum);
+    assertEquals(7, outer.createInner3IntParam().apply(1, 2, 3).sum);
   }
 
   private static <T> void testMethodReference_genericTypeParameters(

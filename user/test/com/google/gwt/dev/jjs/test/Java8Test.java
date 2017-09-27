@@ -288,6 +288,10 @@ public class Java8Test extends GWTTestCase {
     assertFalse(isGwtSourceLevel8());
   }
 
+  public void testMethodReference_varargs() {
+    assertFalse(isGwtSourceLevel8());
+  }
+
   public void testNativeJsOverlay_lambda() {
     assertFalse(isGwtSourceLevel8());
   }
