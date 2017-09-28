@@ -47,6 +47,16 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
+# compiler override
+# on some systems, a newer compiler must be used (instead of the default compiler)
+if [ -d /opt/rh/devtoolset-2/root/usr/bin/ ]
+then
+   # centos6 compiler overrides
+   export CC=/opt/rh/devtoolset-2/root/usr/bin/gcc 
+   export CXX=/opt/rh/devtoolset-2/root/usr/bin/c++ 
+   export CPP=/opt/rh/devtoolset-2/root/usr/bin/cpp  
+fi
+
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 rm -f CMakeCache.txt
