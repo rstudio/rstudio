@@ -11,9 +11,11 @@ RUN set -x \
     && apt-get update
 
 # add ppa repository so we can install java 8 (not in any official repo for precise)
+# also add repo for gcc-4.7 (C++11 support)
 RUN apt-get update \
   && apt-get install -y software-properties-common python-software-properties \
-  && add-apt-repository ppa:openjdk-r/ppa 
+  && add-apt-repository ppa:openjdk-r/ppa \
+  && add-apt-repository ppa:ubuntu-toolchain-r/test
 
 RUN apt-get update \
   && apt-get install -y \
@@ -40,10 +42,16 @@ RUN apt-get update \
     unzip \
     uuid-dev \
     wget \
-    zlib1g-dev
+    zlib1g-dev \
+    gcc-4.7 \
+    g++-4.7
 
 # ensure we use the java 8 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+
+# ensure that we use the gcc-4.7 compiler
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.7 40 --slave /usr/bin/g++ g++ /usr/bin/g++-4.7
+RUN update-alternatives --config gcc
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
