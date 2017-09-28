@@ -39,5 +39,6 @@ if [ -x "$rcpath" ]; then
 fi
 
 # perform overlay config
+cd ~/rstudio/vagrant
 ./provision-primary-overlay.sh
 
