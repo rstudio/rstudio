@@ -4300,7 +4300,7 @@ public class TextEditingTarget implements
    
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
-      String sel = null;
+      String sel = "";
       Range selRange = null;
       
       // if currently in a chunk
