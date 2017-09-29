@@ -91,10 +91,10 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    // discover project-specific settings when available
    r_util::RProjectConfig projConfig;
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
-   FilePath projDir = projects::projectContext().directory();
    bool hasConfig = false;
    
-   if (docPath.isWithin(projDir))
+   if (projects::projectContext().hasProject() &&
+       docPath.isWithin(projects::projectContext().directory()))
    {
       projConfig = projects::projectContext().config();
       hasConfig = true;
