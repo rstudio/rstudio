@@ -118,10 +118,16 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       bool isCorrect = true;
       error = s_pSpellingEngine->checkSpelling(word, &isCorrect);
       if (error)
-         return error;
-
-      if (!isCorrect)
+      {
+         // if we can't check a word, ignore it; some combinations of platform, non-ASCII
+         // characters, and locale are known to fail in iconv, and we don't want to put those
+         // failures in front of the user (we just won't be able to spell check those words)
+         LOG_ERROR(error);
+      }
+      else if (!isCorrect) 
+      {
          misspelledIndexes.push_back(static_cast<int>(i));
+      }
    }
 
    pResponse->setResult(misspelledIndexes);
