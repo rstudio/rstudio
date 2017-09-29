@@ -640,7 +640,7 @@ boost::shared_ptr<ProjectTemplateWorker>& projectTemplateWorker()
    return instance;
 }
 
-void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation& continuation)
+void respondWithProjectTemplateRegistry(json::JsonRpcFunctionContinuation continuation)
 {
    json::JsonRpcResponse response;
    response.setResult(projectTemplateRegistry()->toJson());
@@ -659,7 +659,7 @@ void getProjectTemplateRegistry(const json::JsonRpcRequest& request,
                                 const json::JsonRpcFunctionContinuation& continuation)
 {
    withProjectTemplateRegistry(
-            boost::bind(respondWithProjectTemplateRegistry, boost::cref(continuation)));
+            boost::bind(respondWithProjectTemplateRegistry, continuation));
 }
 
 SEXP rs_getProjectTemplateRegistry()
