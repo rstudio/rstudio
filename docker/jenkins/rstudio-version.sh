@@ -140,43 +140,59 @@ case "$ACTION" in
 
         # increment to highest observed patch release
         PATCH=$(($MAX_PATCH+1))
-        log "Creating new patch release $VERSION.$PATCH"
+
+        OSS_VERSION="$VERSION.$PATCH"
+
+        log "Creating new patch release $OSS_VERSION"
 
         # write temporary file marking all commits until the last known one as
         # belonging to this build
         rm -f /tmp/history-prepend.csv && touch /tmp/history-prepend.csv
         for ((i = 0; i <= PATCH_INDEX - 1; i++)); do
-            log "Marking commit ${COMMITS[$i]} for patch $VERSION.$PATCH"     
+            log "Marking commit ${COMMITS[$i]} for patch $OSS_VERSION"     
             echo "${COMMITS[$i]},$PATCH,$TIMESTAMP" >> /tmp/history-prepend.csv
         done
 
         # now prepend and push to s3
         cat /tmp/history-prepend.csv /tmp/oss-patch.csv > /tmp/oss-updated.csv
         if [[ $DEBUG = true ]]; then
-            echo "Push updated patch history to S3"
+            echo "Push updated patch history to S3 and git"
         else
+            # upload to s3
             aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$VERSION/oss-patch.csv --quiet
+
+            # tag the release on git
+            git tag "v$OSS_VERSION"
+            git push -q origin "v$OSS_VERSION"
         fi
 
         # echo newly created version
-        echo "$VERSION.$PATCH"
+        echo "$OSS_VERSION"
 
     elif [[ $PRO = true ]]; then
 
         # increment to highest observed suffix
         SUFFIX=$(($SUFFIX+1))
 
+        PRO_VERSION="$VERSION.$PATCH-$SUFFIX"
+
+        log "Creating new Pro patch release $PRO_VERSION"
+
         # prepend and push to s3
         echo "$PATCH,$SUFFIX,$TIMESTAMP" > /tmp/suffix-prepend.csv
         cat /tmp/suffix-prepend.csv /tmp/pro-suffix.csv > /tmp/pro-updated.csv
         if [[ $DEBUG = true ]]; then
-            echo "Push updated suffix to S3"
+            echo "Push updated suffix to S3 and git"
         else
             aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv $EXTRA_CP_ARGS
+
+            # tag the release on git
+            git tag "v$PRO_VERSION-pro"
+            git push -q origin "v$PRO_VERSION-pro"
         fi
 
         # echo newly created version
-        echo "$VERSION.$PATCH-$SUFFIX"
+        echo "$PRO_VERSION"
     fi
 esac
 
