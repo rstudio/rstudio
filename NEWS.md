@@ -145,6 +145,8 @@
 * Fixed issues arising from restoring a session suspended with a different R version
 * Color errors in the R console correctly when resuming a session
 * Fixed an issue in which notebook tables would not print data with lists of lists
+* Fix session crash that can occur with certain malformed chunk headers
+* Fix issue preventing New Session from working on Ubuntu 16+
 * Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 * Server Pro: Fix issue with using multiple R versions feature when multi-session is off
 
