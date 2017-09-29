@@ -161,9 +161,9 @@ case "$ACTION" in
             # upload to s3
             aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$VERSION/oss-patch.csv --quiet
 
-            # tag the release on git
-            git tag "v$OSS_VERSION"
-            git push -q origin "v$OSS_VERSION"
+            # tag the release on git (TODO: need Jenkins creds to do this)
+            # git tag "v$OSS_VERSION"
+            # git push -q origin "v$OSS_VERSION"
         fi
 
         # echo newly created version
@@ -186,9 +186,9 @@ case "$ACTION" in
         else
             aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv $EXTRA_CP_ARGS
 
-            # tag the release on git
-            git tag "v$PRO_VERSION-pro"
-            git push -q origin "v$PRO_VERSION-pro"
+            # tag the release on git (TODO: need Jenkins creds to do this)
+            # git tag "v$PRO_VERSION-pro"
+            # git push -q origin "v$PRO_VERSION-pro"
         fi
 
         # echo newly created version
