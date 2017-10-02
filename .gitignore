@@ -32,4 +32,7 @@ CMakeLists.txt.user
 .orig
 .vagrant
 tags
+GPATH
+GRTAGS
+GTAGS
 
