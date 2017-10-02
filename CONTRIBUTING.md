@@ -10,7 +10,7 @@ If you're experiencing behavior that appears to be a bug in RStudio, you're welc
 
 When you're ready to file an issue, please do the following:
 
-1. Most importantly, include a [minimal working example](https://en.wikipedia.org/wiki/Minimal_Working_Example) which will reproduce the bug. 
+1. If at all possible, include a [minimal working example](https://en.wikipedia.org/wiki/Minimal_Working_Example) which will reproduce the bug. If you're unable to reproduce consistently, then please do your best to provide us a set of actions, or other steps that seem to be correlated with the issue you are seeing. 
 
 2. Indicate your operating system, exact version of RStudio (from *Help | About RStudio*) and the output of `sessionInfo()` in R.
 
