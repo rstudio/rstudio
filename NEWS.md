@@ -10,6 +10,7 @@
 ### Bug Fixes
 
 * Fix "Invalid byte sequence" when spell checking
+* Fix incorrect Git status pane display when git detects that a file has been copied
 
 ### RStudio Server Pro
 
