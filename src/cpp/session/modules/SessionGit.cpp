@@ -507,10 +507,9 @@ public:
          std::string filePath = line.substr(3);
          file.status = status;
          
-         // if this was a git rename, we need to capture the rename target
-         // from the next field. note that Git flips the order of filenames
-         // when running with '-z'
-         if (status == "R ")
+         // if this was a git rename or copy, we need to capture the rename target from the next
+         // field. note that Git flips the order of filenames when running with '-z'
+         if (status == "R " || status == "C ")
             filePath = *(++it) + " -> " + filePath;
 
          // remove trailing slashes
