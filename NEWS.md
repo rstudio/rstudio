@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 - Fix sign-out issue when "stay signed in" is checked in RStudio Server (#1538)
+- Fix hang when submitting empty passwords and password encryption is turned off (#1545)
 - Fix dark theme partial application in data viewer when upgrading from 1.0 (#1573)
 - Fix overlap between Refresh icon and plot title text (#1585)
 - Fix slow File Open dialog on RStudio Desktop for Linux (#1587)
