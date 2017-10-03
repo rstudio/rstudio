@@ -38,6 +38,7 @@ import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.lang.ThreadLocalTest;
 import com.google.gwt.emultest.java.lang.ThrowableStackTraceEmulTest;
 import com.google.gwt.emultest.java.lang.ThrowableTest;
 import com.google.gwt.emultest.java.lang.TypeTest;
@@ -56,14 +57,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-/**
- * Test JRE emulations.
- */
+/** Test JRE emulations. */
 @RunWith(Suite.class)
 @SuiteClasses({
   CoercionsTest.class,
 
-  //-- java.io
+  // -- java.io
   ByteArrayInputStreamTest.class,
   ByteArrayOutputStreamTest.class,
   FilterInputStreamTest.class,
@@ -71,7 +70,7 @@ import org.junit.runners.Suite.SuiteClasses;
   InputStreamTest.class,
   OutputStreamTest.class,
 
-  //-- java.lang
+  // -- java.lang
   BooleanTest.class,
   ByteTest.class,
   CharacterTest.class,
@@ -88,6 +87,7 @@ import org.junit.runners.Suite.SuiteClasses;
   StringBufferTest.class,
   StringTest.class,
   SystemTest.class,
+  ThreadLocalTest.class,
   ThrowableTest.class,
   ThrowableStackTraceEmulTest.class,
   TypeTest.class,
@@ -95,20 +95,20 @@ import org.junit.runners.Suite.SuiteClasses;
   // java.lang.reflect
   ArrayTest.class,
 
-  //-- java.math
+  // -- java.math
   // BigDecimal is tested in {@link BigDecimalSuite}
   // BigInteger is tested in {@link BigIntegerSuite}
   RoundingModeTest.class,
   MathContextTest.class,
 
-  //-- java.nio
+  // -- java.nio
   CharsetTest.class,
   StandardCharsetsTest.class,
 
-  //-- java.security
+  // -- java.security
   MessageDigestTest.class,
 
-  //-- java.sql
+  // -- java.sql
   SqlDateTest.class,
   SqlTimeTest.class,
   SqlTimestampTest.class,
