@@ -54,7 +54,7 @@
     $head.insertBefore(devModeScript, $head.firstElementChild || $head.children[0]);
   };
 
-  if (/loaded|complete/.test($doc.readyState)) {
+  if (/loaded|interactive|complete/.test($doc.readyState)) {
     injectScriptTag();
   } else {
     //defer app script insertion until the body is ready

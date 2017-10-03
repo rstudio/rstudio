@@ -440,7 +440,7 @@ function __MODULE_FUNC__() {
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
   var onBodyDoneTimerId = setInterval(function() {
-    if (/loaded|complete/.test($doc.readyState)) {
+    if (/loaded|interactive|complete/.test($doc.readyState)) {
       maybeInjectFrame();
       onBodyDone();
     }
