@@ -44,7 +44,7 @@ public class MathUtil
     * @return whether value is in the range, inclusively.
     */
    public static boolean inRange(int value, int min, int max) {
-       return (value <= max) & (value >= min);
+       return (value <= max) && (value >= min);
    }
 
 }
