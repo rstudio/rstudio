@@ -992,7 +992,7 @@ public class StringUtil
    
    public static boolean isComplementOf(String self, String other)
    {
-      return COMPLEMENTS.get(self).equals(other);
+      return COMPLEMENTS.get(self) == other;
    }
    
    private static final HashMap<String, String> makeComplementsMap()
