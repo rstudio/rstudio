@@ -247,7 +247,9 @@ void signIn(const http::Request& request,
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
    else
-      variables[kFormAction] = "action=\"" + variables["action"] + "\"";
+      variables[kFormAction] = "action=\"" + variables["action"] + "\" "
+                               "onsubmit=\"return verifyMe()\"";
+
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
@@ -445,6 +447,13 @@ bool pamLogin(const std::string& username, const std::string& password)
    // form args
    std::vector<std::string> args;
    args.push_back(username);
+
+   // don't try to login with an empty password (this hangs PAM as it waits for input)
+   if (password.empty())
+   {
+      LOG_WARNING_MESSAGE("No PAM password provided for user '" + username + "'; refusing login");
+      return false;
+   }
 
    // options (assume priv after fork)
    core::system::ProcessOptions options;

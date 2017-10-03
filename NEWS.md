@@ -11,6 +11,7 @@
 
 * Fix "Invalid byte sequence" when spell checking
 * Fix incorrect Git status pane display when git detects that a file has been copied
+* Fix hang when submitting empty passwords and password encryption is turned off (#1545)
 
 ### RStudio Server Pro
 
