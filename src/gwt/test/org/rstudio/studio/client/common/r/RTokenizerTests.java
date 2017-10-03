@@ -159,7 +159,11 @@ public class RTokenizerTests extends GWTTestCase
          {
             if (t.getOffset() == prefix.length())
             {
-               Assert.assertEquals(tokenType, t.getTokenType()) ;
+               if (tokenType != t.getTokenType())
+               {
+                  Assert.fail("Expected token type " + tokenType + ", but got type " + t.getTokenType() +
+                               " for token '" + value + "'");
+               }
                Assert.assertEquals(value.length(), t.getLength()) ;
                Assert.assertEquals(value, t.getContent()) ;
                return ;
