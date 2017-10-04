@@ -67,8 +67,9 @@ public class ChunkDataWidget extends SimplePanel
 
    public static void injectPagedTableResources()
    {
-      injectStyleElement("rmd_data/pagedtable.css", "pagedtable-css");
-      ScriptInjector.fromUrl("rmd_data/pagedtable.js").inject();
+      if (injectStyleElement("rmd_data/pagedtable.css", "pagedtable-css")) {
+         ScriptInjector.fromUrl("rmd_data/pagedtable.js").inject();
+      }
    }
    
    @Override
@@ -106,7 +107,7 @@ public class ChunkDataWidget extends SimplePanel
       }
    }
 
-   private static final native void injectStyleElement(String url, String id) /*-{
+   private static final native boolean injectStyleElement(String url, String id) /*-{
       var linkElement = $doc.getElementById(id);
       if (linkElement === null) {
          linkElement = $doc.createElement("link");
@@ -115,7 +116,10 @@ public class ChunkDataWidget extends SimplePanel
          linkElement.setAttribute("rel", "stylesheet");
          
          $doc.getElementsByTagName("head")[0].appendChild(linkElement);
+         return true;
       }
+
+      return false;
    }-*/;
 
    private final native boolean pagedTableExists() /*-{
