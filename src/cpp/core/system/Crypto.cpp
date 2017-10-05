@@ -70,18 +70,18 @@ Error lastCryptoError(const ErrorLocation& location)
                          "lastCrytpoError called with no pending error",
                          location);
    }
-
+   
    // get the error message (docs say max len is 120)
-   const int ERR_BUFF_SIZE = 250;
+   const int ERR_BUFF_SIZE = 250; 
    char errorBuffer[ERR_BUFF_SIZE];
    ::ERR_error_string_n(ec, errorBuffer, ERR_BUFF_SIZE);
-
+   
    // return the error
    return systemError(boost::system::errc::bad_message,
                       errorBuffer,
                       location);
-}
-
+} 
+   
 class BIOFreeAllScope : boost::noncopyable
 {
 public:
@@ -89,7 +89,7 @@ public:
       : pMem_(pMem)
    {
    }
-
+   
    ~BIOFreeAllScope()
    {
       try
@@ -103,27 +103,27 @@ public:
 private:
    BIO* pMem_;
 };
-
+   
 } // anonymous namespace
-
+   
 void initialize()
 {
    // load global error string table
    ::ERR_load_crypto_strings();
 }
-
+   
 Error HMAC_SHA2(const std::string& data,
                 const std::string& key,
                 std::vector<unsigned char>* pHMAC)
 {
    // copy data into vector
    std::vector<unsigned char> keyVector;
-   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));
-
+   std::copy(key.begin(), key.end(), std::back_inserter(keyVector));  
+   
    // call core
    return HMAC_SHA2(data, keyVector, pHMAC);
 }
-
+   
 Error HMAC_SHA2(const std::string& data,
                 const std::vector<unsigned char>& key,
                 std::vector<unsigned char>* pHMAC)
@@ -131,7 +131,7 @@ Error HMAC_SHA2(const std::string& data,
    // copy data into data vector
    std::vector<unsigned char> dataVector;
    std::copy(data.begin(), data.end(), std::back_inserter(dataVector));
-
+   
    // perform the hash
    unsigned int md_len = 0;
    pHMAC->resize(EVP_MAX_MD_SIZE);
@@ -153,45 +153,45 @@ Error HMAC_SHA2(const std::string& data,
    }
 }
 
-Error base64Encode(const std::vector<unsigned char>& data,
+Error base64Encode(const std::vector<unsigned char>& data, 
                    std::string* pEncoded)
 {
    return base64Encode(&(data[0]), data.size(), pEncoded);
 }
-
-Error base64Encode(const unsigned char* pData,
-                   int len,
+   
+Error base64Encode(const unsigned char* pData, 
+                   int len, 
                    std::string* pEncoded)
 {
    // allocate BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
    if (pB64 == NULL)
       return lastCryptoError(ERROR_LOCATION);
-
+      
    // no newlines
    BIO_set_flags(pB64, BIO_FLAGS_BASE64_NO_NL);
-
+   
    // make sure it is freed prior to exit from the function
    BIOFreeAllScope freeB64Scope(pB64);
-
-   // allocate memory stream
+   
+   // allocate memory stream 
    BIO* pMem = ::BIO_new(BIO_s_mem());
    if (pMem == NULL)
       return lastCryptoError(ERROR_LOCATION);
-
+   
    // tie the stream to the b64 stream
    pB64 = ::BIO_push(pB64, pMem);
-
+   
    // perform the encoding
    int written = ::BIO_write(pB64, pData, len);
    if (written != len)
       return lastCryptoError(ERROR_LOCATION);
-
+      
    // flush all writes
    int result = BIO_flush(pB64);
    if (result <= 0)
       return lastCryptoError(ERROR_LOCATION);
-
+   
    // seek to beginning of memory stream
    result = BIO_seek(pMem, 0);
    if (result == -1)
@@ -210,45 +210,45 @@ Error base64Encode(const unsigned char* pData,
    // return success
    return Success();
 }
-
-
-Error base64Decode(const std::string& data,
+   
+   
+Error base64Decode(const std::string& data, 
                    std::vector<unsigned char>* pDecoded)
 {
    // allocate b64 BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
    if (pB64 == NULL)
       return lastCryptoError(ERROR_LOCATION);
-
+   
    // no newlines
    BIO_set_flags(pB64, BIO_FLAGS_BASE64_NO_NL);
-
+   
    // make sure it is freed prior to exit from the function
    BIOFreeAllScope freeB64Scope(pB64);
-
-   // allocate buffer
+   
+   // allocate buffer 
    BIO* pMem = BIO_new_mem_buf((void*)data.data(), data.length());
    if (pMem == NULL)
       return lastCryptoError(ERROR_LOCATION);
-
+   
    // tie the stream to the b64 stream
    pB64 = ::BIO_push(pB64, pMem);
-
+   
    // reserve adequate memory in the decoded buffer and read into it
    pDecoded->clear();
    pDecoded->resize(data.length());
-   int bytesRead = ::BIO_read(pB64,
-                              &(pDecoded->operator[](0)),
+   int bytesRead = ::BIO_read(pB64, 
+                              &(pDecoded->operator[](0)), 
                               pDecoded->size());
    if (bytesRead < 0)
       return lastCryptoError(ERROR_LOCATION);
-
+   
    // resize the out buffer to the number of bytes actually read
    pDecoded->resize(bytesRead);
-
+   
    // return success
    return Success();
-
+   
 }
 
 Error aesEncrypt(const std::vector<unsigned char>& data,
@@ -377,7 +377,7 @@ core::Error rsaInit()
    #else
       BIGNUM *bn = BN_new();
       BN_set_word(bn, RSA_F4);
-
+ 
       s_pRSA = RSA_new();
       int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
       BN_clear_free(bn);
@@ -385,7 +385,7 @@ core::Error rsaInit()
         RSA_free(s_pRSA);
         return lastCryptoError(ERROR_LOCATION);
       }
-
+   
       RSA_get0_key(s_pRSA, &bn_n, &bn_e, NULL);
    #endif
 
@@ -496,8 +496,9 @@ Error decryptBase64EncodedString(const std::string& input,
    return Success();
 }
 
-
+                     
 } // namespace crypto
 } // namespace system
 } // namespace core
 } // namespace rstudio
+

@@ -34,8 +34,8 @@ add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
 
 
-# the non-strict masking option was identified as a potentially crashing
-# issue due to reliance on undefined C++ behavior, and was removed entirely in
+# the non-strict masking option was identified as a potentially crashing 
+# issue due to reliance on undefined C++ behavior, and was removed entirely in 
 # websocketpp 0.7 (RStudio is using 0.5.1 at this time)
 add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
 
@@ -71,10 +71,10 @@ if(UNIX)
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
       # Mavericks and later default to libc++, which is not compatible with the
-      # older libstdc++. Figure out if we're on Mavericks, and if so, add
+      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
       # flags to enforce usage of the older library.
 
-      # Figure out what version of Mac OS X this is. Unfortunately
+      # Figure out what version of Mac OS X this is. Unfortunately 
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
       EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -342,3 +342,4 @@ else()
    endif()
 
 endif()
+
