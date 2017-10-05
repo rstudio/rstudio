@@ -34,8 +34,8 @@ add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
 
 
-# the non-strict masking option was identified as a potentially crashing 
-# issue due to reliance on undefined C++ behavior, and was removed entirely in 
+# the non-strict masking option was identified as a potentially crashing
+# issue due to reliance on undefined C++ behavior, and was removed entirely in
 # websocketpp 0.7 (RStudio is using 0.5.1 at this time)
 add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
 
@@ -71,10 +71,10 @@ if(UNIX)
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
       # Mavericks and later default to libc++, which is not compatible with the
-      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
+      # older libstdc++. Figure out if we're on Mavericks, and if so, add
       # flags to enforce usage of the older library.
 
-      # Figure out what version of Mac OS X this is. Unfortunately 
+      # Figure out what version of Mac OS X this is. Unfortunately
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
       EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -212,8 +212,8 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-# winpty - pseudoterminal support on Windows
 if(WIN32)
+     # winpty - pseudoterminal support on Windows
      if(RSTUDIO_SESSION_WIN64)
         set(WINPTY_ARCH "64")
      else()
@@ -227,8 +227,24 @@ if(WIN32)
 
      # add winpty as system include directory
      include_directories(SYSTEM ${WINPTY_INCLUDEDIR})
-endif()
 
+     # openssl for Windows
+     if(RSTUDIO_SESSLIBRARY)
+        set(OPENSSL_ARCH "/x64/")
+     else()
+        set(OPENSSL_ARCH "/")
+     endif()
+
+     set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/openssl-1.0.2l_win")
+     set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
+     set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}${OPENSSL_ARCH}lib")
+     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libcrypto.a")
+     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/libssl.a")
+     list(APPEND OPENSSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}")
+     list(APPEND OPENSSL_LIBRARIES "${OPENSSL_SSL_LIBRARY}")
+
+     include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+endif()
 
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)
@@ -326,4 +342,3 @@ else()
    endif()
 
 endif()
-

@@ -30,9 +30,9 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
-   Error.cpp 
+   Error.cpp
    Exec.cpp
-   FileInfo.cpp 
+   FileInfo.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
@@ -110,6 +110,7 @@ set (CORE_SOURCE_FILES
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
    system/ChildProcessSubprocPoll.cpp
+   system/Crypto.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
@@ -184,11 +185,11 @@ if (UNIX)
    if(APPLE)
       if(${MACOSX_VERSION} VERSION_GREATER "10.10"
             AND EXISTS "/usr/local/opt/openssl")
-   
+
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
             -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-   
+
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
             /usr/local/opt/openssl/include)
@@ -244,7 +245,6 @@ if (UNIX)
          SecureKeyFile.cpp
          SocketRpc.cpp
          http/SecureCookie.cpp
-         system/PosixCrypto.cpp
          system/Pam.cpp
       )
    endif()
@@ -268,7 +268,13 @@ else()
    add_subdirectory(zlib)
 
    # system libraries
-   set (CORE_SYSTEM_LIBRARIES -lws2_32 -lmswsock -lrpcrt4 -lShlwapi)
+   set (CORE_SYSTEM_LIBRARIES
+      -lws2_32
+      -lmswsock
+      -lrpcrt4
+      -lShlwapi
+      ${OPENSSL_CRYPTO_LIBRARY}
+   )
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
