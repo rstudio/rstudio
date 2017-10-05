@@ -21,6 +21,7 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
+set OPENSSL_FILES=openssl-1.0.2l_win.zip
 
 set PANDOC_VERSION=1.19.2.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -97,6 +98,13 @@ if not exist winpty-0.4.3-msys2-2.7.0 (
   echo Unzipping %WINPTY_FILES%
   unzip %UNZIP_ARGS% "%WINPTY_FILES%"
   del %WINPTY_FILES%
+)
+
+if not exist openssl-1.0.2l_win (
+  wget %WGET_ARGS% "%BASEURL%%OPENSSL_FILES%"
+  echo Unzipping %OPENSSL_FILES%
+  unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
+  del %OPENSSL_FILES%
 )
 
 if not exist ..\..\src\gwt\lib (

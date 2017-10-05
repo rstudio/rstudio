@@ -110,6 +110,7 @@ set (CORE_SOURCE_FILES
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
    system/ChildProcessSubprocPoll.cpp
+   system/Crypto.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
@@ -244,7 +245,6 @@ if (UNIX)
          SecureKeyFile.cpp
          SocketRpc.cpp
          http/SecureCookie.cpp
-         system/PosixCrypto.cpp
          system/Pam.cpp
       )
    endif()
@@ -268,7 +268,13 @@ else()
    add_subdirectory(zlib)
 
    # system libraries
-   set (CORE_SYSTEM_LIBRARIES -lws2_32 -lmswsock -lrpcrt4 -lShlwapi)
+   set (CORE_SYSTEM_LIBRARIES
+      -lws2_32
+      -lmswsock
+      -lrpcrt4
+      -lShlwapi
+      ${OPENSSL_CRYPTO_LIBRARY}
+   )
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}

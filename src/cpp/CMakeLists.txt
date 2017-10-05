@@ -212,8 +212,8 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-# winpty - pseudoterminal support on Windows
 if(WIN32)
+     # winpty - pseudoterminal support on Windows
      if(RSTUDIO_SESSION_WIN64)
         set(WINPTY_ARCH "64")
      else()
@@ -227,8 +227,24 @@ if(WIN32)
 
      # add winpty as system include directory
      include_directories(SYSTEM ${WINPTY_INCLUDEDIR})
-endif()
 
+     # openssl for Windows
+     if(RSTUDIO_SESSLIBRARY)
+        set(OPENSSL_ARCH "/x64/")
+     else()
+        set(OPENSSL_ARCH "/")
+     endif()
+
+     set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/openssl-1.0.2l_win")
+     set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
+     set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}${OPENSSL_ARCH}lib")
+     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libcrypto.a")
+     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/libssl.a")
+     list(APPEND OPENSSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}")
+     list(APPEND OPENSSL_LIBRARIES "${OPENSSL_SSL_LIBRARY}")
+
+     include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+endif()
 
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)
