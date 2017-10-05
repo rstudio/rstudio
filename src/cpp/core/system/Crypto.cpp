@@ -183,7 +183,7 @@ Error base64Encode(const unsigned char* pData,
    pB64 = ::BIO_push(pB64, pMem);
    
    // perform the encoding
-   int written = ::BIO_write(pB64, pData, len);
+   int written = ::BIO_write(pB64, pData, len); 
    if (written != len)
       return lastCryptoError(ERROR_LOCATION);
       
@@ -248,7 +248,7 @@ Error base64Decode(const std::string& data,
    
    // return success
    return Success();
-   
+     
 }
 
 Error aesEncrypt(const std::vector<unsigned char>& data,
@@ -496,7 +496,7 @@ Error decryptBase64EncodedString(const std::string& input,
    return Success();
 }
 
-                     
+                      
 } // namespace crypto
 } // namespace system
 } // namespace core
