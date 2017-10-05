@@ -59,7 +59,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       for (int i=0; i<formats.length(); i++)
       {
          SavePlotAsImageFormat format = formats.get(i);
-         if (format.getExtension().equals(defaultFormat))
+         if (format.getExtension() == defaultFormat)
             selectedIndex = i;
          imageFormatListBox_.addItem(format.getName(), format.getExtension());
       }

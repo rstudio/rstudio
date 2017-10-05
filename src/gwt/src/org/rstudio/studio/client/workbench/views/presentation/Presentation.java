@@ -146,7 +146,7 @@ public class Presentation extends BasePresenter
             if (currentState_ != null)
             {
                FileSystemItem file = event.getSourceFile();
-               if (file.getPath().equals(currentState_.getFilePath()))
+               if (file.getPath() == currentState_.getFilePath())
                {    
                   int index = detectSlideIndex(event.getContents(),
                                                event.getCursorPos().getRow());
@@ -155,7 +155,7 @@ public class Presentation extends BasePresenter
                   
                   refreshPresentation();
                }
-               else if (file.getParentPathString().equals(getCurrentPresDir()) 
+               else if (file.getParentPathString() == getCurrentPresDir() 
                           &&
                         file.getExtension().toLowerCase().equals(".css"))
                {

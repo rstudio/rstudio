@@ -148,7 +148,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    @Override
    protected CreateKeyOptions collectInput()
    {  
-      if (!getPassphrase().equals(getConfirmPassphrase()))
+      if (getPassphrase() != getConfirmPassphrase())
          return null;
       else
          return CreateKeyOptions.create(rsaSshKeyPath_.getPath(),
@@ -168,7 +168,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       {
          GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
          
-         if (!getPassphrase().equals(getConfirmPassphrase()))
+         if (getPassphrase() != getConfirmPassphrase())
          {
             display.showErrorMessage(
                   "Non-Matching Passphrases", 

@@ -175,7 +175,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
          String valueStr = value.toString();
          for (int i = 0; i < listBox_.getItemCount(); i++)
          {
-            if (listBox_.getValue(i).equals(valueStr))
+            if (listBox_.getValue(i) == valueStr)
             {
                listBox_.setSelectedIndex(i);
                break;

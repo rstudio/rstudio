@@ -78,7 +78,7 @@ public class JsObject extends JavaScriptObject
 
    public final Integer getInteger(String key)
    {
-      if (!hasKey(key) || !getValueType(key).equals("number"))
+      if (!hasKey(key) || getValueType(key) != "number")
          return null;
       return _getInteger(key);
    }
@@ -101,7 +101,7 @@ public class JsObject extends JavaScriptObject
 
    public final Double getDouble(String key)
    {
-      if (!hasKey(key) || !getValueType(key).equals("number"))
+      if (!hasKey(key) || getValueType(key) != "number")
          return null;
       return _getDouble(key);
    }
@@ -124,7 +124,7 @@ public class JsObject extends JavaScriptObject
 
    public final Boolean getBoolean(String key)
    {
-      if (!hasKey(key) || !getValueType(key).equals("boolean"))
+      if (!hasKey(key) || getValueType(key) != "boolean")
          return null;
       return _getBoolean(key);
    }

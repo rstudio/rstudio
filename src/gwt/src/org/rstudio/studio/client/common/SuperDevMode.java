@@ -34,7 +34,7 @@ public class SuperDevMode
    public static boolean isActive()
    {
       return 
-        GWT.getModuleBaseURL().equals("http://localhost:8787/rstudio/") &&
-        GWT.getModuleBaseForStaticFiles().equals("http://localhost:9876/rstudio/");
+        GWT.getModuleBaseURL() == "http://localhost:8787/rstudio/" &&
+        GWT.getModuleBaseForStaticFiles() == "http://localhost:9876/rstudio/";
    }
 }

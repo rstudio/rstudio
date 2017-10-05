@@ -306,7 +306,7 @@ public class CppCompletionManager implements CompletionManager
       {
          // don't do implicit completions if the user has set completion to manual
          // (but always do them if the completion popup is visible)
-         if (!uiPrefs_.codeComplete().getValue().equals(UIPrefsAccessor.COMPLETION_MANUAL) ||
+         if (uiPrefs_.codeComplete().getValue() != UIPrefsAccessor.COMPLETION_MANUAL ||
              isCompletionPopupVisible())
          {
             deferredSuggestCompletions(false, true);
@@ -356,8 +356,8 @@ public class CppCompletionManager implements CompletionManager
                                  ((request_ != null) && request_.isExplicit());
       
       // see if we even have a completion position
-      boolean alwaysComplete = uiPrefs_.codeComplete().getValue().equals(
-                                            UIPrefsAccessor.COMPLETION_ALWAYS);
+      boolean alwaysComplete = uiPrefs_.codeComplete().getValue() ==
+                                            UIPrefsAccessor.COMPLETION_ALWAYS;
       int autoChars = uiPrefs_.alwaysCompleteCharacters().getValue();
       final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,

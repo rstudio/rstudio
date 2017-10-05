@@ -310,7 +310,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
          for (int i = 0; i < ignoredUpdates.length(); i++)
          {
-            if (ignoredUpdates.get(i).equals(result.getUpdateVersion()))
+            if (ignoredUpdates.get(i) == result.getUpdateVersion())
             {
                ignoredUpdate = true;
             }

@@ -217,7 +217,7 @@ public class AceBackgroundHighlighter
    public void onEditorModeChanged(EditorModeChangedEvent event)
    {
       // nothing to do if mode did not change
-      if (event.getMode().equals(activeModeId_))
+      if (event.getMode() == activeModeId_)
          return;
       
       activeModeId_ = event.getMode();

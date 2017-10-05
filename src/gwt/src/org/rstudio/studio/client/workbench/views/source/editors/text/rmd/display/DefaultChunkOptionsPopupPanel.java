@@ -95,13 +95,13 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    private Pair<String, String> getChunkHeaderBounds(String modeId)
    {
-      if (modeId.equals("mode/rmarkdown"))
+      if (modeId == "mode/rmarkdown")
          return new Pair<String, String>("```{", "}");
-      else if (modeId.equals("mode/sweave"))
+      else if (modeId == "mode/sweave")
          return new Pair<String, String>("<<", ">>=");
-      else if (modeId.equals("mode/rhtml"))
+      else if (modeId == "mode/rhtml")
          return new Pair<String, String>("<!--", "");
-      else if (modeId.equals("mode/c_cpp"))
+      else if (modeId == "mode/c_cpp")
          return new Pair<String, String>("/***", "");
       
       return null;
@@ -110,7 +110,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    private String extractChunkPreamble(String extractedChunkHeader,
                                        String modeId)
    {
-      if (modeId.equals("mode/sweave"))
+      if (modeId == "mode/sweave")
          return "";
       
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
@@ -165,11 +165,11 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       String modeId = display_.getModeId();
       
       Pattern pattern = null;
-      if (modeId.equals("mode/rmarkdown"))
+      if (modeId == "mode/rmarkdown")
          pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
-      else if (modeId.equals("mode/sweave"))
+      else if (modeId == "mode/sweave")
          pattern = RegexUtil.RE_SWEAVE_CHUNK_BEGIN;
-      else if (modeId.equals("mode/rhtml"))
+      else if (modeId == "mode/rhtml")
          pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
       
       if (pattern == null) return;

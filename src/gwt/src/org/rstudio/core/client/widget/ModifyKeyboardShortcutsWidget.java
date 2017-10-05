@@ -166,7 +166,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       public void setKeySequence(KeySequence keys)
       {
-         if (keys.equals(keySequence_))
+         if (keys == keySequence_)
             newKeySequence_ = null;
          else
             newKeySequence_ = keys.clone();
@@ -196,7 +196,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          KeyboardShortcutEntry other = (KeyboardShortcutEntry) object;
          return
                commandType_ == other.commandType_ &&
-               id_.equals(other.id_);
+               id_ == other.id_;
       }
       
       private final String id_;
@@ -438,7 +438,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          // Get all commands with this ID.
          List<KeyboardShortcutEntry> bindingsWithId = new ArrayList<KeyboardShortcutEntry>();
          for (KeyboardShortcutEntry binding : originalBindings_)
-            if (binding.getId().equals(id))
+            if (binding.getId() == id)
                bindingsWithId.add(binding);
          
          // Collect all shortcuts.
@@ -574,7 +574,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             // element (thereby committing the current selection) and ensure
             // that selection has been appropriately reset in an earlier preview
             // handler.
-            if (event.getType().equals("keyup") &&
+            if (event.getType()    == "keyup" &&
                 event.getKeyCode() == KeyCodes.KEY_ESCAPE)
             {
                parent.getFirstChildElement().blur();
@@ -604,7 +604,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             
             // Differentiate between resetting the key sequence and
             // adding a new key sequence.
-            if (keys.equals(binding.getOriginalKeySequence()))
+            if (keys == binding.getOriginalKeySequence())
             {
                changes_.remove(binding);
                binding.restoreOriginalKeySequence();
@@ -764,11 +764,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
-      if (type.equals("blur"))
+      if (type == "blur")
       {
          buffer_.clear();
       }
-      else if (type.equals("keydown"))
+      else if (type == "keydown")
       {
          int keyCode = event.getKeyCode();
          int modifiers = KeyboardShortcut.getModifierValue(event);
@@ -804,7 +804,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       NativeEvent event = preview.getNativeEvent();
       String type = event.getType();
       
-      if (type.equals("keydown"))
+      if (type == "keydown")
       {
          int keyCode = event.getKeyCode();
          int modifiers = KeyboardShortcut.getModifierValue(event);

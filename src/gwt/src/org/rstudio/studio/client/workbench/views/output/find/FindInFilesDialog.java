@@ -142,7 +142,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       String filePatterns =
             listPresetFilePatterns_.getValue(
                   listPresetFilePatterns_.getSelectedIndex());
-      if (filePatterns.equals("custom"))
+      if (filePatterns == "custom")
          filePatterns = txtFilePattern_.getText();
 
       ArrayList<String> list = new ArrayList<String>();
@@ -219,11 +219,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       String filePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (listPresetFilePatterns_.getValue(0).equals(filePatterns))
+      if (listPresetFilePatterns_.getValue(0) == filePatterns)
          listPresetFilePatterns_.setSelectedIndex(0);
-      else if (listPresetFilePatterns_.getValue(1).equals(filePatterns))
+      else if (listPresetFilePatterns_.getValue(1) == filePatterns)
          listPresetFilePatterns_.setSelectedIndex(1);
-      else if (listPresetFilePatterns_.getValue(2).equals(filePatterns))
+      else if (listPresetFilePatterns_.getValue(2) == filePatterns)
          listPresetFilePatterns_.setSelectedIndex(2);
       else
          listPresetFilePatterns_.setSelectedIndex(3);

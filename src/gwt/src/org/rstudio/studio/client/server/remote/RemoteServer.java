@@ -265,7 +265,7 @@ public class RemoteServer implements Server
       listeningForEvents_ = true;
       
       // only check credentials if we are in server mode
-      if (session_.getSessionInfo().getMode().equals(SessionInfo.SERVER_MODE))
+      if (session_.getSessionInfo().getMode() == SessionInfo.SERVER_MODE)
          serverAuth_.schedulePeriodicCredentialsUpdate();
       
       // start event listener

@@ -293,7 +293,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          List<MenuItem> menuItems = getItems();
          for (int i = 0; i<menuItems.size(); i++)
          {
-            if (menuItems.get(i).equals(selectedMenuItem))
+            if (menuItems.get(i) == selectedMenuItem)
                return i;
          }
          return -1;

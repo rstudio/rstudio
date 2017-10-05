@@ -189,7 +189,7 @@ public class Workbench implements BusyHandler,
       checkForInitMessages();
       
       if (Desktop.isDesktop() && 
-          session_.getSessionInfo().getVcsName().equals(VCSConstants.GIT_ID))
+          session_.getSessionInfo().getVcsName() == VCSConstants.GIT_ID)
       {
          pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
    

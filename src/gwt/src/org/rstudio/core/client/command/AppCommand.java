@@ -136,12 +136,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
           Satellite.isCurrentWindowSatellite() && 
           satellite.getSatelliteName() != getWindowMode()) 
       {
-         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+         if (getWindowMode() == WINDOW_MODE_MAIN)
          {
             // raise the main window if it's not a background command
             satellite.focusMainWindow();
          }
-         else if (getWindowMode().equals(WINDOW_MODE_BACKGROUND) &&
+         else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
                   Desktop.isDesktop())
          {
             // for background commands, we still want the main window to be

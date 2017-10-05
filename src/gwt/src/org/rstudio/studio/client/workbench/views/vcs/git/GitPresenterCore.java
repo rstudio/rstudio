@@ -142,7 +142,7 @@ public class GitPresenterCore
                @Override
                public boolean includeFile(FileSystemItem file)
                {
-                  return !file.getName().equals(".gitignore");
+                  return file.getName() != ".gitignore";
                }
             };
          }

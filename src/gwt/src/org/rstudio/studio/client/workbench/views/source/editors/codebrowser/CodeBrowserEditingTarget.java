@@ -564,7 +564,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
-      return getContext().equals(position.getContext()) &&
+      return getContext() == position.getContext() &&
              docDisplay_.isAtSourceRow(position);
    }
    
@@ -748,7 +748,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
    private void ensureContext(String context, final Command onRestored)
    {
-      if (!context.equals(getContext()))
+      if (context != getContext())
       {
          // get namespace and function
          String[] contextElements = context.split(":::");

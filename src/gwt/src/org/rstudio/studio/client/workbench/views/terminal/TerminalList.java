@@ -116,7 +116,7 @@ public class TerminalList implements Iterable<String>,
          return false;
       }
 
-      if (!current.getTitle().equals(title))
+      if (current.getTitle() != title)
       {
          current.setTitle(title);
          return true;
@@ -240,7 +240,7 @@ public class TerminalList implements Iterable<String>,
       int i = 0;
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getHandle().equals(handle))
+         if (item.getValue().getCPI().getHandle() == handle)
          {
             return i;
          }
@@ -278,7 +278,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption().equals(caption))
+         if (item.getValue().getCPI().getCaption() == caption)
          {
             return false;
          }
@@ -296,7 +296,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption().equals(caption))
+         if (item.getValue().getCPI().getCaption() == caption)
          {
             return item.getValue().getCPI().getHandle();
          }

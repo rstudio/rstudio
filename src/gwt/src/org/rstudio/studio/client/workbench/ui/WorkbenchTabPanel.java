@@ -233,7 +233,7 @@ class WorkbenchTabPanel
          for (int i = 0; i < tabs_.size(); i++)
          {
             WorkbenchTab tab = tabs_.get(i);
-            if (tab.getTitle().equals(title))
+            if (tab.getTitle() == title)
             {
                selectTab(i);
                return;

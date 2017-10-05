@@ -95,8 +95,8 @@ public class CodeSearchOracle extends SuggestOracle
             penalty--;
          
          // More penalty for 'uninteresting' files
-         if (suggestion.equals("RcppExports.R") ||
-             suggestion.equals("RcppExports.cpp"))
+         if (suggestion == "RcppExports.R" ||
+             suggestion == "RcppExports.cpp")
             penalty += 6;
          
          // More penalty for 'uninteresting' extensions (e.g. .Rd)
@@ -131,7 +131,7 @@ public class CodeSearchOracle extends SuggestOracle
          SearchResult res = resultCache_.get(i);
          
          // exact match of previous query
-         if (request.getQuery().equals(res.getQuery()))
+         if (request.getQuery() == res.getQuery())
          {
             callback.onSuggestionsReady(request, 
                                         new Response(res.getSuggestions()));

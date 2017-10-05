@@ -85,7 +85,7 @@ public class ApplicationAction
     
    private static boolean isAction(String action)
    {
-      return action.equals(getAction());
+      return action == getAction();
    }
    
    private static String getAction()

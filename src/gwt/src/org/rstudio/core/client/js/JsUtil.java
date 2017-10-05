@@ -139,7 +139,7 @@ public class JsUtil
       {
          for (int i=0; i<a.length(); i++)
          {
-            if (!a.get(i).equals(b.get(i)))
+            if (a.get(i) != b.get(i))
                return false; 
          }
          

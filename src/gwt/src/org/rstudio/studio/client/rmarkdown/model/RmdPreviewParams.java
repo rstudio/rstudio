@@ -79,10 +79,10 @@ public class RmdPreviewParams extends JavaScriptObject
    {
       int chromeHeight = 100;
       String format = getResult().getFormatName();
-      if (format.equals(RmdOutputFormat.OUTPUT_IOSLIDES_PRESENTATION) ||
-          format.equals(RmdOutputFormat.OUTPUT_SLIDY_PRESENTATION))
+      if (format == RmdOutputFormat.OUTPUT_IOSLIDES_PRESENTATION ||
+          format == RmdOutputFormat.OUTPUT_SLIDY_PRESENTATION)
          return new Size(1100, 900 + chromeHeight);
-      if (format.endsWith(RmdOutputFormat.OUTPUT_REVEALJS_PRESENTATION))
+      if (format == RmdOutputFormat.OUTPUT_REVEALJS_PRESENTATION)
          return new Size(1100, 900 + chromeHeight);
       
       // default size (html_document and others)

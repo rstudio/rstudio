@@ -124,7 +124,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          @Override
          public void onChange(ChangeEvent event)
          {
-            boolean isNone = sbRemote_.getValue().equals(REMOTE_NONE);
+            boolean isNone = sbRemote_.getValue() == REMOTE_NONE;
             cbPush_.setVisible(!isNone);
          }
       });
@@ -146,7 +146,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                   @Override
                   public boolean test(RemotesInfo info)
                   {
-                     return info.getRemote().equals(currentRemote);
+                     return info.getRemote() == currentRemote;
                   }
                });
 
@@ -164,7 +164,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       });
       
       cbPush_ = new CheckBox("Sync branch with remote");
-      cbPush_.setVisible(!sbRemote_.getValue().equals(REMOTE_NONE));
+      cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
       cbPush_.setValue(true);
       
       setRemotes(remotesInfo);
@@ -225,7 +225,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       {
          for (int i = 0; i < choices.length; i++)
          {
-            if (REMOTE_ORIGIN.equals(choices[i]))
+            if (REMOTE_ORIGIN == choices[i])
             {
                activeRemote = REMOTE_ORIGIN;
                break;

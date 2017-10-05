@@ -281,7 +281,7 @@ public class BranchToolbarButton extends ToolbarButton
                @Override
                public Element createMainElement()
                {
-                  String branchLabel = caption.equals(LOCAL_BRANCHES)
+                  String branchLabel = caption == LOCAL_BRANCHES
                         ? LOCAL_BRANCHES
                         : "(Remote: " + caption + ")";
                   Label label = new Label(branchLabel);

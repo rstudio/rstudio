@@ -554,7 +554,7 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
+      boolean isRMarkdown2 = extendedType_ == "rmarkdown";
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
       
@@ -811,7 +811,7 @@ public class TextEditingTargetWidget
             StringBuilder sb = new StringBuilder();
             for (String s : chars)
             {
-               if (s.equals("."))
+               if (s == ".")
                   sb.append('\n');
                else
                   sb.append((char)Integer.parseInt(s));
@@ -1111,14 +1111,14 @@ public class TextEditingTargetWidget
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
       if (isShinyFile())
       {
-         if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
+         if (shinyAppState_ == ShinyApplicationParams.STATE_STARTED) 
          {
             sourceCommandText_ = "Reload App";
             sourceCommandDesc = "Save changes and reload the Shiny application";
             sourceButton_.setLeftImage(
                   commands_.reloadShinyApp().getImageResource());
          }
-         else if (shinyAppState_.equals(ShinyApplicationParams.STATE_STOPPED))
+         else if (shinyAppState_ == ShinyApplicationParams.STATE_STOPPED)
          {
             sourceCommandText_ = "Run App";
             sourceCommandDesc = "Run the Shiny application";

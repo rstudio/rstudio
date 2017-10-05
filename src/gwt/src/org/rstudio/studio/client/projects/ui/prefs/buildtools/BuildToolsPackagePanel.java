@@ -56,8 +56,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            if (pathSelector_.getText().equals(
-                           workbenchContext_.getActiveProjectDir().getPath())) 
+            if (pathSelector_.getText() ==
+                           workbenchContext_.getActiveProjectDir().getPath()) 
             {
                pathSelector_.setText("");
             }

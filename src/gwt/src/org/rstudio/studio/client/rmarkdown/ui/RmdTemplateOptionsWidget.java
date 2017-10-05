@@ -139,7 +139,7 @@ public class RmdTemplateOptionsWidget extends Composite
       {
          for (int i = 0; i < listFormats_.getItemCount(); i++)
          {
-            if (listFormats_.getValue(i).equals(format))
+            if (listFormats_.getValue(i) == format)
             {
                listFormats_.setSelectedIndex(i);
                updateFormatOptions(format);
@@ -169,7 +169,7 @@ public class RmdTemplateOptionsWidget extends Composite
       optionsTabs_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
-         if (formats_.get(i).getName().equals(format))
+         if (formats_.get(i).getName() == format)
          {
             addFormatOptions(formats_.get(i));
             break;
@@ -245,28 +245,28 @@ public class RmdTemplateOptionsWidget extends Composite
                                                  String initialValue)
    {
       RmdFormatOption optionWidget = null;
-      if (option.getType().equals(RmdTemplateFormatOption.TYPE_BOOLEAN))
+      if (option.getType() == RmdTemplateFormatOption.TYPE_BOOLEAN)
       {
          optionWidget = new RmdBooleanOption(option, initialValue);
       } 
-      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_CHOICE))
+      else if (option.getType() == RmdTemplateFormatOption.TYPE_CHOICE)
       {
          optionWidget = new RmdChoiceOption(option, initialValue);
       }
-      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_STRING))
+      else if (option.getType() == RmdTemplateFormatOption.TYPE_STRING)
       {
          optionWidget = new RmdStringOption(option, initialValue);
       }
-      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FLOAT) ||
-               option.getType().equals(RmdTemplateFormatOption.TYPE_INTEGER))
+      else if (option.getType() == RmdTemplateFormatOption.TYPE_FLOAT ||
+               option.getType() == RmdTemplateFormatOption.TYPE_INTEGER)
       {
          optionWidget = new RmdFloatOption(option, initialValue);
       }
-      else if (option.getType().equals(RmdTemplateFormatOption.TYPE_FILE))
+      else if (option.getType() == RmdTemplateFormatOption.TYPE_FILE)
       {
          // if we have a document and a relative path, resolve the path
          // relative to the document
-         if (document_ != null && !initialValue.equals("null") &&
+         if (document_ != null && initialValue != "null" &&
              FilePathUtils.pathIsRelative(initialValue))
          {
             initialValue = 
@@ -286,7 +286,7 @@ public class RmdTemplateOptionsWidget extends Composite
          RmdTemplateFormatOption option = options_.get(i);
          
          // Not the option we're looking for 
-         if (!option.getName().equals(optionName))
+         if (option.getName() != optionName)
             continue;
 
          String optionFormatName = option.getFormatName();

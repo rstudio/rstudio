@@ -128,9 +128,9 @@ public class AceEditorMixins
       // (be permissive as to what mouse even occurred)
       String type = event.getType();
       return
-            type.equals("mousedown") ||
-            type.equals("click") ||
-            type.equals("mouseup");
+            type == "mousedown" ||
+            type == "click" ||
+            type == "mouseup";
    }
    
    private static final native void invokePasteHandler(AceEditorNative editor, String text)

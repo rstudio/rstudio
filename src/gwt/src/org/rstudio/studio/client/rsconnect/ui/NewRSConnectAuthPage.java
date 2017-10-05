@@ -113,7 +113,7 @@ public class NewRSConnectAuthPage
    @Override
    public void onWindowClosed(WindowClosedEvent event)
    {
-      if (event.getName().equals(AUTH_WINDOW_NAME))
+      if (event.getName() == AUTH_WINDOW_NAME)
       {
          waitingForAuth_.setValue(false, true);
          

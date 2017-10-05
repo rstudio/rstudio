@@ -167,7 +167,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            if (!event.getValue().equals(guessRepoDir()))
+            if (event.getValue() != guessRepoDir())
                suppressDirNameDetection_ = true;
          }
          

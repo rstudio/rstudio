@@ -109,5 +109,4 @@ public class GitState extends VcsState
    private BranchesInfo branches_;
    private RemoteBranchInfo remoteBranchInfo_;
    private final GitServerOperations server_;
-
 }

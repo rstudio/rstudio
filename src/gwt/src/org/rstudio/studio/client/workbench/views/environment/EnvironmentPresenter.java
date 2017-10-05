@@ -722,7 +722,7 @@ public class EnvironmentPresenter extends BasePresenter
          // but both frames are viewed from source, since in this case an
          // unnecessary close and reopen of the source viewer would be 
          // triggered.
-         if ((!newBrowseFile.equals(currentBrowseFile_) ||
+         if ((newBrowseFile != currentBrowseFile_ ||
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
          {
@@ -730,7 +730,7 @@ public class EnvironmentPresenter extends BasePresenter
          }
 
          useCurrentBrowseSource_ = useBrowseSources;
-         if (!currentBrowseSource_.equals(functionCode))
+         if (currentBrowseSource_ != functionCode)
          {
             currentBrowseSource_ = functionCode;
             sourceChanged = true;
@@ -762,7 +762,7 @@ public class EnvironmentPresenter extends BasePresenter
       
       for (UnsavedChangesTarget target: unsavedSourceDocs)
       {
-         if (target.getPath().equals(path))
+         if (target.getPath() == path)
          {
             return true;
          }
@@ -978,24 +978,24 @@ public class EnvironmentPresenter extends BasePresenter
       StringBuilder code = new StringBuilder(command);
       code.append("(");
       code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
-      if (!input.getEncoding().equals(settings.getEncoding()))
+      if (input.getEncoding() != settings.getEncoding())
          code.append(", encoding=" + StringUtil.textToRLiteral(input.getEncoding()));
       if (input.isHeader() != settings.isHeader())
          code.append(", header=" + (input.isHeader() ? "TRUE" : "FALSE"));
-      if (!input.getRowNames().equals(settings.getRowNames()))
+      if (input.getRowNames() != settings.getRowNames())
       {
          // appended literally, since it's the string "1" or the string "NULL"
          code.append(", row.names=" + input.getRowNames());
       }
-      if (!input.getSep().equals(settings.getSep()))
+      if (input.getSep() != settings.getSep())
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
-      if (!input.getDec().equals(settings.getDec()))
+      if (input.getDec() != settings.getDec())
          code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
-      if (!input.getQuote().equals(settings.getQuote()))
+      if (input.getQuote() != settings.getQuote())
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
-      if (!input.getComment().equals(settings.getComment()))
+      if (input.getComment() != settings.getComment())
          code.append(", comment.char=" + StringUtil.textToRLiteral(input.getComment()));
-      if (!input.getNAStrings().equals(settings.getNAStrings()))
+      if (input.getNAStrings() != settings.getNAStrings())
          code.append(", na.strings=" + StringUtil.textToRLiteral(input.getNAStrings()));
       if (input.getStringsAsFactors() != settings.getStringsAsFactors())
          code.append(", stringsAsFactors=" + (input.getStringsAsFactors() ? "TRUE" : "FALSE"));

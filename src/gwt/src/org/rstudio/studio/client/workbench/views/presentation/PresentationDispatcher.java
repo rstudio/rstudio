@@ -144,17 +144,17 @@ public class PresentationDispatcher
          String param1, 
          String param2)
    {
-      if (cmdName.equals("help-doc"))
+      if (cmdName == "help-doc")
          performHelpDocCommand(param1, param2);
-      else if (cmdName.equals("help-topic"))
+      else if (cmdName == "help-topic")
          performHelpTopicCommand(param1, param2);
-      else if (cmdName.equals("console"))
+      else if (cmdName == "console")
          performConsoleCommand(params);
-      else if (cmdName.equals("console-input"))
+      else if (cmdName == "console-input")
          performConsoleInputCommand(params);
-      else if (cmdName.equals("execute"))
+      else if (cmdName == "execute")
          performExecuteCommand(params);
-      else if (cmdName.equals("pause"))
+      else if (cmdName == "pause")
          performPauseCommand();
       else 
       {

@@ -143,7 +143,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       for (int i = 0; i < panes_.length; i++)
       {
-         if (panes_[i].getClass().equals(clazz))
+         if (panes_[i].getClass() == clazz)
          {
             activatePane(i);
             break;
@@ -171,7 +171,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       for (int i = 0; i < panes_.length; i++)
       {
-         if (panes_[i].getClass().equals(clazz))
+         if (panes_[i].getClass() == clazz)
          {
             hidePane(i);
             break;

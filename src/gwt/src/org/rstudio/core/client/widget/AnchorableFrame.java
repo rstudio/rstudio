@@ -81,7 +81,7 @@ public class AnchorableFrame extends RStudioFrame
       if (existingUrl == null)
          return false;      
      
-      return newUrl.equals(stripAnchor(existingUrl));
+      return newUrl == stripAnchor(existingUrl);
    }
    
    private boolean isSamePage(String newUrl)
@@ -91,7 +91,7 @@ public class AnchorableFrame extends RStudioFrame
       if (existingUrl == null)
          return false;      
       
-      return stripAnchor(newUrl).equals(stripAnchor(existingUrl));
+      return stripAnchor(newUrl) == stripAnchor(existingUrl);
    }
    
    private String stripAnchor(String url)

@@ -339,7 +339,7 @@ public class DocUpdateSentinel
                   oldMarksSpec = getProperty("marks");
 
                String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
-               if (!oldMarksSpec.equals(newMarksSpec))
+               if (oldMarksSpec != newMarksSpec)
                   setProperty("marks", newMarksSpec);
             }
          }
@@ -376,7 +376,7 @@ public class DocUpdateSentinel
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec) 
+          && foldSpec == oldFoldSpec 
           && (newChunkDefs == null || 
               ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
@@ -386,7 +386,7 @@ public class DocUpdateSentinel
 
       if (path == null && fileType == null
           && oldContents.length() == 0
-          && newContents.equals("\n"))
+          && newContents == "\n")
       {
          // This is necessary due to us adding an extra \n to empty
          // documents, which we have to do or else CodeMirror starts
@@ -483,7 +483,7 @@ public class DocUpdateSentinel
                      docDisplay_.fireEvent(saveEvent);
                      eventBus_.fireEvent(saveEvent);
                   }
-                  else if (!hash.equals(sourceDoc_.getHash()))
+                  else if (hash != sourceDoc_.getHash())
                   {
                      // We just hit a race condition where two updates
                      // happened at once. Try again

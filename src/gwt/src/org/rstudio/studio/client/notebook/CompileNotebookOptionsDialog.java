@@ -160,7 +160,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       int typeIndex = 0;
       for (int i=0; i<listType_.getItemCount(); i++)
       {
-         if (type.equals(listType_.getValue(i)))
+         if (type == listType_.getValue(i))
          {
             typeIndex = i;
             break;

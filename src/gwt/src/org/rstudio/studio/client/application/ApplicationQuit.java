@@ -665,7 +665,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private String buildSwitchMessage(String switchToProject)
    {
-      String msg = !switchToProject.equals("none") ?
+      String msg = switchToProject != "none" ?
         "Switching to project " + 
            FileSystemItem.createFile(switchToProject).getParentPathString() :
         "Closing project";

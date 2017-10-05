@@ -200,7 +200,7 @@ public class RnwChunkOptions extends JavaScriptObject
          switch (token.getTokenType())
          {
             case RToken.OPER:
-               if (token.getContent().equals("=") &&
+               if (token.getContent() == "=" &&
                    currentName == null &&
                    braceStack.empty())
                {

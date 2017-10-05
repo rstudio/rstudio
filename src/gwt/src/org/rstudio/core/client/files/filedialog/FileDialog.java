@@ -106,7 +106,7 @@ public abstract class FileDialog extends FileSystemDialog
          return false;
 
       boolean useExactFilename = browser_.getSelectedValue() != null
-            && browser_.getSelectedValue().equals(filename);
+            && browser_.getSelectedValue() == filename;
       
       if (!useExactFilename || getAlwaysMungeFilename())
       {

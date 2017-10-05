@@ -115,7 +115,7 @@ public class EnvironmentObjects extends ResizeComposite
       {
          final RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
 
-         if (oldEntry.rObject.getType().equals(obj.getType()))
+         if (oldEntry.rObject.getType() == obj.getType())
          {
             // type hasn't changed
             if (oldEntry.expanded && 
@@ -436,7 +436,7 @@ public class EnvironmentObjects extends ResizeComposite
    @Override
    public boolean useStatePersistence()
    {
-      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
+      return environmentName_ == EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
    }
    
    @Override

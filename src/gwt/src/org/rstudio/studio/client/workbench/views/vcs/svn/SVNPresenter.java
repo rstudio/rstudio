@@ -184,7 +184,7 @@ public class SVNPresenter extends BaseVcsPresenter
       ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
       for (StatusAndPath item :  svnState_.getStatus())
       {
-         if (item.getRawPath().equals(file.getPath()))
+         if (item.getRawPath() == file.getPath())
          {
             diffList.add(item);
             break;

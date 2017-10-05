@@ -153,7 +153,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       rmdPreviewParams_ = null;
-      if (url.equals(ABOUT_BLANK))
+      if (url == ABOUT_BLANK)
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
       }

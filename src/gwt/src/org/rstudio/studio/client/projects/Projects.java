@@ -176,7 +176,7 @@ public class Projects implements OpenProjectFileHandler,
                                     "Zoom _" + sessionInfo.getVcsName());
                
                // customize for svn if necessary
-               if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
+               if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
                {
                   commands.vcsPush().remove();
                   commands.vcsPull().setButtonLabel("Update");
@@ -184,7 +184,7 @@ public class Projects implements OpenProjectFileHandler,
                }    
                
                // customize for git if necessary
-               if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
+               if (sessionInfo.getVcsName() == VCSConstants.GIT_ID)
                {
                   commands.vcsCleanup().remove();
                }
@@ -354,7 +354,7 @@ public class Projects implements OpenProjectFileHandler,
             {
                VcsCloneOptions cloneOptions = newProject.getVcsCloneOptions();
                
-               if (cloneOptions.getVcsName().equals((VCSConstants.GIT_ID)))
+               if (cloneOptions.getVcsName() == (VCSConstants.GIT_ID))
                   indicator.onProgress("Cloning Git repository...");
                else
                   indicator.onProgress("Checking out SVN repository...");
@@ -764,8 +764,8 @@ public class Projects implements OpenProjectFileHandler,
    {
       // project options for current project
       FileSystemItem projFile = event.getFile();
-      if (projFile.getPath().equals(
-                  session_.getSessionInfo().getActiveProjectFile()))
+      if (projFile.getPath() ==
+                  session_.getSessionInfo().getActiveProjectFile())
       {
          onProjectOptions();
          return;
