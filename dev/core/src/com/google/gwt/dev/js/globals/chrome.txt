@@ -90,7 +90,14 @@ CustomEvent
 DOMError
 DOMException
 DOMImplementation
+DOMMatrix
+DOMMatrixReadOnly
 DOMParser
+DOMPoint
+DOMPointReadOnly
+DOMQuad
+DOMRect
+DOMRectReadOnly
 DOMSettableTokenList
 DOMStringList
 DOMStringMap
@@ -289,6 +296,7 @@ NaN
 NamedNodeMap
 NavigationPreloadManager
 Navigator
+NetworkInformation
 Node
 NodeFilter
 NodeIterator
@@ -565,6 +573,7 @@ UIEvent
 URIError
 URL
 URLSearchParams
+USB
 USBAlternateInterface
 USBConfiguration
 USBConnectionEvent
@@ -583,6 +592,7 @@ Uint8Array
 Uint8ClampedArray
 VTTCue
 ValidityState
+VisualViewport
 WaveShaperNode
 WeakMap
 WeakSet
@@ -697,9 +707,11 @@ onabort
 onanimationend
 onanimationiteration
 onanimationstart
+onappinstalled
 onautocomplete
 onautocompleteerror
 onauxclick
+onbeforeinstallprompt
 onbeforeunload
 onblur
 oncancel
@@ -837,6 +849,7 @@ toolbar
 top
 undefined
 unescape
+visualViewport
 webkitAudioContext
 webkitAudioPannerNode
 webkitCancelAnimationFrame
