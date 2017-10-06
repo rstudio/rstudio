@@ -54,7 +54,6 @@ class WorkbenchTabPanel
       parentWindow_ = parentWindow;
 
       tabPanel_ = new ModuleTabLayoutPanel(owner);
-      // tabPanel_ = new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
       panel_.add(tabPanel_);
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
