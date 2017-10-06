@@ -6,6 +6,11 @@
   <!-- TODO(???) please update threadsafe to true if code is threadsafe -->
   <threadsafe>false</threadsafe>
 
+  <!-- Continue to use urlfetch to open URLs in Java.
+       Delete this to use the socket API, which is more performant but could
+       conceivably lead to different behavior. -->
+  <url-stream-handler>urlfetch</url-stream-handler>
+
   <!-- Configure serving/caching of GWT files -->
   <static-files>
     <include path="**" />
