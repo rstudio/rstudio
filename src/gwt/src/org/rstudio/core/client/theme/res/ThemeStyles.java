@@ -145,6 +145,7 @@ public interface ThemeStyles extends CssResource
    String locatorPanel();
 
    String multiPodUtilityArea();
+   String multiPodUtilityTabArea();
 
    String tabOverflowPopup();   
    
