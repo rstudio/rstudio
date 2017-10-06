@@ -220,7 +220,7 @@ public class EditingTargetCodeExecution
       setLastExecuted(range.getStart(), range.getEnd());
       
       // trim intelligently
-      code = code.trim();
+      code = StringUtil.trimBlankLines(code);
       if (code.length() == 0)
          code = "\n";
       
