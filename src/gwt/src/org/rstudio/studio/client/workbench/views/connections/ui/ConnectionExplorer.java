@@ -138,6 +138,11 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {   
       objectBrowser_.update(connection_, hint);
    }
+   
+   public void setFilterText(String text)
+   {
+      objectBrowser_.setFilterText(text);
+   }
   
    @Override
    public void onResize()

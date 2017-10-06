@@ -207,6 +207,11 @@ public class ObjectBrowser extends Composite implements RequiresResize
      String emptyTree();
    }
    
+   public void setFilterText(String text)
+   {
+      objectsModel_.setFilterText(text);
+   }
+   
    private static final TableBrowserMessages MESSAGES 
                               = GWT.create(TableBrowserMessages.class);
    
