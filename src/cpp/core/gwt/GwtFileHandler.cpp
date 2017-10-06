@@ -1,7 +1,7 @@
 /*
  * GwtFileHandler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,6 +91,12 @@ void handleFileRequest(const std::string& wwwLocalPath,
    if (filePath.empty())
    {
       pResponse->setNotFoundError(request.uri());
+      return;
+   }
+   else if (filePath.isDirectory())
+   {
+      // deny directory listings
+      pResponse->setError(http::status::Forbidden, "Forbidden");
       return;
    }
    
