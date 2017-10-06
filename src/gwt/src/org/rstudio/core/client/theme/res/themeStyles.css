@@ -1195,7 +1195,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .multiPodUtilityArea {
    background: MULTIPODTOPFADE left top repeat-y;
 }
+.multiPodUtilityTabArea {
+   height: 0px;
+}
 .firstTabSelected {
+}
+
+.rstudio-themes-flat .multiPodUtilityTabArea {
+   height: 22px;
 }
 
 /** Toolbar **/
