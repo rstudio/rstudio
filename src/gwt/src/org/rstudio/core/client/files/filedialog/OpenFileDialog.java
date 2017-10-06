@@ -36,25 +36,25 @@ public class OpenFileDialog extends FileDialog
    @Override
    public boolean shouldAccept()
    {
+      FileSystemItem item = browser_.getSelectedItem();
+      String fileInput = browser_.getFilename().trim();
+      
       if (canChooseDirectories_)
       {
-         FileSystemItem item = browser_.getSelectedItem();
-         String fileInput = browser_.getFilename().trim();
-         
          // if we have no user input nor a selected item,
          // interpret this as a request to open the active
          // directory as an RStudio project
          if (item == null && fileInput.isEmpty())
             return true;
-         
-         // if the user has selected a directory, and there
-         // is no user input, interpret that as a request to
-         // navigate into that directory
-         if (item != null && item.isDirectory())
-         {
-            cd(item.getPath());
-            return false;
-         }
+      }
+      
+      // if the user has selected a directory, and there
+      // is no user input, interpret that as a request to
+      // navigate into that directory
+      if (item != null && fileInput.isEmpty() && item.isDirectory())
+      {
+         cd(item.getPath());
+         return false;
       }
       
       return super.shouldAccept();
