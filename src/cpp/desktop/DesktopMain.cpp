@@ -42,6 +42,7 @@
 #include "DesktopSessionLauncher.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
+#include "DesktopActivationOverlay.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -301,6 +302,7 @@ int main(int argc, char* argv[])
 
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
+      bool devMode = false;
 
       // check for debug configuration
 #ifndef NDEBUG
@@ -310,6 +312,7 @@ int main(int argc, char* argv[])
          confPath = currentPath.complete("conf/rdesktop-dev.conf");
          sessionPath = currentPath.complete("session/rsession");
          scriptsPath = currentPath.complete("desktop");
+         devMode = true;
 #ifdef _WIN32
          if (version.architecture() == ArchX64)
             sessionPath = installPath.complete("session/x64/rsession");
@@ -346,6 +349,12 @@ int main(int argc, char* argv[])
 
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);
+
+      desktop::activation::DesktopActivation licenseManager(installPath, devMode);
+      if (!licenseManager.getInitialLicense())
+      {
+         return EXIT_FAILURE;
+      }
 
       // launch session
       SessionLauncher sessionLauncher(sessionPath, confPath);
