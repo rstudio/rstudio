@@ -225,7 +225,7 @@ public class SVNReviewPresenter implements ReviewPresenter
 
                   StatusAndPath vcsStatus = StatusAndPath.fromInfo(
                         event.getFileChange().getFile().getSVNStatus());
-                  if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
+                  if (paths.get(0).getRawPath() == vcsStatus.getRawPath())
                   {
                      svnState.refresh(false);
                   }
@@ -377,7 +377,7 @@ public class SVNReviewPresenter implements ReviewPresenter
 
       final StatusAndPath item = paths.get(0);
 
-      if (!item.getPath().equals(currentFilename_))
+      if (item.getPath() != currentFilename_)
       {
          clearDiff();
          currentFilename_ = item.getPath();
@@ -405,7 +405,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                   String response = diffResult.getDecodedValue();
 
                   // Use lastResponse_ to prevent unnecessary flicker
-                  if (response.equals(currentResponse_))
+                  if (response == currentResponse_)
                      return;
                   currentResponse_ = response;
                   currentEncoding_ = diffResult.getSourceEncoding();

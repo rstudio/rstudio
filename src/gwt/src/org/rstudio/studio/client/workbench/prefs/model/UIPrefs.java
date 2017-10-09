@@ -95,7 +95,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    @Override
    public void onUiPrefsChanged(UiPrefsChangedEvent e)
    {        
-      if (e.getType().equals(UiPrefsChangedEvent.GLOBAL_TYPE))
+      if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
       {
          // get prefs accessor
          UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
@@ -480,7 +480,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          gitDiffIgnoreWhitespace().setGlobalValue(
                newUiPrefs.gitDiffIgnoreWhitespace().getGlobalValue());
       }
-      else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
+      else if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
       {
          // get prefs accessor
          UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(

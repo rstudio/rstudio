@@ -351,7 +351,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
             varname_.getText().trim(),
             encoding_.getValue(encoding_.getSelectedIndex()),
             headingYes_.getValue(),
-            rowNames.equals(autoValue) ? null : rowNames,
+            rowNames == autoValue ? null : rowNames,
             separator_.getValue(separator_.getSelectedIndex()),
             decimal_.getValue(decimal_.getSelectedIndex()),
             quote_.getValue(quote_.getSelectedIndex()),

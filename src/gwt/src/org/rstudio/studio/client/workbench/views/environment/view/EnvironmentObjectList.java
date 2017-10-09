@@ -326,8 +326,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          boolean isClickable =
                host_.enableClickableObjects() &&
                rowValue.getCategory() != RObjectEntry.Categories.Value;
-         if ((!title.equals(RObjectEntry.NO_VALUE)) &&
-             title != null)
+         if (title != RObjectEntry.NO_VALUE && title != null)
          {
             if (rowValue.isPromise())
             {

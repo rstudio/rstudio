@@ -297,7 +297,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       uiPrefs_.theme().setGlobalValue(theme_.getValue());
       if (Desktop.isDesktop())
       {
-         if (!initialFontFace_.equals(fontFace_.getValue()))
+         if (initialFontFace_ != fontFace_.getValue())
          {
             Desktop.getFrame().setFixedWidthFont(fontFace_.getValue());
             restartRequired = true;
@@ -305,7 +305,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          
          if (!Desktop.getFrame().isCocoa())
          {
-            if (!initialZoomLevel_.equals(zoomLevel_.getValue()))
+            if (initialZoomLevel_ != zoomLevel_.getValue())
             {
                double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
                Desktop.getFrame().setZoomLevel(zoomLevel);

@@ -117,15 +117,15 @@ public class ShinyFrameHelper
          return;
 
       String eventName = event.getEvent();
-      if (eventName.equals(EVENT_SCROLL_CHANGE))
+      if (eventName == EVENT_SCROLL_CHANGE)
       {
          scrollPosition_ = event.getIntData();
       }
-      else if (eventName.equals(EVENT_HASH_CHANGE))
+      else if (eventName == EVENT_HASH_CHANGE)
       {
          url_ = event.getStringData();
       }
-      else if (eventName.equals(EVENT_READY))
+      else if (eventName == EVENT_READY)
       {
          window_ = event.getSource();
          origin_ = event.getOrigin();

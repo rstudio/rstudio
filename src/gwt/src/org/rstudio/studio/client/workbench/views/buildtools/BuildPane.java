@@ -68,9 +68,9 @@ public class BuildPane extends WorkbenchPane
       
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
-      boolean pkg = type.equals(SessionInfo.BUILD_TOOLS_PACKAGE);
-      boolean makefile = type.equals(SessionInfo.BUILD_TOOLS_MAKEFILE);
-      boolean website = type.equals(SessionInfo.BUILD_TOOLS_WEBSITE);
+      boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
+      boolean makefile = type == SessionInfo.BUILD_TOOLS_MAKEFILE;
+      boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
       
       
       // always include build all
@@ -166,14 +166,14 @@ public class BuildPane extends WorkbenchPane
                String defaultFormat = formats.getOutputFormat();
                JsArrayString allFormats = formats.getAllOututFormats(); 
                MenuItem allMenu = new FormatMenuItem(
-                  "all", "All Formats", defaultFormat.equals("all"));
+                  "all", "All Formats", defaultFormat == "all");
                addItem(allMenu);
                addSeparator();    
                for (int i = 0; i<allFormats.length(); i++)
                {
                   String format = allFormats.get(i);
                   addItem(new FormatMenuItem(format, 
-                                             defaultFormat.equals(format)));
+                                             defaultFormat == format));
                }
                callback.onPopupMenu(BookdownBuildPopupMenu.this);
             }

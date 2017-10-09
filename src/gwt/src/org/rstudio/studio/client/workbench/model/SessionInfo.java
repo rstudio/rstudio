@@ -195,7 +195,7 @@ public class SessionInfo extends JavaScriptObject
       String[] availableVcs = getAvailableVCS();
       for (int i=0; i<availableVcs.length; i++)
       {
-         if (availableVcs[i].equals(id))
+         if (availableVcs[i] == id)
             return true;
       }
       

@@ -106,7 +106,7 @@ public abstract class VcsState
             {
                for (int i = 0; i < status_.size(); i++)
                {
-                  if (status.getRawPath().equals(status_.get(i).getRawPath()))
+                  if (status.getRawPath() == status_.get(i).getRawPath())
                   {
                      if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
                         status_.remove(i);

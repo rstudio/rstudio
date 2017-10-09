@@ -46,7 +46,7 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
          {
             if (value)
             {
-               if (object.getStatus().equals("?"))
+               if (object.getStatus() == "?")
                {
                   server.svnAdd(toArray(object.getPath()), new SimpleRequestCallback<ProcessResult>()
                   {
@@ -59,7 +59,7 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
                   });
                   return;
                }
-               if (object.getStatus().equals("!"))
+               if (object.getStatus() == "!")
                {
                   server.svnDelete(toArray(object.getPath()),
                                    new SimpleRequestCallback<ProcessResult>()
@@ -74,7 +74,7 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
                                    });
                   return;
                }
-               if (object.getStatus().equals("C"))
+               if (object.getStatus() == "C")
                {
                   globalDisplay.showYesNoMessage(
                         GlobalDisplay.MSG_WARNING,

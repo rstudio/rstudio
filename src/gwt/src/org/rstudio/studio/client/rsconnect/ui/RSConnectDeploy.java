@@ -584,7 +584,7 @@ public class RSConnectDeploy extends Composite
          {
             for (int j = 0; j < ignoredFiles.size(); j++)
             {
-               if (ignoredFiles.get(j).equals(files.get(i)))
+               if (ignoredFiles.get(j) == files.get(i))
                {
                   checked = false; 
                   break;
@@ -598,7 +598,7 @@ public class RSConnectDeploy extends Composite
          {
             for (int j = 0; j < additionalFiles.size(); j++)
             {
-               if (additionalFiles.get(j).equals(files.get(i)))
+               if (additionalFiles.get(j) == files.get(i))
                {
                   add = false; 
                   break;
@@ -966,7 +966,7 @@ public class RSConnectDeploy extends Composite
                         ArrayList<String> files = getFileList();
                         for (String file: files)
                         {
-                           if (file.equals(path))
+                           if (file == path)
                            {
                               indicator.onCompleted();
                               return;
@@ -989,7 +989,7 @@ public class RSConnectDeploy extends Composite
       for (int i = 0; i < fileChecks_.size(); i++)
       {
          DirEntryCheckBox fileCheck = fileChecks_.get(i);
-         if (fileCheck.getPath().equals(path))
+         if (fileCheck.getPath() == path)
          {
             // don't allow the user to unselect the primary file
             fileCheck.setEnabled(false);

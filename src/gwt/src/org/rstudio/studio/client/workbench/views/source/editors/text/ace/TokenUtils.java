@@ -19,12 +19,12 @@ public class TokenUtils
    public static boolean isLeftBracket(TokenCursor cursor)
    {
       String value = cursor.currentValue();
-      return value.equals("(") || value.equals("[") || value.equals("{");
+      return value == "(" || value == "[" || value == "{";
    }
    
    public static boolean isRightBracket(TokenCursor cursor)
    {
       String value = cursor.currentValue();
-      return value.equals(")") || value.equals("]") || value.equals("}");
+      return value == ")" || value == "]" || value == "}";
    }
 }

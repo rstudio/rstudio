@@ -170,7 +170,7 @@ public class ConsoleDispatcher
          String escapedPath = escapedPath(path);
          String systemEncoding = session_.getSessionInfo().getSystemEncoding();
          boolean isSystemEncoding =
-          normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
+          normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
          
          if (contentKnownToBeAscii || isSystemEncoding)
             code.append((debug ? "debugSource" : "source") + 

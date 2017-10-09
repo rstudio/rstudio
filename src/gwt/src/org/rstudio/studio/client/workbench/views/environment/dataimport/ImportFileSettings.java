@@ -103,15 +103,15 @@ public class ImportFileSettings
       int score = 0;
       if (isHeader() == other.isHeader())
          score++;
-      if (getRowNames().equals(other.getRowNames()))
+      if (getRowNames() == other.getRowNames())
          score++;
-      if (getSep().equals(other.getSep()))
+      if (getSep() == other.getSep())
          score += 2;
-      if (getDec().equals(other.getDec()))
+      if (getDec() == other.getDec())
          score += 2;
-      if (getQuote().equals(other.getQuote()))
+      if (getQuote() == other.getQuote())
          score++;
-      if (getComment().equals(other.getComment()))
+      if (getComment() == other.getComment())
          score++;
       return score;
    }

@@ -161,7 +161,8 @@ public class PaneManager
          boolean newHasKey = newValue.hasKey(MAXIMIZED_TAB_KEY);
          
          if (oldHasKey && newHasKey)
-            return !oldValue.getString(MAXIMIZED_TAB_KEY).equals(newValue.getString(MAXIMIZED_TAB_KEY));
+            return oldValue.getString(MAXIMIZED_TAB_KEY) != 
+                   newValue.getString(MAXIMIZED_TAB_KEY);
          
          return oldHasKey != newHasKey;
       }

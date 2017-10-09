@@ -324,8 +324,7 @@ public class EditingPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             alwaysCompleteInConsole.setVisible(
-                   showCompletions_.getValue().equals(
-                                        UIPrefsAccessor.COMPLETION_ALWAYS));
+                   showCompletions_.getValue() == UIPrefsAccessor.COMPLETION_ALWAYS);
             
          }
       });
@@ -513,8 +512,8 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
       String editorMode = editorMode_.getValue();
-      boolean isVim = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
-      boolean isEmacs = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      boolean isVim = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
+      boolean isEmacs = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
       
       prefs_.useVimMode().setGlobalValue(isVim);
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);

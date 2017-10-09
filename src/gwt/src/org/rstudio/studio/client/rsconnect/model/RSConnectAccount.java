@@ -49,7 +49,7 @@ public class RSConnectAccount extends JavaScriptObject
    {
       if (other == null)
          return false;
-      else return getName().equals(other.getName()) && 
-             getServer().equals(other.getServer());
+      else return getName()   == other.getName() && 
+                  getServer() == other.getServer();
    }
 }

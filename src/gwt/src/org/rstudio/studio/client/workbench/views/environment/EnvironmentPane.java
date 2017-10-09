@@ -504,9 +504,9 @@ public class EnvironmentPane extends WorkbenchPane
    
    private String friendlyNameOfEnvironment(String name)
    {
-      if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
+      if (name == ".GlobalEnv" || name == "R_GlobalEnv")
          return GLOBAL_ENVIRONMENT_NAME;
-      else if (name.equals("base"))
+      else if (name == "base")
          return "package:base";
       else 
          return name;

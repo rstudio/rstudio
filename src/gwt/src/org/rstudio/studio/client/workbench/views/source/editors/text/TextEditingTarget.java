@@ -1911,7 +1911,7 @@ public class TextEditingTarget implements
             childIndent = indent + "&nbsp;&nbsp;";
 
             if (defaultFunction != null && defaultMenuItem == null &&
-                func.getLabel().equals(defaultFunction.getLabel()) &&
+                func.getLabel() == defaultFunction.getLabel() &&
                 func.getPreamble().getRow() == defaultFunction.getPreamble().getRow() &&
                 func.getPreamble().getColumn() == defaultFunction.getPreamble().getColumn())
             {
@@ -2651,7 +2651,7 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.equals(SourceDocument.XT_RMARKDOWN))
+      if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
       extendedType_ = extendedType;
 
@@ -3730,7 +3730,7 @@ public class TextEditingTarget implements
                formatList.add(uiName);
                valueList.add(formats.get(i).getName());
                extensionList.add(formats.get(i).getExtension());
-               if (formats.get(i).getName().equals(selTemplate.format))
+               if (formats.get(i).getName() == selTemplate.format)
                {
                   formatUiName = uiName;
                }

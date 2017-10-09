@@ -60,13 +60,13 @@ public class RObjectEntry
       return rObject.getLength() > 0 &&
              (rObject.getContentsDeferred() || 
                  (rObject.getContents().length() > 0 &&
-                  !rObject.getContents().get(0).equals(NO_VALUE))) &&
+                  rObject.getContents().get(0) != NO_VALUE)) &&
              !hasTraceInfo();
    }
    
    public boolean hasTraceInfo()
    {
-      return rObject.getType().equals("functionWithTrace");
+      return rObject.getType() == "functionWithTrace";
    }
    
    public int getCategory()
@@ -77,8 +77,7 @@ public class RObjectEntry
       {
          return Categories.Data;
       }
-      else if (type.equals("function") ||
-               hasTraceInfo())
+      else if (type == "function" || hasTraceInfo())
       {
          return Categories.Function;
       }

@@ -87,7 +87,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
    {
       for (int i=0; i<languages_.length(); i++)
       {
-         if (langId.equals(languages_.get(i).getId()))
+         if (langId == languages_.get(i).getId())
          {
             currentLangId_ = langId;
             getListBox().setSelectedIndex(i);

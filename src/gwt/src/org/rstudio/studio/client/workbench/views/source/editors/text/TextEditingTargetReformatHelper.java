@@ -207,19 +207,19 @@ public class TextEditingTargetReformatHelper
       private boolean isLeftBrace()
       {
          String value = currentValue();
-         return value.equals("(") ||
-                value.equals("[") ||
-                value.equals("[[") ||
-                value.equals("{");
+         return value == "(" ||
+                value == "[" ||
+                value == "[[" ||
+                value == "{";
       }
       
       private boolean isRightBrace()
       {
          String value = currentValue();
-         return value.equals(")") ||
-                value.equals("]") ||
-                value.equals("]]") ||
-                value.equals("}");
+         return value == ")" ||
+                value == "]" ||
+                value == "]]" ||
+                value == "}";
       }
       
       public boolean fwdToMatchingToken()
@@ -253,7 +253,7 @@ public class TextEditingTargetReformatHelper
             if (cursor.isLeftBrace())
             {
                braceStack.push(value);
-               if (value.equals(lhs))
+               if (value == lhs)
                   stack++;
                isCounterActive = false;
             }
@@ -264,7 +264,7 @@ public class TextEditingTargetReformatHelper
 
                isCounterActive = braceStack.isEmpty();
 
-               if (value.equals(rhs))
+               if (value == rhs)
                {
                   if (stack == 0)
                   {
@@ -348,12 +348,12 @@ public class TextEditingTargetReformatHelper
       public void ensureWhitespaceFollows()
       {
          String value = getValue();
-         boolean mightWantNewline = value.equals("&&") ||
-             value.equals("||") ||
-             value.equals("&") ||
-             value.equals("|") ||
-             value.equals("<-") ||
-             value.equals("<<-");
+         boolean mightWantNewline = value == "&&" ||
+             value == "||" ||
+             value == "&" ||
+             value == "|" ||
+             value == "<-" ||
+             value == "<<-";
          
          if (mightWantNewline && 
              getCurrentLineLength() >= 70)
@@ -416,7 +416,7 @@ public class TextEditingTargetReformatHelper
          String tokenType = tokens_.get(offset_).getType();
          for (String targetType : targetTypes)
          {
-            if (tokenType.equals(targetType) ||
+            if (tokenType == targetType ||
                 tokenType.contains(targetType + ".") ||
                 tokenType.contains("." + targetType))
             {
@@ -435,7 +435,7 @@ public class TextEditingTargetReformatHelper
       public boolean isWhitespaceOrNewline()
       {
          Token token = currentToken();
-         return token.getType().equals("text") &&
+         return token.getType() == "text" &&
                 token.getValue().matches("^[\\s\\n]*$");
       }
       
@@ -473,7 +473,7 @@ public class TextEditingTargetReformatHelper
       
       public boolean isKeyword()
       {
-         return tokens_.get(offset_).getType().equals("keyword");
+         return tokens_.get(offset_).getType() == "keyword";
       }
       
       public boolean isControlFlowKeyword()
@@ -485,8 +485,8 @@ public class TextEditingTargetReformatHelper
       public boolean isOperator()
       {
          String type = tokens_.get(offset_).getType();
-         return type.equals("keyword.operator") ||
-                type.equals("keyword.operator.infix");
+         return type == "keyword.operator" ||
+                type == "keyword.operator.infix";
       }
       
       public int getCurrentLineLength()
@@ -620,7 +620,7 @@ public class TextEditingTargetReformatHelper
          
          accumulatedLength += clone.getValue().replaceAll("\\s", "").length();
          
-         if (clone.currentType().equals("text"))
+         if (clone.currentType() == "text")
             commaCount += StringUtil.countMatches(
                   clone.currentValue(), ',');
          
@@ -634,11 +634,11 @@ public class TextEditingTargetReformatHelper
          //
          //    tryCatch({
          //
-         if (clone.currentValue().equals("function"))
+         if (clone.currentValue() == "function")
             if (clone.previousSignificantToken().getValue().contains(","))
                overrideNewlineInsertionAsFalse = true;
          
-         if (clone.currentValue().equals("{"))
+         if (clone.currentValue() == "{")
          {
             SimpleTokenCursor peek = clone.clone();
             if (peek.moveToPreviousSignificantToken())
@@ -648,7 +648,7 @@ public class TextEditingTargetReformatHelper
          
          // If we encounter an '=', presumedly
          // this is for a named function call.
-         if (clone.currentValue().equals("="))
+         if (clone.currentValue() == "=")
          {
             equalsCount++;
             
@@ -663,7 +663,7 @@ public class TextEditingTargetReformatHelper
             //
             if (clone.moveToNextSignificantToken())
             {
-               if (clone.currentValue().equals("function"))
+               if (clone.currentValue() == "function")
                {
                   newlineAfterBrace = true;
                   newlineAfterComma = true;
@@ -674,8 +674,8 @@ public class TextEditingTargetReformatHelper
          
          // If we encounter a '{' or '[', skip over -- we don't want to
          // enumerate things in 'child' scopes.
-         if (clone.currentValue().equals("{") ||
-             clone.currentValue().equals("["))
+         if (clone.currentValue() == "{" ||
+             clone.currentValue() == "[")
          {
             clone.fwdToMatchingToken();
             continue;
@@ -685,7 +685,7 @@ public class TextEditingTargetReformatHelper
          // of tokens in that scope. This, used alongside the nesting level,
          // helps us infer the appropriate place to insert newlines when
          // within nested function calls.
-         if (clone.currentValue().equals("("))
+         if (clone.currentValue() == "(")
          {
             if (clone.moveToPreviousSignificantToken())
             {
@@ -710,16 +710,16 @@ public class TextEditingTargetReformatHelper
          // top level, break. (The top level cursor gets to iterate over
          // the entire scope, sending out recursive searches as we encounter
          // opening parens.
-         if (!topLevel && clone.currentValue().equals(closer))
+         if (!topLevel && clone.currentValue() == closer)
             break;
       }
       
       // If this is a '{', and the immediately previous token is a ')',
       // insert some whitespace.
       // TODO: Allow preferences e.g. 1TBS, always newline before brace, etc?
-      if (startValue.equals("{"))
+      if (startValue == "{")
       {
-         if (cursor.peek(-1).currentValue().equals(")"))
+         if (cursor.peek(-1).currentValue() == ")")
             cursor.peek(-1).setValue(") ");
       }
       
@@ -733,7 +733,7 @@ public class TextEditingTargetReformatHelper
       // Within a function argument list, we almost always want to insert
       // newlines after commas, expect for very short function argument
       // lists.
-      if (prevSignificantValue.equals("function"))
+      if (prevSignificantValue == "function")
          commaScore += 20;
       
       // For scopes containing many `=`, we typically prefer inserting a
@@ -755,7 +755,7 @@ public class TextEditingTargetReformatHelper
       Debug.logToConsole("Equals score: " + equalsScore);
       */
       
-      if (!rootState && startValue.equals("("))
+      if (!rootState && startValue == "(")
       {
          if (accumulatedLength +
                commaScore +
@@ -791,7 +791,7 @@ public class TextEditingTargetReformatHelper
             newlineAfterBrace = false;
          
          // Special casing for tryCatch -- we prefer newlines everywhere.
-         if (cursor.currentValue().equals("tryCatch") &&
+         if (cursor.currentValue() == "tryCatch" &&
              accumulatedLength >= 20)
          {
             newlineAfterBrace = true;
@@ -811,7 +811,7 @@ public class TextEditingTargetReformatHelper
       
       // Always insert newlines following '{'.
       // TODO: Allow very compact single line functions?
-      if (startValue.equals("{"))
+      if (startValue == "{")
       {
          if (cursor.peek(1).currentValue().indexOf('\n') == -1)
             cursor.setValue("{\n");
@@ -849,19 +849,19 @@ public class TextEditingTargetReformatHelper
             break;
          
          // Ensure a single space follows control flow statements
-         if (cursor.currentValue().equals("if") ||
-             cursor.currentValue().equals("for") ||
-             cursor.currentValue().equals("while") ||
-             cursor.currentValue().equals("repeat"))
+         if (cursor.currentValue() == "if" ||
+             cursor.currentValue() == "for" ||
+             cursor.currentValue() == "while" ||
+             cursor.currentValue() == "repeat")
          {
             cursor.ensureSingleSpaceFollows();
          }
          
          // Ensure newlines around 'naked' else
-         if (cursor.currentValue().equals("else"))
+         if (cursor.currentValue() == "else")
          {
-            if (!cursor.previousSignificantToken().getValue().equals("}") &&
-                 cursor.getOffset() >= 2)
+            if (cursor.previousSignificantToken().getValue() != "}" &&
+                cursor.getOffset() >= 2)
             {
                cursor.ensureNewlinePreceeds();
             }
@@ -873,7 +873,7 @@ public class TextEditingTargetReformatHelper
             }
             
             String nextValue = cursor.nextSignificantToken().getValue();
-            if (!(nextValue.equals("{") || nextValue.equals("if")))
+            if (!(nextValue == "{" || nextValue == "if"))
                cursor.ensureNewlineFollows();
             
             continue;
@@ -886,24 +886,24 @@ public class TextEditingTargetReformatHelper
             
             // Prefer newlines after comparison operators within 'if'
             // statements when the enclosed selection is long
-            if (prevSignificantValue.equals("if"))
+            if (prevSignificantValue == "if")
             {
                if (accumulatedLength >= 20 &&
-                   value.equals("&&") ||
-                   value.equals("||") ||
-                   value.equals("&") ||
-                   value.equals("|"))
+                   value == "&&" ||
+                   value == "||" ||
+                   value == "&"  ||
+                   value == "|")
                {
                   if (cursor.peek(1).currentValue().indexOf('\n') == -1)
                      cursor.setValue(cursor.currentValue() + "\n");
                }
             }
             
-            else if (value.equals("$") ||
-                value.equals("@") ||
-                value.equals(":") ||
-                value.equals("::") ||
-                value.equals(":::"))
+            else if (value == "$" ||
+                value == "@" ||
+                value == ":" ||
+                value == "::" ||
+                value == ":::")
             {
                cursor.peek(-1).trimWhitespaceBwd();
                cursor.peek(1).trimWhitespaceFwd();
@@ -920,7 +920,7 @@ public class TextEditingTargetReformatHelper
                //    if (-x <- y)
                //
                // for example.
-               if (value.equals("-") || value.equals("+") || value.equals("!"))
+               if (value == "-" || value == "+" || value == "!")
                {
                   // Figure out if the current token is binary or unary.
                   SimpleTokenCursor previousCursor =
@@ -970,7 +970,7 @@ public class TextEditingTargetReformatHelper
          }
          
          // Ensure spaces, or newlines, after commas, if so desired.
-         if (cursor.currentValue().equals(","))
+         if (cursor.currentValue() == ",")
          {
             if (newlineAfterComma &&
                 cursor.peek(1).currentValue().indexOf('\n') == -1)
@@ -988,7 +988,7 @@ public class TextEditingTargetReformatHelper
             
             // Transform semi-colons into newlines.
             // TODO: Too destructive?
-         if (cursor.currentValue().equals(";"))
+         if (cursor.currentValue() == ";")
          {
             cursor.setValue("\n");
          }
@@ -996,14 +996,14 @@ public class TextEditingTargetReformatHelper
          // If we encounter an opening paren, recurse a new token cursor within,
          // and step over the block. This ensures that indentation rules are
          // consistent within a particular scope.
-         if (cursor.currentValue().equals("{") ||
-             cursor.currentValue().equals("(") ||
-             cursor.currentValue().equals("[") ||
-             cursor.currentValue().equals("[["))
+         if (cursor.currentValue() == "{" ||
+             cursor.currentValue() == "(" ||
+             cursor.currentValue() == "[" ||
+             cursor.currentValue() == "[[")
          {
             // If we encounter a non-paren opener, this implies that we can
             // reset the function nesting level.
-            if (!startValue.equals("("))
+            if (startValue != "(")
                parenNestLevel = 0;
             
             // Otherwise, if we inserted newlines after parens for this
@@ -1015,7 +1015,7 @@ public class TextEditingTargetReformatHelper
             }
             
             // Increment the nest level for non-keyword '(' calls
-            int incrementParenNest = startValue.equals("(") &&
+            int incrementParenNest = startValue == "(" &&
                   !beforeStartCursor.isControlFlowKeyword() ? 1 : 0;
             
             /*
@@ -1027,7 +1027,7 @@ public class TextEditingTargetReformatHelper
             
             // Update brace nest level
             int incrementBraceNest =
-                  cursor.currentValue().equals("{") ? 1 : 0;
+                  cursor.currentValue() == "{" ? 1 : 0;
             
             SimpleTokenCursor recursingCursor = cursor.clone();
             boolean success = cursor.fwdToMatchingToken();
@@ -1061,18 +1061,18 @@ public class TextEditingTargetReformatHelper
       //
       //    if (foo) bar
       //
-      if (cursor.currentValue().equals(")") &&
+      if (cursor.currentValue() == ")" &&
           beforeStartCursor.isControlFlowKeyword() &&
-          !cursor.nextSignificantToken().getValue().equals("{"))
+          cursor.nextSignificantToken().getValue() != "{")
       {
          cursor.ensureNewlineFollows();
       }
       
       // If we ended on a ')', maybe insert newline before
-      if (cursor.currentValue().equals(closer))
+      if (cursor.currentValue() == closer)
       {
          SimpleTokenCursor peek = cursor.peek(-1);
-         if (newlineAfterBrace || cursor.currentValue().equals("}"))
+         if (newlineAfterBrace || cursor.currentValue() == "}")
          {
             if (peek.currentValue().indexOf('\n') == -1)
                peek.setValue(peek.currentValue() + "\n");
@@ -1290,7 +1290,7 @@ public class TextEditingTargetReformatHelper
                
                // If this line doesn't match, bail
                match = DELIM_PATTERN.match(masked, 0);
-               if (match == null || !match.getGroup(2).equals(delimiter))
+               if (match == null || match.getGroup(2) != delimiter)
                   break;
             }
             

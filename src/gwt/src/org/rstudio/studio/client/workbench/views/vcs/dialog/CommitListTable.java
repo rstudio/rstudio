@@ -121,7 +121,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       @Override
       public SafeHtml render(CommitInfo object)
       {
-         if (lastGraphImg_ != null && object.getGraph().equals(lastGraph_))
+         if (lastGraphImg_ != null && object.getGraph() == lastGraph_)
             return lastGraphImg_;
 
          lastGraph_ = object.getGraph();
@@ -161,7 +161,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
                ref = ref.substring("refs/remotes/".length());
                style += " " + styles_.remote();
             }
-            else if (ref.equals("HEAD"))
+            else if (ref == "HEAD")
             {
                style += " " + styles_.head();
             }
@@ -286,7 +286,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          {
             if (getVisibleItemCount() > 0
                 && (selectionModel_.getSelectedObject() == null ||
-                    selectionModel_.getSelectedObject().getId().equals(getVisibleItem(0).getId())))
+                    selectionModel_.getSelectedObject().getId() == getVisibleItem(0).getId()))
             {
                selectionModel_.setSelected(getVisibleItem(0), true);
             }

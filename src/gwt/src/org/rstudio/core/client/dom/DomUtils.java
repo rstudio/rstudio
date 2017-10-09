@@ -287,12 +287,12 @@ public class DomUtils
       // Otherwise, determine whether an item can be focused based
       // on its tag name.
       String tagName = element.getTagName().toLowerCase();
-      if (tagName.equals("a"))
+      if (tagName == "a")
       {
          return element.hasAttribute("href");
       }
-      else if (tagName.equals("input") || tagName.equals("select") ||
-               tagName.equals("textarea") || tagName.equals("button"))
+      else if (tagName == "input"    || tagName == "select" ||
+               tagName == "textarea" || tagName == "button")
       {
          return !element.hasAttribute("disabled");
       }
@@ -721,9 +721,9 @@ public class DomUtils
                // the line breaks turn into <br _moz_dirty="true"/> or whatever.
                // We want to keep them in those cases. But in other cases
                // the _moz_dirty breaks are just spurious.
-               if (tag.equals("br") && (pasteMode || !childEl.hasAttribute("_moz_dirty")))
+               if (tag == "br" && (pasteMode || !childEl.hasAttribute("_moz_dirty")))
                   out.append("\n");
-               else if (tag.equals("script") || tag.equals("style"))
+               else if (tag == "script" || tag == "style")
                   continue;
                getInnerText(child, out, pasteMode);
                break;
@@ -973,7 +973,7 @@ public class DomUtils
          return false;
       
       Element elementTarget = Element.as(target);
-      if (!elementTarget.getNodeName().equals("BODY"))
+      if (elementTarget.getNodeName() != "BODY")
          return false;
       
       event.preventDefault();

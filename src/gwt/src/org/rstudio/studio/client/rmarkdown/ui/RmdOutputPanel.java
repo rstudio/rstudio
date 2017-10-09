@@ -305,7 +305,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       public void run()
       {
          String url = getCurrentUrl();
-         if (!url.equals(lastUrl_))
+         if (url != lastUrl_)
          {
             lastUrl_ = url;
             fireSlideIndexChanged();

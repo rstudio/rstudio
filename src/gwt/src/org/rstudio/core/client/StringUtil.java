@@ -1068,7 +1068,7 @@ public class StringUtil
    public static boolean isOneOf(String string, String... candidates)
    {
       for (String candidate : candidates)
-         if (candidate.equals(string))
+         if (candidate == string)
             return true;
       return false;
    }

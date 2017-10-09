@@ -191,31 +191,31 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          public void onChange(ChangeEvent event)
          {
             String value = outputComboBox_.getItemText(outputComboBox_.getSelectedIndex());
-            if (value.equals(OUTPUT_USE_DOCUMENT_DEFAULT))
+            if (value == OUTPUT_USE_DOCUMENT_DEFAULT)
             {
                unset("echo");
                unset("eval");
                unset("include");
             }
-            else if (value.equals(OUTPUT_SHOW_CODE_AND_OUTPUT))
+            else if (value == OUTPUT_SHOW_CODE_AND_OUTPUT)
             {
                set("echo", "TRUE");
                unset("eval");
                unset("include");
             }
-            else if (value.equals(OUTPUT_SHOW_OUTPUT_ONLY))
+            else if (value == OUTPUT_SHOW_OUTPUT_ONLY)
             {
                set("echo", "FALSE");
                unset("eval");
                unset("include");
             }
-            else if (value.equals(OUTPUT_SHOW_NOTHING))
+            else if (value == OUTPUT_SHOW_NOTHING)
             {
                unset("echo");
                unset("eval");
                set("include", "FALSE");
             }
-            else if (value.equals(OUTPUT_SKIP_THIS_CHUNK))
+            else if (value == OUTPUT_SKIP_THIS_CHUNK)
             {
                set("eval", "FALSE");
                set("include", "FALSE");
@@ -497,7 +497,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    {
       for (int i = 0; i < outputComboBox_.getItemCount(); i++)
       {
-         if (outputComboBox_.getItemText(i).equals(option))
+         if (outputComboBox_.getItemText(i) == option)
          {
             outputComboBox_.setSelectedIndex(i);
             return true;
@@ -595,7 +595,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private boolean isTrue(String string)
    {
-      return string.equals("TRUE") || string.equals("T");
+      return string == "TRUE" || string == "T";
    }
    
    @Override
@@ -614,11 +614,11 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private int getPriority(String key)
    {
-      if (key.equals("eval"))
+      if (key == "eval")
          return 10;
-      else if (key.equals("echo"))
+      else if (key == "echo")
          return 9;
-      else if (key.equals("warning") || key.equals("error") || key.equals("message"))
+      else if (key == "warning" || key == "error" || key == "message")
          return 8;
       else if (key.startsWith("fig."))
          return 8;

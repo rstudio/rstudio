@@ -117,7 +117,7 @@ public abstract class EnvironmentObjectDisplay
    
    protected boolean selectionEnabled()
    {
-      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
+      return environmentName_ == EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
    }
 
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;

@@ -155,7 +155,7 @@ public class RmdOutputPresenter implements
    {
       // detect whether we're really doing a refresh
       boolean refresh = params_ != null && 
-            params_.getResult().equals(params.getResult());
+            params_.getResult() == params.getResult();
       params_ = params;
       view_.showOutput(params, SessionUtils.showPublishUi(session_, prefs_), 
                        refresh);

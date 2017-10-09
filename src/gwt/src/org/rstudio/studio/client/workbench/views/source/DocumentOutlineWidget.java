@@ -393,10 +393,10 @@ public class DocumentOutlineWidget extends Composite
    private boolean shouldDisplayNode(Scope node)
    {
       String shownSectionsPref = uiPrefs_.shownSectionsInDocumentOutline().getGlobalValue();
-      if (node.isChunk() && shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY))
+      if (node.isChunk() && shownSectionsPref == UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY)
          return false;
       
-      if (isUnnamedNode(node) && !shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL))
+      if (isUnnamedNode(node) && shownSectionsPref != UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL)
          return false;
       
       // NOTE: the 'is*' items are not mutually exclusive
@@ -409,7 +409,7 @@ public class DocumentOutlineWidget extends Composite
       
       // don't show R functions or R sections in .Rmd unless requested
       TextFileType fileType = target_.getDocDisplay().getFileType();
-      if (!shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL) && fileType.isRmd())
+      if (shownSectionsPref != UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL && fileType.isRmd())
       {
          if (node.isFunction())
             return false;

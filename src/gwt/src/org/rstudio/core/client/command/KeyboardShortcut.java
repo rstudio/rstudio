@@ -268,7 +268,7 @@ public class KeyboardShortcut
             return false;
          
          for (int i = 0; i < other.keyCombinations_.size(); i++)
-            if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
+            if (keyCombinations_.get(i) != other.keyCombinations_.get(i))
                return false;
          
          return true;
@@ -318,7 +318,7 @@ public class KeyboardShortcut
             return false;
          
          for (int i = 0; i < keyCombinations_.size(); i++)
-            if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
+            if (keyCombinations_.get(i) != other.keyCombinations_.get(i))
                return false;
          
          return true;
@@ -395,7 +395,7 @@ public class KeyboardShortcut
          return false;
       
       KeyboardShortcut other = (KeyboardShortcut) object;
-      return keySequence_.equals(other.keySequence_);
+      return keySequence_ == other.keySequence_;
    }
 
    @Override

@@ -934,19 +934,19 @@ public class ObjectExplorerDataGrid
    
    private void performAction(String action, int row)
    {
-      if (action.equals(ACTION_OPEN))
+      if (action == ACTION_OPEN)
       {
          openRow(row);
       }
-      else if (action.equals(ACTION_CLOSE))
+      else if (action == ACTION_CLOSE)
       {
          closeRow(row);
       }
-      else if (action.equals(ACTION_EXTRACT))
+      else if (action == ACTION_EXTRACT)
       {
          extractCode(row);
       }
-      else if (action.equals(ACTION_VIEW))
+      else if (action == ACTION_VIEW)
       {
          viewRow(row);
       }

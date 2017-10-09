@@ -77,7 +77,7 @@ public class CppCompletionToolTip extends PopupPanel
    
    public void setText(String text, String comment)
    {
-      if (!text.equals(label_.getText()))
+      if (text != label_.getText())
          label_.setText(text);
       
       if (!StringUtil.isNullOrEmpty(comment))

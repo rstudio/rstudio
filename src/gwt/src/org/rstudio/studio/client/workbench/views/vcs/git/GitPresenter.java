@@ -274,7 +274,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
       for (StatusAndPath item :  gitState_.getStatus())
       {
-         if (item.getRawPath().equals(file.getPath()))
+         if (item.getRawPath() == file.getPath())
          {
             diffList.add(item);
             break;
@@ -302,7 +302,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       ArrayList<String> revertList = new ArrayList<String>();
       for (StatusAndPath item :  gitState_.getStatus())
       {
-         if (item.getRawPath().equals(file.getPath()))
+         if (item.getRawPath() == file.getPath())
          {
             revertList.add(item.getPath());
             break;

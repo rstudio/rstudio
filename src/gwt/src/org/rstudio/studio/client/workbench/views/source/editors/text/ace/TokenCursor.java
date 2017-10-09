@@ -219,7 +219,7 @@ public class TokenCursor extends JavaScriptObject
    public final boolean moveToActiveFunction()
    {
       TokenCursor clone = cloneCursor();
-      if (clone.moveToNextToken() && clone.currentValue().equals("("))
+      if (clone.moveToNextToken() && clone.currentValue() == "(")
          return true;
       
       clone = cloneCursor();

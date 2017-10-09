@@ -120,7 +120,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
         Element element = DOM.eventGetTarget(event);
         switch (DOM.eventGetType(event)) {
           case Event.ONCLICK: {
-             if (element.getClassName().equals(ThemeStyles.INSTANCE.menuRightImage()))
+             if (element.getClassName() == ThemeStyles.INSTANCE.menuRightImage())
                 ProjectMRUList.setOpenInNewWindow(true);
           }
         }

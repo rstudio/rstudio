@@ -504,7 +504,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       // if there is an existing widget just modify it in place
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       if (widget != null && 
-          widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+          widget.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
       {
          chunkDef = widget.getData();
       }

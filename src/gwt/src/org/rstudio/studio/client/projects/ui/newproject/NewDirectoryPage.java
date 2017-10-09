@@ -217,7 +217,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          String projDir = FileSystemItem.createDir(dir).completePath(name);
          String projFile = projFileFromDir(projDir);
          String newDefaultLocation = null;
-         if (!dir.equals(defaultNewProjectLocation_))
+         if (dir != defaultNewProjectLocation_.getPath())
             newDefaultLocation = dir;
          
          return new NewProjectResult(projFile, 

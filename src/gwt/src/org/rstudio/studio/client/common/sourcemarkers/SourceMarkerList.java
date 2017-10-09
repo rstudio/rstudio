@@ -129,7 +129,7 @@ public class SourceMarkerList extends Composite
          if (firstErrorIndex == -1 && error.getType() == SourceMarker.ERROR)
             firstErrorIndex = i;
          
-         if (!error.getPath().equals(targetFile))
+         if (error.getPath() != targetFile)
             showFileHeaders = true;
          
          errorList.add(error);

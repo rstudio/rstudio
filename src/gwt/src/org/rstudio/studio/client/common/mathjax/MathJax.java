@@ -528,7 +528,7 @@ public class MathJax
                             final MathJaxTypesetCallback callback)
    {
       // no need to re-render if text hasn't changed or is empty
-      if (text.equals(lastRenderedText_))
+      if (text == lastRenderedText_)
          return;
       
       // if empty, hide popup

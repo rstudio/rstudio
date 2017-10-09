@@ -578,17 +578,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       EditorCommandEvent event = dispatchEvent.getEvent();
       
       String type = event.getType();
-      if (type.equals(EditorCommandEvent.TYPE_EDITOR_CONTEXT))
+      if (type == EditorCommandEvent.TYPE_EDITOR_CONTEXT)
       {
          GetEditorContextEvent.Data data = event.getData();
          fireEventToLastFocusedWindow(new GetEditorContextEvent(data));
       }
-      else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
+      else if (type == EditorCommandEvent.TYPE_REPLACE_RANGES)
       {
          ReplaceRangesEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new ReplaceRangesEvent(data));
       }
-      else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
+      else if (type == EditorCommandEvent.TYPE_SET_SELECTION_RANGES)
       {
          SetSelectionRangesEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new SetSelectionRangesEvent(data));
@@ -1320,11 +1320,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private boolean hasSourceAndConsolePaired(String pane1, String pane2)
    {
-      return (pane1.equals(PaneConfig.SOURCE) &&
-              pane2.equals(PaneConfig.CONSOLE))
+      return (pane1 == PaneConfig.SOURCE &&
+              pane2 == PaneConfig.CONSOLE)
                  ||
-             (pane1.equals(PaneConfig.CONSOLE) &&
-              pane2.equals(PaneConfig.SOURCE));
+             (pane1 == PaneConfig.CONSOLE &&
+              pane2 == PaneConfig.SOURCE);
    }
 
    // Private types -----------------------------------------------------------

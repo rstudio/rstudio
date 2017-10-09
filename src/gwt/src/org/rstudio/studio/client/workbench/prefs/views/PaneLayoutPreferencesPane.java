@@ -97,7 +97,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
             panel.add(checkBox);
-            if (module.equals("Presentation"))
+            if (module == "Presentation")
                checkBox.setVisible(false);
          }
          initWidget(panel);
@@ -274,7 +274,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       for (int i = 0; i < listBox.getItemCount(); i++)
       {
-         if (listBox.getValue(i).equals(value))
+         if (listBox.getValue(i) == value)
          {
             listBox.setSelectedIndex(i);
             return true;
@@ -324,13 +324,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
          boolean consoleRightOnTop = prevConfig.getConsoleRightOnTop();
          final String kConsole = "Console";
-         if (panes.get(0).equals(kConsole))
+         if (panes.get(0) == kConsole)
             consoleLeftOnTop = true;
-         else if (panes.get(1).equals(kConsole))
+         else if (panes.get(1) == kConsole)
             consoleLeftOnTop = false;
-         else if (panes.get(2).equals(kConsole))
+         else if (panes.get(2) == kConsole)
             consoleRightOnTop = true;
-         else if (panes.get(3).equals(kConsole))
+         else if (panes.get(3) == kConsole)
             consoleRightOnTop = false;
          
          uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(
@@ -353,9 +353,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       for (int i = 0; i < allPanes_.length; i++)
       {
          String value = allPanes_[i].getValue(allPanes_[i].getSelectedIndex());
-         if (value.equals("TabSet1"))
+         if (value == "TabSet1")
             allPanePanels_[i].add(tabSet1ModuleList_);
-         else if (value.equals("TabSet2"))
+         else if (value == "TabSet2")
             allPanePanels_[i].add(tabSet2ModuleList_);
       }
    }

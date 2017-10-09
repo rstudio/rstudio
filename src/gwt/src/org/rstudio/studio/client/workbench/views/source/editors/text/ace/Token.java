@@ -54,7 +54,7 @@ public class Token extends JavaScriptObject
    
    public final boolean valueEquals(String value)
    {
-      return value.equals(getValue());
+      return value == getValue();
    }
    
    public final boolean hasAllTypes(String... types)
@@ -66,7 +66,7 @@ public class Token extends JavaScriptObject
       for (String type : types)
       {
          boolean hasType =
-               tokenType.equals(type) ||
+               tokenType == type ||
                tokenType.contains(type + ".") ||
                tokenType.contains("." + type);
          

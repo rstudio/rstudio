@@ -151,9 +151,9 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    {
       // for Shiny documents, match on input source
       if (isShinyDocument() && other.isShinyDocument())
-         return getTargetFile().equals(other.getTargetFile());
+         return getTargetFile() == other.getTargetFile();
       else
-         return getOutputFile().equals(other.getOutputFile()) &&
-                getFormatName().equals(other.getFormatName());
+         return getOutputFile() == other.getOutputFile() &&
+                getFormatName() == other.getFormatName();
    }
 }

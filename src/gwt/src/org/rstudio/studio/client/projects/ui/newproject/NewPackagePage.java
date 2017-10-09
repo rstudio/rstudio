@@ -134,7 +134,7 @@ public class NewPackagePage extends NewDirectoryPage
    {
       return NewPackageOptions.create(
             getProjectName(),
-            listProjectType_.getValue().equals("package-rcpp"),  
+            listProjectType_.getValue() == "package-rcpp",  
             JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
    }
    
@@ -207,7 +207,7 @@ public class NewPackagePage extends NewDirectoryPage
                   for (FileSystemItem child : JsUtil.asIterable(children))
                   {
                      boolean canIgnore =
-                           child.getExtension().equals(".Rproj") ||
+                           child.getExtension() == ".Rproj" ||
                            child.getName().startsWith(".");
                      
                      if (canIgnore)
