@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -90,10 +89,10 @@ public class ObjectBrowserModel implements TreeViewModel
          objectProvider_.clear();
    }
    
-   public void setFilterText(String filterText)
+   public void setFilterText(String filterText, ArrayList<DatabaseObject> results)
    {
       filter_ = filterText;
-      objectProvider_.applyFilter(filterText);
+      objectProvider_.applyFilter(filterText, results);
     }
    
    @Override
@@ -237,7 +236,14 @@ public class ObjectBrowserModel implements TreeViewModel
          });
       }
       
-      public boolean applyFilter(String filter)
+      /**
+       * Applies a filter to this node and its parents.
+       * @param filter The text to filter on
+       * @param results A list of database objects which contain matches; note that
+       *   this list doesn't contain the matching objects themselves.
+       * @return true if this object or any of its children matched the search
+       */
+      public boolean applyFilter(String filter, ArrayList<DatabaseObject> results)
       {
          // ignore if not fetched yet
          if (prefetchedObjectList_ == null)
@@ -257,10 +263,18 @@ public class ObjectBrowserModel implements TreeViewModel
             if (name == null)
                continue;
             boolean matches = false;
+            Debug.devlog("check filter against " + object.getName());
             
             // this object matches if any of its children match
             if (objectProviders_.containsKey(object))
-               matches |= objectProviders_.get(object).applyFilter(filter);
+               matches |= objectProviders_.get(object).applyFilter(filter, results);
+            
+            // add to results if children match
+            if (matches)
+            {
+               Debug.log("has child matches: " + object.getName());
+               results.add(object);
+            }
 
             // it also matches if its own name matches
             matches |= name.toLowerCase().contains(lowerFilter);
@@ -545,5 +559,4 @@ public class ObjectBrowserModel implements TreeViewModel
          new NoSelectionModel<Field>();
    
    static final ObjectBrowser.Resources RES = ObjectBrowser.RES;
-  
 }

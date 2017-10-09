@@ -15,14 +15,17 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
@@ -209,7 +212,36 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    public void setFilterText(String text)
    {
-      objectsModel_.setFilterText(text);
+      ArrayList<DatabaseObject> results = new ArrayList<DatabaseObject>();
+      objectsModel_.setFilterText(text, results);
+      openRecursive(objects_.getRootTreeNode(), results);
+   }
+   
+   private void openRecursive(TreeNode node, ArrayList<DatabaseObject> nodes)
+   {
+      for (int i = 0; i < node.getChildCount(); i++)
+      {
+         // skip if no child
+         if (node.getChildValue(i) == null)
+            continue;
+         
+         // skip if this is a data type (we don't search fields)
+         DatabaseObject obj = ((JavaScriptObject)(node.getChildValue(i))).cast();
+         
+         // skip if this object isn't in the list
+         if (!nodes.contains(obj))
+         {
+            Debug.devlog("skipping " + obj.getName());
+            continue;
+         }
+         
+         // open the object
+         TreeNode child = node.setChildOpen(i, true);
+         if (child == null)
+            continue;
+         Debug.logObject(child.getValue());
+         openRecursive(child, nodes);
+      }
    }
    
    private static final TableBrowserMessages MESSAGES 
