@@ -1,5 +1,5 @@
 /*
- * AppDelegate.h
+ * DesktopActivationOverlay.cpp
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -13,14 +13,33 @@
  *
  */
 
-#import <AppKit/NSApplication.h>
-#import "ActivationOverlay.h"
+#include "DesktopActivationOverlay.hpp"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate> {
-   NSString* openFile_;
-   NSMenu* dockMenu_;
-   BOOL initialized_;
-   Activation* activation_;
+using namespace rstudio::core;
+
+namespace rstudio {
+namespace desktop {
+namespace activation {
+
+DesktopActivation::DesktopActivation(const core::FilePath& installPath, bool devMode) 
+{
 }
-@end
 
+bool DesktopActivation::allowProductUsage()
+{
+   return true;
+}
+
+std::string DesktopActivation::activationStateMessage()
+{
+   return std::string();
+}
+
+bool DesktopActivation::getInitialLicense()
+{
+   return true;
+}
+
+} // namespace activation
+} // namespace desktop
+} // namespace rstudio

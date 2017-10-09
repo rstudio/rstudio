@@ -74,7 +74,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       final RmdPreviewParams params = getPreviewParams();
       if (params != null &&
-          params.getOutputUrl().equals(event.getURL()))
+          params.getOutputUrl() == event.getURL())
       {
          frame_ = event.getFrame();
          if (params.isShinyDocument())

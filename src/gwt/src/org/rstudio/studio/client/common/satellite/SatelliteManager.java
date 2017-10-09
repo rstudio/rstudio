@@ -142,7 +142,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // check for a re-activation of an existing window
       for (ActiveSatellite satellite : satellites_)
       {
-         if (satellite.getName().equals(name))
+         if (satellite.getName() == name)
          {
             WindowEx window = satellite.getWindow();
             if (!window.isClosed())
@@ -227,7 +227,7 @@ public class SatelliteManager implements CloseHandler<Window>
       Point preferredPos = null;
       for (ActiveSatellite satellite : satellites_)
       {
-         if (satellite.getName().equals(name) && 
+         if (satellite.getName() == name && 
              !satellite.getWindow().isClosed())
          {
             // save the window's geometry so we can restore it after the window 
@@ -261,7 +261,7 @@ public class SatelliteManager implements CloseHandler<Window>
    public WindowEx getSatelliteWindowObject(String name)
    {
       for (ActiveSatellite satellite : satellites_)
-         if (satellite.getName().equals(name) && 
+         if (satellite.getName() == name && 
              !satellite.getWindow().isClosed())
             return satellite.getWindow();
             
@@ -279,7 +279,7 @@ public class SatelliteManager implements CloseHandler<Window>
       {
          for (ActiveSatellite satellite : satellites_)
          {
-            if (satellite.getName().equals(name) && 
+            if (satellite.getName() == name && 
                 !satellite.getWindow().isClosed())
             {
                satellite.getWindow().focus();
@@ -336,7 +336,7 @@ public class SatelliteManager implements CloseHandler<Window>
    {
       for (ActiveSatellite satellite : satellites_)
       {
-         if (satellite.getName().equals(name) && 
+         if (satellite.getName() == name && 
              !satellite.getWindow().isClosed())
          {
             satellite.close();
@@ -519,7 +519,7 @@ public class SatelliteManager implements CloseHandler<Window>
       for (ActiveSatellite satellite :
                                     new ArrayList<ActiveSatellite>(satellites_))
       {
-         if (satellite.getName().equals(name)
+         if (satellite.getName() == name
              && !satellite.getWindow().isClosed())
          {
             for (JavaScriptObject evt : events)
@@ -713,7 +713,7 @@ public class SatelliteManager implements CloseHandler<Window>
          
          ActiveSatellite otherSatellite = (ActiveSatellite)other;
          
-         return getName().equals(otherSatellite.getName()) &&
+         return getName() == otherSatellite.getName() &&
                 getWindow().equals(otherSatellite.getWindow());
       }
       

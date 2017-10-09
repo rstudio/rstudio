@@ -113,10 +113,10 @@ public class SVNCommandHandler
       if (items.size() == 1)
       {
          StatusAndPath item = items.get(0);
-         if (item.isDirectory() && item.getStatus().equals("M"))
+         if (item.isDirectory() && item.getStatus() == "M")
          {
             String path = item.getPath();
-            if (path.equals("."))
+            if (path == ".")
                path = "";
             IgnoreList ignoreList = new IgnoreList(path, 
                                                    new ArrayList<String>());
@@ -296,7 +296,7 @@ public class SVNCommandHandler
       ArrayList<String> revertList = new ArrayList<String>();
       for (StatusAndPath item :  svnState_.getStatus())
       {
-         if (item.getRawPath().equals(file.getPath()))
+         if (item.getRawPath() == file.getPath())
          {
             revertList.add(item.getPath());
             break;

@@ -111,7 +111,7 @@ public class TextBoxWithButton extends Composite
    {
       text_ = text;
       
-      if (text_.equals(useDefaultValue_))
+      if (text_ == useDefaultValue_)
          textBox_.setText("[Use Default] " + text);
       else if (text.length() > 0)
          textBox_.setText(text);

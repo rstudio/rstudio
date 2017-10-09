@@ -709,10 +709,10 @@ public class AceEditorWidget extends Composite
       // if the edit was all on one line or the action didn't change text
       // in a way that could change lines, we can't have moved anything
       if (start.getRow() == end.getRow() || 
-          (!action.equals("insertText") &&
-           !action.equals("insertLines") &&
-           !action.equals("removeText") &&
-           !action.equals("removeLines")))
+          (action != "insertText" &&
+           action != "insertLines" &&
+           action != "removeText" &&
+           action != "removeLines"))
       {
          return;
       }

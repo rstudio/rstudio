@@ -45,7 +45,7 @@ public class ConnectionId extends JavaScriptObject
    
    public final boolean equalTo(ConnectionId other)
    {
-      return getType().equals(other.getType()) && 
-                       getHost().equals(other.getHost());
+      return getType() == other.getType() && 
+             getHost() == other.getHost();
    }
 }

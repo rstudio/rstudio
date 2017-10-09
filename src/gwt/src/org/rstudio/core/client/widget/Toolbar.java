@@ -60,7 +60,7 @@ public class Toolbar extends Composite
       @Override
       protected boolean isSeparator(Widget item)
       {
-         return styles_.toolbarSeparator().equals(item.getStylePrimaryName());
+         return styles_.toolbarSeparator() == item.getStylePrimaryName();
       }
 
       @Override

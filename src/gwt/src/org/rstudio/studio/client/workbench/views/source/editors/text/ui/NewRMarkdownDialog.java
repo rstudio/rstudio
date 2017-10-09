@@ -212,11 +212,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          ImageResource img = null;
 
          // Special treatment for built-in templates with known names
-         if (templateName.equals(RmdTemplateData.DOCUMENT_TEMPLATE))
+         if (templateName == RmdTemplateData.DOCUMENT_TEMPLATE)
          {
             img = new ImageResource2x(resources.documentIcon2x());
          } 
-         else if (templateName.equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+         else if (templateName == RmdTemplateData.PRESENTATION_TEMPLATE)
          {
             img = new ImageResource2x(resources.presentationIcon2x());
          }
@@ -277,7 +277,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    protected Result collectInput()
    {
       String formatName = "";
-      boolean isShiny = getSelectedTemplate().equals(TEMPLATE_SHINY);
+      boolean isShiny = getSelectedTemplate() == TEMPLATE_SHINY;
       for (int i = 0; i < formatOptions_.size(); i++)
       {
          if (formatOptions_.get(i).getValue())
@@ -287,9 +287,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             if (isShiny)
             {
                String option = formatOptions_.get(i).getText();
-               if (option.equals(SHINY_DOC_NAME))
+               if (option == SHINY_DOC_NAME)
                   formatName = "html_document";
-               else if (option.equals(SHINY_PRESENTATION_NAME))
+               else if (option == SHINY_PRESENTATION_NAME)
                   formatName = "ioslides_presentation";
             }
             // for other documents, read the format from the template
@@ -307,7 +307,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
                                formatName,
                                isShiny),
             templateChooser_.getChosenTemplate(),
-            !getSelectedTemplate().equals(TEMPLATE_CHOOSE_EXISTING));
+            getSelectedTemplate() != TEMPLATE_CHOOSE_EXISTING);
    }
 
    @Override
@@ -331,8 +331,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
       int idx = listTemplates_.getSelectedIndex();
       TemplateMenuItem item = listTemplates_.getItemAtIdx(idx);
-      if (item.getName().equals(TEMPLATE_CHOOSE_EXISTING) ||
-          item.getName().equals(TEMPLATE_SHINY))
+      if (item.getName() == TEMPLATE_CHOOSE_EXISTING ||
+          item.getName() == TEMPLATE_SHINY)
          return item.getName();
       else
          return templates_.get(idx).getName();
@@ -340,8 +340,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    private void updateOptions(String selectedTemplate)
    {
-      boolean existing = selectedTemplate.equals(TEMPLATE_CHOOSE_EXISTING);
-      boolean shiny = selectedTemplate.equals(TEMPLATE_SHINY);
+      boolean existing = selectedTemplate == TEMPLATE_CHOOSE_EXISTING;
+      boolean shiny = selectedTemplate == TEMPLATE_SHINY;
 
       // toggle visibility of UI elements based on which section of the dialog
       // we're in 

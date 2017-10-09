@@ -82,7 +82,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
-      if (event.getData().getCacheKey().equals(getDataItem().getCacheKey()))
+      if (event.getData().getCacheKey() == getDataItem().getCacheKey())
       {
          // figure out what kind of refresh we need--if we already have a full
          // (structural) refresh queued, it trumps other refresh types

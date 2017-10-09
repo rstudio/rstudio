@@ -282,11 +282,11 @@ public class ShortcutManager implements NativePreviewHandler,
       String[] splat = disableModes.split(",");
       for (String item : splat)
       {
-         if (item.equals("default"))
+         if (item == "default")
             mode |= KeyboardShortcut.MODE_DEFAULT;
-         else if (item.equals("vim"))
+         else if (item == "vim")
             mode |= KeyboardShortcut.MODE_VIM;
-         else if (item.equals("emacs"))
+         else if (item == "emacs")
             mode |= KeyboardShortcut.MODE_EMACS;
          else
             assert false: "Unrecognized 'disableModes' value '" + item + "'";

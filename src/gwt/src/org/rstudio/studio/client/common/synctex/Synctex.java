@@ -102,9 +102,9 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       
       boolean synctexSupported =
                   // internal previewer
-                  pdfPreview.equals(UIPrefs.PDF_PREVIEW_RSTUDIO) ||
+                  pdfPreview == UIPrefs.PDF_PREVIEW_RSTUDIO ||
                   // platform-specific desktop previewer
-                  (pdfPreview.equals(UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+                  (pdfPreview == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX &&
                    Desktop.isDesktop());
       
       boolean synctexAvailable = synctexSupported && 
@@ -339,8 +339,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return Desktop.isDesktop() && 
              !Satellite.isCurrentWindowSatellite() &&
-             prefs_.pdfPreview().getValue().equals(
-                                   UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX);
+             prefs_.pdfPreview().getValue() == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX;
    }
 
    private ProgressIndicator getSyncProgress()

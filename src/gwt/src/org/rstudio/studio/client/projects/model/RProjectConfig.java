@@ -287,7 +287,7 @@ public class RProjectConfig extends JavaScriptObject
    {
       String[] roclets = getPackageRoxygenizeNative().split(ROXYGENIZE_DELIM);
       for (int i=0; i<roclets.length; i++)
-         if (roclets[i].equals(roclet))
+         if (roclets[i] == roclet)
             return true;
       
       return false;

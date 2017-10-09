@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 
 # source files
 set(DESKTOP_MAC_SOURCE_FILES
+   ActivationOverlay.mm
    AppDelegate.mm
    DockTileView.mm
    FileDownloader.mm

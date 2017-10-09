@@ -176,7 +176,7 @@ public class SearchWidget extends Composite implements SearchDisplay
             public void onKeyUp(KeyUpEvent event)
             {
                String value = suggestBox_.getText();
-               if (!value.equals(lastValueSent_))
+               if (value != lastValueSent_)
                {
                   updateLastValue(value);
                   ValueChangeEvent.fire(SearchWidget.this, value);
@@ -188,7 +188,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          public void onValueChange(ValueChangeEvent<String> evt)
          {
-            if (!evt.getValue().equals(lastValueSent_))
+            if (evt.getValue() != lastValueSent_)
             {
                updateLastValue(evt.getValue());
                delegateEvent(SearchWidget.this, evt);

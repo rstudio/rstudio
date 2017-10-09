@@ -103,7 +103,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       // only handle PDF compile events when we're the preferred viewer
-      if (!prefs_.pdfPreview().getValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+      if (prefs_.pdfPreview().getValue() != UIPrefs.PDF_PREVIEW_RSTUDIO)
          return;
       
       // only handle successful compiles
@@ -134,7 +134,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
-      if (event.getPdfLocation().getFile().equals(lastSuccessfulPdfPath_))
+      if (event.getPdfLocation().getFile() == lastSuccessfulPdfPath_)
       {
          PdfJsWindow.navigateTo(pdfJsWindow_, event.getPdfLocation());
          if (Desktop.isDesktop())
@@ -173,7 +173,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onWindowOpened(WindowOpenedEvent event)
    {
-      if (event.getName().equals(WINDOW_NAME))
+      if (event.getName() == WINDOW_NAME)
       {
          initializePdfJsWindow(event.getWindow());
       }
@@ -216,8 +216,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       Point pos = null;
       
       // if there's a window open, restore the position when we're done
-      if (restorePosition && 
-          url.equals(lastSuccessfulPdfUrl_))
+      if (restorePosition && url == lastSuccessfulPdfUrl_)
       {
          // if we don't have an active window, we'll use the hash stored when
          // the window closed

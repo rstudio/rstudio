@@ -32,7 +32,7 @@ public class BuildCommands
       
       // adapt or remove package commands if this isn't a package
       String type = sessionInfo.getBuildToolsType();
-      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      if (type == SessionInfo.BUILD_TOOLS_PACKAGE)
       {
          commands.devtoolsLoadAll().remove();
          commands.buildSourcePackage().remove();
@@ -51,20 +51,20 @@ public class BuildCommands
       }
       
       // remove makefile commands if this isn't a makefile
-      if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM) ||
-          type.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
+          type == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
          commands.rebuildAll().remove();
       }
       
-      if (type.equals(SessionInfo.BUILD_TOOLS_CUSTOM) ||
-          type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
+          type == SessionInfo.BUILD_TOOLS_PACKAGE)
       {
          commands.cleanAll().remove();
       }
       
       // remove all other commands if there are no build tools
-      if (type.equals(SessionInfo.BUILD_TOOLS_NONE))
+      if (type == SessionInfo.BUILD_TOOLS_NONE)
       {
          commands.buildAll().remove();
          commands.rebuildAll().remove();

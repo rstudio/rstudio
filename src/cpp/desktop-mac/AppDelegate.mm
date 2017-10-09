@@ -1,3 +1,17 @@
+/*
+ * AppDelegate.mm
+ *
+ * Copyright (C) 2009-17 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
 #include <iostream>
 
@@ -320,6 +334,7 @@ bool prepareEnvironment(Options& options)
    
    // calculate paths to config file, rsession, and desktop scripts
    FilePath confPath, sessionPath, scriptsPath;
+   BOOL devMode = FALSE;
    
    // check for debug configuration
 #ifndef NDEBUG
@@ -329,6 +344,7 @@ bool prepareEnvironment(Options& options)
       confPath = currentPath.complete("conf/rdesktop-dev.conf");
       sessionPath = currentPath.complete("session/Debug/rsession");
       scriptsPath = currentPath.complete("desktop-mac");
+      devMode = TRUE;
    }
 #endif
    
@@ -356,6 +372,14 @@ bool prepareEnvironment(Options& options)
                                     selector:@selector(pollProcessSupervisor)
                                     userInfo:nil
                                     repeats: YES];
+   
+   activation_ = [[[Activation alloc] initWithInstallPath : installPath
+                                                  devMode : devMode ] retain];
+   if (![activation_ getInitialLicense])
+   {
+      [NSApp terminate: self];
+      return;
+   }
    
    // initailize the session launcher and launch the first session
    sessionLauncher().init(sessionPath, confPath);

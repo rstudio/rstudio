@@ -67,7 +67,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
          @Override
          public void execute()
          {
-            if (connectVia_.getSelectedValue().equals(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
+            if (connectVia_.getSelectedValue() == ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD)
             {
                if (codeViewer_ != null)
                {
@@ -117,7 +117,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    {
       for (int i = 0; i < connectVia_.getItemCount(); i++)
       {
-         if (connectVia_.getValue(i).equals(connectVia))
+         if (connectVia_.getValue(i) == connectVia)
          {
             connectVia_.setSelectedIndex(i);
             return true;

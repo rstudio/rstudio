@@ -225,11 +225,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          
          if (!installContext_.isDevModeOn())
          {
-            if (defaultInstallOptions_.getLibraryPath().equals(libPath))
+            if (defaultInstallOptions_.getLibraryPath() == libPath)
                selectedIndex = i;
          }
          
-         if (libPath.equals(installContext_.getDefaultLibraryPath()))
+         if (libPath == installContext_.getDefaultLibraryPath())
             libPath = libPath + " [Default]";
          
          libraryListBox_.addItem(libPath);

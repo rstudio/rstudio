@@ -135,7 +135,7 @@ public class ManipulatorManager
          return true;
       else if (manipulator == null && manipulator_ != null)
          return true;
-      else if (!manipulator_.getID().equals(manipulator.getID()))
+      else if (manipulator_.getID() != manipulator.getID())
          return true;
       else
          return false;

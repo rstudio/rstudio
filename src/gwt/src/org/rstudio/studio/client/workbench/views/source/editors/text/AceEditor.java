@@ -779,8 +779,8 @@ public class AceEditor implements DocDisplay,
          return;
 
       boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
-      boolean live = uiPrefs_.codeCompleteOther().getValue().equals(
-                                       UIPrefsAccessor.COMPLETION_ALWAYS);
+      boolean live = uiPrefs_.codeCompleteOther().getValue() ==
+                                       UIPrefsAccessor.COMPLETION_ALWAYS;
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
       
@@ -3138,9 +3138,9 @@ public class AceEditor implements DocDisplay,
             continue;
          
          String tokenValue = token.getValue();
-         return tokenValue.equals("}") ||
-                tokenValue.equals(")") ||
-                tokenValue.equals("]");
+         return tokenValue == "}" ||
+                tokenValue == ")" ||
+                tokenValue == "]";
       }
       
       return false;
@@ -3161,9 +3161,9 @@ public class AceEditor implements DocDisplay,
             continue;
          
          String tokenValue = token.getValue();
-         return tokenValue.equals("{") ||
-                tokenValue.equals("(") ||
-                tokenValue.equals("[");
+         return tokenValue == "{" ||
+                tokenValue == "(" ||
+                tokenValue == "[";
       }
       
       return false;
@@ -3303,7 +3303,7 @@ public class AceEditor implements DocDisplay,
          
          // keep going if we're in a multiline string
          String state = getSession().getState(startRow - 1);
-         if (state.equals("qstring") || state.equals("qqstring"))
+         if (state == "qstring" || state == "qqstring")
          {
             startRow--;
             continue;
@@ -3333,14 +3333,14 @@ public class AceEditor implements DocDisplay,
          {
             String value = token.getValue();
             
-            parenCount += value.equals("(") ? 1 : 0;
-            parenCount -= value.equals(")") ? 1 : 0;
+            parenCount += value == "(" ? 1 : 0;
+            parenCount -= value == ")" ? 1 : 0;
             
-            braceCount += value.equals("{") ? 1 : 0;
-            braceCount -= value.equals("}") ? 1 : 0;
+            braceCount += value == "{" ? 1 : 0;
+            braceCount -= value == "}" ? 1 : 0;
             
-            bracketCount += value.equals("[") ? 1 : 0;
-            bracketCount -= value.equals("]") ? 1 : 0;
+            bracketCount += value == "[" ? 1 : 0;
+            bracketCount -= value == "]" ? 1 : 0;
          }
          
          // continue search if line ends with binary operator
@@ -3359,7 +3359,7 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we're in a multi-line string
          String state = getSession().getState(endRow);
-         if (state.equals("qstring") || state.equals("qqstring"))
+         if (state == "qstring" || state == "qqstring")
          {
             endRow++;
             continue;
@@ -3753,7 +3753,7 @@ public class AceEditor implements DocDisplay,
       for (int i = 0; i<lineWidgets.length(); i++)
       {
          LineWidget lineWidget = lineWidgets.get(i);
-         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+         if (lineWidget.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
          {
             ChunkDefinition chunk = lineWidget.getData();
             chunks.push(chunk.with(lineWidget.getRow(), 

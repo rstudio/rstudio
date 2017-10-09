@@ -117,7 +117,7 @@ public class SshKeyWidget extends Composite
    private void setSshKey(String keyPath)
    {
       txtSshKeyPath_.setText(keyPath);
-      if (keyPath.equals(NONE))
+      if (keyPath == NONE)
       {
          publicKeyLink_.setVisible(false);
          txtSshKeyPath_.addStyleName(RES.styles().keyPathNone());

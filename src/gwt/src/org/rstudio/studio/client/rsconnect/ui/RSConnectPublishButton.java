@@ -244,7 +244,7 @@ public class RSConnectPublishButton extends Composite
       String buildType = sessionInfo.getBuildToolsType();
 
       boolean setType = false;
-      if (buildType.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      if (buildType == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
          // if this is an Rmd with a content path
          if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&

@@ -444,8 +444,8 @@ public class Files
                FileSystemItem file = selectedFiles.get(i);
                FileSystemItem fileParent = file.getParentPath();
                
-               if (file.getPath().equals(targetDir.getPath()) ||
-                   fileParent.getPath().equals(targetDir.getPath()))
+               if (file.getPath() == targetDir.getPath() ||
+                   fileParent.getPath() == targetDir.getPath())
                {
                   progress.onError("Invalid target folder");
                   return ;

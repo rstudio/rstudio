@@ -89,7 +89,7 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
       int formatIndex = 0;
       for (int i=0; i<listFormat_.getItemCount(); i++)
       {
-         if (format.equals(listFormat_.getValue(i)))
+         if (format == listFormat_.getValue(i))
          {
             formatIndex = i;
             break;

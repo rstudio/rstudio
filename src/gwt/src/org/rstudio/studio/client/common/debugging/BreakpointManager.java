@@ -137,14 +137,14 @@ public class BreakpointManager
             path, 
             "toplevel", 
             lineNumber, 
-            path.equals(activeSource_) ? 
+            path == activeSource_ ? 
                   Breakpoint.STATE_INACTIVE :
                   Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
       
       // If we're actively sourcing this file, we can't set breakpoints in 
       // it just yet
-      if (path.equals(activeSource_))
+      if (path == activeSource_)
          breakpoint.setPendingDebugCompletion(true);
 
       notifyServer(breakpoint, true, true);
@@ -388,7 +388,7 @@ public class BreakpointManager
          CallFrame frame = frames.get(idx);
          String functionName = frame.getFunctionName();
          String fileName = frame.getFileName();
-         if (functionName.equals(".doTrace") &&
+         if (functionName == ".doTrace" &&
              event.isServerInitiated())
          {
             events_.fireEvent(new SendToConsoleEvent(
@@ -659,8 +659,8 @@ public class BreakpointManager
             {
                for (Breakpoint possibleDupe: breakpoints_)
                {
-                  if (breakpoint.getPath().equals(
-                         possibleDupe.getPath()) &&
+                  if (breakpoint.getPath() ==
+                         possibleDupe.getPath() &&
                       steps.getLineNumber() == 
                          possibleDupe.getLineNumber() &&
                       breakpoint.getBreakpointId() != 
@@ -718,7 +718,7 @@ public class BreakpointManager
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.isPackageBreakpoint() &&
-             breakpoint.getPackageName().equals(packageName))
+             breakpoint.getPackageName() == packageName)
          {
             if (enable)
             {
@@ -804,7 +804,7 @@ public class BreakpointManager
          if (breakpoint.isPendingDebugCompletion() &&
              breakpoint.getState() == Breakpoint.STATE_INACTIVE &&
              breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL &&
-             breakpoint.getPath().equals(path))
+             breakpoint.getPath() == path)
          {
             // If this is a top-level breakpoint in the file that we 
             // just finished sourcing, activate the breakpoint.
@@ -850,18 +850,18 @@ public class BreakpointManager
       
       public boolean containsBreakpoint(Breakpoint breakpoint)
       {
-         if (!breakpoint.getFunctionName().equals(functionName))
+         if (breakpoint.getFunctionName() != functionName)
          {
             return false;
          }
          if (fullPath)
          {
-            return breakpoint.getPath().equals(fileName);
+            return breakpoint.getPath() == fileName;
          }
          else
          {
-            return FilePathUtils.friendlyFileName(breakpoint.getPath()).equals(
-                  FilePathUtils.friendlyFileName(fileName));
+            return FilePathUtils.friendlyFileName(breakpoint.getPath()) ==
+                  FilePathUtils.friendlyFileName(fileName);
          }  
       }
       

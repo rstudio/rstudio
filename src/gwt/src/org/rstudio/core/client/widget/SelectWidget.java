@@ -171,7 +171,7 @@ public class SelectWidget extends Composite
    public boolean setValue(String value)
    {
       for (int i = 0; i < listBox_.getItemCount(); i++)
-         if (value.equals(listBox_.getValue(i)))
+         if (value == listBox_.getValue(i))
          {
             listBox_.setSelectedIndex(i);
             return true;

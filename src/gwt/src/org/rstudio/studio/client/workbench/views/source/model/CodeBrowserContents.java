@@ -39,9 +39,8 @@ public class CodeBrowserContents extends JavaScriptObject
    
    public final boolean equalTo(CodeBrowserContents other)
    {
-      return getContext().equals(other.getContext());
+      return getContext() == other.getContext();
    }
-   
    
    public final void fillProperties(HashMap<String, String> properties)
    {

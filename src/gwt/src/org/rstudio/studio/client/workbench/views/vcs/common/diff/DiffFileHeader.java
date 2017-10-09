@@ -29,12 +29,12 @@ public class DiffFileHeader
 
    public String getDescription()
    {
-      if (oldFile_.equals(newFile_))
+      if (oldFile_ == newFile_)
          return oldFile_;
 
-      if (oldFile_.equals("/dev/null"))
+      if (oldFile_ == "/dev/null")
          return newFile_;
-      if (newFile_.equals("/dev/null"))
+      if (newFile_ == "/dev/null")
          return oldFile_;
       return oldFile_ + " => " + newFile_;
    }

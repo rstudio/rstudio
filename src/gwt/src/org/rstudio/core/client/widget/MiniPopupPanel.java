@@ -149,7 +149,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
                
                String tagName = target.getTagName().toLowerCase();
                for (String tag : TAGS_EXCLUDE_DRAG)
-                  if (tagName.equals(tag))
+                  if (tagName == tag)
                      return;
                
                if (DomUtils.isDescendantOfElementWithTag(target, TAGS_EXCLUDE_DRAG))

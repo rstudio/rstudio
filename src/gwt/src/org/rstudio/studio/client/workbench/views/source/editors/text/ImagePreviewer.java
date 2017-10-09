@@ -399,7 +399,7 @@ public class ImagePreviewer
                   
                   // if we have the same href as before, don't update
                   // (avoid flickering + re-requests of same URL)
-                  if (hrefToken.getValue().equals(href_) && attributes.equals(attributes_))
+                  if (hrefToken.getValue() == href_ && attributes == attributes_)
                      return;
                   
                   // cache href and schedule refresh of image
@@ -421,7 +421,7 @@ public class ImagePreviewer
             // ignore 'removeLines' events as they won't mutate the actual
             // line containing the markdown link
             String action = event.getEvent().getAction();
-            if (action.equals("removeLines"))
+            if (action == "removeLines")
                return;
             
             Scheduler.get().scheduleDeferred(new ScheduledCommand()

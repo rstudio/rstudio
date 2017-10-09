@@ -616,7 +616,7 @@ public class HelpPane extends WorkbenchPane
             if (getIFrameEx() != null && 
                   getIFrameEx().getContentWindow() != null)
             {
-               if (targetUrl_.equals(getUrl()))
+               if (targetUrl_ == getUrl())
                {
                   getIFrameEx().getContentWindow().reload();
                }

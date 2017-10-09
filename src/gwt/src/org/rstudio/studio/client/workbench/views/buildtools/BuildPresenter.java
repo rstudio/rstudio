@@ -189,7 +189,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onUiPrefsChanged(UiPrefsChangedEvent e)
          {
-            if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
+            if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
                devtoolsLoadAllPath_ = null;
          }
       });
@@ -325,8 +325,7 @@ public class BuildPresenter extends BasePresenter
    
    private void startBuild(final String type, final String subType)
    {
-      if (session_.getSessionInfo().getBuildToolsType().equals(
-                                       SessionInfo.BUILD_TOOLS_WEBSITE))
+      if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
           dependencyManager_.withRMarkdown("Building sites", new Command() {
             @Override

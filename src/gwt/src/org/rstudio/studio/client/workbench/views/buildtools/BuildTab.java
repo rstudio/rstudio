@@ -107,8 +107,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    @Override
    public boolean isSuppressed()
    {
-      return session_.getSessionInfo().getBuildToolsType().equals(
-                                                 SessionInfo.BUILD_TOOLS_NONE);
+      return session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_NONE;
    }
 
    private Session session_;

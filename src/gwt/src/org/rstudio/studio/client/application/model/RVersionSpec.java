@@ -54,10 +54,8 @@ public class RVersionSpec extends JavaScriptObject
       {
          for (int j = 0; j<rVersions.length(); j++)
          {
-            if (i != j && rVersions.get(i).getVersion().equals(
-                          rVersions.get(j).getVersion())
-                       && rVersions.get(i).getLabel().equals(
-                          rVersions.get(j).getLabel())) 
+            if (i != j && rVersions.get(i).getVersion() == rVersions.get(j).getVersion()
+                       && rVersions.get(i).getLabel()   == rVersions.get(j).getLabel())
                return true;
          }
       }

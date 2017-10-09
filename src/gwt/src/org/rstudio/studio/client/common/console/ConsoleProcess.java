@@ -302,7 +302,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                public void onServerConsoleOutput(
                                              ServerConsoleOutputEvent event)
                {
-                  if (event.getProcessHandle().equals(procInfo.getHandle()))
+                  if (event.getProcessHandle() == procInfo.getHandle())
                      fireEvent(new ConsoleOutputEvent(event.getOutput()));
                }
             }));
@@ -314,7 +314,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                public void onServerConsolePrompt(
                                              ServerConsolePromptEvent event)
                {
-                  if (event.getProcessHandle().equals(procInfo.getHandle()))
+                  if (event.getProcessHandle() == procInfo.getHandle())
                      fireEvent(new ConsolePromptEvent(event.getPrompt()));
                }
             }));
@@ -325,7 +325,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                @Override
                public void onServerProcessExit(ServerProcessExitEvent event)
                {   
-                  if (event.getProcessHandle().equals(procInfo.getHandle()))
+                  if (event.getProcessHandle() == procInfo.getHandle())
                   {
                      // no more events are coming
                      registrations_.removeHandler();
