@@ -41,9 +41,7 @@ public abstract class TouchEvent<H extends EventHandler>
     }
 
     private native boolean detectTouchSupport() /*-{
-      var elem = document.createElement('div');
-      elem.setAttribute('ontouchstart', 'return;');
-      return (typeof elem.ontouchstart) == "function";
+      return 'ontouchstart' in $wnd;
     }-*/;
   }
 
