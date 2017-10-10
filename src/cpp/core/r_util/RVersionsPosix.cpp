@@ -180,6 +180,12 @@ std::vector<RVersion> enumerateRVersions(
          // override them with whatever was explicitly set by the user
          BOOST_FOREACH(const core::system::Option& option, userEnv)
          {
+            // do not override R_HOME as it was corrected while detecting the environment
+            // this is necessary because the user-specified path might be just the root directory
+            // and not the full install directory
+            if (option.first == "R_HOME")
+               continue;
+
             core::system::setenv(&mergedEnv, option.first, option.second);
          }
 
@@ -281,8 +287,12 @@ std::vector<RVersion> enumerateRVersions(
    }
 #endif
 
-   // sort the versions
-   std::sort(rVersions.begin(), rVersions.end());
+   // sort the versions using stable sort
+   // this gaurantees that versions specified in the versions file will come first
+   // this makes sure that versions that have user-defined metadata (such as labels)
+   // will not be erased in the subsequent erase call, but the equivalent default versions that were
+   // found will be erased instead
+   std::stable_sort(rVersions.begin(), rVersions.end());
 
    // remove duplicates
    rVersions.erase(std::unique(rVersions.begin(), rVersions.end()),
