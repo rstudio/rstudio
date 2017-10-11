@@ -19,17 +19,32 @@
 #include <core/FilePath.hpp>
 
 namespace rstudio {
+namespace core {
+   class Error;
+}
+}
+
+namespace rstudio {
 namespace desktop {
 namespace activation {
+
+class DesktopActivation;
+DesktopActivation& activation();
 
 class DesktopActivation
 {
 public:
-   DesktopActivation(const core::FilePath& installPath, bool devMode);
+   DesktopActivation();
 
-   bool getInitialLicense();
+   bool getInitialLicense(const core::FilePath& installPath, bool devMode);
    bool allowProductUsage();
+
+   // Description of license state if expired or within certain time window before expiring,
+   // otherwise empty string
    std::string activationStateMessage();
+
+   // Description of license state
+   std::string licenseStateMessage();
 };
 
 } // namespace activation

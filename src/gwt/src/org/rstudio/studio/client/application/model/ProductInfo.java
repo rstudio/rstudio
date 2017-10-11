@@ -1,7 +1,7 @@
 /*
  * ProductInfo.java
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,14 @@
  */
 package org.rstudio.studio.client.application.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-public class ProductInfo extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class ProductInfo
 {
    protected ProductInfo() {}
    
-   public final native String getVersion() /*-{
-      return this.version;
-   }-*/;
-
-   public final native String getNotice() /*-{
-      return this.notice;
-   }-*/;
+   public String version;
+   public String notice;
 }

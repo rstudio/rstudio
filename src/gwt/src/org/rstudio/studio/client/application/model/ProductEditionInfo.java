@@ -1,5 +1,5 @@
 /*
- * AppDelegate.h
+ * ProductEditionInfo.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -13,13 +13,21 @@
  *
  */
 
-#import <AppKit/NSApplication.h>
-#import "ActivationOverlay.h"
+package org.rstudio.studio.client.application.model;
 
-@interface AppDelegate : NSObject <NSApplicationDelegate> {
-   NSString* openFile_;
-   NSMenu* dockMenu_;
-   BOOL initialized_;
+public class ProductEditionInfo
+{
+   public String editionName()
+   {
+      return "RStudio";
+   }
+   
+   public boolean proLicense()
+   {
+      return false;
+   }
+   
+   public void showLicense()
+   {
+   }
 }
-@end
-

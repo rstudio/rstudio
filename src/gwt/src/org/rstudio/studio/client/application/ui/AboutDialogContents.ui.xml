@@ -59,7 +59,7 @@
                      styleName="{style.logo}"
                      width="48"
                      height="48"/>
-				<g:Label text="RStudio" styleName="{style.productName}"></g:Label>
+				<g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
 				<g:HTMLPanel styleName="{style.productVersion}">
 					<g:InlineLabel text="Version "></g:InlineLabel>
 					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>

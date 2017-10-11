@@ -21,7 +21,13 @@ namespace rstudio {
 namespace desktop {
 namespace activation {
 
-DesktopActivation::DesktopActivation(const core::FilePath& installPath, bool devMode) 
+DesktopActivation& activation()
+{
+   static DesktopActivation singleton;
+   return singleton;
+}
+
+DesktopActivation::DesktopActivation()
 {
 }
 
@@ -35,7 +41,12 @@ std::string DesktopActivation::activationStateMessage()
    return std::string();
 }
 
-bool DesktopActivation::getInitialLicense()
+std::string DesktopActivation::licenseStateMessage()
+{
+   return std::string();
+}
+
+bool DesktopActivation::getInitialLicense(const core::FilePath& installPath, bool devMode)
 {
    return true;
 }

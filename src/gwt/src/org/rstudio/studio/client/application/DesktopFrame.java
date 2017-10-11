@@ -145,6 +145,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    
+   void showLicenseDialog();
+   
    // mac-specific zoom calls
    void macZoomActualSize();
    void macZoomIn();

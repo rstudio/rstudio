@@ -1,5 +1,5 @@
 /*
- * AppDelegate.h
+ * DesktopLicenseDialogOverlay.hpp
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -13,13 +13,19 @@
  *
  */
 
-#import <AppKit/NSApplication.h>
-#import "ActivationOverlay.h"
+#ifndef DESKTOP_LICENSE_DIALOG_HPP
+#define DESKTOP_LICENSE_DIALOG_HPP
 
-@interface AppDelegate : NSObject <NSApplicationDelegate> {
-   NSString* openFile_;
-   NSMenu* dockMenu_;
-   BOOL initialized_;
-}
-@end
+#include <QObject>
 
+namespace rstudio {
+namespace desktop {
+namespace activation {
+
+void showLicenseDialog();
+
+} // namespace activation
+} // namespace desktop
+} // namespace rstudio
+
+#endif // DESKTOP_LICENSE_DIALOG_HPP
