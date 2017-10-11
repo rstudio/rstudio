@@ -83,6 +83,8 @@
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 @eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
 
+@eval THEME_DARK_SEARCHRESULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground;
+
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
       dialogTopRight, dialogTopRightInner,
@@ -1663,6 +1665,16 @@ body.ubuntu_mono .searchBox {
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
+}
+
+.filterMatch
+{
+	background-color: #e8e8ff;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .filterMatch
+{
+   background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
 
 .odd {
