@@ -487,12 +487,13 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertFalse(map.containsKey(keys[3]));
   }
 
+  @SuppressWarnings("CollectionIncompatibleType")
   public void testContainsKey_ComparableKey() {
     TreeMap<String, Object> map = new TreeMap<String, Object>();
     ConflictingKey conflictingKey = new ConflictingKey("conflictingKey");
-    assertFalse(map.containsKey(conflictingKey));
+    assertFalse(map.containsKey(/* expected: String, actual: ConflictingKey */ conflictingKey));
     map.put("something", "value");
-    assertFalse(map.containsKey(conflictingKey));
+    assertFalse(map.containsKey(/* expected: String, actual: ConflictingKey */ conflictingKey));
   }
 
   /**
@@ -1141,12 +1142,13 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertSame(values[1], map.put(keys[1], values[2]));
   }
 
+  @SuppressWarnings("CollectionIncompatibleType")
   public void testGet_ComparableKey() {
     TreeMap<String, Object> map = new TreeMap<String, Object>();
     ConflictingKey conflictingKey = new ConflictingKey("conflictingKey");
-    assertNull(map.get(conflictingKey));
+    assertNull(map.get(/* expected: String, actual: ConflictingKey */ conflictingKey));
     map.put("something", "value");
-    assertNull(map.get(conflictingKey));
+    assertNull(map.get(/* expected: String, actual: ConflictingKey */ conflictingKey));
   }
 
   /**
@@ -2671,12 +2673,13 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertTrue(!map.containsKey(keys[2]));
   }
 
+  @SuppressWarnings("CollectionIncompatibleType")
   public void testRemove_ComparableKey() {
     TreeMap<String, Object> map = new TreeMap<String, Object>();
     ConflictingKey conflictingKey = new ConflictingKey("conflictingKey");
-    assertNull(map.remove(conflictingKey));
+    assertNull(map.remove(/* expected: String, actual: ConflictingKey */ conflictingKey));
     map.put("something", "value");
-    assertNull(map.remove(conflictingKey));
+    assertNull(map.remove(/* expected: String, actual: ConflictingKey */ conflictingKey));
   }
 
   /**

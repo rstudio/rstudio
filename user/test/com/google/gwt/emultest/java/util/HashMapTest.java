@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.java.util;
 
-
 import org.apache.commons.collections.TestMap;
 
 import java.util.ArrayList;
@@ -211,6 +210,7 @@ public class HashMapTest extends TestMap {
   /*
    * Test method for 'java.util.HashMap.containsValue(Object)'
    */
+  @SuppressWarnings("CollectionIncompatibleType")
   public void testContainsValue() {
     HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
     checkEmptyHashMapAssumptions(hashMap);
@@ -220,8 +220,10 @@ public class HashMapTest extends TestMap {
     hashMap.put(KEY_TEST_CONTAINS_VALUE, VALUE_TEST_CONTAINS_KEY);
     assertTrue("check contains of map with element",
         hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
-    assertFalse("check contains of map other element",
-        hashMap.containsValue(VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
+    assertFalse(
+        "check contains of map other element",
+        hashMap.containsValue(
+            /* expected: Integer, actual: String */ VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
 
     assertFalse(hashMap.containsValue(null));
     hashMap.put(KEY_TEST_CONTAINS_VALUE, null);

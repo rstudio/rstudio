@@ -476,6 +476,7 @@ AugmentedJar(
         "**/package.html",
         "**/RunStyleSelenium.java",
     ],
+    deps = ["//third_party/java/junit:not-testonly"],
 )
 
 # The gwt-testing classes for GWT internal use only.
@@ -547,6 +548,7 @@ AugmentedJar(
     ],
     javacopts = [
         "-Xep:CheckReturnValue:OFF",
+        "-Xep:DeadThread:OFF",
         "-Xep:ReturnValueIgnored:OFF",
         "-Xep:SelfComparison:OFF",  # go/self-comparison-lsc
         "-Xep:SelfEquals:OFF",  # go/self-equals-lsc

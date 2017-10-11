@@ -96,7 +96,7 @@ public final class InternalPreconditions {
       throw new IllegalStateException("Incorrect level: " + getProperty("jre.checks.checkLevel"));
     }
   }
-  
+
   private static final boolean IS_TYPE_CHECKED =
       CHECK_TYPE == "AUTO" && LEVEL_OPT_OR_HIGHER || CHECK_TYPE == "ENABLED";
   private static final boolean IS_BOUNDS_CHECKED =

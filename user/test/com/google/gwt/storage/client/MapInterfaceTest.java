@@ -150,13 +150,13 @@ public abstract class MapInterfaceTest<K, V> extends GWTTestCase {
   }
 
   /**
-   * Checks all the properties that should always hold of a map. Also calls
-   * {@link #assertMoreInvariants} to check invariants that are peculiar to
-   * specific implementations.
+   * Checks all the properties that should always hold of a map. Also calls {@link
+   * #assertMoreInvariants} to check invariants that are peculiar to specific implementations.
    *
    * @see #assertMoreInvariants
    * @param map the map to check.
    */
+  @SuppressWarnings("CollectionIncompatibleType")
   protected final void assertInvariants(Map<K, V> map) {
     Set<K> keySet = map.keySet();
     Collection<V> valueCollection = map.values();

@@ -227,6 +227,7 @@ public class LinkedHashMapTest extends TestMap {
   /*
    * Test method for 'java.util.LinkedHashMap.containsValue(Object)'
    */
+  @SuppressWarnings("CollectionIncompatibleType")
   public void testContainsValue() {
     LinkedHashMap<String, Integer> hashMap = new LinkedHashMap<String, Integer>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
@@ -236,8 +237,10 @@ public class LinkedHashMapTest extends TestMap {
     hashMap.put(KEY_TEST_CONTAINS_VALUE, VALUE_TEST_CONTAINS_KEY);
     assertTrue("check contains of map with element",
         hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
-    assertFalse("check contains of map other element",
-        hashMap.containsValue(VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
+    assertFalse(
+        "check contains of map other element",
+        hashMap.containsValue(
+            /* expected: Integer, actual: String */ VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
 
     assertFalse(hashMap.containsValue(null));
     hashMap.put(KEY_TEST_CONTAINS_VALUE, null);

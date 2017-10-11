@@ -148,12 +148,12 @@ class FourthTopLevelClass extends TestCase {
     assertEquals(messages[logCount++], msg);
   }
 
-  void test() {
+  public void test() {
     test1();
     test2();
   };
 
-  private void test1() {
+  public void test1() {
     if (false) {
       class Foo {
         @SuppressWarnings("jsni")
@@ -165,7 +165,7 @@ class FourthTopLevelClass extends TestCase {
     }
   }
 
-  private void test2() {
+  public void test2() {
     class Foo {
       @SuppressWarnings("jsni")
       public native void foo() /*-{
@@ -180,7 +180,7 @@ class FourthTopLevelClass extends TestCase {
    * Instead of timing out, the AssertEquals fails
    */
   @SuppressWarnings("unused")
-  private void test3() {
+  public void test3() {
     class Foo {
       @SuppressWarnings("jsni")
       public native void foo() /*-{
@@ -296,7 +296,7 @@ class ThirdTopLevelClass extends TestCase {
     assertEquals(messages[logCount++], msg);
   }
 
-  void test() {
+  public void test() {
     EmmaClassLoadingTest.TestInterface a = new EmmaClassLoadingTest.TestInterface() {
       @Override
       @SuppressWarnings("jsni")
