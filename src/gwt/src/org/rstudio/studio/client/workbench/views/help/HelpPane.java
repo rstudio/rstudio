@@ -115,6 +115,10 @@ public class HelpPane extends WorkbenchPane
          ".rstudio-themes-flat.editor_dark table {\n" +
          "  background: none !important;\n" +
          "  color: white !important;\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.editor_dark ::selection {\n" +
+         "  background-color: #CCC;\n" +
          "}\n",
          null,
          false);
