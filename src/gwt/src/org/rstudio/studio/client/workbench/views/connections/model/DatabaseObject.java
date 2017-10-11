@@ -27,7 +27,8 @@ public class DatabaseObject extends JavaScriptObject
       return {
          name: name,
          type: type,
-         parent: null
+         parent: null,
+         matches: true
       }; 
    }-*/;
    
@@ -46,6 +47,15 @@ public class DatabaseObject extends JavaScriptObject
    public final native void setParent(DatabaseObject parent) /*-{
       this.parent = parent;
    }-*/;
+   
+   public final native void setMatches(boolean matches) /*-{
+      this.matches = matches;
+   }-*/;
+   
+   public final native boolean matches() /*-{
+      // matches by default unless we have data showing otherwise
+      return typeof this.matches === "undefined" ? true : !!this.matches;
+   }-*/; 
    
    public final boolean isEqualTo(DatabaseObject other) 
    {
