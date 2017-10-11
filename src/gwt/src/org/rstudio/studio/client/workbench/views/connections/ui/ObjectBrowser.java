@@ -15,17 +15,17 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
@@ -141,10 +141,9 @@ public class ObjectBrowser extends Composite implements RequiresResize
          });
 
       // create new widget
-      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES);
+      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES, Integer.MAX_VALUE);
       
       // create the top level list of objects
-      objects_.setDefaultNodeSize(Integer.MAX_VALUE);
       objects_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
       objects_.setWidth("100%");
       
@@ -193,6 +192,8 @@ public class ObjectBrowser extends Composite implements RequiresResize
          String fieldType();
          String tableViewDataset();
          String containerIcon();
+         String searchMatches();
+         String searchHidden();
       }
    }
    
@@ -212,35 +213,42 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    public void setFilterText(String text)
    {
-      ArrayList<DatabaseObject> results = new ArrayList<DatabaseObject>();
-      objectsModel_.setFilterText(text, results);
-      openRecursive(objects_.getRootTreeNode(), results);
+      objectsModel_.setFilterText(text);
+      
+      // defer execution of the matched element filter so the celltree can
+      // render
+      Scheduler.get().scheduleDeferred(() ->
+         hideUnmatchedElements(objects_.getElement()));
    }
    
-   private void openRecursive(TreeNode node, ArrayList<DatabaseObject> nodes)
+   /**
+    * Hides nodes in the hierarchy which contain objects that don't match the
+    * query. GWT's CellTree doesn't provide a way to temporarily remove nodes
+    * from the tree or hide them, so we work around this by labeling the values
+    * to be hidden, and then making pass through them here to hide elements
+    * that don't match using the DOM directly.
+    * @param ele Root element of the 
+    */
+   private void hideUnmatchedElements(Element ele)
    {
-      for (int i = 0; i < node.getChildCount(); i++)
+      // get all the rendered nodes in the CellTree
+      Element[] parents = DomUtils.getElementsByClassName(
+            ele, RES.cellTreeStyle().cellTreeItem());
+      for (int i = 0; i < parents.length; i++)
       {
-         // skip if no child
-         if (node.getChildValue(i) == null)
-            continue;
-         
-         // skip if this is a data type (we don't search fields)
-         DatabaseObject obj = ((JavaScriptObject)(node.getChildValue(i))).cast();
-         
-         // skip if this object isn't in the list
-         if (!nodes.contains(obj))
+         // see if this rendered node contains any matches for the search
+         Element[] matches = DomUtils.getElementsByClassName(parents[i], 
+               RES.cellTreeStyle().searchMatches());
+         if (matches.length == 0) 
          {
-            Debug.devlog("skipping " + obj.getName());
-            continue;
+            // none of the child nodes has a match, so hide this parent
+            parents[i].addClassName(RES.cellTreeStyle().searchHidden());
          }
-         
-         // open the object
-         TreeNode child = node.setChildOpen(i, true);
-         if (child == null)
-            continue;
-         Debug.logObject(child.getValue());
-         openRecursive(child, nodes);
+         else
+         {
+            // at least one child node hsa a match
+            parents[i].removeClassName(RES.cellTreeStyle().searchHidden());
+         }
       }
    }
    

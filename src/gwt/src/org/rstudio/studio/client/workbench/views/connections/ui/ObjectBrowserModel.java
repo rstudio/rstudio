@@ -89,10 +89,10 @@ public class ObjectBrowserModel implements TreeViewModel
          objectProvider_.clear();
    }
    
-   public void setFilterText(String filterText, ArrayList<DatabaseObject> results)
+   public void setFilterText(String filterText)
    {
       filter_ = filterText;
-      objectProvider_.applyFilter(filterText, results);
+      objectProvider_.applyFilter(filterText);
     }
    
    @Override
@@ -237,13 +237,11 @@ public class ObjectBrowserModel implements TreeViewModel
       }
       
       /**
-       * Applies a filter to this node and its parents.
+       * Applies a text filter to this node and its children
        * @param filter The text to filter on
-       * @param results A list of database objects which contain matches; note that
-       *   this list doesn't contain the matching objects themselves.
        * @return true if this object or any of its children matched the search
        */
-      public boolean applyFilter(String filter, ArrayList<DatabaseObject> results)
+      public boolean applyFilter(String filter)
       {
          // ignore if not fetched yet
          if (prefetchedObjectList_ == null)
@@ -254,40 +252,35 @@ public class ObjectBrowserModel implements TreeViewModel
          // don't be case sensitive
          String lowerFilter = filter.toLowerCase();
          
-         // reduce to objects that match filter
-         JsArray<DatabaseObject> filtered = JsArray.createArray().cast();
          for (int i = 0; i < prefetchedObjectList_.length(); i++)
          {
+            // retrieve name of object for matching
             DatabaseObject object = prefetchedObjectList_.get(i);
             String name = object.getName();
             if (name == null)
                continue;
+            
+            // don't match by default
             boolean matches = false;
-            Debug.devlog("check filter against " + object.getName());
             
-            // this object matches if any of its children match
+            // if we have a provider for this object, apply the filter
+            // recursively; we also match if any child object matches
             if (objectProviders_.containsKey(object))
-               matches |= objectProviders_.get(object).applyFilter(filter, results);
+               matches |= objectProviders_.get(object).applyFilter(filter);
             
-            // add to results if children match
-            if (matches)
-            {
-               Debug.log("has child matches: " + object.getName());
-               results.add(object);
-            }
-
-            // it also matches if its own name matches
+            // we match if our own name matches
             matches |= name.toLowerCase().contains(lowerFilter);
             
-            // add to the list if either match occurred
-            if (matches)
-               filtered.push(object);
+            // remember whether we matched; we'll use this later to render a CSS
+            // class to indicate the match
+            object.setMatches(matches);
 
             anyMatched |= matches;
          }
          
-         updateData(filtered);
-         
+         // redraw
+         updateData(prefetchedObjectList_);
+
          // indicate whether any of the child nodes matched
          return anyMatched;
       }
@@ -487,8 +480,15 @@ public class ObjectBrowserModel implements TreeViewModel
       public void render(Cell.Context context, DatabaseObject container, 
             SafeHtmlBuilder sb)
       {
+         sb.appendHtmlConstant("<span class=\"" + (container.matches() ? 
+            ObjectBrowser.RES.cellTreeStyle().searchMatches() :
+            ObjectBrowser.RES.cellTreeStyle().searchHidden()) +
+               "\">");
+                                 
          SafeHtmlUtil.highlightSearchMatch(sb, container.getName(), filter_, 
                ThemeStyles.INSTANCE.filterMatch());
+         
+         sb.appendHtmlConstant("</span>");
          
          ConnectionObjectType type = connection_.getObjectType(
                container.getType());
