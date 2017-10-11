@@ -300,7 +300,7 @@ void setSignInCookies(const core::http::Request& request,
                             pResponse);
 
    // add cross site request forgery detection cookie
-   auth::csrf::setCSRFTokenCookie(request, pResponse);
+   auth::csrf::setCSRFTokenCookie(request, expiry, "", pResponse);
 }
 
 void doSignIn(const http::Request& request,
