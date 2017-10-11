@@ -43,7 +43,7 @@
   <property name="test.args.web.selenium"
             value='${test.args} -prod -out www -generateJsInteropExports -runStyle "Selenium:${gwt.hosts.web.selenium}"'/>
   <property name="test.args.web.htmlunit"
-            value='${test.args} -prod -out www -generateJsInteropExports'/>
+            value='${test.args} -prod -out www -generateJsInteropExports -batch module'/>
 
   <!--
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
