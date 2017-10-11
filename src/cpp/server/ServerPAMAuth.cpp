@@ -306,7 +306,7 @@ void setSignInCookies(const core::http::Request& request,
                                   options().getOverlayOption("ssl-enabled") == "1");
 
    // add cross site request forgery detection cookie
-   auth::csrf::setCSRFTokenCookie(request, pResponse);
+   auth::csrf::setCSRFTokenCookie(request, expiry, "", pResponse);
 }
 
 void doSignIn(const http::Request& request,
