@@ -13,7 +13,6 @@
  *
  */
 
-#include "ChildProcess.hpp"
 #include "ChildProcessSubprocPoll.hpp"
 
 #include <fcntl.h>
@@ -32,17 +31,18 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/system/PosixChildProcess.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/Thread.hpp>
 
 #include <core/PerformanceTimer.hpp>
-
-#include "ChildProcess.hpp"
 
 namespace rstudio {
 namespace core {
@@ -977,6 +977,384 @@ void AsyncChildProcess::poll()
 bool AsyncChildProcess::exited()
 {
    return pAsyncImpl_->exited_;
+}
+
+struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioAsyncChildProcess::Impl>
+{
+   Impl(AsioAsyncChildProcess* parent,
+        boost::asio::io_service& ioService) :
+      parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
+      stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
+      exitCode_(0), writing_(false)
+   {
+   }
+
+   void attachDescriptors()
+   {
+      stdOutDescriptor_.assign(parent_->pImpl_->fdStdout);
+      stdErrDescriptor_.assign(parent_->pImpl_->fdStderr);
+      stdInDescriptor_.assign(parent_->pImpl_->fdStdin);
+   }
+
+   void beginReadStdOut()
+   {
+      return stdOutDescriptor_.async_read_some(boost::asio::buffer(stdOutBuff_, 1024),
+                                               boost::bind(&Impl::stdOutCallback,
+                                                           boost::weak_ptr<Impl>(shared_from_this()),
+                                                           boost::asio::placeholders::error,
+                                                           _2));
+   }
+
+   void beginReadStdErr()
+   {
+      return stdErrDescriptor_.async_read_some(boost::asio::buffer(stdErrBuff_, 1024),
+                                               boost::bind(&Impl::stdErrCallback,
+                                                           boost::weak_ptr<Impl>(shared_from_this()),
+                                                           boost::asio::placeholders::error,
+                                                           _2));
+   }
+
+   void beginWriteStdIn()
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         if (exited_) return;
+
+         if (writeBuffer_.empty()) return;
+
+         std::pair<std::string, bool>& writeData = writeBuffer_.front();
+         std::string& input = writeData.first;
+         bool eof = writeData.second;
+
+         stdInDescriptor_.async_write_some(boost::asio::buffer(input, input.size()),
+                                           boost::bind(&Impl::writeCallback,
+                                                       boost::weak_ptr<Impl>(shared_from_this()),
+                                                       boost::asio::placeholders::error,
+                                                       eof));
+      }
+      END_LOCK_MUTEX
+   }
+
+   static void stdOutCallback(const boost::weak_ptr<Impl>& instance,
+                              boost::system::error_code ec, size_t bytesRead)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onReadStdOut(ec, bytesRead);
+      }
+   }
+
+   static void stdErrCallback(const boost::weak_ptr<Impl>& instance,
+                              boost::system::error_code ec, size_t bytesRead)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onReadStdErr(ec, bytesRead);
+      }
+   }
+
+   void onReadStdOut(boost::system::error_code ec, size_t bytesRead)
+   {
+      if (ec)
+         return handleError(ec);
+
+      std::string out(stdOutBuff_, bytesRead);
+      if (callbacks_.onStdout)
+         callbacks_.onStdout(*(static_cast<ProcessOperations*>(parent_)), out);
+
+      // continue reading stdout
+      beginReadStdOut();
+   }
+
+   void onReadStdErr(boost::system::error_code ec, size_t bytesRead)
+   {
+      if (ec)
+         return handleError(ec);
+
+      std::string out(stdErrBuff_, bytesRead);
+      if (callbacks_.onStderr)
+         callbacks_.onStderr(*(static_cast<ProcessOperations*>(parent_)), out);
+
+      // continue reading stdout
+      beginReadStdErr();
+   }
+
+   static void writeCallback(const boost::weak_ptr<Impl>& instance, boost::system::error_code ec, bool eof)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onWriteStdIn(ec, eof);
+      }
+   }
+
+   void onWriteStdIn(boost::system::error_code ec, bool eof)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         if (exited_) return;
+
+         // free the message that was just written
+         // we do this here because the message has to exist in memory
+         // for the entire duration of the asynchronous write
+         writeBuffer_.pop();
+      }
+      END_LOCK_MUTEX
+
+      if (ec)
+         return handleError(ec);
+
+      if (eof)
+      {
+         // close std in stream and stop writing
+         parent_->pImpl_->closeFD(&parent_->pImpl_->fdStdin, ERROR_LOCATION);
+      }
+      else
+      {
+         // continue writing until our write queue is drained
+         beginWriteStdIn();
+      }
+   }
+
+   // writes need synchronization because we could have an outstanding write while a request
+   // comes in to write more data. async io requires that we only have one outstanding write
+   // operation to avoid interleaving of message content
+   void writeInput(const std::string& input, bool eof)
+   {
+      bool beginWriting = false;
+
+      LOCK_MUTEX(mutex_)
+      {
+         if (exited_) return;
+
+         beginWriting = writeBuffer_.empty();
+         writeBuffer_.push(std::make_pair(input, eof));
+      }
+      END_LOCK_MUTEX
+
+      if (beginWriting)
+         beginWriteStdIn();
+   }
+
+   void handleError(boost::system::error_code ec)
+   {
+      // if we were aborted, we did this ourselves so do not propagate the error
+      if (ec == boost::asio::error::operation_aborted) return;
+
+      // check to see if the process exited
+      // if not, invoke error callback
+      if (!checkExited())
+      {
+         Error error = systemError(ec.value(), ec.message(), ERROR_LOCATION);
+         if (callbacks_.onError)
+         {
+            // copy members before posting the error to the thread pool
+            // we do this because this instance could be destroyed while in the
+            // io_service queue, and so we want to copy these variables
+            // to ensure we don't try to access any members
+            boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
+                                                              boost::weak_ptr<Impl>(shared_from_this()),
+                                                              error);
+            ioService_.post(handler);
+         }
+         else
+            LOG_ERROR(error);
+
+         // if we had an unexpected closure of the stream but no exit, terminate
+         parent_->terminate();
+      }
+   }
+
+   static void invokeErrorHandler(boost::weak_ptr<Impl> weak,
+                                  const Error& error)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = weak.lock())
+      {
+         // invoke the actual callback on the shared ptr
+         impl->callbacks_.onError(*(static_cast<ProcessOperations*>(impl->parent_)), error);
+      }
+   }
+
+   bool exited()
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         return exited_;
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return exited_;
+   }
+
+   void setExited()
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         exited_ = true;
+      }
+      END_LOCK_MUTEX
+   }
+
+   bool checkExited()
+   {
+      bool transitioned = false;
+
+      LOCK_MUTEX(mutex_)
+      {
+         if (exited_) return exited_;
+
+         // perform a non-blocking wait on the pid to determine if we exited
+         int status = 0;
+         PidType result = posixCall<PidType>(boost::bind(::waitpid, parent_->pImpl_->pid, &status, WNOHANG));
+
+         if (result != 0)
+         {
+            exited_ = true;
+            transitioned = true;
+
+            cleanup();
+
+            if (result > 0)
+               exitCode_ = resolveExitStatus(status);
+            else
+               exitCode_ = -1;
+         }
+      }
+      END_LOCK_MUTEX
+
+      // invoke the exit callback on the thread pool
+      // we do that instead of immediately to ensure a clean exit
+      if (transitioned && callbacks_.onExit)
+      {
+         // copy the function before posting the error to the thread pool
+         // we do this because this instance could be destroyed while in the
+         // io_service queue, and so we want to copy these variables
+         // to ensure we don't try to access any members
+         boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
+         ioService_.post(handler);
+      }
+
+      return exited_;
+   }
+
+   void cleanup()
+   {
+      // stop asynchronous operations
+      stdOutDescriptor_.cancel();
+      stdErrDescriptor_.cancel();
+      stdInDescriptor_.cancel();
+
+      // close all pipes
+      parent_->pImpl_->closeAll(ERROR_LOCATION);
+   }
+
+   AsioAsyncChildProcess* parent_;
+   boost::asio::io_service& ioService_;
+   boost::asio::posix::stream_descriptor stdOutDescriptor_;
+   boost::asio::posix::stream_descriptor stdErrDescriptor_;
+   boost::asio::posix::stream_descriptor stdInDescriptor_;
+   bool exited_;
+   int exitCode_;
+
+   ProcessCallbacks callbacks_;
+
+   char stdOutBuff_[1024];
+   char stdErrBuff_[1024];
+
+   bool writing_;
+   std::queue<std::pair<std::string, bool> > writeBuffer_;
+
+   boost::mutex mutex_;
+};
+
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+                                             const std::string& exe,
+                                             const std::vector<std::string>& args,
+                                             const ProcessOptions& options) :
+   AsyncChildProcess(exe, args, options),
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+{
+}
+
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+                                             const std::string& command,
+                                             const ProcessOptions& options) :
+   AsyncChildProcess(command, options),
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+{
+}
+
+AsioAsyncChildProcess::~AsioAsyncChildProcess()
+{
+}
+
+Error AsioAsyncChildProcess::run(const ProcessCallbacks& callbacks)
+{
+   pAsioImpl_->callbacks_ = callbacks;
+
+   Error error = ChildProcess::run();
+   if (error)
+      return error;
+
+   pAsioImpl_->attachDescriptors();
+   pAsioImpl_->beginReadStdOut();
+   pAsioImpl_->beginReadStdErr();
+
+   return Success();
+}
+
+void AsioAsyncChildProcess::asyncWriteToStdin(const std::string& input, bool eof)
+{
+   return pAsioImpl_->writeInput(input, eof);
+}
+
+bool AsioAsyncChildProcess::exited()
+{
+   return pAsioImpl_->exited();
+}
+
+Error AsioAsyncChildProcess::terminate()
+{
+   if (exited()) return Success();
+
+   Error error = AsyncChildProcess::terminate();
+   if (!error)
+      pAsioImpl_->checkExited();
+
+   return error;
+}
+
+bool AsioAsyncChildProcess::hasNonWhitelistSubprocess() const
+{
+   return AsyncChildProcess::hasNonWhitelistSubprocess();
+}
+
+bool AsioAsyncChildProcess::hasWhitelistSubprocess() const
+{
+   return AsyncChildProcess::hasWhitelistSubprocess();
+}
+
+core::FilePath AsioAsyncChildProcess::getCwd() const
+{
+   // not relevant
+   return FilePath();
+}
+
+bool AsioAsyncChildProcess::hasRecentOutput() const
+{
+   // not relevant
+   return false;
 }
 
 } // namespace system

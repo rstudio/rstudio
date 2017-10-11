@@ -216,7 +216,7 @@ public:
    void poll();
 
    // has it exited?
-   bool exited();
+   virtual bool exited();
 
    // override of terminate (allow special handling for unix pty termination)
    virtual Error terminate();
