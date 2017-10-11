@@ -6,6 +6,7 @@
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
+* Add ability to search for displayed database objects in Connections tab (#1549)
 
 ### Bug Fixes
 
@@ -13,6 +14,7 @@
 * Fix incorrect Git status pane display when git detects that a file has been copied
 * Fix hang when submitting empty passwords and password encryption is turned off (#1545)
 * Fix HTTP 500 error when navigating to directories such as /js/ (#1561)
+* Fix inability to sign out when using a new browser window and "stay signed in" (#1538)
 
 ### RStudio Server Pro
 
