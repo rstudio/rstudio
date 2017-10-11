@@ -17,6 +17,8 @@
 #define SERVER_CSRF_TOKEN_HPP
 
 #include <string>
+#include <boost/optional.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rstudio {
 namespace core {
@@ -34,8 +36,10 @@ namespace csrf {
 
 // Adds a CSRF (cross site request forgery) cookie. This is simply a cookie with
 // a random value (token).
-void setCSRFTokenCookie(const core::http::Request&, core::http::Response*,
-      const std::string& token = std::string());
+void setCSRFTokenCookie(const core::http::Request& request, 
+      boost::optional<boost::gregorian::days> expiry,
+      const std::string& token,
+      core::http::Response* pResponse);
 
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.

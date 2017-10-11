@@ -68,6 +68,7 @@ class WorkbenchTabPanel
       panel_.setWidgetRightWidth(utilPanel_,
                                  0, Unit.PX,
                                  UTILITY_AREA_SIZE, Unit.PX);
+      panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
       initWidget(panel_);
    }

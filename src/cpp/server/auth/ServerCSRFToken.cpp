@@ -32,22 +32,30 @@ namespace auth {
 namespace csrf {
 
 void setCSRFTokenCookie(const http::Request& request, 
-                        http::Response* pResponse,
-                        const std::string& token)
+                        boost::optional<boost::gregorian::days> expiry,
+                        const std::string& token,
+                        http::Response* pResponse)
 {
    // generate UUID for token if unspecified
    std::string csrfToken(token);
    if (csrfToken.empty())
       csrfToken = core::system::generateUuid();
 
-   pResponse->addCookie(http::Cookie(
+   // generate CSRF token cookie
+   http::Cookie cookie(
             request, 
             kCSRFTokenName, 
             csrfToken, 
             "/",  // cookie for root path
             false, // can't be HTTP only since it's read by client script
             // secure if delivered via SSL
-            options().getOverlayOption("ssl-enabled") == "1"));
+            options().getOverlayOption("ssl-enabled") == "1");
+
+   // set expiration for cookie
+   if (expiry.is_initialized())
+      cookie.setExpires(*expiry);
+
+   pResponse->addCookie(cookie);
 }
 
 bool validateCSRFForm(const http::Request& request, 
