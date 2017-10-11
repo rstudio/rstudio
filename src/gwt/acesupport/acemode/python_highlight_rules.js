@@ -55,6 +55,7 @@
 define("mode/python_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var Utils = require("mode/utils");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var PythonHighlightRules = function() {
@@ -140,16 +141,19 @@ var PythonHighlightRules = function() {
             regex : integer + "\\b"
         }, {
             token : keywordMapper,
-            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+            regex : "[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }, {
             token : "keyword.operator",
-            regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="
+            regex : "//=|\\*\\*=|>>=|<<=|//|\\*\\*|==|!=|>=|<=|>>|<<|\\+=|-=|\\*=|/=|&=|%=|\\|=|\\^=|\\+|-|\\*|/|%|>|<|\\^|~|\\||&|=|:|\\.",
+            merge : false
         }, {
-            token : "paren.lparen",
-            regex : "[\\[\\(\\{]"
+            token : "paren.lparen.keyword.operator",
+            regex : "[\\[\\(\\{]",
+            merge : false
         }, {
-            token : "paren.rparen",
-            regex : "[\\]\\)\\}]"
+            token : "paren.rparen.keyword.operator",
+            regex : "[\\]\\)\\}]",
+            merge : false
         }, {
             token : "text",
             regex : "\\s+"

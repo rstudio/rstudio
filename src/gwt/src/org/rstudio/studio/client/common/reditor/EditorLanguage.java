@@ -54,6 +54,8 @@ public class EditorLanguage
          "mode/stan", false, true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
          "mode/yaml", false, true);
+   public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
+         "mode/python", false, true);
    
    // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
@@ -64,8 +66,6 @@ public class EditorLanguage
          "ace/mode/css", false, true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
          "ace/mode/javascript", false, true);
-   public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
-         "ace/mode/python", false, true);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
          "mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
