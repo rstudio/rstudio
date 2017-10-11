@@ -167,6 +167,8 @@ public slots:
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
 
+   void showLicenseDialog();
+
    void macZoomActualSize();
    void macZoomIn();
    void macZoomOut();

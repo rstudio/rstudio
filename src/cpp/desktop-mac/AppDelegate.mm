@@ -373,9 +373,8 @@ bool prepareEnvironment(Options& options)
                                     userInfo:nil
                                     repeats: YES];
    
-   activation_ = [[[Activation alloc] initWithInstallPath : installPath
-                                                  devMode : devMode ] retain];
-   if (![activation_ getInitialLicense])
+   if (![[Activation sharedActivation]
+         getInitialLicenseWithPath: installPath devMode: devMode])
    {
       [NSApp terminate: self];
       return;

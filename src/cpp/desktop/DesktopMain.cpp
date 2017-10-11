@@ -350,8 +350,7 @@ int main(int argc, char* argv[])
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);
 
-      desktop::activation::DesktopActivation licenseManager(installPath, devMode);
-      if (!licenseManager.getInitialLicense())
+      if (!desktop::activation::activation().getInitialLicense(installPath, devMode))
       {
          return EXIT_FAILURE;
       }

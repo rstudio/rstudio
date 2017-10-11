@@ -20,13 +20,21 @@ using namespace rstudio::core;
 
 @implementation Activation
 
-- (id) initWithInstallPath: (FilePath&) installPath
-                   devMode: (BOOL) devMode
++ (id) sharedActivation
 {
-   return [super init];
+   static Activation* sharedActivation = nil;
+   @synchronized(self)
+   {
+      if (sharedActivation == nil)
+      {
+         sharedActivation = [[self alloc] init];
+      }
+   }
+   return sharedActivation;
 }
 
-- (BOOL) getInitialLicense
+- (BOOL) getInitialLicenseWithPath : (rstudio::core::FilePath&) installPath
+                           devMode : (BOOL) devMode
 {
    return TRUE;
 }
@@ -37,6 +45,11 @@ using namespace rstudio::core;
 }
 
 - (std::string) activationStateMessage
+{
+   return std::string();
+}
+
+- (std::string) licenseStateMessage
 {
    return std::string();
 }

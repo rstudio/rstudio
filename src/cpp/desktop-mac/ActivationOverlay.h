@@ -29,12 +29,20 @@ namespace core {
 @interface Activation : NSObject {
 }
 
-- (id) initWithInstallPath: (rstudio::core::FilePath&) installPath
-                   devMode: (BOOL) devMode;
++ (id) sharedActivation;
 
-- (BOOL) getInitialLicense;
+- (BOOL) getInitialLicenseWithPath : (rstudio::core::FilePath&) installPath
+                           devMode : (BOOL) devMode;
+
 - (BOOL) allowProductUsage;
+
+// Description of license state if expired or within certain time window before expiring,
+// otherwise empty string
 - (std::string) activationStateMessage;
+
+// Description of license state
+- (std::string) licenseStateMessage;
+
 - (BOOL) updateLicenseState;
 
 @end

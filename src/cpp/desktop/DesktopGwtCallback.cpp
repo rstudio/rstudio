@@ -38,6 +38,7 @@
 #include <core/r_util/RUserData.hpp>
 
 #include "DesktopAboutDialog.hpp"
+#include "DesktopLicenseDialogOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -1122,6 +1123,11 @@ double GwtCallback::getZoomLevel()
 void GwtCallback::setZoomLevel(double zoomLevel)
 {
    options().setZoomLevel(zoomLevel);
+}
+
+void GwtCallback::showLicenseDialog()
+{
+   rstudio::desktop::activation::showLicenseDialog();
 }
 
 void GwtCallback::macZoomActualSize()
