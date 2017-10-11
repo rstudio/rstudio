@@ -142,7 +142,7 @@ public class SafeHtmlUtil
       if (StringUtil.isNullOrEmpty(haystack))
          return;
       
-      // if we hqve a needle to search for, and it exists, highlight it
+      // if we have a needle to search for, and it exists, highlight it
       boolean hasMatch = false;
       if (!StringUtil.isNullOrEmpty(needle))
       {
