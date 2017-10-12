@@ -1,7 +1,7 @@
 /*
  * NotebookExec.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,6 +73,7 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
+   lastOutputType_(kChunkConsoleInput),
    execScope_(execScope),
    hasOutput_(false),
    hasErrors_(false)
@@ -368,9 +369,6 @@ void ChunkExecContext::onError(const core::json::Object& err)
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 
       bool truncate)
 {
-   if (output.empty())
-      return;
-
    // if we haven't received any actual output yet, don't push input into the
    // file yet
    if (type == kChunkConsoleInput && !hasOutput_) 
@@ -378,6 +376,11 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       pendingInput_.append(output + "\n");
       return;
    }
+
+   // blank lines aren't permitted following output, only input
+   if (lastOutputType_ != kChunkConsoleInput && type == kChunkConsoleInput && output.empty())
+      return;
+   lastOutputType_ = type;
 
    // set up folder to receive output if necessary
    initializeOutput();
@@ -411,7 +414,9 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       LOG_ERROR(error);
    }
 
-   events().onChunkConsoleOutput(docId_, chunkId_, type, output);
+   // if we got some real output, fire event for it
+   if (!output.empty())
+      events().onChunkConsoleOutput(docId_, chunkId_, type, output);
 }
 
 void ChunkExecContext::disconnect()
