@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,11 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+/*
+ * NOTICE: We keep documentation concerning which packages RStudio depends on. If you change 
+ * the dependencies listed here, be sure to update the documentation in the admin guide as well.
+ */
 
 @Singleton
 public class DependencyManager implements InstallShinyEvent.Handler,
