@@ -91,8 +91,8 @@
      - Only trap window.onerror if there is no current window.onerror handler (REPORT_IF_NO_HANDLER)
      - Do not trap anything (legacy behavior) (IGNORE)
   -->
-  <define-property name="gwt.uncaughtexceptionhander.windowonerror" values="IGNORE, REPORT, REPORT_IF_NO_HANDLER" />
-  <set-property name="gwt.uncaughtexceptionhander.windowonerror" value="IGNORE"/>
+  <define-property name="gwt.uncaughtexceptionhandler.windowonerror" values="IGNORE, REPORT, REPORT_IF_NO_HANDLER" />
+  <set-property name="gwt.uncaughtexceptionhandler.windowonerror" value="IGNORE"/>
 
   <!-- To support legacy logging flags -->
   <inherits name="com.google.gwt.logging.LogImpl"/>

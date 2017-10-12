@@ -173,7 +173,7 @@ public final class Impl {
   private static boolean onErrorInitialized;
 
   public static void maybeInitializeWindowOnError() {
-    if ("IGNORE".equals(System.getProperty("gwt.uncaughtexceptionhander.windowonerror"))) {
+    if ("IGNORE".equals(System.getProperty("gwt.uncaughtexceptionhandler.windowonerror"))) {
       return;
     }
     if (onErrorInitialized) {
@@ -182,7 +182,7 @@ public final class Impl {
     onErrorInitialized = true;
     boolean alwaysReport =
         "REPORT"
-            .equals(System.getProperty("gwt.uncaughtexceptionhander.windowonerror"));
+            .equals(System.getProperty("gwt.uncaughtexceptionhandler.windowonerror"));
     registerWindowOnError(alwaysReport);
   }
 
