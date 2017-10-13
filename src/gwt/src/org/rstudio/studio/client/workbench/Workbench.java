@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -110,6 +111,7 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
+                    ProductEditionInfo productEditionInfo,
                     ChooseFile chooseFile,                    // force gin to create
                     AskPassManager askPass,                   // force gin to create
                     PDFViewer pdfViewer,                      // force gin to create
@@ -136,6 +138,7 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
+      productEditionInfo_ = productEditionInfo;
       newSession_ = newSession;
       serverOperations_ = serverOperations;
       
@@ -449,7 +452,6 @@ public class Workbench implements BusyHandler,
    
    private void checkForInitMessages()
    {
-      // only check for init messages in server mode
       if (!Desktop.isDesktop())
       {
          server_.getInitMessages(new ServerRequestCallback<String>() {
@@ -466,6 +468,14 @@ public class Workbench implements BusyHandler,
                // ignore
             }
          });
+      }
+      else if (productEditionInfo_.proLicense())
+      {
+         String message = Desktop.getFrame().getInitMessages();
+         if (!StringUtil.isNullOrEmpty(message))
+         {
+            globalDisplay_.showWarningBar(false, message);
+         }
       }
    }
     
@@ -641,4 +651,5 @@ public class Workbench implements BusyHandler,
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false; 
+   private final ProductEditionInfo productEditionInfo_;
 }
