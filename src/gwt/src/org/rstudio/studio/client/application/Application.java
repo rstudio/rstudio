@@ -56,6 +56,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
@@ -107,7 +108,8 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
-                      Provider<AceThemes> pAceThemes)
+                      Provider<AceThemes> pAceThemes,
+                      Provider<ProductEditionInfo> pEdition)
    {
       // save references
       view_ = view ;
@@ -125,6 +127,7 @@ public class Application implements ApplicationEventHandlers
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
       pAceThemes_ = pAceThemes;
+      pEdition_ = pEdition;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -298,11 +301,17 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onRstudioCommunityForum()
+   {
+      globalDisplay_.openRStudioLink("community-forum");
+   }
+   
+   @Handler
    public void onRstudioSupport()
    {
       globalDisplay_.openRStudioLink("support");
    }
-   
+
    @Handler
    public void onRstudioAgreement()
    {
@@ -890,6 +899,13 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().remove();
       }
       
+      // show support link only in RStudio Pro
+      if (pEdition_.get() != null)
+      {
+         if (!pEdition_.get().proLicense())
+            commands_.rstudioSupport().remove();
+      }
+      
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
       showToolbar( uiPrefs_.get().toolbarVisible().getValue());
@@ -1055,6 +1071,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
+   private final Provider<ProductEditionInfo> pEdition_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 
