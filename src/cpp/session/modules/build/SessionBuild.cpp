@@ -536,7 +536,15 @@ private:
                enqueBuildOutput(module_context::kCompileOutputError,
                                 result.stdErr);
             enqueBuildOutput(module_context::kCompileOutputNormal, "\n");
-            return result.exitStatus == EXIT_SUCCESS;
+            if (result.exitStatus == EXIT_SUCCESS)
+            {
+               return true;
+            }
+            else
+            {
+               terminateWithErrorStatus(result.exitStatus);
+               return false;
+            }
          }
          else
          {
