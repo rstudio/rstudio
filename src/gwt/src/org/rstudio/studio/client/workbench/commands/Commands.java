@@ -446,6 +446,7 @@ public abstract class
    public abstract AppCommand diagnosticsReport();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
+   public abstract AppCommand rstudioCommunityForum();
    public abstract AppCommand rstudioAgreement();
 
    public abstract AppCommand showWarningBar();

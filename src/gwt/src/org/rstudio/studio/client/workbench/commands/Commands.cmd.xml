@@ -466,6 +466,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="checkForUpdates"/>
          <separator/>
          <cmd refid="helpUsingRStudio"/>
+         <cmd refid="rstudioCommunityForum"/>
          <cmd refid="rstudioSupport"/>
          <separator/>
          <menu label="_Cheatsheets">
@@ -2709,6 +2710,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="updateCredentials"
         menuLabel="_Update Credentials"
         rebindable="false"/>
+
+   <cmd id="rstudioCommunityForum"
+        menuLabel="RStudio Community _Forum"
+        rebindable="false"
+        windowMode="main"/>
 
    <cmd id="rstudioSupport"
         menuLabel="RStudio _Support"
