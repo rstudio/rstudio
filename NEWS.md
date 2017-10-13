@@ -15,6 +15,7 @@
 * Fix hang when submitting empty passwords and password encryption is turned off (#1545)
 * Fix HTTP 500 error when navigating to directories such as /js/ (#1561)
 * Fix inability to sign out when using a new browser window and "stay signed in" (#1538)
+* Fix issue where Build pane would get 'stuck' on failed Rcpp::compileAttributes() call (#1601)
 
 ### RStudio Server Pro
 
