@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1128,6 +1128,12 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 void GwtCallback::showLicenseDialog()
 {
    rstudio::desktop::activation::showLicenseDialog();
+}
+
+QString GwtCallback::getInitMessages()
+{
+   std::string message = rstudio::desktop::activation::getInitMessages();
+   return QString::fromStdString(message);
 }
 
 void GwtCallback::macZoomActualSize()

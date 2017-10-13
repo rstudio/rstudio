@@ -1,7 +1,7 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -146,6 +146,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setZoomLevel(double zoomLevel);
    
    void showLicenseDialog();
+   String getInitMessages();
    
    // mac-specific zoom calls
    void macZoomActualSize();

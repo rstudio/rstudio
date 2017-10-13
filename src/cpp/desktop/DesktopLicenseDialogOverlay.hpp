@@ -23,6 +23,7 @@ namespace desktop {
 namespace activation {
 
 void showLicenseDialog();
+std::string getInitMessages();
 
 } // namespace activation
 } // namespace desktop
