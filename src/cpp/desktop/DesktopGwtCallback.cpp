@@ -38,6 +38,7 @@
 #include <core/r_util/RUserData.hpp>
 
 #include "DesktopAboutDialog.hpp"
+#include "DesktopActivationOverlay.hpp"
 #include "DesktopLicenseDialogOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
@@ -1127,12 +1128,12 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 
 void GwtCallback::showLicenseDialog()
 {
-   rstudio::desktop::activation::showLicenseDialog();
+   activation::showLicenseDialog();
 }
 
 QString GwtCallback::getInitMessages()
 {
-   std::string message = rstudio::desktop::activation::getInitMessages();
+   std::string message = activation::activation().activationStateMessage();
    return QString::fromStdString(message);
 }
 

@@ -23,11 +23,6 @@ void showLicenseDialog()
 {
 }
 
-std::string getInitMessages()
-{
-   return std::string();
-}
-
 } // namespace activation
 } // namespace desktop
 } // namespace rstudio
