@@ -300,6 +300,11 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
 
 void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
 {
+    // for some reason, Qt can get stalled querying the clipboard
+    // while a modal is active, so disable any such behavior here
+    if (QApplication::activeModalWidget() != NULL)
+       return;
+
     // if this is a change in the selection contents, track it
     if (mode == QClipboard::Selection)
     {
