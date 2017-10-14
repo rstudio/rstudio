@@ -92,7 +92,7 @@ then
      SYS_MAJOR_VER=`uname -r | cut -d "." -f -1`
      if [ "$SYS_MAJOR_VER" -gt "12" ]
      then
-        BJAM_CXXFLAGS="cxxflags=-stdlib=libstdc++"
+        BJAM_CXXFLAGS="cxxflags=-fPIC -stdlib=libstdc++"
         BJAM_LDFLAGS="linkflags=-stdlib=libstdc++"
      else
         BJAM_CXXFLAGS=""
@@ -117,6 +117,7 @@ then
         --prefix="$BOOST_DIR" \
         --without-python      \
         variant=release       \
+        cxxflags="-fPIC"      \
         install
    fi
 
