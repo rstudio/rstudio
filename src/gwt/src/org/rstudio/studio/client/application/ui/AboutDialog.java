@@ -36,7 +36,7 @@ public class AboutDialog extends ModalDialogBase
       
       if (editionInfo_.proLicense() && Desktop.isDesktop())
       {
-         ThemedButton licenseButton = new ThemedButton("License...", (ClickEvent) ->  {
+         ThemedButton licenseButton = new ThemedButton("Manage License...", (ClickEvent) ->  {
             closeDialog();
             editionInfo_.showLicense();
          });

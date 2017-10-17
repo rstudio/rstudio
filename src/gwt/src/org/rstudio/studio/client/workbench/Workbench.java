@@ -35,7 +35,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -111,7 +110,6 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
-                    ProductEditionInfo productEditionInfo,
                     ChooseFile chooseFile,                    // force gin to create
                     AskPassManager askPass,                   // force gin to create
                     PDFViewer pdfViewer,                      // force gin to create
@@ -138,7 +136,6 @@ public class Workbench implements BusyHandler,
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
-      productEditionInfo_ = productEditionInfo;
       newSession_ = newSession;
       serverOperations_ = serverOperations;
       
@@ -469,7 +466,7 @@ public class Workbench implements BusyHandler,
             }
          });
       }
-      else if (productEditionInfo_.proLicense())
+      else
       {
          String message = Desktop.getFrame().getInitMessages();
          if (!StringUtil.isNullOrEmpty(message))
@@ -651,5 +648,4 @@ public class Workbench implements BusyHandler,
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false; 
-   private final ProductEditionInfo productEditionInfo_;
 }

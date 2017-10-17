@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -327,7 +327,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
             @Override
             public void execute()
             {
-               appQuit_.prepareForQuit("Update RStudio", new QuitContext()
+               appQuit_.prepareForQuit("Update RStudio", true /*allowCancel*/, new QuitContext()
                {
                   @Override
                   public void onReadyToQuit(boolean saveChanges)

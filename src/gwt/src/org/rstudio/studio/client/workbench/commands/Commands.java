@@ -444,6 +444,7 @@ public abstract class
    public abstract AppCommand newSession();
    public abstract AppCommand suspendSession();
    public abstract AppCommand quitSession();
+   public abstract AppCommand forceQuitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();
    public abstract AppCommand showLogFiles();

@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,14 +22,17 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JsObjectInjector;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuicideEvent;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -62,7 +65,8 @@ public class DesktopHooks
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
-                       SourceShim sourceShim)
+                       SourceShim sourceShim,
+                       ProductEditionInfo editionInfo)
    {
       commands_ = commands;
       events_ = events;
@@ -73,6 +77,7 @@ public class DesktopHooks
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
+      editionInfo_ = editionInfo;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, 
                          new SaveActionChangedHandler() 
@@ -214,6 +219,19 @@ public class DesktopHooks
    {
       return DesktopApplicationHeader.isSelectionEmpty();
    }
+   
+   void licenseLost(String licenseMessage)
+   {
+      String message = "Unable to obtain a license. Please restart RStudio to try again.";
+      if (!StringUtil.isNullOrEmpty(licenseMessage))
+      {
+         message = message + "\n\nDetails: ";
+         message = message + licenseMessage;
+      }
+      globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message);
+      
+      commands_.forceQuitSession().execute();
+   }
 
    private final Commands commands_;
    private final EventBus events_;
@@ -226,6 +244,7 @@ public class DesktopHooks
    private final SourceShim sourceShim_;
    private final SerializedCommandQueue commandQueue_ = 
                                          new SerializedCommandQueue();
+   private final ProductEditionInfo editionInfo_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
 }

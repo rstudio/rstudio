@@ -1195,6 +1195,28 @@ enum RS_NSActivityOptions : uint64_t
       return NO;
 }
 
+- (void) showLicenseDialog
+{
+   [[Activation sharedActivation] showLicenseDialog];
+}
+
+- (NSString *) getInitMessages
+{
+   std::string message = [[Activation sharedActivation] currentLicenseStateMessage];
+   return [NSString stringWithUTF8String:message.c_str()];
+}
+
+- (NSString*) getLicenseStatusMessage
+{
+   std::string message = [[Activation sharedActivation] licenseStatus];
+   return [NSString stringWithUTF8String:message.c_str()];
+}
+
+- (BOOL) allowProductUsage
+{
+   return [[Activation sharedActivation] allowProductUsage];
+}
+
 @end
 
 #ifdef __clang__

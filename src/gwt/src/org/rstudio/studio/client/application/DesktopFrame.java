@@ -147,6 +147,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void showLicenseDialog();
    String getInitMessages();
+   String getLicenseStatusMessage();
+   boolean allowProductUsage();
    
    // mac-specific zoom calls
    void macZoomActualSize();

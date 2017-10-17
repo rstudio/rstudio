@@ -32,6 +32,13 @@
 			margin-top: 15px;
 			margin-bottom: 15px;
 		}
+		.licenseBox {
+			clear: both;
+			width: 100%;
+			font-family: fixedWidthFont;
+			margin-top: 3px;
+			margin-bottom: 15px;
+		}
 		
 		.logo {
 	      float: left;
@@ -51,6 +58,11 @@
 	   .outerProductInfo {
 	      text-align: center;
 	   }
+		.licenseLabel {
+			font-size: 12pt;
+			font-weight: bold;
+			text-align: center;
+		}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.aboutBox}">
 	   <g:HTMLPanel styleName="{style.outerProductInfo}">
@@ -77,5 +89,9 @@
 			target="_blank"></g:Anchor>
 		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
 			visibleLines="15" readOnly="true"></g:TextArea>
+		<g:Label ui:field="licenseLabel" visible="false" text="RStudio Pro License Status" styleName="{style.licenseLabel}"></g:Label>
+  		<g:TextArea ui:field="licenseBox" styleName="{style.licenseBox}"
+     		visibleLines="10" visible="false" readOnly="true"></g:TextArea>
+
 	</g:HTMLPanel>
 </ui:UiBinder> 

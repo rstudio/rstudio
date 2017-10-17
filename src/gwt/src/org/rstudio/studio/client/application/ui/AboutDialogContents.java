@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
@@ -54,10 +56,24 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(Window.Navigator.getUserAgent());
       noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
+      
+      if (editionInfo.proLicense() && Desktop.isDesktop())
+      {
+         String licenseStatus = Desktop.getFrame().getLicenseStatusMessage();
+         int licenseLines = StringUtil.newlineCount(licenseStatus);
+         noticeBox.setVisibleLines(10);
+         licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
+         licenseLabel.setVisible(true);
+         licenseBox.setVisible(true);
+         licenseBox.setText(Desktop.getFrame().getLicenseStatusMessage());
+         
+      }
    }
 
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField TextArea noticeBox;
+   @UiField Label licenseLabel;
+   @UiField TextArea licenseBox;
    @UiField Label productName;
 }
