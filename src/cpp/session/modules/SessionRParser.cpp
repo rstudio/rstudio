@@ -80,6 +80,24 @@ std::map<std::string, std::string> makeComplementMap()
 static std::map<std::string, std::string> s_complements =
       makeComplementMap();
 
+Error safeEvaluateString(const std::string& string,
+                         SEXP* pSEXP,
+                         r::sexp::Protect* pProtect)
+{
+   // only evaluate strings that consist of identifiers + extraction
+   // operators, e.g. 'foo$bar[[1]]'
+   boost::regex reSafeEvaluation("^[a-zA-Z0-9_$@\\[\\]]+$");
+   if (regex_utils::search(string, reSafeEvaluation))
+   {
+      return r::exec::evaluateString(string, pSEXP, pProtect);
+   }
+   else
+   {
+      *pSEXP = R_NilValue;
+      return Success();
+   }
+}
+
 bool isDataTableSingleBracketCall(RTokenCursor& cursor)
 {
    if (!cursor.contentEquals(L"["))
@@ -109,7 +127,7 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
    // Get the object and check if it inherits from data.table
    SEXP objectSEXP;
    r::sexp::Protect protect;
-   Error error = r::exec::evaluateString(objectString, &objectSEXP, &protect);
+   Error error = safeEvaluateString(objectString, &objectSEXP, &protect);
    if (error)
       return false;
    
@@ -242,7 +260,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       // avoid output leaking to console
       r::session::utils::SuppressOutputInScope scope;
       
-      Error error = r::exec::evaluateString(call, &symbolSEXP, pProtect);
+      Error error = safeEvaluateString(call, &symbolSEXP, pProtect);
       if (error)
       {
          DEBUG("- Failed to evaluate call '" << call << "'");
