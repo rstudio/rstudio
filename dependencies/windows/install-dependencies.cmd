@@ -10,7 +10,7 @@ set UNZIP_ARGS=-q
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set BOOST_GCC493_FILE=boost-1.63-win-rtools33-gcc493.zip
 set RTOOLS_FILE=Rtools33.exe
-set GIN_FILE=gin-1.5.zip
+set GIN_FILE=gin-2.1.2.zip
 set GWT_FILE=gwt-2.8.1.zip
 set SELENIUM_FILE=selenium-java-2.37.0.zip
 set SELENIUM_SERVER_FILE=selenium-server-standalone-2.37.0.jar
@@ -112,11 +112,11 @@ if not exist ..\..\src\gwt\lib (
 )
 pushd ..\..\src\gwt\lib
 
-if not exist gin\1.5 (
+if not exist gin\2.1.2 (
   wget %WGET_ARGS% "%BASEURL%%GIN_FILE%"
-  mkdir gin\1.5
+  mkdir gin\2.1.2
   echo Unzipping %GIN_FILE%
-  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\1.5
+  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\2.1.2
   del "%GIN_FILE%"
 )
 

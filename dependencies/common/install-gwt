@@ -41,7 +41,7 @@ LIB_DIR=$GWT_DIR/lib
 mkdir -p $LIB_DIR
 
 # gin
-GIN_VER=1.5
+GIN_VER=2.1.2
 GIN=gin-$GIN_VER
 GIN_ZIP=$GIN.zip
 if [ -d "$LIB_DIR/gin/$GIN_VER" ]

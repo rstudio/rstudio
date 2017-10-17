@@ -28,7 +28,7 @@
    <path id="project.class.path">
       <pathelement location="bin"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
-      <fileset dir="lib/gin/1.5" includes="*.jar"/>
+      <fileset dir="lib/gin/2.1.2" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">
