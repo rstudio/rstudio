@@ -23,8 +23,11 @@ RUN apt-get update \
     apparmor-utils \
     build-essential \
     cmake \
+    debsigs \
+    dpkg-sig \
     fakeroot \
     git-core \
+    gpg \
     libapparmor1 \
     libbz2-dev \
     libgl1-mesa-dev \
