@@ -33,30 +33,29 @@ using namespace rstudio::core;
    return sharedActivation;
 }
 
+- (BOOL) allowProductUsage
+{
+   return TRUE;
+}
+
+- (std::string) currentLicenseStateMessage
+{
+   return std::string();
+}
+
+- (std::string) licenseStatus
+{
+   return std::string();
+}
+
 - (BOOL) getInitialLicenseWithPath : (rstudio::core::FilePath&) installPath
                            devMode : (BOOL) devMode
 {
    return TRUE;
 }
 
-- (BOOL) allowProductUsage
+- (void) showLicenseDialog
 {
-   return TRUE;
-}
-
-- (std::string) activationStateMessage
-{
-   return std::string();
-}
-
-- (std::string) licenseStateMessage
-{
-   return std::string();
-}
-
-- (BOOL) updateLicenseState
-{
-   return TRUE;
 }
 
 @end

@@ -118,7 +118,6 @@ endif (NOT WIN32)
 set(MOC_DESKTOP_HEADER_FILES ${DESKTOP_HEADER_FILES})
 list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtsingleapplication/qtlockedfile.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopLicenseDialogOverlay.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
@@ -162,7 +161,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
   DesktopInputDialog.cpp
-  DesktopLicenseDialogOverlay.cpp
   DesktopMain.cpp
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp

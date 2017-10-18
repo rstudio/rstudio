@@ -1,7 +1,7 @@
 /*
  * SourceWindow.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -397,7 +397,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          quitContext.onReadyToQuit(false);
       else
          ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
-               "Close Source Window", false, sourceShim_, null, null, quitContext);
+               "Close Source Window", true /*allowCancel*/, false /*forceSaveAll*/, 
+               sourceShim_, null, null, quitContext);
    }
    
    private String unsavedTargetDesc(UnsavedChangesTarget item)

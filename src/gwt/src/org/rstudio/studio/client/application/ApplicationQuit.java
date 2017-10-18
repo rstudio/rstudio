@@ -120,12 +120,14 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    }
    
    public void prepareForQuit(final String caption,
+                              final boolean allowCancel,
                               final QuitContext quitContext)
    {
-      prepareForQuit(caption, false, quitContext);
+      prepareForQuit(caption, allowCancel, false /*forceSaveAll*/, quitContext);
    }
-   
+
    public void prepareForQuit(final String caption,
+                              final boolean allowCancel,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
@@ -147,43 +149,41 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       if (busy && !forceSaveAll)
       {
-         globalDisplay_.showYesNoMessage(
-               MessageDialog.QUESTION,
-               caption, 
-               msg + " Are you sure you want to quit?",
-               new Operation() {
-                  @Override
-                  public void execute()
-                  {
-                     handleUnsavedChanges(caption, forceSaveAll, quitContext);
-                  }}, 
-               true);
+         if (allowCancel)
+         {
+            globalDisplay_.showYesNoMessage(
+                  MessageDialog.QUESTION,
+                  caption, 
+                  msg + " Are you sure you want to quit?",
+                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext),
+                  true);
+         }
+         else
+         {
+            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
+         }
       }
       else
       {
          // if we aren't restoring source documents then close them all now
          if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
          {
-            sourceShim_.closeAllSourceDocs(caption, new Command() {
-               @Override
-               public void execute()
-               {
-                  handleUnsavedChanges(caption, forceSaveAll, quitContext);
-               }
-            });
+            sourceShim_.closeAllSourceDocs(caption,
+                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext));
          }
          else
          {
-            handleUnsavedChanges(caption, forceSaveAll, quitContext);
+            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
          }
       }
    }
    
    private void handleUnsavedChanges(String caption, 
+                                     boolean allowCancel,
                                      boolean forceSaveAll,
                                      QuitContext quitContext)
    {
-      handleUnsavedChanges(saveAction_.getAction(), caption, forceSaveAll,
+      handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
             sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
    }
    
@@ -196,6 +196,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    public static void handleUnsavedChanges(final int saveAction, 
                                      String caption,
+                                     boolean allowCancel,
                                      boolean forceSaveAll,
                                      final SourceShim sourceShim,
                                      final WorkbenchContext workbenchContext,
@@ -260,18 +261,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                GlobalDisplay.MSG_QUESTION,
                caption,
                prompt,
-               true,
-               new Operation() { public void execute()
-               {
-                  quitContext.onReadyToQuit(true);      
-               }},
-               new Operation() { public void execute()
-               {
-                  quitContext.onReadyToQuit(false);
-               }},
-               new Operation() { public void execute()
-               {
-               }},
+               allowCancel,
+               () -> quitContext.onReadyToQuit(true),
+               () -> quitContext.onReadyToQuit(false),
+               () -> {},
                "Save",
                "Don't Save",
                true);        
@@ -627,14 +620,17 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", new QuitContext() {
-         public void onReadyToQuit(boolean saveChanges)
-         {
-            performQuit(saveChanges);
-         }   
-      });
+      prepareForQuit("Quit R Session", true /*allowCancel*/, 
+            (boolean saveChanges) -> performQuit(saveChanges));
    }
-   
+
+   @Handler
+   public void onForceQuitSession()
+   {
+      prepareForQuit("Quit R Session", false/*allowCancel*/,
+            (boolean saveChanges) -> performQuit(saveChanges));
+   }
+
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
    {
       @Override

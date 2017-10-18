@@ -445,8 +445,8 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onSwitchToRVersion(final SwitchToRVersionEvent event)
    {
-      final ApplicationQuit applicaitonQuit = pApplicationQuit_.get();
-      applicaitonQuit.prepareForQuit("Switch R Version", 
+      final ApplicationQuit applicationQuit = pApplicationQuit_.get();
+      applicationQuit.prepareForQuit("Switch R Version", true /*allowCancel*/,
                                              new QuitContext() {
          public void onReadyToQuit(boolean saveChanges)
          {
@@ -456,7 +456,7 @@ public class Application implements ApplicationEventHandlers
                project = Projects.NONE;
             
             // do the quit
-            applicaitonQuit.performQuit(saveChanges, 
+            applicationQuit.performQuit(saveChanges, 
                                         project, 
                                         event.getRVersionSpec());
          }   

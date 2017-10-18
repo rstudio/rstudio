@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -666,7 +666,7 @@ public class Projects implements OpenProjectFileHandler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Close Project",
+      applicationQuit_.prepareForQuit("Close Project", true /*allowCancel*/,
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {

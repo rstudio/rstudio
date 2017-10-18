@@ -38,12 +38,12 @@ namespace core {
 
 // Description of license state if expired or within certain time window before expiring,
 // otherwise empty string
-- (std::string) activationStateMessage;
+- (std::string) currentLicenseStateMessage;
 
 // Description of license state
-- (std::string) licenseStateMessage;
+- (std::string) licenseStatus;
 
-- (BOOL) updateLicenseState;
+- (void) showLicenseDialog;
 
 @end
 

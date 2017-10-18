@@ -169,6 +169,8 @@ public slots:
 
    void showLicenseDialog();
    QString getInitMessages();
+   QString getLicenseStatusMessage();
+   bool allowProductUsage();
 
    void macZoomActualSize();
    void macZoomIn();

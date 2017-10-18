@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopGwtCallback.hpp"
+#include "DesktopActivationOverlay.hpp"
 
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
@@ -147,6 +148,10 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
+   pMainWindow_->connect(&activation::activation(),
+                         SIGNAL(licenseLost(QString)),
+                         pMainWindow_,
+                         SLOT(onLicenseLost(QString)));
 
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
@@ -159,7 +164,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    return Success();
 }
 
-void SessionLauncher::closeAllSatillites()
+void SessionLauncher::closeAllSatellites()
 {
    QWidgetList topLevels = QApplication::topLevelWidgets();
    for (int i = 0; i < topLevels.size(); i++)
@@ -185,7 +190,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // if there was no pending quit set then this is a crash
    if (pendingQuit == PendingQuitNone)
    {
-      closeAllSatillites();
+      closeAllSatellites();
 
       pMainWindow_->evaluateJavaScript(
                QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
@@ -208,10 +213,27 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // otherwise this is a restart so we need to launch the next session
    else
    {
+      if (!activation::activation().allowProductUsage())
+      {
+         std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
+         std::string licenseMessage = activation::activation().currentLicenseStateMessage();
+         if (licenseMessage.empty())
+            licenseMessage = "None Available";
+         message += "\n\nDetails: ";
+         message += licenseMessage;
+         showMessageBox(QMessageBox::Critical,
+                        pMainWindow_,
+                        QString::fromUtf8("RStudio"),
+                        QString::fromUtf8(message.c_str()));
+         closeAllSatellites();
+         pMainWindow_->quit();
+         return;
+      }
+
       // close all satellite windows if we are reloading
       bool reload = (pendingQuit == PendingQuitRestartAndReload);
       if (reload)
-         closeAllSatillites();
+         closeAllSatellites();
 
       // launch next session
       Error error = launchNextSession(reload);

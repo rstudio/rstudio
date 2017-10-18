@@ -36,12 +36,12 @@ bool DesktopActivation::allowProductUsage()
    return true;
 }
 
-std::string DesktopActivation::activationStateMessage()
+std::string DesktopActivation::currentLicenseStateMessage()
 {
    return std::string();
 }
 
-std::string DesktopActivation::licenseStateMessage()
+std::string DesktopActivation::licenseStatus()
 {
    return std::string();
 }
@@ -49,6 +49,19 @@ std::string DesktopActivation::licenseStateMessage()
 bool DesktopActivation::getInitialLicense(const core::FilePath& installPath, bool devMode)
 {
    return true;
+}
+
+void DesktopActivation::onLicenseManagerExited(int exitCode, QProcess::ExitStatus exitStatus)
+{
+
+}
+
+void DesktopActivation::onUpdateLicenseState()
+{
+}
+
+void DesktopActivation::showLicenseDialog()
+{
 }
 
 } // namespace activation
