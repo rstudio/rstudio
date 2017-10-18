@@ -13,7 +13,6 @@
  *
  */
 
-#include "ChildProcess.hpp"
 #include "ChildProcessSubprocPoll.hpp"
 #include "Win32Pty.hpp"
 
@@ -25,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/system/ChildProcess.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/FilePath.hpp>
