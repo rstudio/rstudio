@@ -23,7 +23,6 @@ RUN apt-get update \
     apparmor-utils \
     build-essential \
     cmake \
-    debsigs \
     dpkg-sig \
     fakeroot \
     git-core \
