@@ -37,13 +37,9 @@ def compile_package(type, flavor, variant) {
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 
   // sign the new package
-  switch ( type ) {
-      case "DEB":
-        withCredentials([file(credentialsId: 'gpg-codesign-private-key', variable: 'codesignKey'),
-                         file(credentialsId: 'gpg-codesign-passphrase',  variable: 'codesignPassphrase')]) {
-          sh "docker/jenkins/sign-release.sh package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()} ${codesignKey} ${codesignPassphrase}"
-        }
-        break
+  withCredentials([file(credentialsId: 'gpg-codesign-private-key', variable: 'codesignKey'),
+                   file(credentialsId: 'gpg-codesign-passphrase',  variable: 'codesignPassphrase')]) {
+    sh "docker/jenkins/sign-release.sh package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()} ${codesignKey} ${codesignPassphrase}"
   }
 }
 

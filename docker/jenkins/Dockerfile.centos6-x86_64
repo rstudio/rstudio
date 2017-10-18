@@ -8,9 +8,11 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     cmake \
+    expect \
     gcc \
     gcc-c++ \
     git \
+    gpg \
     gstreamer-devel \
     gstreamer-plugins-base-devel \
     java-1.8.0-openjdk  \
@@ -23,6 +25,7 @@ RUN yum install -y \
     pango-devel \
     R \
     rpmdevtools \
+    rpmsign \
     sudo \
     wget \
     xml-commons-apis \
