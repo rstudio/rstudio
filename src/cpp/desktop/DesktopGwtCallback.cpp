@@ -39,7 +39,6 @@
 
 #include "DesktopAboutDialog.hpp"
 #include "DesktopActivationOverlay.hpp"
-#include "DesktopLicenseDialogOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -1133,13 +1132,24 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 
 void GwtCallback::showLicenseDialog()
 {
-   activation::showLicenseDialog();
+   activation::activation().showLicenseDialog();
 }
 
 QString GwtCallback::getInitMessages()
 {
-   std::string message = activation::activation().activationStateMessage();
+   std::string message = activation::activation().currentLicenseStateMessage();
    return QString::fromStdString(message);
+}
+
+QString GwtCallback::getLicenseStatusMessage()
+{
+   std::string message = activation::activation().licenseStatus();
+   return QString::fromStdString(message);
+}
+
+bool GwtCallback::allowProductUsage()
+{
+   return activation::activation().allowProductUsage();
 }
 
 void GwtCallback::macZoomActualSize()

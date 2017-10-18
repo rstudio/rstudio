@@ -16,6 +16,9 @@
 #ifndef DESKTOP_ACTIVATION_HPP
 #define DESKTOP_ACTIVATION_HPP
 
+#include <QObject>
+#include <QProcess>
+
 #include <core/FilePath.hpp>
 
 namespace rstudio {
@@ -31,8 +34,9 @@ namespace activation {
 class DesktopActivation;
 DesktopActivation& activation();
 
-class DesktopActivation
+class DesktopActivation : public QObject
 {
+   Q_OBJECT
 public:
    DesktopActivation();
 
@@ -41,10 +45,19 @@ public:
 
    // Description of license state if expired or within certain time window before expiring,
    // otherwise empty string
-   std::string activationStateMessage();
+   std::string currentLicenseStateMessage();
 
    // Description of license state
-   std::string licenseStateMessage();
+   std::string licenseStatus();
+
+   void showLicenseDialog();
+
+public slots:
+   void onLicenseManagerExited(int exitCode, QProcess::ExitStatus exitStatus);
+   void onUpdateLicenseState();
+
+signals:
+   void licenseLost(QString licenseMessage);
 };
 
 } // namespace activation

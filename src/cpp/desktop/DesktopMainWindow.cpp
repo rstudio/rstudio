@@ -323,6 +323,13 @@ void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
                                                    QString::fromStdString(js));
 }
 
+void MainWindow::onLicenseLost(QString licenseMessage)
+{
+   webView()->page()->mainFrame()->evaluateJavaScript(
+         QString::fromUtf8("window.desktopHooks.licenseLost('") + licenseMessage +
+         QString::fromUtf8("');"));
+}
+
 // private interface for SessionLauncher
 
 void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
