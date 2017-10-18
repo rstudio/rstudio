@@ -12,5 +12,5 @@ function isBodyLoaded() {
     // the body is loaded.
     return false;
   }
-  return (/loaded|interactive|complete/.test($doc.readyState));
+  return (/loaded|complete/.test($doc.readyState));
 }

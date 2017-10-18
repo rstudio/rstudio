@@ -8,5 +8,5 @@ function isBodyLoaded() {
     // in isBodyLoadedFf35Fix.js
     return (typeof $doc.body != "undefined" && $doc.body != null);
   }
-  return (/loaded|interactive|complete/.test($doc.readyState));
+  return (/loaded|complete/.test($doc.readyState));
 }

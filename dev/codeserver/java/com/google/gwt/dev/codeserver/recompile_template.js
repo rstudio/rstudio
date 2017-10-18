@@ -37,7 +37,7 @@
     __MAIN__
   };
 
-  if (/loaded|interactive|complete/.test($doc.readyState)) {
+  if (/loaded|complete/.test($doc.readyState)) {
     executeMain();
   } else {
     //defer app script insertion until the body is ready
