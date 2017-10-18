@@ -16,6 +16,7 @@ RUN apt-get install -y \
     bzip2 \
     cmake \
     dpkg-sig \
+    expect \
     fakeroot \
     gcc \
     git \

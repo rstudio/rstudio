@@ -26,6 +26,9 @@ trap cleanup EXIT
 echo "Installing signing key from $KEYFILE..."
 gpg --no-default-keyring --secret-keyring=$TMP_KEYRING --import $KEYFILE
 
+echo "Importing passphrase from $PASSFILE..."
+PASSPHRASE=$(cat $PASSFILE)
+
 # scrape out the signing key ID
 KEY_ID=$(gpg --list-secret-keys --no-default-keyring --secret-keyring=$TMP_KEYRING --keyid-format long --with-colons | grep '^sec' | cut --delimiter ':' --fields 5)
 echo "Signing installer $INSTALLER with key $KEY_ID..."
@@ -35,12 +38,13 @@ FILENAME=$(basename "$INSTALLER")
 EXT=${FILENAME##*.}
 
 if [ "$EXT" == "deb" ]; then
-    # TODO: debsigs doesn't currently have a way to manipulate the gpg options
-    # such that it's possible to feed in the passphrase non-interactively
-    # (might have to do something with gpg-agent to make this possible)
-    #
-    # echo "Signing with debsigs..."
-    # debsigs -v --sign=origin --default-key=$KEY_ID --secret-keyring=$TMP_KEYRING $INSTALLER
+    echo "Signing with debsigs..."
+    /usr/bin/expect << EOD
+spawn bash -c "debsigs -v --sign=origin --default-key=$KEY_ID --secret-keyring=$TMP_KEYRING $INSTALLER"
+expect "Enter passphrase:"
+send "$PASSPHRASE\r"
+expect eof
+EOD
 
     echo "Signing with dpkg-sig..."
     dpkg-sig -k $KEY_ID --verbose --sign builder $INSTALLER --gpg-options="--no-default-keyring --secret-keyring=$TMP_KEYRING --passphrase-file $PASSFILE"
@@ -57,7 +61,12 @@ elif [ "$EXT" == "rpm" ]; then
     echo "%_gpg_path $TMP_KEYRING" >> $RPM_MACROS
 
     # perform the actual signature
-    rpmsign -D --addsign $INSTALLER
+    /usr/bin/expect << EOD
+spawn bash -c "rpmsign -D --addsign $INSTALLER"
+expect "Enter passphrase:"
+send "$PASSPHRASE\r"
+expect eof
+EOD
 
     # restore old rpmacros file if we touched it
     rm -f $RPM_MACROS

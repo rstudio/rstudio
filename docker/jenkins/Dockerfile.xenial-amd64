@@ -17,6 +17,7 @@ RUN apt-get update \
     build-essential \
     cmake \
     dpkg-sig \
+    expect \
     fakeroot \
     git-core \
     gpg \
