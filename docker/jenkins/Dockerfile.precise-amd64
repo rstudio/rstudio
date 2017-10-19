@@ -27,7 +27,7 @@ RUN apt-get update \
     expect \
     fakeroot \
     git-core \
-    gpg \
+    gnupg \
     libapparmor1 \
     libbz2-dev \
     libgl1-mesa-dev \

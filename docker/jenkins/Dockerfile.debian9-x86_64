@@ -20,7 +20,7 @@ RUN apt-get install -y \
     fakeroot \
     gcc \
     git \
-    gpg \
+    gnupg \
     gstreamer1.0-plugins-base \
     openjdk-8-jdk  \
     libpam0g-dev \
