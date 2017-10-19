@@ -90,6 +90,8 @@ public class DataImport extends Composite
    private final DataImportModes dataImportMode_;
    
    private JavaScriptObject localFiles_;
+
+   private int assembleCount_ = 0;
    
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
@@ -650,12 +652,17 @@ public class DataImport extends Composite
    
    private void assembleDataImport(final Operation onComplete)
    {
+      int assembleIndex = assembleCount_;
+
       server_.assembleDataImport(getOptions(),
             new ServerRequestCallback<DataImportAssembleResponse>()
       {
          @Override
          public void onResponseReceived(DataImportAssembleResponse response)
          {
+            if (assembleIndex < assembleCount_) return;
+            assembleCount_++;
+
             if (response.getErrorMessage() != null)
             {
                progressIndicator_.onError(response.getErrorMessage());
@@ -681,6 +688,8 @@ public class DataImport extends Composite
          @Override
          public void onError(ServerError error)
          {
+            assembleCount_++;
+
             Debug.logError(error);
             globalDisplay_.showErrorMessage(codePreviewErrorMessage_, error.getMessage());
          }
