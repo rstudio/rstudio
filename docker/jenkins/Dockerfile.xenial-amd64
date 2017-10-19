@@ -16,6 +16,7 @@ RUN apt-get update \
     apparmor-utils \
     build-essential \
     cmake \
+    debsigs \
     dpkg-sig \
     expect \
     fakeroot \
