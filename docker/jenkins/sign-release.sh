@@ -41,11 +41,27 @@ function cleanup {
 }
 trap cleanup EXIT
 
+# this script only works with GnuPG 1.4 and 2.0; in 2.1 all the secret
+# management happens in gpg-agent, which is much less amenable to automation.
+# if the gpg1 binary is present on this machine, then presume that it exists as
+# an alternative to a future, incompatible version, and use it for the "gpg"
+# command by manipulating $PATH.
+GPG1=$(which gpg1)
+if [ "$?" == "0" ]; then 
+    # emit notice
+    GPG2=$(which gpg)
+    echo "Note: Using $GPG1 to provide GnuPG (was $GPG2)"
+    # softlink gpg into our temporary work folder
+    ln -s $GPG1 $TMP_KEYRING_DIR/gpg
+    export PATH=$TMP_KEYRING_DIR:$PATH
+fi
+
+echo "Using GPG version: "
+gpg --version
+
 # import signing key
 echo "Installing signing key from $KEYFILE..."
 gpg --no-default-keyring --keyring=$TMP_PUB_KEYRING --secret-keyring=$TMP_SEC_KEYRING --import $KEYFILE
-
-echo "Importing passphrase from $PASSFILE..."
 PASSPHRASE=$(cat $PASSFILE)
 
 # scrape out the signing key ID
