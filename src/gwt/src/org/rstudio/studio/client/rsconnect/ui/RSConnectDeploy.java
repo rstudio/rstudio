@@ -632,7 +632,7 @@ public class RSConnectDeploy extends Composite
    {
       if (accountList_.isVisible())
          return accountList_.getSelectedAccount();
-      else if (accountEntry_.isVisible())
+      else if (accountEntryPanel_.isVisible())
          return accountEntry_.getAccount();
       else
          return null;
@@ -720,7 +720,7 @@ public class RSConnectDeploy extends Composite
    private void setSingleAccount(RSConnectAccount account)
    {
       accountEntry_.setAccount(account);
-      accountEntry_.setVisible(true);
+      accountEntryPanel_.setVisible(true);
    }
    
    private void populateAccountList(final ProgressIndicator indicator,
@@ -770,7 +770,7 @@ public class RSConnectDeploy extends Composite
 
       // populate the accounts in the UI (the account display widget filters
       // based on account criteria)
-      accountEntry_.setVisible(false);
+      accountEntryPanel_.setVisible(false);
       publishToLabel_.setVisible(false);
       int numAccounts = setAccountList(accounts);
 
@@ -1257,6 +1257,7 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel rootPanel_;
    @UiField HTMLPanel appErrorPanel_;
+   @UiField HTMLPanel accountEntryPanel_;
    @UiField Image deployIllustration_;
    @UiField Image descriptionImage_;
    @UiField InlineLabel deployLabel_;
