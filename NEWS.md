@@ -7,6 +7,7 @@
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
 * Add ability to search for displayed database objects in Connections tab (#1549)
+* Linux desktop and server releases are now [signed with GPG](https://www.rstudio.com/code-signing/) (#1619)
 
 ### Bug Fixes
 
@@ -16,6 +17,9 @@
 * Fix HTTP 500 error when navigating to directories such as /js/ (#1561)
 * Fix inability to sign out when using a new browser window and "stay signed in" (#1538)
 * Fix issue where Build pane would get 'stuck' on failed Rcpp::compileAttributes() call (#1601)
+* Fix low/no-contrast colors with HTML widgets in notebooks with a dark theme (#1615)
+* Fix invalid YAML in some cases when changing R Markdown output type via dialog (#1609)
+* Fix issue preventing Compile Report from R Script to export to PDF (#1631)
 
 ### RStudio Server Pro
 
@@ -24,3 +28,5 @@
 * Added support for auth-pam-sessions-use-password option in a load balanced setup.
 * Added ability to suspend sessions from user home page.
 * Added hmac signature verification for proxy auth mode with new auth-proxy-require-hmac option in rserver.conf.
+
+

@@ -15,12 +15,13 @@ RUN apt-get install -y \
     libboost-all-dev \
     bzip2 \
     cmake \
+    debsigs \
     dpkg-sig \
     expect \
     fakeroot \
     gcc \
     git \
-    gpg \
+    gnupg1 \
     gstreamer1.0-plugins-base \
     openjdk-8-jdk  \
     libpam0g-dev \

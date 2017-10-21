@@ -243,7 +243,7 @@ public class TextEditingTargetRMarkdownHelper
          @Override
          public void execute(CompileNotebookv2Options input)
          { 
-            renderNotebookv2(sourceDoc, null, input.getFormat());
+            renderNotebookv2(sourceDoc, input.getFormat(), null);
             
             // save options for this document
             HashMap<String, String> changedProperties 
