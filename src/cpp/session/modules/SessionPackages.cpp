@@ -55,7 +55,9 @@ namespace {
 
 bool isSecure(const std::string& url)
 {
-   return boost::algorithm::starts_with(url, "https");
+   // both https URLs and local file URLs are cosnidered secure
+   return boost::algorithm::starts_with(url, "https:") ||
+          boost::algorithm::starts_with(url, "file:");
 }
 
 void insecureReposURLWarning(const std::string& url,
