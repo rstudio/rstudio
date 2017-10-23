@@ -44,12 +44,23 @@ def compile_package(type, flavor, variant) {
 }
 
 def s3_upload(type, flavor, os, arch) {
+  // get package name from filesystem
+  def buildFolder = "package/linux/build-${flavor.capitalize()}-${type}"
+  def packageFile = sh (
+    script: "basename `ls ${buildFolder}/rstudio-*.${type.toLowerCase()}`",
+    returnStdout: true
+  ).trim()
+
   // copy installer to s3
-  sh "aws s3 cp package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-      sh "aws s3 cp package/linux/build-${flavor.capitalize()}-${type}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  }
+
+  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
   }
 }
 
