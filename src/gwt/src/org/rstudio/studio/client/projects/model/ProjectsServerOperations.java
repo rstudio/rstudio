@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.server.Void;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;

@@ -155,6 +155,14 @@ core::system::ProcessSupervisor& processSupervisor()
    return instance;
 }
    
+core::Error runProgram(const std::string& executable,
+                       const std::vector<std::string>& args,
+                       const core::system::ProcessOptions& options,
+                       const core::system::ProcessCallbacks& cb)
+{
+   return processSupervisor().runProgram(executable, args, options, cb);
+}
+   
 bool supportsFullscreenMode(NSWindow* window)
 {
    return [window respondsToSelector:@selector(toggleFullScreen:)];
