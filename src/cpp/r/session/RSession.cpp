@@ -1725,7 +1725,7 @@ void quit(bool saveWorkspace, int status)
       LOG_ERROR_MESSAGE(quitErr);
    }
  #else
-   Error error = r::exec::RFunction("q", save, status, true).call();
+   Error error = r::exec::RFunction("base:::q", save, status, true).call();
    if (error)
    {
       REprintf((r::endUserErrorMessage(error) + "\n").c_str());
