@@ -45,9 +45,20 @@ pipeline {
     stage('upload') {
       steps {
         script {
+          // extract name of package to publish
+          def packageFile = sh (
+            script: "basename `ls package/osx/build/RStudio-*.${type.toLowerCase()}`",
+            returnStdout: true
+          ).trim()
+
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-            sh 'aws s3 cp package/osx/build/RStudio-* s3://rstudio-ide-build/desktop/macos/'
+            sh "aws s3 cp package/osx/build/${packageFile} s3://rstudio-ide-build/desktop/macos/"
+          }
+
+          // upload daily build redirects
+          withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+            sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} ${wwwRstudioOrgPem}"
           }
         }
       }
