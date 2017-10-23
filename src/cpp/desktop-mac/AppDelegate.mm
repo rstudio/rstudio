@@ -380,7 +380,7 @@ bool prepareEnvironment(Options& options)
       return;
    }
    
-   // initailize the session launcher and launch the first session
+   // initialize the session launcher and launch the first session
    sessionLauncher().init(sessionPath, confPath);
    error = sessionLauncher().launchFirstSession(filename);
    if (error)
@@ -447,6 +447,8 @@ bool prepareEnvironment(Options& options)
    
    // cleanup
    sessionLauncher().cleanupAtExit();
+   
+   utils::processSupervisor().terminateAll();
 }
 
 - (BOOL) canBecomeKeyWindow

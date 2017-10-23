@@ -51,15 +51,6 @@ bool DesktopActivation::getInitialLicense(const core::FilePath& installPath, boo
    return true;
 }
 
-void DesktopActivation::onLicenseManagerExited(int exitCode, QProcess::ExitStatus exitStatus)
-{
-
-}
-
-void DesktopActivation::onUpdateLicenseState()
-{
-}
-
 void DesktopActivation::showLicenseDialog()
 {
 }

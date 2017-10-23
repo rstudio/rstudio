@@ -51,13 +51,6 @@ public:
    std::string licenseStatus();
 
    void showLicenseDialog();
-
-public slots:
-   void onLicenseManagerExited(int exitCode, QProcess::ExitStatus exitStatus);
-   void onUpdateLicenseState();
-
-signals:
-   void licenseLost(QString licenseMessage);
 };
 
 } // namespace activation
