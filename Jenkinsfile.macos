@@ -47,7 +47,7 @@ pipeline {
         script {
           // extract name of package to publish
           def packageFile = sh (
-            script: "basename `ls package/osx/build/RStudio-*.${type.toLowerCase()}`",
+            script: "basename `ls package/osx/build/RStudio-*.dmg`",
             returnStdout: true
           ).trim()
 
