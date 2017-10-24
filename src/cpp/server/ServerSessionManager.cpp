@@ -114,10 +114,6 @@ core::system::ProcessConfig sessionProcessConfig(
                               context.scope.id()));
    }
 
-   // log to stderr if we aren't daemonized
-   if (!options.serverDaemonize())
-      args.push_back(std::make_pair("--log-stderr", "1"));
-
    // pass extra params
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 

@@ -91,7 +91,7 @@ public:
 
    bool logStderr() const
    {
-      return allowFullUI() ? logStderr_ : false;
+      return logStderr_;
    }
    
    // agreement
