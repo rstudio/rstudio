@@ -20,6 +20,7 @@
 #include <vector>
 #include <map>
 
+#include <boost/asio/buffer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -160,6 +161,8 @@ void fileRequestHandler(const std::string& wwwLocalPath,
                         const std::string& baseUri,
                         const core::http::Request& request,
                         core::http::Response* pResponse);
+
+std::string formatMessageAsHttpChunk(const std::string& message);
 
 } // namespace util
 

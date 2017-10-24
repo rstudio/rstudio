@@ -16,6 +16,7 @@
 
 #include <core/http/Util.hpp>
 
+#include <ios>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -460,6 +461,15 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    // return requested file
    pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
+}
+
+std::string formatMessageAsHttpChunk(const std::string& message)
+{
+   // format message as an HTTP chunk
+   // the format is <Chunk size (hex)>CRLF<Chunk data>CRLF
+   std::stringstream sstr;
+   sstr << std::hex << message.size() << "\r\n" << message << "\r\n";
+   return sstr.str();
 }
 
 

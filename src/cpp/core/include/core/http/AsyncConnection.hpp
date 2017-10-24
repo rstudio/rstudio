@@ -61,7 +61,16 @@ public:
    // simple wrappers for writing an existing response or error
    virtual void writeResponse(const http::Response& response,
                               bool close = true) = 0;
+
+   // writes only the headers and not any body data
+   // useful for chunked encoding (streaming)
+   // after successful write, the handler callback is invoked
+   // allowing you to start writing to the raw socket for streaming purposes
+   virtual void writeResponseHeaders(Socket::Handler handler) = 0;
+
    virtual void writeError(const Error& error) = 0;
+
+   virtual void close() = 0;
 };
 
 } // namespace http

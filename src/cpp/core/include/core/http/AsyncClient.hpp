@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_ASYNC_CLIENT_HPP
 #define CORE_HTTP_ASYNC_CLIENT_HPP
 
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -34,6 +35,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
+#include <core/http/ChunkParser.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/ResponseParser.hpp>
@@ -58,6 +60,10 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+// chunked handler for reading chunked encoding chunks
+// ONLY used for responses that return chunked encoding
+typedef boost::function<void(const http::Response&, const std::string&)> ChunkHandler;
+
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
 
@@ -73,7 +79,8 @@ public:
                bool logToStderr = false)
       : ioService_(ioService),
         connectionRetryContext_(ioService),
-        logToStderr_(logToStderr)
+        logToStderr_(logToStderr),
+        chunkedEncoding_(false)
    {
    }
 
@@ -94,11 +101,13 @@ public:
 
    // execute the async client
    void execute(const ResponseHandler& responseHandler,
-                const ErrorHandler& errorHandler)
+                const ErrorHandler& errorHandler,
+                const ChunkHandler& chunkHandler = ChunkHandler())
    {
       // set handlers
       responseHandler_ = responseHandler;
       errorHandler_ = errorHandler;
+      chunkHandler_ = chunkHandler;
 
       // connect and write request (implmented in a protocol
       // specific manner by subclassees)
@@ -116,6 +125,7 @@ public:
    {
       responseHandler_ = ResponseHandler();
       errorHandler_ = ErrorHandler();
+      chunkHandler_ = ChunkHandler();
    }
 
    // satisfy lower-level http::Socket interface (used when the client
@@ -409,6 +419,26 @@ private:
             // parse headers
             ResponseParser::parseHeaders(&responseBuffer_, &response_);
 
+            // if this is chunked encoding, start processing chunks
+            if (response_.headerValue(kTransferEncoding) == kChunkedTransferEncoding &&
+                response_.contentLength() == 0)
+            {
+               chunkedEncoding_ = true;
+
+               // we have some chunk data to process
+               if (responseBuffer_.size() > 0)
+               {
+                  processChunks();
+                  return;
+               }
+               else
+               {
+                  // no chunk data yet - keep reading
+                  readSomeContent();
+                  return;
+               }
+            }
+
             // append any lefover buffer contents to the body
             if (responseBuffer_.size() > 0)
                ResponseParser::appendToBody(&responseBuffer_, &response_);
@@ -430,6 +460,14 @@ private:
       {
          if (!ec)
          {
+            // if we are parsing chunked encoding, process this data
+            // as chunk data
+            if (chunkedEncoding_)
+            {
+               processChunks();
+               return;
+            }
+
             // copy content
             ResponseParser::appendToBody(&responseBuffer_, &response_);
 
@@ -449,6 +487,52 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   void processChunks()
+   {
+      if (!chunkParser_)
+      {
+         // lazy init the parser - this is done because the vast majority of responses
+         // are NOT chunked encoding
+         chunkParser_.reset(new ChunkParser());
+      }
+
+      // get the underlying bytes from the response buffer
+      const char* bufferPtr = boost::asio::buffer_cast<const char*>(responseBuffer_.data());
+
+      // parse the bytes into chunks
+      std::vector<std::string> chunks;
+      bool complete = chunkParser_->parse(bufferPtr, responseBuffer_.size(), &chunks);
+
+      // process any completed chunks
+      BOOST_FOREACH(const std::string& chunk, chunks)
+      {
+         if (chunkHandler_)
+            chunkHandler_(response_, chunk);
+         else
+         {
+            // no chunk handler supplied, so caller expects to receive all chunks
+            // in one shot when the request finishes - simply append chunk to final response
+            ResponseParser::appendToBody(chunk, &response_);
+         }
+      }
+
+      if (!complete)
+      {
+         // more chunks to come - keep reading
+
+         // we must explicitly consume the underlying buffer to ensure that
+         // subsequent reads are read into the beginning of the buffer and not the end
+         responseBuffer_.consume(responseBuffer_.size());
+
+         readSomeContent();
+      }
+      else
+      {
+         // no more chunks
+         closeAndRespond();
+      }
+   }
+
    virtual bool isShutdownError(const boost::system::error_code& ec)
    {
       return false;
@@ -459,8 +543,10 @@ private:
       if (!keepConnectionAlive())
          close();
 
-      if (responseHandler_)
+      if (responseHandler_ && (!chunkedEncoding_ || !chunkHandler_))
          responseHandler_(response_);
+      else if (chunkHandler_)
+         chunkHandler_(response_, ""); // completion of chunks signified by empty chunk
    }
 
    void logError(const Error& error) const
@@ -501,6 +587,9 @@ private:
    ErrorHandler errorHandler_;
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
+   boost::shared_ptr<ChunkParser> chunkParser_;
+   ChunkHandler chunkHandler_;
+   bool chunkedEncoding_;
 };
    
 

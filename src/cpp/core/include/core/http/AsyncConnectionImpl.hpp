@@ -117,6 +117,14 @@ public:
       writeResponse(close);
    }
 
+   virtual void writeResponseHeaders(Socket::Handler handler)
+   {
+      response_.setHeader("Date", util::httpDate());
+
+      // write only the header buffers
+      boost::asio::async_write(socket_, response_.headerBuffers(), handler);
+   }
+
    virtual void writeError(const Error& error)
    {
       response_.setError(error);

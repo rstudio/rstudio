@@ -1014,25 +1014,25 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
                                                            _2));
    }
 
-   void beginWriteStdIn()
+
+   void beginWriteStdIn(const boost::unique_lock<boost::mutex>& lock)
    {
-      LOCK_MUTEX(mutex_)
-      {
-         if (exited_) return;
+      // requires prior synchronization
+      BOOST_ASSERT(lock.owns_lock());
 
-         if (writeBuffer_.empty()) return;
+      if (exited_) return;
 
-         std::pair<std::string, bool>& writeData = writeBuffer_.front();
-         std::string& input = writeData.first;
-         bool eof = writeData.second;
+      if (writeBuffer_.empty()) return;
 
-         stdInDescriptor_.async_write_some(boost::asio::buffer(input, input.size()),
-                                           boost::bind(&Impl::writeCallback,
-                                                       boost::weak_ptr<Impl>(shared_from_this()),
-                                                       boost::asio::placeholders::error,
-                                                       eof));
-      }
-      END_LOCK_MUTEX
+      std::pair<std::string, bool>& writeData = writeBuffer_.front();
+      std::string& input = writeData.first;
+      bool eof = writeData.second;
+
+      stdInDescriptor_.async_write_some(boost::asio::buffer(input, input.size()),
+                                        boost::bind(&Impl::writeCallback,
+                                                    boost::weak_ptr<Impl>(shared_from_this()),
+                                                    boost::asio::placeholders::error,
+                                                    eof));
    }
 
    static void stdOutCallback(const boost::weak_ptr<Impl>& instance,
@@ -1098,19 +1098,20 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    void onWriteStdIn(boost::system::error_code ec, bool eof)
    {
-      LOCK_MUTEX(mutex_)
-      {
-         if (exited_) return;
+      boost::unique_lock<boost::mutex> lock(mutex_);
 
-         // free the message that was just written
-         // we do this here because the message has to exist in memory
-         // for the entire duration of the asynchronous write
-         writeBuffer_.pop();
-      }
-      END_LOCK_MUTEX
+      if (exited_) return;
+
+      // free the message that was just written
+      // we do this here because the message has to exist in memory
+      // for the entire duration of the asynchronous write
+      writeBuffer_.pop();
 
       if (ec)
+      {
+         lock.unlock();
          return handleError(ec);
+      }
 
       if (eof)
       {
@@ -1120,7 +1121,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       else
       {
          // continue writing until our write queue is drained
-         beginWriteStdIn();
+         beginWriteStdIn(lock);
       }
    }
 
@@ -1131,17 +1132,15 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    {
       bool beginWriting = false;
 
-      LOCK_MUTEX(mutex_)
-      {
-         if (exited_) return;
+      boost::unique_lock<boost::mutex> lock(mutex_);
 
-         beginWriting = writeBuffer_.empty();
-         writeBuffer_.push(std::make_pair(input, eof));
-      }
-      END_LOCK_MUTEX
+      if (exited_) return;
+
+      beginWriting = writeBuffer_.empty();
+      writeBuffer_.push(std::make_pair(input, eof));
 
       if (beginWriting)
-         beginWriteStdIn();
+         beginWriteStdIn(lock);
    }
 
    void handleError(boost::system::error_code ec)

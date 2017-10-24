@@ -81,6 +81,7 @@ set (CORE_SOURCE_FILES
    http/Header.cpp
    http/Message.cpp
    http/MultipartRelated.cpp
+   http/ChunkParser.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
