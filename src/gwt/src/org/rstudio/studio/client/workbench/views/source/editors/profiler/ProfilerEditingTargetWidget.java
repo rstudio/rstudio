@@ -151,6 +151,8 @@ public class ProfilerEditingTargetWidget extends Composite
       
       toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
       toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.openProfileInBrowser().createToolbarButton());
       
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(

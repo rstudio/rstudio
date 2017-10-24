@@ -358,7 +358,7 @@ public abstract class
    public abstract AppCommand activatePackages();
    public abstract AppCommand layoutZoomPackages();
    
-   // // packrat
+   // packrat
    public abstract AppCommand packratBootstrap();
    public abstract AppCommand packratOptions();
    public abstract AppCommand packratBundle();
@@ -381,6 +381,7 @@ public abstract class
    public abstract AppCommand openProfile();
    public abstract AppCommand profileHelp();
    public abstract AppCommand gotoProfileSource();
+   public abstract AppCommand openProfileInBrowser();
    
    // Tools
    public abstract AppCommand showShellDialog();
