@@ -1134,22 +1134,21 @@ assign(x = ".rs.acCompletionTypes",
          dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
          if (is.function(dollarNamesMethod))
          {
-            allNames <- dollarNamesMethod(object)
+            allNames <- dollarNamesMethod(object, "")
             
-            # rJava will include closing parentheses as part of the
-            # completion list -- clean those up and use them to infer
-            # symbol types
-            if ("rJava" %in% loadedNamespaces() &&
-                identical(environment(dollarNamesMethod), asNamespace("rJava")))
-            {
-               types <- ifelse(
-                  grepl("[()]$", allNames),
-                  .rs.acCompletionTypes$FUNCTION,
-                  .rs.acCompletionTypes$UNKNOWN
-               )
-               allNames <- gsub("[()]*$", "", allNames)
-               attr(allNames, "types") <- types
-            }
+            # detect completion systems that append closing parentheses
+            # to the completion item, and assume those are functions
+            # rJava and Rcpp will do this for some objects
+            # for example:
+            # - rJava:::.DollarNames.jobjref
+            # - Rcpp:::.DollarNames.C++Object
+            types <- ifelse(
+               grepl("[()]\\s*$", allNames),
+               .rs.acCompletionTypes$FUNCTION,
+               .rs.acCompletionTypes$UNKNOWN
+            )
+            allNames <- gsub("[()]*\\s*$", "", allNames)
+            attr(allNames, "types") <- as.integer(types)
             
             # check for custom helpHandler
             helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
