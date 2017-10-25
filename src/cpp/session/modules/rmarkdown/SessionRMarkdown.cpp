@@ -44,6 +44,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -426,6 +427,13 @@ private:
          if (!workingDir.empty())
             working = module_context::resolveAliasedPath(workingDir);
 
+         // tell the user the command we're using to render the doc if requested
+         if (userSettings().showRmdRenderCommand())
+         {
+            onRenderOutput(module_context::kCompileOutputNormal, "==> " + cmd + "\n");
+         }
+
+         // start the render process
          async_r::AsyncRProcess::start(cmd.c_str(), environment, working,
                                        async_r::R_PROCESS_NO_RDATA);
       }

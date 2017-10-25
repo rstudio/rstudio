@@ -110,6 +110,7 @@ public:
    bool terminalTrackEnv() const;
    core::system::busy_detection::Mode terminalBusyMode() const;
    std::vector<std::string> terminalBusyWhitelist() const;
+   bool showRmdRenderCommand() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -272,6 +273,7 @@ private:
    mutable boost::scoped_ptr<bool> pTerminalTrackEnv_;
    mutable boost::scoped_ptr<int> pTerminalBusyMode_;
    mutable boost::scoped_ptr<core::json::Array> pTerminalBusyWhitelist_;
+   mutable boost::scoped_ptr<bool> pShowRmdRenderCommand_;
 
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

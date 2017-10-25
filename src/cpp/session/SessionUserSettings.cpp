@@ -413,6 +413,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int terminalBusyMode = readPref<int>(prefs, "busy_detection", core::system::busy_detection::Always);
    pTerminalBusyMode_.reset(new int(terminalBusyMode));
 
+   bool showRmdRenderCommand = readPref<bool>(prefs, "show_rmd_render_command", false);
+   pShowRmdRenderCommand_.reset(new bool(showRmdRenderCommand));
+
    core::json::Array defWhitelist;
    defWhitelist.push_back("tmux");
    defWhitelist.push_back("screen");
@@ -642,6 +645,11 @@ bool UserSettings::terminalAutoclose() const
 bool UserSettings::terminalTrackEnv() const
 {
    return readUiPref<bool>(pTerminalTrackEnv_);
+}
+
+bool UserSettings::showRmdRenderCommand() const
+{
+   return readUiPref<bool>(pShowRmdRenderCommand_);
 }
 
 core::system::busy_detection::Mode UserSettings::terminalBusyMode() const

@@ -125,6 +125,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          knitWorkingDir_ = null;
       }
       
+      final CheckBox showRmdRenderCommand = checkboxPref(
+            "Display render command in R Markdown tab",
+            prefs_.showRmdRenderCommand());
+      add(showRmdRenderCommand);
+      
       add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk

@@ -623,6 +623,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("terminal_track_env", true);
    }
+   
+   public PrefValue<Boolean> showRmdRenderCommand()
+   {
+      return bool("show_rmd_render_command", false);
+   }
 
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;
