@@ -23,6 +23,8 @@
 * Fix invalid YAML in some cases when changing R Markdown output type via dialog (#1609)
 * Fix issue preventing Compile Report from R Script to export to PDF (#1631)
 * Fix error when quitting while a function named `q()` is present (#1647)
+* Fix crash when executing multiple R Notebook chunks with a failing Rcpp chunk (#1668)
+* Fix missing blank lines in code chunks in R Notebook preview (#1556)
 
 ### RStudio Server Pro
 
