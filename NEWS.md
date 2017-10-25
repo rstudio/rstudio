@@ -8,6 +8,8 @@
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
 * Add ability to search for displayed database objects in Connections tab (#1549)
 * Linux desktop and server releases are now [signed with GPG](https://www.rstudio.com/code-signing/) (#1619)
+* Add button to open profiler output in an external browser (#1657)
+* Add option to show the R Markdown render command used when knitting (#1658)
 
 ### Bug Fixes
 
@@ -20,6 +22,7 @@
 * Fix low/no-contrast colors with HTML widgets in notebooks with a dark theme (#1615)
 * Fix invalid YAML in some cases when changing R Markdown output type via dialog (#1609)
 * Fix issue preventing Compile Report from R Script to export to PDF (#1631)
+* Fix error when quitting while a function named `q()` is present (#1647)
 
 ### RStudio Server Pro
 
