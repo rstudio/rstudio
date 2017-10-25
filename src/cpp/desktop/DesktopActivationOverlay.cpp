@@ -55,6 +55,11 @@ void DesktopActivation::showLicenseDialog()
 {
 }
 
+bool DesktopActivation::hasLicenseLostSignal() const
+{
+   return false;
+}
+
 } // namespace activation
 } // namespace desktop
 } // namespace rstudio
