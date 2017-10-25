@@ -437,11 +437,16 @@ private:
             execUnit_ = unit;
 
             enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
-            error = executeAlternateEngineChunk(
+
+            // actually execute the chunk with the alternate engine; store the error separately
+            // and log if necessary
+            Error execError = executeAlternateEngineChunk(
                unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
                engine, innerCode, options.mergedOptions());
-            if (error)
-               LOG_ERROR(error);
+            if (execError)
+            {
+               LOG_ERROR(execError);
+            }
          }
       }
 
