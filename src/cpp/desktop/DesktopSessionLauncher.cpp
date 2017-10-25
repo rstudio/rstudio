@@ -148,10 +148,13 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
-   pMainWindow_->connect(&activation::activation(),
-                         SIGNAL(licenseLost(QString)),
-                         pMainWindow_,
-                         SLOT(onLicenseLost(QString)));
+   if (activation::activation().hasLicenseLostSignal())
+   {
+      pMainWindow_->connect(&activation::activation(),
+                           SIGNAL(licenseLost(QString)),
+                           pMainWindow_,
+                           SLOT(onLicenseLost(QString)));
+   }
 
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
