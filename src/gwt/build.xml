@@ -15,34 +15,44 @@
 
 <project name="client" default="build" basedir=".">
 
+   <!-- configure dirs -->
+   <property name="src.dir" value="./src"/>        <!-- main Java sources -->
+   <property name="test.dir" value="./test"/>      <!-- Java sources for tests -->
+   <property name="www.dir" value="./www"/>        <!-- output folder for www artifacts (HTML, etc.) -->
+   <property name="build.dir" value="./bin"/>      <!-- output folder for compiled classes -->
+   <property name="lib.dir" value="./lib"/>        <!-- libraries (GWT, GIN, etc. -->
+   <property name="tools.dir" value="./tools"/>    <!-- other tools -->
+   <property name="extras.dir" value="./extras"/>  <!-- extras: symbol maps, etc. -->
+
    <taskdef name="jscomp"
             classname="com.google.javascript.jscomp.ant.CompileTask"
-            classpath="./tools/compiler/compiler.jar"/>
+            classpath="${tools.dir}/compiler/compiler.jar"/>
+
    <!-- Configure path to GWT SDK -->
-   <property name="gwt.sdk" value="lib/gwt/2.8.1"/>
+   <property name="gwt.sdk" value="${lib.dir}/gwt/2.8.1"/>
 
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
-   <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
+   <property name="ace.bin" value="${src.dir}/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
 
    <path id="project.class.path">
       <pathelement location="bin"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
-      <fileset dir="lib/gin/2.1.2" includes="*.jar"/>
+      <fileset dir="${lib.dir}/gin/2.1.2" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">
       <pathelement location="bin"/>
-      <fileset dir="lib/selenium/2.37.0" includes="*.jar"/>
-      <fileset dir="lib/selenium/2.37.0/libs" includes="*.jar"/>
+      <fileset dir="${lib.dir}/selenium/2.37.0" includes="*.jar"/>
+      <fileset dir="${lib.dir}/selenium/2.37.0/libs" includes="*.jar"/>
    </path>
 
    <path id="unittest.class.path">
-      <fileset dir="lib/" includes="*.jar"/>
+       <fileset dir="${lib.dir}/" includes="*.jar"/>
    </path>
 
    <fileset id="acesupport.sources.fileset" dir="acesupport">
-      <include name="**/*.js"/>
+      <include name="${src.dir}/**/*.js"/>
       <exclude name="extern.js"/>
    </fileset>
 
@@ -71,19 +81,19 @@
    </target>
 
    <target name="javac" description="Compile java source">
-      <mkdir dir="bin"/>
+      <mkdir dir="${build.dir}"/>
       <!-- Compile com.google stuff separately from org.rstudio stuff since
          theirs have lots of deprecation warnings we can't do anything about -->
-      <javac srcdir="src" includes="com/google/**" encoding="utf-8"
-             destdir="bin"
+      <javac srcdir="${src.dir}" includes="com/google/**" encoding="utf-8"
+             destdir="${build.dir}"
              source="1.8" target="1.8" nowarn="true" deprecation="false"
              debug="true" debuglevel="lines,vars,source"
              includeantruntime="false">
          <classpath refid="project.class.path"/>
          <compilerarg value="-Xlint:-deprecation"/>
       </javac>
-      <javac srcdir="src" includes="org/rstudio/**" encoding="utf-8"
-             destdir="bin"
+      <javac srcdir="${src.dir}" includes="org/rstudio/**" encoding="utf-8"
+             destdir="${build.dir}"
              source="1.8" target="1.8" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
              includeantruntime="false"
@@ -94,20 +104,20 @@
          <compilerarg value="-J-Xmx512m"/>
       </javac>
       <copy todir="bin">
-         <fileset dir="src" excludes="**/*.java"/>
+         <fileset dir="${src.dir}" excludes="**/*.java"/>
       </copy>
    </target>
 
    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
          <classpath>
-            <pathelement location="src"/>
+            <pathelement location="${src.dir}"/>
             <path refid="project.class.path"/>
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
          <jvmarg value="-Xmx1536M"/>
          <arg value="-war"/>
-         <arg value="www"/>
+         <arg value="${www.dir}"/>
          <arg value="-localWorkers"/>
          <arg value="2"/>
          <arg value="-XdisableClassMetadata"/>
@@ -115,7 +125,7 @@
          <arg line="-strict"/>
          <arg line="-gen gen"/>
          <!--<arg line="-style PRETTY"/>-->
-         <arg line="-extra extras"/>
+         <arg line="-extra ${extras.dir}"/>
          <arg line="${gwt.extra.args}"/>
          <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="${gwt.main.module}"/>
@@ -128,7 +138,7 @@
          <param name="gwt.extra.args" value="${gwt.extra.args} -compileReport"/>
       </antcall>
       <exec executable="open" os="Mac OS X">
-         <arg file="extras/rstudio/soycReport/compile-report/index.html"/>
+         <arg file="${extras.dir}/rstudio/soycReport/compile-report/index.html"/>
       </exec>
    </target>
 
@@ -142,7 +152,7 @@
    <target name="desktop" depends="acesupport,javac" description="Run development mode">
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
          <classpath>
-            <pathelement location="src"/>
+            <pathelement location="${src.dir}"/>
             <path refid="project.class.path"/>
          </classpath>
          <jvmarg value="-Xmx2048M"/>
@@ -151,7 +161,7 @@
          <arg value="-XmethodNameDisplayMode"/>
          <arg value="ABBREVIATED"/>
          <arg value="-war"/>
-         <arg value="www"/>
+         <arg value="${www.dir}"/>
          <arg value="-noserver"/>
          <arg value="-startupUrl"/>
          <arg value="http://localhost:8787"/>
@@ -172,7 +182,7 @@
          <arg value="-XmethodNameDisplayMode"/>
          <arg value="ABBREVIATED"/>
          <arg value="-war"/>
-         <arg value="www"/>
+         <arg value="${www.dir}"/>
          <arg value="-noserver"/>
          <arg value="-startupUrl"/>
          <arg value="http://localhost:8787"/>
@@ -194,32 +204,32 @@
          <jvmarg value="-Xmx2048M"/>
       	<arg value="-src"/>
       	<arg value = "src"/>
-         <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
+        <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
 
    <target name="build" depends="gwtc" description="Build this project" />
 
    <target name="clean" description="Cleans this project">
-      <delete dir="bin" failonerror="false" />
+      <delete dir="${build.dir}" failonerror="false" />
       <delete dir="gwt-unitCache" failonerror="false" />
-      <delete dir="www/rstudio" failonerror="false" />
+      <delete dir="${www.dir}/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
-      <delete dir="extras" failonerror="false" />
+      <delete dir="${extras.dir}" failonerror="false" />
    </target>
 
    <target name="test" description="Runs Selenium tests" depends="build-tests">
       <parallel>
          <daemons>
-            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-mac" os="Mac OS X" />
-            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-win.exe" os="Windows NT" />
-            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-linux" os="Linux" />
+            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-mac" os="Mac OS X" />
+            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-win.exe" os="Windows NT" />
+            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-linux" os="Linux" />
          </daemons>
          <sequential>
             <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
                <classpath>
-                  <pathelement location="src"/>
+                  <pathelement location="${src.dir}"/>
                   <path refid="test.class.path"/>
                </classpath>
                <arg value="org.rstudio.studio.selenium.RStudioTestSuite"/>
@@ -230,7 +240,7 @@
 
    <target name="build-tests" description="Builds Selenium tests">
       <javac srcdir="test" includes="org/rstudio/studio/selenium/**" encoding="utf-8"
-             destdir="bin"
+             destdir="${build.dir}"
              source="1.8" target="1.8" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
              includeantruntime="false">
@@ -252,8 +262,8 @@
    <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
      <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
         <classpath>
-            <pathelement location="test"/>
-            <pathelement location="src"/>
+            <pathelement location="${test.dir}"/>
+            <pathelement location="${src.dir}"/>
         </classpath>
         <classpath refid="project.class.path"/>
         <classpath refid="unittest.class.path"/>

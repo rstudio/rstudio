@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,28 @@
 cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
+# check for externals
+SET(GWT_LIBS "/opt/rstudio-tools/gwt/lib")
+if(NOT EXISTS GWT_LIBS)
+   SET(GWT_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+endif()
+
+# define output dirs
+set(GWT_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gwt")
+set(GWT_BIN_DIR "${GWT_OUTPUT_DIR}/bin")
+set(GWT_WWW_DIR "${GWT_OUTPUT_DIR}/www")
+set(GWT_EXTRAS "${GWT_OUTPUT_DIR}/extras")
+
 # invoke ant to build
 add_custom_target(gwt_build ALL)
 add_custom_command(
    TARGET gwt_build
    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-   COMMAND ant)
+   COMMAND ant -Dbuild.dir=${GWT_BIN_DIR}
+               -Dwww.dir=${GWT_WWW_DIR}
+               -Dextras.dir=${GWT_EXTRAS_DIR})
 
 # installation rules
-install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-install(DIRECTORY extras/rstudio/symbolMaps/
+install(DIRECTORY "$GWT_WWW_DIR" DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+install(DIRECTORY "$GWT_EXTRAS_DIR/rstudio/symbolMaps/"
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
