@@ -51,6 +51,8 @@ public:
    std::string licenseStatus();
 
    void showLicenseDialog();
+
+   bool hasLicenseLostSignal() const;
 };
 
 } // namespace activation
