@@ -32,7 +32,7 @@ public class BuildCommands
       
       // adapt or remove package commands if this isn't a package
       String type = sessionInfo.getBuildToolsType();
-      if (type == SessionInfo.BUILD_TOOLS_PACKAGE)
+      if (type != SessionInfo.BUILD_TOOLS_PACKAGE)
       {
          commands.devtoolsLoadAll().remove();
          commands.buildSourcePackage().remove();
