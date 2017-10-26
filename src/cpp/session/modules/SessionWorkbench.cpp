@@ -431,19 +431,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().beginUpdate();
    userSettings().setVcsEnabled(vcsEnabled);
 
-   FilePath gitExePath(gitExe);
+   FilePath gitExePath = module_context::resolveAliasedPath(gitExe);
    if (gitExePath == git::detectedGitExePath())
       userSettings().setGitExePath(FilePath());
    else
       userSettings().setGitExePath(gitExePath);
 
-   FilePath svnExePath(svnExe);
+   FilePath svnExePath = module_context::resolveAliasedPath(svnExe);
    if (svnExePath == svn::detectedSvnExePath())
       userSettings().setSvnExePath(FilePath());
    else
       userSettings().setSvnExePath(svnExePath);
 
-   FilePath terminalFilePath(terminalPath);
+   FilePath terminalFilePath = module_context::resolveAliasedPath(terminalPath);
    if (terminalFilePath == detectedTerminalPath())
       userSettings().setVcsTerminalPath(FilePath());
    else
