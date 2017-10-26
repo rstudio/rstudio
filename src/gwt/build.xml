@@ -36,13 +36,13 @@
    <property name="ace.bin" value="${src.dir}/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
 
    <path id="project.class.path">
-      <pathelement location="bin"/>
+     <pathelement location="${build.dir}"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
       <fileset dir="${lib.dir}/gin/2.1.2" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">
-      <pathelement location="bin"/>
+      <pathelement location="{build.dir}"/>
       <fileset dir="${lib.dir}/selenium/2.37.0" includes="*.jar"/>
       <fileset dir="${lib.dir}/selenium/2.37.0/libs" includes="*.jar"/>
    </path>
@@ -103,7 +103,7 @@
          <compilerarg value="-J-Xms256m"/>
          <compilerarg value="-J-Xmx512m"/>
       </javac>
-      <copy todir="bin">
+      <copy todir="${build.dir}">
          <fileset dir="${src.dir}" excludes="**/*.java"/>
       </copy>
    </target>
@@ -250,7 +250,7 @@
 
    <target name="build-unittests" description="Builds JUnit unit tests">
        <javac srcdir="test" includes="org/rstudio/studio/client/**" encoding="utf-8"
-             destdir="bin"
+             destdir="${build.dir}"
              source="1.8" target="1.8" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
              includeantruntime="false">

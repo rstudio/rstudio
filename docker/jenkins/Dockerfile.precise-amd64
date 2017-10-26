@@ -74,7 +74,7 @@ RUN mkdir -p /opt/RStudio-QtSDK && \
 
 # install GWT libs
 COPY dependencies/common/install-gwt /tmp/
-RUN mkdir -p /opt/rstudio-tools/gwt &&
+RUN mkdir -p /opt/rstudio-tools/gwt && \
     /tmp/install-gwt
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
