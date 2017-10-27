@@ -14,12 +14,21 @@
  */
 
 #import <AppKit/NSApplication.h>
+
+#include <core/FilePath.hpp>
+
 #import "ActivationOverlay.h"
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
    NSString* openFile_;
    NSMenu* dockMenu_;
    BOOL initialized_;
+   rstudio::core::FilePath confPath_;
+   rstudio::core::FilePath sessionPath_;
+   std::string filename_;
 }
+
+- (void) launchFirstSession;
+
 @end
 
