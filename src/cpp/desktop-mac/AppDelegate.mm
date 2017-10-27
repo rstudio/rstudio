@@ -299,9 +299,8 @@ bool prepareEnvironment(Options& options)
       if (![openFile isEqualToString: @"none"])
          openFile = verifyAndNormalizeFilename(openFile);
    }
-   std::string filename;
    if (openFile)
-      filename = [openFile UTF8String];
+      filename_ = [openFile UTF8String];
    
    // intialize options
    NSArray* arguments = [[NSProcessInfo processInfo] arguments];
@@ -313,8 +312,8 @@ bool prepareEnvironment(Options& options)
    
    // initialize startup environment
    initializeSharedSecret();
-   initializeWorkingDirectory(filename);
-   initializeStartupEnvironment(&filename);
+   initializeWorkingDirectory(filename_);
+   initializeStartupEnvironment(&filename_);
    desktop::Options& options = desktop::options();
    if (!prepareEnvironment(options))
    {
@@ -333,7 +332,7 @@ bool prepareEnvironment(Options& options)
    }
    
    // calculate paths to config file, rsession, and desktop scripts
-   FilePath confPath, sessionPath, scriptsPath;
+   FilePath scriptsPath;
    BOOL devMode = FALSE;
    
    // check for debug configuration
@@ -341,24 +340,24 @@ bool prepareEnvironment(Options& options)
    FilePath currentPath = FilePath::safeCurrentPath(installPath);
    if (currentPath.complete("conf/rdesktop-dev.conf").exists())
    {
-      confPath = currentPath.complete("conf/rdesktop-dev.conf");
-      sessionPath = currentPath.complete("session/Debug/rsession");
+      confPath_ = currentPath.complete("conf/rdesktop-dev.conf");
+      sessionPath_ = currentPath.complete("session/Debug/rsession");
       scriptsPath = currentPath.complete("desktop-mac");
       devMode = TRUE;
    }
 #endif
    
    // if there is no conf path then release mode
-   if (confPath.empty())
+   if (confPath_.empty())
    {
       // default paths (then tweak)
-      sessionPath = installPath.complete("bin/rsession");
+      sessionPath_ = installPath.complete("bin/rsession");
       scriptsPath = installPath.complete("bin");
       
       // check for running in a bundle
       if (installPath.complete("Info.plist").exists())
       {
-         sessionPath = installPath.complete("MacOS/rsession");
+         sessionPath_ = installPath.complete("MacOS/rsession");
          scriptsPath = installPath.complete("MacOS");
       }
    }
@@ -373,29 +372,13 @@ bool prepareEnvironment(Options& options)
                                     userInfo:nil
                                     repeats: YES];
    
-   if (![[Activation sharedActivation]
+   if ([[Activation sharedActivation]
          getInitialLicenseWithPath: installPath devMode: devMode])
    {
-      [NSApp terminate: self];
+      [self launchFirstSession];
       return;
    }
    
-   // initialize the session launcher and launch the first session
-   sessionLauncher().init(sessionPath, confPath);
-   error = sessionLauncher().launchFirstSession(filename);
-   if (error)
-   {
-      LOG_ERROR(error);
-      
-      std::string msg = sessionLauncher().launchFailedErrorMessage();
-      
-      [NSApp activateIgnoringOtherApps: YES];
-      utils::showMessageBox(NSCriticalAlertStyle,
-                            @"RStudio",
-                            [NSString stringWithUTF8String: msg.c_str()]);
-      [NSApp terminate: self];
-   }
-
    initialized_ = YES;
 }
 
@@ -478,6 +461,25 @@ bool prepareEnvironment(Options& options)
 {
    [NSTask launchedTaskWithLaunchPath: executablePath()
                             arguments: [NSArray array]];
+}
+
+- (void) launchFirstSession
+{
+   // initialize the session launcher and launch the first session
+   sessionLauncher().init(sessionPath_, confPath_);
+   Error error = sessionLauncher().launchFirstSession(filename_);
+   if (error)
+   {
+      LOG_ERROR(error);
+      
+      std::string msg = sessionLauncher().launchFailedErrorMessage();
+      
+      [NSApp activateIgnoringOtherApps: YES];
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"RStudio",
+                            [NSString stringWithUTF8String: msg.c_str()]);
+      [NSApp terminate: self];
+   }
 }
 
 @end

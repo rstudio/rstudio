@@ -101,6 +101,30 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/RStudio.sdef
                  DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
 
+find_program(IBTOOL ibtool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
+if (${IBTOOL} STREQUAL "IBTOOL-NOTFOUND")
+   message(SEND_ERROR "\
+ibtool can not be found and is needed to compile the .xib files. It should have been \
+installed with the Apple developer tools. The default system paths were searched in \
+addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
+else()
+   message(STATUS "Detected MacOS ibtool: ${IBTOOL}")
+endif()
+
+# Make sure the 'Resources' Directory is correctly created before we build
+add_custom_command (TARGET RStudio PRE_BUILD
+COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/RStudio.app/Contents/Resources)
+                      
+# Compile the .xib files with destination being app package
+foreach(xib ${DESKTOP_MAC_XIBS})
+   add_custom_command (TARGET RStudio POST_BUILD
+                       COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text
+                               --compile ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/RStudio.app/Contents/Resources/${xib}.nib
+                               ${CMAKE_CURRENT_SOURCE_DIR}/${xib}.xib
+                       COMMENT "Compiling ${CMAKE_CURRENT_SOURCE_DIR}/${xib}.xib"
+   )
+endforeach()
+
 # enable developer extras
 exec_program(defaults
              ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
