@@ -72,8 +72,26 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
       return error;
 
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
+   if (projectFilePath.exists())
+   {
+      // ensure that the project directory and project file are writeable
+      bool writeable = false;
+      error = core::system::isFileWriteable(projectFilePath, &writeable);
+      if (error)
+         return error;
 
-   pResponse->setResult(projectFilePath.exists());
+      if (writeable)
+      {
+         error = core::system::isFileWriteable(projectFilePath.parent(), &writeable);
+         if (error)
+            return error;
+      }
+
+      pResponse->setResult(writeable);
+   }
+   else
+      pResponse->setResult(false);
+
    return Success();
 }
 

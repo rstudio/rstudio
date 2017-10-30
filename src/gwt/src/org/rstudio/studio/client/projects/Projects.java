@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.projects;
 
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -26,6 +28,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -806,8 +809,26 @@ public class Projects implements OpenProjectFileHandler,
                " owner to request access.";
       }       
       
-      globalDisplay_.showErrorMessage("Error Opening Project", msg);
-       
+      ArrayList<String> buttons = new ArrayList<String>();
+      buttons.add("OK");
+      ArrayList<Operation> ops = new ArrayList<Operation>();
+      ops.add(new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            // close the project by switching to the empty project
+            // this puts us in a known good state instead of hanging
+            // out in a session we shouldn't be using
+            onCloseProject();
+         }
+      });
+      
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showGenericDialog(
+            GlobalDisplay.MSG_ERROR, 
+            "Error Opening Project", 
+            msg, buttons, ops, 0);
+      
       // remove from mru list
       pMRUList_.get().remove(event.getProject());
    }
@@ -847,9 +868,7 @@ public class Projects implements OpenProjectFileHandler,
             else
             {
                // show error dialog
-               String msg = "Project '" + projectFilePath + "' " +
-                            "does not exist (it has been moved or deleted)";
-               globalDisplay_.showErrorMessage("Error Opening Project", msg);
+               showProjectOpenError(projectFilePath);
                 
                // remove from mru list
                pMRUList_.get().remove(projectFilePath);
@@ -941,25 +960,68 @@ public class Projects implements OpenProjectFileHandler,
                      if (input == null || input.getProjectFile() == null)
                         return;
                      
-                     if (input.inNewSession())
+                     String projectPath = input.getProjectFile().getPath();
+                     
+                     // lambda to invoke to actually open the project
+                     final Runnable openProject = ()-> 
                      {
-                        // open new window if requested
-                        eventBus_.fireEvent(
-                            new OpenProjectNewWindowEvent(
-                                  input.getProjectFile().getPath(),
-                                  input.getRVersion()));
-                     }
-                     else
-                     {
-                        // perform quit
-                        applicationQuit_.performQuit(saveChanges,
-                              input.getProjectFile().getPath());
-                     }
+                        if (input.inNewSession())
+                        {
+                           // open new window if requested
+                           eventBus_.fireEvent(
+                               new OpenProjectNewWindowEvent(
+                                     input.getProjectFile().getPath(),
+                                     input.getRVersion()));
+                        }
+                        else
+                        {
+                           // perform quit
+                           applicationQuit_.performQuit(saveChanges,
+                                 input.getProjectFile().getPath());
+                        }
+                     };
+                     
+                     // validate that the open will actually work before attempting to open the project
+                     projServer_.validateProjectPath(
+                                     projectPath,
+                                     new SimpleRequestCallback<Boolean>() {
+                                        
+                        @Override
+                        public void onResponseReceived(Boolean valid)
+                        {
+                           if (valid)
+                           {
+                              // open the project
+                              openProject.run();
+                           }
+                           else
+                           {
+                              // show error dialog
+                              showProjectOpenError(projectPath);
+                           }
+                        }
+                        
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           
+                           // attempt to open project anyway to ensure user does not get stuck
+                           openProject.run();
+                        }
+                     });
                   }   
                });
-            
          }
       }); 
+   }
+   
+   private void showProjectOpenError(String projectFilePath)
+   {
+      String msg = "Project '" + projectFilePath + "' " +
+            "does not exist (it has been moved or deleted), or it " +
+            "is not writeable";
+      globalDisplay_.showErrorMessage("Error Opening Project", msg);
    }
 
    private final Provider<ProjectMRUList> pMRUList_;

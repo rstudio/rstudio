@@ -371,6 +371,24 @@ inline std::string projectIdToProject(
                                          (projectId);
 }
 
+inline bool isSharedProject(const core::FilePath& sharedStoragePath,
+                            const core::r_util::ProjectId& projectId,
+                            bool* pHasAccess)
+{
+   core::FilePath projectEntryPath =
+         sharedStoragePath.complete(kProjectSharedDir)
+                          .complete(projectId.asString() + kProjectEntryExt);
+   if (projectEntryPath.exists())
+   {
+      // an entry exists, meaning this particular project is shared
+      // determine if we can access it
+      core::system::isFileReadable(projectEntryPath, pHasAccess);
+      return true;
+   }
+   else
+      return false;
+}
+
 
 } // namespace session
 } // namespace rstudio
