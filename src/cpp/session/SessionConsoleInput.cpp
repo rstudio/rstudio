@@ -24,6 +24,7 @@
 #include "modules/SessionConsole.hpp"
 
 #include "modules/connections/SessionConnections.hpp"
+#include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 
 #include <session/SessionModuleContext.hpp>
@@ -89,6 +90,7 @@ bool canSuspend(const std::string& prompt)
    return !main_process::haveActiveChildren() && 
           modules::connections::isSuspendable() &&
           modules::overlay::isSuspendable() &&
+          modules::environment::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
 

@@ -33,6 +33,8 @@ core::json::Value environmentStateAsJson();
 
 bool monitoring();
 
+bool isSuspendable();
+
 core::Error initialize();
    
 } // namespace environment
