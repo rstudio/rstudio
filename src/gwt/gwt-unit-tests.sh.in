@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+cd ${CMAKE_CURRENT_SOURCE_DIR}
+
+echo "Running ant unittest target..."
+
+ant -Dbuild.dir=${GWT_BIN_DIR} \
+    -Dwww.dir=${GWT_WWW_DIR} \
+    -Dextras.dir=${GWT_EXTRAS_DIR} \
+    -Dlib.dir=${GWT_LIB_DIR} \
+    unittest
+
+

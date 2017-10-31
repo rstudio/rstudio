@@ -33,8 +33,12 @@ download()
   fi
 }
 
-# target directory for gwt
-GWT_DIR=$INSTALL_DIR/../../src/gwt
+# target directory for gwt; if there's an opt folder then use that, otherwise,
+# presume we're using the install dir
+GWT_DIR="/opt/rstudio-tools/gwt"
+if ! [ -d "$GWT_DIR" ]; then
+   GWT_DIR=$INSTALL_DIR/../../src/gwt
+fi
 
 # lib dir
 LIB_DIR=$GWT_DIR/lib

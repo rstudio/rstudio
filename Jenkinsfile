@@ -43,6 +43,16 @@ def compile_package(type, flavor, variant) {
   }
 }
 
+def run_tests(type, flavor, variant) {
+  try {
+    // attempt to run ant (gwt) unit tests
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()}/src/gwt && ./gwt-unit-tests.sh"
+  } catch(err) {
+    // mark build as unstable if it fails unit tests
+    currentBuild.result = "UNSTABLE"
+  }
+}
+
 def s3_upload(type, flavor, os, arch) {
   // get package name from filesystem
   def buildFolder = "package/linux/build-${flavor.capitalize()}-${type}"
@@ -187,6 +197,9 @@ try {
                         }
                         stage('compile package') {
                             compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                        }
+                        stage('run tests') {
+                            run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
                     }
                     stage('upload artifacts') {
