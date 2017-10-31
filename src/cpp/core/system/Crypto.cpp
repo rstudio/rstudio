@@ -261,13 +261,14 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    int outlen = 0;
    int bytesEncrypted = 0;
 
-   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+   EVP_CIPHER_CTX *ctx;
+   ctx = EVP_CIPHER_CTX_new();
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kEncrypt);
 
    // perform the encryption
    if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], data.size()))
    {
-      EVP_CIPHER_CTX_cleanup(ctx);
+      EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
    }
    bytesEncrypted += outlen;
@@ -275,12 +276,12 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    // perform final flush including left-over padding
    if(!EVP_CipherFinal_ex(ctx, &(pEncrypted->operator[](outlen)), &outlen))
    {
-      EVP_CIPHER_CTX_cleanup(ctx);
+      EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
    }
    bytesEncrypted += outlen;
 
-   EVP_CIPHER_CTX_cleanup(ctx);
+   EVP_CIPHER_CTX_free(ctx);
 
    // resize the container to the amount of actual bytes encrypted (including padding)
    pEncrypted->resize(bytesEncrypted);
@@ -297,13 +298,14 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    int outlen = 0;
    int bytesDecrypted = 0;
 
-   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+   EVP_CIPHER_CTX *ctx;
+   ctx = EVP_CIPHER_CTX_new();
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kDecrypt);
 
    // perform the decryption
    if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], data.size()))
    {
-      EVP_CIPHER_CTX_cleanup(ctx);
+      EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
    }
    bytesDecrypted += outlen;
@@ -311,12 +313,12 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    // perform final flush
    if(!EVP_CipherFinal_ex(ctx, &(pDecrypted->operator[](outlen)), &outlen))
    {
-      EVP_CIPHER_CTX_cleanup(ctx);
+      EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
    }
    bytesDecrypted += outlen;
 
-   EVP_CIPHER_CTX_cleanup(ctx);
+   EVP_CIPHER_CTX_free(ctx);
 
    // resize the container to the amount of actual bytes decrypted (padding is removed)
    pDecrypted->resize(bytesDecrypted);
