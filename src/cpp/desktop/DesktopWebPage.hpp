@@ -17,8 +17,7 @@
 #define DESKTOP_WEB_PAGE_HPP
 
 #include <QtGui>
-#include <QtWebKit>
-#include <QWebPage>
+#include <QWebEnginePage>
 
 namespace rstudio {
 namespace desktop {
@@ -69,7 +68,7 @@ struct PendingWindow
 };
 
 
-class WebPage : public QWebPage
+class WebPage : public QWebEnginePage
 {
    Q_OBJECT
 
@@ -85,22 +84,22 @@ public:
    void activateWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);
    void closeWindow(QString name);
-   virtual void triggerAction(QWebPage::WebAction action, bool checked = false);
+   virtual void triggerAction(QWebEnginePage::WebAction action, bool checked = false);
 
 public slots:
    bool shouldInterruptJavaScript();
    void closeRequested();
 
 protected:
-   QWebPage* createWindow(QWebPage::WebWindowType type);
+   QWebEnginePage* createWindow(QWebEnginePage::WebWindowType type);
    void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
    QString userAgentForUrl(const QUrl &url) const;
-   bool acceptNavigationRequest(QWebFrame* frame,
+   bool acceptNavigationRequest(QWebEnginePage* page,
                                 const QNetworkRequest& request,
                                 NavigationType type);
 
 private:
-   void handleBase64Download(QWebFrame* pWebFrame, QUrl url);
+   void handleBase64Download(QWebEnginePage* pWebPage, QUrl url);
 
 private:
    QUrl baseUrl_;

@@ -14,7 +14,6 @@
  */
 
 #include "DesktopBrowserWindow.hpp"
-#include <QWebFrame>
 #include <QToolBar>
 #include <QShortcut>
 
@@ -44,14 +43,14 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    progress_ = 0;
 
    pView_ = new WebView(baseUrl, this, allowExternalNavigate);
-   QWebFrame* mainFrame = pView_->page()->mainFrame();
-   connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
+   QWebEnginePage* mainPage = pView_->page();
+   connect(mainPage, SIGNAL(javaScriptWindowObjectCleared()),
            this, SLOT(onJavaScriptWindowObjectCleared()));
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
-   connect(pView_->page(), SIGNAL(printRequested(QWebFrame*)),
-           this, SLOT(printRequested(QWebFrame*)));
+   connect(pView_->page(), SIGNAL(printRequested(QWebEnginePage*)),
+           this, SLOT(printRequested(QWebEnginePage*)));
 
    // set zoom factor
    double zoomLevel = options().zoomLevel();
@@ -70,7 +69,7 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    desktop::enableFullscreenMode(this, false);
 }
 
-void BrowserWindow::printRequested(QWebFrame* frame)
+void BrowserWindow::printRequested(QWebEnginePage* frame)
 {
    QPrinter printer;
    printer.setOutputFormat(QPrinter::NativeFormat);
@@ -159,7 +158,7 @@ void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
    QCoreApplication::postEvent(webView(), keyEvent);
 }
 
-void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
+void BrowserWindow::triggerPageAction(QWebEnginePage::WebAction action)
 {
    webView()->triggerPageAction(action);
 }

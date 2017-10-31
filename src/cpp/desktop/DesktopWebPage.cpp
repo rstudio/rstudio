@@ -22,7 +22,7 @@
 #include <core/FilePath.hpp>
 
 #include <QWidget>
-#include <QWebFrame>
+#include <QWebEnginePage>
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -46,7 +46,7 @@ WindowTracker s_windowTracker;
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebPage(parent),
+      QWebEnginePage(parent),
       baseUrl_(baseUrl),
       navigated_(false),
       allowExternalNav_(allowExternalNavigate)
@@ -88,7 +88,7 @@ void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
    pendingWindow_ = pendingWnd;
 }
 
-QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
+QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
 {
    QString name;
    bool isSatellite = false;
@@ -201,10 +201,10 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
+   return this->QWebEnginePage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
 }
 
-bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
+bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
                                        const QNetworkRequest& request,
                                        NavigationType navType)
 {
@@ -251,8 +251,8 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    else
    {
       if (url.scheme() == QString::fromUtf8("data") &&
-          (navType == QWebPage::NavigationTypeLinkClicked ||
-           navType == QWebPage::NavigationTypeFormSubmitted))
+          (navType == QWebEnginePage::NavigationTypeLinkClicked ||
+           navType == QWebEnginePage::NavigationTypeFormSubmitted))
       {
          handleBase64Download(pWebFrame, url);
       }
@@ -262,7 +262,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
          navigated_ = true;
          return true;
       }
-      else if (navType == QWebPage::NavigationTypeLinkClicked)
+      else if (navType == QWebEnginePage::NavigationTypeLinkClicked)
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
@@ -283,7 +283,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    }
 }
 
-void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
+void WebPage::handleBase64Download(QWebEnginePage* pWebPage, QUrl url)
 {
    // look for beginning of base64 data
    QString base64 = QString::fromUtf8("base64,");
@@ -303,7 +303,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    // find the a tag in the page with this href
    QWebElement aTag;
    QString urlString = url.toString(QUrl::None);
-   QWebElementCollection aElements = pWebFrame->findAllElements(
+   QWebElementCollection aElements = pWebPage->findAllElements(
                                              QString::fromUtf8("a"));
    for (int i=0; i<aElements.count(); i++)
    {
@@ -397,7 +397,7 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 void WebPage::triggerAction(WebAction action, bool checked)
 {
    // swallow copy events when the selection is empty
-   if (action == QWebPage::Copy || action == QWebPage::Cut)
+   if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
    {
       QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
       bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
@@ -406,7 +406,7 @@ void WebPage::triggerAction(WebAction action, bool checked)
    }
 
    // delegate to base
-   QWebPage::triggerAction(action, checked);
+   QWebEnginePage::triggerAction(action, checked);
 }
 
 } // namespace desktop

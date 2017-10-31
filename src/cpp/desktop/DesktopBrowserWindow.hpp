@@ -18,7 +18,6 @@
 
 #include <QAction>
 #include <QMainWindow>
-#include <QtWebKitWidgets/QWebView>
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"
@@ -46,7 +45,7 @@ protected slots:
      void setProgress(int p);
      virtual void finishLoading(bool);
      virtual void onJavaScriptWindowObjectCleared();
-     void printRequested(QWebFrame* frame);
+     void printRequested(QWebEnginePage* frame);
 
 protected:
      void avoidMoveCursorIfNecessary();
@@ -55,7 +54,7 @@ protected:
      virtual QWidget* asWidget();
      virtual WebPage* webPage();
      virtual void postWebViewEvent(QEvent *event);
-     virtual void triggerPageAction(QWebPage::WebAction action);
+     virtual void triggerPageAction(QWebEnginePage::WebAction action);
      virtual void closeEvent(QCloseEvent *event);
 
      // hooks for subclasses

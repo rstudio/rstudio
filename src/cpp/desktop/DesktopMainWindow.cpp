@@ -20,7 +20,7 @@
 #include <QtGui>
 #include <QtWebKit>
 #include <QToolBar>
-#include <QWebFrame>
+#include <QWebEnginePage>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -109,7 +109,7 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
    QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromUtf8(
                     "window.desktopHooks.getSumatraPdfExePath()")).toString();
    return sumatraPath;
@@ -139,7 +139,7 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
 
 void MainWindow::onCloseWindowShortcut()
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
 
    bool closeSourceDocEnabled = pMainFrame->evaluateJavaScript(
       QString::fromUtf8(
@@ -208,11 +208,11 @@ void MainWindow::onJavaScriptWindowObjectCleared()
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromUtf8("desktop"),
          &gwtCallback_,
-         QWebFrame::QtOwnership);
+         QWebEnginePage::QtOwnership);
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromUtf8("desktopMenuCallback"),
          &menuCallback_,
-         QWebFrame::QtOwnership);
+         QWebEnginePage::QtOwnership);
 }
 
 void MainWindow::invokeCommand(QString commandId)
@@ -223,7 +223,7 @@ void MainWindow::invokeCommand(QString commandId)
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
    action->setVisible(pMainFrame->evaluateJavaScript(
          QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
    action->setEnabled(pMainFrame->evaluateJavaScript(
@@ -241,20 +241,20 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
 // visibility state (to trigger visibility of menus containing the command)
 void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
    action->setVisible(pMainFrame->evaluateJavaScript(
          QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
 }
 
 void MainWindow::evaluateJavaScript(QString jsCode)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
    pMainFrame->evaluateJavaScript(jsCode);
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
-   QWebFrame* pFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pFrame = webView()->page()->mainFrame();
    if (!pFrame)
    {
        pEvent->accept();

@@ -35,7 +35,7 @@ namespace rstudio {
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-    QWebView(parent),
+    QWebEngineView(parent),
     baseUrl_(baseUrl),
     pWebInspector_(NULL),
     dpiZoomScaling_(getDpiZoomScaling())
@@ -51,7 +51,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
    setPage(pWebPage_);
 
-   // QWebView can create its own QWebInspector instance, but it doesn't always
+   // QWebEngineView can create its own QWebInspector instance, but it doesn't always
    // destroy it correctly if the inspector is open when the associated browser
    // window is closed (see case 3889), leading to a crash. To work around this,
    // we create our own unbound web inspector, and clean it up manually when the
@@ -149,7 +149,7 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
                    pEv->count());
   
    // delegate to base
-   this->QWebView::keyPressEvent(&newEv);
+   this->QWebEngineView::keyPressEvent(&newEv);
 }
 
 void WebView::downloadRequested(const QNetworkRequest& request)
@@ -257,7 +257,7 @@ void WebView::openFile(QString fileName)
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
 }
 
-// QWebView doesn't respect the system DPI and always renders as though
+// QWebEngineView doesn't respect the system DPI and always renders as though
 // it were at 96dpi. To work around this, we take the user-specified zoom level
 // and scale it by a DPI-determined constant before applying it to the view.
 // See: https://bugreports.qt-project.org/browse/QTBUG-29571

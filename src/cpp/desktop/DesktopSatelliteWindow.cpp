@@ -15,7 +15,7 @@
 
 #include "DesktopSatelliteWindow.hpp"
 
-#include <QWebFrame>
+#include <QWebEnginePage>
 #include <QShortcut>
 
 #include "DesktopGwtCallback.hpp"
@@ -48,7 +48,7 @@ void SatelliteWindow::onJavaScriptWindowObjectCleared()
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromUtf8("desktop"),
          &gwtCallback_,
-         QWebFrame::QtOwnership);
+         QWebEnginePage::QtOwnership);
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
@@ -69,7 +69,7 @@ void SatelliteWindow::finishLoading(bool ok)
 
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
-   QWebFrame* pFrame = webView()->page()->mainFrame();
+   QWebEnginePage* pFrame = webView()->page()->mainFrame();
 
    // the source window has special close semantics
    if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))

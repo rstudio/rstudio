@@ -28,7 +28,7 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
-#include <QWebFrame>
+#include <QWebEnginePage>
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -605,7 +605,7 @@ void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
    pOwner_->webPage()->updatePositionDependentActions(
          QPoint(left + (width/2), top + (height/2)));
-   pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
+   pOwner_->triggerPageAction(QWebEnginePage::CopyImageToClipboard);
 }
 
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
