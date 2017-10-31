@@ -19,7 +19,7 @@ cmake_policy(SET CMP0020 OLD)
 
 project(DESKTOP)
 
-set(QT_VERSION_SUBDIR "5.4")
+set(QT_VERSION_SUBDIR "5.9.2")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -39,7 +39,7 @@ if(NOT WIN32)
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_CANDIDATE 5.4.2 5.4.1 5.4.0)
+      foreach(QT_CANDIDATE 5.9.2)
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
             set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
@@ -56,8 +56,7 @@ if(NOT WIN32)
       endforeach()
    endif()
 else()
-   # only Qt 5.4.1 is supported on windows
-   set(QT_VERSION "5.4.1")
+   set(QT_VERSION "5.9.2")
    if(NOT QT_QMAKE_EXECUTABLE)
       set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\mingw491_32")
       if(EXISTS ${QMAKE_QT50_SDK})
@@ -80,9 +79,9 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
-find_package(Qt5WebKit REQUIRED)
+find_package(Qt5WebEngine REQUIRED)
 find_package(Qt5WebChannel REQUIRED)
-find_package(Qt5WebKitWidgets REQUIRED)
+find_package(Qt5WebEngineWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5Positioning REQUIRED)
@@ -310,8 +309,8 @@ if(NOT APPLE)
       Gui
       Network
       WebChannel
-      WebKit
-      WebKitWidgets
+      WebEngine
+      WebEngineWidgets
       PrintSupport
       Quick
       Positioning
@@ -368,7 +367,7 @@ else()
       ${DESKTOP_UI_SOURCES}
       ${ICNS_FILES})
 
-   qt5_use_modules(RStudio Core Widgets Gui Network WebKit WebKitWidgets)
+   qt5_use_modules(RStudio Core Widgets Gui Network WebEngine WebEngineWidgets)
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
@@ -480,10 +479,10 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Network.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Widgets.so.5
                        ${QT_LIBRARY_DIR}/libQt5Widgets.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebChannel.so.5
                        ${QT_LIBRARY_DIR}/libQt5WebChannel.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Positioning.so.5
@@ -520,8 +519,8 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5Gui${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Network${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebKit${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebKitWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebEngine${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebEngineWidgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebChannel${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Positioning${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5PrintSupport${LIB_SUFFIX}.dll
