@@ -112,17 +112,26 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-bool hasExternalPtr(SEXP env,      // environment to search for external pointers
+bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
                     bool nullPtr,  // whether to look for NULL pointers 
                     int level = 5) // maximum recursion depth (envs can have self-ref loops)
 {
    // list the contents of this environment
    std::vector<r::sexp::Variable> vars;
    r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(env, 
-                            true,  // include all values
-                            false, // don't include last dot
-                            &rProtect, &vars);
+   if (r::sexp::isPrimitiveEnvironment(obj))
+   {
+      // for simple environments, list the objects in the environment
+      r::sexp::listEnvironment(obj, 
+                               true,  // include all values
+                               false, // don't include last dot
+                               &rProtect, &vars);
+   }
+   else if (TYPEOF(obj) == S4SXP)
+   {
+      // for S4 objects, list the attributes (which correspond to slots)
+      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
+   }
 
    // check for external pointers
    for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
@@ -133,11 +142,11 @@ bool hasExternalPtr(SEXP env,      // environment to search for external pointer
          return true;
       }
 
-      if (r::sexp::isEnvironment(it->second) && level > 0)
+      if (r::sexp::isPrimitiveEnvironment(it->second) || TYPEOF(it->second) == S4SXP)
       {
          // if this object is itself an environment, check it recursively for external pointers. 
          // (we do this only if there's sufficient recursion depth remaining)
-         if (hasExternalPtr(it->second, nullPtr, level - 1))
+         if (level > 0 && hasExternalPtr(it->second, nullPtr, level - 1))
             return true;
       }
    }
@@ -155,7 +164,7 @@ SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
       // object is an external pointer itself
       hasPtr = r::sexp::isNullExternalPointer(objSEXP) == nullPtr;
    }
-   else if (r::sexp::isEnvironment(objSEXP))
+   else if (r::sexp::isPrimitiveEnvironment(objSEXP) || TYPEOF(objSEXP) == S4SXP)
    {
       // object is an environment; check it for external pointers
       hasPtr = hasExternalPtr(objSEXP, nullPtr);

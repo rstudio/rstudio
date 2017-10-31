@@ -432,7 +432,7 @@
    obj <- get(objName, env)
    # objects containing null external pointers can crash when
    # evaluated--display generically (see case 4092)
-   hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE)
+   hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
    if (hasNullPtr) 
    {
       val <- "<Object with null pointer>"
