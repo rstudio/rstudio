@@ -80,8 +80,8 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
-find_package(Qt5WebEngine REQUIRED)
 find_package(Qt5WebChannel REQUIRED)
+find_package(Qt5WebEngine REQUIRED)
 find_package(Qt5WebEngineWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
@@ -97,7 +97,7 @@ if(UNIX AND NOT APPLE)
    find_package(Qt5DBus REQUIRED)
 endif()
 
-
+set(QT_PLUGIN_PATH "${QT_BIN_DIR}/../plugins" CACHE INTERNAL "")
 
 # disable clang warnings for qt sources
 if(APPLE)
