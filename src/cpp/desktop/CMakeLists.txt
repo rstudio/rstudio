@@ -19,7 +19,8 @@ cmake_policy(SET CMP0020 OLD)
 
 project(DESKTOP)
 
-set(QT_VERSION_SUBDIR "5.9.2")
+set(QT_VERSION_SUBDIR "5.9")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake

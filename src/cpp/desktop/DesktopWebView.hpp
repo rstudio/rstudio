@@ -58,8 +58,6 @@ protected:
    void closeEvent(QCloseEvent* pEv);
 
 protected slots:
-   void downloadRequested(const QNetworkRequest&);
-   void unsupportedContent(QNetworkReply*);
    void openFile(QString file);
 
 private:
