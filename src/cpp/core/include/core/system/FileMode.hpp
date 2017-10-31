@@ -167,6 +167,25 @@ inline Error isFileReadable(const FilePath& filePath, bool* pReadable)
    return Success();
 }
 
+inline Error isFileWriteable(const FilePath& filePath, bool* pWriteable)
+{
+   int result = ::access(filePath.absolutePath().c_str(), W_OK);
+   if (result == 0)
+   {
+      // user has access
+      *pWriteable = true;
+   }
+   else if (errno == EACCES)
+   {
+      *pWriteable = false;
+   }
+   else
+   {
+      return systemError(errno, ERROR_LOCATION);
+   }
+   return Success();
+}
+
 
 } // namespace system
 } // namespace core
