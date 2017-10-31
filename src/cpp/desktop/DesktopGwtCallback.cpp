@@ -603,8 +603,8 @@ void GwtCallback::activateSatelliteWindow(QString name)
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
-   pOwner_->webPage()->updatePositionDependentActions(
-         QPoint(left + (width/2), top + (height/2)));
+   // TODO: 'updatePositionDependentActions()' is no longer available;
+   // we might only be able to copy the currently selected image?
    pOwner_->triggerPageAction(QWebEnginePage::CopyImageToClipboard);
 }
 
@@ -1194,7 +1194,6 @@ void GwtCallback::launchSession(bool reload)
 void GwtCallback::activateAndFocusOwner()
 {
    desktop::raiseAndActivateWindow(pOwner_->asWidget());
-   pOwner_->webPage()->mainFrame()->setFocus();
 }
 
 void GwtCallback::reloadZoomWindow()

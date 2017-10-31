@@ -17,7 +17,6 @@
 #define DESKTOP_SECONDARY_WINDOW_HPP
 
 #include <QMainWindow>
-#include <QtWebKit>
 #include "DesktopBrowserWindow.hpp"
 
 namespace rstudio {
@@ -44,8 +43,6 @@ private:
     QAction* forward_;
     QAction* reload_;
     QAction* print_;
-
-    QWebHistory* history_;
 };
 
 } // namespace desktop

@@ -23,7 +23,10 @@
 
 #include <QWidget>
 #include <QWebEnginePage>
+#include <QWebEngineSettings>
+
 #include <QtDebug>
+
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopSatelliteWindow.hpp"
@@ -51,15 +54,11 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
       navigated_(false),
       allowExternalNav_(allowExternalNavigate)
 {
-   settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
-   settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanAccessClipboard, true);
-   QString storagePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-   settings()->setOfflineStoragePath(storagePath);
-   settings()->enablePersistentStorage(storagePath);
+   settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
+   settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
 
-   setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
@@ -199,11 +198,6 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
    qDebug() << message;
 }
 
-QString WebPage::userAgentForUrl(const QUrl &url) const
-{
-   return this->QWebEnginePage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
-}
-
 bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
                                        const QNetworkRequest& request,
                                        NavigationType navType)
@@ -301,31 +295,35 @@ void WebPage::handleBase64Download(QWebEnginePage* pWebPage, QUrl url)
    QByteArray byteArray = QByteArray::fromBase64(base64ByteArray);
 
    // find the a tag in the page with this href
-   QWebElement aTag;
-   QString urlString = url.toString(QUrl::None);
-   QWebElementCollection aElements = pWebPage->findAllElements(
-                                             QString::fromUtf8("a"));
-   for (int i=0; i<aElements.count(); i++)
-   {
-      QWebElement a = aElements.at(i);
-      QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
-      if (href == urlString)
-      {
-         aTag = a;
-         break;
-      }
-   }
 
-   // if no a tag was found then bail
-   if (aTag.isNull())
-   {
-      LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
-      return;
-   }
+   // TODO: may need to use custom JavaScript here?
+   // QWebElement aTag;
+   // QString urlString = url.toString(QUrl::None);
+   // QWebElementCollection aElements = pWebPage->findAllElements(
+   //                                           QString::fromUtf8("a"));
+   // for (int i=0; i<aElements.count(); i++)
+   // {
+   //    QWebElement a = aElements.at(i);
+   //    QString href = a.attribute(QString::fromUtf8("href"));
+   //    href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
+   //    if (href == urlString)
+   //    {
+   //       aTag = a;
+   //       break;
+   //    }
+   // }
 
-   // get the download attribute (default filename)
-   QString download = aTag.attribute(QString::fromUtf8("download"));
+   // // if no a tag was found then bail
+   // if (aTag.isNull())
+   // {
+   //    LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
+   //    return;
+   // }
+
+   // // get the download attribute (default filename)
+   // QString download = aTag.attribute(QString::fromUtf8("download"));
+
+   QString download = QString::fromUtf8("");
    QString defaultFilename = defaultSaveDir_.absoluteFilePath(download);
 
    // prompt for filename
@@ -400,7 +398,7 @@ void WebPage::triggerAction(WebAction action, bool checked)
    if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
    {
       QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
-      bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
+      bool emptySelection = evaluateJavaScript(code).toBool();
       if (emptySelection)
          return;
    }

@@ -37,7 +37,6 @@ namespace desktop {
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebEngineView(parent),
     baseUrl_(baseUrl),
-    pWebInspector_(NULL),
     dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_OS_LINUX
@@ -50,22 +49,6 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
 #endif
    pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
    setPage(pWebPage_);
-
-   // QWebEngineView can create its own QWebInspector instance, but it doesn't always
-   // destroy it correctly if the inspector is open when the associated browser
-   // window is closed (see case 3889), leading to a crash. To work around this,
-   // we create our own unbound web inspector, and clean it up manually when the
-   // WebView closes.
-   pWebInspector_ = new QWebInspector();
-   pWebInspector_->setVisible(false);
-   pWebInspector_->setPage(pWebPage_);
-
-   page()->setForwardUnsupportedContent(true);
-
-   connect(page(), SIGNAL(downloadRequested(QNetworkRequest)),
-           this, SLOT(downloadRequested(QNetworkRequest)));
-   connect(page(), SIGNAL(unsupportedContent(QNetworkReply*)),
-           this, SLOT(unsupportedContent(QNetworkReply*)));
 }
 
 void WebView::setBaseUrl(const QUrl& baseUrl)
@@ -152,93 +135,6 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
    this->QWebEngineView::keyPressEvent(&newEv);
 }
 
-void WebView::downloadRequested(const QNetworkRequest& request)
-{
-   QString fileName = promptForFilename(request);
-   if (fileName.isEmpty())
-      return;
-
-   // Ask the network manager to download
-   // the file and connect to the progress
-   // and finished signals.
-   QNetworkRequest newRequest = request;
-
-   QNetworkAccessManager* pNetworkManager = page()->networkAccessManager();
-   QNetworkReply* pReply = pNetworkManager->get(newRequest);
-   // DownloadHelper frees itself when downloading is done
-   new DownloadHelper(pReply, fileName);
-}
-
-void WebView::unsupportedContent(QNetworkReply* pReply)
-{
-   bool closeAfterDownload = false;
-   if (this->page()->history()->count() == 0)
-   {
-      /* This is for the case where a new browser window was launched just
-         to show a PDF or save a file. Otherwise we would have an empty
-         browser window with no history hanging around. */
-      window()->hide();
-      closeAfterDownload = true;
-   }
-
-   DownloadHelper* pDownloadHelper = NULL;
-
-   QString contentType =
-         pReply->header(QNetworkRequest::ContentTypeHeader).toString();
-   if (contentType.contains(QRegExp(QString::fromUtf8("^\\s*application/pdf($|;)"),
-                                    Qt::CaseInsensitive)))
-   {
-      core::FilePath dir(options().scratchTempDir());
-
-      QTemporaryFile pdfFile(QString::fromUtf8(
-            dir.childPath("rstudio-XXXXXX.pdf").absolutePath().c_str()));
-      pdfFile.setAutoRemove(false);
-      pdfFile.open();
-      pdfFile.close();
-
-      if (pReply->isFinished())
-      {
-         DownloadHelper::handleDownload(pReply, pdfFile.fileName());
-         openFile(pdfFile.fileName());
-      }
-      else
-      {
-         // DownloadHelper frees itself when downloading is done
-         pDownloadHelper = new DownloadHelper(pReply, pdfFile.fileName());
-         connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
-                 this, SLOT(openFile(QString)));
-      }
-   }
-   else
-   {
-      QString fileName = promptForFilename(pReply->request(), pReply);
-      if (fileName.isEmpty())
-      {
-         pReply->abort();
-         if (closeAfterDownload)
-            window()->close();
-      }
-      else
-      {
-         // DownloadHelper frees itself when downloading is done
-         if (pReply->isFinished())
-         {
-            DownloadHelper::handleDownload(pReply, fileName);
-         }
-         else
-         {
-            pDownloadHelper = new DownloadHelper(pReply, fileName);
-         }
-      }
-   }
-
-   if (closeAfterDownload && pDownloadHelper)
-   {
-      connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
-              window(), SLOT(close()));
-   }
-}
-
 void WebView::openFile(QString fileName)
 {
    // force use of Preview for PDFs on the Mac (Adobe Reader 10.01 crashes)
@@ -271,17 +167,13 @@ qreal WebView::dpiAwareZoomFactor()
    return zoomFactor() / dpiZoomScaling_;
 }
 
+bool WebView::event(QEvent* event)
+{
+   return this->QWebEngineView::event(event);
+}
+
 void WebView::closeEvent(QCloseEvent*)
 {
-   // When the webview closes, preemptively destroy the associated web
-   // inspector, if we have one.
-   if (pWebInspector_ != NULL)
-   {
-      pWebInspector_->setVisible(false);
-      pWebInspector_->disconnect();
-      pWebInspector_->deleteLater();
-      pWebInspector_ = NULL;
-   }
 }
 
 } // namespace desktop

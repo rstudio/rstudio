@@ -18,6 +18,7 @@
 
 #include <QWidget>
 #include <QString>
+#include <QWebEnginePage>
 
 namespace rstudio {
 namespace desktop {

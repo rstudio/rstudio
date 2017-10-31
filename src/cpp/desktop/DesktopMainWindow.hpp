@@ -41,7 +41,7 @@ public:
 
 public:
    QString getSumatraPdfExePath();
-   void evaluateJavaScript(QString jsCode);
+   QVariant evaluateJavaScript(const QString& script);
    void launchSession(bool reload);
    void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
                       const std::string& initialDir = std::string());
@@ -91,8 +91,10 @@ private:
    // allow SessionLauncher to collect restart requests from GwtCallback
    int collectPendingQuitRequest();
 
+   // check whether desktop hooks have been initialized
    bool desktopHooksAvailable();
 
+   // callback when window is activated
    virtual void onActivated();
 
 private:

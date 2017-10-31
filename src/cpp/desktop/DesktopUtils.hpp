@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QMainWindow>
 #include <QFileDialog>
+#include <QWebEnginePage>
 
 #include <core/system/Process.hpp>
 
@@ -81,6 +82,9 @@ double getDpiZoomScaling();
 int getDpi();
 
 QFileDialog::Options standardFileDialogOptions();
+
+QVariant evaluateJavaScript(QWebEnginePage* pPage,
+                            const QString& script);
 
 } // namespace desktop
 } // namespace rstudio

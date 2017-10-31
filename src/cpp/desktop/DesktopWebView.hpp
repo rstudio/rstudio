@@ -42,6 +42,8 @@ public:
    void setDpiAwareZoomFactor(qreal factor);
    qreal dpiAwareZoomFactor();
 
+   virtual bool event(QEvent* event);
+
    WebPage* webPage() const { return pWebPage_; }
 
 signals:

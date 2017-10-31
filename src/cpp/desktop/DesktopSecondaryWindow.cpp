@@ -73,8 +73,6 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
    connect(print_, SIGNAL(triggered()),
            this, SLOT(print()));
 
-   history_ = webView()->history();
-
    connect(webView(), SIGNAL(loadStarted()),
            this, SLOT(manageCommandState()));
    connect(webView(), SIGNAL(urlChanged(QUrl)),
@@ -94,13 +92,11 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
 
 void SecondaryWindow::print()
 {
-   printRequested(webView()->page()->mainFrame());
+   printRequested(webView()->page());
 }
 
 void SecondaryWindow::manageCommandState()
 {
-   back_->setEnabled(history_->canGoBack());
-   forward_->setEnabled(history_->canGoForward());
 }
 
 } // namespace desktop

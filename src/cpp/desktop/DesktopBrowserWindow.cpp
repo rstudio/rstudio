@@ -94,9 +94,9 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+      desktop::evaluateJavaScript(webPage(), cmd);
    }
-   else if (pOpener_->mainFrame())
+   else if (pOpener_)
    {
       // if we do know where we were opened from and it has the appropriate
       // handlers, let it know we're closing
@@ -105,11 +105,11 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
                   "   window.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      pOpener_->mainFrame()->evaluateJavaScript(cmd);
+      desktop::evaluateJavaScript(webPage(), cmd);
    }
 
-   // forward the close event to the web view
-   webView()->event(event);
+   // forward the close event to the page
+   webPage()->event(event);
 }
 
 void BrowserWindow::adjustTitle()
@@ -170,8 +170,7 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
       "   window.opener.registerDesktopChildWindow('");
    cmd.append(name_);
    cmd.append(QString::fromUtf8("', window);"));
-
-   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+   desktop::evaluateJavaScript(webPage(), cmd);
 }
 
 QString BrowserWindow::getName()
