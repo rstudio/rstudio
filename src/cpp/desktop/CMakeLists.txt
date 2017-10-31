@@ -368,7 +368,7 @@ else()
       ${DESKTOP_UI_SOURCES}
       ${ICNS_FILES})
 
-   qt5_use_modules(RStudio Core Widgets Gui Network WebKit WebKitWidgets)
+   qt5_use_modules(RStudio Core Widgets Gui Network WebKit WebKitWidgets PrintSupport)
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
