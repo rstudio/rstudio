@@ -31,6 +31,8 @@ namespace environment {
 
 core::json::Value environmentStateAsJson();
 
+bool isSuspendable();
+
 core::Error initialize();
    
 } // namespace environment

@@ -107,6 +107,57 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
+bool hasExternalPtr(SEXP env,      // environment to search for external pointers
+                    bool nullPtr,  // whether to look for NULL pointers 
+                    int level = 5) // maximum recursion depth (envs can have self-ref loops)
+{
+   // list the contents of this environment
+   std::vector<r::sexp::Variable> vars;
+   r::sexp::Protect rProtect;
+   r::sexp::listEnvironment(env, 
+                            true,  // include all values
+                            false, // don't include last dot
+                            &rProtect, &vars);
+
+   // check for external pointers
+   for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
+   {
+      if (r::sexp::isExternalPointer(it->second) && 
+          r::sexp::isNullExternalPointer(it->second) == nullPtr)
+      {
+         return true;
+      }
+
+      if (r::sexp::isEnvironment(it->second) && level > 0)
+      {
+         // if this object is itself an environment, check it recursively for external pointers. 
+         // (we do this only if there's sufficient recursion depth remaining)
+         if (hasExternalPtr(it->second, nullPtr, level - 1))
+            return true;
+      }
+   }
+
+   return false;
+}
+
+SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
+{
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   r::sexp::Protect protect;
+   bool hasPtr = false;
+   if (r::sexp::isExternalPointer(objSEXP))
+   {
+      // object is an external pointer itself
+      hasPtr = r::sexp::isNullExternalPointer(objSEXP) == nullPtr;
+   }
+   else if (r::sexp::isEnvironment(objSEXP))
+   {
+      // object is an environment; check it for external pointers
+      hasPtr = hasExternalPtr(objSEXP, nullPtr);
+   }
+   return r::sexp::create(hasPtr, &protect);
+}
+
 // Construct a simulated source reference from a context containing a
 // function being debugged, and either the context containing the current
 // invocation or a string containing the last debug ouput from R.
@@ -909,6 +960,12 @@ SEXP rs_isBrowserActive()
    return r::sexp::create(s_browserActive, &protect);
 }
 
+bool isSuspendable()
+{
+   // suppress suspension if any object has a live external pointer; these can't be restored
+   return !hasExternalPtr(R_GlobalEnv, false);
+}
+
 Error initialize()
 {
    // store on the heap so that the destructor is never called (so we
@@ -939,6 +996,8 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_jumpToFunction ;
    methodDef.numArgs = 3;
    r::routines::addCallMethod(methodDef);
+
+   RS_REGISTER_CALL_METHOD(rs_hasExternalPointer, 2);
 
    // subscribe to events
    using boost::bind;
