@@ -31,8 +31,13 @@ namespace core {
 
 + (id) sharedActivation;
 
-- (BOOL) getInitialLicenseWithPath : (rstudio::core::FilePath&) installPath
-                           devMode : (BOOL) devMode;
+// TRUE if license confirmed and caller can launch session; FALSE if license
+// still being checked and caller should proceed to process events but not show any UI. In
+// latter case, results of lease acquisition (or lack thereof) will be handled by
+// the Activation object.
+- (BOOL) getInitialLicenseWithArguments : (NSArray*) arguments
+                                   path : (rstudio::core::FilePath&) installPath
+                                devMode : (BOOL) devMode;
 
 - (BOOL) allowProductUsage;
 

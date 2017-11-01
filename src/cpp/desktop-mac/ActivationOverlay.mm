@@ -48,8 +48,9 @@ using namespace rstudio::core;
    return std::string();
 }
 
-- (BOOL) getInitialLicenseWithPath : (rstudio::core::FilePath&) installPath
-                           devMode : (BOOL) devMode
+- (BOOL) getInitialLicenseWithArguments : (NSArray*) arguments
+                                   path : (rstudio::core::FilePath&) installPath
+                                devMode : (BOOL) devMode;
 {
    return TRUE;
 }

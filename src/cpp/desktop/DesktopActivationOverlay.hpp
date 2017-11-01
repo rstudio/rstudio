@@ -40,7 +40,9 @@ class DesktopActivation : public QObject
 public:
    DesktopActivation();
 
-   bool getInitialLicense(const core::FilePath& installPath, bool devMode);
+   bool getInitialLicense(const QStringList& arguments,
+                          const core::FilePath& installPath,
+                          bool devMode);
    bool allowProductUsage();
 
    // Description of license state if expired or within certain time window before expiring,
