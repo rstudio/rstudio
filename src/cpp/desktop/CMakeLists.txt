@@ -98,6 +98,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 set(QT_PLUGIN_PATH "${QT_BIN_DIR}/../plugins" CACHE INTERNAL "")
+set(QT_LIBRARY_PATH "${QT_BIN_DIR}/../lib" CACHE INTERNAL "")
 
 # disable clang warnings for qt sources
 if(APPLE)

@@ -15,4 +15,6 @@
 #
 #
 
-QT_PLUGIN_PATH="@QT_PLUGIN_PATH@" desktop/rstudio "$@"
+QT_PLUGIN_PATH="@QT_PLUGIN_PATH@" \
+    LD_LIBRARY_PATH="@QT_LIBRARY_PATH@" \
+    desktop/rstudio "$@"
