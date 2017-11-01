@@ -110,6 +110,7 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet);
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
+void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables);
 
 // weak/external pointers and finalizers
 bool isExternalPointer(SEXP object);

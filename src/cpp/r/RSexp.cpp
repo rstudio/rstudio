@@ -327,6 +327,36 @@ void listEnvironment(SEXP env,
    }
 }
 
+
+void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
+{
+   // reset passed vars
+   pVariables->clear();
+
+   // extract the attributes and ensure we got a pairlist
+   SEXP attrs = ATTRIB(obj);
+   if (TYPEOF(attrs) != LISTSXP)
+      return;
+
+   // extract the names from the pairlist
+   std::vector<std::string> names;
+   r::sexp::getNames(attrs, &names);
+   
+   // loop over the attributes and fill in the variable vector
+   SEXP attr = R_NilValue; 
+   SEXP nextAttr = R_NilValue;
+   size_t i = 0;
+   for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
+   {
+      pProtect->add(attr);
+      pVariables->push_back(std::make_pair(names.at(i), attr));
+
+      // sanity: break if we run out of names
+      if (++i >= names.size()) 
+         break;
+   }
+}
+
 namespace {
 
 Error asPrimitiveEnvironment(SEXP envirSEXP,
