@@ -248,6 +248,8 @@ void log(LogLevel level, const std::string& message) ;
 bool isHiddenFile(const FilePath& filePath) ;
 bool isHiddenFile(const FileInfo& fileInfo) ;
 bool isReadOnly(const FilePath& filePath);
+core::Error isFileReadable(const FilePath& filePath, bool* pReadable);
+core::Error isFileWriteable(const FilePath& filePath, bool* pWriteable);
    
 // terminals
 bool stderrIsTerminal();

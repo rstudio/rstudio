@@ -534,6 +534,24 @@ Error closeFileDescriptorsFrom(int fdStart)
    return Success();
 }
 
+Error fileHasAccess(const FilePath& filePath, int mode, bool* pHasAccess)
+{
+   int result = ::access(filePath.absolutePath().c_str(), mode);
+   if (result == 0)
+   {
+      // user has access
+      *pHasAccess = true;
+   }
+   else if (errno == EACCES)
+   {
+      *pHasAccess = false;
+   }
+   else
+   {
+      return systemError(errno, ERROR_LOCATION);
+   }
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -610,7 +628,17 @@ bool isReadOnly(const FilePath& filePath)
       return false;
    }
 }
-   
+
+Error isFileReadable(const FilePath& filePath, bool* pReadable)
+{
+   return fileHasAccess(filePath, R_OK, pReadable);
+}
+
+Error isFileWriteable(const FilePath& filePath, bool* pWriteable)
+{
+   return fileHasAccess(filePath, W_OK, pWriteable);
+}
+
 bool stderrIsTerminal()
 {
    return ::isatty(STDERR_FILENO) == 1;

@@ -56,6 +56,10 @@
 #define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
 #endif
 
+#define WRITE_ACCESS 2
+#define READ_ACCESS  4
+
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -128,6 +132,29 @@ bool isHiddenFile(const std::string& path)
       return true;
    else
       return false;
+}
+
+Error fileHasAccess(const FilePath& filePath, int mode, bool* pHasAccess)
+{
+   std::wstring wPath = filePath.absolutePathW();
+   int result = ::_waccess(wPath.c_str(), mode);
+   if (result == 0)
+   {
+      // user has access
+      *pHasAccess = true;
+   }
+   else if (errno == EACCES)
+   {
+      // this error is expected when the user doesn't have access to the path
+      // or the path does not exist - either way, it is not accessible
+      *pHasAccess = false;
+   }
+   else
+   {
+      // some other error (unexpected)
+      return systemError(errno, ERROR_LOCATION);
+   }
+   return Success();
 }
 
 } // anonymous namespace
@@ -559,8 +586,15 @@ Error makeFileHidden(const FilePath& path)
    return Success();
 }
 
+Error isFileReadable(const FilePath& filePath, bool* pReadable)
+{
+   return fileHasAccess(filePath, READ_ACCESS, pReadable);
+}
 
-
+Error isFileWriteable(const FilePath& filePath, bool* pWriteable)
+{
+   return fileHasAccess(filePath, WRITE_ACCESS, pWriteable);
+}
 
 bool stderrIsTerminal()
 {
