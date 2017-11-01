@@ -41,7 +41,6 @@ public:
 
 public:
    QString getSumatraPdfExePath();
-   QVariant evaluateJavaScript(const QString& script);
    void launchSession(bool reload);
    void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
                       const std::string& initialDir = std::string());

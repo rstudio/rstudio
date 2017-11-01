@@ -67,6 +67,12 @@ void SatelliteWindow::finishLoading(bool ok)
 
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
+   webView()->event(event);
+
+   // TODO: We'll have to get called back to handle this properly.
+
+   /*
+
    QWebEnginePage* pPage = webView()->page();
 
    // the source window has special close semantics
@@ -95,12 +101,12 @@ void SatelliteWindow::closeEvent(QCloseEvent *event)
 
    // forward the close event to the web view
    webView()->event(event);
+   */
 }
 
 void SatelliteWindow::onActivated()
 {
-   desktop::evaluateJavaScript(
-            webView()->page(),
+   webView()->webPage()->runJavaScript(
             QString::fromUtf8(
                "if (window.notifyRStudioSatelliteReactivated) "
                "   window.notifyRStudioSatelliteReactivated(null);"));

@@ -339,51 +339,5 @@ QFileDialog::Options standardFileDialogOptions()
 
 #endif
 
-namespace {
-
-class EvaluateJavaScriptCallback
-{
-public:
-
-   EvaluateJavaScriptCallback(
-         QVariant* pResult,
-         boost::atomic<bool>* pReady)
-      : pResult_(pResult),
-        pReady_(pReady)
-   {
-   }
-
-   void operator()(const QVariant& result)
-   {
-      *pResult_ = result;
-      *pReady_ = true;
-   }
-
-private:
-
-   QVariant* pResult_;
-   boost::atomic<bool>* pReady_;
-};
-
-} // end anonymous namespace
-
-QVariant evaluateJavaScript(QWebEnginePage* pPage,
-                            const QString& script)
-{
-   QVariant result;
-   boost::atomic<bool> ready(false);
-
-   EvaluateJavaScriptCallback callback(&result, &ready);
-   pPage->runJavaScript(script, callback);
-
-   while (!ready)
-   {
-      boost::this_thread::sleep(boost::posix_time::milliseconds(1));
-   }
-
-   return result;
-}
-
-
 } // namespace desktop
 } // namespace rstudio

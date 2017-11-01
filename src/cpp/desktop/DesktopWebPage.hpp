@@ -87,11 +87,6 @@ public:
    void prepareForWindow(const PendingWindow& pendingWnd);
    void closeWindow(QString name);
 
-   inline QVariant evaluateJavaScript(const QString& script)
-   {
-      return desktop::evaluateJavaScript(this, script);
-   }
-
    virtual void triggerAction(QWebEnginePage::WebAction action, bool checked = false);
 
 public slots:

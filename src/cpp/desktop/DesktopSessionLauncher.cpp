@@ -194,8 +194,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
-
-      pMainWindow_->evaluateJavaScript(
+      pMainWindow_->webView()->webPage()->runJavaScript(
                QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
 
       if (abendLogPath().exists())

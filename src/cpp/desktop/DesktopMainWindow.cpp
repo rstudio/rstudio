@@ -108,10 +108,8 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   QVariant sumatraPath = evaluateJavaScript(
-            QString::fromUtf8("window.desktopHooks.getSumatraPdfExePath()"));
-
-   return sumatraPath.toString();
+   // TODO: Extra sumatra path from session info
+   return QString();
 }
 
 void MainWindow::launchSession(bool reload)
@@ -138,13 +136,8 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
 
 void MainWindow::onCloseWindowShortcut()
 {
-   QString command = QString::fromUtf8(
-         "window.desktopHooks.isCommandEnabled('closeSourceDoc')");
-
-   bool closeSourceDocEnabled = evaluateJavaScript(command).toBool();
-
-   if (!closeSourceDocEnabled)
-      close();
+   // TODO: Call close() method if the 'closeSourceDoc' command
+   // is not enabled.
 }
 
 
@@ -156,16 +149,8 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
 
-   // see if there is a project dir to display in the titlebar
-   // if there are unsaved changes then resolve them before exiting
-   QVariant vProjectDir = evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.getActiveProjectDir()"));
-
-   QString projectDir = vProjectDir.toString();
-   if (projectDir.length() > 0)
-      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
-   else
-      setWindowTitle(QString::fromUtf8("RStudio"));
+   // TODO: Separately discover the active project directory
+   // and display in the title bar.
 
    avoidMoveCursorIfNecessary();
 }
@@ -223,36 +208,21 @@ void MainWindow::invokeCommand(QString commandId)
          commandId +
          QString::fromUtf8("');");
 
-   evaluateJavaScript(command);
+   webPage()->runJavaScript(command);
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
 {
-   action->setVisible(evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
-   action->setEnabled(evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromUtf8("')")).toBool());
-   action->setText(evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromUtf8("')")).toString());
-   if (action->isCheckable())
-   {
-      action->setChecked(evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromUtf8("')")).toBool());
-   }
+   // TODO: We should have a generic API that retrieves information about
+   // a command (visible, enabled, label, checked, etc) and use a callback to handle
+   // everything received.
 }
 
 // a faster version of the above that just checks and sets the command's
 // visibility state (to trigger visibility of menus containing the command)
 void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
-   action->setVisible(evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
-}
-
-QVariant MainWindow::evaluateJavaScript(const QString& script)
-{
-   QWebEnginePage* pPage = webView()->page();
-   return desktop::evaluateJavaScript(pPage, script);
+   // TODO: make asynchronous.
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
@@ -264,6 +234,10 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
+   // TODO: quit R if we have an R session.
+   pEvent->accept();
+
+   /*
    QVariant hasQuitR = desktop::evaluateJavaScript(pPage, QString::fromUtf8("!!window.desktopHooks"));
 
    if (quitConfirmed_
@@ -278,6 +252,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       desktop::evaluateJavaScript(pPage, QString::fromUtf8("window.desktopHooks.quitR()"));
       pEvent->ignore();
    }
+   */
 }
 
 double MainWindow::getZoomLevel()
@@ -303,17 +278,16 @@ void MainWindow::openFileInRStudio(QString path)
       return;
 
    path = path.replace(QString::fromUtf8("\\"), QString::fromUtf8("\\\\"))
-          .replace(QString::fromUtf8("\""), QString::fromUtf8("\\\""))
-          .replace(QString::fromUtf8("\n"), QString::fromUtf8("\\n"));
+         .replace(QString::fromUtf8("\""), QString::fromUtf8("\\\""))
+         .replace(QString::fromUtf8("\n"), QString::fromUtf8("\\n"));
 
-   desktop::evaluateJavaScript(
-               webView()->page(),
-               QString::fromUtf8("window.desktopHooks.openFile(\"") + path + QString::fromUtf8("\")"));
+   webView()->page()->runJavaScript(
+            QString::fromUtf8("window.desktopHooks.openFile(\"") + path + QString::fromUtf8("\")"));
 }
 
 void MainWindow::onPdfViewerClosed(QString pdfPath)
 {
-   evaluateJavaScript(
+   webView()->page()->runJavaScript(
             QString::fromUtf8("window.synctexNotifyPdfViewerClosed(\"") +
             pdfPath + QString::fromUtf8("\")"));
 }
@@ -322,12 +296,12 @@ void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
 {
    boost::format fmt("window.desktopSynctexInverseSearch(\"%1%\", %2%, %3%)");
    std::string js = boost::str(fmt % srcFile.toStdString() % line % column);
-   evaluateJavaScript(QString::fromStdString(js));
+   webView()->page()->runJavaScript(QString::fromStdString(js));
 }
 
 void MainWindow::onLicenseLost(QString licenseMessage)
 {
-   evaluateJavaScript(
+   webView()->page()->runJavaScript(
             QString::fromUtf8("window.desktopHooks.licenseLost('") + licenseMessage +
             QString::fromUtf8("');"));
 }
@@ -357,7 +331,7 @@ int MainWindow::collectPendingQuitRequest()
 
 bool MainWindow::desktopHooksAvailable()
 {
-   return evaluateJavaScript(QString::fromUtf8("!!window.desktopHooks")).toBool();
+   // TODO: Need to request this state through an alternative mechanism.
 }
 
 void MainWindow::onActivated()

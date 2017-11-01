@@ -94,7 +94,7 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      desktop::evaluateJavaScript(webPage(), cmd);
+      webPage()->runJavaScript(cmd);
    }
    else if (pOpener_)
    {
@@ -105,7 +105,7 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
                   "   window.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      desktop::evaluateJavaScript(webPage(), cmd);
+      webPage()->runJavaScript(cmd);
    }
 
    // forward the close event to the page
@@ -138,7 +138,7 @@ WebView* BrowserWindow::webView()
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
 #ifdef Q_OS_MAC
-   webView()->page()->mainFrame()->evaluateJavaScript(
+   webView()->page()->runJavaScript(
          QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 }
@@ -170,7 +170,7 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
       "   window.opener.registerDesktopChildWindow('");
    cmd.append(name_);
    cmd.append(QString::fromUtf8("', window);"));
-   desktop::evaluateJavaScript(webPage(), cmd);
+   webPage()->runJavaScript(cmd);
 }
 
 QString BrowserWindow::getName()
