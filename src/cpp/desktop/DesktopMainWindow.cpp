@@ -20,6 +20,7 @@
 #include <QtGui>
 #include <QToolBar>
 #include <QWebEnginePage>
+#include <QWebChannel>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -108,7 +109,7 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   // TODO: Extra sumatra path from session info
+   // TODO: Extract sumatra path from session info
    return QString();
 }
 
@@ -189,16 +190,13 @@ void MainWindow::onJavaScriptWindowObjectCleared()
 {
    GwtWindow::onJavaScriptWindowObjectCleared();
 
-   /* TODO: Web channels */
+   webPage()->webChannel()->registerObject(
+            QString::fromUtf8("desktop"),
+            &gwtCallback_);
 
-   // webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-   //       QString::fromUtf8("desktop"),
-   //       &gwtCallback_,
-   //       QWebEnginePage::QtOwnership);
-   // webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-   //       QString::fromUtf8("desktopMenuCallback"),
-   //       &menuCallback_,
-   //       QWebEnginePage::QtOwnership);
+   webPage()->webChannel()->registerObject(
+            QString::fromUtf8("desktopMenuCallback"),
+            &menuCallback_);
 }
 
 void MainWindow::invokeCommand(QString commandId)
@@ -332,6 +330,7 @@ int MainWindow::collectPendingQuitRequest()
 bool MainWindow::desktopHooksAvailable()
 {
    // TODO: Need to request this state through an alternative mechanism.
+   return true;
 }
 
 void MainWindow::onActivated()
