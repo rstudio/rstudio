@@ -46,7 +46,9 @@ std::string DesktopActivation::licenseStatus()
    return std::string();
 }
 
-bool DesktopActivation::getInitialLicense(const core::FilePath& installPath, bool devMode)
+bool DesktopActivation::getInitialLicense(const QStringList& arguments,
+                                          const core::FilePath& installPath,
+                                          bool devMode)
 {
    return true;
 }
