@@ -375,7 +375,7 @@ inline bool isSharedProject(const core::FilePath& sharedStoragePath,
                             const core::r_util::ProjectId& projectId,
                             bool* pHasAccess)
 {
-#ifdef RSTUDIO_SERVER
+#ifndef _WIN32
    core::FilePath projectEntryPath =
          sharedStoragePath.complete(kProjectSharedDir)
                           .complete(projectId.asString() + kProjectEntryExt);
@@ -389,7 +389,7 @@ inline bool isSharedProject(const core::FilePath& sharedStoragePath,
    else
       return false;
 #else
-   return false; // project sharing not supported on desktop
+   return false; // project sharing not supported on Windows
 #endif
 }
 
