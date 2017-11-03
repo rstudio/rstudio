@@ -200,6 +200,10 @@ int main(int argc, char* argv[])
 {
    core::system::initHook();
 
+   // enable debug console
+   // TODO: better way of selecting a port?
+   core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", "59009");
+
    try
    {
       initializeLang();
