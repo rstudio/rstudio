@@ -92,13 +92,9 @@ QString Options::portNumber() const
 #ifdef _WIN32
       QString localPeer = QString::fromUtf8("\\\\.\\pipe\\") +
                           portNumber_ + QString::fromUtf8("-rsession");
-#else
-      QString localPeer = QDir(QDir::tempPath()).absolutePath() +
-                          QString::fromUtf8("/") + portNumber_ +
-                          QString::fromUtf8("-rsession");
-#endif
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
+#endif
    }
 
    return portNumber_;

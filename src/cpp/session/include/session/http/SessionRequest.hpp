@@ -67,19 +67,12 @@ inline core::Error sendSessionRequest(const std::string& uri,
 #else
    std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
 
-#ifdef __APPLE__
-   // on OS X desktop, we use HTTP
    if (tcpipPort.empty())
    {
       // if no standalone port, make an authenticated session request
       tcpipPort = core::system::getenv(kRSessionPortNumber);
       request.setHeader("X-Shared-Secret",
                           core::system::getenv("RS_SHARED_SECRET"));
-   }
-#endif
-
-   if (!tcpipPort.empty())
-   {
       return core::http::sendRequest("127.0.0.1", tcpipPort, request, 
             pResponse);
    }

@@ -173,6 +173,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopUtils.cpp
   DesktopWebPage.cpp
   DesktopWebView.cpp
+  DesktopWebProfile.cpp
   DesktopWindowTracker.cpp
   DesktopSatelliteWindow.cpp
   DesktopSecondaryWindow.cpp

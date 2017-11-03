@@ -32,7 +32,7 @@
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopMainWindow.hpp"
-
+#include "DesktopWebProfile.hpp"
 #include "DesktopUtils.hpp"
 
 using namespace rstudio::core;
@@ -49,7 +49,7 @@ WindowTracker s_windowTracker;
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebEnginePage(parent),
+      QWebEnginePage(new WebProfile, parent),
       baseUrl_(baseUrl),
       navigated_(false),
       allowExternalNav_(allowExternalNavigate)
