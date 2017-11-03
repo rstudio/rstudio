@@ -15,13 +15,17 @@
 
 #include "DesktopUtils.hpp"
 
+#include <QPointer>
 #include <QProcess>
 #include <QPushButton>
+#include <QTimer>
+#include <QEventLoop>
 #include <QDesktopServices>
 
 #include <boost/atomic.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
+#include <boost/ref.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -338,6 +342,80 @@ QFileDialog::Options standardFileDialogOptions()
 }
 
 #endif
+
+namespace {
+
+class JavaScriptCallback : public QObject
+{
+public:
+
+   JavaScriptCallback()
+      : ready_(false)
+   {
+   }
+
+   QVariant waitForResult()
+   {
+      while (!ready_)
+      {
+         eventLoop_.exec();
+      }
+
+      eventLoop_.quit();
+      return result_;
+   }
+
+   void operator()(const QVariant& result)
+   {
+      result_ = result;
+      ready_ = true;
+   }
+
+private:
+   Q_DISABLE_COPY(JavaScriptCallback)
+
+   bool ready_;
+   QEventLoop eventLoop_;
+   QVariant result_;
+};
+
+class JavaScriptCallbackWrapper
+{
+public:
+   explicit JavaScriptCallbackWrapper(JavaScriptCallback* pCallback)
+      : pCallback_(pCallback)
+   {
+   }
+
+   void operator()(const QVariant& result)
+   {
+      (*pCallback_)(result);
+   }
+
+private:
+   JavaScriptCallback* pCallback_;
+};
+
+} // end anonymous namespace
+
+QVariant evaluateJavaScript(QWebEnginePage* page, const QString& script)
+{
+   JavaScriptCallback callback;
+   JavaScriptCallbackWrapper wrapper(&callback);
+   page->runJavaScript(script, wrapper);
+   return callback.waitForResult();
+}
+
+QVariant evaluateJavaScript(QWebEnginePage* page, const char* script)
+{
+   return evaluateJavaScript(page, QString::fromUtf8(script));
+}
+
+QVariant evaluateJavaScript(QWebEnginePage* page, const std::string& script)
+{
+   return evaluateJavaScript(page, QString::fromStdString(script));
+}
+
 
 } // namespace desktop
 } // namespace rstudio

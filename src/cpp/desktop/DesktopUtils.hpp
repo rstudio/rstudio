@@ -83,6 +83,10 @@ int getDpi();
 
 QFileDialog::Options standardFileDialogOptions();
 
+QVariant evaluateJavaScript(QWebEnginePage* page, const QString& script);
+QVariant evaluateJavaScript(QWebEnginePage* page, const char* script);
+QVariant evaluateJavaScript(QWebEnginePage* page, const std::string& script);
+
 } // namespace desktop
 } // namespace rstudio
 

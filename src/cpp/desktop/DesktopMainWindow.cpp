@@ -109,8 +109,9 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   // TODO: Extract sumatra path from session info
-   return QString();
+   return desktop::evaluateJavaScript(
+            webPage(),
+            "window.desktopHooks.getSumatraPdfExePath()").toString();
 }
 
 void MainWindow::launchSession(bool reload)
@@ -137,10 +138,14 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
 
 void MainWindow::onCloseWindowShortcut()
 {
-   // TODO: Call close() method if the 'closeSourceDoc' command
-   // is not enabled.
-}
+   bool closeSourceDocEnabled = desktop::evaluateJavaScript(
+            webPage(),
+            "window.desktopHooks.isCommandEnabled('closeSourceDoc')")
+         .toBool();
 
+   if (!closeSourceDocEnabled)
+      close();
+}
 
 void MainWindow::onWorkbenchInitialized()
 {
@@ -150,8 +155,17 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
 
-   // TODO: Separately discover the active project directory
-   // and display in the title bar.
+   // see if there is a project dir to display in the titlebar
+   // if there are unsaved changes then resolve them before exiting
+   QString projectDir = desktop::evaluateJavaScript(
+            webPage(),
+            "window.desktopHooks.getActiveProjectDir()")
+         .toString();
+
+   if (projectDir.length() > 0)
+      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+   else
+      setWindowTitle(QString::fromUtf8("RStudio"));
 
    avoidMoveCursorIfNecessary();
 }
