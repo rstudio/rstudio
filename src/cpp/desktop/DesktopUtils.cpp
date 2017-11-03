@@ -356,12 +356,22 @@ public:
 
    QVariant waitForResult()
    {
+      int retryCount = 0;
+
       while (!ready_)
       {
+         if (retryCount++ > 10)
+         {
+            break;
+         }
+
+         // run the event loop for 10ms
+         QTimer::singleShot(10, [this]() {
+            eventLoop_.quit();
+         });
          eventLoop_.exec();
       }
 
-      eventLoop_.quit();
       return result_;
    }
 
