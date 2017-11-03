@@ -25,6 +25,7 @@
 * Fix error when quitting while a function named `q()` is present (#1647)
 * Fix crash when executing multiple R Notebook chunks with a failing Rcpp chunk (#1668)
 * Fix missing blank lines in code chunks in R Notebook preview (#1556)
+* Fix selection in Files pane when files are modified while checked (#1715)
 
 ### RStudio Server Pro
 
