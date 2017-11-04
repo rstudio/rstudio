@@ -27,6 +27,7 @@
 #include <core/r_util/RUserData.hpp>
 
 #include <QProcess>
+#include <QPushButton>
 #include <QtNetwork/QTcpSocket>
 
 #include "DesktopUtils.hpp"
@@ -74,13 +75,19 @@ void logEnvVar(const std::string& name)
 
 } // anonymous namespace
 
-
-Error SessionLauncher::launchFirstSession(const QString& filename,
-                                          ApplicationLaunch* pAppLaunch)
+void SessionLauncher::launchFirstSession(const core::FilePath& installPath,
+                                         bool devMode,
+                                         const QStringList& arguments)
 {
-   // save reference to app launch
-   pAppLaunch_ = pAppLaunch;
+   connect(&desktop::activation::activation(), SIGNAL(launchFirstSession()),
+           SLOT(onLaunchFirstSession()), Qt::QueuedConnection);
+   connect(&desktop::activation::activation(), SIGNAL(launchError(QString)),
+            SLOT(onLaunchError(QString)), Qt::QueuedConnection);
+   desktop::activation::activation().getInitialLicense(arguments, installPath, devMode);
+}
 
+Error SessionLauncher::launchFirstSession()
+{
    // build a new new launch context
    QString host, port;
    QStringList argList;
@@ -118,17 +125,17 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    pMainWindow_ = new MainWindow(url);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
-   pMainWindow_->setAppLauncher(pAppLaunch);
-   pAppLaunch->setActivationWindow(pMainWindow_);
+   pMainWindow_->setAppLauncher(pAppLaunch_);
+   pAppLaunch_->setActivationWindow(pMainWindow_);
 
    desktop::options().restoreMainWindowBounds(pMainWindow_);
 
    RUN_DIAGNOSTICS_LOG("\nConnected to R session, attempting to initialize...\n");
 
    // one-time workbench intiailized hook for startup file association
-   if (!filename.isNull() && !filename.isEmpty())
+   if (!filename_.isNull() && !filename_.isEmpty())
    {
-      StringSlotBinder* filenameBinder = new StringSlotBinder(filename);
+      StringSlotBinder* filenameBinder = new StringSlotBinder(filename_);
       pMainWindow_->connect(pMainWindow_,
                             SIGNAL(firstWorkbenchInitialized()),
                             filenameBinder,
@@ -148,22 +155,19 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
-   if (activation::activation().hasLicenseLostSignal())
-   {
-      pMainWindow_->connect(&activation::activation(),
-                           SIGNAL(licenseLost(QString)),
-                           pMainWindow_,
-                           SLOT(onLicenseLost(QString)));
-   }
+   pMainWindow_->connect(&activation::activation(),
+                         SIGNAL(licenseLost(QString)),
+                         pMainWindow_,
+                         SLOT(onLicenseLost(QString)));
 
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
    {
       pMainWindow_->show();
-      pAppLaunch->activateWindow();
+      pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
    }
-
+   qApp->setQuitOnLastWindowClosed(true);
    return Success();
 }
 
@@ -310,7 +314,15 @@ void SessionLauncher::onReloadFrameForNextSession()
    nextSessionUrl_.clear();
 }
 
-
+void SessionLauncher::onLaunchFirstSession()
+{
+   Error error = launchFirstSession();
+   if (error)
+   {
+      LOG_ERROR(error);
+      activation::activation().emitLaunchError(launchFailedErrorMessage());
+   }
+}
 
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
@@ -325,6 +337,17 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                      sessionPath_.absolutePath(),
                      argList,
                      ppRSessionProcess));
+}
+
+void SessionLauncher::onLaunchError(QString message)
+{
+  QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
+      QString::fromUtf8("RStudio"),
+      message);
+  errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
+      QMessageBox::AcceptRole);
+  errorMsg.exec();
+  qApp->exit(EXIT_FAILURE);
 }
 
 QString SessionLauncher::collectAbendLogMessage() const

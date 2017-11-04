@@ -34,17 +34,21 @@ class SessionLauncher : public QObject
    Q_OBJECT
 public:
    SessionLauncher(const core::FilePath& sessionPath,
-                   const core::FilePath& confPath)
+                   const core::FilePath& confPath,
+                   const QString& filename,
+                   ApplicationLaunch* pAppLaunch)
       : confPath_(confPath),
         sessionPath_(sessionPath),
-        pAppLaunch_(NULL),
+        pAppLaunch_(pAppLaunch),
         pMainWindow_(NULL),
-        pRSessionProcess_(NULL)
-   {
-   }
+        pRSessionProcess_(NULL),
+        filename_(filename)
+{
+}
 
-   core::Error launchFirstSession(const QString& filename,
-                                  ApplicationLaunch* pAppLaunch);
+   void launchFirstSession(const core::FilePath& installPath,
+                           bool devMode,
+                           const QStringList& arguments);
 
    core::Error launchNextSession(bool reload);
 
@@ -55,8 +59,11 @@ public:
 public slots:
    void onRSessionExited(int exitCode, QProcess::ExitStatus exitStatus);
    void onReloadFrameForNextSession();
+   void onLaunchFirstSession();
+   void onLaunchError(QString message);
 
 private:
+   core::Error launchFirstSession();
 
    QString collectAbendLogMessage() const;
 
@@ -78,6 +85,7 @@ private:
    MainWindow* pMainWindow_;
    QProcess* pRSessionProcess_;
    QUrl nextSessionUrl_;
+   QString filename_;
 };
 
 } // namespace desktop

@@ -46,20 +46,30 @@ std::string DesktopActivation::licenseStatus()
    return std::string();
 }
 
-bool DesktopActivation::getInitialLicense(const QStringList& arguments,
+void DesktopActivation::getInitialLicense(const QStringList& arguments,
                                           const core::FilePath& installPath,
                                           bool devMode)
 {
-   return true;
+   emit launchFirstSession();
 }
 
 void DesktopActivation::showLicenseDialog()
 {
 }
 
-bool DesktopActivation::hasLicenseLostSignal() const
+void DesktopActivation::emitLicenseLostSignal()
 {
-   return false;
+   emit licenseLost(QString::fromUtf8(currentLicenseStateMessage().c_str()));
+}
+
+void DesktopActivation::emitLaunchFirstSession()
+{
+   emit launchFirstSession();
+}
+
+void DesktopActivation::emitLaunchError(QString message)
+{
+   emit launchError(message);
 }
 
 } // namespace activation

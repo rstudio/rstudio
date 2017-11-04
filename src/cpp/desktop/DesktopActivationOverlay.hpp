@@ -40,7 +40,7 @@ class DesktopActivation : public QObject
 public:
    DesktopActivation();
 
-   bool getInitialLicense(const QStringList& arguments,
+   void getInitialLicense(const QStringList& arguments,
                           const core::FilePath& installPath,
                           bool devMode);
    bool allowProductUsage();
@@ -54,7 +54,15 @@ public:
 
    void showLicenseDialog();
 
-   bool hasLicenseLostSignal() const;
+signals:
+   void licenseLost(QString licenseMessage);
+   void launchFirstSession();
+   void launchError(QString message);
+   
+public:
+   void emitLicenseLostSignal();
+   void emitLaunchFirstSession();
+   void emitLaunchError(QString message);
 };
 
 } // namespace activation
