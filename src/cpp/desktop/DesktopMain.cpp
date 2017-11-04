@@ -42,7 +42,6 @@
 #include "DesktopSessionLauncher.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
-#include "DesktopActivationOverlay.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -350,49 +349,19 @@ int main(int argc, char* argv[])
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);
 
-      if (!desktop::activation::activation().getInitialLicense(pApp->arguments(),
-                                                               installPath,
-                                                               devMode))
-      {
-         return EXIT_FAILURE;
-      }
-
       // launch session
-      SessionLauncher sessionLauncher(sessionPath, confPath);
-      error = sessionLauncher.launchFirstSession(filename, pAppLaunch.get());
-      if (!error)
-      {
-         ProgressActivator progressActivator;
+      SessionLauncher sessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
+      sessionLauncher.launchFirstSession(installPath, devMode, pApp->arguments());
 
-         int result = pApp->exec();
+      ProgressActivator progressActivator;
 
-         sessionLauncher.cleanupAtExit();
+      int result = pApp->exec();
 
-         options.cleanUpScratchTempDir();
+      sessionLauncher.cleanupAtExit();
 
-         return result;
-      }
-      else
-      {
-         LOG_ERROR(error);
+      options.cleanUpScratchTempDir();
 
-         // These calls to processEvents() seem to be necessary to get
-         // readAllStandardError to work.
-         pApp->processEvents();
-         pApp->processEvents();
-         pApp->processEvents();
-
-         QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
-                              QString::fromUtf8("RStudio"),
-                              sessionLauncher.launchFailedErrorMessage());
-         errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
-                            QMessageBox::AcceptRole);
-         errorMsg.show();
-
-         pApp->exec();
-
-         return EXIT_FAILURE;
-      }
+      return result;
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
