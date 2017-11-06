@@ -21,6 +21,8 @@
 #include <QToolBar>
 #include <QWebEnginePage>
 #include <QWebChannel>
+#include <QWebEngineScript>
+#include <QWebEngineScriptCollection>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -50,6 +52,11 @@ MainWindow::MainWindow(QUrl url) :
 {
    quitConfirmed_ = false;
    pToolbar_->setVisible(false);
+
+   // create web channel and bind GWT callbacks
+   QWebChannel* channel = new QWebChannel(this);
+   channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   webPage()->setWebChannel(channel);
 
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well

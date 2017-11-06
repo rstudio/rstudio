@@ -494,6 +494,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
+            <cmd refid="openDeveloperConsole"/>
             <separator/>
             <cmd refid="toggleEditorTokenInfo"/>
             <separator/>

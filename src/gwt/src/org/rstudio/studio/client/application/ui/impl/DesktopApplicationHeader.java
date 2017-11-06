@@ -260,6 +260,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
       }.schedule(1000);
       
    }
+   
+   @Handler
+   void onOpenDeveloperConsole()
+   {
+      // TODO: Request this port as part of the startup session info?
+      globalDisplay_.openWindow("localhost:59009");
+   }
 
    @Handler
    void onCheckForUpdates()
