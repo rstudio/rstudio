@@ -56,6 +56,7 @@ MainWindow::MainWindow(QUrl url) :
    // create web channel and bind GWT callbacks
    QWebChannel* channel = new QWebChannel(this);
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
    webPage()->setWebChannel(channel);
 
    // Dummy menu bar to deal with the fact that

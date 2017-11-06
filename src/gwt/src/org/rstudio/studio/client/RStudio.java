@@ -30,6 +30,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -102,8 +104,8 @@ public class RStudio implements EntryPoint
    public void onModuleLoad() 
    {
       Debug.injectDebug();
-      Command dismissProgressAnimation = showProgress();
-      delayLoadApplication(dismissProgressAnimation);
+      dismissProgressAnimation_ = showProgress();
+      delayLoadApplication();
    }
 
    private Command showProgress()
@@ -153,85 +155,132 @@ public class RStudio implements EntryPoint
       };
    }
    
-   private void delayLoadApplication(final Command dismissProgressAnimation)
+   private void delayLoadApplication()
    {
+      final SerializedCommandQueue queue = new SerializedCommandQueue();
+      
+      // TODO (gary) This early loading of XTermWidget dependencies needs to be
+      // removed once I figure out why XTermWidget.load in 
+      // TerminalPane:createMainWidget) isn't sufficient. Suspect due to xterm.js
+      // loading its add-ons (fit.js) but need to investigate. 
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            XTermWidget.load(continuation);
+         }
+      });
+      
+      // load Qt WebEngine hooks
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            QWebChannel.load(continuation);
+         }
+      });
+      
+      // ensure Ace is loaded up front
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            AceEditor.load(continuation);
+         }
+      });
+      
+      // load the requested page
+      queue.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            onDelayLoadApplication();
+         }
+      });
+      
+      // define async callback fro GWT
       final RunAsyncCallback runCallback = new RunAsyncCallback()
       {
          public void onFailure(Throwable reason)
          {
-            dismissProgressAnimation.execute();
-            Window.alert("Error: " + reason.getMessage());
          }
 
          public void onSuccess()
          {
-            // TODO (gary) This early loading of XTermWidget dependencies needs to be
-            // removed once I figure out why XTermWidget.load in 
-            // TerminalPane:createMainWidget) isn't sufficient. Suspect due to xterm.js
-            // loading its add-ons (fit.js) but need to investigate. 
-            XTermWidget.load(new Command()
-            {
-               public void execute()
-               {
-                  AceEditor.load(new Command()
-                  {
-                     public void execute()
-                     {
-                        ensureStylesInjected();
-
-                        String view = Window.Location.getParameter("view");
-                        if (VCSApplication.NAME.equals(view))
-                        {
-                           RStudioGinjector.INSTANCE.getVCSApplication().go(
-                                 RootLayoutPanel.get(),
-                                 dismissProgressAnimation);
-                        }
-                        else if (HTMLPreviewApplication.NAME.equals(view))
-                        {
-                           RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
-                                 RootLayoutPanel.get(),
-                                 dismissProgressAnimation);
-                        }
-                        else if (ShinyApplicationSatellite.NAME.equals(view))
-                        {
-                           RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
-                                 RootLayoutPanel.get(),
-                                 dismissProgressAnimation);
-                        }
-                        else if (RmdOutputSatellite.NAME.equals(view))
-                        {
-                           RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
-                                 RootLayoutPanel.get(), 
-                                 dismissProgressAnimation);
-                        }
-                        else if (view != null && 
-                              view.startsWith(SourceSatellite.NAME_PREFIX))
-                        {
-                           SourceSatellite satellite = new SourceSatellite(view);
-                           satellite.go(RootLayoutPanel.get(), 
-                                 dismissProgressAnimation);
-                        }
-                        else if (view != null && 
-                              view.startsWith(ChunkSatellite.NAME_PREFIX))
-                        {
-                           ChunkSatellite satellite = new ChunkSatellite(view);
-                           satellite.go(RootLayoutPanel.get(), 
-                                 dismissProgressAnimation);
-                        }
-                        else
-                        {
-                           RStudioGinjector.INSTANCE.getApplication().go(
-                                 RootLayoutPanel.get(),
-                                 dismissProgressAnimation);
-                        }
-                     }
-                  });
-               }
-            });
+            queue.run();
          }
       };
+      
+      GWT.runAsync(new RunAsyncCallback()
+      {
+         @Override
+         public void onSuccess()
+         {
+            queue.run();
+         }
+         
+         @Override
+         public void onFailure(Throwable reason)
+         {
+            dismissProgressAnimation_.execute();
+            Window.alert("Error: " + reason.getMessage());
+         }
+      });
+   }
+   
+   private void onDelayLoadApplication()
+   {
+      ensureStylesInjected();
 
-      GWT.runAsync(runCallback);
+      String view = Window.Location.getParameter("view");
+      if (VCSApplication.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getVCSApplication().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
+      else if (HTMLPreviewApplication.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
+      else if (ShinyApplicationSatellite.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
+      else if (RmdOutputSatellite.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
+               RootLayoutPanel.get(), 
+               dismissProgressAnimation_);
+      }
+      else if (view != null && 
+            view.startsWith(SourceSatellite.NAME_PREFIX))
+      {
+         SourceSatellite satellite = new SourceSatellite(view);
+         satellite.go(RootLayoutPanel.get(), 
+               dismissProgressAnimation_);
+      }
+      else if (view != null && 
+            view.startsWith(ChunkSatellite.NAME_PREFIX))
+      {
+         ChunkSatellite satellite = new ChunkSatellite(view);
+         satellite.go(RootLayoutPanel.get(), 
+               dismissProgressAnimation_);
+      }
+      else
+      {
+         RStudioGinjector.INSTANCE.getApplication().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
    }
    
    private void ensureStylesInjected()
@@ -298,4 +347,6 @@ public class RStudio implements EntryPoint
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
    }
+   
+   private Command dismissProgressAnimation_;
 }
