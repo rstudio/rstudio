@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command.impl;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.MenuCallback;
 
@@ -31,9 +32,9 @@ public class DesktopMenuCallback implements MenuCallback
    public void addCommand(String commandId, AppCommand command)
    {
       addCommand(commandId,
-                 command.getMenuLabel(true),
-                 command.getTooltip(),
-                 command.getShortcutRaw(),
+                 StringUtil.notNull(command.getMenuLabel(true)),
+                 StringUtil.notNull(command.getTooltip()),
+                 StringUtil.notNull(command.getShortcutRaw()),
                  command.isCheckable());
    }
 
