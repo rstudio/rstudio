@@ -62,6 +62,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -265,7 +266,10 @@ public class DesktopApplicationHeader implements ApplicationHeader
    void onOpenDeveloperConsole()
    {
       // TODO: Request this port as part of the startup session info?
-      globalDisplay_.openWindow("localhost:59009");
+      globalDisplay_.openMinimalWindow(
+            "http://127.0.0.1:59009",
+            Window.getClientWidth() - 20,
+            Window.getClientHeight() - 20);
    }
 
    @Handler
