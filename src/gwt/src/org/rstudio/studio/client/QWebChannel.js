@@ -17,10 +17,13 @@ new QWebChannel(qt.webChannelTransport, function(channel) {
 
    // export all channel objects to main window
    var objects = channel.objects;
-   for (key in objects) {
+   for (var key in objects) {
       if (objects.hasOwnProperty(key)) {
          window[key] = objects[key];
       }
    }
+   
+   // make channel generally accessible (for debugging)
+   window.qt.channel = channel;
    
 });

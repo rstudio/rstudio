@@ -117,9 +117,12 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   return desktop::evaluateJavaScript(
-            webPage(),
-            "window.desktopHooks.getSumatraPdfExePath()").toString();
+   // TODO: get from session info?
+   return QStringLiteral("<unknown>");
+
+//   return desktop::evaluateJavaScript(
+//            webPage(),
+//            "window.desktopHooks.getSumatraPdfExePath()").toString();
 }
 
 void MainWindow::launchSession(bool reload)
@@ -146,13 +149,15 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
 
 void MainWindow::onCloseWindowShortcut()
 {
-   bool closeSourceDocEnabled = desktop::evaluateJavaScript(
-            webPage(),
-            "window.desktopHooks.isCommandEnabled('closeSourceDoc')")
-         .toBool();
+   // TODO
 
-   if (!closeSourceDocEnabled)
-      close();
+//   bool closeSourceDocEnabled = desktop::evaluateJavaScript(
+//            webPage(),
+//            "window.desktopHooks.isCommandEnabled('closeSourceDoc')")
+//         .toBool();
+
+//   if (!closeSourceDocEnabled)
+//      close();
 }
 
 void MainWindow::onWorkbenchInitialized()
@@ -163,17 +168,19 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
 
-   // see if there is a project dir to display in the titlebar
-   // if there are unsaved changes then resolve them before exiting
-   QString projectDir = desktop::evaluateJavaScript(
-            webPage(),
-            "window.desktopHooks.getActiveProjectDir()")
-         .toString();
+   // TODO: alternate mechanism for requesting project title?
 
-   if (projectDir.length() > 0)
-      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
-   else
-      setWindowTitle(QString::fromUtf8("RStudio"));
+//   // see if there is a project dir to display in the titlebar
+//   // if there are unsaved changes then resolve them before exiting
+//   QString projectDir = desktop::evaluateJavaScript(
+//            webPage(),
+//            "window.desktopHooks.getActiveProjectDir()")
+//         .toString();
+
+//   if (projectDir.length() > 0)
+//      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+//   else
+//      setWindowTitle(QString::fromUtf8("RStudio"));
 
    avoidMoveCursorIfNecessary();
 }
@@ -242,20 +249,22 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
 // visibility state (to trigger visibility of menus containing the command)
 void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
+   qDebug() << "Managing command visibilitiy: '" << cmdId << "'";
+
    // TODO: make asynchronous.
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
-   QWebEnginePage* pPage = webView()->page();
-   if (!pPage)
+   if (!webPage())
    {
        pEvent->accept();
        return;
    }
 
    // TODO: quit R if we have an R session.
-   pEvent->accept();
+   webPage()->runJavaScript(QStringLiteral("window.desktopHooks.quitR()"));
+   pEvent->ignore();
 
    /*
    QVariant hasQuitR = desktop::evaluateJavaScript(pPage, QString::fromUtf8("!!window.desktopHooks"));

@@ -69,31 +69,31 @@ void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
    webView()->event(event);
 
-   QWebEnginePage* pPage = webView()->page();
+   // TODO: handle closing of source windows
 
-   // the source window has special close semantics
-   if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))
-   {
-      bool readyToClose = desktop::evaluateJavaScript(
-               pPage,
-               QString::fromUtf8("window.rstudioReadyToClose")).toBool();
+//   // the source window has special close semantics
+//   if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))
+//   {
+//      bool readyToClose = desktop::evaluateJavaScript(
+//               pPage,
+//               QString::fromUtf8("window.rstudioReadyToClose")).toBool();
 
-      if (!readyToClose)
-      {
-         desktop::evaluateJavaScript(
-                  pPage,
-                  QString::fromUtf8("window.rstudioCloseSourceWindow();"));
+//      if (!readyToClose)
+//      {
+//         desktop::evaluateJavaScript(
+//                  pPage,
+//                  QString::fromUtf8("window.rstudioCloseSourceWindow();"));
 
-        event->ignore();
-        return;
-     }
-   }
+//        event->ignore();
+//        return;
+//     }
+//   }
 
-   desktop::evaluateJavaScript(
-            pPage,
-            QString::fromUtf8(
-               "if (window.notifyRStudioSatelliteClosing) "
-               "   window.notifyRStudioSatelliteClosing();"));
+//   desktop::evaluateJavaScript(
+//            pPage,
+//            QString::fromUtf8(
+//               "if (window.notifyRStudioSatelliteClosing) "
+//               "   window.notifyRStudioSatelliteClosing();"));
 
    // forward the close event to the web view
    webView()->event(event);
