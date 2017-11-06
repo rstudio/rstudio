@@ -29,6 +29,8 @@ public class DesktopMenuCallback implements MenuCallback
       $wnd.desktopMenuCallback.beginMenu(label);
    }-*/;
 
+   // TODO: Rather than adding commands one-at-a-time, we should
+   // see if we could instead add all of the commands in one message.
    public void addCommand(String commandId, AppCommand command)
    {
       addCommand(commandId,

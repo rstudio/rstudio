@@ -249,8 +249,6 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
 // visibility state (to trigger visibility of menus containing the command)
 void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
-   qDebug() << "Managing command visibilitiy: '" << cmdId << "'";
-
    // TODO: make asynchronous.
 }
 
