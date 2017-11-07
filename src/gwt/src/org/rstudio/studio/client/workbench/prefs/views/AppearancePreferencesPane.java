@@ -144,9 +144,8 @@ public class AppearancePreferencesPane extends PreferencesPane
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
          fontFace_.getListBox().setWidth("95%");
 
-         String value = Desktop.getFrame().getFixedWidthFont();
-         String label = Desktop.getFrame().getFixedWidthFont().replaceAll("\\\"",
-                                                                          "");
+         String value = DesktopInfo.getFixedWidthFont();
+         String label = value.replaceAll("\\\"", "");
          if (!fontFace_.setValue(label))
          {
             fontFace_.insertValue(0, label, value);

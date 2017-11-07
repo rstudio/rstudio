@@ -46,6 +46,9 @@ public:
 
    Q_INVOKABLE QString getFixedWidthFont();
    Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
+
+   Q_INVOKABLE QString getDesktopSynctexViewer();
+   Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
 };
 
 } // end namespace desktop

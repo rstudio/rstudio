@@ -19,6 +19,7 @@
 #include <core/FileSerializer.hpp>
 
 #include "DesktopOptions.hpp"
+#include "DesktopSynctex.hpp"
 
 #define kLsbRelease    "/etc/lsb-release"
 #define kRedhatRelease "/etc/redhat-release"
@@ -151,13 +152,19 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   // TODO
+   // TODO: read from QFont database
    return QStringLiteral("None");
 }
 
 QString DesktopInfo::getFixedWidthFont()
 {
    return options().fixedWidthFont();
+}
+
+QString DesktopInfo::getDesktopSynctexViewer()
+{
+   // TODO: this isn't really constant
+   return Synctex::desktopViewerInfo().name;
 }
 
 } // end namespace desktop

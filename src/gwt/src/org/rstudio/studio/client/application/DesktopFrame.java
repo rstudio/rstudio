@@ -154,9 +154,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void macZoomIn();
    void macZoomOut();
    
-   // TODO
-   String getDesktopSynctexViewer();
-   
    void externalSynctexPreview(String pdfPath, int page);
    
    void externalSynctexView(String pdfFile, 

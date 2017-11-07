@@ -40,4 +40,9 @@ public class DesktopInfo
    /*-{
       return $wnd.desktopInfo.fixedWidthFont;
    }-*/;
+   
+   public static final native String getDesktopSynctexViewer()
+   /*-{
+      return $wnd.desktopInfo.desktopSynctexViewer;
+   }-*/;
 }
