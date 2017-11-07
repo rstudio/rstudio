@@ -27,11 +27,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    boolean isCocoa();
    void browseUrl(String url);
    
-   String getOpenFileName(String caption,
-                          String label,
-                          String dir,
-                          String filter,
-                          boolean canChooseDirectories);
+   void getOpenFileName(String caption,
+                        String label,
+                        String dir,
+                        String filter,
+                        boolean canChooseDirectories,
+                        DesktopFrameCallback<String> callback);
    
    String getSaveFileName(String caption,
                           String label,

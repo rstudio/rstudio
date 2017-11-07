@@ -26,6 +26,8 @@ import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallback;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -170,19 +172,26 @@ public class DesktopFileDialogs implements FileDialogs
                         final String dir,
                         final CommandWithArg<String> onCompleted)
          {
-            String fileName = Desktop.getFrame().getOpenFileName(
+            Desktop.getFrame().getOpenFileName(
                   caption,
                   label,
                   dir,
                   filter,
-                  canChooseDirectories);
+                  canChooseDirectories,
+                  new DesktopFrameCallbackBuilder<String>()
+                  {
+                     @Override
+                     public void execute(String fileName)
+                     {
+                        if (fileName != null)
+                        {
+                           updateWorkingDirectory(fileName, fsContext);
+                        }
+
+                        onCompleted.execute(fileName);
+                     }
+                  }.create());
             
-            if (fileName != null)
-            {
-               updateWorkingDirectory(fileName, fsContext);
-            }
-            
-            onCompleted.execute(fileName);
          }
       }.execute(caption, fsContext, initialFilePath, operation);
    }

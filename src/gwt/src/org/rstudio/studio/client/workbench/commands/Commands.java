@@ -484,6 +484,7 @@ public abstract class
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
 
+   // Placeholder for most recently used files
    public abstract AppCommand mru0();
    public abstract AppCommand mru1();
    public abstract AppCommand mru2();
