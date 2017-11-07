@@ -26,7 +26,6 @@ import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallback;
 import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -221,15 +220,25 @@ public class DesktopFileDialogs implements FileDialogs
                         final String dir,
                         final CommandWithArg<String> onCompleted)
          {
-            String fileName = Desktop.getFrame().getSaveFileName(
-                  caption, buttonLabel, dir, defaultExtension, forceDefaultExtension);
+            Desktop.getFrame().getSaveFileName(
+                  caption,
+                  buttonLabel,
+                  dir,
+                  defaultExtension,
+                  forceDefaultExtension,
+                  new DesktopFrameCallbackBuilder<String>()
+                  {
+                     @Override
+                     public void execute(String fileName)
+                     {
+                        if (fileName != null)
+                        {
+                           updateWorkingDirectory(fileName, fsContext);
+                        }
 
-            if (fileName != null)
-            {
-               updateWorkingDirectory(fileName, fsContext);
-            }
-            
-            onCompleted.execute(fileName);
+                        onCompleted.execute(fileName);
+                     }
+                  }.create());
          }
       }.execute(caption,
                 fsContext,
@@ -258,12 +267,18 @@ public class DesktopFileDialogs implements FileDialogs
                         final String dir,
                         final CommandWithArg<String> onCompleted)
          {
-            String directory = Desktop.getFrame().getExistingDirectory(
+            Desktop.getFrame().getExistingDirectory(
                   caption,
                   label,
-                  initialDir != null ? initialDir.getPath() : null);
-            
-            onCompleted.execute(directory);
+                  initialDir != null ? initialDir.getPath() : null,
+                  new DesktopFrameCallbackBuilder<String>()
+                  {
+                     @Override
+                     public void execute(String directory)
+                     {
+                        onCompleted.execute(directory);
+                     }
+                  }.create());
          }
       }.execute(caption, fsContext, null, operation);
    }

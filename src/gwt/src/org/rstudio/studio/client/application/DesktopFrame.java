@@ -34,15 +34,17 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         boolean canChooseDirectories,
                         DesktopFrameCallback<String> callback);
    
-   String getSaveFileName(String caption,
-                          String label,
-                          String dir, 
-                          String defaultExtension, 
-                          boolean forceDefaultExtension);
+   void getSaveFileName(String caption,
+                        String label,
+                        String dir, 
+                        String defaultExtension, 
+                        boolean forceDefaultExtension,
+                        DesktopFrameCallback<String> callback);
    
-   String getExistingDirectory(String caption,
-                               String label,
-                               String dir);
+   void getExistingDirectory(String caption,
+                             String label,
+                             String dir,
+                             DesktopFrameCallback<String> callback);
    
    void undo(boolean forAce);
    void redo(boolean forAce);
@@ -52,10 +54,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void clipboardPaste();
    
    void setClipboardText(String text);
-   String getClipboardText();
+   void getClipboardText(DesktopFrameCallback<String> callback);
    
    void setGlobalMouseSelection(String selection);
-   String getGlobalMouseSelection();
+   void getGlobalMouseSelection(DesktopFrameCallback<String> callback);
    
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
@@ -89,24 +91,27 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                int width, 
                                int height);
    
-   boolean supportsClipboardMetafile();
+   void supportsClipboardMetafile(DesktopFrameCallback<Boolean> callback);
 
-   int showMessageBox(int type,
-                      String caption,
-                      String message,
-                      String buttons,
-                      int defaultButton,
-                      int cancelButton);
+   void showMessageBox(int type,
+                       String caption,
+                       String message,
+                       String buttons,
+                       int defaultButton,
+                       int cancelButton,
+                       DesktopFrameCallback<Integer> callback);
 
-   String promptForText(String title,
-                        String label,
-                        String initialValue,
-                        boolean usePasswordMask,
-                        String rememberPasswordPrompt,
-                        boolean rememberByDefault,
-                        boolean numbersOnly,
-                        int selectionStart,
-                        int selectionLength, String okButtonCaption);
+   void promptForText(String title,
+                      String label,
+                      String initialValue,
+                      boolean usePasswordMask,
+                      String rememberPasswordPrompt,
+                      boolean rememberByDefault,
+                      boolean numbersOnly,
+                      int selectionStart,
+                      int selectionLength,
+                      String okButtonCaption,
+                      DesktopFrameCallback<String> callback);
 
    void showAboutDialog();
    void bringMainFrameToFront();

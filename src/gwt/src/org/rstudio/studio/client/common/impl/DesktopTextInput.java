@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.TextInput;
 
 public class DesktopTextInput implements TextInput
@@ -35,29 +36,37 @@ public class DesktopTextInput implements TextInput
                              ProgressOperationWithInput<String> okOperation,
                              Operation cancelOperation)
    {
-      String result = Desktop.getFrame().promptForText(title,
-                                                       label,
-                                                       initialValue,
-                                                       usePasswordMask,
-                                                       "",
-                                                       false,
-                                                       numbersOnly,
-                                                       selectionStart,
-                                                       selectionLength,
-                                                       okButtonCaption);
-      if (StringUtil.isNullOrEmpty(result))
-      {
-         if (cancelOperation != null)
-            cancelOperation.execute();
-      }
-      else
-      {
-         String[] lines = result.split("\\n");
-         okOperation.execute(lines[0],
-                             RStudioGinjector.INSTANCE
-                                   .getGlobalDisplay()
-                                   .getProgressIndicator("Error"));
-      }
+      Desktop.getFrame().promptForText(
+            title,
+            label,
+            initialValue,
+            usePasswordMask,
+            "",
+            false,
+            numbersOnly,
+            selectionStart,
+            selectionLength,
+            okButtonCaption,
+            new DesktopFrameCallbackBuilder<String>()
+            {
+               @Override
+               public void execute(String result)
+               {
+                  if (StringUtil.isNullOrEmpty(result))
+                  {
+                     if (cancelOperation != null)
+                        cancelOperation.execute();
+                  }
+                  else
+                  {
+                     String[] lines = result.split("\\n");
+                     okOperation.execute(lines[0],
+                           RStudioGinjector.INSTANCE
+                           .getGlobalDisplay()
+                           .getProgressIndicator("Error"));
+                  }
+               }
+            }.create());
    }
 
    @Override
@@ -73,31 +82,39 @@ public class DesktopTextInput implements TextInput
                                  ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
-      String result = Desktop.getFrame().promptForText(title,
-                                                       label,
-                                                       initialValue,
-                                                       usePasswordMask,
-                                                       extraOptionPrompt,
-                                                       extraOptionDefault,
-                                                       false,
-                                                       selectionStart,
-                                                       selectionLength,
-                                                       okButtonCaption);
-      if (StringUtil.isNullOrEmpty(result))
-      {
-         if (cancelOperation != null)
-            cancelOperation.execute();
-      }
-      else
-      {
-         PromptWithOptionResult presult = new PromptWithOptionResult();
-         String[] lines = result.split("\\n");
-         presult.input = lines[0];
-         presult.extraOption = "1".equals(lines[1]);
-         okOperation.execute(presult,
-                             RStudioGinjector.INSTANCE
-                                   .getGlobalDisplay()
-                                   .getProgressIndicator("Error"));
-      }
+      Desktop.getFrame().promptForText(
+            title,
+            label,
+            initialValue,
+            usePasswordMask,
+            extraOptionPrompt,
+            extraOptionDefault,
+            false,
+            selectionStart,
+            selectionLength,
+            okButtonCaption,
+            new DesktopFrameCallbackBuilder<String>()
+            {
+               @Override
+               public void execute(String result)
+               {
+                  if (StringUtil.isNullOrEmpty(result))
+                  {
+                     if (cancelOperation != null)
+                        cancelOperation.execute();
+                  }
+                  else
+                  {
+                     PromptWithOptionResult presult = new PromptWithOptionResult();
+                     String[] lines = result.split("\\n");
+                     presult.input = lines[0];
+                     presult.extraOption = "1".equals(lines[1]);
+                     okOperation.execute(presult,
+                           RStudioGinjector.INSTANCE
+                           .getGlobalDisplay()
+                           .getProgressIndicator("Error"));
+                  }
+               }
+            }.create());
    }
 }

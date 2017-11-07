@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.workbench.exportplot.clipboard.CopyPlotToClipboardDesktopDialog;
 import org.rstudio.studio.client.workbench.exportplot.clipboard.CopyPlotToClipboardDesktopMetafileDialog;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -29,26 +30,32 @@ public class ExportPlotDesktop extends ExportPlot
 
    @Override
    public void copyPlotToClipboard(
-                              PlotsServerOperations server,
-                              ExportPlotOptions options,
-                              OperationWithInput<ExportPlotOptions> onClose)
-   {   
-      if (Desktop.getFrame().supportsClipboardMetafile())
+                              final PlotsServerOperations server,
+                              final ExportPlotOptions options,
+                              final OperationWithInput<ExportPlotOptions> onClose)
+   {
+      Desktop.getFrame().supportsClipboardMetafile(new DesktopFrameCallbackBuilder<Boolean>()
       {
-         new CopyPlotToClipboardDesktopMetafileDialog(
-                        new PlotsPanePreviewer(server, true),
-                        new PlotsPaneClipboard(server),
-                        options, 
-                        onClose).showModal();
-      }
-      else
-      {
-         new CopyPlotToClipboardDesktopDialog(
-                        new PlotsPanePreviewer(server, true),
-                        new PlotsPaneClipboard(server),
-                        options, 
-                        onClose).showModal();
-      }
+         @Override
+         public void execute(Boolean supported)
+         {
+            if (supported)
+            {
+               new CopyPlotToClipboardDesktopMetafileDialog(
+                     new PlotsPanePreviewer(server, true),
+                     new PlotsPaneClipboard(server),
+                     options, 
+                     onClose).showModal();
+            }
+            else
+            {
+               new CopyPlotToClipboardDesktopDialog(
+                     new PlotsPanePreviewer(server, true),
+                     new PlotsPaneClipboard(server),
+                     options, 
+                     onClose).showModal();
+            }
+         }
+      }.create());
    }
-
 }

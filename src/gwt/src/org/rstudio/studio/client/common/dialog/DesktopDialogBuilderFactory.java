@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 public class DesktopDialogBuilderFactory implements DialogBuilderFactory
@@ -48,13 +49,25 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
             delim = "|";
          }
 
-         int result = Desktop.getFrame().showMessageBox(type,
-                                                        caption,
-                                                        message_,
-                                                        buttons.toString(),
-                                                        defaultButton_,
-                                                        buttons_.size() - 1);
-
+         Desktop.getFrame().showMessageBox(
+               type,
+               caption,
+               message_,
+               buttons.toString(),
+               defaultButton_,
+               buttons_.size() - 1,
+               new DesktopFrameCallbackBuilder<Integer>()
+               {
+                  @Override
+                  public void execute(Integer result)
+                  {
+                     Builder.this.execute(result);
+                  }
+               }.create());
+      }
+      
+      private void execute(Integer result)
+      {
          if (result >= buttons_.size())
             return;
 
