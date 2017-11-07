@@ -28,13 +28,16 @@ class DesktopInfo : public QObject
 
 public:
 
-   explicit DesktopInfo(QObject* parent)
-      : QObject(parent)
-   {
-   }
+   explicit DesktopInfo(QObject* parent);
 
    Q_INVOKABLE QString getPlatform();
    Q_PROPERTY(QString platform READ getPlatform)
+
+   Q_INVOKABLE QString getVersion();
+   Q_PROPERTY(QString version READ getVersion);
+
+   Q_INVOKABLE QString getScrollingCompensationType();
+   Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType);
 };
 
 } // end namespace desktop

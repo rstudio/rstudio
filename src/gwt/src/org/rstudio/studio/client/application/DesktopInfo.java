@@ -1,5 +1,5 @@
 /*
- * DesktopInfo.cpp
+ * DesktopInfo.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -12,22 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.application;
 
-#include "DesktopInfo.hpp"
-
-namespace rstudio {
-namespace desktop {
-
-QString DesktopInfo::getScrollingCompensationType()
+public class DesktopInfo
 {
-#if defined(Q_OS_MAC)
-   return QStringLiteral("Mac");
-#elif defined(Q_OS_WIN32)
-   return QStringLiteral("Win");
-#else
-   return QStringLiteral("None");
-#endif
+   public static final native String getPlatform()
+   /*-{
+      return $wnd.desktopInfo.platform;
+   }-*/;
+   
+   public static final native String getVersion()
+   /*-{
+      return $wnd.desktopInfo.version;
+   }-*/;
+   
+   public static final native String getScrollingCompensationType()
+   /*-{
+      return $wnd.desktopInfo.scrollingCompensationType;
+   }-*/;
 }
-
-} // end namespace desktop
-} // end namespace rstudio

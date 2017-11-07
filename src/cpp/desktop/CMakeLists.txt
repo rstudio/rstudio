@@ -189,6 +189,17 @@ set(DESKTOP_SOURCE_FILES
 
 if(WIN32)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopInfoWin32.cpp)
+elseif(APPLE)
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopInfoMac.cpp)
+elseif(UNIX)
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopInfoLinux.cpp)
+endif()
+
+if(WIN32)
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopChooseRHome.cpp
     DesktopWin32ApplicationLaunch.cpp
     DesktopRVersion.cpp
