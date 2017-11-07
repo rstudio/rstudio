@@ -116,14 +116,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
-
-   String getRVersion();
-   String chooseRVersion();
-   boolean canChooseRVersion();
-
-   double devicePixelRatio();
-   int getDisplayDpi();
    
+   void getDisplayDpi(DesktopFrameCallback<Integer> callback);
+
    void cleanClipboard();
    
    public static final int PENDING_QUIT_NONE = 0;
@@ -143,24 +138,27 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String extraPathEntries,
                      int shellType);
 
+   // TODO
    String getFixedWidthFontList();
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
+   // TODO
    String getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    
    void showLicenseDialog();
-   String getInitMessages();
-   String getLicenseStatusMessage();
-   boolean allowProductUsage();
+   void getInitMessages(DesktopFrameCallback<String> callback);
+   void getLicenseStatusMessage(DesktopFrameCallback<String> callback);
+   void allowProductUsage(DesktopFrameCallback<Boolean> callback);
    
    // mac-specific zoom calls
    void macZoomActualSize();
    void macZoomIn();
    void macZoomOut();
    
+   // TODO
    String getDesktopSynctexViewer();
    
    void externalSynctexPreview(String pdfPath, int page);
@@ -170,7 +168,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                             int line,
                             int column);
    
-   boolean supportsFullscreenMode();
    void toggleFullscreenMode();
    void showKeyboardShortcutHelp();
    

@@ -161,6 +161,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
+  DesktopInfo.cpp
   DesktopInputDialog.cpp
   DesktopMain.cpp
   DesktopMainWindow.cpp

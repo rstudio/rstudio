@@ -45,6 +45,7 @@ namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
       GwtWindow(false, false, QString(), url, NULL),
+      desktopInfo_(this),
       menuCallback_(this),
       gwtCallback_(this, this),
       pSessionLauncher_(NULL),
@@ -56,6 +57,7 @@ MainWindow::MainWindow(QUrl url) :
    // create web channel and bind GWT callbacks
    QWebChannel* channel = new QWebChannel(this);
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   channel->registerObject(QStringLiteral("desktopInfo"), &desktopInfo_);
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
    webPage()->setWebChannel(channel);
 

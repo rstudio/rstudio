@@ -40,8 +40,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -64,36 +62,37 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
 
-      if (Desktop.isDesktop())
-      {
-         if (Desktop.getFrame().canChooseRVersion())
-         {
-            rVersion_ = new TextBoxWithButton(
-                  "R version:",
-                  "Change...",
-                  new ClickHandler()
-                  {
-                     public void onClick(ClickEvent event)
-                     {
-                        String ver = Desktop.getFrame().chooseRVersion();
-                        if (!StringUtil.isNullOrEmpty(ver))
-                        {
-                           rVersion_.setText(ver);
-
-                           globalDisplay.showMessage(MessageDialog.INFO,
-                                 "Change R Version",
-                                 "You need to quit and re-open RStudio " +
-                                 "in order for this change to take effect.");
-                        }
-                     }
-                  });
-            rVersion_.setWidth("100%");
-            rVersion_.setText(Desktop.getFrame().getRVersion());
-            spaced(rVersion_);
-            add(rVersion_);
-         }
-      }
-      else if (versionsInfo.isMultiVersion())
+      // TODO: Wrap this up into a proper asynchronous routine?
+//      if (Desktop.isDesktop())
+//      {
+//         if (Desktop.getFrame().canChooseRVersion())
+//         {
+//            rVersion_ = new TextBoxWithButton(
+//                  "R version:",
+//                  "Change...",
+//                  new ClickHandler()
+//                  {
+//                     public void onClick(ClickEvent event)
+//                     {
+//                        String ver = Desktop.getFrame().chooseRVersion();
+//                        if (!StringUtil.isNullOrEmpty(ver))
+//                        {
+//                           rVersion_.setText(ver);
+//
+//                           globalDisplay.showMessage(MessageDialog.INFO,
+//                                 "Change R Version",
+//                                 "You need to quit and re-open RStudio " +
+//                                 "in order for this change to take effect.");
+//                        }
+//                     }
+//                  });
+//            rVersion_.setWidth("100%");
+//            rVersion_.setText(Desktop.getFrame().getRVersion());
+//            spaced(rVersion_);
+//            add(rVersion_);
+//         }
+//      }
+      if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
                                        versionsInfo.getAvailableRVersions());

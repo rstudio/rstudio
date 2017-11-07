@@ -96,8 +96,7 @@ public class WorkbenchScreen extends Composite
       if (!BrowseCap.isMacintoshDesktop() || BrowseCap.isCocoaDesktop())
          commands.macPreferences().remove();
       
-      if (!Desktop.isDesktop() || 
-          !Desktop.getFrame().supportsFullscreenMode())
+      if (!Desktop.isDesktop())
       {
          commands.toggleFullScreen().remove();
       }

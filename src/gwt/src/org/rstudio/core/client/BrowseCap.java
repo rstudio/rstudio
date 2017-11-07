@@ -17,6 +17,7 @@ package org.rstudio.core.client;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -151,10 +152,9 @@ public class BrowseCap
    
    public static double devicePixelRatio() 
    {
-      if (Desktop.isDesktop())
-         return Desktop.getFrame().devicePixelRatio();
-      else
-         return getDevicePixelRatio();
+      // TODO: validate that we can rely on browser to report even
+      // on desktop clients
+      return getDevicePixelRatio();
    }
 
    public static String getPlatformName()
@@ -243,9 +243,19 @@ public class BrowseCap
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
 
-      if (isWindowsDesktop() && Desktop.getFrame().getDisplayDpi() >= 192)
+      if (isWindowsDesktop())
       {
-         Document.get().getBody().addClassName("windows-highdpi");
+         Desktop.getFrame().getDisplayDpi(new DesktopFrameCallbackBuilder<Integer>()
+         {
+            @Override
+            public void execute(Integer result)
+            {
+               if (result >= 192)
+               {
+                  Document.get().getBody().addClassName("windows-highdpi");
+               }
+            }
+         }.create());
       }
 
       if (FIXED_UBUNTU_MONO)

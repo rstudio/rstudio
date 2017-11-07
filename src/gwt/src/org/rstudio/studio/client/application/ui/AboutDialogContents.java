@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
@@ -59,13 +60,20 @@ public class AboutDialogContents extends Composite
       
       if (editionInfo.proLicense() && Desktop.isDesktop())
       {
-         String licenseStatus = Desktop.getFrame().getLicenseStatusMessage();
-         int licenseLines = StringUtil.newlineCount(licenseStatus);
-         noticeBox.setVisibleLines(10);
-         licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
-         licenseLabel.setVisible(true);
-         licenseBox.setVisible(true);
-         licenseBox.setText(Desktop.getFrame().getLicenseStatusMessage());
+         // TODO: since this runs asynchronously this might be problematic
+         Desktop.getFrame().getLicenseStatusMessage(new DesktopFrameCallbackBuilder<String>()
+         {
+            @Override
+            public void execute(String licenseStatus)
+            {
+               int licenseLines = StringUtil.newlineCount(licenseStatus);
+               noticeBox.setVisibleLines(10);
+               licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
+               licenseLabel.setVisible(true);
+               licenseBox.setVisible(true);
+               licenseBox.setText(licenseStatus);
+            }
+         }.create());
          
       }
    }

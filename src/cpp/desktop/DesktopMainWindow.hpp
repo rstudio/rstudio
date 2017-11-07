@@ -22,6 +22,7 @@
 #include <QtGui>
 #include <QSessionManager>
 
+#include "DesktopInfo.hpp"
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
@@ -98,6 +99,7 @@ private:
 
 private:
    bool quitConfirmed_;
+   DesktopInfo desktopInfo_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
