@@ -364,8 +364,9 @@ bool MainWindow::desktopHooksAvailable()
 
 void MainWindow::onActivated()
 {
-   if (desktopHooksAvailable())
-      invokeCommand(QString::fromUtf8("vcsRefreshNoError"));
+   // TODO: this should only be invoked if we have VCS active + in a project
+//   if (desktopHooksAvailable())
+//      invokeCommand(QString::fromUtf8("vcsRefreshNoError"));
 }
 
 } // namespace desktop
