@@ -397,7 +397,7 @@ public class Files
             
             server_.copyFile(selectedFiles.get(0),
                  targetFile,
-                 false,
+                 true,
                  new VoidServerRequestCallback(progress) {
                      @Override
                      protected void onSuccess()
