@@ -138,13 +138,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String extraPathEntries,
                      int shellType);
 
-   // TODO
-   String getFixedWidthFontList();
-   String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
    // TODO
-   String getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    

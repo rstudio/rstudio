@@ -19,6 +19,8 @@
 #include <QObject>
 #include <QString>
 
+#include "DesktopGwtCallback.hpp"
+
 namespace rstudio {
 namespace desktop {
 
@@ -34,10 +36,16 @@ public:
    Q_PROPERTY(QString platform READ getPlatform CONSTANT)
 
    Q_INVOKABLE QString getVersion();
-   Q_PROPERTY(QString version READ getVersion CONSTANT);
+   Q_PROPERTY(QString version READ getVersion CONSTANT)
 
    Q_INVOKABLE QString getScrollingCompensationType();
-   Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT);
+   Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT)
+
+   Q_INVOKABLE QString getFixedWidthFontList();
+   Q_PROPERTY(QString fixedWidthFontList READ getFixedWidthFontList CONSTANT)
+
+   Q_INVOKABLE QString getFixedWidthFont();
+   Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
 };
 
 } // end namespace desktop

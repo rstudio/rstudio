@@ -99,9 +99,9 @@ private:
 
 private:
    bool quitConfirmed_;
-   DesktopInfo desktopInfo_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
+   DesktopInfo desktopInfo_;
    SessionLauncher* pSessionLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;

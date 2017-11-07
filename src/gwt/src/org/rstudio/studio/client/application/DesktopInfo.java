@@ -30,4 +30,14 @@ public class DesktopInfo
    /*-{
       return $wnd.desktopInfo.scrollingCompensationType;
    }-*/;
+   
+   public static final native String getFixedWidthFontList()
+   /*-{
+      return $wnd.desktopInfo.fixedWidthFontList;
+   }-*/;
+   
+   public static final native String getFixedWidthFont()
+   /*-{
+      return $wnd.desktopInfo.fixedWidthFont;
+   }-*/;
 }

@@ -45,9 +45,9 @@ namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
       GwtWindow(false, false, QString(), url, NULL),
-      desktopInfo_(this),
       menuCallback_(this),
       gwtCallback_(this, this),
+      desktopInfo_(this),
       pSessionLauncher_(NULL),
       pCurrentSessionProcess_(NULL)
 {
