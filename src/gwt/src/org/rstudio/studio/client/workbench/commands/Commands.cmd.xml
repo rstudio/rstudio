@@ -736,7 +736,6 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
-         <shortcut refid="clearTerminalScrollbackBuffer" value="Ctrl+Shift+L"/>
          <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
       </shortcutgroup>
