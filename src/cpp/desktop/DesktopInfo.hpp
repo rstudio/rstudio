@@ -30,7 +30,7 @@ class DesktopInfo : public QObject
 
 public:
 
-   explicit DesktopInfo(QObject* parent);
+   explicit DesktopInfo(QObject* parent = nullptr);
 
    Q_INVOKABLE QString getPlatform();
    Q_PROPERTY(QString platform READ getPlatform CONSTANT)
@@ -50,6 +50,12 @@ public:
    Q_INVOKABLE QString getDesktopSynctexViewer();
    Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
 };
+
+inline DesktopInfo& desktopInfo()
+{
+   static DesktopInfo instance;
+   return instance;
+}
 
 } // end namespace desktop
 } // end namespace rstudio
