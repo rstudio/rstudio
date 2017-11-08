@@ -261,26 +261,27 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
-   // TODO: quit R if we have an R session.
-   webPage()->runJavaScript(QStringLiteral("window.desktopHooks.quitR()"));
-   pEvent->ignore();
+   webPage()->runJavaScript(
+            QStringLiteral("!!window.desktopHooks"),
+            [&](QVariant hasQuitR) {
 
-   /*
-   QVariant hasQuitR = desktop::evaluateJavaScript(pPage, QString::fromUtf8("!!window.desktopHooks"));
-
-   if (quitConfirmed_
-       || !hasQuitR.toBool()
-       || pCurrentSessionProcess_ == NULL
-       || pCurrentSessionProcess_->state() != QProcess::Running)
-   {
-      pEvent->accept();
-   }
-   else
-   {
-      desktop::evaluateJavaScript(pPage, QString::fromUtf8("window.desktopHooks.quitR()"));
-      pEvent->ignore();
-   }
-   */
+      if (quitConfirmed_ ||
+          !hasQuitR.toBool() ||
+          pCurrentSessionProcess_ == NULL ||
+          pCurrentSessionProcess_->state() != QProcess::Running)
+      {
+         pEvent->accept();
+      }
+      else
+      {
+         webPage()->runJavaScript(
+                  QStringLiteral("window.desktopHooks.quitR()"),
+                  [&](QVariant ignored)
+         {
+            pEvent->ignore();
+         });
+      }
+   });
 }
 
 double MainWindow::getZoomLevel()

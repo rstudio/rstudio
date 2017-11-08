@@ -61,3 +61,4 @@ inline DesktopInfo& desktopInfo()
 } // end namespace rstudio
 
 #endif /* DESKTOP_DESKTOP_INFO_HPP */
+
