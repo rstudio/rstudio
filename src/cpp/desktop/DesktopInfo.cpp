@@ -34,9 +34,10 @@ namespace desktop {
 
 namespace {
 
-QString s_platform          = kUnknown;
-QString s_version           = kUnknown;
-QString s_sumatraPdfExePath = kUnknown;
+QString s_platform           = kUnknown;
+QString s_version            = kUnknown;
+QString s_sumatraPdfExePath  = kUnknown;
+QString s_fixedWidthFontList = kUnknown;
 
 #ifdef Q_OS_LINUX
 
@@ -129,7 +130,24 @@ DesktopInfo::DesktopInfo(QObject* parent)
 {
    initialize();
 
-   QObject::connect(this, &DesktopInfo::sumatraPdfExePathChanged, &DesktopInfo::setSumatraPdfExePath);
+   QObject::connect(
+            this,
+            &DesktopInfo::sumatraPdfExePathChanged,
+            &DesktopInfo::setSumatraPdfExePath);
+
+   QObject::connect(
+            this,
+            &DesktopInfo::fixedWidthFontListChanged,
+            &DesktopInfo::setFixedWidthFontList);
+
+   // TODO: consider deferring this work as it may
+   // be expensive (don't want it to slow down startup)
+   QFontDatabase db;
+   QStringList fonts;
+   for (QString family : db.families())
+      if (db.isFixedPitch(family))
+         fonts.append(family);
+   s_fixedWidthFontList = fonts.join(QStringLiteral("\n"));
 }
 
 QString DesktopInfo::getPlatform()
@@ -155,8 +173,12 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   // TODO: read from QFont database
-   return QStringLiteral("None");
+   return s_fixedWidthFontList;
+}
+
+void DesktopInfo::setFixedWidthFontList(QString list)
+{
+   s_fixedWidthFontList = list;
 }
 
 QString DesktopInfo::getFixedWidthFont()

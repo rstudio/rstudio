@@ -30,6 +30,7 @@ class DesktopInfo : public QObject
 
 Q_SIGNALS:
    void sumatraPdfExePathChanged(QString value);
+   void fixedWidthFontListChanged(QString value);
 
 public:
    explicit DesktopInfo(QObject* parent = nullptr);
@@ -44,7 +45,11 @@ public:
    Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT)
 
    Q_INVOKABLE QString getFixedWidthFontList();
-   Q_PROPERTY(QString fixedWidthFontList READ getFixedWidthFontList CONSTANT)
+   Q_INVOKABLE void setFixedWidthFontList(QString list);
+   Q_PROPERTY(QString fixedWidthFontList
+              READ getFixedWidthFontList
+              WRITE setFixedWidthFontList
+              NOTIFY fixedWidthFontListChanged)
 
    Q_INVOKABLE QString getFixedWidthFont();
    Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
@@ -60,7 +65,10 @@ public:
 
    Q_INVOKABLE QString getSumatraPdfExePath();
    Q_INVOKABLE void setSumatraPdfExePath(QString path);
-   Q_PROPERTY(QString sumatraPdfExePath READ getSumatraPdfExePath WRITE setSumatraPdfExePath NOTIFY sumatraPdfExePathChanged)
+   Q_PROPERTY(QString sumatraPdfExePath
+              READ getSumatraPdfExePath
+              WRITE setSumatraPdfExePath
+              NOTIFY sumatraPdfExePathChanged)
 };
 
 inline DesktopInfo& desktopInfo()
