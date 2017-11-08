@@ -14,8 +14,34 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+@Singleton
 public class DesktopInfo
 {
+   @Inject
+   public DesktopInfo(Session session,
+                      EventBus events)
+   {
+      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            SessionInfo info = session.getSessionInfo();
+            if (info.getSumatraPdfExePath() != null)
+               setSumatraPdfExePath(info.getSumatraPdfExePath());
+         }
+      });
+   }
+   
    public static final native String getPlatform()
    /*-{
       return $wnd.desktopInfo.platform;
@@ -50,4 +76,15 @@ public class DesktopInfo
    /*-{
       return $wnd.desktopInfo.desktopSynctexViewer;
    }-*/;
+   
+   public static final native String getSumatraPdfExePath()
+   /*-{
+      return $wnd.desktopInfo.sumatraPdfExePath;
+   }-*/;
+   
+   public static final native void setSumatraPdfExePath(String path)
+   /*-{
+      $wnd.desktopInfo.sumatraPdfExePath = path;
+   }-*/;
+   
 }

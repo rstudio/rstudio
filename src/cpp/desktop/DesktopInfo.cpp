@@ -34,8 +34,9 @@ namespace desktop {
 
 namespace {
 
-QString s_platform = kUnknown;
-QString s_version  = kUnknown;
+QString s_platform          = kUnknown;
+QString s_version           = kUnknown;
+QString s_sumatraPdfExePath = kUnknown;
 
 #ifdef Q_OS_LINUX
 
@@ -127,6 +128,8 @@ DesktopInfo::DesktopInfo(QObject* parent)
    : QObject(parent)
 {
    initialize();
+
+   QObject::connect(this, &DesktopInfo::sumatraPdfExePathChanged, &DesktopInfo::setSumatraPdfExePath);
 }
 
 QString DesktopInfo::getPlatform()
@@ -170,6 +173,21 @@ QString DesktopInfo::getDesktopSynctexViewer()
 {
    // TODO: this isn't really constant
    return Synctex::desktopViewerInfo().name;
+}
+
+bool DesktopInfo::desktopHooksAvailable()
+{
+   return true;
+}
+
+QString DesktopInfo::getSumatraPdfExePath()
+{
+   return s_sumatraPdfExePath;
+}
+
+void DesktopInfo::setSumatraPdfExePath(QString path)
+{
+   s_sumatraPdfExePath = path;
 }
 
 } // end namespace desktop

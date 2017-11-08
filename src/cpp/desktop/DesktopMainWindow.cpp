@@ -144,12 +144,7 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   // TODO: get from session info?
-   return QStringLiteral("<unknown>");
-
-//   return desktop::evaluateJavaScript(
-//            webPage(),
-//            "window.desktopHooks.getSumatraPdfExePath()").toString();
+   return desktopInfo().getSumatraPdfExePath();
 }
 
 void MainWindow::launchSession(bool reload)
@@ -382,8 +377,7 @@ int MainWindow::collectPendingQuitRequest()
 
 bool MainWindow::desktopHooksAvailable()
 {
-   // TODO: Need to request this state through an alternative mechanism.
-   return true;
+   return desktopInfo().desktopHooksAvailable();
 }
 
 void MainWindow::onActivated()

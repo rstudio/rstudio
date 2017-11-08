@@ -28,8 +28,10 @@ class DesktopInfo : public QObject
 {
     Q_OBJECT
 
-public:
+Q_SIGNALS:
+   void sumatraPdfExePathChanged(QString value);
 
+public:
    explicit DesktopInfo(QObject* parent = nullptr);
 
    Q_INVOKABLE QString getPlatform();
@@ -52,6 +54,13 @@ public:
 
    Q_INVOKABLE QString getDesktopSynctexViewer();
    Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
+
+   Q_INVOKABLE bool desktopHooksAvailable();
+   Q_PROPERTY(bool desktopHooksAvailable READ desktopHooksAvailable CONSTANT)
+
+   Q_INVOKABLE QString getSumatraPdfExePath();
+   Q_INVOKABLE void setSumatraPdfExePath(QString path);
+   Q_PROPERTY(QString sumatraPdfExePath READ getSumatraPdfExePath WRITE setSumatraPdfExePath NOTIFY sumatraPdfExePathChanged)
 };
 
 inline DesktopInfo& desktopInfo()
