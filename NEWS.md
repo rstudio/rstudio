@@ -28,6 +28,7 @@
 * Fix selection in Files pane when files are modified while checked (#1715)
 * Fix incorrect truncation of some R object descriptions in Environment pane (#1703)
 * Fix "File Exists" error when using Copy To to overwrite a file (#1722)
+* Fix duplicate prompts in each window when using RStudio API `showPrompt` (#1706)
 
 ### RStudio Server Pro
 
