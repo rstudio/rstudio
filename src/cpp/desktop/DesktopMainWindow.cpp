@@ -150,15 +150,13 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
 
 void MainWindow::onCloseWindowShortcut()
 {
-   // TODO
-
-//   bool closeSourceDocEnabled = desktop::evaluateJavaScript(
-//            webPage(),
-//            "window.desktopHooks.isCommandEnabled('closeSourceDoc')")
-//         .toBool();
-
-//   if (!closeSourceDocEnabled)
-//      close();
+   webPage()->runJavaScript(
+            QStringLiteral("window.desktopHooks.isCommandEnabled('closeSourceDoc')"),
+            [&](QVariant closeSourceDocEnabled)
+   {
+      if (!closeSourceDocEnabled.toBool())
+         close();
+   });
 }
 
 void MainWindow::onWorkbenchInitialized()
@@ -169,21 +167,19 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
 
-   // TODO: alternate mechanism for requesting project title?
+   webPage()->runJavaScript(
+            QStringLiteral("window.desktopHooks.getActiveProjectDir()"),
+            [&](QVariant qProjectDir)
+   {
+      QString projectDir = qProjectDir.toString();
 
-//   // see if there is a project dir to display in the titlebar
-//   // if there are unsaved changes then resolve them before exiting
-//   QString projectDir = desktop::evaluateJavaScript(
-//            webPage(),
-//            "window.desktopHooks.getActiveProjectDir()")
-//         .toString();
+      if (projectDir.length() > 0)
+         setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+      else
+         setWindowTitle(QString::fromUtf8("RStudio"));
 
-//   if (projectDir.length() > 0)
-//      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
-//   else
-//      setWindowTitle(QString::fromUtf8("RStudio"));
-
-   avoidMoveCursorIfNecessary();
+      avoidMoveCursorIfNecessary();
+   });
 }
 
 void MainWindow::resetMargins()
