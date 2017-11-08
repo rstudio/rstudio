@@ -161,6 +161,11 @@ QString DesktopInfo::getFixedWidthFont()
    return options().fixedWidthFont();
 }
 
+QString DesktopInfo::getProportionalFont()
+{
+   return options().proportionalFont();
+}
+
 QString DesktopInfo::getDesktopSynctexViewer()
 {
    // TODO: this isn't really constant

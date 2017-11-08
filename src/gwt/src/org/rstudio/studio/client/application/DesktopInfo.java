@@ -41,6 +41,11 @@ public class DesktopInfo
       return $wnd.desktopInfo.fixedWidthFont;
    }-*/;
    
+   public static final native String getProportionalFont()
+   /*-{
+      return $wnd.desktopInfo.proportionalFont;
+   }-*/;
+   
    public static final native String getDesktopSynctexViewer()
    /*-{
       return $wnd.desktopInfo.desktopSynctexViewer;

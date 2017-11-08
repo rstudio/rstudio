@@ -22,18 +22,15 @@ public class ThemeFonts
 {
    private static final ThemeFontLoader fontLoader =
          GWT.create(ThemeFontLoader.class);
-   private static final String proportionalFont =
-         fontLoader.getProportionalFont();
-   private static final String fixedWidthFont = fontLoader.getFixedWidthFont();
-
+   
    public static String getProportionalFont()
    {
-      return proportionalFont;
+      return fontLoader.getProportionalFont();
    }
 
    public static String getFixedWidthFont()
    {
-      return fixedWidthFont;
+      return fontLoader.getFixedWidthFont();
    }
 
    static interface ThemeFontLoader
@@ -45,13 +42,11 @@ public class ThemeFonts
    static class DesktopThemeFontLoader implements ThemeFontLoader
    {
       public native final String getProportionalFont() /*-{
-         // TODO: not available this early
-         return "sans-serif";
+         return $wnd.desktopInfo.proportionalFont;
       }-*/;
 
       public native final String getFixedWidthFont() /*-{
-         // TODO: not available this early
-         return "monospace";
+         return $wnd.desktopInfo.fixedWidthFont;
       }-*/;
    }
 

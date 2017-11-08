@@ -47,6 +47,9 @@ public:
    Q_INVOKABLE QString getFixedWidthFont();
    Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
 
+   Q_INVOKABLE QString getProportionalFont();
+   Q_PROPERTY(QString proportionalFont READ getProportionalFont CONSTANT)
+
    Q_INVOKABLE QString getDesktopSynctexViewer();
    Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
 };

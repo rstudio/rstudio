@@ -172,16 +172,6 @@ public class RStudio implements EntryPoint
          }
       });
       
-      // load Qt WebEngine hooks
-      queue.addCommand(new SerializedCommand()
-      {
-         @Override
-         public void onExecute(Command continuation)
-         {
-            QWebChannel.load(continuation);
-         }
-      });
-      
       // ensure Ace is loaded up front
       queue.addCommand(new SerializedCommand()
       {

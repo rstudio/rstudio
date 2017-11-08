@@ -17,7 +17,7 @@
 
 #include <algorithm>
 
-#include <QtGui>
+#include <QDebug>
 #include <QToolBar>
 #include <QWebEnginePage>
 #include <QWebChannel>
@@ -28,6 +28,7 @@
 #include <boost/format.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
 #include "DesktopGwtCallback.hpp"
@@ -59,6 +60,31 @@ MainWindow::MainWindow(QUrl url) :
    channel->registerObject(QStringLiteral("desktopInfo"), &desktopInfo());
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
    webPage()->setWebChannel(channel);
+
+   // load qwebchannel.js
+   QFile webChannelJsFile(QStringLiteral(":/qtwebchannel/qwebchannel.js"));
+   if (!webChannelJsFile.open(QFile::ReadOnly))
+      qDebug() << "Failed to open qwebchannel.js!";
+
+   QString webChannelJs = QString::fromUtf8(webChannelJsFile.readAll());
+   webChannelJsFile.close();
+
+   // append our WebChannel initialization code
+   const char* webChannelInit =
+         "new QWebChannel(qt.webChannelTransport, function(channel) {"
+         "   for (var key in channel.objects) {"
+         "      window[key] = channel.objects[key];"
+         "   }"
+         "});";
+
+   webChannelJs.append(QString::fromUtf8(webChannelInit));
+
+   QWebEngineScript script;
+   script.setName(QStringLiteral("qwebchannel"));
+   script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+   script.setWorldId(QWebEngineScript::MainWorld);
+   script.setSourceCode(webChannelJs);
+   webPage()->scripts().insert(script);
 
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
