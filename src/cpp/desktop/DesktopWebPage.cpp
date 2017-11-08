@@ -395,21 +395,22 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 void WebPage::triggerAction(WebAction action, bool checked)
 {
    // swallow copy events when the selection is empty
-   // NOTE: we need a callback since we want to ask Ace if it
-   // has a selection in these cases
-
-   /*
    if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
    {
-      QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
-      bool emptySelection = evaluateJavaScript(code).toBool();
-      if (emptySelection)
-         return;
-   }
-   */
+      runJavaScript(
+               QStringLiteral("window.desktopHooks.isSelectionEmpty()"),
+               [&](const QVariant& emptySelection)
+      {
+         if (emptySelection.toBool())
+            return;
 
-   // delegate to base
-   QWebEnginePage::triggerAction(action, checked);
+         QWebEnginePage::triggerAction(action, checked);
+      });
+   }
+   else
+   {
+      QWebEnginePage::triggerAction(action, checked);
+   }
 }
 
 } // namespace desktop
