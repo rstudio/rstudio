@@ -467,6 +467,10 @@ public class SessionInfo extends JavaScriptObject
       return this.tutorial_api_available;
    }-*/;
    
+   public final native boolean getTutorialApiParentNotifyAvailable() /*-{
+      return this.tutorial_api_parent_notify_available;
+   }-*/;
+   
    public final native String getTutorialApiClientOrigin() /*-{
       return this.tutorial_api_client_origin;
    }-*/;

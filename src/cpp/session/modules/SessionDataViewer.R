@@ -183,9 +183,10 @@
    if (is.data.frame(x))
    {
       info <- .row_names_info(x, type = 0L)
-      if (is.na(info)[[1]])
+      if (is.integer(info) && is.na(info[[1]]))
       {
-         range <- seq(from = start, to = start + len)
+         n <- info[[2]]
+         range <- seq(from = start, to = min(n, start + len))
          return(as.character(range))
       }
    }

@@ -120,7 +120,7 @@ public class XTermNative extends JavaScriptObject
  
    // XTERM_IMP
    public final native boolean altBufferActive() /*-{
-      return this.normal != null;
+      return this.buffers.active == this.buffers.alt;
    }-*/;
    
    public final native void showPrimaryBuffer() /*-{

@@ -673,6 +673,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       "chaos",
       "clouds midnight",
       "cobalt",
+      "dracula",
       "idle fingers",
       "kr theme",
       "material",
@@ -692,7 +693,6 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
     ),
     editor,
     ignore.case = TRUE)
-  dark <- !identical(global, "Classic") && dark
 
   list(
     editor = editor,

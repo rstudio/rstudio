@@ -36,6 +36,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
+import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -1781,6 +1782,8 @@ public class RemoteServer implements Server
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
@@ -1804,6 +1807,8 @@ public class RemoteServer implements Server
                                 String hash,
                                 ServerRequestCallback<String> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
@@ -1954,6 +1959,7 @@ public class RemoteServer implements Server
                                   String rnwWeave,
                                   ServerRequestCallback<Void> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(contents));
       params.set(1, JSONBoolean.getInstance(sweave));
@@ -1981,6 +1987,8 @@ public class RemoteServer implements Server
          HashMap<String, String> properties,
          ServerRequestCallback<Void> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONObject obj = new JSONObject();
       for (Map.Entry<String, String> entry : properties.entrySet())
       {

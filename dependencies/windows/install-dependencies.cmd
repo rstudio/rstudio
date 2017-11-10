@@ -37,7 +37,7 @@ set RTOOLS_DIR=%RTOOLS_FILE:.exe=%
 if not exist %RTOOLS_DIR% (
   wget %WGET_ARGS% "%BASEURL%%RTOOLS_FILE%"
   echo Installing '%RTOOLS_FILE%' -- please wait...
-  start /wait Rtools33.exe /verysilent /dir=%CD%\%RTOOLS_DIR%
+  start /wait Rtools33.exe /verysilent /dir="%CD%\%RTOOLS_DIR%"
   if %ERRORLEVEL% EQU 0 (
     echo '%RTOOLS_FILE%' successfully installed!
     del %RTOOLS_FILE%
