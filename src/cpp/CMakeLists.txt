@@ -29,10 +29,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
-# explicitly do not use new c++ 11 features
+# explicitly do not use new c++ 11 features for websocketpp
 # they currently do not work with our source
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
-
 
 # the non-strict masking option was identified as a potentially crashing 
 # issue due to reliance on undefined C++ behavior, and was removed entirely in 
@@ -41,6 +40,15 @@ add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
 
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
+
+# enable c++11
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(NOT COMPILER_SUPPORTS_CXX11)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 
 # UNIX specific global directivies
 if(UNIX)
