@@ -28,18 +28,29 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onApplicationTutorialNotifyEvent(ApplicationTutorialEvent event);
+      void onApplicationTutorialEvent(ApplicationTutorialEvent event);
    }
 
    // Supported values for Data.message
    
-   // Some type of file save operation was initiated. Doesn't guarantee it was successful.
-   public static final String FILE_SAVE = "fileSave";
+   // API request failed
+   // {"message": "error": "api": "<APINAME>", "result": "<API-SPECIFIC>"}
+   public static final String API_ERROR = "error";
+   
+   // API request succeeded
+   // {"message": "success": "api": "<APINAME>"}
+   public static final String API_SUCCESS = "success";
 
+   // Some type of file save operation was initiated. Doesn't guarantee it was successful.
+   // {"message": "fileSave"}
+   public static final String FILE_SAVE = "fileSave";
+   
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class Data
    {
       public String message;
+      public String api;
+      public String result;
    }
 
    public ApplicationTutorialEvent()
@@ -58,6 +69,21 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
       data_.message = message;
    }
 
+   public ApplicationTutorialEvent(String message, String api)
+   {
+      data_ = new Data();
+      data_.message = message;
+      data_.api = api;
+   }
+
+   public ApplicationTutorialEvent(String message, String api, String result)
+   {
+      data_ = new Data();
+      data_.message = message;
+      data_.api = api;
+      data_.result = result;
+   }
+
    @Override
    public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
    {
@@ -67,7 +93,7 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onApplicationTutorialNotifyEvent(this);
+      handler.onApplicationTutorialEvent(this);
    }
    
    public Data getData()

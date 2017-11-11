@@ -1,7 +1,7 @@
 /*
  * NewProjectWizardPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,13 +78,6 @@ public abstract class NewProjectWizardPage
       spacerLabel.addStyleName(
                      NewProjectResources.INSTANCE.styles().wizardSpacer());
       flowPanel_.add(spacerLabel);
-   }
-   
-   protected String projFileFromDir(String dir)
-   {
-      FileSystemItem dirItem = FileSystemItem.createDir(dir);
-      return FileSystemItem.createFile(
-        dirItem.completePath(dirItem.getName() + ".Rproj")).getPath();
    }
    
    protected FileSystemItem defaultNewProjectLocation_;

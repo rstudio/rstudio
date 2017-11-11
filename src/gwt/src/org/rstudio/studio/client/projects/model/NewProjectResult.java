@@ -1,7 +1,7 @@
 /*
  * NewProjectResult.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,8 @@ public class NewProjectResult
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
                            NewShinyAppOptions newShinyAppOptions,
-                           ProjectTemplateOptions projectTemplateOptions)
+                           ProjectTemplateOptions projectTemplateOptions,
+                           String invokedByTutorialApi)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
@@ -37,6 +38,7 @@ public class NewProjectResult
       newPackageOptions_ = newPackageOptions;
       newShinyAppOptions_ = newShinyAppOptions;
       projectTemplateOptions_ = projectTemplateOptions;
+      invokedByTutorialApi_ = invokedByTutorialApi;
    }
    
    public String getProjectFile()
@@ -99,6 +101,14 @@ public class NewProjectResult
       return projectTemplateOptions_;
    }
 
+   /**
+    * @return If invoked via Tutorial Api, name of the invoker, otherwise null
+    */
+   public String getInvokedByTutorialApi()
+   {
+      return invokedByTutorialApi_;
+   }
+
    private final boolean createGitRepo_;
    private final boolean usePackrat_;
    private boolean openInNewWindow_;
@@ -109,4 +119,5 @@ public class NewProjectResult
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
    private final ProjectTemplateOptions projectTemplateOptions_;
+   private final String invokedByTutorialApi_;
 }
