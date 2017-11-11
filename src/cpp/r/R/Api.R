@@ -660,43 +660,47 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    editor <- .Call("rs_readUiPref", "theme")
    global <- .Call("rs_readUiPref", "flat_theme")
 
+   if (is.null(editor)) {
+      editor <- "TextMate"
+   }
+
    global <- switch(
-    if (is.null(global)) "" else global,
-    alternate = "Sky",
-    default = "Modern",
-    "Classic"
-  )
+      if (is.null(global)) "" else global,
+      alternate = "Sky",
+      default = "Modern",
+      "Classic"
+   )
 
-  dark <- grepl(
-    paste(
-      "ambiance",
-      "chaos",
-      "clouds midnight",
-      "cobalt",
-      "dracula",
-      "idle fingers",
-      "kr theme",
-      "material",
-      "merbivore soft",
-      "merbivore",
-      "mono industrial",
-      "monokai",
-      "pastel on dark",
-      "solarized dark",
-      "tomorrow night blue",
-      "tomorrow night bright",
-      "tomorrow night 80s",
-      "tomorrow night",
-      "twilight",
-      "vibrant ink",
-      sep = "|"
-    ),
-    editor,
-    ignore.case = TRUE)
+   dark <- grepl(
+      paste(
+         "ambiance",
+         "chaos",
+         "clouds midnight",
+         "cobalt",
+         "dracula",
+         "idle fingers",
+         "kr theme",
+         "material",
+         "merbivore soft",
+         "merbivore",
+         "mono industrial",
+         "monokai",
+         "pastel on dark",
+         "solarized dark",
+         "tomorrow night blue",
+         "tomorrow night bright",
+         "tomorrow night 80s",
+         "tomorrow night",
+         "twilight",
+         "vibrant ink",
+       sep = "|"
+     ),
+     editor,
+     ignore.case = TRUE)
 
-  list(
-    editor = editor,
-    global = global,
-    dark = dark
-  )
+   list(
+      editor = editor,
+      global = global,
+      dark = dark
+   )
 })
