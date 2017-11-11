@@ -1,7 +1,7 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.common.vcs.VcsHelpLink;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -202,7 +203,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       String dir = existingRepoDestDir_.getText().trim();
       if (url.length() > 0 && checkoutDir.length() > 0 && dir.length() > 0)
       {
-         String projFile = projFileFromDir(
+         String projFile = Projects.projFileFromDir(
                FileSystemItem.createDir(dir).completePath(checkoutDir));
          
          VcsCloneOptions options = VcsCloneOptions.create(getVcsId(), 
@@ -211,7 +212,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
                                                           checkoutDir, 
                                                           dir);
          
-         return new NewProjectResult(projFile, false, false, dir, options, null, null, null);
+         return new NewProjectResult(projFile, false, false, dir, options, null, null, null, null);
       }
       else
       {
