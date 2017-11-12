@@ -202,17 +202,24 @@ if (UNIX)
       endif()
    endif()
 
+   find_package(OpenSSL REQUIRED QUIET)
+   set(CORE_SYSTEM_LIBRARIES
+         ${CORE_SYSTEM_LIBRARIES}
+         ${OPENSSL_LIBRARIES}
+      )
+   set(CORE_INCLUDE_DIRS
+      ${CORE_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIRS}
+   )
+
    if(RSTUDIO_SERVER)
-      find_package(OpenSSL REQUIRED QUIET)
       find_package(PAM REQUIRED)
       set(CORE_SYSTEM_LIBRARIES
          ${CORE_SYSTEM_LIBRARIES}
-         ${OPENSSL_LIBRARIES}
          ${PAM_LIBRARIES}
       )
       set(CORE_INCLUDE_DIRS
          ${CORE_INCLUDE_DIRS}
-         ${OPENSSL_INCLUDE_DIRS}
          ${PAM_INCLUDE_DIRS}
       )
    endif()
