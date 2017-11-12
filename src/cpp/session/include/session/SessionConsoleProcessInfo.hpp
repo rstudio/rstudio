@@ -20,6 +20,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/Types.hpp>
 
 #include <session/SessionTerminalShell.hpp>
@@ -201,25 +202,25 @@ private:
    std::string caption_;
    std::string title_;
    std::string handle_;
-   int terminalSequence_;
-   bool allowRestart_;
-   InteractionMode interactionMode_;
-   int maxOutputLines_;
-   bool showOnOutput_;
-   boost::circular_buffer<char> outputBuffer_;
+   int terminalSequence_ = kNoTerminal;
+   bool allowRestart_ = false;
+   InteractionMode interactionMode_ = InteractionNever;
+   int maxOutputLines_ = kDefaultMaxOutputLines;
+   bool showOnOutput_ = false;
+   boost::circular_buffer<char> outputBuffer_ {kOutputBufferSize};
    boost::optional<int> exitCode_;
-   bool childProcs_;
-   bool altBufferActive_;
-   TerminalShell::TerminalShellType shellType_;
-   ChannelMode channelMode_;
+   bool childProcs_ = true;
+   bool altBufferActive_ = false;
+   TerminalShell::TerminalShellType shellType_ = TerminalShell::DefaultShell;
+   ChannelMode channelMode_ = Rpc;
    std::string channelId_;
    core::FilePath cwd_;
-   int cols_;
-   int rows_;
-   bool restarted_;
-   AutoCloseMode autoClose_;
-   bool zombie_;
-   bool trackEnv_;
+   int cols_ = core::system::kDefaultCols;
+   int rows_ = core::system::kDefaultRows;
+   bool restarted_ = false;
+   AutoCloseMode autoClose_ = DefaultAutoClose;
+   bool zombie_ = false;
+   bool trackEnv_ = false;
 };
 
 } // namespace console_process

@@ -15,7 +15,6 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
-#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/text/TermBufferParser.hpp>
 
@@ -35,12 +34,6 @@ const int kNewTerminal = -1; // new terminal, sequence number yet to be determin
 const size_t kOutputBufferSize = 8192;
 
 ConsoleProcessInfo::ConsoleProcessInfo()
-   : terminalSequence_(kNoTerminal), allowRestart_(false),
-     interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
-     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false), trackEnv_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -64,10 +57,9 @@ ConsoleProcessInfo::ConsoleProcessInfo(
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(true),
      interactionMode_(InteractionAlways), maxOutputLines_(kDefaultTerminalMaxOutputLines),
-     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(altBufferActive), shellType_(shellType),
-     channelMode_(Rpc), cwd_(cwd), cols_(cols), rows_(rows), restarted_(false),
-     autoClose_(DefaultAutoClose), zombie_(zombie), trackEnv_(trackEnv)
+     cwd_(cwd), cols_(cols), rows_(rows),
+     zombie_(zombie), trackEnv_(trackEnv)
 {
 }
 
@@ -75,12 +67,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& caption,
          InteractionMode mode,
          int maxOutputLines)
-   : caption_(caption), terminalSequence_(kNoTerminal), allowRestart_(false),
-     interactionMode_(mode), maxOutputLines_(maxOutputLines),
-     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
-     altBufferActive_(false), shellType_(TerminalShell::DefaultShell),
-     channelMode_(Rpc), cols_(system::kDefaultCols), rows_(system::kDefaultRows),
-     restarted_(false), autoClose_(DefaultAutoClose), zombie_(false), trackEnv_(false)
+   : caption_(caption), interactionMode_(mode), maxOutputLines_(maxOutputLines)
 {
 }
 
