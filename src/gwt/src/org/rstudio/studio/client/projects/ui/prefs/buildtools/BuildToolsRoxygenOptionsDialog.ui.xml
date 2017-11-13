@@ -25,7 +25,7 @@
          <g:Label text="Automatically roxygenize when running:"/>
          <g:CheckBox ui:field="chkRunForCheckPackage_" text="R CMD check"/> <br/>
          <g:CheckBox ui:field="chkRunForBuildPackage_" text="Source and binary package builds"/> <br/>
-         <g:CheckBox ui:field="chkRunForBuildAndReload_" text="Build &amp; Reload"/> <br/>
+         <g:CheckBox ui:field="chkRunForBuildAndReload_" text="Install and Restart"/> <br/>
          
          <br/>
       
