@@ -1,7 +1,7 @@
 /*
  * Response.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -127,7 +127,15 @@ void Response::setFrameOptionHeaders(const std::string& options)
    {
       // the special string "any" means any origin
       if (options != "any")
+      {
          option = "ALLOW-FROM " + options;
+         
+         // Chrome and Safari ignore ALLOW-FROM so also emit Content-Security-Policy
+         // https://www.owasp.org/index.php/Clickjacking_Defense_Cheat_Sheet#Defending_with_X-Frame-Options_Response_Headers   
+         std::string optionCSP = "frame-ancestors ";
+         optionCSP += options;
+         setHeader("Content-Security-Policy", optionCSP);
+      }
    }
 
    if (!option.empty())
