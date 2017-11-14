@@ -273,7 +273,7 @@ if(WIN32)
       set(DESKTOP_SOURCE_FILES
          ${DESKTOP_SOURCE_FILES}
          "${CMAKE_CURRENT_BINARY_DIR}/res.o")
-   endif(MINGW)
+   endif()
 
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(urlopener)

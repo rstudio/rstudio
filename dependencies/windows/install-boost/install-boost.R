@@ -16,7 +16,7 @@ PATH$prepend("../tools")
 
 # initialize variables
 boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
-output_name <- "boost-1.65.1-win-vc14.zip"
+output_name <- "boost-1.65.1-win-msvc14.zip"
 output_dir <- owd
 output_file <- file.path(output_dir, output_name)
 build_dir <- file.path(output_dir, tools::file_path_sans_ext(output_name))
@@ -74,6 +74,7 @@ invisible(lapply(docs, function(doc) {
       unlink(doc, recursive = TRUE)
 }))
 
+
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
 exec("cmd.exe", "/C call bootstrap.bat vc14")
@@ -102,6 +103,7 @@ b2_build_args <- function(bitness) {
    
    paste(
       sprintf("address-model=%s", bitness),
+      "toolset=msvc-14.0",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       "--without-python",

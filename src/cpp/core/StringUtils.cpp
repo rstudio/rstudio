@@ -245,8 +245,8 @@ std::string utf8ToSystem(const std::string& str,
       return std::string();
 
 #ifdef _WIN32
-   wchar_t wide[str.length() + 1];
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, wide, sizeof(wide));
+   std::vector<wchar_t> wide(str.length() + 1);
+   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], wide.size());
    if (chars < 0)
    {
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
@@ -282,15 +282,15 @@ std::string systemToUtf8(const std::string& str, int codepage)
       return std::string();
 
 #ifdef _WIN32
-   wchar_t wide[str.length() + 1];
-   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), str.length(), wide, sizeof(wide));
+   std::vector<wchar_t> wide(str.length() + 1);
+   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), str.length(), &wide[0], wide.size());
    if (chars < 0)
    {
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
       return str;
    }
 
-   int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+   int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
                                              NULL, 0,
                                              NULL, NULL);
    if (bytesRequired == 0)
@@ -299,7 +299,7 @@ std::string systemToUtf8(const std::string& str, int codepage)
       return str;
    }
    std::vector<char> buf(bytesRequired, 0);
-   int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+   int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
                                             &(buf[0]), buf.size(),
                                             NULL, NULL);
    return std::string(buf.begin(), buf.end());

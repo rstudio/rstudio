@@ -30,9 +30,9 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
-   Error.cpp 
+   Error.cpp
    Exec.cpp
-   FileInfo.cpp 
+   FileInfo.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
@@ -186,11 +186,11 @@ if (UNIX)
    if(APPLE)
       if(${MACOSX_VERSION} VERSION_GREATER "10.10"
             AND EXISTS "/usr/local/opt/openssl")
-   
+
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
             -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-   
+
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
             /usr/local/opt/openssl/include)

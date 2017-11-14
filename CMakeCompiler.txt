@@ -26,6 +26,36 @@ if(APPLE)
 
 endif()
 
+# require C++11 (or C++14 for MSVC)
+if (WIN32)
+
+  # use C++14 (MSVC doesn't support C++11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+
+  # force multi-threaded runtimes
+  set(COMPILER_FLAGS
+    CMAKE_CXX_FLAGS
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_C_FLAGS
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_C_FLAGS_RELEASE
+    )
+
+  foreach(FLAG ${COMPILER_FLAGS})
+    string(REPLACE "/MD" "/MT" ${FLAG} "${${FLAG}}")
+  endforeach()
+
+  # ensure release-style builds (for compatibility with how Boost was built)
+  add_definitions(
+    -D_CRT_NONSTDC_NO_DEPRECATE
+    -D_ITERATOR_DEBUG_LEVEL=0
+    )
+
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+endif()
+
 if(NOT DEFINED WINDRES)
   set(WINDRES windres.exe)
 endif()

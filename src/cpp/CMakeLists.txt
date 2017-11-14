@@ -107,24 +107,22 @@ if(UNIX)
 
 # Win32 specific global directives
 else()
-   add_definitions(-DWINVER=0x501)
+
+   add_definitions(
+       -DWINVER=0x501
+       -DNOMINMAX
+       /bigobj
+   )
 
    if(RSTUDIO_SESSION_WIN64)
-
-      # increase stack size to 20MB, avoid mingw auto-importing warning,
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--allow-multiple-definition")
-
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /machine:x64 /largeaddressaware /force:multiple")
       add_definitions(-D_WIN64
                       -D_WIN64_WINNT=0x0501
                       -D_WIN64_IE=0x600
                       -DWIN64_LEAN_AND_MEAN
                       -DBOOST_USE_WINDOWS_H)
    else()
-
-      # increase stack size to 20MB, avoid mingw auto-importing warning,
-      # and ensure that we are large address aware
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--large-address-aware,--allow-multiple-definition")
-
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /machine:x86 /largeaddressaware /force:multiple")
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
                       -DWIN32_LEAN_AND_MEAN
@@ -140,8 +138,12 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# default to boost 1.63.0
-set(BOOST_VERSION 1.63.0)
+# default Boost versions
+if (WIN32)
+   set(BOOST_VERSION 1.65.1)
+else()
+   set(BOOST_VERSION 1.63.0)
+endif()
 
 # override if necessary
 if (RSTUDIO_BOOST_VERSION)
@@ -192,18 +194,17 @@ if(UNIX)
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
-   set(Boost_COMPILER "-mgw49")
    if(RSTUDIO_SESSION_WIN64)
       set(BOOST_ARCH "64")
    else()
       set(BOOST_ARCH "32")
    endif()
-   set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.63-win-rtools33-gcc493/boost${BOOST_ARCH}")
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_63")
+   set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc14/boost${BOOST_ARCH}")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_65_1")
    find_package(Boost ${BOOST_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}${Boost_COMPILER}-mt-s-1_63.a")
+      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-vc140-mt-s-1_65_1.lib")
    endforeach()
    message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
 endif()

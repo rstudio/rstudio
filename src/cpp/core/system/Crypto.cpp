@@ -16,6 +16,10 @@
 
 #include <core/system/Crypto.hpp>
 
+#ifdef _MSC_VER
+# include <io.h>
+#endif
+
 #include <fcntl.h>
 
 #include <openssl/err.h>
