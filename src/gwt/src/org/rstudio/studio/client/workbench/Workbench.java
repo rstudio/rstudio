@@ -34,7 +34,6 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -469,17 +468,13 @@ public class Workbench implements BusyHandler,
       }
       else
       {
-         Desktop.getFrame().getInitMessages(new DesktopFrameCallbackBuilder<String>()
+         Desktop.getFrame().getInitMessages(message ->
          {
-            @Override
-            public void execute(String message)
+            if (!StringUtil.isNullOrEmpty(message))
             {
-               if (!StringUtil.isNullOrEmpty(message))
-               {
-                  globalDisplay_.showWarningBar(false, message);
-               }
+               globalDisplay_.showWarningBar(false, message);
             }
-         }.create());
+         });
       }
    }
     

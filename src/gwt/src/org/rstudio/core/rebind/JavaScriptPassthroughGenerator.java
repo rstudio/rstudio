@@ -118,8 +118,36 @@ public class JavaScriptPassthroughGenerator extends Generator
             {
                w.print(parameters[i].getType().getQualifiedSourceName());
                w.print(" ");
+               w.print(parameters[i].getName());
             }
-            w.print(parameters[i].getName());
+            else
+            {
+               String simpleName = parameters[i].getType().getSimpleSourceName();
+
+               // wrap Command/CommandWithArg parameters with a plain JavaScript
+               // function
+               if (simpleName == "Command" || simpleName == "CommandWithArg")
+               {
+                  w.print("$entry(function(result) { ");
+                  w.print(parameters[i].getName() + "." + 
+                          parameters[i].getType().getQualifiedSourceName() + 
+                          "::execute");
+                  if (simpleName == "Command")
+                  {
+                     w.print("()()");
+                  }
+                  else if (simpleName == "CommandWithArg")
+                  {
+                     w.print("(Ljava/lang/Object;)(result)");
+                  }
+                  w.print(";");
+                  w.print("})");
+               }
+               else
+               {
+                  w.print(parameters[i].getName());
+               }
+            }
          }
       }
 

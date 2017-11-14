@@ -17,7 +17,6 @@ package org.rstudio.core.client;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -245,17 +244,13 @@ public class BrowseCap
 
       if (isWindowsDesktop())
       {
-         Desktop.getFrame().getDisplayDpi(new DesktopFrameCallbackBuilder<Integer>()
+         Desktop.getFrame().getDisplayDpi(dpi ->
          {
-            @Override
-            public void execute(Integer result)
+            if (dpi >= 192)
             {
-               if (result >= 192)
-               {
-                  Document.get().getBody().addClassName("windows-highdpi");
-               }
+               Document.get().getBody().addClassName("windows-highdpi");
             }
-         }.create());
+         });
       }
 
       if (FIXED_UBUNTU_MONO)

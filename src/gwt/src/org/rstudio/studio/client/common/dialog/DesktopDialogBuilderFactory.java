@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 public class DesktopDialogBuilderFactory implements DialogBuilderFactory
@@ -56,14 +55,10 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
                buttons.toString(),
                defaultButton_,
                buttons_.size() - 1,
-               new DesktopFrameCallbackBuilder<Integer>()
+               result ->
                {
-                  @Override
-                  public void execute(Integer result)
-                  {
-                     Builder.this.execute(result);
-                  }
-               }.create());
+                  Builder.this.execute(result);
+               });
       }
       
       private void execute(Integer result)
