@@ -2912,6 +2912,11 @@ public class RemoteServer implements Server
             // first crack goes to globally registered rpc error handlers
             if (!handleRpcErrorInternally(error))
             {
+               eventBus_.fireEvent(new ApplicationTutorialEvent(
+                     ApplicationTutorialEvent.API_ERROR,
+                     "rpc",
+                     error.getEndUserMessage()));
+               
                // no global handlers processed it, send on to caller
                responseHandler.onResponseReceived(RpcResponse.create(error));
             }
