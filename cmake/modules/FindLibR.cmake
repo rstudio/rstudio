@@ -97,9 +97,6 @@ else()
    # Find R executable and paths (Win32)
    else()
 
-      # force CMake to look for .dlls
-      set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".dll")
-
       # find the home path
       if(NOT LIBR_HOME)
 

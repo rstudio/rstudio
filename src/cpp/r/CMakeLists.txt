@@ -86,8 +86,8 @@ add_library(rstudio-r STATIC ${R_SOURCE_FILES} ${R_HEADER_FILES})
 
 # link dependencies
 target_link_libraries(rstudio-r
+   ${LIBR_LIBRARIES}
    rstudio-core
-   "-force"
 )
 
 # install rules

@@ -27,7 +27,7 @@ if(APPLE)
 endif()
 
 # require C++11 (or C++14 for MSVC)
-if(WIN32)
+if(MSVC)
 
   # use C++14 (MSVC doesn't support C++11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
@@ -36,16 +36,23 @@ if(WIN32)
   # using in Boost and other supporting libraries).
   # TODO: Build Boost (perhaps with ExternalProject_Add) to match with
   # the requested runtime library used for a particular build type
+  if(RSTUDIO_PACKAGE_BUILD)
+     set(ITERATOR_DEBUG_LEVEL 0)
+     set(LINKER_FLAG "/MT")
+  else()
+     set(ITERATOR_DEBUG_LEVEL 2)
+     set(LINKER_FLAG "/MTd")
+  endif()
+
   foreach(RELEASE_TYPE "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO")
     foreach(FLAG CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-      string(REGEX REPLACE "/MDd?" "/MT" ${FLAG}${RELEASE_TYPE} "${${FLAG}${RELEASE_TYPE}}")
+      string(REGEX REPLACE "/MDd?" "${LINKER_FLAG}" ${FLAG}${RELEASE_TYPE} "${${FLAG}${RELEASE_TYPE}}")
     endforeach()
   endforeach()
 
-  # ensure release-style builds (for compatibility with how Boost was built)
   add_definitions(
     -D_CRT_NONSTDC_NO_DEPRECATE
-    -D_ITERATOR_DEBUG_LEVEL=0
+    -D_ITERATOR_DEBUG_LEVEL=${ITERATOR_DEBUG_LEVEL}
     )
 
 else()

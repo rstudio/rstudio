@@ -21,6 +21,10 @@ add_subdirectory(tex/synctex)
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
+if(MSVC)
+   add_definitions(-DHUNSPELL_STATIC)
+endif()
+
 # source files
 set (CORE_SOURCE_FILES
    Assert.cpp
@@ -269,8 +273,6 @@ else()
    # embedded version of zlib
    add_subdirectory(zlib)
 
-   message(STATUS "Boost: ${Boost_LIBRARIES}")
-
    # system libraries
    set (CORE_SYSTEM_LIBRARIES
       WS2_32
@@ -329,6 +331,7 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 # link dependencies
 target_link_libraries(
    rstudio-core
+   rstudio-core-hunspell
    ${Boost_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )

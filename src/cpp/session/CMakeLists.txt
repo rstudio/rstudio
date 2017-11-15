@@ -381,7 +381,7 @@ target_link_libraries(rsession
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
-   "-force"
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script

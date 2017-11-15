@@ -1,9 +1,23 @@
+argument <- function(index, default) {
+   args <- commandArgs(TRUE)
+   if (length(args) < index)
+      default
+   else
+      args[[index]]
+}
+
+# parse some command line arguments
+args <- as.list(commandArgs(TRUE))
+variant <- argument(1, "debug")
+link    <- argument(2, "static")
+
 # some laziness to ensure we move to the 'install-boost' folder
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-boost")
 
 source("tools.R")
 section("The working directory is: '%s'", getwd())
+progress("Producing '%s' build with '%s' linking", variant, link)
 owd <- getwd()
 
 # initialize log directory (for when things go wrong)
@@ -16,15 +30,15 @@ PATH$prepend("../tools")
 
 # initialize variables
 boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
-output_name <- "boost-1.65.1-win-msvc14.zip"
-output_dir <- owd
+output_name <- sprintf("boost-1.65.1-win-msvc14-%s-%s.zip", variant, link)
+output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
-build_dir <- file.path(output_dir, tools::file_path_sans_ext(output_name))
+install_dir <- file.path(owd, tools::file_path_sans_ext(output_name))
 
 # clear out the directory we'll create boost in
-unlink(build_dir, recursive = TRUE)
-ensure_dir(build_dir)
-build_dir <- normalizePath(build_dir)
+unlink(install_dir, recursive = TRUE)
+ensure_dir(install_dir)
+install_dir <- normalizePath(install_dir)
 
 # boost modules we need to alias
 boost_modules <- c(
@@ -98,7 +112,7 @@ exec("cmd.exe", "/C call bootstrap.bat vc14")
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
    
-   prefix <- file.path(build_dir, sprintf("boost%s", bitness), fsep = "\\")
+   prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
    unlink(prefix, recursive = TRUE)
    
    paste(
@@ -107,9 +121,9 @@ b2_build_args <- function(bitness) {
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       "--without-python",
-      "variant=release",
-      "link=static",
-      "runtime-link=static",
+      sprintf("variant=%s", variant),
+      sprintf("link=%s", link),
+      sprintf("runtime-link=%s", link),
       "threading=multi",
       "define=BOOST_USE_WINDOWS_H",
       "install"
@@ -125,7 +139,7 @@ section("Building Boost 64bit...")
 exec("b2", b2_build_args("64"))
 
 # enter the build directory
-enter(build_dir)
+enter(install_dir)
 
 # zip it all up
 section("Creating archive '%s'...", output_name)

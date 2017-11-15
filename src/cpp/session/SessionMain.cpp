@@ -1526,7 +1526,7 @@ bool ensureUtf8Charset()
 int main (int argc, char * const argv[]) 
 {
    try
-   {      
+   {
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
