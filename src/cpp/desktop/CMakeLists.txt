@@ -380,7 +380,7 @@ endif()
 # bundle qt dependencies if this is a package build
 if(RSTUDIO_BUNDLE_QT)
    # set lib suffix for windows
-   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(LIB_SUFFIX "d")
    else()
       set(LIB_SUFFIX "")
