@@ -26,7 +26,6 @@ import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -177,19 +176,14 @@ public class DesktopFileDialogs implements FileDialogs
                   dir,
                   filter,
                   canChooseDirectories,
-                  new DesktopFrameCallbackBuilder<String>()
+                  fileName -> 
                   {
-                     @Override
-                     public void execute(String fileName)
+                     if (fileName != null)
                      {
-                        if (fileName != null)
-                        {
-                           updateWorkingDirectory(fileName, fsContext);
-                        }
-
-                        onCompleted.execute(fileName);
+                        updateWorkingDirectory(fileName, fsContext);
                      }
-                  }.create());
+                     onCompleted.execute(fileName);
+                  });
             
          }
       }.execute(caption, fsContext, initialFilePath, operation);
@@ -226,19 +220,14 @@ public class DesktopFileDialogs implements FileDialogs
                   dir,
                   defaultExtension,
                   forceDefaultExtension,
-                  new DesktopFrameCallbackBuilder<String>()
+                  fileName ->
                   {
-                     @Override
-                     public void execute(String fileName)
+                     if (fileName != null)
                      {
-                        if (fileName != null)
-                        {
-                           updateWorkingDirectory(fileName, fsContext);
-                        }
-
-                        onCompleted.execute(fileName);
+                        updateWorkingDirectory(fileName, fsContext);
                      }
-                  }.create());
+                     onCompleted.execute(fileName);
+                  });
          }
       }.execute(caption,
                 fsContext,
@@ -271,14 +260,10 @@ public class DesktopFileDialogs implements FileDialogs
                   caption,
                   label,
                   initialDir != null ? initialDir.getPath() : null,
-                  new DesktopFrameCallbackBuilder<String>()
-                  {
-                     @Override
-                     public void execute(String directory)
+                  directory -> 
                      {
                         onCompleted.execute(directory);
-                     }
-                  }.create());
+                     });
          }
       }.execute(caption, fsContext, null, operation);
    }

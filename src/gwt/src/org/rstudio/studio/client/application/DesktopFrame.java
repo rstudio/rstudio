@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
+
+import com.google.gwt.user.client.Command;
 
 /**
  * This is an interface straight through to a C++ object that lives
@@ -32,19 +35,19 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String dir,
                         String filter,
                         boolean canChooseDirectories,
-                        DesktopFrameCallback<String> callback);
+                        CommandWithArg<String> callback);
    
    void getSaveFileName(String caption,
                         String label,
                         String dir, 
                         String defaultExtension, 
                         boolean forceDefaultExtension,
-                        DesktopFrameCallback<String> callback);
+                        CommandWithArg<String> callback);
    
    void getExistingDirectory(String caption,
                              String label,
                              String dir,
-                             DesktopFrameCallback<String> callback);
+                             CommandWithArg<String> callback);
    
    void undo(boolean forAce);
    void redo(boolean forAce);
@@ -54,10 +57,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void clipboardPaste();
    
    void setClipboardText(String text);
-   void getClipboardText(DesktopFrameCallback<String> callback);
+   void getClipboardText(CommandWithArg<String> callback);
    
    void setGlobalMouseSelection(String selection);
-   void getGlobalMouseSelection(DesktopFrameCallback<String> callback);
+   void getGlobalMouseSelection(CommandWithArg<String> callback);
    
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
@@ -70,9 +73,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int x, int y, int width,
-                                  int height);
+                                  int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
-         boolean showDesktopToolbar);
+         boolean showDesktopToolbar, Command onPrepared);
    void closeNamedWindow(String name);
    
    // interface for plot export where coordinates are specified relative to
@@ -91,7 +94,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                int width, 
                                int height);
    
-   void supportsClipboardMetafile(DesktopFrameCallback<Boolean> callback);
+   void supportsClipboardMetafile(CommandWithArg<Boolean> callback);
 
    void showMessageBox(int type,
                        String caption,
@@ -99,7 +102,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                        String buttons,
                        int defaultButton,
                        int cancelButton,
-                       DesktopFrameCallback<Integer> callback);
+                       CommandWithArg<Integer> callback);
 
    void promptForText(String title,
                       String label,
@@ -111,13 +114,13 @@ public interface DesktopFrame extends JavaScriptPassthrough
                       int selectionStart,
                       int selectionLength,
                       String okButtonCaption,
-                      DesktopFrameCallback<String> callback);
+                      CommandWithArg<String> callback);
 
    void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
    
-   void getDisplayDpi(DesktopFrameCallback<Integer> callback);
+   void getDisplayDpi(CommandWithArg<Integer> callback);
 
    void cleanClipboard();
    
@@ -145,9 +148,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setZoomLevel(double zoomLevel);
    
    void showLicenseDialog();
-   void getInitMessages(DesktopFrameCallback<String> callback);
-   void getLicenseStatusMessage(DesktopFrameCallback<String> callback);
-   void allowProductUsage(DesktopFrameCallback<Boolean> callback);
+   void getInitMessages(CommandWithArg<String> callback);
+   void getLicenseStatusMessage(CommandWithArg<String> callback);
+   void allowProductUsage(CommandWithArg<Boolean> callback);
    
    // mac-specific zoom calls
    void macZoomActualSize();

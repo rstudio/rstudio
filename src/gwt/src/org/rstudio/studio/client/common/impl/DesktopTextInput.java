@@ -20,7 +20,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.common.TextInput;
 
 public class DesktopTextInput implements TextInput
@@ -47,26 +46,22 @@ public class DesktopTextInput implements TextInput
             selectionStart,
             selectionLength,
             okButtonCaption,
-            new DesktopFrameCallbackBuilder<String>()
+            result ->
             {
-               @Override
-               public void execute(String result)
+               if (StringUtil.isNullOrEmpty(result))
                {
-                  if (StringUtil.isNullOrEmpty(result))
-                  {
-                     if (cancelOperation != null)
-                        cancelOperation.execute();
-                  }
-                  else
-                  {
-                     String[] lines = result.split("\\n");
-                     okOperation.execute(lines[0],
-                           RStudioGinjector.INSTANCE
-                           .getGlobalDisplay()
-                           .getProgressIndicator("Error"));
-                  }
+                  if (cancelOperation != null)
+                     cancelOperation.execute();
                }
-            }.create());
+               else
+               {
+                  String[] lines = result.split("\\n");
+                  okOperation.execute(lines[0],
+                        RStudioGinjector.INSTANCE
+                        .getGlobalDisplay()
+                        .getProgressIndicator("Error"));
+               }
+            });
    }
 
    @Override
@@ -93,28 +88,24 @@ public class DesktopTextInput implements TextInput
             selectionStart,
             selectionLength,
             okButtonCaption,
-            new DesktopFrameCallbackBuilder<String>()
+            result ->
             {
-               @Override
-               public void execute(String result)
+               if (StringUtil.isNullOrEmpty(result))
                {
-                  if (StringUtil.isNullOrEmpty(result))
-                  {
-                     if (cancelOperation != null)
-                        cancelOperation.execute();
-                  }
-                  else
-                  {
-                     PromptWithOptionResult presult = new PromptWithOptionResult();
-                     String[] lines = result.split("\\n");
-                     presult.input = lines[0];
-                     presult.extraOption = "1".equals(lines[1]);
-                     okOperation.execute(presult,
-                           RStudioGinjector.INSTANCE
-                           .getGlobalDisplay()
-                           .getProgressIndicator("Error"));
-                  }
+                  if (cancelOperation != null)
+                     cancelOperation.execute();
                }
-            }.create());
+               else
+               {
+                  PromptWithOptionResult presult = new PromptWithOptionResult();
+                  String[] lines = result.split("\\n");
+                  presult.input = lines[0];
+                  presult.extraOption = "1".equals(lines[1]);
+                  okOperation.execute(presult,
+                        RStudioGinjector.INSTANCE
+                        .getGlobalDisplay()
+                        .getProgressIndicator("Error"));
+               }
+            });
    }
 }

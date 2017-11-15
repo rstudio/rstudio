@@ -1,7 +1,7 @@
 /*
  * JavaScriptPassthroughGenerator.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -118,8 +118,36 @@ public class JavaScriptPassthroughGenerator extends Generator
             {
                w.print(parameters[i].getType().getQualifiedSourceName());
                w.print(" ");
+               w.print(parameters[i].getName());
             }
-            w.print(parameters[i].getName());
+            else
+            {
+               String simpleName = parameters[i].getType().getSimpleSourceName();
+
+               // wrap Command/CommandWithArg parameters with a plain JavaScript
+               // function
+               if (simpleName.equals("Command") || simpleName.equals("CommandWithArg"))
+               {
+                  w.print("function(result) { ");
+                  w.print(parameters[i].getName() + ".@" + 
+                          parameters[i].getType().getQualifiedSourceName() + 
+                          "::execute");
+                  if (simpleName.equals("Command"))
+                  {
+                     w.print("()()");
+                  }
+                  else if (simpleName.equals("CommandWithArg"))
+                  {
+                     w.print("(Ljava/lang/Object;)(result)");
+                  }
+                  w.print(";");
+                  w.print("}");
+               }
+               else
+               {
+                  w.print(parameters[i].getName());
+               }
+            }
          }
       }
 

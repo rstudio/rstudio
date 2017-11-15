@@ -21,7 +21,6 @@ import org.rstudio.studio.client.JavaScriptEventHistory;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.JavaScriptEventHistory.EventData;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopFrameCallbackBuilder;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
@@ -100,14 +99,8 @@ public class AceEditorMixins
       
       if (useGlobalMouseSelection)
       {
-         Desktop.getFrame().getGlobalMouseSelection(new DesktopFrameCallbackBuilder<String>()
-         {
-            @Override
-            public void execute(String selection)
-            {
-               onReadyToPaste.execute(selection);
-            }
-         }.create());
+         Desktop.getFrame().getGlobalMouseSelection(selection ->
+               onReadyToPaste.execute(selection));
       }
       else
       {
