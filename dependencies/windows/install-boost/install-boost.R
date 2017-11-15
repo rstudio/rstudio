@@ -127,19 +127,6 @@ exec("b2", b2_build_args("64"))
 # enter the build directory
 enter(build_dir)
 
-# rename the libraries (remove rstudio prefix)
-setwd("boost32/lib")
-src <- list.files()
-tgt <- gsub("rstudio_", "", src)
-file.rename(src, tgt)
-setwd("../..")
-
-setwd("boost64/lib")
-src <- list.files()
-tgt <- gsub("rstudio_", "", src)
-file.rename(src, tgt)
-setwd("../..")
-
 # zip it all up
 section("Creating archive '%s'...", output_name)
 if (file.exists(output_name))

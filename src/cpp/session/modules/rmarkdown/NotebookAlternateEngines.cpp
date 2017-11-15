@@ -20,6 +20,7 @@
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookWorkingDir.hpp"
 
+#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/StringUtils.hpp>
@@ -499,6 +500,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
 Error initAlternateEngines()
 {
    using namespace module_context;
+   using boost::bind;
 
    ExecBlock initBlock;
    initBlock.addFunctions()

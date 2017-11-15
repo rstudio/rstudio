@@ -269,12 +269,14 @@ else()
    # embedded version of zlib
    add_subdirectory(zlib)
 
+   message(STATUS "Boost: ${Boost_LIBRARIES}")
+
    # system libraries
    set (CORE_SYSTEM_LIBRARIES
-      -lws2_32
-      -lmswsock
-      -lrpcrt4
-      -lShlwapi
+      WS2_32
+      MsWSock
+      RpcRT4
+      ShLwApi
       ${OPENSSL_CRYPTO_LIBRARY}
    )
 

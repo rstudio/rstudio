@@ -13,13 +13,13 @@
 #
 #
 
-# set compiler
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
-
 # set minimum version
 cmake_minimum_required(VERSION 2.6)
 
 project (RSTUDIO_CPP)
+
+# set compiler
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
 
 # include globals. normally these are included at the root but we also
 # include them here to support configuring at the src level (i.e. for
@@ -33,11 +33,18 @@ add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 # they currently do not work with our source
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
 
-
 # the non-strict masking option was identified as a potentially crashing 
 # issue due to reliance on undefined C++ behavior, and was removed entirely in 
 # websocketpp 0.7 (RStudio is using 0.5.1 at this time)
 add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
+
+# make websockets build with MSVC
+if(WIN32 AND MSVC)
+   add_definitions(
+      -D_WEBSOCKETPP_NOEXCEPT_
+      -D_WEBSOCKETPP_CPP11_CHRONO
+   )
+endif()
 
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
@@ -114,15 +121,17 @@ else()
        /bigobj
    )
 
+   foreach(TYPE EXE STATIC MODULE)
+      set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware /force")
+   endforeach()
+
    if(RSTUDIO_SESSION_WIN64)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /machine:x64 /largeaddressaware /force:multiple")
       add_definitions(-D_WIN64
                       -D_WIN64_WINNT=0x0501
                       -D_WIN64_IE=0x600
                       -DWIN64_LEAN_AND_MEAN
                       -DBOOST_USE_WINDOWS_H)
    else()
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /machine:x86 /largeaddressaware /force:multiple")
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
                       -DWIN32_LEAN_AND_MEAN
@@ -154,16 +163,17 @@ endif()
 add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
 
 list(APPEND BOOST_LIBS
+   atomic
+   chrono
    date_time
    filesystem
    iostreams
    program_options
+   random
    regex
    signals
    system
    thread
-   chrono
-   random
 )
 
 # UNIX BOOST
@@ -204,7 +214,7 @@ else()
    find_package(Boost ${BOOST_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-vc140-mt-s-1_65_1.lib")
+      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-vc140-mt-s-1_65_1.lib")
    endforeach()
    message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
 endif()

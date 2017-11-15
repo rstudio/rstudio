@@ -36,23 +36,6 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.rc.in
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
                 ${CMAKE_CURRENT_BINARY_DIR}/urlopener.exe.manifest COPYONLY)
 
-if(MINGW)
-   set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
-   add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      COMMAND "${WINDRES}"
-         -I "."
-         -i "urlopener.rc"
-         -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         -Ocoff
-      DEPENDS
-         "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc"
-         "${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest")
-   set(URLOPENER_SOURCE_FILES
-      ${URLOPENER_SOURCE_FILES}
-      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
-endif()
-
 add_executable(urlopener
   ${URLOPENER_SOURCE_FILES}
 )

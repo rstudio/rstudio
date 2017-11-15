@@ -36,25 +36,6 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.rc.in
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest
                 ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.exe.manifest COPYONLY)
 
-if(MINGW)
-   set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
-   add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      COMMAND "${WINDRES}"
-         -I "."
-         -i "rsinverse.rc"
-         -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         -Ocoff
-      DEPENDS
-         "${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc"
-         "${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest")
-   set(RSINVERSE_SOURCE_FILES
-      ${RSINVERSE_SOURCE_FILES}
-      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
-
-   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
-endif()
-
 add_executable(rsinverse
   ${RSINVERSE_SOURCE_FILES}
 )

@@ -20,7 +20,6 @@ cmake_policy(SET CMP0020 OLD)
 project(DESKTOP)
 
 set(QT_VERSION_SUBDIR "5.9.2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -256,25 +255,6 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
-   if(MINGW)
-      set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
-      add_custom_command(
-         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         COMMAND "${WINDRES}"
-            -I "."
-            -i "rstudio.rc"
-            -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-            -Ocoff
-         DEPENDS
-            "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest"
-            "${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico"
-            "${CMAKE_CURRENT_SOURCE_DIR}/RProject.ico")
-      set(DESKTOP_SOURCE_FILES
-         ${DESKTOP_SOURCE_FILES}
-         "${CMAKE_CURRENT_BINARY_DIR}/res.o")
-   endif()
-
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(urlopener)
       add_subdirectory(synctex/rsinverse)
@@ -342,9 +322,15 @@ if(NOT APPLE)
    # set link dependencies
    target_link_libraries(rstudio
       ${QT_LIBRARIES}
+      ${Boost_LIBRARIES}
       rstudio-core
       ${LINK_FLAGS}
    )
+
+   # extra dependencies for Windows
+   if(WIN32)
+      target_link_libraries(rstudio Version)
+   endif()
 
 # for OSX we create a bundle
 else()
@@ -381,7 +367,6 @@ else()
       ${SECURITY_LIBRARY})
 
 endif()
-
 
 # install target (OSX install goes into the bundle)
 if(APPLE)

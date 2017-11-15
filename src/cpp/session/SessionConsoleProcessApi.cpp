@@ -16,6 +16,7 @@
 #include "SessionConsoleProcessApi.hpp"
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
@@ -938,6 +939,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
 Error initializeApi()
 {
    using namespace module_context;
+   using boost::bind;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);

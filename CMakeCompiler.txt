@@ -27,23 +27,19 @@ if(APPLE)
 endif()
 
 # require C++11 (or C++14 for MSVC)
-if (WIN32)
+if(WIN32)
 
   # use C++14 (MSVC doesn't support C++11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
 
-  # force multi-threaded runtimes
-  set(COMPILER_FLAGS
-    CMAKE_CXX_FLAGS
-    CMAKE_CXX_FLAGS_DEBUG
-    CMAKE_CXX_FLAGS_RELEASE
-    CMAKE_C_FLAGS
-    CMAKE_C_FLAGS_DEBUG
-    CMAKE_C_FLAGS_RELEASE
-    )
-
-  foreach(FLAG ${COMPILER_FLAGS})
-    string(REPLACE "/MD" "/MT" ${FLAG} "${${FLAG}}")
+  # force the use of the static runtime (since that's what we're
+  # using in Boost and other supporting libraries).
+  # TODO: Build Boost (perhaps with ExternalProject_Add) to match with
+  # the requested runtime library used for a particular build type
+  foreach(RELEASE_TYPE "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO")
+    foreach(FLAG CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+      string(REGEX REPLACE "/MDd?" "/MT" ${FLAG}${RELEASE_TYPE} "${${FLAG}${RELEASE_TYPE}}")
+    endforeach()
   endforeach()
 
   # ensure release-style builds (for compatibility with how Boost was built)

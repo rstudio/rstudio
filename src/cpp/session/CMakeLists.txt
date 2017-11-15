@@ -339,21 +339,6 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   if(MINGW)
-      add_custom_command(
-         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         COMMAND "${WINDRES}"
-            -I "."
-            -i "rsession.rc"
-            -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-            -Ocoff
-         DEPENDS
-            "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest")
-   endif()
-   set(SESSION_SOURCE_FILES
-      ${SESSION_SOURCE_FILES}
-      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(consoleio)
    endif()
@@ -377,7 +362,7 @@ endif()
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
-   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} -ladvapi32)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
@@ -395,8 +380,8 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
-   ${LIBR_LIBRARIES}
    ${CMAKE_DL_LIBS}
+   "-force"
 )
 
 # configure and install r-ldpaths script
