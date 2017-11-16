@@ -32,10 +32,8 @@ if(MSVC)
   # use C++14 (MSVC doesn't support C++11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
 
-  # force the use of the static runtime (since that's what we're
-  # using in Boost and other supporting libraries).
-  # TODO: Build Boost (perhaps with ExternalProject_Add) to match with
-  # the requested runtime library used for a particular build type
+  # ensure that we're using linker flags compatible with
+  # the version of Boost that will be linked in
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
      set(ITERATOR_DEBUG_LEVEL 0)
      set(LINKER_FLAG "/MD")
@@ -51,11 +49,13 @@ if(MSVC)
   endforeach()
 
   # ensure exception handling model is compatible with MinGW
+  # TODO: 32bit uses Dwarf, 64bit uses SEH; we should respect that
   string(REPLACE "/EHs?c?" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
   # multi-process compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
+  # silence some warnings (mostly out of our control) + set debug level
   add_definitions(
     -D_CRT_NONSTDC_NO_DEPRECATE
     -D_CRT_SECURE_NO_WARNINGS
