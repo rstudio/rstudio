@@ -44,7 +44,10 @@
 
 extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
-extern "C" UImode CharacterMode;
+
+extern "C" {
+   __declspec(dllimport) UImode CharacterMode;
+}
 
 using namespace rstudio::core;
 
