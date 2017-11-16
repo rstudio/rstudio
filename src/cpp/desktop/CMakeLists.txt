@@ -96,6 +96,7 @@ if(UNIX AND NOT APPLE)
    find_package(Qt5DBus REQUIRED)
 endif()
 
+set(QT_BINARY_PATH "${QT_BIN_DIR}" CACHE INTERNAL "")
 set(QT_PLUGIN_PATH "${QT_BIN_DIR}/../plugins" CACHE INTERNAL "")
 set(QT_LIBRARY_PATH "${QT_BIN_DIR}/../lib" CACHE INTERNAL "")
 

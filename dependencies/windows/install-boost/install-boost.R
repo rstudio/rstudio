@@ -33,7 +33,7 @@ boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1
 output_name <- sprintf("boost-1.65.1-win-msvc14-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
-install_dir <- file.path(owd, tools::file_path_sans_ext(output_name))
+install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
 
 # clear out the directory we'll create boost in
 unlink(install_dir, recursive = TRUE)
@@ -123,7 +123,7 @@ b2_build_args <- function(bitness) {
       "--without-python",
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
-      sprintf("runtime-link=%s", link),
+      sprintf("runtime-link=shared", link),
       "threading=multi",
       "define=BOOST_USE_WINDOWS_H",
       "install"

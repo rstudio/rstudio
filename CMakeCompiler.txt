@@ -38,10 +38,10 @@ if(MSVC)
   # the requested runtime library used for a particular build type
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
      set(ITERATOR_DEBUG_LEVEL 0)
-     set(LINKER_FLAG "/MT")
+     set(LINKER_FLAG "/MD")
   else()
      set(ITERATOR_DEBUG_LEVEL 2)
-     set(LINKER_FLAG "/MTd")
+     set(LINKER_FLAG "/MDd")
   endif()
 
   foreach(RELEASE_TYPE "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO")
@@ -53,9 +53,13 @@ if(MSVC)
   # ensure exception handling model is compatible with MinGW
   string(REPLACE "/EHs?c?" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
+  # multi-process compilation
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+
   add_definitions(
     -D_CRT_NONSTDC_NO_DEPRECATE
     -D_CRT_SECURE_NO_WARNINGS
+    -D_SCL_SECURE_NO_WARNINGS
     -D_ITERATOR_DEBUG_LEVEL=${ITERATOR_DEBUG_LEVEL}
     )
 

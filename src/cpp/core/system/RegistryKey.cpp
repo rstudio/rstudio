@@ -81,8 +81,7 @@ Error RegistryKey::getStringValue(std::string name, std::string *pValue)
    if (!hKey_)
       return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
 
-   std::vector<char> buffer;
-   buffer.reserve(260);
+   std::vector<char> buffer(256);
    while (true)
    {
       DWORD type;
