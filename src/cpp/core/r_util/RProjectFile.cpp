@@ -314,7 +314,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 }
 
 Error findProjectFile(FilePath filePath,
-                      const FilePath& anchorPath,
+                      FilePath anchorPath,
                       FilePath* pProjPath)
 {
    // check to see if we already have a .Rproj file
@@ -327,20 +327,27 @@ Error findProjectFile(FilePath filePath,
    if (!filePath.isDirectory())
       filePath = filePath.parent();
    
-   // also screen parent of anchor path
-   FilePath anchorParentPath = anchorPath.parent();
-
+   // list all paths up to root for our anchor -- we want to stop looking
+   // if we hit the anchor path, or any parent directory of that path
+   std::vector<FilePath> anchorPaths;
+   for (; anchorPath.exists(); anchorPath = anchorPath.parent())
+      anchorPaths.push_back(anchorPath);
+   
    // no .Rproj file found; scan parent directories
    for (; filePath.exists(); filePath = filePath.parent())
    {
       // bail if we've hit our anchor
-      if (filePath == anchorPath)
-         return fileNotFoundError(ERROR_LOCATION);
+      BOOST_FOREACH(const FilePath& anchorPath, anchorPaths)
+      {
+         if (filePath == anchorPath)
+            return fileNotFoundError(ERROR_LOCATION);
+      }
       
-      // bail if we're no longer within the anchor's parent path
-      if (!filePath.isWithin(anchorParentPath))
-         return fileNotFoundError(ERROR_LOCATION);
-      
+      // skip directory if there's no .Rproj.user directory (avoid potentially
+      // expensive query of all files in directory)
+      if (!filePath.complete(".Rproj.user").exists())
+         continue;
+         
       // scan this directory for .Rproj files
       FilePath projPath = projectFromDirectory(filePath);
       if (!projPath.empty())
