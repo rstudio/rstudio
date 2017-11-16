@@ -51,8 +51,8 @@
        <fileset dir="${lib.dir}/" includes="*.jar"/>
    </path>
 
-   <fileset id="acesupport.sources.fileset" dir="acesupport">
-      <include name="${src.dir}/**/*.js"/>
+   <fileset id="acesupport.sources.fileset" dir="${src.dir}/../acesupport">
+      <include name="**/*.js"/>
       <exclude name="extern.js"/>
    </fileset>
 
@@ -64,7 +64,7 @@
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
               
-          <externs dir="acesupport">
+          <externs dir="${src.dir}/../acesupport">
              <file name="extern.js"/>
           </externs>
 
