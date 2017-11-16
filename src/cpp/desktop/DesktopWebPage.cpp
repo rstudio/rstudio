@@ -27,7 +27,6 @@
 
 #include <QtDebug>
 
-#include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"

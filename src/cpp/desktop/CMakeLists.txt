@@ -157,7 +157,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopAboutDialog.cpp
   DesktopBrowserWindow.cpp
   DesktopCommandInvoker.cpp
-  DesktopDataUriNetworkReply.cpp
   DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
@@ -167,7 +166,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp
   DesktopNetworkIOService.cpp
-  DesktopNetworkReply.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
   DesktopURLDownloader.cpp
@@ -182,7 +180,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopSlotBinders.cpp
   DesktopSubMenu.cpp
   DesktopSynctex.cpp
-  DesktopNetworkAccessManager.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
 )

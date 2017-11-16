@@ -6,11 +6,6 @@ Sys.setenv(PATH = PATH)
 # Find R DLLs.
 dlls <- list.files(R.home("bin"), pattern = "dll$", full.names = TRUE)
 
-# Additional symbols that aren't exported but we still need to use.
-additions <- list(
-   # "R.dll" = c("R_interrupts_suspended", "UserBreak", "_GA_initapp")
-)
-
 # Generate corresponding 'lib' file for each DLL.
 for (dll in dlls) {
    
