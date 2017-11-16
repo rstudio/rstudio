@@ -125,9 +125,11 @@ struct RProjectConfig
 };
 
 Error findProjectFile(FilePath filePath,
+                      FilePath anchorPath,
                       FilePath* pProjPath);
 
 Error findProjectConfig(FilePath filePath,
+                        const FilePath& anchorPath,
                         RProjectConfig* pConfig);
 
 Error readProjectFile(const FilePath& projectFilePath,
