@@ -27,7 +27,8 @@ namespace desktop {
 
 SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
     GwtWindow(false, true, name),
-    gwtCallback_(pMainWindow, this)
+    gwtCallback_(pMainWindow, this),
+    close_(CloseStageOpen)
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
@@ -65,37 +66,56 @@ void SatelliteWindow::finishLoading(bool ok)
       avoidMoveCursorIfNecessary();
 }
 
+void SatelliteWindow::closeSatellite(QCloseEvent *event)
+{
+   webPage()->runJavaScript(
+      QStringLiteral(
+          "if (window.notifyRStudioSatelliteClosing) "
+          "   window.notifyRStudioSatelliteClosing();"));
+   webView()->event(event);
+}
+
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
-   webView()->event(event);
-
-   // the source window has special close semantics
-   if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))
+   // the source window has special close semantics; if we're not currently
+   // closing, then invoke custom close handlers
+   if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)) &&
+       close_ == CloseStageOpen)
    {
+      // ignore this event; we need to make sure the window can be
+      // closed ourselves
+      event->ignore();
+      close_ = CloseStagePending;
+
       webPage()->runJavaScript(
                QStringLiteral("window.rstudioReadyToClose"),
                [&](QVariant qReadyToClose)
       {
          bool readyToClose = qReadyToClose.toBool();
-         if (!readyToClose)
+         if (readyToClose)
          {
+            // all clear, close the window
+            close_ = CloseStageAccepted;
+            close();
+         }
+         else
+         {
+            // not ready to close, revert close stage and take care of business
+            close_ = CloseStageOpen;
             webPage()->runJavaScript(
                      QStringLiteral("window.rstudioCloseSourceWindow()"),
                      [&](QVariant ignored)
             {
-               event->ignore();
+               // no work to do here
             });
          }
       });
    }
-
-   webPage()->runJavaScript(
-            QStringLiteral(
-               "if (window.notifyRStudioSatelliteClosing) "
-               "   window.notifyRStudioSatelliteClosing();"));
-
-   // forward the close event to the web view
-   webView()->event(event);
+   else
+   {
+      // not a  source window, just close it
+      closeSatellite(event);
+   }
 }
 
 void SatelliteWindow::onActivated()

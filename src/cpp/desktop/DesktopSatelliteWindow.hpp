@@ -26,6 +26,13 @@
 namespace rstudio {
 namespace desktop {
 
+enum CloseStage
+{
+   CloseStageOpen,
+   CloseStagePending,
+   CloseStageAccepted
+};
+
 class MainWindow;
 
 class SatelliteWindow : public GwtWindow
@@ -46,6 +53,7 @@ protected slots:
 
 protected:
    virtual void closeEvent(QCloseEvent *event);
+   void closeSatellite(QCloseEvent *event);
 
    virtual QSize printDialogMinimumSize()
    {
@@ -58,6 +66,7 @@ private:
 
 private:
    GwtCallback gwtCallback_;
+   CloseStage close_;
 };
 
 } // namespace desktop
