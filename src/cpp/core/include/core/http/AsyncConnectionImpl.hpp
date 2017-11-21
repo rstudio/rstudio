@@ -95,6 +95,11 @@ public:
       if (close)
          response_.setHeader("Connection", "close");
 
+      // make sure that if no content-length was specified, we send a 0-length one
+      // otherwise, this response will be invalid
+      if (response_.headerValue("Content-Length").empty())
+          response_.setContentLength(0);
+
       // call the response filter if we have one
       if (responseFilter_)
          responseFilter_(originalUri_, &response_);
