@@ -1,7 +1,7 @@
 /*
  * ServerOptions.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@
 #include <core/FilePath.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Types.hpp>
 
 namespace rstudio {
 namespace core {
@@ -37,8 +38,11 @@ namespace server {
 
 // singleton
 class Options ;
-Options& options();   
-   
+Options& options();
+
+// add overlay-specific args and/or environment variables
+void sessionProcessConfigOverlay(core::system::Options* pArgs, core::system::Options* pEnvironment);
+
 class Options : boost::noncopyable
 {
 private:
