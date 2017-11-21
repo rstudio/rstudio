@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,18 +15,12 @@
 
 #include <server/ServerSessionManager.hpp>
 
-#include <vector>
-
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
-#include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
-#include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
-#include <core/r_util/RSessionContext.hpp>
 
 #include <monitor/MonitorClient.hpp>
 #include <session/SessionConstants.hpp>
@@ -113,6 +107,8 @@ core::system::ProcessConfig sessionProcessConfig(
                               kRStudioSessionScopeId,
                               context.scope.id()));
    }
+
+   sessionProcessConfigOverlay(&args, &environment);
 
    // pass extra params
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
