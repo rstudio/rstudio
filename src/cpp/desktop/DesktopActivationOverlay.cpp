@@ -19,7 +19,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
-namespace activation {
 
 DesktopActivation& activation()
 {
@@ -72,6 +71,5 @@ void DesktopActivation::emitLaunchError(QString message)
    emit launchError(message);
 }
 
-} // namespace activation
 } // namespace desktop
 } // namespace rstudio

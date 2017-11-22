@@ -29,7 +29,6 @@ namespace core {
 
 namespace rstudio {
 namespace desktop {
-namespace activation {
 
 class DesktopActivation;
 DesktopActivation& activation();
@@ -58,14 +57,13 @@ signals:
    void licenseLost(QString licenseMessage);
    void launchFirstSession();
    void launchError(QString message);
-   
+
 public:
    void emitLicenseLostSignal();
    void emitLaunchFirstSession();
    void emitLaunchError(QString message);
 };
 
-} // namespace activation
 } // namespace desktop
 } // namespace rstudio
 
