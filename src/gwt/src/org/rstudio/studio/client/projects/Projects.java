@@ -54,6 +54,7 @@ import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.NewProjectFolderEvent;
 import org.rstudio.studio.client.projects.events.NewProjectFromVcsEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -92,6 +93,7 @@ public class Projects implements OpenProjectFileHandler,
                                  OpenProjectNewWindowHandler,
                                  NewProjectEvent.Handler,
                                  NewProjectFromVcsEvent.Handler,
+                                 NewProjectFolderEvent.Handler,
                                  OpenProjectEvent.Handler,
                                  RequestOpenProjectEvent.Handler
 {
@@ -139,6 +141,7 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(OpenProjectNewWindowEvent.TYPE, this);
       eventBus.addHandler(NewProjectEvent.TYPE, this);
       eventBus.addHandler(NewProjectFromVcsEvent.TYPE, this);
+      eventBus.addHandler(NewProjectFolderEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
       
@@ -312,6 +315,30 @@ public class Projects implements OpenProjectFileHandler,
                event.getTutorialCommand());
 
          createNewProject(newProject, saveChanges);
+      }
+   }
+   
+   @Override
+   public void onNewProjectFolderEvent(NewProjectFolderEvent event)
+   {
+      String name = event.getDirName().trim();
+      String dir = event.getDestDir().trim();
+      if (name.length() > 0 && dir.length() > 0)
+      {
+         String projDir = FileSystemItem.createDir(dir).completePath(name);
+         String projFile = Projects.projFileFromDir(projDir);
+         NewProjectResult newProject = new NewProjectResult(
+               projFile,
+               event.getCreateRepo(),
+               false/*usePackRat*/,
+               dir,
+               null/*vcsCloneOptions*/,
+               null/*newPackageOptions*/,
+               null/*newShinyAppOptions*/,
+               null/*projectTemplateOptions*/,
+               event.getTutorialCommand());
+         
+         createNewProject(newProject, false/*saveChanges*/);
       }
    }
 
