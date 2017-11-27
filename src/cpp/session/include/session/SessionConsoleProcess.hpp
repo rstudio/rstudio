@@ -240,27 +240,27 @@ private:
    boost::shared_ptr<ConsoleProcessInfo> procInfo_;
 
    // Whether the process should be stopped
-   bool interrupt_;
+   bool interrupt_ = false;
 
    // Whether to send pty interrupt
-   bool interruptChild_;
+   bool interruptChild_ = false;
    
    // Whether the tty should be notified of a resize
-   int newCols_; // -1 = no change
-   int newRows_; // -1 = no change
+   int newCols_ = -1; // -1 = no change
+   int newRows_ = -1; // -1 = no change
 
    // Last known PID of associated process
-   PidType pid_;
+   PidType pid_ = -1;
 
    // Has client been notified of state of childProcs_ at least once?
-   bool childProcsSent_;
+   bool childProcsSent_ = false;
 
    // Is there a child process matching the whitelist?
-   bool whitelistChildProc_;
+   bool whitelistChildProc_ = false;
 
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;
-   int lastInputSequence_;
+   int lastInputSequence_ = kIgnoreSequence;
    boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
@@ -271,7 +271,7 @@ private:
    boost::regex promptPattern_;
 
    // is the underlying process started?
-   bool started_;
+   bool started_ = false;
 
    // cached pointer to process operations, for use in websocket thread callbacks
    boost::weak_ptr<core::system::ProcessOperations> pOps_;
