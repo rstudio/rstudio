@@ -185,7 +185,9 @@
       info <- .row_names_info(x, type = 0L)
       if (is.integer(info) && is.na(info[[1]]))
       {
-         n <- info[[2]]
+         # the second element indicates the number of rows, and is negative if they're 
+         # automatic
+         n <- abs(info[[2]])
          range <- seq(from = start, to = min(n, start + len))
          return(as.character(range))
       }
