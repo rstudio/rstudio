@@ -65,6 +65,7 @@ import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
@@ -198,7 +199,10 @@ public class Application implements ApplicationEventHandlers
                   }
                   
                   session_.setSessionInfo(sessionInfo);
-                        
+                  
+                  // load MathJax
+                  MathJaxLoader.ensureMathJaxLoaded();
+                  
                   // initialize workbench
                   initializeWorkbench();
                }
