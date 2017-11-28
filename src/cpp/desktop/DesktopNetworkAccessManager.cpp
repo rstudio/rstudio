@@ -1,7 +1,7 @@
 /*
  * DesktopNetworkAccessManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@ using namespace rstudio::desktop;
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)
 {
-   QTimer* pTimer = new QTimer(this);
+   auto* pTimer = new QTimer(this);
    connect(pTimer, SIGNAL(timeout()), SLOT(pollForIO()));
    pTimer->start(25);
 }

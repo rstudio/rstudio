@@ -46,13 +46,13 @@ namespace desktop {
 
 namespace {
 
-static std::string s_launcherToken;
-         
+std::string s_launcherToken;
+
 void launchProcess(std::string absPath,
                    QStringList argList,
                    QProcess** ppProc)
 {
-   QProcess* pProcess = new QProcess();
+   auto* pProcess = new QProcess();
    if (options().runDiagnostics())
       pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
    else
@@ -174,9 +174,8 @@ Error SessionLauncher::launchFirstSession()
 void SessionLauncher::closeAllSatellites()
 {
    QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
+   for (auto pWindow : topLevels)
    {
-      QWidget* pWindow = topLevels.at(i);
       if (pWindow != pMainWindow_)
         pWindow->close();
    }
@@ -268,11 +267,11 @@ Error SessionLauncher::launchNextSession(bool reload)
    pMainWindow_->disconnect(SIGNAL(firstWorkbenchInitialized()));
 
    // delete the old process object
-   pMainWindow_->setSessionProcess(NULL);
+   pMainWindow_->setSessionProcess(nullptr);
    if (pRSessionProcess_)
    {
       delete pRSessionProcess_;
-      pRSessionProcess_ = NULL;
+      pRSessionProcess_ = nullptr;
    }
 
    // build a new launch context -- re-use the same port if we aren't reloading
@@ -447,7 +446,7 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
       s_launcherToken = core::system::generateShortenedUuid();
    *pArgList << QString::fromUtf8("--launcher-token") <<
                 QString::fromUtf8(s_launcherToken.c_str());
-   
+
    if (options().runDiagnostics())
       *pArgList << QString::fromUtf8("--verify-installation") <<
                    QString::fromUtf8("1");

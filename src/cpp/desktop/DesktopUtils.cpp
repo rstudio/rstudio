@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -230,7 +230,7 @@ void showFileError(const QString& action,
                  QString::fromUtf8(" ") + file +
                  QString::fromUtf8(" - ") + error;
    showMessageBox(QMessageBox::Critical,
-                  NULL,
+                  nullptr,
                   QString::fromUtf8("File Error"),
                   msg);
 }
@@ -240,9 +240,9 @@ bool isFixedWidthFont(const QFont& font)
    QFontMetrics metrics(font);
    int width = metrics.width(QChar::fromLatin1(' '));
    char chars[] = {'m', 'i', 'A', '/', '-', '1', 'l', '!', 'x', 'X', 'y', 'Y'};
-   for (size_t i = 0; i < sizeof(chars); i++)
+   for (char i : chars)
    {
-      if (metrics.width(QChar::fromLatin1(chars[i])) != width)
+      if (metrics.width(QChar::fromLatin1(i)) != width)
          return false;
    }
    return true;
@@ -338,7 +338,7 @@ void openUrl(const QUrl& url)
 
 QFileDialog::Options standardFileDialogOptions()
 {
-   return 0;
+   return nullptr;
 }
 
 #endif

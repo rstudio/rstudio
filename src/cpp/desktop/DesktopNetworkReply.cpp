@@ -1,7 +1,7 @@
 /*
  * DesktopNetworkReply.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -41,7 +41,7 @@ namespace desktop {
 
 struct NetworkReply::Impl
 {
-   Impl(const std::string& localPeer)
+   explicit Impl(const std::string& localPeer)
  #ifdef _WIN32
       : pClient(new http::NamedPipeAsyncClient(ioService(),
                                                localPeer,
@@ -134,9 +134,8 @@ NetworkReply::NetworkReply(const std::string& localPeer,
 
    // headers
    QList<QByteArray> headers = req.rawHeaderList();
-   for (int i=0; i<headers.size(); i++)
+   for (auto name : headers)
    {
-      QByteArray name = headers.at(i);
       QByteArray value = req.rawHeader(name);
       request.setHeader(std::string(name.begin(), name.end()),
                         std::string(value.begin(), value.end()));
@@ -146,7 +145,7 @@ NetworkReply::NetworkReply(const std::string& localPeer,
    request.setHeader("X-Shared-Secret", secret.toStdString());
 
    // body
-   if (outgoingData != NULL)
+   if (outgoingData != nullptr)
    {
       QByteArray postData = outgoingData->readAll();
       request.setBody(std::string(postData.begin(), postData.end()));

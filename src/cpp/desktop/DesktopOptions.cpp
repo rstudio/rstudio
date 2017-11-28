@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,7 @@ void Options::initFromCommandLine(const QStringList& arguments)
 {
    for (int i=1; i<arguments.size(); i++)
    {
-      QString arg = arguments.at(i);
+      const QString &arg = arguments.at(i);
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
    }

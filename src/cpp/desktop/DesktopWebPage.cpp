@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -97,8 +97,8 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
    int height = 0;
    int x = -1;
    int y = -1;
-   MainWindow* pMainWindow = NULL;
-   BrowserWindow* pWindow = NULL;
+   MainWindow* pMainWindow = nullptr;
+   BrowserWindow* pWindow = nullptr;
 
    // check if this is a satellite window
    if (!pendingWindow_.isEmpty())
@@ -126,7 +126,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
          desktop::raiseAndActivateWindow(pWindow);
-         return NULL;
+         return nullptr;
       }
    }
 
@@ -166,7 +166,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
    }
    else
    {
-      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, NULL, this,
+      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, nullptr, this,
                                     allowExternalNavigate);
    }
 
@@ -328,11 +328,11 @@ void WebPage::handleBase64Download(QWebEnginePage* pWebPage, QUrl url)
 
    // prompt for filename
    QString filename = QFileDialog::getSaveFileName(
-                                            NULL,
+                                            nullptr,
                                             tr("Download File"),
                                             defaultFilename,
                                             defaultSaveDir_.absolutePath(),
-                                            0,
+                                            nullptr,
                                             standardFileDialogOptions());
    if (!filename.isEmpty())
    {

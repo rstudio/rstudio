@@ -1,7 +1,7 @@
 /*
  * DesktopCommandInvoker.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ class CommandInvoker : public QObject
 {
     Q_OBJECT
 public:
-    explicit CommandInvoker(QString commandId, QObject *parent = 0);
+    explicit CommandInvoker(QString commandId, QObject *parent = nullptr);
 
 signals:
     void commandInvoked(QString commandId);

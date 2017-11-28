@@ -1,7 +1,7 @@
 /*
  * DesktopBrowserWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,8 +34,8 @@ public:
                            bool adjustTitle,
                            QString name,
                            QUrl baseUrl = QUrl(),
-                           QWidget *parent = NULL,
-                           WebPage *pOpener = NULL,
+                           QWidget *parent = nullptr,
+                           WebPage *pOpener = nullptr,
                            bool allowExternalNavigate = false);
     WebView* webView();
 
@@ -51,16 +51,16 @@ protected:
      void avoidMoveCursorIfNecessary();
 
      // implement GwtCallbackOwner
-     virtual QWidget* asWidget();
-     virtual WebPage* webPage();
-     virtual void postWebViewEvent(QEvent *event);
-     virtual void triggerPageAction(QWebEnginePage::WebAction action);
-     virtual void closeEvent(QCloseEvent *event);
+     QWidget* asWidget() override;
+     WebPage* webPage() override;
+     void postWebViewEvent(QEvent *event) override;
+     void triggerPageAction(QWebEnginePage::WebAction action) override;
+     void closeEvent(QCloseEvent *event) override;
 
      // hooks for subclasses
      virtual QSize printDialogMinimumSize()
      {
-         return QSize(0,0);
+         return {0,0};
      }
 
 protected:

@@ -172,7 +172,7 @@ void initializeStartupEnvironment(QString* pFilename)
    }
 }
 
-QString verifyAndNormalizeFilename(QString filename)
+QString verifyAndNormalizeFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return QString();
@@ -184,7 +184,7 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 }
 
-bool isNonProjectFilename(QString filename)
+bool isNonProjectFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return false;
@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
       // set the scripts path in options

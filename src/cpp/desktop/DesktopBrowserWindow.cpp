@@ -1,7 +1,7 @@
 /*
  * DesktopBrowserWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,7 +85,7 @@ void BrowserWindow::printRequested(QWebEnginePage* frame)
 
 void BrowserWindow::closeEvent(QCloseEvent *event)
 {
-   if (pOpener_ == NULL)
+   if (pOpener_ == nullptr)
    {
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)

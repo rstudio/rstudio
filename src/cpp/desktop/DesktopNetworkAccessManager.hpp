@@ -1,7 +1,7 @@
 /*
  * DesktopNetworkAccessManager.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ class NetworkAccessManager : public QNetworkAccessManager
     Q_OBJECT
 public:
     explicit NetworkAccessManager(QString secret,
-                                  QObject *parent = 0);
+                                  QObject *parent = nullptr);
 
 private slots:
    void pollForIO();
@@ -32,7 +32,7 @@ private slots:
 protected:
     QNetworkReply* createRequest(Operation op,
                                  const QNetworkRequest& req,
-                                 QIODevice* outgoingData = 0);
+                                 QIODevice* outgoingData = nullptr) override;
 
 private:
     QString secret_;

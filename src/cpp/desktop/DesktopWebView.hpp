@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ class WebView : public QWebEngineView
 
 public:
    explicit WebView(QUrl baseUrl = QUrl(),
-                    QWidget *parent = NULL,
+                    QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
@@ -42,7 +42,7 @@ public:
    void setDpiAwareZoomFactor(qreal factor);
    qreal dpiAwareZoomFactor();
 
-   virtual bool event(QEvent* event);
+   bool event(QEvent* event) override;
 
    WebPage* webPage() const { return pWebPage_; }
 
@@ -54,8 +54,8 @@ public slots:
 protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
-   void keyPressEvent(QKeyEvent* pEv);
-   void closeEvent(QCloseEvent* pEv);
+   void keyPressEvent(QKeyEvent* pEv) override;
+   void closeEvent(QCloseEvent* pEv) override;
 
 protected slots:
    void openFile(QString file);

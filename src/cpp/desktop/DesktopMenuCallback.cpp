@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,7 @@ void MenuCallback::beginMenu(QString label)
    }
 #endif
 
-   SubMenu* pMenu = new SubMenu(label, pMainMenu_);
+   auto* pMenu = new SubMenu(label, pMainMenu_);
 
    connect(pMenu, SIGNAL(manageCommandVisibility(QString,QAction*)),
            this, SIGNAL(manageCommandVisibility(QString,QAction*)));
@@ -63,7 +63,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString tooltip)
 {
 
-   QAction* pAction = NULL;
+   QAction* pAction = nullptr;
    if (commandId == QString::fromUtf8("zoomIn"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
@@ -101,7 +101,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
 #endif
 
-   if (pAction != NULL)
+   if (pAction != nullptr)
    {
       pAction->setData(commandId);
       pAction->setToolTip(tooltip);
@@ -109,7 +109,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
    else
    {
-      return NULL;
+      return nullptr;
    }
 }
 
@@ -135,7 +135,7 @@ void MenuCallback::addCommand(QString commandId,
    QAction* pAction = addCustomAction(commandId, label, tooltip);
 
    // if there was no custom handler then do stock command-id processing
-   if (pAction == NULL)
+   if (pAction == nullptr)
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -147,7 +147,7 @@ void MenuCallback::addCommand(QString commandId,
       if (checkable)
          pAction->setCheckable(true);
 
-      MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      auto * pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
               this, SIGNAL(manageCommand(QString,QAction*)));
    }
@@ -155,7 +155,7 @@ void MenuCallback::addCommand(QString commandId,
 
 void MenuCallback::actionInvoked()
 {
-   QAction* action = qobject_cast<QAction*>(sender());
+   auto * action = qobject_cast<QAction*>(sender());
    QString commandId = action->data().toString();
    commandInvoked(commandId);
 }
@@ -272,14 +272,13 @@ void WindowMenu::onAboutToShow()
    }
 
    QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
+   for (auto pWindow : topLevels)
    {
-      QWidget* pWindow = topLevels.at(i);
       if (!pWindow->isVisible())
          continue;
 
       // construct with no parent (we free it manually)
-      QAction* pAction = new QAction(pWindow->windowTitle(), NULL);
+      QAction* pAction = new QAction(pWindow->windowTitle(), nullptr);
       pAction->setData(QVariant::fromValue(pWindow));
       pAction->setCheckable(true);
       if (pWindow->isActiveWindow())
@@ -298,10 +297,10 @@ void WindowMenu::onAboutToHide()
 
 void WindowMenu::showWindow()
 {
-   QAction* pAction = qobject_cast<QAction*>(sender());
+   auto* pAction = qobject_cast<QAction*>(sender());
    if (!pAction)
       return;
-   QWidget* pWidget = pAction->data().value<QWidget*>();
+   auto* pWidget = pAction->data().value<QWidget*>();
    if (!pWidget)
       return;
    if (pWidget->isMinimized())

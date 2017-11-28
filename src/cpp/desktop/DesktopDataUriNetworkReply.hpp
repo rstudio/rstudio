@@ -1,7 +1,7 @@
 /*
  * DesktopDataUriNetworkReply.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,20 +39,20 @@ public:
    void createReply();
 
 public:
-   void abort()
+   void abort() override
    {
       close();
    }
 
-   qint64 bytesAvailable() const;
+   qint64 bytesAvailable() const override;
 
-   bool isSequential() const
+   bool isSequential() const override
    {
       return true;
    }
 
 protected:
-   qint64 readData(char *data, qint64 maxSize);
+   qint64 readData(char *data, qint64 maxSize) override;
 
 private:
    void setContent(const QByteArray& content);

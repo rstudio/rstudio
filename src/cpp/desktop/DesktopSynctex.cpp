@@ -1,7 +1,7 @@
 /*
  * DesktopSynctex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,7 +77,7 @@ SynctexViewerInfo discoverViewer()
 
    // extract version
    boost::smatch match;
-   boost::regex re("^.*(\\d+)\\.(\\d+)\\.(\\d)+$");
+   boost::regex re(R"(^.*(\d+)\.(\d+)\.(\d)+$)");
    if (regex_utils::match(stdOut, match, re))
    {
       SynctexViewerInfo sv;

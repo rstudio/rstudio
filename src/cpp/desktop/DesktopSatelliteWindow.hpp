@@ -1,7 +1,7 @@
 /*
  * DesktopSatelliteWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,21 +48,20 @@ public slots:
 
 protected slots:
    void onCloseWindowShortcut();
-   void finishLoading(bool ok);
-   void onJavaScriptWindowObjectCleared();
+   void finishLoading(bool ok) override;
+   void onJavaScriptWindowObjectCleared() override;
 
 protected:
-   virtual void closeEvent(QCloseEvent *event);
+   void closeEvent(QCloseEvent *event) override;
    void closeSatellite(QCloseEvent *event);
 
-   virtual QSize printDialogMinimumSize()
+   QSize printDialogMinimumSize() override
    {
       return this->size();
    }
 
 private:
-   virtual void onActivated();
-
+   void onActivated() override;
 
 private:
    GwtCallback gwtCallback_;

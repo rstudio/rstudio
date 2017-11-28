@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,17 +45,17 @@ namespace rstudio {
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      GwtWindow(false, false, QString(), url, NULL),
+      GwtWindow(false, false, QString(), url, nullptr),
       menuCallback_(this),
       gwtCallback_(this, this),
-      pSessionLauncher_(NULL),
-      pCurrentSessionProcess_(NULL)
+      pSessionLauncher_(nullptr),
+      pCurrentSessionProcess_(nullptr)
 {
    quitConfirmed_ = false;
    pToolbar_->setVisible(false);
 
    // create web channel and bind GWT callbacks
-   QWebChannel* channel = new QWebChannel(this);
+   auto* channel = new QWebChannel(this);
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
    channel->registerObject(QStringLiteral("desktopInfo"), &desktopInfo());
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
@@ -89,7 +89,7 @@ MainWindow::MainWindow(QUrl url) :
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
    // after startup.
-   QMenuBar* pMainMenuStub = new QMenuBar(this);
+   auto* pMainMenuStub = new QMenuBar(this);
    pMainMenuStub->addMenu(QString::fromUtf8("File"));
    pMainMenuStub->addMenu(QString::fromUtf8("Edit"));
    pMainMenuStub->addMenu(QString::fromUtf8("Code"));
@@ -284,7 +284,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
 
       if (quitConfirmed_ ||
           !hasQuitR.toBool() ||
-          pCurrentSessionProcess_ == NULL ||
+          pCurrentSessionProcess_ == nullptr ||
           pCurrentSessionProcess_->state() != QProcess::Running)
       {
          pEvent->accept();

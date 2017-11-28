@@ -68,7 +68,7 @@ extern QString scratchPath;
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
-     pSynctex_(NULL),
+     pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
     QClipboard* clipboard = QApplication::clipboard();
@@ -84,7 +84,7 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
 
 Synctex& GwtCallback::synctex()
 {
-   if (pSynctex_ == NULL)
+   if (pSynctex_ == nullptr)
       pSynctex_ = Synctex::create(pMainWindow_);
 
    return *pSynctex_;
@@ -303,7 +303,7 @@ void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
 {
     // for some reason, Qt can get stalled querying the clipboard
     // while a modal is active, so disable any such behavior here
-    if (QApplication::activeModalWidget() != NULL)
+    if (QApplication::activeModalWidget() != nullptr)
        return;
 
     // if this is a change in the selection contents, track it
@@ -330,7 +330,7 @@ void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
 void GwtCallback::doAction(const QKeySequence& keys)
 {
    int keyCode = keys[0];
-   Qt::KeyboardModifier modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
+   auto modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
    keyCode &= ~Qt::KeyboardModifierMask;
 
    QKeyEvent* keyEvent = new QKeyEvent(QKeyEvent::KeyPress, keyCode, modifiers);
@@ -340,7 +340,7 @@ void GwtCallback::doAction(const QKeySequence& keys)
 void GwtCallback::doAction(QKeySequence::StandardKey key)
 {
    QList<QKeySequence> bindings = QKeySequence::keyBindings(key);
-   if (bindings.size() == 0)
+   if (bindings.empty())
       return;
 
    doAction(bindings.first());
@@ -530,7 +530,7 @@ void GwtCallback::openMinimalWindow(QString name,
 {
    bool named = !name.isEmpty() && name != QString::fromUtf8("_blank");
 
-   BrowserWindow* browser = NULL;
+   BrowserWindow* browser = nullptr;
    if (named)
       browser = s_windowTracker.getWindow(name);
 
@@ -678,9 +678,9 @@ int GwtCallback::showMessageBox(int type,
                                 int cancelButton)
 {
    // cancel other message box if it's visible
-   QMessageBox* pMsgBox = qobject_cast<QMessageBox*>(
+   auto* pMsgBox = qobject_cast<QMessageBox*>(
                         QApplication::activeModalWidget());
-   if (pMsgBox != NULL)
+   if (pMsgBox != nullptr)
       pMsgBox->close();
 
    QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
@@ -797,7 +797,7 @@ void GwtCallback::showKeyboardShortcutHelp()
 void GwtCallback::showAboutDialog()
 {
    // WA_DeleteOnClose
-   AboutDialog* about = new AboutDialog(pOwner_->asWidget());
+   auto* about = new AboutDialog(pOwner_->asWidget());
    about->setAttribute(Qt::WA_DeleteOnClose);
    about->show();
 }
@@ -1069,7 +1069,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    else
    {
       desktop::showWarning(
-         NULL,
+         nullptr,
          QString::fromUtf8("Terminal Not Found"),
          QString::fromUtf8(
                   "Unable to find a compatible terminal program to launch"));

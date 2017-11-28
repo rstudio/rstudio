@@ -1,7 +1,7 @@
 /*
  * DesktopDownloadHelper.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@ bool handleReplyError(QNetworkReply* pReply)
 {
    if (pReply->error() != QNetworkReply::NoError)
    {
-      showWarning(NULL,
+      showWarning(nullptr,
                   QString::fromUtf8("Download Failed"),
                   QString::fromUtf8("An error occurred during download:\n\n")
                   + pReply->errorString());
@@ -74,7 +74,7 @@ void DownloadHelper::handleDownload(QNetworkReply* pReply, QString fileName)
 
 void DownloadHelper::onDownloadFinished()
 {
-   QNetworkReply* pReply = static_cast<QNetworkReply*>(sender());
+   auto* pReply = static_cast<QNetworkReply*>(sender());
 
    if (!handleReplyError(pReply))
       return;

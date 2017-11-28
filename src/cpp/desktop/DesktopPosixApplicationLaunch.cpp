@@ -38,8 +38,8 @@ PosixApplication* app()
 } // anonymous namespace
 
 ApplicationLaunch::ApplicationLaunch() :
-    QWidget(NULL),
-    pMainWindow_(NULL)
+    QWidget(nullptr),
+    pMainWindow_(nullptr)
 {
    connect(app(), SIGNAL(messageReceived(QString)),
            this, SIGNAL(openFileRequest(QString)));

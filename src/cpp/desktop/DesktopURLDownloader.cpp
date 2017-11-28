@@ -1,7 +1,7 @@
 /*
  * DesktopURLDownloader.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ URLDownloader::URLDownloader(const QUrl& url,
      pRequestTimeoutTimer_(new QTimer(this)),
      manuallyInvoked_(manuallyInvoked)
 {
-   QNetworkAccessManager* pNetman = new QNetworkAccessManager(this);
+   auto* pNetman = new QNetworkAccessManager(this);
    pReply_ = pNetman->get(QNetworkRequest(url));
    connect(pReply_, SIGNAL(finished()),
            this, SLOT(complete()));
@@ -53,7 +53,7 @@ void URLDownloader::complete()
    if (pRequestTimeoutTimer_->isActive())
       pRequestTimeoutTimer_->stop();
 
-   QNetworkReply* pReply = qobject_cast<QNetworkReply*>(sender());
+   auto* pReply = qobject_cast<QNetworkReply*>(sender());
 
    if (pReply->error() == QNetworkReply::NoError)
    {
@@ -73,7 +73,7 @@ void URLDownloader::error(QNetworkReply::NetworkError error)
    if (pRequestTimeoutTimer_->isActive())
       pRequestTimeoutTimer_->stop();
 
-   QNetworkReply* pReply = qobject_cast<QNetworkReply*>(sender());
+   auto* pReply = qobject_cast<QNetworkReply*>(sender());
 
    downloadError(pReply->errorString());
 

@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,7 @@ class MainWindow : public GwtWindow
    Q_OBJECT
 
 public:
-   MainWindow(QUrl url=QUrl());
+   explicit MainWindow(QUrl url=QUrl());
 
 public:
    QString getSumatraPdfExePath();
@@ -63,15 +63,15 @@ signals:
 
 protected slots:
    void onCloseWindowShortcut();
-   void onJavaScriptWindowObjectCleared();
+   void onJavaScriptWindowObjectCleared() override;
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);
 
 protected:
-   virtual void closeEvent(QCloseEvent*);
-   virtual double getZoomLevel();
-   virtual void setZoomLevel(double zoomLevel);
+   void closeEvent(QCloseEvent*) override;
+   double getZoomLevel() override;
+   void setZoomLevel(double zoomLevel) override;
 
 // private interface for SessionLauncher
 private:
@@ -95,7 +95,7 @@ private:
    bool desktopHooksAvailable();
 
    // callback when window is activated
-   virtual void onActivated();
+   void onActivated() override;
 
 private:
    bool quitConfirmed_;

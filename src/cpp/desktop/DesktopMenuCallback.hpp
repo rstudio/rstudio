@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ class MenuCallback : public QObject
 {
     Q_OBJECT
 public:
-    explicit MenuCallback(QObject *parent = 0);
+    explicit MenuCallback(QObject *parent = nullptr);
 
 public slots:
     void beginMainMenu();
@@ -99,7 +99,7 @@ class WindowMenu : public QMenu
 {
    Q_OBJECT
 public:
-   explicit WindowMenu(QWidget *parent = 0);
+   explicit WindowMenu(QWidget *parent = nullptr);
 
 protected slots:
    void onMinimize();

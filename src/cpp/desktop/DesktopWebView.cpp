@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,7 +68,7 @@ void WebView::prepareForWindow(const PendingWindow& pendingWnd)
 }
 
 QString WebView::promptForFilename(const QNetworkRequest& request,
-                                   QNetworkReply* pReply = NULL)
+                                   QNetworkReply* pReply = nullptr)
 {
    QString defaultFileName = QFileInfo(request.url().path()).fileName();
 
@@ -88,7 +88,7 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
                                                    tr("Download File"),
                                                    defaultFileName,
                                                    QString(),
-                                                   0,
+                                                   nullptr,
                                                    standardFileDialogOptions());
    return fileName;
 }

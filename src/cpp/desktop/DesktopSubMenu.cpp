@@ -1,7 +1,7 @@
 /*
  * DesktopSubMenu.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@ void SubMenu::onAboutToShow()
         pAction++)
    {
       QMenu* menu = (*pAction)->menu();
-      if (menu != NULL)
+      if (menu != nullptr)
       {
          // Found a submenu; presume that it needs to be hidden until we
          // discover either a non-command or a visible command

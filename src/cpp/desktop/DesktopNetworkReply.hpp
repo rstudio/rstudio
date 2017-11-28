@@ -43,8 +43,8 @@ public:
                 QNetworkAccessManager::Operation op,
                 const QNetworkRequest& req,
                 QIODevice* outgoingData,
-                QObject *parent = 0);
-   virtual ~NetworkReply();
+                QObject *parent = nullptr);
+   ~NetworkReply() override;
 
 signals:
    
@@ -52,12 +52,12 @@ public slots:
 
 public:
 
-   qint64 bytesAvailable() const;
-   bool isSequential() const;
-   void abort();
+   qint64 bytesAvailable() const override;
+   bool isSequential() const override;
+   void abort() override;
 
 protected:
-   qint64 readData(char *data, qint64 maxSize);
+   qint64 readData(char *data, qint64 maxSize) override;
 
 private:
    void onResponse(const core::http::Response& response);

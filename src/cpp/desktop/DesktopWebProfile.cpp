@@ -36,7 +36,7 @@ public:
    {
    }
 
-   virtual void interceptRequest(QWebEngineUrlRequestInfo& info)
+   void interceptRequest(QWebEngineUrlRequestInfo& info) override
    {
       // TODO: do we want to set the shared secret on all requests?
       info.setHttpHeader(

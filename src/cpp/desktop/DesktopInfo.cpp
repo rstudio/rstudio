@@ -144,7 +144,7 @@ DesktopInfo::DesktopInfo(QObject* parent)
    // be expensive (don't want it to slow down startup)
    QFontDatabase db;
    QStringList fonts;
-   for (QString family : db.families())
+   for (const QString& family : db.families())
       if (db.isFixedPitch(family))
          fonts.append(family);
    s_fixedWidthFontList = fonts.join(QStringLiteral("\n"));
