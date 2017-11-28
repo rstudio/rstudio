@@ -63,8 +63,13 @@ void GwtWindow::zoomOut()
    }
 }
 
-void GwtWindow::onJavaScriptWindowObjectCleared()
+void GwtWindow::finishLoading(bool succeeded)
 {
+   BrowserWindow::finishLoading(succeeded);
+
+   if (!succeeded)
+       return;
+
    if (getZoomLevel() != webView()->dpiAwareZoomFactor())
       webView()->setDpiAwareZoomFactor(getZoomLevel());
 }

@@ -233,19 +233,6 @@ void MainWindow::quit()
    close();
 }
 
-void MainWindow::onJavaScriptWindowObjectCleared()
-{
-   GwtWindow::onJavaScriptWindowObjectCleared();
-
-   webPage()->webChannel()->registerObject(
-            QString::fromUtf8("desktop"),
-            &gwtCallback_);
-
-   webPage()->webChannel()->registerObject(
-            QString::fromUtf8("desktopMenuCallback"),
-            &menuCallback_);
-}
-
 void MainWindow::invokeCommand(QString commandId)
 {
    QString command =

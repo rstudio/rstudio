@@ -63,7 +63,6 @@ signals:
 
 protected slots:
    void onCloseWindowShortcut();
-   void onJavaScriptWindowObjectCleared() override;
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);

@@ -44,7 +44,6 @@ protected slots:
      void adjustTitle();
      void setProgress(int p);
      virtual void finishLoading(bool);
-     virtual void onJavaScriptWindowObjectCleared();
      void printRequested(QWebEnginePage* frame);
 
 protected:

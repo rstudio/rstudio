@@ -38,7 +38,7 @@ public slots:
    void zoomOut();
 
 protected slots:
-   void onJavaScriptWindowObjectCleared() override;
+   void finishLoading(bool);
 
 protected:
    bool event(QEvent* pEvent) override;

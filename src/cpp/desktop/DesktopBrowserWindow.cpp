@@ -43,9 +43,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    progress_ = 0;
 
    pView_ = new WebView(baseUrl, this, allowExternalNavigate);
-   QWebEnginePage* mainPage = pView_->page();
-   connect(mainPage, SIGNAL(javaScriptWindowObjectCleared()),
-           this, SLOT(onJavaScriptWindowObjectCleared()));
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
@@ -124,10 +121,20 @@ void BrowserWindow::setProgress(int p)
    adjustTitle();
 }
 
-void BrowserWindow::finishLoading(bool)
+void BrowserWindow::finishLoading(bool succeeded)
 {
    progress_ = 100;
    adjustTitle();
+
+   if (succeeded)
+   {
+      QString cmd = QString::fromUtf8("if (window.opener && "
+         "window.opener.registerDesktopChildWindow)"
+         "   window.opener.registerDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("', window);"));
+      webPage()->runJavaScript(cmd);
+   }
 }
 
 WebView* BrowserWindow::webView()
@@ -161,16 +168,6 @@ void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 void BrowserWindow::triggerPageAction(QWebEnginePage::WebAction action)
 {
    webView()->triggerPageAction(action);
-}
-
-void BrowserWindow::onJavaScriptWindowObjectCleared()
-{
-   QString cmd = QString::fromUtf8("if (window.opener && "
-      "window.opener.registerDesktopChildWindow))"
-      "   window.opener.registerDesktopChildWindow('");
-   cmd.append(name_);
-   cmd.append(QString::fromUtf8("', window);"));
-   webPage()->runJavaScript(cmd);
 }
 
 QString BrowserWindow::getName()

@@ -49,7 +49,6 @@ public slots:
 protected slots:
    void onCloseWindowShortcut();
    void finishLoading(bool ok) override;
-   void onJavaScriptWindowObjectCleared() override;
 
 protected:
    void closeEvent(QCloseEvent *event) override;

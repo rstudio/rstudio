@@ -43,16 +43,6 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
    connect(zoomOutShortcut, SIGNAL(activated()), this, SLOT(zoomOut()));
 }
 
-void SatelliteWindow::onJavaScriptWindowObjectCleared()
-{
-   GwtWindow::onJavaScriptWindowObjectCleared();
-   QWebChannel* channel = webView()->webPage()->webChannel();
-   channel->registerObject(QString::fromUtf8("desktop"), &gwtCallback_);
-
-   connect(webView(), SIGNAL(onCloseWindowShortcut()),
-           this, SLOT(onCloseWindowShortcut()));
-}
-
 void SatelliteWindow::onCloseWindowShortcut()
 {
    close();
@@ -63,7 +53,11 @@ void SatelliteWindow::finishLoading(bool ok)
    BrowserWindow::finishLoading(ok);
 
    if (ok)
+   {
       avoidMoveCursorIfNecessary();
+      connect(webView(), SIGNAL(onCloseWindowShortcut()), this,
+              SLOT(onCloseWindowShortcut()));
+   }
 }
 
 void SatelliteWindow::closeSatellite(QCloseEvent *event)
