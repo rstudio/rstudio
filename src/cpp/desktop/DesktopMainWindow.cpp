@@ -132,7 +132,7 @@ MainWindow::MainWindow(QUrl url) :
    setWindowTitle(QString::fromUtf8("RStudio"));
 
 #ifdef Q_OS_MAC
-   QMenuBar* pDefaultMenu = new QMenuBar();
+   auto* pDefaultMenu = new QMenuBar();
    pDefaultMenu->addMenu(new WindowMenu());
 #endif
 

@@ -28,7 +28,7 @@ class PosixApplication : public QtSingleApplication
     Q_OBJECT
 public:
 
-   PosixApplication(QString appName, int& argc, char* argv[])
+   PosixApplication(const QString& appName, int& argc, char* argv[])
     : QtSingleApplication(appName, argc, argv),
       pAppLauncher_(nullptr)
    {

@@ -48,8 +48,8 @@ namespace {
 
 std::string s_launcherToken;
 
-void launchProcess(std::string absPath,
-                   QStringList argList,
+void launchProcess(const std::string& absPath,
+                   const QStringList& argList,
                    QProcess** ppProc)
 {
    auto* pProcess = new QProcess();

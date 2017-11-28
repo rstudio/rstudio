@@ -26,9 +26,7 @@ DesktopActivation& activation()
    return singleton;
 }
 
-DesktopActivation::DesktopActivation()
-{
-}
+DesktopActivation::DesktopActivation() = default;
 
 bool DesktopActivation::allowProductUsage()
 {

@@ -651,7 +651,7 @@ bool GwtCallback::supportsClipboardMetafile()
 }
 
 namespace {
-   QMessageBox::ButtonRole captionToRole(QString caption)
+   QMessageBox::ButtonRole captionToRole(const QString& caption)
    {
       if (caption == QString::fromUtf8("OK"))
          return QMessageBox::AcceptRole;
@@ -1081,7 +1081,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    core::system::setenv("PATH", previousPath);
 }
 
-bool isProportionalFont(QString fontFamily)
+bool isProportionalFont(const QString& fontFamily)
 {
    QFont font(fontFamily, 12);
    return !isFixedWidthFont(font);

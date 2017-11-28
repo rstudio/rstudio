@@ -38,7 +38,7 @@ public slots:
    void zoomOut();
 
 protected slots:
-   void finishLoading(bool);
+   void finishLoading(bool) override;
 
 protected:
    bool event(QEvent* pEvent) override;
