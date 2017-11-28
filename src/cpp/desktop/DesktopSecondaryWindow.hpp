@@ -30,11 +30,6 @@ public:
                              QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
                              bool allowExternalNavigate = false);
 
-signals:
-
-public slots:
-    void print();
-
  protected slots:
     virtual void manageCommandState();
 

@@ -122,6 +122,10 @@ public slots:
                                int width,
                                int height);
 
+   void printText(QString text);
+   void paintPrintText(QPrinter* printer);
+   void printFinished(int result);
+
    bool supportsClipboardMetafile();
 
    int showMessageBox(int type,
@@ -223,6 +227,7 @@ private:
    GwtCallbackOwner* pOwner_;
    Synctex* pSynctex_;
    int pendingQuit_;
+   QString printText_;
 #ifdef Q_OS_WIN32
    WordViewer wordViewer_;
 #endif

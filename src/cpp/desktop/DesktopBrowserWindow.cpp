@@ -46,8 +46,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
-   connect(pView_->page(), SIGNAL(printRequested(QWebEnginePage*)),
-           this, SLOT(printRequested(QWebEnginePage*)));
 
    // set zoom factor
    double zoomLevel = options().zoomLevel();
@@ -64,20 +62,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    setUnifiedTitleAndToolBarOnMac(true);
 
    desktop::enableFullscreenMode(this, false);
-}
-
-void BrowserWindow::printRequested(QWebEnginePage* frame)
-{
-   QPrinter printer;
-   printer.setOutputFormat(QPrinter::NativeFormat);
-   QPrintPreviewDialog dialog(&printer, window());
-   QSize size = printDialogMinimumSize();
-   if (!size.isNull())
-      dialog.setMinimumSize(size);
-   dialog.setWindowModality(Qt::WindowModal);
-   connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
-           frame, SLOT(print(QPrinter*)));
-   dialog.exec();
 }
 
 void BrowserWindow::closeEvent(QCloseEvent *event)

@@ -1178,10 +1178,20 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      PrintIFrame printIFrame = new PrintIFrame(
-            getCode(),
-            RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
-      RootPanel.get().add(printIFrame);
+      if (Desktop.isDesktop())
+      {
+         // the desktop frame prints the code directly
+         Desktop.getFrame().printText(getCode());
+      }
+      else
+      {
+         // in server mode, we render the code to an IFrame and then print
+         // the frame using the browser
+         PrintIFrame printIFrame = new PrintIFrame(
+               getCode(),
+               RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
+         RootPanel.get().add(printIFrame);
+      }
    }
 
    public String getText()

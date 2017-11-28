@@ -93,6 +93,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                int top, 
                                int width, 
                                int height);
+
+   void printText(String text);
    
    void supportsClipboardMetafile(CommandWithArg<Boolean> callback);
 

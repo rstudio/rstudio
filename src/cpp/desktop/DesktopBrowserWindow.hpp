@@ -44,7 +44,6 @@ protected slots:
      void adjustTitle();
      void setProgress(int p);
      virtual void finishLoading(bool);
-     void printRequested(QWebEnginePage* frame);
 
 protected:
      void avoidMoveCursorIfNecessary();
@@ -55,12 +54,6 @@ protected:
      void postWebViewEvent(QEvent *event) override;
      void triggerPageAction(QWebEnginePage::WebAction action) override;
      void closeEvent(QCloseEvent *event) override;
-
-     // hooks for subclasses
-     virtual QSize printDialogMinimumSize()
-     {
-         return {0,0};
-     }
 
 protected:
      WebView* pView_;

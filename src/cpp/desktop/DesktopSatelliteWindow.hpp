@@ -54,11 +54,6 @@ protected:
    void closeEvent(QCloseEvent *event) override;
    void closeSatellite(QCloseEvent *event);
 
-   QSize printDialogMinimumSize() override
-   {
-      return this->size();
-   }
-
 private:
    void onActivated() override;
 

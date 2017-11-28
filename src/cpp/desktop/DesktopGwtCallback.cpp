@@ -30,6 +30,9 @@
 #include <QAbstractButton>
 #include <QWebEnginePage>
 
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintPreviewDialog>
+
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
 #include <core/SafeConvert.hpp>
@@ -93,6 +96,61 @@ Synctex& GwtCallback::synctex()
 bool GwtCallback::isCocoa()
 {
    return false;
+}
+
+void GwtCallback::printText(QString text)
+{
+   QPrintPreviewDialog dialog;
+   dialog.setWindowModality(Qt::WindowModal);
+
+   // QPrintPreviewDialog will call us back to paint the contents
+   connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
+           this, SLOT(paintPrintText(QPrinter*)));
+   connect(&dialog, SIGNAL(finished(int)),
+           this, SLOT(printFinished(int)));
+
+   // cache the requested print text to replay for the print preview
+   printText_ = text;
+
+   dialog.exec();
+}
+
+void GwtCallback::paintPrintText(QPrinter* printer)
+{
+    QPainter painter;
+    painter.begin(printer);
+
+    // look up the system fixed font
+    QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    fixedFont.setPointSize(10);
+    painter.setFont(fixedFont);
+
+    // break up the text into pages and draw each page
+    QStringList lines = printText_.split(QString::fromUtf8("\n"));
+    int i = 0;
+    while (i < lines.size())
+    {
+       // split off next chunk of lines and draw them
+       int end = std::min(i + 60, lines.size());
+       QStringList pageLines(lines.mid(i, 60));
+       painter.drawText(50, 50, 650, 900, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
+                        pageLines.join(QString::fromUtf8("\n")));
+
+       // start a new page if there are more lines
+       if (end < lines.size())
+          printer->newPage();
+
+       // move to next line group
+       i += 60;
+    }
+
+    painter.end();
+}
+
+void GwtCallback::printFinished(int result)
+{
+   // signal emitted by QPrintPreviewDialog when the dialog is dismissed
+   printText_.clear();
 }
 
 void GwtCallback::browseUrl(QString url)

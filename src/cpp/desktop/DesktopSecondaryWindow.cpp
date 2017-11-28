@@ -90,11 +90,6 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
    }
 }
 
-void SecondaryWindow::print()
-{
-   printRequested(webView()->page());
-}
-
 void SecondaryWindow::manageCommandState()
 {
 }
