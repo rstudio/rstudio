@@ -95,14 +95,13 @@ public slots:
 
 protected:
    QWebEnginePage* createWindow(QWebEnginePage::WebWindowType type) override;
-   void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
+   void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message,
+                                 int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
-   bool acceptNavigationRequest(QWebEnginePage* page,
-                                const QNetworkRequest& request,
-                                NavigationType type);
+   bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame) override;
 
 private:
-   void handleBase64Download(QWebEnginePage* pWebPage, QUrl url);
+   void handleBase64Download(QUrl url);
 
 private:
    QUrl baseUrl_;

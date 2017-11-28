@@ -193,17 +193,14 @@ bool WebPage::shouldInterruptJavaScript()
    return false;
 }
 
-void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*/, const QString& /*sourceID*/)
+void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel /*level*/, const QString& message,
+                                       int /*lineNumber*/, const QString& /*sourceID*/)
 {
    qDebug() << message;
 }
 
-bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
-                                       const QNetworkRequest& request,
-                                       NavigationType navType)
+bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType navType, bool isMainFrame)
 {
-   QUrl url = request.url();
-
    if (url.toString() == QString::fromUtf8("about:blank"))
       return true;
 
@@ -235,7 +232,7 @@ bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
       navigated_ = true;
       return true;
    }
-   // allow shiny dialiog urls to be handled internally by Qt
+   // allow shiny dialog urls to be handled internally by Qt
    else if (isLocal && !shinyDialogUrl_.isEmpty() &&
             url.toString().startsWith(shinyDialogUrl_))
    {
@@ -248,7 +245,7 @@ bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
           (navType == QWebEnginePage::NavigationTypeLinkClicked ||
            navType == QWebEnginePage::NavigationTypeFormSubmitted))
       {
-         handleBase64Download(pWebFrame, url);
+         handleBase64Download(url);
       }
       else if (allowExternalNav_)
       {
@@ -277,7 +274,7 @@ bool WebPage::acceptNavigationRequest(QWebEnginePage* pWebFrame,
    }
 }
 
-void WebPage::handleBase64Download(QWebEnginePage* pWebPage, QUrl url)
+void WebPage::handleBase64Download(QUrl url)
 {
    // look for beginning of base64 data
    QString base64 = QString::fromUtf8("base64,");
