@@ -19,7 +19,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
-namespace activation {
 
 DesktopActivation& activation()
 {
@@ -46,20 +45,31 @@ std::string DesktopActivation::licenseStatus()
    return std::string();
 }
 
-bool DesktopActivation::getInitialLicense(const core::FilePath& installPath, bool devMode)
+void DesktopActivation::getInitialLicense(const QStringList& arguments,
+                                          const core::FilePath& installPath,
+                                          bool devMode)
 {
-   return true;
+   emit launchFirstSession();
 }
 
 void DesktopActivation::showLicenseDialog()
 {
 }
 
-bool DesktopActivation::hasLicenseLostSignal() const
+void DesktopActivation::emitLicenseLostSignal()
 {
-   return false;
+   emit licenseLost(QString::fromUtf8(currentLicenseStateMessage().c_str()));
 }
 
-} // namespace activation
+void DesktopActivation::emitLaunchFirstSession()
+{
+   emit launchFirstSession();
+}
+
+void DesktopActivation::emitLaunchError(QString message)
+{
+   emit launchError(message);
+}
+
 } // namespace desktop
 } // namespace rstudio

@@ -87,17 +87,8 @@ then
    if [ "$PLATFORM" == "Darwin" ]
    then
 
-     # need flags for Mavericks and later instructing the compiler to target
-     # the older libstdc++
-     SYS_MAJOR_VER=`uname -r | cut -d "." -f -1`
-     if [ "$SYS_MAJOR_VER" -gt "12" ]
-     then
-        BJAM_CXXFLAGS="cxxflags=-fPIC -stdlib=libstdc++"
-        BJAM_LDFLAGS="linkflags=-stdlib=libstdc++"
-     else
-        BJAM_CXXFLAGS=""
-        BJAM_LDFLAGS=""
-     fi
+     BJAM_CXXFLAGS="cxxflags=-fPIC -std=c++11"
+     BJAM_LDFLAGS=""     
 
      sudo ./bjam              \
         "${BOOST_BJAM_FLAGS}" \
@@ -112,12 +103,12 @@ then
         install
    else
       # plain old build for other platforms
-     sudo ./bjam              \
-        "${BOOST_BJAM_FLAGS}" \
-        --prefix="$BOOST_DIR" \
-        --without-python      \
-        variant=release       \
-        cxxflags="-fPIC"      \
+     sudo ./bjam                     \
+        "${BOOST_BJAM_FLAGS}"        \
+        --prefix="$BOOST_DIR"        \
+        --without-python             \
+        variant=release              \
+        cxxflags="-fPIC -std=c++11"  \
         install
    fi
 

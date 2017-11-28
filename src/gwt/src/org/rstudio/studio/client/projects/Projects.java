@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -52,6 +54,8 @@ import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.NewProjectFolderEvent;
+import org.rstudio.studio.client.projects.events.NewProjectFromVcsEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
@@ -88,6 +92,8 @@ public class Projects implements OpenProjectFileHandler,
                                  OpenProjectErrorHandler,
                                  OpenProjectNewWindowHandler,
                                  NewProjectEvent.Handler,
+                                 NewProjectFromVcsEvent.Handler,
+                                 NewProjectFolderEvent.Handler,
                                  OpenProjectEvent.Handler,
                                  RequestOpenProjectEvent.Handler
 {
@@ -134,6 +140,8 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
       eventBus.addHandler(OpenProjectNewWindowEvent.TYPE, this);
       eventBus.addHandler(NewProjectEvent.TYPE, this);
+      eventBus.addHandler(NewProjectFromVcsEvent.TYPE, this);
+      eventBus.addHandler(NewProjectFolderEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
       
@@ -271,11 +279,95 @@ public class Projects implements OpenProjectFileHandler,
                        event.getAllowOpenInNewWindow());
    }
 
+   @Override
+   public void onNewProjectFromVcsEvent(NewProjectFromVcsEvent event)
+   {
+      if (event.getVcsId() != VCSConstants.GIT_ID)
+      {
+         Debug.logWarning("Unsupported VCS type invoked through API");
+         return;
+      }
+
+      boolean saveChanges = false;
+      String url = event.getRepoUrl().trim();
+      String username = event.getUsername().trim();
+      String checkoutDir = event.getDirName().trim();
+      String dir = event.getDestDir().trim();
+      if (url.length() > 0 && checkoutDir.length() > 0 && dir.length() > 0)
+      {
+         String projFile = projFileFromDir(
+               FileSystemItem.createDir(dir).completePath(checkoutDir));
+         
+         VcsCloneOptions options = VcsCloneOptions.create(event.getVcsId(),
+                                                          url,
+                                                          username,
+                                                          checkoutDir,
+                                                          dir);
+         NewProjectResult newProject = new NewProjectResult(
+               projFile, 
+               false /*createGitRepo*/,
+               false /*usePackrat*/,
+               dir,
+               options,
+               null /*newPackageOptions*/,
+               null /*newShinyAppOptions*/,
+               null /*projectTemplateOptions*/,
+               event.getTutorialCommand());
+
+         createNewProject(newProject, saveChanges);
+      }
+   }
+   
+   @Override
+   public void onNewProjectFolderEvent(NewProjectFolderEvent event)
+   {
+      String name = event.getDirName().trim();
+      String dir = event.getDestDir().trim();
+      if (name.length() > 0 && dir.length() > 0)
+      {
+         String projDir = FileSystemItem.createDir(dir).completePath(name);
+         String projFile = Projects.projFileFromDir(projDir);
+         NewProjectResult newProject = new NewProjectResult(
+               projFile,
+               event.getCreateRepo(),
+               false/*usePackRat*/,
+               dir,
+               null/*vcsCloneOptions*/,
+               null/*newPackageOptions*/,
+               null/*newShinyAppOptions*/,
+               null/*projectTemplateOptions*/,
+               event.getTutorialCommand());
+         
+         createNewProject(newProject, false/*saveChanges*/);
+      }
+   }
+
+   public static String projFileFromDir(String dir)
+   {
+      FileSystemItem dirItem = FileSystemItem.createDir(dir);
+      return FileSystemItem.createFile(
+        dirItem.completePath(dirItem.getName() + ".Rproj")).getPath();
+   }
+   
+   private void notifyTutorialCreateNewResult(NewProjectResult newProject,
+                                              boolean success,
+                                              String resultMessage)
+   {
+      if (StringUtil.isNullOrEmpty(newProject.getInvokedByTutorialApi()))
+      {
+         // not triggered by Tutorial Api, nobody to report to
+         return;
+      }
+      
+      eventBus_.fireEvent(new ApplicationTutorialEvent(
+            success ? ApplicationTutorialEvent.API_SUCCESS : ApplicationTutorialEvent.API_ERROR,
+            newProject.getInvokedByTutorialApi(),
+            resultMessage)); 
+   }
+
    private void createNewProject(final NewProjectResult newProject,
                                  final boolean saveChanges)
    {
-    
-      
       // This gets a little crazy. We have several pieces of asynchronous logic
       // that each may or may not need to be executed, depending on the type
       // of project being created and on whether the previous pieces of logic
@@ -384,6 +476,7 @@ public class Projects implements OpenProjectFileHandler,
                                  }
                                  else
                                  {
+                                    notifyTutorialCreateNewResult(newProject, false, "vcsClone failed");
                                     indicator.onCompleted();
                                  }
                               }
@@ -395,6 +488,7 @@ public class Projects implements OpenProjectFileHandler,
                         {
                            Debug.logError(error);
                            indicator.onError(error.getUserMessage());
+                           notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
                         }
                      });
             }
@@ -421,6 +515,8 @@ public class Projects implements OpenProjectFileHandler,
                               "package names must start with a letter, and contain " +
                               "only letters and numbers."
                         );
+                  notifyTutorialCreateNewResult(newProject, false, 
+                        "Invalid package name " + packageName);
                   return;
                }
             }
@@ -461,9 +557,14 @@ public class Projects implements OpenProjectFileHandler,
                         public void onResponseReceived(RResult<Void> response)
                         {
                            if (response.failed())
+                           {
                               indicator.onError(response.errorMessage());
+                              notifyTutorialCreateNewResult(newProject, false, "creating project");
+                           }
                            else
+                           {
                               continuation.execute();
+                           }
                         }
 
                         @Override
@@ -471,6 +572,7 @@ public class Projects implements OpenProjectFileHandler,
                         {
                            Debug.logError(error);
                            indicator.onError(error.getUserMessage());
+                           notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
                         }
                      });
                      
@@ -556,6 +658,7 @@ public class Projects implements OpenProjectFileHandler,
                }
                else
                {
+                  notifyTutorialCreateNewResult(newProject, true, "");
                   indicator.onProgress("Preparing to open project...");
                   serverOpenProjectInNewWindow(project, 
                                                newProject.getRVersion(),
@@ -572,6 +675,7 @@ public class Projects implements OpenProjectFileHandler,
          public void onExecute(Command continuation)
          {
             indicator.onCompleted();
+            notifyTutorialCreateNewResult(newProject, true, "");
             
             if (!newProject.getOpenInNewWindow())
             {

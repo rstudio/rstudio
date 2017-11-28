@@ -29,10 +29,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
-# explicitly do not use new c++ 11 features
+# explicitly do not use new c++ 11 features for websocketpp
 # they currently do not work with our source
 add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
-
 
 # the non-strict masking option was identified as a potentially crashing 
 # issue due to reliance on undefined C++ behavior, and was removed entirely in 
@@ -41,6 +40,15 @@ add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
 
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
+
+# enable c++11
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(NOT COMPILER_SUPPORTS_CXX11)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 
 # UNIX specific global directivies
 if(UNIX)
@@ -70,30 +78,11 @@ if(UNIX)
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
-      # Mavericks and later default to libc++, which is not compatible with the
-      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
-      # flags to enforce usage of the older library.
-
       # Figure out what version of Mac OS X this is. Unfortunately 
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
       EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
-      if(RSTUDIO_USE_LIBCXX)
-         message(STATUS "C++ Standard Library: libc++")
-         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libc++")
-      elseif(RSTUDIO_USE_LIBSTDCXX)
-         message(STATUS "C++ Standard Library: libstdc++")
-         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
-         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
-      else()
-         if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
-            message(STATUS "C++ Standard Library: libstdc++")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
-            set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
-         endif()
-      endif()
    endif()
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)

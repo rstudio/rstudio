@@ -1132,24 +1132,24 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 
 void GwtCallback::showLicenseDialog()
 {
-   activation::activation().showLicenseDialog();
+   activation().showLicenseDialog();
 }
 
 QString GwtCallback::getInitMessages()
 {
-   std::string message = activation::activation().currentLicenseStateMessage();
+   std::string message = activation().currentLicenseStateMessage();
    return QString::fromStdString(message);
 }
 
 QString GwtCallback::getLicenseStatusMessage()
 {
-   std::string message = activation::activation().licenseStatus();
+   std::string message = activation().licenseStatus();
    return QString::fromStdString(message);
 }
 
 bool GwtCallback::allowProductUsage()
 {
-   return activation::activation().allowProductUsage();
+   return activation().allowProductUsage();
 }
 
 void GwtCallback::macZoomActualSize()

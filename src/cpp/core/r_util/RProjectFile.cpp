@@ -31,6 +31,7 @@
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RVersionInfo.hpp>
@@ -313,6 +314,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 }
 
 Error findProjectFile(FilePath filePath,
+                      FilePath anchorPath,
                       FilePath* pProjPath)
 {
    // check to see if we already have a .Rproj file
@@ -324,10 +326,28 @@ Error findProjectFile(FilePath filePath,
 
    if (!filePath.isDirectory())
       filePath = filePath.parent();
-
+   
+   // list all paths up to root for our anchor -- we want to stop looking
+   // if we hit the anchor path, or any parent directory of that path
+   std::vector<FilePath> anchorPaths;
+   for (; anchorPath.exists(); anchorPath = anchorPath.parent())
+      anchorPaths.push_back(anchorPath);
+   
    // no .Rproj file found; scan parent directories
    for (; filePath.exists(); filePath = filePath.parent())
    {
+      // bail if we've hit our anchor
+      BOOST_FOREACH(const FilePath& anchorPath, anchorPaths)
+      {
+         if (filePath == anchorPath)
+            return fileNotFoundError(ERROR_LOCATION);
+      }
+      
+      // skip directory if there's no .Rproj.user directory (avoid potentially
+      // expensive query of all files in directory)
+      if (!filePath.complete(".Rproj.user").exists())
+         continue;
+         
       // scan this directory for .Rproj files
       FilePath projPath = projectFromDirectory(filePath);
       if (!projPath.empty())
@@ -341,12 +361,13 @@ Error findProjectFile(FilePath filePath,
 }
 
 Error findProjectConfig(FilePath filePath,
+                        const FilePath& anchorPath,
                         RProjectConfig* pConfig)
 {
    Error error;
    
    FilePath projPath;
-   error = findProjectFile(filePath, &projPath);
+   error = findProjectFile(filePath, anchorPath, &projPath);
    if (error)
       return error;
    

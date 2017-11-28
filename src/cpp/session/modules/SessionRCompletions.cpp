@@ -61,24 +61,27 @@ char ends(char begins) {
 
 bool isBinaryOp(char character)
 {
-   return character == '~' ||
-         character == '!' ||
-         character == '@' ||
-         character == '$' ||
-         character == '%' ||
-         character == '^' ||
-         character == '&' ||
-         character == '*' ||
-         character == '-' ||
-         character == '+' ||
-         character == '*' ||
-         character == '/' ||
-         character == '=' ||
-         character == '|' ||
-         character == '<' ||
-         character == '>' ||
-         character == '?';
-
+  switch(character) {
+    case '~':
+    case '!':
+    case '@':
+    case '$':
+    case '%':
+    case '^':
+    case '&':
+    case '-':
+    case '+':
+    case '*':
+    case '/':
+    case '=':
+    case '|':
+    case '<':
+    case '>':
+    case '?':
+    return true;
+    default:
+    return false;
+  }
 }
 
 } // end anonymous namespace

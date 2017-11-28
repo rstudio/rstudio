@@ -46,7 +46,7 @@ def compile_package(type, flavor, variant) {
 def run_tests(type, flavor, variant) {
   try {
     // attempt to run ant (gwt) unit tests
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/rstudio-*.${type.toLowerCase()}/src/gwt && ./gwt-unit-tests.sh"
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
   } catch(err) {
     // mark build as unstable if it fails unit tests
     currentBuild.result = "UNSTABLE"

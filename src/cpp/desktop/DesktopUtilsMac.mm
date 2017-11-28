@@ -71,6 +71,10 @@ bool isOSXMavericks()
    return boost::algorithm::starts_with(version, "10.9");
 }
 
+bool isCentOS()
+{
+   return false;
+}
 
 namespace {
 

@@ -29,7 +29,6 @@ namespace core {
 
 namespace rstudio {
 namespace desktop {
-namespace activation {
 
 class DesktopActivation;
 DesktopActivation& activation();
@@ -40,7 +39,9 @@ class DesktopActivation : public QObject
 public:
    DesktopActivation();
 
-   bool getInitialLicense(const core::FilePath& installPath, bool devMode);
+   void getInitialLicense(const QStringList& arguments,
+                          const core::FilePath& installPath,
+                          bool devMode);
    bool allowProductUsage();
 
    // Description of license state if expired or within certain time window before expiring,
@@ -52,10 +53,17 @@ public:
 
    void showLicenseDialog();
 
-   bool hasLicenseLostSignal() const;
+signals:
+   void licenseLost(QString licenseMessage);
+   void launchFirstSession();
+   void launchError(QString message);
+
+public:
+   void emitLicenseLostSignal();
+   void emitLaunchFirstSession();
+   void emitLaunchError(QString message);
 };
 
-} // namespace activation
 } // namespace desktop
 } // namespace rstudio
 

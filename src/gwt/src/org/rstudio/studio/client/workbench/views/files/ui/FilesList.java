@@ -445,7 +445,13 @@ public class FilesList extends Composite
          {
             int row = rowForFile(file);
             if (row != -1)
+            {
+               // the selection model loses the selection state when we update
+               // the row, so save and restore it manually.
+               boolean selected = selectionModel_.isSelected(file);
                files.set(row, file);
+               selectionModel_.setSelected(file, selected);
+            }
          }
          break;
  

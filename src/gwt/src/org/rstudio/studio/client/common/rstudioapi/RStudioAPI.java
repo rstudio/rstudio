@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
+import org.rstudio.studio.client.common.satellite.Satellite;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -190,6 +191,14 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    @Override
    public void onRStudioAPIShowDialogEvent(RStudioAPIShowDialogEvent event)
    {
+      // Every window receives a copy of this event; for now, respond to the
+      // event only if this is the main window. (In the future, we could extend
+      // the API to allow for targeting the window with focus, or a named
+      // window, but in the API as it exists today, we presume that the main
+      // window is responsible.)
+      if (Satellite.isCurrentWindowSatellite())
+         return;
+
       if (event.getPrompt()) {
          showPrompt(
             event.getTitle(), 

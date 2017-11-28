@@ -372,8 +372,9 @@ bool prepareEnvironment(Options& options)
                                     userInfo:nil
                                     repeats: YES];
    
-   if ([[Activation sharedActivation]
-         getInitialLicenseWithPath: installPath devMode: devMode])
+   if ([[Activation sharedActivation] getInitialLicenseWithArguments: arguments
+                                                                path: installPath
+                                                             devMode: devMode])
    {
       [self launchFirstSession];
       return;

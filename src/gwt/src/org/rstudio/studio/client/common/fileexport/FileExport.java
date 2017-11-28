@@ -55,7 +55,11 @@ public class FileExport
    {
       // validation: some files provided
       if  (files.size() == 0)
-         return ;
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "No Files Selected",
+               "Please select one or more files to export.");
+         return;
+      }
          
       // case: single file which is not a folder 
       if ((files.size()) == 1 && !files.get(0).isDirectory())

@@ -104,7 +104,7 @@ PATH$remove(toolchain_32bit)
 b2_build_args <- function(bitness) {
    
    prefix <- file.path(output_dir, sprintf("boost%s", bitness))
-   cxxflags <- "-march=core2 -mtune=generic"
+   cxxflags <- "-march=core2 -mtune=generic -std=c++11"
    
    unlink(prefix, recursive = TRUE)
    

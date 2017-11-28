@@ -311,7 +311,9 @@ public class FileTypeRegistry
       register("Renviron.site", SH, new ImageResource2x(icons.iconSh2x()));
       register("DESCRIPTION", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("INDEX", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("LICENSE", TEXT, new ImageResource2x(icons.iconText2x()));
       register("LICENCE", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("CITATION", TEXT, new ImageResource2x(icons.iconText2x()));
       register("MD5", TEXT, new ImageResource2x(icons.iconText2x()));
       register("NEWS", TEXT, new ImageResource2x(icons.iconText2x()));
       register("PORTING", TEXT, new ImageResource2x(icons.iconText2x()));
