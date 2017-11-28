@@ -1,7 +1,7 @@
 /*
  * DesktopWordViewer.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ HRESULT invokeDispatch (int dispatchType, VARIANT *pvResult,
    va_list marker;
    va_start(marker, cArgs);
 
-   DISPPARAMS dp = { NULL, NULL, 0, 0 };
+   DISPPARAMS dp = { nullptr, nullptr, 0, 0 };
    DISPID dispidNamed = DISPID_PROPERTYPUT;
    DISPID dispID;
    HRESULT hr;
@@ -83,7 +83,7 @@ HRESULT invokeDispatch (int dispatchType, VARIANT *pvResult,
    }
 
    hr = pDisp->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, dispatchType,
-                      &dp, pvResult, NULL, NULL);
+                      &dp, pvResult, nullptr, nullptr);
    va_end(marker);
    return hr;
 }
@@ -118,7 +118,7 @@ HRESULT getIntProp(IDispatch* idisp, const std::wstring& strName, int* pOut)
 } // anonymous namespace
 
 WordViewer::WordViewer():
-   idispWord_(NULL),
+   idispWord_(nullptr),
    docScrollX_(0),
    docScrollY_(0)
 {
@@ -151,7 +151,7 @@ Error WordViewer::showDocument(QString& path)
 
    // If we have an active IDispatch pointer to Word, check to see whether
    // it has been closed
-   if (idispWord_ != NULL)
+   if (idispWord_ != nullptr)
    {
       // Test the interface by looking up a known DISPID
       const WCHAR* wstrQuit = L"Quit";
@@ -165,18 +165,18 @@ Error WordViewer::showDocument(QString& path)
           SCODE_CODE(hr) == RPC_S_SERVER_UNAVAILABLE)
       {
          idispWord_->Release();
-         idispWord_ = NULL;
+         idispWord_ = nullptr;
       }
    }
 
    // Get an IDispatch for the Word Application root object
-   if (idispWord_ == NULL)
+   if (idispWord_ == nullptr)
    {
       CLSID clsid;
       LPCOLESTR progId = L"Word.Application";
-      CoInitialize(NULL);
+      CoInitialize(nullptr);
       VERIFY_HRESULT(CLSIDFromProgID(progId, &clsid));
-      VERIFY_HRESULT(CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER,
+      VERIFY_HRESULT(CoCreateInstance(clsid, nullptr, CLSCTX_LOCAL_SERVER,
                                       IID_IDispatch,
                                       reinterpret_cast<void**>(&idispWord_)));
       idispWord_->AddRef();
@@ -212,7 +212,7 @@ Error WordViewer::showDocument(QString& path)
    }
 
    // Bring Word to the foreground
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, NULL, idispWord_,
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispWord_,
                                  L"Activate", 0));
 
 LErrExit:
@@ -227,7 +227,7 @@ Error WordViewer::showWord()
    VARIANT visible;
    visible.vt = VT_BOOL;
    visible.boolVal = true;
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, NULL, idispWord_,
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, nullptr, idispWord_,
                                  L"Visible", 1, visible));
 LErrExit:
    return errorHR;
@@ -269,8 +269,8 @@ Error WordViewer::openDocument(QString& path, IDispatch* idispDocs,
                      LOCALE_USER_DEFAULT, &dispidOpen));
    VERIFY_HRESULT(idispDocs->Invoke(
                      dispidOpen, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                     DISPATCH_METHOD, &dparams, &result, NULL, NULL));
-   if (pidispDoc)
+                     DISPATCH_METHOD, &dparams, &result, nullptr, nullptr));
+   if (pidispDocnullptr
       *pidispDoc = result.pdispVal;
 
 LErrExit:
@@ -285,23 +285,23 @@ Error WordViewer::closeLastViewedDocument()
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   if (idispWord_ == NULL)
+   if (idispWord_ == nullptr)
       return Success();
 
    // Find the open document corresponding to the one we last rendered. If we
    // find it, close it; if we can't find it, do nothing.
-   IDispatch* idispDoc = NULL;
+   IDispatch* idispDoc = nullptr;
    errorHR = getDocumentByPath(docPath_, &idispDoc);
    if (errorHR)
       return errorHR;
-   if (idispDoc == NULL)
+   if (idispDoc == nullptr)
       return Success();
 
    errorHR = getDocumentPosition(idispDoc, &docScrollX_, &docScrollY_);
    if (errorHR)
       LOG_ERROR(errorHR);
 
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, NULL, idispDoc, L"Close", 0));
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispDoc, L"Close", 0));
 
 LErrExit:
    return errorHR;
@@ -313,7 +313,7 @@ Error WordViewer::getDocumentPosition(IDispatch* idispDoc, int* pxPos,
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   IDispatch* idispWindow = NULL;
+   IDispatch* idispWindow = nullptr;
 
    VERIFY_HRESULT(getIDispatchProp(idispDoc, L"ActiveWindow", &idispWindow));
    VERIFY_HRESULT(getIntProp(idispWindow, L"HorizontalPercentScrolled", pxPos));
@@ -328,16 +328,16 @@ Error WordViewer::setDocumentPosition(IDispatch* idispDoc, int xPos, int yPos)
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   IDispatch* idispWindow = NULL;
+   IDispatch* idispWindow = nullptr;
    VARIANT varPos;
    varPos.vt = VT_INT;
 
    VERIFY_HRESULT(getIDispatchProp(idispDoc, L"ActiveWindow", &idispWindow));
    varPos.intVal = xPos;
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, NULL, idispWindow,
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, nullptr, idispWindow,
                                  L"HorizontalPercentScrolled", 1, varPos));
    varPos.intVal = yPos;
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, NULL, idispWindow,
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, nullptr, idispWindow,
                                  L"VerticalPercentScrolled", 1, varPos));
 LErrExit:
    return errorHR;
@@ -351,13 +351,13 @@ Error WordViewer::getDocumentByPath(QString& path, IDispatch** pidispDoc)
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   IDispatch* idispDocs = NULL;
-   IDispatch* idispDoc = NULL;
+   IDispatch* idispDocs = nullptr;
+   IDispatch* idispDoc = nullptr;
    VARIANT varDocIdx;
    VARIANT varResult;
    int docCount = 0;
 
-   *pidispDoc = NULL;
+   *pidispDoc = nullptr;
 
    VERIFY_HRESULT(getIDispatchProp(idispWord_, L"Documents", &idispDocs));
    VERIFY_HRESULT(getIntProp(idispDocs, L"Count", &docCount));

@@ -249,7 +249,7 @@ void WindowMenu::onBringAllToFront()
    CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
    if (appUrlRef)
    {
-      LSOpenCFURLRef(appUrlRef, NULL);
+      LSOpenCFURLRef(appUrlRef, nullptr);
       CFRelease(appUrlRef);
    }
 #endif

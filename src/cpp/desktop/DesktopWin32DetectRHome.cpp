@@ -1,7 +1,7 @@
 /*
  * DesktopWin32DetectRHome.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,7 @@ bool prepareEnvironment(Options &options)
    // get the short path version of the home dir
    std::string homePath =
          QDir::toNativeSeparators(rVersion.homeDir()).toStdString();
-   DWORD len = ::GetShortPathName(homePath.c_str(), NULL, 0);
+   DWORD len = ::GetShortPathName(homePath.c_str(), nullptr, 0);
    std::vector<TCHAR> buffer(len, 0);
    if (::GetShortPathName(homePath.c_str(), &(buffer[0]), len) != 0)
    {

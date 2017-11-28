@@ -1,7 +1,7 @@
 /*
  * DesktopWindowTracker.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ WindowTracker::WindowTracker(QObject *parent) :
 
 BrowserWindow* WindowTracker::getWindow(QString key)
 {
-   return map_.value(key, NULL);
+   return map_.value(key, nullptr);
 }
 
 void WindowTracker::addWindow(QString key, BrowserWindow* window)

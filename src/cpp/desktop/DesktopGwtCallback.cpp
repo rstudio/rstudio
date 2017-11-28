@@ -267,11 +267,11 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
       wchar_t szDir[MAX_PATH];
       BROWSEINFOW bi;
       bi.hwndOwner = (HWND)(pOwner_->asWidget()->winId());
-      bi.pidlRoot = NULL;
+      bi.pidlRoot = nullptr;
       bi.pszDisplayName = szDir;
       bi.lpszTitle = L"Select a folder:";
       bi.ulFlags = BIF_RETURNONLYFSDIRS;
-      bi.lpfn = NULL;
+      bi.lpfn = nullptr;
       bi.lpfn = 0;
       bi.iImage = -1;
       LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
@@ -830,7 +830,7 @@ template <typename TValue>
 class CFReleaseHandle
 {
 public:
-   CFReleaseHandle(TValue value=NULL)
+   CFReleaseHandle(TValue value=nullptr)
    {
       value_ = value;
    }
@@ -866,7 +866,7 @@ OSStatus addToPasteboard(PasteboardRef pasteboard,
                          const QByteArray& data)
 {
    CFReleaseHandle<CFDataRef> dataRef = CFDataCreate(
-         NULL,
+         nullptr,
          reinterpret_cast<const UInt8*>(data.constData()),
          data.length());
 

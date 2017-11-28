@@ -251,9 +251,9 @@ bool isFixedWidthFont(const QFont& font)
 int getDpi()
 {
 #ifdef _WIN32
-   HDC defaultDC = GetDC(NULL);
+   HDC defaultDC = GetDC(nullptr);
    int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
-   ReleaseDC(NULL, defaultDC);
+   ReleaseDC(nullptr, defaultDC);
    return dpi;
 #else
    // presume 96 DPI on other Qt platforms (i.e. Linux) for now

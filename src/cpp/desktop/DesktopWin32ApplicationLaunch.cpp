@@ -1,7 +1,7 @@
 /*
  * DesktopWin32ApplicationLaunch.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,8 +66,8 @@ void activate(HWND hWnd)
 } // anonymous namespace
 
 ApplicationLaunch::ApplicationLaunch() :
-    QWidget(NULL),
-    pMainWindow_(NULL)
+    QWidget(nullptr),
+    pMainWindow_(nullptr)
 {
    setAttribute(Qt::WA_NativeWindow);
    setWindowTitle(QString::fromUtf8(WINDOW_TITLE));
@@ -109,10 +109,10 @@ bool acquireLock()
    HANDLE hFile = ::CreateFileW(lockFilePath.toStdWString().c_str(),
                                 GENERIC_WRITE,
                                 0, // exclusive access
-                                NULL,
+                                nullptr,
                                 OPEN_ALWAYS,
                                 FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
-                                NULL);
+                                nullptr);
 
    if (hFile == INVALID_HANDLE_VALUE)
    {
@@ -137,10 +137,10 @@ bool ApplicationLaunch::sendMessage(QString filename)
    if (acquireLock())
       return false;
 
-   HWND hwndAppLaunch = NULL;
+   HWND hwndAppLaunch = nullptr;
    do
    {
-      hwndAppLaunch = ::FindWindowEx(HWND_MESSAGE, hwndAppLaunch, NULL, WINDOW_TITLE);
+      hwndAppLaunch = ::FindWindowEx(HWND_MESSAGE, hwndAppLaunch, nullptr, WINDOW_TITLE);
    } while (hwndAppLaunch == (HWND)winId()); // Ignore ourselves
 
    if (::IsWindow(hwndAppLaunch))
@@ -230,7 +230,7 @@ void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
       args,
       "",
       options,
-      NULL);
+      nullptr);
    if (error)
       LOG_ERROR(error);
 }
