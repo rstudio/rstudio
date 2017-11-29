@@ -101,7 +101,6 @@ public class Application implements ApplicationEventHandlers
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
-                      MacZoomHandler zoomHandler,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -880,12 +879,6 @@ public class Application implements ApplicationEventHandlers
       
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
-      
-      // hide zoom actual size everywhere but cocoa desktop
-      if (!BrowseCap.isCocoaDesktop())
-      {
-         commands_.zoomActualSize().remove();
-      }
       
       // hide zoom in and zoom out in web mode
       if (!Desktop.isDesktop())

@@ -85,15 +85,13 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
-     
-      
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
       optionsLoader_ = optionsLoader;
       
-      if (!BrowseCap.isMacintoshDesktop() || BrowseCap.isCocoaDesktop())
+      if (!BrowseCap.isMacintoshDesktop())
          commands.macPreferences().remove();
       
       if (!Desktop.isDesktop())

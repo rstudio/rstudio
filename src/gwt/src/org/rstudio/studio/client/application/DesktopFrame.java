@@ -27,7 +27,6 @@ import com.google.gwt.user.client.Command;
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
 {
-   boolean isCocoa();
    void browseUrl(String url);
    
    void getOpenFileName(String caption,
@@ -153,11 +152,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getInitMessages(CommandWithArg<String> callback);
    void getLicenseStatusMessage(CommandWithArg<String> callback);
    void allowProductUsage(CommandWithArg<Boolean> callback);
-   
-   // mac-specific zoom calls
-   void macZoomActualSize();
-   void macZoomIn();
-   void macZoomOut();
    
    void externalSynctexPreview(String pdfPath, int page);
    

@@ -54,7 +54,6 @@ signals:
 public slots:
    QString proportionalFont();
    QString fixedWidthFont();
-   bool isCocoa();
    void browseUrl(QString url);
 
    QString getOpenFileName(const QString& caption,
@@ -175,10 +174,6 @@ public slots:
    QString getInitMessages();
    QString getLicenseStatusMessage();
    bool allowProductUsage();
-
-   void macZoomActualSize();
-   void macZoomIn();
-   void macZoomOut();
 
    QString getDesktopSynctexViewer();
 

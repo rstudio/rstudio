@@ -93,11 +93,6 @@ Synctex& GwtCallback::synctex()
    return *pSynctex_;
 }
 
-bool GwtCallback::isCocoa()
-{
-   return false;
-}
-
 void GwtCallback::printText(QString text)
 {
    QPrintPreviewDialog dialog;
@@ -1209,19 +1204,6 @@ bool GwtCallback::allowProductUsage()
 {
    return activation().allowProductUsage();
 }
-
-void GwtCallback::macZoomActualSize()
-{
-}
-
-void GwtCallback::macZoomIn()
-{
-}
-
-void GwtCallback::macZoomOut()
-{
-}
-
 
 QString GwtCallback::getDesktopSynctexViewer()
 {
