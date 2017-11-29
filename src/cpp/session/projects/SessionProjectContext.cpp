@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -458,6 +458,9 @@ void ProjectContext::fileMonitorTermination(const Error& error)
             msg.append(" ");
             msg.append(monitorSubscribers_[i]);
          }
+
+         // write final newline
+         msg.append("\n");
 
          // write to console
          module_context::consoleWriteError(msg);
