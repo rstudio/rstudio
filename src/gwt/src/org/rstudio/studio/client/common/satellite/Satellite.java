@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -64,6 +65,9 @@ public class Satellite implements HasCloseHandlers<Satellite>
    {
       onReactivated_ = onReactivated;
       initializeNative(name);
+      
+      // load MathJax
+      MathJaxLoader.ensureMathJaxLoaded();
       
       // NOTE: Desktop doesn't seem to get onWindowClosing events in Qt 4.8
       // so we instead rely on an explicit callback from the desktop frame

@@ -226,7 +226,7 @@ try {
           trigger_external_build('IDE/windows-pro')
         }
 
-        slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed"
+        slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
 
 } catch(err) {
