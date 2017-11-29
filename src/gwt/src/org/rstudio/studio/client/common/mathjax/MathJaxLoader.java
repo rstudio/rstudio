@@ -34,7 +34,6 @@ public class MathJaxLoader
    
    public MathJaxLoader()
    {
-      ensureMathJaxLoaded();
    }
    
    public static boolean isMathJaxLoaded()
