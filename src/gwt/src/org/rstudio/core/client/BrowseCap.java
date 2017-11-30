@@ -68,7 +68,6 @@ public class BrowseCap
       return Desktop.isDesktop() || !isSafari();
    }
    
-   
    public boolean isInternetExplorer()
    {
       return isUserAgent("trident");
@@ -93,12 +92,7 @@ public class BrowseCap
    {
       return Desktop.isDesktop() && isMacintosh();
    }
-   
-   public static boolean isCocoaDesktop()
-   {
-      return Desktop.isDesktop() && Desktop.getFrame().isCocoa();
-   }
-   
+  
    public static boolean isWindows()
    {
       return OPERATING_SYSTEM.equals("windows");
