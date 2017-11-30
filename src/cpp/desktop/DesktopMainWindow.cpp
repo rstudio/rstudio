@@ -89,6 +89,7 @@ MainWindow::MainWindow(QUrl url) :
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
    // after startup.
+#ifndef Q_OS_MAC
    auto* pMainMenuStub = new QMenuBar(this);
    pMainMenuStub->addMenu(QString::fromUtf8("File"));
    pMainMenuStub->addMenu(QString::fromUtf8("Edit"));
@@ -102,6 +103,7 @@ MainWindow::MainWindow(QUrl url) :
    pMainMenuStub->addMenu(QString::fromUtf8("Tools"));
    pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
+#endif
 
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
            this, SLOT(setMenuBar(QMenuBar*)));
