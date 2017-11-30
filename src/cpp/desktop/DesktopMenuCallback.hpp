@@ -35,6 +35,7 @@ public:
     explicit MenuCallback(QObject *parent = nullptr);
 
 public slots:
+    // menu-building commands
     void beginMainMenu();
     void beginMenu(QString label);
     void addCommand(QString commandId,
@@ -46,6 +47,12 @@ public slots:
     void endMenu();
     void endMainMenu();
     void actionInvoked();
+
+    // runtime command state drivers
+    void setCommandEnabled(QString commandId, bool enabled);
+    void setCommandVisible(QString commandId, bool visible);
+    void setCommandLabel(QString commandId, QString label);
+    void setCommandChecked(QString commandId, bool checked);
 
 signals:
     void menuBarCompleted(QMenuBar* menuBar);
@@ -64,6 +71,7 @@ private:
 private:
     QMenuBar* pMainMenu_;
     QStack<SubMenu*> menuStack_;
+    QMap<QString, QAction*> actions_;
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,

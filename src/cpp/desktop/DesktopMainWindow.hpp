@@ -51,8 +51,6 @@ public slots:
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
-   void manageCommand(QString cmdId, QAction* pAction);
-   void manageCommandVisibility(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);

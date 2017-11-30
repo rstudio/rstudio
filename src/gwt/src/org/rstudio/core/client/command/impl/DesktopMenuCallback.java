@@ -59,4 +59,20 @@ public class DesktopMenuCallback implements MenuCallback
    public native final void endMainMenu() /*-{
       $wnd.desktopMenuCallback.endMainMenu();
    }-*/;
+   
+   public native static final void setCommandVisible(String commandId, boolean visible) /*-{
+      $wnd.desktopMenuCallback.setCommandVisible(commandId, visible);
+   }-*/;
+
+   public native static final void setCommandEnabled(String commandId, boolean enabled) /*-{
+      $wnd.desktopMenuCallback.setCommandEnabled(commandId, enabled);
+   }-*/;
+
+   public native static final void setCommandChecked(String commandId, boolean checked) /*-{
+      $wnd.desktopMenuCallback.setCommandChecked(commandId, checked);
+   }-*/;
+
+   public native static final void setCommandLabel(String commandId, String label) /*-{
+      $wnd.desktopMenuCallback.setCommandLabel(commandId, label);
+   }-*/;
 }

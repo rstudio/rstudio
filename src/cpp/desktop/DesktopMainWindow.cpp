@@ -107,10 +107,6 @@ MainWindow::MainWindow(QUrl url) :
            this, SLOT(setMenuBar(QMenuBar*)));
    connect(&menuCallback_, SIGNAL(commandInvoked(QString)),
            this, SLOT(invokeCommand(QString)));
-   connect(&menuCallback_, SIGNAL(manageCommand(QString,QAction*)),
-           this, SLOT(manageCommand(QString,QAction*)));
-   connect(&menuCallback_, SIGNAL(manageCommandVisibility(QString,QAction*)),
-           this, SLOT(manageCommandVisibility(QString,QAction*)));
 
    connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
    connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
@@ -241,20 +237,6 @@ void MainWindow::invokeCommand(QString commandId)
          QString::fromUtf8("');");
 
    webPage()->runJavaScript(command);
-}
-
-void MainWindow::manageCommand(QString cmdId, QAction* action)
-{
-   // TODO: We should have a generic API that retrieves information about
-   // a command (visible, enabled, label, checked, etc) and use a callback to handle
-   // everything received.
-}
-
-// a faster version of the above that just checks and sets the command's
-// visibility state (to trigger visibility of menus containing the command)
-void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
-{
-   // TODO: make asynchronous.
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)

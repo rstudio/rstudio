@@ -31,9 +31,6 @@ class SubMenu : public QMenu
 public:
    explicit SubMenu(const QString& title, QWidget* parent = nullptr);
 
-signals:
-   void manageCommandVisibility(QString,QAction*);
-
 protected slots:
    void onAboutToShow();
 };

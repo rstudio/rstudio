@@ -47,9 +47,6 @@ void MenuCallback::beginMenu(QString label)
 
    auto* pMenu = new SubMenu(label, pMainMenu_);
 
-   connect(pMenu, SIGNAL(manageCommandVisibility(QString,QAction*)),
-           this, SIGNAL(manageCommandVisibility(QString,QAction*)));
-
    if (menuStack_.count() == 0)
       pMainMenu_->addMenu(pMenu);
    else
@@ -151,6 +148,9 @@ void MenuCallback::addCommand(QString commandId,
       connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
               this, SIGNAL(manageCommand(QString,QAction*)));
    }
+
+   // remember action for later
+   actions_[commandId] = pAction;
 }
 
 void MenuCallback::actionInvoked()
@@ -176,6 +176,42 @@ void MenuCallback::endMainMenu()
    menuBarCompleted(pMainMenu_);
 }
 
+void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setEnabled(enabled);
+}
+
+void MenuCallback::setCommandVisible(QString commandId, bool visible)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setVisible(visible);
+}
+
+void MenuCallback::setCommandLabel(QString commandId, QString label)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setText(label);
+}
+
+void MenuCallback::setCommandChecked(QString commandId, bool checked)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setChecked(checked);
+}
+
 MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)
 {
    connect(pMenu, SIGNAL(aboutToShow()), this, SLOT(onShowMenu()));
@@ -188,7 +224,6 @@ MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAc
 void MenuActionBinder::onShowMenu()
 {
    QString commandId = pAction_->data().toString();
-   manageCommand(commandId, pAction_);
    pAction_->setShortcut(keySequence_);
 }
 

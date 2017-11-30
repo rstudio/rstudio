@@ -30,7 +30,7 @@ public:
                              QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
                              bool allowExternalNavigate = false);
 
- protected slots:
+protected slots:
     virtual void manageCommandState();
 
 private:

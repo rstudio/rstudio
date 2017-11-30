@@ -65,7 +65,6 @@ void SubMenu::onAboutToShow()
             }
 
             // It's a command, check visibility state
-            manageCommandVisibility(cmdId, subAction);
             if (subAction->isVisible())
             {
                hide = false;
