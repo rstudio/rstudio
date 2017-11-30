@@ -24,7 +24,7 @@ public class GridViewerFrame extends RStudioFrame
 {
    public GridViewerFrame()
    {
-      super("grid_resource/gridviewer.html?data_source=data");
+      super("grid_resource/dtviewer.html?data_source=data");
    }
    
    public void onAttach()

@@ -1,7 +1,7 @@
 /*jshint browser:true, strict:false, curly:false, indent:3*/
 
 /*
- * gridviewer.js
+ * dtviewer.js
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
