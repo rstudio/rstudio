@@ -344,7 +344,7 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
    dataItem["cacheKey"] = cacheKey;
    dataItem["object"] = objName;
    dataItem["environment"] = envName;
-   dataItem["contentUrl"] = kGridResource "/dtviewer.html?env=" +
+   dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
       http::util::urlEncode(cacheKey, true);
