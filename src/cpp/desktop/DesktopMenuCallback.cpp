@@ -57,10 +57,36 @@ void MenuCallback::beginMenu(QString label)
 
 QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString label,
-                                       QString tooltip)
+                                       QString tooltip,
+                                       QKeySequence keySequence,
+                                       bool checkable)
 {
 
    QAction* pAction = nullptr;
+
+#ifdef Q_OS_MAC
+   // On Mac, certain commands will be automatically moved to Application Menu by Qt. If we want them to also
+   // appear in RStudio menus, check for them here and return nullptr.
+   if (duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
+                              commandId, label, tooltip, keySequence, checkable))
+   {
+      return nullptr;
+   }
+   else if (duplicateAppMenuAction(QString::fromUtf8("quitSession"),
+                              commandId, label, tooltip, keySequence, checkable))
+   {
+      return nullptr;
+   }
+
+   // If we want a command to not be automatically moved to Application Menu, include it here and return the
+   // created action.
+   pAction = duplicateAppMenuAction(QString::fromUtf8("buildToolsProjectSetup"),
+                                    commandId, label, tooltip, keySequence, checkable);
+   if (pAction)
+      return pAction;
+
+#endif // Q_OS_MAC
+
    if (commandId == QString::fromUtf8("zoomIn"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
@@ -110,6 +136,32 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
 }
 
+QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
+                                              QString commandId,
+                                              QString label,
+                                              QString tooltip,
+                                              QKeySequence keySequence,
+                                              bool checkable)
+{
+   QAction* pAction = nullptr;
+   if (commandId == commandToDuplicate)
+   {
+      pAction = new QAction(QIcon(), label);
+      pAction->setMenuRole(QAction::NoRole);
+      pAction->setData(commandId);
+      pAction->setToolTip(tooltip);
+      pAction->setShortcut(keySequence);
+      if (checkable)
+         pAction->setCheckable(true);
+
+      menuStack_.top()->addAction(pAction);
+
+      auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction * )), this, SIGNAL(manageCommand(QString, QAction * )));
+      connect(pAction, SIGNAL(triggered()), this, SLOT(actionInvoked()));
+   }
+   return pAction;
+}
 
 void MenuCallback::addCommand(QString commandId,
                               QString label,
@@ -129,7 +181,7 @@ void MenuCallback::addCommand(QString commandId,
 #endif
 
    // allow custom action handlers first shot
-   QAction* pAction = addCustomAction(commandId, label, tooltip);
+   QAction* pAction = addCustomAction(commandId, label, tooltip, keySequence, checkable);
 
    // if there was no custom handler then do stock command-id processing
    if (pAction == nullptr)

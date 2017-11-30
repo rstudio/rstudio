@@ -66,8 +66,16 @@ signals:
 private:
     QAction* addCustomAction(QString commandId,
                              QString label,
-                             QString tooltip);
+                             QString tooltip,
+                             QKeySequence keySequence,
+                             bool checkable);
 
+    QAction* duplicateAppMenuAction(QString commandToDuplicate,
+                                    QString commandId,
+                                    QString label,
+                                    QString tooltip,
+                                    QKeySequence keySequence,
+                                    bool checkable);
 private:
     QMenuBar* pMainMenu_;
     QStack<SubMenu*> menuStack_;
