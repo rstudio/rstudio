@@ -349,10 +349,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setLabel(String label)
    {
       label_ = label;
-
-      // sync with desktop frame
-      if (Desktop.isDesktop())
-         DesktopMenuCallback.setCommandLabel(id_, label_);
    }
 
    public String getButtonLabel()
@@ -379,6 +375,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
+
+      // sync with desktop frame
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 
    @Override
