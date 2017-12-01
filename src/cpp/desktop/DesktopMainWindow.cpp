@@ -247,13 +247,17 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       return;
    }
 
+   pEvent->ignore();
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
             [&](QVariant hasQuitR) {
 
       if (!hasQuitR.toBool())
       {
-         pEvent->accept();
+         LOG_ERROR_MESSAGE("Main window closed unexpectedly");
+
+         // exit to avoid user having to kill/force-close the application
+         QApplication::quit();
       }
       else
       {
@@ -261,7 +265,6 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
                   QStringLiteral("window.desktopHooks.quitR()"),
                   [&](QVariant ignored)
          {
-            pEvent->ignore();
          });
       }
    });
