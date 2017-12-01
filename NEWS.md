@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 - Fix sign-out issue when "stay signed in" is checked in RStudio Server (#1538)
+- Fix dark theme partial application in data viewer when upgrading from 1.0 (#1573)
 - Fix overlap between Refresh icon and plot title text (#1585)
 - Fix slow File Open dialog on RStudio Desktop for Linux (#1587)
 - Fix slow open of new files on Windows when using network drives (#1592)
@@ -17,3 +18,4 @@
 - Allow new "Copy To" command in Files Pane to overwite its target (#1722)
 - Respect "Load All" command shortcut when the Terminal is open (#1723)
 - Detect full-screen mode correctly in Terminal pane (#1725)
+- Allow installation of package dependencies from repos not named CRAN (#1762)
