@@ -15,11 +15,7 @@
 
 #include "DesktopMainWindow.hpp"
 
-#include <algorithm>
-
-#include <QDebug>
 #include <QToolBar>
-#include <QWebEnginePage>
 #include <QWebChannel>
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
@@ -27,16 +23,10 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
-#include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/system/System.hpp>
 
-#include "DesktopGwtCallback.hpp"
-#include "DesktopMenuCallback.hpp"
-#include "DesktopWebView.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
-#include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 
 using namespace rstudio::core;
@@ -249,14 +239,19 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
+   if (quitConfirmed_ ||
+       pCurrentSessionProcess_ == nullptr ||
+       pCurrentSessionProcess_->state() != QProcess::Running)
+   {
+      pEvent->accept();
+      return;
+   }
+
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
             [&](QVariant hasQuitR) {
 
-      if (quitConfirmed_ ||
-          !hasQuitR.toBool() ||
-          pCurrentSessionProcess_ == nullptr ||
-          pCurrentSessionProcess_->state() != QProcess::Running)
+      if (!hasQuitR.toBool())
       {
          pEvent->accept();
       }
