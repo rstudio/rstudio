@@ -154,7 +154,6 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 # source files
 set(DESKTOP_SOURCE_FILES
   DesktopActivationOverlay.cpp
-  DesktopAboutDialog.cpp
   DesktopBrowserWindow.cpp
   DesktopCommandInvoker.cpp
   DesktopDataUriNetworkReply.cpp
@@ -233,7 +232,6 @@ include_directories(
 # ensure moc files are generated
 qt5_wrap_cpp(MOC_DESKTOP_SOURCE_FILES ${MOC_DESKTOP_HEADER_FILES})
 qt5_wrap_ui(DESKTOP_UI_SOURCES
-   DesktopAboutDialog.ui
    DesktopChooseRHome.ui
    DesktopInputDialog.ui
 )

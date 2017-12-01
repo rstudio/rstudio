@@ -28,7 +28,6 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
-#include <QWebEnginePage>
 
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
@@ -40,7 +39,6 @@
 #include <core/system/Environment.hpp>
 #include <core/r_util/RUserData.hpp>
 
-#include "DesktopAboutDialog.hpp"
 #include "DesktopActivationOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
@@ -49,7 +47,6 @@
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
-#include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
 
 #ifdef __APPLE__
@@ -845,14 +842,6 @@ void GwtCallback::showKeyboardShortcutHelp()
    QString file = QString::fromUtf8(keyboardHelpPath.absolutePath().c_str());
    QUrl url = QUrl::fromLocalFile(file);
    desktop::openUrl(url);
-}
-
-void GwtCallback::showAboutDialog()
-{
-   // WA_DeleteOnClose
-   auto* about = new AboutDialog(pOwner_->asWidget());
-   about->setAttribute(Qt::WA_DeleteOnClose);
-   about->show();
 }
 
 void GwtCallback::bringMainFrameToFront()

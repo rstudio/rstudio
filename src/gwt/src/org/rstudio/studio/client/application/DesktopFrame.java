@@ -117,7 +117,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                       String okButtonCaption,
                       CommandWithArg<String> callback);
 
-   void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
    

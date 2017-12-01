@@ -144,7 +144,6 @@ public slots:
                          int selectionStart,
                          int selectionLength);
 
-   void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
 
