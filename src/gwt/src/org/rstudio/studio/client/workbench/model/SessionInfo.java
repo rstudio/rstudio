@@ -415,12 +415,24 @@ public class SessionInfo extends JavaScriptObject
       return this.rmarkdown_available;
    }-*/;
    
+   public final native void setRMarkdownPackageAvailable(boolean available) /*-{
+      this.rmarkdown_available = available;
+   }-*/;
+   
    public final native boolean getKnitParamsAvailable()  /*-{
       return this.knit_params_available;
    }-*/;
    
+   public final native void setKnitParamsAvailable(boolean available) /*-{
+      this.knit_params_available = available;
+   }-*/;
+   
    public final native boolean getKnitWorkingDirAvailable() /*-{
       return this.knit_working_dir_available;
+   }-*/;
+
+   public final native void setKnitWorkingDirAvailable(boolean available) /*-{
+      this.knit_working_dir_available = available;
    }-*/;
    
    public final native boolean getClangAvailable() /*-{

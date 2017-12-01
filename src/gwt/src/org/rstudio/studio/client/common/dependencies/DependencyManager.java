@@ -36,6 +36,8 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -82,12 +84,16 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    @Inject
    public DependencyManager(GlobalDisplay globalDisplay,
                             DependencyServerOperations server,
-                            EventBus eventBus)
+                            EventBus eventBus,
+                            Session session,
+                            Commands commands)
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
       satisfied_ = new ArrayList<Dependency>();
       requestQueue_ = new LinkedList<DependencyRequest>();
+      session_ = session;
+      commands_ = commands;
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
       eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
@@ -177,19 +183,13 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withRMarkdown(String progressCaption, String userAction, 
          final Command command)
    {
-     withDependencies(
+     withRMarkdown(
         progressCaption,
         userAction, 
-        rmarkdownDependenciesArray(), 
-        true, // we want to update to the embedded version if needed
-        new CommandWithArg<Boolean>()
+        succeeded ->
         {
-         @Override
-         public void execute(Boolean succeeded)
-         {
-            if (succeeded)
-               command.execute();
-         }
+           if (succeeded)
+              command.execute();
         }
      );
    }
@@ -201,8 +201,22 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
-        true, 
-        command);
+        true, // we want to update to the embedded version if needed
+        succeeded -> 
+        {
+           if (succeeded)
+           {
+              // if we successfully installed the latest R Markdown version,
+              // update the session cache of package information.
+              session_.getSessionInfo().setKnitParamsAvailable(true);
+              session_.getSessionInfo().setRMarkdownPackageAvailable(true);
+              session_.getSessionInfo().setKnitWorkingDirAvailable(true);
+              
+              // restore removed commands
+              commands_.knitWithParameters().restore();
+           }
+           command.execute(succeeded);
+        });
    }
 
    public static List<Dependency> rmarkdownDependencies()
@@ -1059,4 +1073,6 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private final GlobalDisplay globalDisplay_;
    private final DependencyServerOperations server_;
    private final ArrayList<Dependency> satisfied_;
+   private final Session session_;
+   private final Commands commands_;
 }
