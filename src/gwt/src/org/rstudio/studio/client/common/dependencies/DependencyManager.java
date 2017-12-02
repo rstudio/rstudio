@@ -365,7 +365,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private ArrayList<Dependency> dataImportCsvDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
-      deps.add(Dependency.cranPackage("readr", "0.2.2"));
+      deps.add(Dependency.cranPackage("readr", "1.1.0"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       return deps;
    }

@@ -406,8 +406,8 @@
          }
          else if (identical(dataImportOptions$delimiter, " "))
          {
-            functionName <- "read_table"
-            functionReference <- readr::read_table
+            functionName <- "read_table2"
+            functionReference <- readr::read_table2
          }
          else
          {
