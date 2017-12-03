@@ -417,7 +417,6 @@ public class TextEditingTargetRMarkdownHelper
          else if (fileType.requiresKnit() && 
                   !session_.getSessionInfo().getRMarkdownPackageAvailable())
          {
-   
             showKnitrPreviewWarning(display, feature, "1.2");
             return false;
          }

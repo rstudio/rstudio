@@ -201,6 +201,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          handlers_.fireEvent(new VisibleChangedEvent(this));
       }
    }
+   
+   /**
+    * Restores a command which was formerly removed. The command must still be made
+    * visible and enabled in order to work.
+    */
+   public void restore()
+   {
+      removed_ = false;
+   }
 
    public boolean isCheckable()
    {
