@@ -450,10 +450,11 @@ if(RSTUDIO_BUNDLE_QT)
    # fixup bundle on osx
    if(APPLE)
       set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
-      set(DIRS ${QT_LIBRARY_DIRS})
+      set(DIRS ${QT_LIBRARY_PATH})
       INSTALL(CODE "
           file(GLOB_RECURSE QTPLUGINS
             \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+          set(BU_CHMOD_BUNDLE_ITEMS ON)
           include(BundleUtilities)
           file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession\")
           file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver\")
