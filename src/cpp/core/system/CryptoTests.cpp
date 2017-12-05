@@ -13,6 +13,8 @@
  *
  */
 
+#include <iterator>
+
 #include <core/system/Crypto.hpp>
 
 #include <tests/TestThat.hpp>
