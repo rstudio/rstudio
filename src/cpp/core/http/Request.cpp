@@ -58,7 +58,8 @@ bool Request::acceptsEncoding(const std::string& encoding) const
    // read , separated fields
    using namespace boost ;
    char_separator<char> comma(",");
-   tokenizer<char_separator<char> > tokens(acceptEncoding(), comma);
+   std::string accepted = acceptEncoding();
+   tokenizer<char_separator<char>> tokens(accepted, comma);
    return std::find(tokens.begin(), tokens.end(), encoding) != tokens.end();
 }
    

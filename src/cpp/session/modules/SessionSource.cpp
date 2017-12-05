@@ -980,11 +980,11 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
       path = filePath.relativePath(currentPath);
       if (interpreter.empty())
       {
-#ifndef _WINDOWS
+#ifndef _WIN32
          if (path.find_first_of('/') == std::string::npos)
             path = "./" + path;
-      }
 #endif
+      }
    }
    else
    {
@@ -996,7 +996,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
       path = "\\\"" + path + "\\\"";
 
    // if there's no interpreter then we may need to do a chmod
-#ifndef _WINDOWS
+#ifndef _WIN32
    if (interpreter.empty())
    {
       error = r::exec::RFunction(

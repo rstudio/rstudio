@@ -74,11 +74,18 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
    if (projectFilePath.exists())
    {
+<<<<<<< HEAD
 #ifdef _WIN32
       pResponse->setResult(true);
 #else
+=======
+
+>>>>>>> feature/qt-5.9.2-webengine-msvc
       // ensure that the project directory and project file are writeable
-      bool writeable = false;
+      bool writeable = true;
+
+// TODO
+#ifndef _WIN32
       error = core::system::isFileWriteable(projectFilePath, &writeable);
       if (error)
          return error;
@@ -89,12 +96,15 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
          if (error)
             return error;
       }
+#endif
 
       pResponse->setResult(writeable);
 #endif
    }
    else
+   {
       pResponse->setResult(false);
+   }
 
    return Success();
 }

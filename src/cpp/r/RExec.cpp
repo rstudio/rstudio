@@ -27,12 +27,15 @@
 
 #include <R_ext/Parse.h>
 
-#include <R_ext/libextern.h> 
+#include <R_ext/libextern.h>
+
+extern "C" {
 LibExtern Rboolean R_interrupts_suspended;
 LibExtern int R_interrupts_pending;
 #ifdef _WIN32
 LibExtern int UserBreak;
 #endif
+}
 
 using namespace rstudio::core ;
 

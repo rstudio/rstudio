@@ -13,13 +13,13 @@
 #
 #
 
-# set compiler
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
-
 # set minimum version
 cmake_minimum_required(VERSION 2.6)
 
 project (RSTUDIO_CPP)
+
+# set compiler
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
 
 # include globals. normally these are included at the root but we also
 # include them here to support configuring at the src level (i.e. for
@@ -37,6 +37,14 @@ add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
 # issue due to reliance on undefined C++ behavior, and was removed entirely in 
 # websocketpp 0.7 (RStudio is using 0.5.1 at this time)
 add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
+
+# make websockets build with MSVC
+if(WIN32 AND MSVC)
+   add_definitions(
+      -D_WEBSOCKETPP_NOEXCEPT_
+      -D_WEBSOCKETPP_CPP11_CHRONO
+   )
+endif()
 
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
@@ -96,24 +104,24 @@ if(UNIX)
 
 # Win32 specific global directives
 else()
-   add_definitions(-DWINVER=0x501)
+
+   add_definitions(
+       -DWINVER=0x501
+       -DNOMINMAX
+       /bigobj
+   )
+
+   foreach(TYPE EXE MODULE)
+      set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware /force")
+   endforeach()
 
    if(RSTUDIO_SESSION_WIN64)
-
-      # increase stack size to 20MB, avoid mingw auto-importing warning,
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--allow-multiple-definition")
-
       add_definitions(-D_WIN64
                       -D_WIN64_WINNT=0x0501
                       -D_WIN64_IE=0x600
                       -DWIN64_LEAN_AND_MEAN
                       -DBOOST_USE_WINDOWS_H)
    else()
-
-      # increase stack size to 20MB, avoid mingw auto-importing warning,
-      # and ensure that we are large address aware
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--large-address-aware,--allow-multiple-definition")
-
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
                       -DWIN32_LEAN_AND_MEAN
@@ -129,8 +137,12 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# default to boost 1.63.0
-set(BOOST_VERSION 1.63.0)
+# default Boost versions
+if (WIN32)
+   set(BOOST_VERSION 1.65.1)
+else()
+   set(BOOST_VERSION 1.63.0)
+endif()
 
 # override if necessary
 if (RSTUDIO_BOOST_VERSION)
@@ -141,16 +153,17 @@ endif()
 add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
 
 list(APPEND BOOST_LIBS
+   atomic
+   chrono
    date_time
    filesystem
    iostreams
    program_options
+   random
    regex
    signals
    system
    thread
-   chrono
-   random
 )
 
 # UNIX BOOST
@@ -181,20 +194,25 @@ if(UNIX)
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
-   set(Boost_COMPILER "-mgw49")
    if(RSTUDIO_SESSION_WIN64)
       set(BOOST_ARCH "64")
    else()
       set(BOOST_ARCH "32")
    endif()
-   set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.63-win-rtools33-gcc493/boost${BOOST_ARCH}")
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_63")
+   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(BOOST_SUFFIX "vc140-mt-1_65_1.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc14-release-static/boost${BOOST_ARCH}")
+   else()
+      set(BOOST_SUFFIX "vc140-mt-gd-1_65_1.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc14-debug-static/boost${BOOST_ARCH}")
+   endif()
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_65_1")
    find_package(Boost ${BOOST_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}${Boost_COMPILER}-mt-s-1_63.a")
+      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")
    endforeach()
-   message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
+   message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}: ${BOOST_ROOT}")
 endif()
 
 
@@ -308,6 +326,9 @@ else()
          configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
          configure_file(rstudio-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-dev)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
+         if(WIN32)
+            configure_file(rstudio.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio.bat @ONLY)
+         endif()
       endif()
 
       # add this after desktop so it is not included in fixup_bundle

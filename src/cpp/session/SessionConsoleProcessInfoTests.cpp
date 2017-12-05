@@ -13,8 +13,11 @@
  *
  */
 #include <core/system/Process.hpp>
+
 #include <session/SessionConsoleProcessInfo.hpp>
+
 #include <boost/lexical_cast.hpp>
+#include <boost/optional/optional_io.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>

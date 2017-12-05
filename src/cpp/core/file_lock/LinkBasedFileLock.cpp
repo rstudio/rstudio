@@ -19,8 +19,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
+
+#ifdef _MSC_VER
+# include <io.h>
+#else
+# include <unistd.h>
+#endif
 
 #include <set>
 #include <vector>

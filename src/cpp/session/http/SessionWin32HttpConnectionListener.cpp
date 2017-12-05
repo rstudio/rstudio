@@ -22,7 +22,7 @@
 
 #include <core/system/System.hpp>
 
-#include "SessionNamedPipeHttpConnectionListener.hpp"
+#include "SessionTcpIpHttpConnectionListener.hpp"
 
 using namespace rstudio::core ;
 
@@ -32,18 +32,19 @@ namespace session {
 namespace {
 
 // pointer to global connection listener singleton
-HttpConnectionListener* s_pHttpConnectionListener = NULL ;
+HttpConnectionListener* s_pHttpConnectionListener = NULL;
 
-}  // anonymouys namespace
+}  // anonymous namespace
 
 
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
-   std::string secret = options.sharedSecret();
-   s_pHttpConnectionListener = new NamedPipeHttpConnectionListener(pipeName,
-                                                                   secret);
+   s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
+                                      options.wwwAddress(),
+                                      options.wwwPort(),
+                                      options.sharedSecret());
+
 }
 
 HttpConnectionListener& httpConnectionListener()

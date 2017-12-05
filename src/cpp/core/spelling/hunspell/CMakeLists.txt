@@ -19,8 +19,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 
-# disable warnings
-add_definitions(-w)
+add_definitions(-w -DHUNSPELL_STATIC)
 
 # include files
 file(GLOB_RECURSE CORE_HUNSPELL_HEADER_FILES "*.h*")

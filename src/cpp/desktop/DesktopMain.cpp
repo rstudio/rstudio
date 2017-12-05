@@ -307,7 +307,6 @@ int main(int argc, char* argv[])
       bool devMode = false;
 
       // check for debug configuration
-#ifndef NDEBUG
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
       if (currentPath.complete("conf/rdesktop-dev.conf").exists())
       {
@@ -320,7 +319,6 @@ int main(int argc, char* argv[])
             sessionPath = installPath.complete("session/x64/rsession");
 #endif
       }
-#endif
 
       // if there is no conf path then release mode
       if (confPath.empty())

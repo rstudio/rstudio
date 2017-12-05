@@ -26,13 +26,45 @@ if(APPLE)
 
 endif()
 
-# use Rtools on Windows (mainly for Qt Creator)
-if(WIN32 AND NOT DEFINED RSTUDIO_PACKAGE_BUILD)
-  set(RTOOLS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows/Rtools33")
-  string(REGEX REPLACE "/" "\\\\" RTOOLS_TOOLCHAIN_32BIT_PATH "${RTOOLS_PATH}/mingw_32/bin")
-  set(ENV{PATH} "${RTOOLS_TOOLCHAIN_32BIT_PATH}")
-  set(WINDRES "${RTOOLS_TOOLCHAIN_32BIT_PATH}\\windres.exe")
-  message(STATUS "The PATH is $ENV{PATH}")
+# require C++11 (or C++14 for MSVC)
+if(MSVC)
+
+  # use C++14 (MSVC doesn't support C++11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+
+  # ensure that we're using linker flags compatible with
+  # the version of Boost that will be linked in
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+     set(ITERATOR_DEBUG_LEVEL 0)
+     set(LINKER_FLAG "/MD")
+  else()
+     set(ITERATOR_DEBUG_LEVEL 2)
+     set(LINKER_FLAG "/MDd")
+  endif()
+
+  foreach(RELEASE_TYPE "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO")
+    foreach(FLAG CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+      string(REGEX REPLACE "/MDd?" "${LINKER_FLAG}" ${FLAG}${RELEASE_TYPE} "${${FLAG}${RELEASE_TYPE}}")
+    endforeach()
+  endforeach()
+
+  # ensure exception handling model is compatible with MinGW
+  # TODO: 32bit uses Dwarf, 64bit uses SEH; we should respect that
+  string(REPLACE "/EHs?c?" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+  # multi-process compilation
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+
+  # silence some warnings (mostly out of our control) + set debug level
+  add_definitions(
+    -D_CRT_NONSTDC_NO_DEPRECATE
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SCL_SECURE_NO_WARNINGS
+    -D_ITERATOR_DEBUG_LEVEL=${ITERATOR_DEBUG_LEVEL}
+    )
+
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 endif()
 
 if(NOT DEFINED WINDRES)
