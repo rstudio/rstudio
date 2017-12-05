@@ -270,7 +270,7 @@ Error WordViewer::openDocument(QString& path, IDispatch* idispDocs,
    VERIFY_HRESULT(idispDocs->Invoke(
                      dispidOpen, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                      DISPATCH_METHOD, &dparams, &result, nullptr, nullptr));
-   if (pidispDocnullptr
+   if (pidispDoc)
       *pidispDoc = result.pdispVal;
 
 LErrExit:
