@@ -71,6 +71,13 @@ endif()
 get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
 set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
 
+if(APPLE)
+   find_program(MACDEPLOYQT_COMMAND macdeployqt PATHS "${QT_BIN_DIR}" NO_DEFAULT_PATH)
+   if (NOT MACDEPLOYQT_COMMAND)
+      message(FATAL_ERROR "Did not find macdeployqt under ${QT_BIN_DIR}.")
+   endif ()
+endif()
+
 # find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -273,6 +280,26 @@ if(APPLE OR WIN32 OR
   set(RSTUDIO_BUNDLE_QT TRUE)
 endif()
 
+set(RSTUDIO_QTMODULES
+    Core
+    Widgets
+    Gui
+    Network
+    WebChannel
+    WebEngine
+    WebEngineWidgets
+    PrintSupport
+    Quick
+    Positioning
+    Sensors
+    Svg
+    Xml
+    XmlPatterns
+    Qml
+    Sql
+    OpenGL
+)
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -283,25 +310,6 @@ if(NOT APPLE)
       ${DESKTOP_UI_SOURCES}
    )
 
-   set(RSTUDIO_QTMODULES
-      Core
-      Widgets
-      Gui
-      Network
-      WebChannel
-      WebEngine
-      WebEngineWidgets
-      PrintSupport
-      Quick
-      Positioning
-      Sensors
-      Svg
-      Xml
-      XmlPatterns
-      Qml
-      Sql
-      OpenGL
-   )
    if(WIN32)
       qt5_use_modules(rstudio ${RSTUDIO_QTMODULES})
    else()
@@ -353,7 +361,7 @@ else()
       ${DESKTOP_UI_SOURCES}
       ${ICNS_FILES})
 
-   qt5_use_modules(RStudio Core Widgets Gui Network WebEngine WebEngineWidgets PrintSupport)
+   qt5_use_modules(RStudio ${RSTUDIO_QTMODULES})
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
@@ -409,6 +417,11 @@ if(RSTUDIO_BUNDLE_QT)
       install(PROGRAMS "${QT_PLATFORMS_DIR}/qminimal${LIB_SUFFIX}.dll"
                        "${QT_PLATFORMS_DIR}/qwindows${LIB_SUFFIX}.dll"
               DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
+   elseif(APPLE)
+      set(QT_PLATFORMS_DIR "${Qt5Core_DIR}/../../../plugins/platforms")
+      install(PROGRAMS "${QT_PLATFORMS_DIR}/libqminimal${LIB_SUFFIX}.dylib"
+            "${QT_PLATFORMS_DIR}/libqcocoa${LIB_SUFFIX}.dylib"
+            DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
    else()
       install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/imageformats"
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
