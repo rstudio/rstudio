@@ -15,7 +15,7 @@ link    <- argument(2, "static")
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-boost")
 
-source("tools.R")
+source("../tools.R")
 section("The working directory is: '%s'", getwd())
 progress("Producing '%s' build with '%s' linking", variant, link)
 owd <- getwd()
