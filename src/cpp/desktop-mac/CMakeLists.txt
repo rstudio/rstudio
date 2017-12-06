@@ -129,3 +129,24 @@ endforeach()
 exec_program(defaults
              ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
              OUTPUT_VARIABLE DEV_EXTRAS)
+
+
+# we build against OpenSSL, but Apple no longer bundles OpenSSL, so copy it
+# into our install folder and fix the runtime path so that we can load from
+# there.
+
+add_custom_command (TARGET RStudio PRE_BUILD
+                    COMMAND mkdir -p ${RSTUDIO_INSTALL_BIN}/openssl)
+find_package(OpenSSL REQUIRED QUIET)
+
+# copy the libssl and libcrypto libraries 
+foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+   get_filename_component(LIB_DIR ${lib} DIRECTORY)
+   execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+   install(FILES ${LIB_DIR}/${LIB_FILE}
+           DESTINATION ${RSTUDIO_INSTALL_BIN}/openssl/)
+   add_custom_command (TARGET RStudio POST_BUILD
+      COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/openssl/${LIB_FILE} ${RSTUDIO_INSTALL_BIN}/RStudio
+      COMMENT "Fixing runtime path for ${lib}")
+endforeach()
+ 
