@@ -71,13 +71,6 @@ endif()
 get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
 set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
 
-if(APPLE)
-   find_program(MACDEPLOYQT_COMMAND macdeployqt PATHS "${QT_BIN_DIR}" NO_DEFAULT_PATH)
-   if (NOT MACDEPLOYQT_COMMAND)
-      message(FATAL_ERROR "Did not find macdeployqt under ${QT_BIN_DIR}.")
-   endif ()
-endif()
-
 # find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -457,6 +450,12 @@ if(RSTUDIO_BUNDLE_QT)
           file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver-pam\")
           fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
           ")
+
+      # Copy over the QtWebEngineProcess.app
+      set(QTWEBENGINE_HELPERS_DIR "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework/Versions/5/Helpers")
+      set(QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR "${QTPLUGINS_DEST_DIR}/Frameworks/QtWebEngineCore.framework")
+      install(DIRECTORY "${QTWEBENGINE_HELPERS_DIR}"
+              DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5" USE_SOURCE_PERMISSIONS)
 
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
