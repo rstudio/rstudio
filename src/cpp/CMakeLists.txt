@@ -113,9 +113,13 @@ else()
        /bigobj
    )
 
+   # TODO: we shouldn't rely on '/force' if at all possible
    foreach(TYPE EXE MODULE)
       set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware /force")
    endforeach()
+
+   # increase stack size to 16mb
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /stack:0x1000000")
 
    if(RSTUDIO_SESSION_WIN64)
       add_definitions(-D_WIN64

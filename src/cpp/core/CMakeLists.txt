@@ -286,6 +286,7 @@ else()
       MsWSock
       RpcRT4
       ShLwApi
+      AdvAPI32
       ${OPENSSL_CRYPTO_LIBRARY}
    )
 
@@ -358,6 +359,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell
+      rstudio-core-zlib
       ${Boost_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )
