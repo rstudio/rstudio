@@ -359,9 +359,11 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell
-      rstudio-core-zlib
       ${Boost_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )
 
+   if(WIN32)
+      target_link_libraries(rstudio-core-tests rstudio-core-zlib)
+   endif()
 endif()
