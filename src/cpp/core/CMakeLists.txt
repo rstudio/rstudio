@@ -286,6 +286,7 @@ else()
       MsWSock
       RpcRT4
       ShLwApi
+      AdvAPI32
       ${OPENSSL_CRYPTO_LIBRARY}
    )
 
@@ -362,4 +363,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${CORE_SYSTEM_LIBRARIES}
    )
 
+   if(WIN32)
+      target_link_libraries(rstudio-core-tests rstudio-core-zlib)
+   endif()
 endif()

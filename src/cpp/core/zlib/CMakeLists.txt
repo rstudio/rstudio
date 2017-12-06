@@ -100,5 +100,4 @@ set_property(TARGET rstudio-core-zlib
              PROPERTY COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS})
 
 # link dependencies
-target_link_libraries(rstudio-core-zlib
-)
+target_link_libraries(rstudio-core-zlib)

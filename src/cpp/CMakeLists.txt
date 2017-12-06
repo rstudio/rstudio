@@ -113,9 +113,13 @@ else()
        /bigobj
    )
 
+   # TODO: we shouldn't rely on '/force' if at all possible
    foreach(TYPE EXE MODULE)
       set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware /force")
    endforeach()
+
+   # increase stack size to 16mb
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /stack:0x1000000")
 
    if(RSTUDIO_SESSION_WIN64)
       add_definitions(-D_WIN64
@@ -244,11 +248,11 @@ if(WIN32)
         set(OPENSSL_ARCH "/")
      endif()
 
-     set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/openssl-1.0.2l_win")
+     set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/openssl-1.0.2m")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}${OPENSSL_ARCH}lib")
-     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libcrypto.a")
-     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/libssl.a")
+     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libeay32.lib")
+     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/ssleay32.lib")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_SSL_LIBRARY}")
 
