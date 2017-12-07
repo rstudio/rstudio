@@ -233,9 +233,8 @@ TEST_CASE("Win32PtyTests")
       stdOut.clear();
       std::string line1 = "echo This was once a place where words and letters and 32 numbers lived!";
 
-      // console will word-wrap so set the console to twice width of our input string
-      // to account for the prompt as well
-      err = pty.setSize(line1.length() * 2, kRows);
+      // console will word-wrap unless we set a large size
+      err = pty.setSize(line1.length() * 4, kRows);
       CHECK(!err);
 
       for (int i = 0; i < line1.length(); i++)
