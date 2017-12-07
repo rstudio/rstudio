@@ -520,6 +520,7 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5Network${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebEngine${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebEngineCore{LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebEngineWidgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebChannel${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Positioning${LIB_SUFFIX}.dll
@@ -534,6 +535,7 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5OpenGL${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Multimedia${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5MultimediaWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/QtWebEngineProcess${LIB_SUFFIX}.exe
                        ${QT_BINARY_DIR}/icudt53.dll
                        ${QT_BINARY_DIR}/icuin53.dll
                        ${QT_BINARY_DIR}/icuuc53.dll
@@ -541,6 +543,13 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/libstdc++-6.dll
                        ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
               DESTINATION ${RSTUDIO_INSTALL_BIN})
+
+      # install required resources for Qt WebEngine
+      install(
+         DIRECTORY "${Qt5Core_DIR}/../../../resources/"
+         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}
+         USE_SOURCE_PERMISSIONS)
+
    endif()
 endif(RSTUDIO_BUNDLE_QT)
 
