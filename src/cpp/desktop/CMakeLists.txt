@@ -452,10 +452,12 @@ if(RSTUDIO_BUNDLE_QT)
           ")
 
       # Copy over the QtWebEngineProcess.app
-      set(QTWEBENGINE_HELPERS_DIR "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework/Versions/5/Helpers")
+      set(QTWEBENGINE_FRAMEWORK_SOURCE "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework")
       set(QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR "${QTPLUGINS_DEST_DIR}/Frameworks/QtWebEngineCore.framework")
-      install(DIRECTORY "${QTWEBENGINE_HELPERS_DIR}"
-              DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5" USE_SOURCE_PERMISSIONS)
+      install(DIRECTORY "${QTWEBENGINE_FRAMEWORK_SOURCE}/Versions/5/Helpers"
+            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5" USE_SOURCE_PERMISSIONS)
+      install(DIRECTORY "${QTWEBENGINE_FRAMEWORK_SOURCE}/Helpers"
+            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}" USE_SOURCE_PERMISSIONS)
 
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
