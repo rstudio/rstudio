@@ -134,19 +134,54 @@ exec_program(defaults
 # we build against OpenSSL, but Apple no longer bundles OpenSSL, so copy it
 # into our install folder and fix the runtime path so that we can load from
 # there.
-
 add_custom_command (TARGET RStudio PRE_BUILD
                     COMMAND mkdir -p ${RSTUDIO_INSTALL_BIN}/openssl)
 find_package(OpenSSL REQUIRED QUIET)
 
-# copy the libssl and libcrypto libraries 
+# copy the libssl and libcrypto libraries to the install folder
 foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+   # extract the parent directory and actual filename
    get_filename_component(LIB_DIR ${lib} DIRECTORY)
    execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
-   install(FILES ${LIB_DIR}/${LIB_FILE}
+
+   # create a writable copy of the libraries we will later modify
+   file(COPY ${LIB_DIR}/${LIB_FILE} 
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        FILE_PERMISSIONS OWNER_WRITE OWNER_READ)
+
+   # install it read-only
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIB_FILE}
+           PERMISSIONS OWNER_READ GROUP_READ WORLD_READ
            DESTINATION ${RSTUDIO_INSTALL_BIN}/openssl/)
+
+   # save final destination filename
+   if(lib STREQUAL ${OPENSSL_CRYPTO_LIBRARY})
+      set(LIBCRYPTO ${CMAKE_CURRENT_BINARY_DIR}/${LIB_FILE})
+   else()
+      set(LIBSSL ${CMAKE_CURRENT_BINARY_DIR}/${LIB_FILE})
+   endif()
+
+   # modify the RStudio binaries to look for the installed copies instead of
+   # the system copies we linked against
    add_custom_command (TARGET RStudio POST_BUILD
       COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/openssl/${LIB_FILE} ${RSTUDIO_INSTALL_BIN}/RStudio
       COMMENT "Fixing runtime path for ${lib}")
 endforeach()
  
+
+# now we need to go back and fix up the dylibs themselves so that their
+# references to each other  point at the installed copies
+foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+   # look up the installation path computed above
+   if(lib STREQUAL ${OPENSSL_CRYPTO_LIBRARY})
+      set(LIB_INSTALLED ${LIBCRYPTO})
+   else()
+      set(LIB_INSTALLED ${LIBSSL})
+   endif()
+
+   # figure out which libcrypto we're linking against
+   execute_process(COMMAND bash "-c" "otool -L ${lib} | grep libcrypto | grep version | cut -d ' ' -f 1" OUTPUT_VARIABLE LIBCRYPTO_DYLIB OUTPUT_STRIP_TRAILING_WHITESPACE)
+   get_filename_component(LIBCRYPTO_FILE ${LIBCRYPTO} NAME)
+   add_custom_command (TARGET RStudio POST_BUILD
+      COMMAND install_name_tool -change ${LIBCRYPTO_DYLIB} @executable_path/openssl/${LIBCRYPTO_FILE} ${LIB_INSTALLED})
+endforeach()
