@@ -9,6 +9,11 @@ dlls <- list.files(R.home("bin"), pattern = "dll$", full.names = TRUE)
 # Generate corresponding 'lib' file for each DLL.
 for (dll in dlls) {
    
+   # check to see if we've already generated our exports
+   def <- sub("dll$", "def", dll)
+   if (file.exists(def))
+      next
+   
    # Call it on R.dll to generate exports.
    command <- sprintf("dumpbin.exe /EXPORTS /NOLOGO %s", dll)
    output <- system(paste(command), intern = TRUE)
