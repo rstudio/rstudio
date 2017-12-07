@@ -9,10 +9,6 @@ if "%1" == "clean" (
 
 setlocal
 
-REM Put our MinGW toolchain on the PATH
-set MINGW64_32BIT_PATH=%CD%\..\..\dependencies\windows\Rtools33\mingw_32\bin
-set PATH=%MINGW64_32BIT_PATH%;%PATH%
-
 REM Remove system Rtools from PATH
 call set PATH=%PATH:C:\Rtools\bin=%
 call set PATH=%PATH:C:\Rtools\gcc-4.6.3\bin=%
@@ -31,12 +27,15 @@ cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
-cmake -G"MinGW Makefiles" ^
+
+REM Configure and build the project. (Note that Windows / MSVC builds require
+REM that we specify the build type both at configure time and at build time)
+cmake -G"Visual Studio 14 2015" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\.. || goto :error
-mingw32-make %MAKEFLAGS% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree

@@ -10,21 +10,17 @@ if "%2" == "clean" rmdir /s /q %WIN64_BUILD_PATH%
 
 setlocal
 
-REM put toolchain on PATH
-set MINGW64_64BIT_PATH=%CD%\..\..\dependencies\windows\Rtools33\mingw_64\bin
-set PATH=%MINGW64_64BIT_PATH%;%PATH%
-
 REM perform 64-bit build 
 mkdir %WIN64_BUILD_PATH%
 cd %WIN64_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
-cmake -G"MinGW Makefiles" ^
+cmake -G"Visual Studio 14 2015" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DRSTUDIO_TARGET=SessionWin64 ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\.. || goto :error
-mingw32-make install %MAKEFLAGS% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
 endlocal
 

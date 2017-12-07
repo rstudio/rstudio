@@ -13,6 +13,12 @@
 #
 #
 
+# include guard
+if(RSTUDIO_CMAKE_COMPILER_INCLUDED)
+   return()
+endif()
+set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
+
 # use clang on osx
 if(APPLE)
 

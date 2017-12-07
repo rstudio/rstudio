@@ -13,6 +13,12 @@
 #
 #
 
+# include guard
+if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
+   return()
+endif()
+set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
+
 # version info
 if ("$ENV{RSTUDIO_VERSION_MAJOR}" STREQUAL "")
   set(CPACK_PACKAGE_VERSION_MAJOR "99")
@@ -39,6 +45,7 @@ endif()
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
+   message(STATUS "CMake build type not set; defaulting to debug build")
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
