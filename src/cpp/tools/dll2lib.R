@@ -21,10 +21,15 @@ for (dll in dlls) {
    end <- grep("^\\s*Summary\\s*$", output)
    contents <- output[start:(end - 1)]
    contents <- contents[nzchar(contents)]
-   tbl <- read.table(text = contents, header = TRUE, stringsAsFactors = FALSE)
    
-   # Add other exports
-   exports <- c(exports, additions[[basename(dll)]])
+   # Remove forwarded fields
+   contents <- grep("forwarded to", contents, invert = TRUE, value = TRUE, fixed = TRUE)
+   
+   # parse into a table
+   tbl <- read.table(text = contents, header = TRUE, stringsAsFactors = FALSE)
+   exports <- tbl$name
+   
+   # sort and re-format exports
    exports <- sort(exports)
    exports <- c("EXPORTS", paste("\t", tbl$name, sep = ""))
    
@@ -34,6 +39,8 @@ for (dll in dlls) {
    
    # Call 'lib.exe' to generate the library file.
    outfile <- sub("dll$", "lib", dll)
-   system(sprintf("lib.exe /def:%s /out:%s", def, outfile))
+   fmt <- "lib.exe /def:%s /out:%s /machine:%s"
+   cmd <- sprintf(fmt, def, outfile, .Platform$r_arch)
+   system(cmd)
    
 }

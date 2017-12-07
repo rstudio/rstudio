@@ -14,7 +14,7 @@ REM perform 64-bit build
 mkdir %WIN64_BUILD_PATH%
 cd %WIN64_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
-cmake -G"Visual Studio 14 2015" ^
+cmake -G"Visual Studio 14 2015 Win64" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DRSTUDIO_TARGET=SessionWin64 ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^

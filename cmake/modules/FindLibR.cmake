@@ -118,10 +118,17 @@ else()
 
       # set library hint path based on whether  we are doing a special session 64 build
       if(LIBR_FIND_WINDOWS_64BIT)
+         set(LIBR_ARCH "x64")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
       else()
+         set(LIBR_ARCH "i386")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/i386")
       endif()
+
+      # call dll2lib.R to ensure export files are generated
+      execute_process(
+         COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe dll2lib.R"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIRECTORY}/tools")
 
    endif()
 

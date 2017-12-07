@@ -17,9 +17,9 @@ cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
 # check for externals
-SET(GWT_LIB_DIR "/opt/rstudio-tools/gwt/lib")
+set(GWT_LIB_DIR "/opt/rstudio-tools/gwt/lib")
 if(NOT EXISTS "${GWT_LIB_DIR}")
-   SET(GWT_LIB_DIR "lib")
+   set(GWT_LIB_DIR "lib")
 endif()
 
 # define output dirs
