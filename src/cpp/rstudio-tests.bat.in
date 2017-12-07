@@ -1,0 +1,11 @@
+@echo off
+set "PATH=@LIBR_BIN_DIR@;%PATH%"
+
+echo Running 'core' tests...
+"@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"
+
+echo Running 'rsession' tests...
+"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^
+    --run-tests ^
+    --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
+

@@ -186,6 +186,7 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
 
 if(LIBR_FOUND)
    message(STATUS "Found R: ${LIBR_HOME}")
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" DIRECTORY CACHE)
 endif()
 
 # mark low-level variables from FIND_* calls as advanced
