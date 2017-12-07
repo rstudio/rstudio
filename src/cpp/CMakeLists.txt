@@ -120,17 +120,17 @@ else()
    # increase stack size to 16mb
    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /stack:0x1000000")
 
+   # require Windows Vista (for both 32bit and 64bit targets)
+   add_definitions(
+      -DWINVER=0x600
+      -D_WIN32_WINNT=0x600
+      -D_WIN32_IE=0x600
+      -DWIN32_LEAN_AND_MEAN
+      -DBOOST_USE_WINDOWS_H)
+
+   # ensure we use 64-bit APIs for 64-bit builds
    if(RSTUDIO_SESSION_WIN64)
-      add_definitions(-D_WIN64
-                      -D_WIN64_WINNT=0x0501
-                      -D_WIN64_IE=0x600
-                      -DWIN64_LEAN_AND_MEAN
-                      -DBOOST_USE_WINDOWS_H)
-   else()
-      add_definitions(-D_WIN32_WINNT=0x0501
-                      -D_WIN32_IE=0x600
-                      -DWIN32_LEAN_AND_MEAN
-                      -DBOOST_USE_WINDOWS_H)
+      add_definitions(-D_WIN64)
    endif()
 
 endif()
@@ -247,7 +247,7 @@ if(WIN32)
         set(OPENSSL_BUILD_TYPE "release")
      endif()
 
-     if(RSTUDIO_SESSLIBRARY)
+     if(RSTUDIO_SESSION_WIN64)
         set(OPENSSL_BITNESS "64")
      else()
         set(OPENSSL_BITNESS "32")

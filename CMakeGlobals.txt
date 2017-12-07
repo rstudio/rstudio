@@ -71,8 +71,13 @@ if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desk
 endif()
 
 # set session64 if specified
-if (${RSTUDIO_TARGET} STREQUAL "SessionWin64")
+if(RSTUDIO_TARGET STREQUAL "SessionWin64")
    set(RSTUDIO_SESSION_WIN64 TRUE)
+endif()
+
+# prefer 64bit session when using 64bit toolchain
+if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(RSTUDIO_SESSION_WIN64 TRUE)
 endif()
 
 # record git revision hash (cache it since we don't use this in development
