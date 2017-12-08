@@ -127,8 +127,9 @@ else()
 
       # call dll2lib.R to ensure export files are generated
       execute_process(
-         COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe dll2lib.R"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIRECTORY}/tools")
+         COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe" "dll2lib.R"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+         RESULT_VARIABLE LIBR_DLL2LIB_RESULT)
 
    endif()
 

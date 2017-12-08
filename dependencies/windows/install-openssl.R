@@ -1,5 +1,5 @@
 OWD <- getwd()
-URL <- "https://www.openssl.org/source/openssl-1.0.2m.tar.gz"
+URL <- "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2m.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
 DIR <- file.path(tempdir(), "openssl")
 
@@ -18,7 +18,7 @@ owd <- setwd(DIR)
 # download and extract
 if (!file.exists(basename(URL))) {
    section("Downloading OpenSSL")
-   download(URL, destfile = basename(URL))
+   download.file(URL, destfile = basename(URL))
 }
 
 section("Extracting OpenSSL")

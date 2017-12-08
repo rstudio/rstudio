@@ -100,7 +100,7 @@ if not exist winpty-0.4.3-msys2-2.7.0 (
   del %WINPTY_FILES%
 )
 
-if not exist openssl-1.0.2l_win (
+if not exist openssl-1.0.2m (
   wget %WGET_ARGS% "%BASEURL%%OPENSSL_FILES%"
   echo Unzipping %OPENSSL_FILES%
   unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
