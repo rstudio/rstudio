@@ -222,6 +222,7 @@ set (SESSION_SOURCE_FILES
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
+   rsession.rc
 )
 
 # platform specific source files

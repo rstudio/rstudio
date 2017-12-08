@@ -26,6 +26,7 @@ include_directories(
 
 set(DIAGNOSTICS_SOURCE_FILES
   DiagnosticsMain.cpp
+  diagnostics.rc
 )
 
 # config file

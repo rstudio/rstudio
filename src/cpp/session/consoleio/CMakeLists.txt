@@ -25,6 +25,7 @@ include_directories(
 
 set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
+  consoleio.rc
 )
 
 

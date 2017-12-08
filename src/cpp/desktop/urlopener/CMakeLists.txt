@@ -25,6 +25,7 @@ include_directories(
 
 set(URLOPENER_SOURCE_FILES
   UrlOpenerMain.cpp
+  urlopener.rc
 )
 
 

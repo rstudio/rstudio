@@ -107,12 +107,6 @@ if(UNIX)
 # Win32 specific global directives
 else()
 
-   add_definitions(
-       -DWINVER=0x501
-       -DNOMINMAX
-       /bigobj
-   )
-
    foreach(TYPE EXE MODULE)
       set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware")
    endforeach()
@@ -122,6 +116,8 @@ else()
 
    # require Windows Vista (for both 32bit and 64bit targets)
    add_definitions(
+      /bigobj
+      -DNOMINMAX
       -DWINVER=0x600
       -D_WIN32_WINNT=0x600
       -D_WIN32_IE=0x600

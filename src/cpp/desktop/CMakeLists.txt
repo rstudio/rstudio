@@ -181,6 +181,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSynctex.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
+  rstudio.rc
 )
 
 if(WIN32)
