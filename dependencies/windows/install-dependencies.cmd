@@ -8,8 +8,6 @@ set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_GCC493_FILE=boost-1.63-win-rtools33-gcc493.zip
-set RTOOLS_FILE=Rtools33.exe
 set GIN_FILE=gin-2.1.2.zip
 set GWT_FILE=gwt-2.8.1.zip
 set SELENIUM_FILE=selenium-java-2.37.0.zip
@@ -32,26 +30,6 @@ set LIBCLANG_NAME=libclang-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
-
-set RTOOLS_DIR=%RTOOLS_FILE:.exe=%
-if not exist %RTOOLS_DIR% (
-  wget %WGET_ARGS% "%BASEURL%%RTOOLS_FILE%"
-  echo Installing '%RTOOLS_FILE%' -- please wait...
-  start /wait Rtools33.exe /verysilent /dir="%CD%\%RTOOLS_DIR%"
-  if %ERRORLEVEL% EQU 0 (
-    echo '%RTOOLS_FILE%' successfully installed!
-    del %RTOOLS_FILE%
-  ) else (
-    echo Failed to install '%RTOOLS_FILE%'!
-  )
-)
-
-if not exist boost-1.63-win-rtools33-gcc493 (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC493_FILE%"
-  echo Unzipping %BOOST_GCC493_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_GCC493_FILE%" -d boost-1.63-win-rtools33-gcc493
-  del "%BOOST_GCC493_FILE%"
-)
 
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
@@ -100,7 +78,7 @@ if not exist winpty-0.4.3-msys2-2.7.0 (
   del %WINPTY_FILES%
 )
 
-if not exist openssl-1.0.2m (
+if not exist %OPENSSL_FILES:~0,-4% (
   wget %WGET_ARGS% "%BASEURL%%OPENSSL_FILES%"
   echo Unzipping %OPENSSL_FILES%
   unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
