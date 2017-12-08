@@ -88,9 +88,10 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    }
    (*pDocJson)["notebook"] = notebook;
    
-   // discover project-specific settings when available
+   // discover project-specific settings when available (only applied when
+   // opening a file that belongs to a project separate from the active project)
    r_util::RProjectConfig projConfig;
-   bool hasConfig = false;
+   bool useConfig = false;
    
    if (!pDoc->path().empty())
    {
@@ -99,8 +100,9 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
       if (projects::projectContext().hasProject() &&
           docPath.isWithin(projects::projectContext().directory()))
       {
-         projConfig = projects::projectContext().config();
-         hasConfig = true;
+         // this file belongs to the active project: do nothing here and let
+         // other machinery handle setting of project-specific options
+         useConfig = false;
       }
       else
       {
@@ -108,11 +110,11 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                   docPath,
                   module_context::userHomePath(),
                   &projConfig);
-         hasConfig = !error;
+         useConfig = !error;
       }
    }
    
-   if (hasConfig)
+   if (useConfig)
    {
       json::Object projConfigJson;
       
