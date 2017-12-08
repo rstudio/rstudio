@@ -29,7 +29,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
-
+#include <r/RSexp.hpp>
 
 using namespace rstudio::core;
 
@@ -347,10 +347,10 @@ Error executeStanEngineChunk(const std::string& docId,
 }
 
 Error executeSqlEngineChunk(const std::string& docId,
-                             const std::string& chunkId,
-                             const std::string& nbCtxId,
-                             const std::string& code,
-                             const json::Object& options)
+                            const std::string& chunkId,
+                            const std::string& nbCtxId,
+                            const std::string& code,
+                            const json::Object& options)
 {
    Error error;
    
@@ -439,6 +439,85 @@ Error executeSqlEngineChunk(const std::string& docId,
    return Success();
 }
 
+Error runUserDefinedEngine(const std::string& docId,
+                           const std::string& chunkId,
+                           const std::string& nbCtxId,
+                           const std::string& engine,
+                           const std::string& code,
+                           const json::Object& options)
+{
+   using namespace r::sexp;
+   using namespace r::exec;
+   Error error;
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   // prepare cache output file (use tempfile on failure)
+   FilePath targetPath = module_context::tempFile("engine-cache", "txt");
+   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
+   if (error)
+      LOG_ERROR(error);
+   
+   // capture console output, error
+   boost::signals::scoped_connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(chunkConsoleOutputHandler, _1, _2, targetPath));
+   
+   // write input code to cache
+   error = appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            targetPath);
+   if (error)
+      LOG_ERROR(error);
+
+   // run the user-defined engine
+   SEXP outputSEXP = R_NilValue;
+   Protect protect;
+   error = RFunction(".rs.runUserDefinedEngine")
+         .addParam(engine)
+         .addParam(options)
+         .call(&outputSEXP, &protect);
+   
+   // report errors during engine execution to user
+   if (error)
+   {
+      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
+                                r::endUserErrorMessage(error),
+                                targetPath);
+      return error;
+   }
+   
+   // forward engine output
+   if (isString(outputSEXP))
+   {
+      // write generated output to file
+      appendConsoleOutput(
+               kChunkConsoleOutput,
+               asString(outputSEXP),
+               targetPath);
+      
+      // default output is just text, for forward that
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               0,
+               ChunkOutputText,
+               targetPath);
+   }
+   else
+   {
+      // TODO: properly handle evaluate()-style output as reticulate does
+      Rf_warning(
+               "don't know how to handle '%s' engine output",
+               engine.c_str());
+   }
+   
+   return Success();
+}
+
 Error interruptEngineChunk(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -489,7 +568,27 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else if (engine == "sql")
       error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
    else
-      runChunk(docId, chunkId, nbCtxId, engine, code, options);
+   {
+      // check to see if this is a known interpreter; if so, we'll
+      // use own own shim to run the engine. if not, we'll just call
+      // the engine as-is
+      using namespace r::exec;
+      using namespace r::sexp;
+      
+      bool isSystemInterpreter = false;
+      Error error = RFunction(".rs.isSystemInterpreter")
+            .addParam(engine)
+            .call(&isSystemInterpreter);
+      
+      if (isSystemInterpreter)
+      {
+         runChunk(docId, chunkId, nbCtxId, engine, code, options);
+      }
+      else
+      {
+         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
+      }
+   }
 
    // release working directory
    dir.disconnect();
@@ -504,6 +603,7 @@ Error initAlternateEngines()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "NotebookAlternateEngines.R"))
       (bind(registerRpcMethod, "interrupt_chunk", interruptEngineChunk));
    return initBlock.execute();
 }
