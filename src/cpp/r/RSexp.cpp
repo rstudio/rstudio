@@ -598,6 +598,11 @@ bool isString(SEXP object)
 {
    return Rf_isString(object);
 }
+
+bool isFunction(SEXP object)
+{
+   return Rf_isFunction(object);
+}
    
 bool isMatrix(SEXP object)
 {
