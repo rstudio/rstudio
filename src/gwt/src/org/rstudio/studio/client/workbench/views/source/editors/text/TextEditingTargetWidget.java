@@ -410,6 +410,7 @@ public class TextEditingTargetWidget
          publishButton_ = new RSConnectPublishButton(
                RSConnectPublishButton.HOST_EDITOR,
                RSConnect.CONTENT_TYPE_APP, false, null);
+         publishButton_.onPublishInvoked(() -> target_.save());
          toolbar.addRightWidget(publishButton_);
       }
       
