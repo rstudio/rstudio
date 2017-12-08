@@ -289,8 +289,6 @@ set(RSTUDIO_QTMODULES
     Xml
     XmlPatterns
     Qml
-    Sql
-    OpenGL
 )
 
 # define executable (Windows & Linux)
@@ -303,10 +301,17 @@ if(NOT APPLE)
       ${DESKTOP_UI_SOURCES}
    )
 
+   # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
+   # these on any platform.
+   set(RSTUDIO_EXTRA_QTMODULES
+      Sql
+      OpenGL
+   )
+
    if(WIN32)
-      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES})
+      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES} ${RSTUDIO_EXTRA_QTMODULES})
    else()
-      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES} DBus)
+      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES} ${RSTUDIO_EXTRA_QTMODULES} DBus)
    endif()
 
    # add rpath for linux so we can find qt libraries in our bin dir
@@ -410,12 +415,7 @@ if(RSTUDIO_BUNDLE_QT)
       install(PROGRAMS "${QT_PLATFORMS_DIR}/qminimal${LIB_SUFFIX}.dll"
                        "${QT_PLATFORMS_DIR}/qwindows${LIB_SUFFIX}.dll"
               DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
-   elseif(APPLE)
-      set(QT_PLATFORMS_DIR "${Qt5Core_DIR}/../../../plugins/platforms")
-      install(PROGRAMS "${QT_PLATFORMS_DIR}/libqminimal${LIB_SUFFIX}.dylib"
-            "${QT_PLATFORMS_DIR}/libqcocoa${LIB_SUFFIX}.dylib"
-            DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
-   else()
+   elseif(NOT APPLE)
       install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/imageformats"
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
               PATTERN "*_debug.*" EXCLUDE
@@ -439,25 +439,17 @@ if(RSTUDIO_BUNDLE_QT)
    # fixup bundle on osx
    if(APPLE)
       set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
-      set(DIRS ${QT_LIBRARY_PATH})
-      INSTALL(CODE "
-          file(GLOB_RECURSE QTPLUGINS
-            \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
-          set(BU_CHMOD_BUNDLE_ITEMS ON)
-          include(BundleUtilities)
-          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession\")
-          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver\")
-          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver-pam\")
-          fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
-          ")
+      set(RSTUDIO_APP_BIN "\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/RStudio")
+      find_program(MACDEPLOYQT_COMMAND macdeployqt PATHS "${QT_BIN_DIR}" NO_DEFAULT_PATH)
+      if (NOT MACDEPLOYQT_COMMAND)
+         message(FATAL_ERROR "Did not find macdeployqt under ${QT_BIN_DIR}.")
+      endif()
 
-      # Copy over the QtWebEngineProcess.app
-      set(QTWEBENGINE_FRAMEWORK_SOURCE "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework")
-      set(QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR "${QTPLUGINS_DEST_DIR}/Frameworks/QtWebEngineCore.framework")
-      install(DIRECTORY "${QTWEBENGINE_FRAMEWORK_SOURCE}/Versions/5/Helpers"
-            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5" USE_SOURCE_PERMISSIONS)
-      install(DIRECTORY "${QTWEBENGINE_FRAMEWORK_SOURCE}/Helpers"
-            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}" USE_SOURCE_PERMISSIONS)
+      # this copies over the frameworks and plugins
+      install(CODE "execute_process(COMMAND \"${MACDEPLOYQT_COMMAND}\" \"${APPS}\" -verbose=1 -always-overwrite)")
+
+      # fixups needed after running macdeployqt
+      install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@executable_path/../Frameworks\" \"${RSTUDIO_APP_BIN}\")")
 
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
