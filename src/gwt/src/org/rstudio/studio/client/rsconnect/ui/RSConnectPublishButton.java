@@ -174,6 +174,11 @@ public class RSConnectPublishButton extends Composite
       events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
    }
    
+   public void onPublishInvoked(Command onPublishInvoked)
+   {
+      onPublishInvoked_ = onPublishInvoked;
+   }
+   
    @Override
    public void setVisible(boolean visible)
    {
@@ -365,8 +370,13 @@ public class RSConnectPublishButton extends Composite
 
    // Private methods --------------------------------------------------------
    
+
    private void onPublishButtonClick()
    {
+      // let host know if requested
+      if (onPublishInvoked_ != null)
+         onPublishInvoked_.execute();
+      
       // if the publish button is clicked without the droplist ever being 
       // invoked, then we need to grab the list of existing deployments to
       // determine what the default one will be.
@@ -838,6 +848,7 @@ public class RSConnectPublishButton extends Composite
    private boolean visible_ = false;
    
    private final AppCommand boundCommand_;
+   private Command onPublishInvoked_;
 
    private RSConnectDeploymentRecord defaultRec_;
    
