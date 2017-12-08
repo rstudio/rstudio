@@ -171,6 +171,16 @@ void MenuCallback::addCommand(QString commandId,
 {
    shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromUtf8("\n"));
 
+#ifdef Q_OS_MAC
+   QStringList parts = shortcut.split(QString::fromUtf8("+"));
+   for (int i = 0; i < parts.count(); i++)
+   {
+      if (parts.at(i) == QString::fromUtf8("Cmd"))
+         parts.replace(i, QString::fromUtf8("META"));
+   }
+   shortcut = parts.join(QString::fromUtf8("+"));
+#endif
+
    QKeySequence keySequence(shortcut);
 #ifndef Q_OS_MAC
    if (shortcut.contains(QString::fromUtf8("\n")))
