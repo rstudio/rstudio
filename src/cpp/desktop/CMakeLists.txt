@@ -405,7 +405,6 @@ if(RSTUDIO_BUNDLE_QT)
       install(PROGRAMS "${QT_IMAGEFORMATS_DIR}/qgif${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qico${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qjpeg${LIB_SUFFIX}.dll"
-                       "${QT_IMAGEFORMATS_DIR}/qmng${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qsvg${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qtga${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qtiff${LIB_SUFFIX}.dll"
@@ -436,8 +435,14 @@ if(RSTUDIO_BUNDLE_QT)
               PATTERN "*.a" EXCLUDE)
    endif()
 
-   # fixup bundle on osx
-   if(APPLE)
+   if(WIN32)
+      find_program(WINDEPLOYQT_COMMAND windeployqt PATHS "${QT_BIN_DIR}" NO_DEFAULT_PATH)
+      if (NOT WINDEPLOYQT_COMMAND)
+         message(FATAL_ERROR "Did not find windeployqt under ${QT_BIN_DIR}.")
+      endif()
+      install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_COMMAND}\" \"\${CMAKE_INSTALL_PREFIX}\\\\bin\\\\rstudio.exe\" -verbose 0)")
+   elseif(APPLE)
+      # fixup bundle on osx
       set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
       set(RSTUDIO_APP_BIN "\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/RStudio")
       find_program(MACDEPLOYQT_COMMAND macdeployqt PATHS "${QT_BIN_DIR}" NO_DEFAULT_PATH)
