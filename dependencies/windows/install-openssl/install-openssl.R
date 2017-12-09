@@ -1,19 +1,15 @@
 OWD <- getwd()
 URL <- "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2m.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
-DIR <- file.path(tempdir(), "openssl")
 
-source("tools.R")
+source("../tools.R")
 
 if (!file.exists("C:/Perl/bin"))
    fatal("No perl installation detected (please install ActiveState Perl from https://www.activestate.com/activeperl/downloads)")
 
+PATH$prepend("../tools")
 PATH$prepend("C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC")
 PATH$prepend("C:/Perl/bin")
-
-# move to a temporary build folder
-ensure_dir(DIR)
-owd <- setwd(DIR)
 
 # download and extract
 if (!file.exists(basename(URL))) {
@@ -34,7 +30,7 @@ xcopy <- function(src, dst) {
 OPTS <- "no-asm no-shared -DUNICODE -D_UNICODE --prefix=build"
 
 section("Building OpenSSL 32bit (Debug)")
-TARGET <- sprintf("%s-debug-32", NAME)
+TARGET <- sprintf("build-%s-debug-32", NAME)
 unlink(TARGET, recursive = TRUE)
 xcopy(NAME, TARGET)
 setwd(TARGET)
@@ -46,7 +42,7 @@ exec("vcvarsall.bat", "x86 && nmake -f ms\\nt.mak install")
 setwd("..")
 
 section("Building OpenSSL 64bit (Debug)")
-TARGET <- sprintf("%s-debug-64", NAME)
+TARGET <- sprintf("build-%s-debug-64", NAME)
 unlink(TARGET, recursive = TRUE)
 xcopy(NAME, TARGET)
 setwd(TARGET)
@@ -58,7 +54,7 @@ exec("vcvarsall.bat", "amd64 && nmake -f ms\\nt.mak install")
 setwd("..")
 
 section("Building OpenSSL 32bit (Release)")
-TARGET <- sprintf("%s-release-32", NAME)
+TARGET <- sprintf("build-%s-release-32", NAME)
 unlink(TARGET, recursive = TRUE)
 xcopy(NAME, TARGET)
 setwd(TARGET)
@@ -70,7 +66,7 @@ exec("vcvarsall.bat", "x86 && nmake -f ms\\nt.mak install")
 setwd("..")
 
 section("Building OpenSSL 64bit (Release)")
-TARGET <- sprintf("%s-release-64", NAME)
+TARGET <- sprintf("build-%s-release-64", NAME)
 unlink(TARGET, recursive = TRUE)
 xcopy(NAME, TARGET)
 setwd(TARGET)
@@ -84,7 +80,7 @@ setwd("..")
 section("Building redistributible")
 unlink("dist", recursive = TRUE)
 dir.create(file.path("dist", NAME), recursive = TRUE)
-dirs <- list.files(pattern = sprintf("^%s-", NAME))
+dirs <- list.files(pattern = sprintf("^build-%s-", NAME))
 lapply(dirs, function(dir) {
    src <- file.path(dir, "build", fsep = "\\")
    dst <- file.path("dist", NAME, dir, fsep = "\\")
@@ -96,7 +92,13 @@ lapply(dirs, function(dir) {
 setwd("dist")
 zipfile <- sprintf("%s.zip", NAME)
 zip(zipfile = zipfile, files = NAME, extras = "-q")
-unlink(file.path(OWD, NAME), recursive = TRUE)
-file.rename(NAME, file.path(OWD, NAME))
-file.rename(zipfile, file.path(OWD, zipfile))
+
+install <- function(name) {
+   unlink(file.path(OWD, "..", name), recursive = TRUE)
+   file.rename(name, file.path(OWD, "..", name))
+}
+
+install(NAME)
+install(zipfile)
+
 setwd("..")
