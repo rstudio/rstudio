@@ -3,6 +3,8 @@ URL <- "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2m.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
 
 source("../tools.R")
+dir.create("logs", showWarnings = FALSE)
+options(log.dir = normalizePath("logs", winslash = "/"))
 
 if (!file.exists("C:/Perl/bin"))
    fatal("No perl installation detected (please install ActiveState Perl from https://www.activestate.com/activeperl/downloads)")
@@ -83,7 +85,7 @@ dir.create(file.path("dist", NAME), recursive = TRUE)
 dirs <- list.files(pattern = sprintf("^build-%s-", NAME))
 lapply(dirs, function(dir) {
    src <- file.path(dir, "build", fsep = "\\")
-   dst <- file.path("dist", NAME, dir, fsep = "\\")
+   dst <- file.path("dist", NAME, sub("^build-", "", dir), fsep = "\\")
    xcopy(src, dst)
    unlink(file.path(dst, "bin"), recursive = TRUE)
    unlink(file.path(dst, "build"), recursive = TRUE)
