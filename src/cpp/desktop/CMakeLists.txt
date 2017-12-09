@@ -58,12 +58,17 @@ if(NOT WIN32)
 else()
    set(QT_VERSION "5.9.2")
    if(NOT QT_QMAKE_EXECUTABLE)
+
       set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
-      else()
-         message(FATAL_ERROR "Failed to locate Qt ${QT_VERSION} SDK (expected SDK at ${QMAKE_QT50_SDK})")
       endif()
+
+      set(QMAKE_QT50_SDK "C:\\Qt\\${QT_VERSION_SUBDIR}\\msvc2015")
+      if(EXISTS ${QMAKE_QT50_SDK})
+         set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
+      endif()
+
    endif()
 endif()
 
