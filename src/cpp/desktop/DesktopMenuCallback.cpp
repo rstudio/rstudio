@@ -16,8 +16,6 @@
 #include "DesktopMenuCallback.hpp"
 #include <QDebug>
 #include <QApplication>
-#include "DesktopCommandInvoker.hpp"
-#include "DesktopSubMenu.hpp"
 
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>

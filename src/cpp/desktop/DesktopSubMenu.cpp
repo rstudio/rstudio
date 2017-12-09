@@ -18,7 +18,6 @@
 #include <QList>
 
 #include "DesktopSubMenu.hpp"
-#include "DesktopCommandInvoker.hpp"
 
 namespace rstudio {
 namespace desktop {
