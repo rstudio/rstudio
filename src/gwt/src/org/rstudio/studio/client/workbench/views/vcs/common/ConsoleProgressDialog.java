@@ -76,6 +76,9 @@ public class ConsoleProgressDialog extends ProgressDialog
          throw new IllegalArgumentException(
                "Invalid combination of arguments to ConsoleProgressDialog");
       }
+
+      // save console process so that we can compute interaction mode below
+      consoleProcess_ = consoleProcess;
       
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
