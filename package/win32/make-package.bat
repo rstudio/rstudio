@@ -7,6 +7,15 @@ if "%1" == "clean" (
       if exist CMakeCache.txt del CMakeCache.txt
 )
 
+REM check for required programs on PATH
+for %%F in (ant cmake) do (
+      where /q %%F
+      if ERRORLEVEL 1 (
+            echo '%%F' not found on PATH; exiting
+            exit /b 1
+      )
+)
+
 setlocal
 
 REM Remove system Rtools from PATH
