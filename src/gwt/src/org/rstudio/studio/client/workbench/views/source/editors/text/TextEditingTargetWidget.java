@@ -32,6 +32,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
@@ -410,7 +411,14 @@ public class TextEditingTargetWidget
          publishButton_ = new RSConnectPublishButton(
                RSConnectPublishButton.HOST_EDITOR,
                RSConnect.CONTENT_TYPE_APP, false, null);
-         publishButton_.onPublishInvoked(() -> target_.save());
+         publishButton_.onPublishInvoked(new Command()
+         {
+             @Override
+             public void execute()
+             {
+                 target_.save();
+             }
+         });
          toolbar.addRightWidget(publishButton_);
       }
       
