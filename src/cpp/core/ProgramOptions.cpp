@@ -76,13 +76,76 @@ void reportWarnings(const std::string& warningMessages,
       core::log::logWarningMessage(warningMessages, location);
 }
 
+void parseCommandLine(variables_map& vm,
+                      const OptionsDescription& optionsDescription,
+                      const options_description& commandLineOptions,
+                      int argc,
+                      char * const argv[],
+                      std::vector<std::string>* pUnrecognized)
+{
+   // parse the command line
+   command_line_parser parser(argc, const_cast<char**>(argv));
+   parser.options(commandLineOptions);
+   parser.positional(optionsDescription.positionalOptions);
+   if (pUnrecognized != NULL)
+      parser.allow_unregistered();
+   parsed_options parsed = parser.run();
+   store(parsed, vm);
+   notify(vm) ;
+
+   // collect unrecognized if necessary
+   if (pUnrecognized != NULL)
+   {
+      *pUnrecognized = collect_unrecognized(parsed.options,
+                                            include_positional);
+   }
+}
+
+bool parseConfigFile(variables_map& vm,
+                     const std::string& configFile,
+                     const OptionsDescription& optionsDescription,
+                     bool allowUnregisteredConfigOptions)
+{
+   // open the config file
+   if (!configFile.empty())
+   {
+      boost::shared_ptr<std::istream> pIfs;
+      Error error = FilePath(configFile).open_r(&pIfs);
+      if (error)
+      {
+         reportError("Unable to open config file: " + configFile,
+                     ERROR_LOCATION);
+
+         return false;
+      }
+
+      try
+      {
+         // parse config file
+         store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm) ;
+         notify(vm) ;
+      }
+      catch(const std::exception& e)
+      {
+         reportError(
+           "Error reading " + configFile + ": " + std::string(e.what()),
+           ERROR_LOCATION);
+
+         return false;
+      }
+   }
+
+   return true;
+}
+
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
-                   bool allowUnregisteredConfigOptions)
+                   bool allowUnregisteredConfigOptions,
+                   bool configFileHasPrecedence)
 {
    *pHelp = false;
    std::string configFile;
@@ -103,58 +166,36 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       options_description commandLineOptions(optionsDescription.commandLine);
       commandLineOptions.add(general);
       
-      // parse the command line
       variables_map vm ;
-      command_line_parser parser(argc, const_cast<char**>(argv));
-      parser.options(commandLineOptions);
-      parser.positional(optionsDescription.positionalOptions);
-      if (pUnrecognized != NULL)
-         parser.allow_unregistered();
-      parsed_options parsed = parser.run();
-      store(parsed, vm);
-      notify(vm) ;
 
-      // collect unrecognized if necessary
-      if (pUnrecognized != NULL)
+      // the order of parsing is determined based on whether or not the config file has precedence
+      // if it does, parse it first, otherwise parse the command line first
+      if (configFileHasPrecedence)
       {
-         *pUnrecognized = collect_unrecognized(parsed.options,
-                                               include_positional);
-      }
+         // if we are parsing the config file first, do not attempt to parse
+         // the config file path from the command line arguments - just use
+         // the default value that was passed in
+         configFile = optionsDescription.defaultConfigFilePath;
 
-      // "none" is a special sentinel value for the config-file which
-      // explicitly prevents us from reading the defautl config file above
-      // now that we are past that we can reset it to empty
-      if (configFile == "none")
-         configFile = "";
-      
-      // open the config file
-      if (!configFile.empty())
-      {
-         boost::shared_ptr<std::istream> pIfs;
-         Error error = FilePath(configFile).open_r(&pIfs);
-         if (error)
-         {
-            reportError("Unable to open config file: " + configFile,
-                        ERROR_LOCATION);
-            return ProgramStatus::exitFailure() ;
-         }
-         
-         try
-         {
-            // parse config file
-            store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm) ;
-            notify(vm) ;
-         }
-         catch(const std::exception& e)
-         {
-            reportError(
-              "Error reading " + configFile + ": " + std::string(e.what()),
-              ERROR_LOCATION);
-
+         if (!parseConfigFile(vm, configFile, optionsDescription, allowUnregisteredConfigOptions))
             return ProgramStatus::exitFailure();
-         }
+
+         parseCommandLine(vm, optionsDescription, commandLineOptions, argc, argv, pUnrecognized);
       }
-      
+      else
+      {
+         parseCommandLine(vm, optionsDescription, commandLineOptions, argc, argv, pUnrecognized);
+
+         // "none" is a special sentinel value for the config-file which
+         // explicitly prevents us from reading the default config file above
+         // now that we are past that we can reset it to empty
+         if (configFile == "none")
+            configFile = "";
+
+         if (!parseConfigFile(vm, configFile, optionsDescription, allowUnregisteredConfigOptions))
+            return ProgramStatus::exitFailure();
+      }
+
       // show help if requested
       if (vm.count("help"))
       {

@@ -16,6 +16,8 @@
 #ifndef CORE_SYSTEM_POSIX_CHILD_PROCESS_HPP
 #define CORE_SYSTEM_POSIX_CHILD_PROCESS_HPP
 
+#include <boost/asio/io_service.hpp>
+
 #include <core/system/ChildProcess.hpp>
 #include <core/system/Process.hpp>
 
@@ -69,6 +71,8 @@ public:
    virtual bool hasWhitelistSubprocess() const;
    virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
+
+   pid_t pid() const;
 
 private:
    struct Impl;

@@ -19,6 +19,7 @@
 #include <boost/asio/io_service.hpp>
 
 #include <core/system/Process.hpp>
+#include <core/system/PosixChildProcess.hpp>
 
 namespace rstudio {
 namespace core {
@@ -37,11 +38,13 @@ public:
    core::Error runProgram(const std::string& executable,
                           const std::vector<std::string>& args,
                           const ProcessOptions& options,
-                          const ProcessCallbacks& callbacks);
+                          const ProcessCallbacks& callbacks,
+                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = NULL);
 
    core::Error runCommand(const std::string& command,
                           const ProcessOptions& options,
-                          const ProcessCallbacks& callbacks);
+                          const ProcessCallbacks& callbacks,
+                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = NULL);
 
    // Check whether any children are currently running
    bool hasRunningChildren();
@@ -56,7 +59,7 @@ public:
 private:
    struct Impl;
    friend struct Impl;
-   boost::scoped_ptr<Impl> pImpl_;
+   boost::shared_ptr<Impl> pImpl_;
 };
 
 } // namespace system

@@ -216,6 +216,11 @@ core::Error temporarilyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error restorePriv();
 
+// restoreRoot should be used to set the effective ID back to root (0) before using
+// the other privilege-modifying methods above - this is necessary because they maintain
+// state of the original effective user, and in most cases that should be root
+core::Error restoreRoot();
+
 #ifdef __APPLE__
 // Detect subprocesses via Mac-only BSD-ish APIs
 std::vector<SubprocInfo> getSubprocessesMac(PidType pid);

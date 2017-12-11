@@ -56,34 +56,41 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
                    char * const argv[],
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
-                   bool allowUnregisteredConfigOptions = false);
+                   bool allowUnregisteredConfigOptions = false,
+                   bool configFileHasPrecedence = false);
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           char * const argv[],
                           bool* pHelp,
-                          bool allowUnregisteredConfigOptions = false)
+                          bool allowUnregisteredConfigOptions = false,
+                          bool configFileHasPrecedence = false)
 {
-   return read(optionsDescription, argc, argv, NULL, pHelp, allowUnregisteredConfigOptions);
+   return read(optionsDescription, argc, argv, NULL, pHelp,
+               allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           char * const argv[],
                           std::vector<std::string>* pUnrecognized,
-                          bool allowUnregisteredConfigOptions = false)
+                          bool allowUnregisteredConfigOptions = false,
+                          bool configFileHasPrecedence = false)
 {
    bool help;
-   return read(optionsDescription, argc, argv, pUnrecognized, &help, allowUnregisteredConfigOptions);
+   return read(optionsDescription, argc, argv, pUnrecognized, &help,
+               allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
                           char * const argv[],
-                          bool allowUnregisteredConfigOptions = false)
+                          bool allowUnregisteredConfigOptions = false,
+                          bool configFileHasPrecedence = false)
 {
    bool help;
-   return read(optionsDescription, argc, argv, &help, allowUnregisteredConfigOptions);
+   return read(optionsDescription, argc, argv, &help,
+               allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
 
 void reportError(const std::string& errorMessage,

@@ -1071,6 +1071,26 @@ core::Error readObject(const json::Object& object,
    return readObject(object, name12, pValue12);
 }
 
+template <typename T>
+core::Error getOptionalParam(const json::Object& json, const std::string& param,
+                             const T& defaultValue, T* outParam)
+{
+   json::Object::const_iterator it = json.find(param);
+   if (it != json.end())
+   {
+      if (!json::isType<T>(it->second))
+      {
+         return core::Error(errc::ParamTypeMismatch, ERROR_LOCATION);
+      }
+
+      *outParam = (it->second).get_value<T>();
+      return Success();
+   }
+
+   *outParam = defaultValue;
+   return Success();
+}
+
 // json rpc response
          
 class JsonRpcResponse
