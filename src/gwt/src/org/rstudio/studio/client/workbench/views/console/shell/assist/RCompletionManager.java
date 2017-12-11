@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -246,6 +247,20 @@ public class RCompletionManager implements CompletionManager
             }
          }
       }));
+      
+      // hide the autocompletion popup if the user executes
+      // an Ace editor command (e.g. insert pipe operator)
+      handlers_.add(eventBus_.addHandler(
+            AceEditorCommandEvent.TYPE,
+            new AceEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onEditorCommand(AceEditorCommandEvent event)
+               {
+                  invalidatePendingRequests();
+                  close();
+               }
+            }));
       
    }
    
