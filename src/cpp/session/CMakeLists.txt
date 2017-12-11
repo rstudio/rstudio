@@ -222,7 +222,6 @@ set (SESSION_SOURCE_FILES
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
    "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
-   "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
 )
 
 # platform specific source files
@@ -244,6 +243,7 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
    )
 endif()
 

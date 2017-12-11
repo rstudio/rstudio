@@ -25,17 +25,23 @@ include_directories(
 
 set(RSINVERSE_SOURCE_FILES
   RsInverseMain.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc"
 )
 
+if(WIN32)
 
-# configure rsinverse.rc
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.rc.in
-                ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc)
+   list(
+      APPEND RS_INVERSE_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc")
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc)
 
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest
-                ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.exe.manifest COPYONLY)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.exe.manifest COPYONLY)
+endif()
 
 add_executable(rsinverse
   ${RSINVERSE_SOURCE_FILES}

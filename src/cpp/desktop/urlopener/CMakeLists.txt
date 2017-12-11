@@ -25,17 +25,24 @@ include_directories(
 
 set(URLOPENER_SOURCE_FILES
   UrlOpenerMain.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc"
 )
 
+if(WIN32)
 
-# configure urlopener.rc
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.rc.in
-                ${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc)
+   list(
+      APPEND URLOPENER_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc")
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/urlopener.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc)
 
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
-                ${CMAKE_CURRENT_BINARY_DIR}/urlopener.exe.manifest COPYONLY)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/urlopener.exe.manifest COPYONLY)
+
+endif()
 
 add_executable(urlopener
   ${URLOPENER_SOURCE_FILES}

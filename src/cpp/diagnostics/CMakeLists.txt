@@ -26,7 +26,6 @@ include_directories(
 
 set(DIAGNOSTICS_SOURCE_FILES
   DiagnosticsMain.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/diagnostics.rc"
 )
 
 # config file
@@ -34,13 +33,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if(WIN32)
-   # configure diagnostics.rc
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/diagnostics.rc.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/diagnostics.rc)
 
+   list(
+      APPEND DIAGNOSTICS_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/diagnostics.rc")
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/diagnostics.exe.manifest
-                   ${CMAKE_CURRENT_BINARY_DIR}/diagnostics.exe.manifest COPYONLY)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/diagnostics.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/diagnostics.rc)
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/diagnostics.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/diagnostics.exe.manifest COPYONLY)
 
 endif()
 

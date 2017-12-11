@@ -25,17 +25,23 @@ include_directories(
 
 set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc"
 )
 
+if(WIN32)
 
-# configure consoleio.rc
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.rc.in
-                ${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc)
+   list(
+      APPEND CONSOLEIO_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc")
 
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/consoleio.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc)
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/consoleio.exe.manifest
-                ${CMAKE_CURRENT_BINARY_DIR}/consoleio.exe.manifest COPYONLY)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/consoleio.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/consoleio.exe.manifest COPYONLY)
+
+endif()
 
 add_executable(consoleio
   ${CONSOLEIO_SOURCE_FILES}

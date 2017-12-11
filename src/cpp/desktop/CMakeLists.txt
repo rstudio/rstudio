@@ -185,7 +185,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopSynctex.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
 )
 
 if(WIN32)
@@ -197,6 +196,7 @@ if(WIN32)
     DesktopWin32ProgressActivator.cpp
     DesktopWordViewer.cpp
     synctex/sumatra/SumatraSynctex.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
   )
   list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp
