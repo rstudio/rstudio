@@ -26,7 +26,7 @@ include_directories(
 
 set(DIAGNOSTICS_SOURCE_FILES
   DiagnosticsMain.cpp
-  diagnostics.rc
+  "${CMAKE_CURRENT_BINARY_DIR}/diagnostics.rc"
 )
 
 # config file

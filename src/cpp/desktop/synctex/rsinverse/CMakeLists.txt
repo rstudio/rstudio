@@ -25,7 +25,7 @@ include_directories(
 
 set(RSINVERSE_SOURCE_FILES
   RsInverseMain.cpp
-  rsinverse.rc
+  "${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc"
 )
 
 

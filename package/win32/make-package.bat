@@ -54,6 +54,8 @@ if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
 )
 
 REM create packages
+set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+set "VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC"
 cd "%BUILD_DIR%"
 if not "%1" == "quick" cpack -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP

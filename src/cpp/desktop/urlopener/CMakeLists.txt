@@ -25,7 +25,7 @@ include_directories(
 
 set(URLOPENER_SOURCE_FILES
   UrlOpenerMain.cpp
-  urlopener.rc
+  "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc"
 )
 
 

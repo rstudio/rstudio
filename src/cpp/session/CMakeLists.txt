@@ -221,8 +221,8 @@ set (SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
-   ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
-   rsession.rc
+   "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
+   "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
 )
 
 # platform specific source files

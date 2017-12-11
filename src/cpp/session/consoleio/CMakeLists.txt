@@ -25,7 +25,7 @@ include_directories(
 
 set(CONSOLEIO_SOURCE_FILES
   ConsoleIOMain.cpp
-  consoleio.rc
+  "${CMAKE_CURRENT_BINARY_DIR}/consoleio.rc"
 )
 
 
