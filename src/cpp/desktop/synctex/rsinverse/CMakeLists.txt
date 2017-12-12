@@ -37,10 +37,10 @@ if(WIN32)
       ${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.rc.in
       ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.rc)
 
-
    configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/rsinverse.exe.manifest
       ${CMAKE_CURRENT_BINARY_DIR}/rsinverse.exe.manifest COPYONLY)
+
 endif()
 
 add_executable(rsinverse
