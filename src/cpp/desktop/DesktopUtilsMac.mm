@@ -40,7 +40,13 @@ NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
    return [nsview window];
 }
 
+void initializeSystemPrefs()
+{
+   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+   [defaults setBool:NO forKey: @"NSFunctionBarAPIEnabled"];
 }
+
+} // anonymous namespace
 
 double devicePixelRatio(QMainWindow* pMainWindow)
 {
@@ -183,6 +189,8 @@ void initializeLang()
    const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
    core::system::setenv("LANG", clang);
    core::system::setenv("LC_CTYPE", clang);
+
+   initializeSystemPrefs();
 }
 
 } // namespace desktop
