@@ -93,6 +93,10 @@ int askYesNoCancel(const char* question)
       return NO;
    case IDCANCEL:
       return CANCEL;
+
+   // silence compiler warning
+   default:
+      return CANCEL;
    }
 }
 
@@ -116,7 +120,7 @@ void setMemoryLimit()
 
    // use physical memory on win64. on win32 further constrain by
    // virtual memory minus an offset (for the os and other programs)
- #ifdef WIN64
+ #ifdef _WIN64
    DWORDLONG maxMemory = physicalMem;
  #else
    DWORDLONG maxMemory = std::min(virtualMemory, physicalMem);

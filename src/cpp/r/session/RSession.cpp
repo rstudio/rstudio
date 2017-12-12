@@ -62,7 +62,10 @@
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
-extern "C" SA_TYPE SaveAction;
+
+extern "C" {
+__declspec(dllimport) SA_TYPE SaveAction;
+}
 
 #define CTXT_BROWSER 16
 
