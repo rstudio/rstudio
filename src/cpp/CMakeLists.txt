@@ -107,6 +107,7 @@ if(UNIX)
 # Win32 specific global directives
 else()
 
+   # be large address aware
    foreach(TYPE EXE MODULE)
       set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} /largeaddressaware")
    endforeach()
@@ -114,9 +115,12 @@ else()
    # increase stack size to 16mb
    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /stack:0x1000000")
 
+   # allow for large number of sections
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+
    # require Windows Vista (for both 32bit and 64bit targets)
    add_definitions(
-      /bigobj
       -DNOMINMAX
       -DWINVER=0x600
       -D_WIN32_WINNT=0x600
