@@ -261,7 +261,9 @@ if(WIN32)
       add_subdirectory(synctex/rsinverse)
    endif()
 
-   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
+   set(
+      CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
 
 elseif(APPLE)
    find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
