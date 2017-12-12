@@ -93,7 +93,7 @@ std::string finishExpression(const std::string& expression)
    // If the last character of the expression is a binary op, then we
    // place a '.' after it
    int n = expression.length();
-   if (isBinaryOp(expression[n - 1]))
+   if (n > 0 && isBinaryOp(expression[n - 1]))
       result.append(".");
 
    std::vector<char> terminators;
