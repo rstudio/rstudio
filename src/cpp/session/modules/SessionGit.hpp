@@ -73,7 +73,7 @@ core::Error status(const core::FilePath& dir,
 core::Error fileStatus(const core::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
 core::Error statusToJson(const core::FilePath& path,
-                         const source_control::VCSStatus& status,
+                         const source_control::VCSStatus& vcsStatus,
                          core::json::Object* pObject);
 
 core::Error clone(const std::string& url,

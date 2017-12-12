@@ -192,19 +192,6 @@ public class RStudio implements EntryPoint
          }
       });
       
-      // define async callback fro GWT
-      final RunAsyncCallback runCallback = new RunAsyncCallback()
-      {
-         public void onFailure(Throwable reason)
-         {
-         }
-
-         public void onSuccess()
-         {
-            queue.run();
-         }
-      };
-      
       GWT.runAsync(new RunAsyncCallback()
       {
          @Override

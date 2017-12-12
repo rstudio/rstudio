@@ -197,11 +197,11 @@ bool isNonProjectFilename(const QString &filename)
 
 int main(int argc, char* argv[])
 {
-   core::system::initHook();
-
    // enable debug console
    // TODO: better way of selecting a port?
-   core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", "59009");
+   qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QByteArrayLiteral("59009"));
+
+   core::system::initHook();
 
    try
    {
