@@ -86,12 +86,10 @@ public:
 
 public:
    
-   RToken()
-      : offset_(-1)
-   {}
-   
+   RToken() = default;
+
    explicit RToken(TokenType type)
-      : type_(type), offset_(-1)
+      : type_(type)
    {}
 
    RToken(TokenType type,
@@ -190,12 +188,12 @@ public:
    }
 
 private:
-   TokenType type_;
+   TokenType type_ = TokenType::ERR;
    std::wstring::const_iterator begin_;
    std::wstring::const_iterator end_;
-   std::size_t offset_;
-   std::size_t row_;
-   std::size_t column_;
+   std::size_t offset_ = -1;
+   std::size_t row_ = 0;
+   std::size_t column_ = 0;
 };
 
 // Tokenize R code. Note that the RToken instances which are returned are
@@ -586,6 +584,10 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
 inline bool isPipeOperator(const RToken& rToken)
 {
    static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+
+   // don't try to iterate the dummy token (or any type=ERR token)
+   if (rToken.type() == RToken::TokenType::ERR)
+      return false;
    return regex_utils::match(rToken.begin(), rToken.end(), rePipe);
 }
 
