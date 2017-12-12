@@ -64,7 +64,13 @@
 #include <R_ext/RStartup.h>
 
 extern "C" {
+
+#ifndef _WIN32
+SA_TYPE SaveAction;
+#else
 __declspec(dllimport) SA_TYPE SaveAction;
+#endif
+
 }
 
 #define CTXT_BROWSER 16
