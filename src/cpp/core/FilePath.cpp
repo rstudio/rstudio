@@ -602,9 +602,17 @@ std::time_t FilePath::lastWriteTime() const
 
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
-   path_t relPath = boost::filesystem::relative(
-            this->pImpl_->path,
-            parentPath.pImpl_->path);
+   path_t relPath;
+   try
+   {
+      relPath = boost::filesystem::relative(
+               this->pImpl_->path,
+               parentPath.pImpl_->path);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION);
+   }
 
    return BOOST_FS_PATH2STR(relPath);
 }
