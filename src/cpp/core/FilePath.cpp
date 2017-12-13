@@ -600,37 +600,13 @@ std::time_t FilePath::lastWriteTime() const
    }
 }
 
-// NOTE: this does not properly handle .. and . path elements
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
-   // get iterators to this path and parent path
-   path_t::iterator thisBegin = pImpl_->path.begin() ;
-   path_t::iterator thisEnd = pImpl_->path.end() ;
-   path_t::iterator parentBegin = parentPath.pImpl_->path.begin();
-   path_t::iterator parentEnd = parentPath.pImpl_->path.end() ;
+   path_t relPath = boost::filesystem::relative(
+            this->pImpl_->path,
+            parentPath.pImpl_->path);
 
-   // if the child is fully prefixed by the parent
-   path_t::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
-   if ( it == thisBegin )
-   {
-      // search for mismatch location
-      std::pair<path_t::iterator,path_t::iterator> mmPair =
-                              std::mismatch(thisBegin, thisEnd, parentBegin);
-
-      // build relative path from mismatch on
-      path_t relativePath ;
-      path_t::iterator mmit = mmPair.first ;
-      while (mmit != thisEnd)
-      {
-         relativePath /= *mmit ;
-         mmit++ ;
-      }
-      return BOOST_FS_PATH2STR(relativePath) ;
-   }
-   else
-   {
-      return std::string() ;
-   }
+   return BOOST_FS_PATH2STR(relPath);
 }
 
 bool FilePath::isWithin(const FilePath& scopePath) const
