@@ -217,6 +217,9 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
+      // set application attributes
+      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromUtf8("RStudio"),
