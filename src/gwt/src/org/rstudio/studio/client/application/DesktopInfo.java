@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -35,6 +36,9 @@ public class DesktopInfo
          @Override
          public void onSessionInit(SessionInitEvent sie)
          {
+            if (Satellite.isCurrentWindowSatellite())
+               return;
+            
             SessionInfo info = session.getSessionInfo();
             if (info.getSumatraPdfExePath() != null)
                setSumatraPdfExePath(info.getSumatraPdfExePath());
