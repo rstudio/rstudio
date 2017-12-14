@@ -301,6 +301,7 @@ set(RSTUDIO_QTMODULES
     WebEngineWidgets
     PrintSupport
     Quick
+    QuickWidgets
     Positioning
     Sensors
     Svg
@@ -476,16 +477,24 @@ if(RSTUDIO_BUNDLE_QT)
 
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
+
       # install dependent libraries
-      set(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib")
+      get_filename_component(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib" ABSOLUTE CACHE)
+      get_filename_component(QT_RESOURCES_DIR "${Qt5Core_DIR}/../../../resources" ABSOLUTE CACHE)
       set(QT_FULL_VERSION ${QT_VERSION})
-      set(SO_VERSION "53")
+      set(SO_VERSION 56)
 
-      # use newer system library versions for Qt > 5.4.1
-      if(QT_VERSION VERSION_GREATER 5.4.1)
-         set(SO_VERSION "55")
-      endif()
+      # ensure Qt's icu libraries are linked in
+      set(ICU_LIBRARIES libicudata libicui18n libicuuc)
+      foreach(ICU_LIBRARY ${ICU_LIBRARIES})
+         add_library(${ICU_LIBRARY} SHARED IMPORTED)
+         set_target_properties(
+            ${ICU_LIBRARY} PROPERTIES
+            IMPORTED_LOCATION "${QT_LIBRARY_DIR}/${ICU_LIBRARY}.so.${SO_VERSION}")
+      endforeach()
+      target_link_libraries(rstudio ${ICU_LIBRARIES})
 
+      # install components from the library directory
       install(PROGRAMS ${QT_LIBRARY_DIR}/libQt5Core.so.5
                        ${QT_LIBRARY_DIR}/libQt5Core.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5DBus.so.5
@@ -516,6 +525,8 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5XmlPatterns.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Quick.so.5
                        ${QT_LIBRARY_DIR}/libQt5Quick.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5QuickWidgets.so.5
+                       ${QT_LIBRARY_DIR}/libQt5QuickWidgets.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Qml.so.5
                        ${QT_LIBRARY_DIR}/libQt5Qml.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Sql.so.5
@@ -529,45 +540,15 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}
                        ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}.1
               DESTINATION ${RSTUDIO_INSTALL_BIN})
-   # copy qt dlls directly to bin on win32
-   elseif(WIN32)
-      set(QT_BINARY_DIR "${Qt5Core_DIR}/../../../bin")
-      install(PROGRAMS ${QT_BINARY_DIR}/Qt5Core${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Gui${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Network${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebEngine${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebEngineCore{LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebEngineWidgets${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5WebChannel${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Positioning${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5PrintSupport${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Sensors${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Svg${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Xml${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5XmlPatterns${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Quick${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Qml${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Sql${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5OpenGL${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5Multimedia${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5MultimediaWidgets${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtWebEngineProcess${LIB_SUFFIX}.exe
-                       ${QT_BINARY_DIR}/icudt53.dll
-                       ${QT_BINARY_DIR}/icuin53.dll
-                       ${QT_BINARY_DIR}/icuuc53.dll
-                       ${QT_BINARY_DIR}/libwinpthread-1.dll
-                       ${QT_BINARY_DIR}/libstdc++-6.dll
-                       ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
-              DESTINATION ${RSTUDIO_INSTALL_BIN})
 
-      # install required resources for Qt WebEngine
+      # install components from resources directory
       install(
-         DIRECTORY "${Qt5Core_DIR}/../../../resources/"
-         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}
+         DIRECTORY "${QT_RESOURCES_DIR}"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}/"
          USE_SOURCE_PERMISSIONS)
 
    endif()
+          
 endif(RSTUDIO_BUNDLE_QT)
 
 if (UNIX AND NOT APPLE)

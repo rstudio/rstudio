@@ -47,6 +47,8 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
+: ${CMAKE_INSTALL_PREFIX="/usr/lib/${INSTALL_DIR}"}
+
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 rm -f CMakeCache.txt
@@ -55,7 +57,7 @@ cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       -DRSTUDIO_PACKAGE_VARIANT=$4 \
-      -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
+      -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
       ../../..
 
 make
