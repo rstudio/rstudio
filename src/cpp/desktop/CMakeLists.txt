@@ -507,6 +507,8 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Widgets.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebEngine.so.5
                        ${QT_LIBRARY_DIR}/libQt5WebEngine.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineCore.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebEngineCore.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.5
                        ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebChannel.so.5
