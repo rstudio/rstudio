@@ -178,6 +178,12 @@
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn2x;
 
+@url RSTUDIOLOGOLARGE rstudio2x;
+@url RSTUDIOLOGOSMALL rstudio_small2x;
+
+@url RSTUDIOHOMELARGE rstudio_home2x;
+@url RSTUDIOHOMESMALL rstudio_home_small2x;
+
 body.windows, body.macintosh, body.linux {}
 
 body {
@@ -2043,6 +2049,28 @@ body.ubuntu_mono .searchBox {
    color: #606060;
    top: -1px;
    margin-right: 6px;
+}
+
+.rstudioLogoLarge {
+   background-image: RSTUDIOLOGOLARGE;
+   background-size: 100%;
+   width: 48px;
+   height: 48px;
+}
+
+.rstudioLogoSmall {
+   background-image: RSTUDIOLOGOSMALL;
+   background-size: 100%;
+   width: 30px;
+   height: 30px;
+}
+
+.rstudioLogoLarge.serverHome:hover {
+   background-image: RSTUDIOHOMELARGE;
+}
+
+.rstudioLogoSmall.serverHome:hover {
+   background-image: RSTUDIOHOMESMALL;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .toolbarInfoLabel {

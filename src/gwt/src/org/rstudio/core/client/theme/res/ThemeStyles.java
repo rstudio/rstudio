@@ -208,4 +208,7 @@ public interface ThemeStyles extends CssResource
    String menuCheckable();
    
    String noLogo();
+   String rstudioLogoLarge();
+   String rstudioLogoSmall();
+   String serverHome();
 }

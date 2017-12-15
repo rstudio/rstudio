@@ -95,14 +95,16 @@ public class WebApplicationHeader extends Composite
       outerPanel_.getElement().getStyle().setPosition(Position.RELATIVE);
       
       // large logo
-      logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
+      logoLarge_ = new HTMLPanel("");
+      logoLarge_.getElement().setClassName(
+            ThemeResources.INSTANCE.themeStyles().rstudioLogoLarge());
       ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
-      logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
       
       // small logo
-      logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
+      logoSmall_ = new HTMLPanel("");
+      logoSmall_.getElement().setClassName(
+            ThemeResources.INSTANCE.themeStyles().rstudioLogoSmall());
       ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
-      logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
       // link target for logo
       logoAnchor_ = new Anchor();
@@ -196,14 +198,15 @@ public class WebApplicationHeader extends Composite
             showProjectMenu(!toolbar_.isVisible());
                 
             // record logo target url (if any)
-            logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
+            // logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
+            logoTargetUrl_ = "foo";
             if (logoTargetUrl_ != null)
             {
                logoAnchor_.setHref(logoTargetUrl_);
                logoAnchor_.setTitle("RStudio Server Home");
 
-               logoLarge_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home2x()));
-               logoSmall_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home_small2x()));
+               logoLarge_.getElement().addClassName(ThemeResources.INSTANCE.themeStyles().serverHome());
+               logoSmall_.getElement().addClassName(ThemeResources.INSTANCE.themeStyles().serverHome());
             }
             else
             {
@@ -551,8 +554,8 @@ public class WebApplicationHeader extends Composite
    private int preferredHeight_;
    private FlowPanel outerPanel_;
    private Anchor logoAnchor_;
-   private Image logoLarge_;
-   private Image logoSmall_;
+   private HTMLPanel logoLarge_;
+   private HTMLPanel logoSmall_;
    private String logoTargetUrl_ = null;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
