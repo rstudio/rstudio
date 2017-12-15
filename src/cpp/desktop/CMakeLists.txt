@@ -499,15 +499,21 @@ if(RSTUDIO_BUNDLE_QT)
       # download linuxdeployqt tool
       set(LINUXDEPLOYQT_COMMAND "$ENV{HOME}/rstudio-tools/linuxdeployqt")
       set(LINUXDEPLOYQT_URL "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage")
+      set(LINUXDEPLOYQT_RPATHTOOL "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh")
       if(NOT EXISTS "${LINUXDEPLOYQT_COMMAND}")
          message(STATUS "Downloading linuxdeployqt...")
          file(DOWNLOAD "${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_COMMAND}")
       endif()
 
-      # run cmake installer script
+      # configure and run cmake installer script
       configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinuxDeployQt.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake"
+        @ONLY)
+
+      configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/linux-rpath.sh.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh"
         @ONLY)
 
       install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake")

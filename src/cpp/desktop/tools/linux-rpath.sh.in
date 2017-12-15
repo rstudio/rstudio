@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+rewrite-rpath () {
+	patchelf --remove-rpath "$1"
+	patchelf --set-rpath '$ORIGIN/../lib' --force-rpath "$1"
+}
+
+rewrite-rpath libexec/QtWebEngineProcess
+rewrite-rpath bin/rstudio
+for file in lib/*.so*; do
+	rewrite-rpath "$file"
+done
+
+rm ../AppRun
+

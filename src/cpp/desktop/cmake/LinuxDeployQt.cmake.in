@@ -4,3 +4,16 @@ execute_process(COMMAND
   "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
   "-qmake=@QT_QMAKE_EXECUTABLE@")
 
+# running the generator twice is necessary to pick
+# up certain dependencies (for OpenGL)
+# https://github.com/probonopd/linuxdeployqt/issues/150
+execute_process(COMMAND
+  "@LINUXDEPLOYQT_COMMAND@"
+  "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+  "-qmake=@QT_QMAKE_EXECUTABLE@")
+
+# fix up rpaths
+execute_process(
+  COMMAND bash "@LINUXDEPLOYQT_RPATHTOOL@"
+  WORKING_DIRECTORY "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}")
+
