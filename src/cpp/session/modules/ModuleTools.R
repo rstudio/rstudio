@@ -292,27 +292,36 @@
 })
 
 
-.rs.addFunction("pandocSelfContainedHtml", function(input, output) {
+.rs.addFunction("pandocSelfContainedHtml", function(input, template, output) {
    
    # make input file path absolute
    input <- normalizePath(input)
-   
-   # ensure output file exists and make it's path absolute
+
+   # create a temporary copy of the file for conversion
+   inputFile <- tempfile(tmpdir = dirname(input), fileext = ".html")
+   inputLines <- readLines(con = input, warn = FALSE)
+
+   # write all the lines from the input except the DOCTYPE declaration, which pandoc will not treat
+   # as HTML (starting in pandoc 2)
+   writeLines(text = inputLines[!grepl("<!DOCTYPE", inputLines, fixed = TRUE)],
+              con  = inputFile)
+
+   # ensure output file exists and make its path absolute
    if (!file.exists(output))
       file.create(output)
    output <- normalizePath(output)
    
-   # create a simple body-only template
-   template <- tempfile(fileext = ".html")
-   writeLines("$body$", template)
-   
-   # convert from markdown to html to get base64 encoding
-   # (note there is no markdown in the source document but
-   # we still need to do this "conversion" to get the
-   # base64 encoding)
-   args <- c(input)
+   # convert from markdown to html to get base64 encoding. note there is no markdown in the source
+   # document but we still need to do this "conversion" to get the base64 encoding; we also don't
+   # want to convert from HTML since that will cause pandoc to convert only the <body>
+   args <- c(inputFile)
    args <- c(args, "--from", "markdown_strict")
    args <- c(args, "--output", output)
+
+   # define a title for the document. this value is not actually consumed by the template, but
+   # pandoc requires it in metadata when converting to HTML, so supply a dummy value to keep the
+   # output clean.
+   args <- c(args, "--metadata", "title:RStudio")
    
    # set stack size
    stack_size <- getOption("pandoc.stack.size", default = "512m")
@@ -329,7 +338,7 @@
    # setwd temporarily
    wd <- getwd()
    on.exit(setwd(wd), add = TRUE)
-   setwd(dirname(input))
+   setwd(dirname(inputFile))
    
    # execute it
    result <- system(command)
