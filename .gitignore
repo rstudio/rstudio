@@ -34,5 +34,6 @@ CMakeLists.txt.user
 tags
 GPATH
 GRTAGS
+GSYMS
 GTAGS
 
