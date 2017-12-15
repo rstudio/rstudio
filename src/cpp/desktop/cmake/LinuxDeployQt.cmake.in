@@ -1,19 +1,25 @@
 # call linuxdeployqt to bundle Qt dependencies
-execute_process(COMMAND
-  "@LINUXDEPLOYQT_COMMAND@"
-  "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
-  "-qmake=@QT_QMAKE_EXECUTABLE@")
+execute_process(
+   COMMAND
+      "@LINUXDEPLOYQT_COMMAND@"
+      "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+      "-qmake=@QT_QMAKE_EXECUTABLE@"
+   OUTPUT_QUIET
+   ERROR_QUIET)
 
 # running the generator twice is necessary to pick
 # up certain dependencies (for OpenGL)
 # https://github.com/probonopd/linuxdeployqt/issues/150
-execute_process(COMMAND
-  "@LINUXDEPLOYQT_COMMAND@"
-  "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
-  "-qmake=@QT_QMAKE_EXECUTABLE@")
+execute_process(
+   COMMAND
+      "@LINUXDEPLOYQT_COMMAND@"
+      "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+      "-qmake=@QT_QMAKE_EXECUTABLE@"
+   OUTPUT_QUIET
+   ERROR_QUIET)
 
 # fix up rpaths
 execute_process(
-  COMMAND bash "@LINUXDEPLOYQT_RPATHTOOL@"
-  WORKING_DIRECTORY "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}")
+   COMMAND bash "@LINUXDEPLOYQT_RPATHTOOL@"
+   WORKING_DIRECTORY "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}")
 
