@@ -1,0 +1,6 @@
+# call linuxdeployqt to bundle Qt dependencies
+execute_process(COMMAND
+  "@LINUXDEPLOYQT_COMMAND@"
+  "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+  "-qmake=@QT_QMAKE_EXECUTABLE@")
+

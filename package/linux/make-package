@@ -60,7 +60,7 @@ cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
       ../../..
 
-make
+make ${MAKEFLAGS}
 
 if [ "$2" != "DEB" ]
 then

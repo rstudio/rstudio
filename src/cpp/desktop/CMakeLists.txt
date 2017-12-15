@@ -415,8 +415,12 @@ if(RSTUDIO_BUNDLE_QT)
       set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_BIN})
       set(QTPLUGINS_DEST_DIR ${RSTUDIO_INSTALL_BIN})
    endif()
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt.conf
-           DESTINATION ${QTCONF_DEST_DIR})
+
+   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qt.conf)
+      install(
+         FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt.conf
+         DESTINATION ${QTCONF_DEST_DIR})
+   endif()
 
    # copy qt plugins
    if(WIN32)
@@ -433,7 +437,7 @@ if(RSTUDIO_BUNDLE_QT)
       install(PROGRAMS "${QT_PLATFORMS_DIR}/qminimal${LIB_SUFFIX}.dll"
                        "${QT_PLATFORMS_DIR}/qwindows${LIB_SUFFIX}.dll"
               DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
-   elseif(NOT APPLE)
+   elseif(APPLE)
       install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/imageformats"
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
               PATTERN "*_debug.*" EXCLUDE
@@ -484,70 +488,29 @@ if(RSTUDIO_BUNDLE_QT)
       set(QT_FULL_VERSION ${QT_VERSION})
       set(SO_VERSION 56)
 
-      # ensure Qt's icu libraries are linked in
-      set(ICU_LIBRARIES libicudata libicui18n libicuuc)
+      # tell RStudio to link to icu
+      set(ICU_LIBRARIES libicui18n libicuuc libicudata)
       foreach(ICU_LIBRARY ${ICU_LIBRARIES})
          add_library(${ICU_LIBRARY} SHARED IMPORTED)
-         set_target_properties(
-            ${ICU_LIBRARY} PROPERTIES
-            IMPORTED_LOCATION "${QT_LIBRARY_DIR}/${ICU_LIBRARY}.so.${SO_VERSION}")
+         set_property(TARGET ${ICU_LIBRARY} PROPERTY IMPORTED_LOCATION "${QT_LIBRARY_DIR}/${ICU_LIBRARY}.so")
       endforeach()
       target_link_libraries(rstudio ${ICU_LIBRARIES})
 
-      # install components from the library directory
-      install(PROGRAMS ${QT_LIBRARY_DIR}/libQt5Core.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Core.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5DBus.so.5
-                       ${QT_LIBRARY_DIR}/libQt5DBus.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Gui.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Gui.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Network.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Network.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Widgets.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Widgets.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebEngine.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebEngineCore.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebEngineCore.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebEngineWidgets.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5WebChannel.so.5
-                       ${QT_LIBRARY_DIR}/libQt5WebChannel.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Positioning.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Positioning.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5PrintSupport.so.5
-                       ${QT_LIBRARY_DIR}/libQt5PrintSupport.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Sensors.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Sensors.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Svg.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Svg.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Xml.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Xml.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5XmlPatterns.so.5
-                       ${QT_LIBRARY_DIR}/libQt5XmlPatterns.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Quick.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Quick.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5QuickWidgets.so.5
-                       ${QT_LIBRARY_DIR}/libQt5QuickWidgets.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Qml.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Qml.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5Sql.so.5
-                       ${QT_LIBRARY_DIR}/libQt5Sql.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQt5OpenGL.so.5
-                       ${QT_LIBRARY_DIR}/libQt5OpenGL.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libicui18n.so.${SO_VERSION}
-                       ${QT_LIBRARY_DIR}/libicui18n.so.${SO_VERSION}.1
-                       ${QT_LIBRARY_DIR}/libicuuc.so.${SO_VERSION}
-                       ${QT_LIBRARY_DIR}/libicuuc.so.${SO_VERSION}.1
-                       ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}
-                       ${QT_LIBRARY_DIR}/libicudata.so.${SO_VERSION}.1
-              DESTINATION ${RSTUDIO_INSTALL_BIN})
+      # download linuxdeployqt tool
+      set(LINUXDEPLOYQT_COMMAND "$ENV{HOME}/rstudio-tools/linuxdeployqt")
+      set(LINUXDEPLOYQT_URL "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage")
+      if(NOT EXISTS "${LINUXDEPLOYQT_COMMAND}")
+         message(STATUS "Downloading linuxdeployqt...")
+         file(DOWNLOAD "${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_COMMAND}")
+      endif()
 
-      # install components from resources directory
-      install(
-         DIRECTORY "${QT_RESOURCES_DIR}"
-         DESTINATION "${RSTUDIO_INSTALL_BIN}/"
-         USE_SOURCE_PERMISSIONS)
+      # run cmake installer script
+      configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinuxDeployQt.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake"
+        @ONLY)
+
+      install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake")
 
    endif()
           
