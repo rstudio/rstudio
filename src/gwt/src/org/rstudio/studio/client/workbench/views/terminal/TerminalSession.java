@@ -265,7 +265,13 @@ public class TerminalSession extends XTermWidget
       }
       socket_.dispatchOutput(output, doLocalEcho());
    }
-
+   
+   @Override
+   public void connectionDisconnected()
+   {
+      disconnect(false);
+   }
+   
    public void receivedSendToTerminal(String input)
    {
       // tweak line endings 
