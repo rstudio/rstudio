@@ -24,6 +24,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
 
 using namespace rstudio::core;
@@ -52,6 +53,9 @@ void Options::initFromCommandLine(const QStringList& arguments)
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
    }
+
+   // synchronize zoom level with desktop frame
+   desktopInfo().setZoomLevel(zoomLevel());
 }
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
@@ -218,10 +222,9 @@ double Options::zoomLevel() const
 
 void Options::setZoomLevel(double zoomLevel)
 {
+   desktopInfo().setZoomLevel(zoomLevel);
    settings_.setValue(QString::fromUtf8("view.zoomLevel"), zoomLevel);
 }
-
-
 
 #ifdef _WIN32
 QString Options::rBinDir() const

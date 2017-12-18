@@ -31,6 +31,7 @@ class DesktopInfo : public QObject
 Q_SIGNALS:
    void sumatraPdfExePathChanged(QString value);
    void fixedWidthFontListChanged(QString value);
+   void zoomLevelChanged(double value);
 
 public:
    explicit DesktopInfo(QObject* parent = nullptr);
@@ -69,6 +70,13 @@ public:
               READ getSumatraPdfExePath
               WRITE setSumatraPdfExePath
               NOTIFY sumatraPdfExePathChanged)
+
+   Q_INVOKABLE double getZoomLevel();
+   Q_INVOKABLE void setZoomLevel(double zoomLevel);
+   Q_PROPERTY(double zoomLevel
+              READ getZoomLevel
+              WRITE setZoomLevel
+              NOTIFY zoomLevelChanged)
 };
 
 inline DesktopInfo& desktopInfo()

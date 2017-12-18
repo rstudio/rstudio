@@ -142,9 +142,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      int shellType);
 
    void setFixedWidthFont(String font);
-   
-   // TODO
-   double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    
    void showLicenseDialog();

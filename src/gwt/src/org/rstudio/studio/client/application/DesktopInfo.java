@@ -91,4 +91,15 @@ public class DesktopInfo
       $wnd.desktopInfo.sumatraPdfExePath = path;
    }-*/;
    
+   public static final native double getZoomLevel()
+   /*-{
+      return $wnd.desktopInfo.zoomLevel;
+   }-*/;
+   
+   public static final native void setZoomLevel(double zoomLevel)
+   /*-{
+      $wnd.desktopInfo.zoomLevel = zoomLevel;
+   }-*/;
+   
+   
 }

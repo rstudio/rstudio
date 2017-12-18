@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 
 import com.google.gwt.core.client.Scheduler;
@@ -39,7 +40,7 @@ public class DesktopExport
             sizeEditor.setGripperVisible(false);
             
             // get zoom level
-            double zoomLevel = Desktop.getFrame().getZoomLevel();
+            double zoomLevel = DesktopInfo.getZoomLevel();
             
             // get the preview iframe rect
             ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();

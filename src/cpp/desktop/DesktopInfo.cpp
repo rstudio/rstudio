@@ -38,6 +38,7 @@ QString s_platform           = kUnknown;
 QString s_version            = kUnknown;
 QString s_sumatraPdfExePath  = kUnknown;
 QString s_fixedWidthFontList = kUnknown;
+double  s_zoomLevel          = 1.0;
 
 #ifdef Q_OS_LINUX
 
@@ -140,6 +141,11 @@ DesktopInfo::DesktopInfo(QObject* parent)
             &DesktopInfo::fixedWidthFontListChanged,
             &DesktopInfo::setFixedWidthFontList);
 
+   QObject::connect(
+            this,
+            &DesktopInfo::zoomLevelChanged,
+            &DesktopInfo::setZoomLevel);
+
    // TODO: consider deferring this work as it may
    // be expensive (don't want it to slow down startup)
    QFontDatabase db;
@@ -210,6 +216,16 @@ QString DesktopInfo::getSumatraPdfExePath()
 void DesktopInfo::setSumatraPdfExePath(QString path)
 {
    s_sumatraPdfExePath = path;
+}
+
+double DesktopInfo::getZoomLevel()
+{
+   return s_zoomLevel;
+}
+
+void DesktopInfo::setZoomLevel(double zoomLevel)
+{
+   s_zoomLevel = zoomLevel;
 }
 
 } // end namespace desktop

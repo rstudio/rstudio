@@ -108,7 +108,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             if (zoomValue == 1.0)
                normalIndex = i;
             
-            if (zoomValue == Desktop.getFrame().getZoomLevel())
+            if (zoomValue == DesktopInfo.getZoomLevel())
                initialIndex = i;
             
             zoomLabels[i] = StringUtil.formatPercent(zoomValue);
@@ -255,7 +255,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (Desktop.isDesktop())
       {
          preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
-                               Desktop.getFrame().getZoomLevel());
+                               DesktopInfo.getZoomLevel());
       }
    }
 
