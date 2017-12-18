@@ -238,8 +238,9 @@ public class BrowseCap
 
       if (isWindowsDesktop())
       {
-         Desktop.getFrame().getDisplayDpi(dpi ->
+         Desktop.getFrame().getDisplayDpi(dpiString ->
          {
+            Integer dpi = StringUtil.parseInt(dpiString, 96);
             if (dpi >= 192)
             {
                Document.get().getBody().addClassName("windows-highdpi");

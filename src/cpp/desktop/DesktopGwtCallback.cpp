@@ -1311,9 +1311,9 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
-int GwtCallback::getDisplayDpi()
+std::string GwtCallback::getDisplayDpi()
 {
-   return getDpi();
+   return safe_convert::numberToString(getDpi());
 }
 
 } // namespace desktop
