@@ -20,6 +20,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.0.2m.zip
+set BOOST_FILES=boost-1.65.1-win-msvc14.zip
 
 set PANDOC_VERSION=1.19.2.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -83,6 +84,13 @@ if not exist %OPENSSL_FILES:~0,-4% (
   echo Unzipping %OPENSSL_FILES%
   unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
   del %OPENSSL_FILES%
+)
+
+if not exist %BOOST_FILES:~0,-4% (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_FILES%"
+  echo Unzipping %BOOST_FILES%
+  unzip %UNZIP_ARGS% "%BOOST_FILES%"
+  del %BOOST_FILES%
 )
 
 if not exist ..\..\src\gwt\lib (
