@@ -85,6 +85,12 @@ ShellCommand& ShellCommand::operator<<(const std::vector<FilePath> args)
    return *this;
 }
 
+ShellArgs& ShellArgs::operator <<(EncodingMode mode)
+{
+   encodingMode_ = mode;
+   return *this;
+}
+
 ShellArgs& ShellArgs::operator<<(const std::string& arg)
 {
    args_.push_back(arg);
@@ -99,7 +105,11 @@ ShellArgs& ShellArgs::operator<<(int arg)
 
 ShellArgs& ShellArgs::operator<<(const FilePath& path)
 {
-   return *this << string_utils::utf8ToSystem(path.absolutePath());
+   if (encodingMode_ == SystemEncoding)
+      *this << string_utils::utf8ToSystem(path.absolutePath());
+   else
+      *this << path.absolutePath();
+   return *this;
 }
 
 ShellArgs& ShellArgs::operator<<(const std::vector<std::string> args)
