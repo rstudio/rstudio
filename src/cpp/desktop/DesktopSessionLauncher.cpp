@@ -123,6 +123,7 @@ Error SessionLauncher::launchFirstSession()
                            "...");
 
    pMainWindow_ = new MainWindow(url);
+   pMainWindow_->setAttribute(Qt::WA_DeleteOnClose);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
    pMainWindow_->setAppLauncher(pAppLaunch_);
