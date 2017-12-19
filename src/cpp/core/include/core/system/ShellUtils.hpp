@@ -52,6 +52,12 @@ enum EscapeMode
    EscapeFilesOnly
 };
 
+enum EncodingMode
+{
+   SystemEncoding,
+   DefaultEncoding
+};
+
 class ShellCommand
 {
 public:
@@ -98,6 +104,8 @@ private:
 class ShellArgs
 {
 public:
+   ShellArgs() : encodingMode_(SystemEncoding) {}
+   ShellArgs& operator<<(EncodingMode mode);
    ShellArgs& operator<<(const std::string& arg);
    ShellArgs& operator<<(int arg);
    ShellArgs& operator<<(const FilePath& path);
@@ -116,6 +124,7 @@ public:
 
 private:
    std::vector<std::string> args_;
+   EncodingMode encodingMode_;
 };
 
 }
