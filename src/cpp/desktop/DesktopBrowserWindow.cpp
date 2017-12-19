@@ -14,6 +14,8 @@
  */
 
 #include "DesktopBrowserWindow.hpp"
+
+#include <QApplication>
 #include <QToolBar>
 #include <QShortcut>
 
@@ -146,7 +148,8 @@ WebPage* BrowserWindow::webPage()
 
 void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 {
-   QCoreApplication::postEvent(webView(), keyEvent);
+   for (auto* child : webView()->children())
+      QApplication::sendEvent(child, keyEvent);
 }
 
 void BrowserWindow::triggerPageAction(QWebEnginePage::WebAction action)

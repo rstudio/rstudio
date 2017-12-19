@@ -48,8 +48,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                              String dir,
                              CommandWithArg<String> callback);
    
-   void undo(boolean forAce);
-   void redo(boolean forAce);
+   void undo();
+   void redo();
    
    void clipboardCut();
    void clipboardCopy();

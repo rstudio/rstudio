@@ -73,8 +73,8 @@ public slots:
 
    void onClipboardChanged(QClipboard::Mode mode);
 
-   void undo(bool forAce);
-   void redo(bool forAce);
+   void undo();
+   void redo();
 
    void clipboardCut();
    void clipboardCopy();

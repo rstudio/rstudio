@@ -396,12 +396,12 @@ void GwtCallback::doAction(QKeySequence::StandardKey key)
    doAction(bindings.first());
 }
 
-void GwtCallback::undo(bool forAce)
+void GwtCallback::undo()
 {
    doAction(QKeySequence::Undo);
 }
 
-void GwtCallback::redo(bool forAce)
+void GwtCallback::redo()
 {
    // NOTE: On Windows, the default redo key sequence is 'Ctrl+Y';
    // however, we bind this to 'yank' and so 'redo' actions executed

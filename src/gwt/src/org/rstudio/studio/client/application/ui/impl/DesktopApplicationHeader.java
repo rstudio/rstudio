@@ -208,13 +208,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onUndoDummy()
    {
-      Desktop.getFrame().undo(isFocusInAceInstance());
+      Desktop.getFrame().undo();
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo(isFocusInAceInstance());
+      Desktop.getFrame().redo();
    }
 
    @Handler
