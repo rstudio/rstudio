@@ -32,6 +32,9 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
+set QT_VERSION=5.9.2
+set QT_FILE=QtSDK-%QT_VERSION%-msvc2015.7z
+
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
   mkdir gnudiff
@@ -86,11 +89,19 @@ if not exist %OPENSSL_FILES:~0,-4% (
   del %OPENSSL_FILES%
 )
 
-if not exist %BOOST_FILES:~0,-4% (
+if not exist %BOOST_FILES:~0,-4%* (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILES%"
   echo Unzipping %BOOST_FILES%
   unzip %UNZIP_ARGS% "%BOOST_FILES%"
   del %BOOST_FILES%
+)
+
+if not exist C:\Qt%QT_VERSION% (
+  wget %WGET_ARGS% %BASEURL%%QT_FILE%
+  echo Extracting %QT_FILE%
+  7z x %QT_FILE%
+  del %QT_FILE%
+  move Qt%QT_VERSION% C:\Qt%QT_VERSION%
 )
 
 if not exist ..\..\src\gwt\lib (
