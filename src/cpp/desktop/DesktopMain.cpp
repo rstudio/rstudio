@@ -220,6 +220,15 @@ int main(int argc, char* argv[])
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
+#ifndef NDEBUG
+      // disable web security for development builds (so we can
+      // get access to sourcemaps)
+      static std::vector<char*> arguments(argv, argv + argc);
+      arguments.push_back("--disable-web-security");
+      argc = (int) arguments.size();
+      argv = &arguments[0];
+#endif
+
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromUtf8("RStudio"),
