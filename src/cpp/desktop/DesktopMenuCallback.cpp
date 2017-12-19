@@ -180,6 +180,30 @@ void MenuCallback::addCommand(QString commandId,
 #endif
 
    QKeySequence keySequence(shortcut);
+
+   // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
+   // populate those here when discovered
+   if (commandId == QStringLiteral("cutDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Cut);
+   }
+   else if (commandId == QStringLiteral("copyDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Copy);
+   }
+   else if (commandId == QStringLiteral("pasteDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Paste);
+   }
+   else if (commandId == QStringLiteral("undoDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Undo);
+   }
+   else if (commandId == QStringLiteral("redoDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Redo);
+   }
+
 #ifndef Q_OS_MAC
    if (shortcut.contains(QString::fromUtf8("\n")))
    {
