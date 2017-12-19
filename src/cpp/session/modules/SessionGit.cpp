@@ -1380,7 +1380,10 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      ShellArgs args = gitArgs() << "show" << "--pretty=oneline" << "-M";
+      ShellArgs args = gitArgs()
+            << "-c" << "core.quotepath=false"
+            << "show" << "--pretty=oneline" << "-M";
+      
       if (s_gitVersion >= GIT_1_7_2)
          args << "-c";
       args << rev;
