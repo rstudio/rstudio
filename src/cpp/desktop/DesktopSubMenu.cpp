@@ -22,6 +22,29 @@
 namespace rstudio {
 namespace desktop {
 
+namespace {
+
+void hideCommandsWithNoLabel(QMenu* pMenu)
+{
+   for (auto* pAction : pMenu->actions())
+   {
+      if (pAction->menu())
+      {
+         hideCommandsWithNoLabel(pAction->menu());
+      }
+      else if (pAction->isSeparator())
+      {
+         // no action to take
+      }
+      else
+      {
+         pAction->setVisible(!pAction->text().isEmpty());
+      }
+   }
+}
+
+} // end anonymous namespace
+
 SubMenu::SubMenu(const QString& title, QWidget* parent):
     QMenu(title, parent)
 {
@@ -66,6 +89,9 @@ void SubMenu::onAboutToShow()
          pAction->setVisible(!hide);
       }
    }
+
+   // Hide commands with no text (e.g. MRU commands with no associated file)
+   hideCommandsWithNoLabel(this);
 
    // Clean up duplicated separators.
    // TODO: Qt is supposed to do this for us; perhaps we're
