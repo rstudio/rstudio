@@ -193,16 +193,16 @@ Error FilePath::makeCurrent(const std::string& path)
 #define kHomePathAlias "~/"
 #define kHomePathLeafAlias "~"
 
-std::string FilePath::createAliasedPath(const FilePath& path,
-                              const FilePath& userHomePath)
+std::string FilePath::createAliasedPath(
+      const FilePath& path,
+      const FilePath& userHomePath)
 {
    // Special case for "~"
    if (path == userHomePath)
       return kHomePathLeafAlias;
 
    // if the path is contained within the home path then alias it
-   std::string homeRelativePath = path.relativePath(userHomePath);
-   if (!homeRelativePath.empty())
+   if (path.isWithin(userHomePath))
    {
       std::string aliasedPath = kHomePathAlias + homeRelativePath;
       return aliasedPath;
@@ -620,10 +620,11 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
 bool FilePath::isWithin(const FilePath& scopePath) const
 {
    if (*this == scopePath)
-      return true ;
+      return true;
 
-   std::string relativePath = this->relativePath(scopePath);
-   return !relativePath.empty();
+   return boost::algorithm::starts_with(
+            (*this).absolutePath(),
+            scopePath.absolutePath());
 }
 
 
@@ -966,7 +967,7 @@ FilePath FilePath::childPath(const std::string& path) const
 namespace {
 
 Error notFoundError(const FilePath& filePath,
-                        const ErrorLocation& location)
+                    const ErrorLocation& location)
 {
    Error error = pathNotFoundError(location);
    if (!filePath.empty())
