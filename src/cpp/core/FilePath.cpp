@@ -204,6 +204,7 @@ std::string FilePath::createAliasedPath(
    // if the path is contained within the home path then alias it
    if (path.isWithin(userHomePath))
    {
+      std::string homeRelativePath = path.relativePath(userHomePath);
       std::string aliasedPath = kHomePathAlias + homeRelativePath;
       return aliasedPath;
    }
