@@ -38,7 +38,10 @@ void hideCommandsWithNoLabel(QMenu* pMenu)
       }
       else
       {
-         pAction->setVisible(!pAction->text().isEmpty());
+         if (pAction->isVisible())
+         {
+            pAction->setVisible(!pAction->text().isEmpty());
+         }
       }
    }
 }
