@@ -207,7 +207,8 @@ QString resolveAliasedPath(const QString& path)
 QString GwtCallback::getOpenFileName(const QString& caption,
                                      const QString& label,
                                      const QString& dir,
-                                     const QString& filter)
+                                     const QString& filter,
+                                     bool canChooseDirectories)
 {
    QString resolvedDir = resolveAliasedPath(dir);
 

@@ -59,7 +59,8 @@ public slots:
    QString getOpenFileName(const QString& caption,
                            const QString& label,
                            const QString& dir,
-                           const QString& filter);
+                           const QString& filter,
+                           bool canChooseDirectories);
 
    QString getSaveFileName(const QString& caption,
                            const QString& label,
