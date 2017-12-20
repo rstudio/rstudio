@@ -44,6 +44,7 @@ void MenuCallback::beginMenu(QString label)
 #endif
 
    auto* pMenu = new SubMenu(label, pMainMenu_);
+   pMenu->setSeparatorsCollapsible(true);
 
    if (menuStack_.count() == 0)
       pMainMenu_->addMenu(pMenu);
