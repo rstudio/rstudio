@@ -44,24 +44,6 @@ $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
    --config-file=$SESSION_CONF_FILE
 checkUnitTestFailure
 
-if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server/filebase ]
-then
-    echo Running 'filebase' tests...
-    $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/server/filebase/filebase-tests
-fi
-checkUnitTestFailure
-
-if [ -e ${CMAKE_CURRENT_BINARY_DIR}/spawner ]
-then
-   echo Running 'spawner' tests...
-   sudo $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/spawner/spawner-tests
-   checkUnitTestFailure
-
-   echo Running 'local spawner' tests
-   sudo $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/spawner/impls/local/local-spawner-tests
-   checkUnitTestFailure
-fi
-
 # return an error exit code if any unit tests failed
 if [ "$UNIT_TEST_FAILURE" = true ] ; then
     exit 1
