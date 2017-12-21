@@ -1120,8 +1120,10 @@ void enqueFileEditEvent(const std::string& file)
    if (file.empty())
       return;
 
-   // calculate full path
-   FilePath filePath = module_context::safeCurrentPath().complete(file);
+   // construct file path from full path
+   FilePath filePath = (boost::algorithm::starts_with(file, "~"))
+         ? module_context::resolveAliasedPath(file)
+         : module_context::safeCurrentPath().complete(file);
 
    // if it doesn't exist then create it
    if (!filePath.exists())
