@@ -81,6 +81,10 @@ else()
    endif()
 endif()
 
+if(QMAKE_QT50_SDK)
+   message(STATUS "Found Qt: ${QMAKE_QT50_SDK}")
+endif()
+
 # set the cmake prefix path based on the location of the qmake executable
 get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
 set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
