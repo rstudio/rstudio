@@ -54,8 +54,6 @@ public:
 
    QString launchFailedErrorMessage() const;
 
-   void cleanupAtExit();
-
 public slots:
    void onRSessionExited(int exitCode, QProcess::ExitStatus exitStatus);
    void onReloadFrameForNextSession();

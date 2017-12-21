@@ -361,8 +361,6 @@ int main(int argc, char* argv[])
 
       int result = pApp->exec();
 
-      sessionLauncher.cleanupAtExit();
-
       options.cleanUpScratchTempDir();
 
       return result;

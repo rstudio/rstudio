@@ -246,8 +246,9 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       pEvent->accept();
       return;
    }
-
+   
    pEvent->ignore();
+   desktop::options().saveMainWindowBounds(this);
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
             [&](QVariant hasQuitR) {

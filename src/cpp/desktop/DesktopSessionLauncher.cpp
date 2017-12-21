@@ -405,13 +405,6 @@ QString SessionLauncher::launchFailedErrorMessage() const
 }
 
 
-void SessionLauncher::cleanupAtExit()
-{
-   if (pMainWindow_)
-      desktop::options().saveMainWindowBounds(pMainWindow_);
-}
-
-
 void SessionLauncher::buildLaunchContext(QString* pHost,
                                          QString* pPort,
                                          QStringList* pArgList,
