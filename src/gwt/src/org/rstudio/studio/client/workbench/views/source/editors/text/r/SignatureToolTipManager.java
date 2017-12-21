@@ -449,7 +449,7 @@ public class SignatureToolTipManager
       if (!cursor.hasType("identifier"))
          return;
 
-      if (cursor.nextValue() == "(")
+      if (!cursor.nextValue().equals("("))
          return;
       
       String callString = cursor.currentValue();
