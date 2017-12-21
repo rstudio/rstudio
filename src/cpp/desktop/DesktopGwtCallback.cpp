@@ -218,7 +218,11 @@ QString GwtCallback::getOpenFileName(const QString& caption,
             resolveAliasedPath(dir),
             filter);
 
-   dialog.setFileMode(QFileDialog::ExistingFile);
+   QFileDialog::FileMode mode = (canChooseDirectories)
+         ? QFileDialog::AnyFile
+         : QFileDialog::ExistingFile;
+   
+   dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
 
    QString result;
