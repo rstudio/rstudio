@@ -1467,7 +1467,7 @@ private:
          {
             while (++endIndex < n)
             {
-               if (std::isspace(extraArgs[endIndex]))
+               if (isspace(extraArgs[endIndex]))
                   break;
             }
             libPath = extraArgs.substr(startIndex, endIndex - startIndex + 1);

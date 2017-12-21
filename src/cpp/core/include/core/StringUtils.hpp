@@ -285,6 +285,83 @@ inline std::wstring trimWhitespace(const std::wstring& string)
 std::string makeRandomByteString(std::size_t n);
 
 } // namespace string_utils
+
+// wrappers for functions in <cctype>, as those functions normally
+// require one to cast arguments from char to unsigned char, otherwise
+// one risks bumping into undefined behavior (which MSVC is strict about)
+// see e.g. http://en.cppreference.com/w/cpp/string/byte/toupper for
+// motivation
+
+inline int isalnum(char ch)
+{
+   return std::isalnum(static_cast<unsigned char>(ch));
+}
+
+inline int isalpha(char ch)
+{
+   return std::isalpha(static_cast<unsigned char>(ch));
+}
+
+inline int islower(char ch)
+{
+   return std::islower(static_cast<unsigned char>(ch));
+}
+
+inline int isupper(char ch)
+{
+   return std::isupper(static_cast<unsigned char>(ch));
+}
+
+inline int isdigit(char ch)
+{
+   return std::isdigit(static_cast<unsigned char>(ch));
+}
+
+inline int isxdigit(char ch)
+{
+   return std::isxdigit(static_cast<unsigned char>(ch));
+}
+
+inline int iscntrl(char ch)
+{
+   return std::iscntrl(static_cast<unsigned char>(ch));
+}
+
+inline int isgraph(char ch)
+{
+   return std::isgraph(static_cast<unsigned char>(ch));
+}
+
+inline int isspace(char ch)
+{
+   return std::isspace(static_cast<unsigned char>(ch));
+}
+
+inline int isblank(char ch)
+{
+   return std::isblank(static_cast<unsigned char>(ch));
+}
+
+inline int isprint(char ch)
+{
+   return std::isprint(static_cast<unsigned char>(ch));
+}
+
+inline int ispunct(char ch)
+{
+   return std::ispunct(static_cast<unsigned char>(ch));
+}
+
+inline int tolower(char ch)
+{
+   return std::tolower(static_cast<unsigned char>(ch));
+}
+
+inline int toupper(char ch)
+{
+   return std::toupper(static_cast<unsigned char>(ch));
+}
+
 } // namespace core 
 } // namespace rstudio
 
