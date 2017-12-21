@@ -54,7 +54,7 @@ public slots:
 protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
-   void keyPressEvent(QKeyEvent* pEv) override;
+   void keyPressEvent(QKeyEvent* pEvent) override;
    void closeEvent(QCloseEvent* pEv) override;
 
 protected slots:

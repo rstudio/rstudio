@@ -93,46 +93,9 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
    return fileName;
 }
 
-void WebView::keyPressEvent(QKeyEvent* pEv)
+void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
-   // emit close window shortcut signal if appropriate
-#ifndef _WIN32
-   if (pEv->key() == 'W')
-   {
-      // check modifier and emit signal
-      if (pEv->modifiers() & Qt::ControlModifier)
-         onCloseWindowShortcut();
-   }
-#endif
-
-  // flip control and meta on the mac
-#ifdef Q_OS_MAC
-   Qt::KeyboardModifiers modifiers = pEv->modifiers();
-   if (modifiers & Qt::MetaModifier && !(modifiers & Qt::ControlModifier))
-   {
-      modifiers &= ~Qt::MetaModifier;
-      modifiers |= Qt::ControlModifier;
-   }
-   else if (modifiers & Qt::ControlModifier && !(modifiers & Qt::MetaModifier))
-   {
-      modifiers &= ~Qt::ControlModifier;
-      modifiers |= Qt::MetaModifier;
-   }
-#endif
-
-   // Work around bugs in QtWebKit that result in numpad key
-   // presses resulting in keyCode=0 in the DOM's keydown events.
-   // This is due to some missing switch cases in the case
-   // where the keypad modifier bit is on, so we turn it off.
-   QKeyEvent newEv(pEv->type(),    
-                   pEv->key(),
-                   pEv->modifiers() & ~Qt::KeypadModifier,
-                   pEv->text(),
-                   pEv->isAutoRepeat(),
-                   pEv->count());
-  
-   // delegate to base
-   this->QWebEngineView::keyPressEvent(&newEv);
+   QWebEngineView::keyPressEvent(pEvent);
 }
 
 void WebView::openFile(QString fileName)
