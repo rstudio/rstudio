@@ -2,7 +2,7 @@
 execute_process(
    COMMAND
       "@LINUXDEPLOYQT_COMMAND@"
-      "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+      "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/rstudio"
       "-qmake=@QT_QMAKE_EXECUTABLE@"
    OUTPUT_QUIET
    ERROR_QUIET)
@@ -13,7 +13,7 @@ execute_process(
 execute_process(
    COMMAND
       "@LINUXDEPLOYQT_COMMAND@"
-      "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/bin/rstudio"
+      "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/rstudio"
       "-qmake=@QT_QMAKE_EXECUTABLE@"
    OUTPUT_QUIET
    ERROR_QUIET)
@@ -21,5 +21,5 @@ execute_process(
 # fix up rpaths
 execute_process(
    COMMAND bash "@LINUXDEPLOYQT_RPATHTOOL@"
-   WORKING_DIRECTORY "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}")
+   WORKING_DIRECTORY "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
 
