@@ -142,10 +142,12 @@ std::string getLastFunction(const std::string& fileContents)
    size_t lastParenPos = std::string::npos;
    for (size_t i = contents.size() - 1; i > 1; i--)
    {
-      if (std::isspace(contents.at(i)))
+      if (isspace(contents.at(i)))
          continue;
+      
       if (contents.at(i) == ')')
          lastParenPos = i;
+      
       break;
    }
 
@@ -179,7 +181,7 @@ std::string getLastFunction(const std::string& fileContents)
       return function;
 
    // skip any whitespace between function paren and name
-   while (std::isspace(contents.at(functionEndPos)) && functionEndPos > 0)
+   while (isspace(contents.at(functionEndPos)) && functionEndPos > 0)
       functionEndPos--;
 
    // now work backward again to find the function name 
@@ -187,7 +189,7 @@ std::string getLastFunction(const std::string& fileContents)
    for (size_t i = functionEndPos; i > 0; i--)
    {
       char ch = contents.at(i);
-      if (!(std::isalnum(ch) || ch == '_' || ch == '.')) {
+      if (!(isalnum(ch) || ch == '_' || ch == '.')) {
          functionStartPos = i + 1;
          break;
       }
