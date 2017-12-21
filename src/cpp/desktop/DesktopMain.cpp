@@ -284,8 +284,6 @@ int main(int argc, char* argv[])
          initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
       }
 
-      pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
-
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);

@@ -25,6 +25,7 @@
 #include <QObject>
 #include <QKeyEvent>
 #include <QProcess>
+#include <QDebug>
 
 namespace rstudio {
 namespace desktop {
@@ -54,6 +55,7 @@ protected:
          auto* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
          auto modifiers = pKeyEvent->modifiers();
          
+         // fix up modifiers
          if (modifiers.testFlag(Qt::MetaModifier) &&
              !modifiers.testFlag(Qt::ControlModifier))
          {
@@ -69,7 +71,7 @@ protected:
             pKeyEvent->setModifiers(modifiers);
          }
       }
-         
+      
       return QObject::eventFilter(pObject, pEvent);
    }
 };
