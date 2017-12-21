@@ -17,6 +17,8 @@
 #define CORE_STRING_UTILS_HPP
 
 #include <string>
+#include <cctype>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
