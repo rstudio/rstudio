@@ -28,7 +28,7 @@ fi
 
 
 echo Running 'core' tests...
-$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN
+$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN -s
 checkUnitTestFailure
 
 echo Running 'rsession' tests...
