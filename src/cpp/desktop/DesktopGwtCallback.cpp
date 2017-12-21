@@ -738,12 +738,11 @@ int GwtCallback::showMessageBox(int type,
    if (pMsgBox != nullptr)
       pMsgBox->close();
 
-   QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
-                       caption,
-                       message,
-                       QMessageBox::NoButton,
-                       pOwner_->asWidget(),
-                       Qt::Dialog | Qt::Sheet);
+   QMessageBox msgBox(pOwner_->asWidget());
+   msgBox.setText(caption);
+   msgBox.setInformativeText(message);
+   msgBox.setIcon(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)));
+   msgBox.setWindowFlags(Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
    msgBox.setTextFormat(Qt::PlainText);
 
