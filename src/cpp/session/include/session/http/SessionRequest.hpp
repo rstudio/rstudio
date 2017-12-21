@@ -21,16 +21,12 @@
 
 #include <session/http/SessionRequest.hpp>
 
-#if !defined(_WIN32)
 #include <core/http/TcpIpBlockingClient.hpp>
-#include <core/http/LocalStreamBlockingClient.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
-#else
-#include <core/http/NamedPipeBlockingClient.hpp>
-#endif
 
-#if !defined(_WIN32)
-#include <session/SessionLocalStreams.hpp>
+#ifndef _WIN32
+# include <core/http/LocalStreamBlockingClient.hpp>
+# include <session/SessionLocalStreams.hpp>
 #endif
 
 #include <session/SessionConstants.hpp>
@@ -43,7 +39,8 @@ namespace http {
 // it can be used both from the postback executable (which does not link with
 // rsession) and the session itself
 inline core::Error sendSessionRequest(const std::string& uri, 
-      const std::string& body, core::http::Response* pResponse)
+                                      const std::string& body,
+                                      core::http::Response* pResponse)
 {
    // build request
    core::http::Request request;
@@ -53,47 +50,34 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setHeader("Connection", "close");
    request.setBody(body);
 
-#ifdef _WIN32
-   // get local peer
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
-   request.setHeader("X-Shared-Secret",
-                       core::system::getenv("RS_SHARED_SECRET"));
-   return core::http::sendRequest(pipeName,
-                            request,
-                            core::http::ConnectionRetryProfile(
-                                  boost::posix_time::seconds(10),
-                                  boost::posix_time::milliseconds(50)),
-                            pResponse);
-#else
    std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
 
+   // first, attempt to send a plain old http request
    if (tcpipPort.empty())
    {
       // if no standalone port, make an authenticated session request
       tcpipPort = core::system::getenv(kRSessionPortNumber);
+      request.setHeader("X-Shared-Secret", core::system::getenv("RS_SHARED_SECRET"));
+      return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
+   }
+
+#ifndef _WIN32
+   // otherwise, attempt communicating over a local stream (unix domain socket)
+   // determine stream path -- check server environment variable first
+   core::FilePath streamPath;
+   std::string stream = core::system::getenv(kRStudioSessionStream);
+   if (stream.empty())
+   {
+      // if no server environment variable, check desktop variant
+      streamPath = core::FilePath(core::system::getenv("RS_LOCAL_PEER"));
       request.setHeader("X-Shared-Secret",
-                          core::system::getenv("RS_SHARED_SECRET"));
-      return core::http::sendRequest("127.0.0.1", tcpipPort, request, 
-            pResponse);
+                        core::system::getenv("RS_SHARED_SECRET"));
    }
    else
    {
-      // determine stream path -- check server environment variable first
-      core::FilePath streamPath;
-      std::string stream = core::system::getenv(kRStudioSessionStream);
-      if (stream.empty())
-      {
-         // if no server environment variable, check desktop variant
-         streamPath = core::FilePath(core::system::getenv("RS_LOCAL_PEER"));
-         request.setHeader("X-Shared-Secret",
-                             core::system::getenv("RS_SHARED_SECRET"));
-      }
-      else
-      {
-         streamPath = session::local_streams::streamPath(stream);
-      }
-      return core::http::sendRequest(streamPath, request, pResponse);
+      streamPath = session::local_streams::streamPath(stream);
    }
+   return core::http::sendRequest(streamPath, request, pResponse);
 #endif
 
    return core::Success();
