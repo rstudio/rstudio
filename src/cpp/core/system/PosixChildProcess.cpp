@@ -15,6 +15,7 @@
 
 #include "ChildProcessSubprocPoll.hpp"
 
+#include <atomic>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
@@ -1062,7 +1063,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
         boost::asio::io_service& ioService) :
       parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
       stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
-      exitCode_(0), writing_(false)
+      stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false)
    {
    }
 
@@ -1097,7 +1098,8 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       // requires prior synchronization
       BOOST_ASSERT(lock.owns_lock());
 
-      if (exited_) return;
+      if (exited_)
+         return;
 
       if (writeBuffer_.empty()) return;
 
@@ -1139,7 +1141,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    void onReadStdOut(const boost::system::error_code& ec, size_t bytesRead)
    {
       if (ec)
+      {
+         stdoutFailure_ = true;
          return handleError(ec);
+      }
 
       std::string out(stdOutBuff_, bytesRead);
       if (callbacks_.onStdout)
@@ -1152,7 +1157,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    void onReadStdErr(const boost::system::error_code& ec, size_t bytesRead)
    {
       if (ec)
+      {
+         stderrFailure_ = true;
          return handleError(ec);
+      }
 
       std::string out(stdErrBuff_, bytesRead);
       if (callbacks_.onStderr)
@@ -1175,9 +1183,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    void onWriteStdIn(const boost::system::error_code& ec, bool eof)
    {
-      boost::unique_lock<boost::mutex> lock(mutex_);
+      if (exited_)
+         return;
 
-      if (exited_) return;
+      boost::unique_lock<boost::mutex> lock(mutex_);
 
       // free the message that was just written
       // we do this here because the message has to exist in memory
@@ -1207,11 +1216,12 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    // operation to avoid interleaving of message content
    void writeInput(const std::string& input, bool eof)
    {
+      if (exited_)
+         return;
+
       bool beginWriting = false;
 
       boost::unique_lock<boost::mutex> lock(mutex_);
-
-      if (exited_) return;
 
       beginWriting = writeBuffer_.empty();
       writeBuffer_.push(std::make_pair(input, eof));
@@ -1242,23 +1252,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    bool exited()
    {
-      LOCK_MUTEX(mutex_)
-      {
-         return exited_;
-      }
-      END_LOCK_MUTEX
-
-      // keep compiler happy
       return exited_;
-   }
-
-   void setExited()
-   {
-      LOCK_MUTEX(mutex_)
-      {
-         exited_ = true;
-      }
-      END_LOCK_MUTEX
    }
 
    static void checkExitedTimer(const boost::weak_ptr<Impl>& instance,
@@ -1289,11 +1283,24 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       using namespace boost::posix_time;
       using namespace boost::asio;
 
+      if (exited_)
+         return;
+
+      // only check for exit if both stdout and stderr have failed
+      // without this check, it would be possible for us to exit before processing any buffered output
+      // from the other pipe
+      if ((!stderrFailure_ || !stdoutFailure_) && !forceExit)
+         return;
+
       bool transitioned = false;
 
+      // lock the mutex to ensure only one thread checks for exit at a time
       LOCK_MUTEX(mutex_)
       {
-         if (exited_) return;
+         // check exited once more - this ensures that if another thread acquired the lock while we
+         // attempted to grab it, that we won't check for exit if it has already been done
+         if (exited_)
+            return;
 
          // perform a wait on the pid to determine if we exited
          // the waitTime parameter determines how long we should wait for the process to exit
@@ -1407,7 +1414,9 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    boost::asio::posix::stream_descriptor stdOutDescriptor_;
    boost::asio::posix::stream_descriptor stdErrDescriptor_;
    boost::asio::posix::stream_descriptor stdInDescriptor_;
-   bool exited_;
+   std::atomic<bool> exited_;
+   std::atomic<bool> stdoutFailure_;
+   std::atomic<bool> stderrFailure_;
    int exitCode_;
 
    boost::shared_ptr<boost::asio::deadline_timer> exitTimer_;

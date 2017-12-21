@@ -15,6 +15,8 @@
 
 #ifndef _WIN32
 
+#include <atomic>
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
@@ -56,7 +58,7 @@ struct IoServiceFixture
 {
    boost::asio::io_service ioService;
    boost::asio::io_service::work work;
-   boost::shared_ptr<boost::thread> pThread;
+   std::vector<boost::shared_ptr<boost::thread> > threads;
 
    void runServiceThread()
    {
@@ -64,15 +66,21 @@ struct IoServiceFixture
    }
 
    IoServiceFixture() :
-      ioService(), work(ioService),
-      pThread(new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)))
+      ioService(), work(ioService)
    {
+      for (int i = 0; i < 4; ++i)
+      {
+         boost::shared_ptr<boost::thread> pThread(
+                  new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)));
+         threads.push_back(pThread);
+      }
    }
 
    ~IoServiceFixture()
    {
       ioService.stop();
-      pThread->join();
+      for (const boost::shared_ptr<boost::thread>& thread : threads)
+         thread->join();
    }
 };
 
@@ -284,10 +292,17 @@ context("ProcessTests")
       // create new supervisor
       AsioProcessSupervisor supervisor(fixture.ioService);
 
-      int exitCodes[10];
-      std::string outputs[10];
-      for (int i = 0; i < 10; ++i)
+      const int numProcs = 1000;
+
+      int exitCodes[numProcs];
+      std::string outputs[numProcs];
+      std::atomic<int> numExited(0);
+      for (int i = 0; i < numProcs; ++i)
       {
+         // set exit code to some initial bad value to ensure it is properly set when
+         // the process exits
+         exitCodes[i] = -1;
+
          // construct program arguments
          std::vector<std::string> args;
          args.push_back("Hello, " + safe_convert::numberToString(i));
@@ -298,7 +313,11 @@ context("ProcessTests")
 
          ProcessCallbacks callbacks;
 
-         callbacks.onExit = boost::bind(&checkExitCode, _1, exitCodes + i);
+         callbacks.onExit = [&exitCodes, &numExited, i](int exitCode) {
+            exitCodes[i] = exitCode;
+            numExited++;
+         };
+
          callbacks.onStdout = boost::bind(&appendOutput, _2, outputs + i);
 
          // run program
@@ -306,11 +325,14 @@ context("ProcessTests")
       }
 
       // wait for processes to exit
-      bool success = supervisor.wait(boost::posix_time::seconds(5));
+      bool success = supervisor.wait(boost::posix_time::seconds(10));
       CHECK(success);
 
+      // check to make sure all processes really exited
+      CHECK(numExited == numProcs);
+
       // verify correct exit statuses and outputs
-      for (int i = 0; i < 10; ++i)
+      for (int i = 0; i < numProcs; ++i)
       {
          CHECK(exitCodes[i] == 0);
          CHECK(outputs[i] == "Hello, " + safe_convert::numberToString(i) + "\n");

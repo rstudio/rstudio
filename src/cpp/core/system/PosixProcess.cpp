@@ -39,17 +39,17 @@ struct AsioProcessSupervisor::Impl
 
    Error runChild(boost::shared_ptr<AsioAsyncChildProcess> pChild, ProcessCallbacks callbacks)
    {
-      // run the child
-      Error error = pChild->run(callbacks);
-      if (error)
-         return error;
-
       LOCK_MUTEX(mutex_)
       {
          // add to the list of children
          children_.insert(pChild);
       }
       END_LOCK_MUTEX
+
+      // run the child
+      Error error = pChild->run(callbacks);
+      if (error)
+         return error;      
 
       // success
       return Success();
