@@ -73,6 +73,7 @@ public class DesktopMenuCallback implements MenuCallback
    }-*/;
 
    public native static final void setCommandLabel(String commandId, String label) /*-{
+      label = @org.rstudio.core.client.command.AppMenuItem::replaceMnemonics(Ljava/lang/String;Ljava/lang/String;)(label, "&");
       $wnd.desktopMenuCallback.setCommandLabel(commandId, label);
    }-*/;
 }
