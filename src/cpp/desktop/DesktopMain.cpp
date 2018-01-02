@@ -224,7 +224,8 @@ int main(int argc, char* argv[])
       // disable web security for development builds (so we can
       // get access to sourcemaps)
       static std::vector<char*> arguments(argv, argv + argc);
-      arguments.push_back("--disable-web-security");
+      static char disableWebSecurity[] = "--disable-web-security";
+      arguments.push_back(disableWebSecurity);
       argc = (int) arguments.size();
       argv = &arguments[0];
 #endif
