@@ -16,6 +16,7 @@
 #include "ChildProcessSubprocPoll.hpp"
 
 #include <boost/bind.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
 #include <tests/TestThat.hpp>
