@@ -64,7 +64,7 @@ void standardStreamCaptureThread(
 Error ioError(const std::string& description, const ErrorLocation& location)
 {
    boost::system::error_code ec(boost::system::errc::io_error,
-                                boost::system::get_system_category());
+                                boost::system::system_category());
    Error error(ec, location);
    error.addProperty("description", description);
    return error;

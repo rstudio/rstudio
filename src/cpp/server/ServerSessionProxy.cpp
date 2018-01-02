@@ -572,7 +572,7 @@ void proxyRequest(
    {
       Error permissionError(boost::system::error_code(
                                boost::system::errc::permission_denied,
-                               boost::system::get_system_category()),
+                               boost::system::system_category()),
                             error,
                             ERROR_LOCATION);
       errorHandler(permissionError);

@@ -148,7 +148,7 @@ std::string interprocess_error_category::message(int ev) const
 boost::system::error_code ec_from_exception(const interprocess_exception& e) 
 {
    if (e.get_error_code() == system_error)
-      return error_code(e.get_native_error(), get_system_category()) ;
+      return error_code(e.get_native_error(), system_category()) ;
    else
       return error_code(e.get_error_code(), interprocess_category()) ;
 }

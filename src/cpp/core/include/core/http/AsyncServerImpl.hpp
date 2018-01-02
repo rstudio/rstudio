@@ -465,7 +465,7 @@ private:
    void checkForResourceExhaustion(const boost::system::error_code& ec,
                                    const core::ErrorLocation& location)
    {
-      if ( ec.category() == boost::system::get_system_category() &&
+      if ( ec.category() == boost::system::system_category() &&
           (ec.value() == boost::system::errc::too_many_files_open ||
            ec.value() == boost::system::errc::not_enough_memory) )
       {
