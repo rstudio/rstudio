@@ -96,19 +96,20 @@ public class AppearancePreferencesPane extends PreferencesPane
          int initialIndex = -1;
          int normalIndex = -1;
          String[] zoomValues = new String[] {
-               "0.25", "0.33", "0.50", "0.67", "0.75", "0.80",
-               "0.90", "1.00", "1.10", "1.25", "1.50", "1.75",
+               "0.25", "0.50", "0.75", "0.80", "0.90",
+               "1.00", "1.10", "1.25", "1.50", "1.75",
                "2.00", "2.50", "3.00", "4.00", "5.00"
          };
          String[] zoomLabels = new String[zoomValues.length];
-         for (int i=0; i<zoomValues.length; i++)
+         double currentZoomLevel = DesktopInfo.getZoomLevel();
+         for (int i = 0; i < zoomValues.length; i++)
          {
             double zoomValue = Double.parseDouble(zoomValues[i]);
             
             if (zoomValue == 1.0)
                normalIndex = i;
             
-            if (zoomValue == DesktopInfo.getZoomLevel())
+            if (zoomValue == currentZoomLevel)
                initialIndex = i;
             
             zoomLabels[i] = StringUtil.formatPercent(zoomValue);
