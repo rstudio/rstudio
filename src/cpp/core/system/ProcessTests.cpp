@@ -15,10 +15,13 @@
 
 #ifndef _WIN32
 
+#include <atomic>
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 
+#include <core/SafeConvert.hpp>
 #include <core/system/PosixProcess.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/Thread.hpp>
@@ -55,7 +58,7 @@ struct IoServiceFixture
 {
    boost::asio::io_service ioService;
    boost::asio::io_service::work work;
-   boost::shared_ptr<boost::thread> pThread;
+   std::vector<boost::shared_ptr<boost::thread> > threads;
 
    void runServiceThread()
    {
@@ -63,15 +66,21 @@ struct IoServiceFixture
    }
 
    IoServiceFixture() :
-      ioService(), work(ioService),
-      pThread(new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)))
+      ioService(), work(ioService)
    {
+      for (int i = 0; i < 4; ++i)
+      {
+         boost::shared_ptr<boost::thread> pThread(
+                  new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)));
+         threads.push_back(pThread);
+      }
    }
 
    ~IoServiceFixture()
    {
       ioService.stop();
-      pThread->join();
+      for (const boost::shared_ptr<boost::thread>& thread : threads)
+         thread->join();
    }
 };
 
@@ -86,6 +95,8 @@ context("ProcessTests")
 
       // create process options and callbacks
       ProcessOptions options;
+      options.threadSafe = true;
+
       ProcessCallbacks callbacks;
       int exitCode = -1;
       callbacks.onExit = boost::bind(&checkExitCode, _1, &exitCode);
@@ -114,6 +125,8 @@ context("ProcessTests")
 
       // create process options and callbacks
       ProcessOptions options;
+      options.threadSafe = true;
+
       ProcessCallbacks callbacks;
 
       int exitCode = -1;
@@ -136,6 +149,41 @@ context("ProcessTests")
       CHECK(output == expectedOutput);
    }
 
+   /* test running child process as another user
+    * commented out due to users being different on every machine
+   test_that("AsioProcessSupervisor can run process as another user")
+   {
+      IoServiceFixture fixture;
+
+      // create new supervisor
+      AsioProcessSupervisor supervisor(fixture.ioService);
+
+      // create process options and callbacks
+      ProcessOptions options;
+      options.runAsUser = "jdoe1";
+      ProcessCallbacks callbacks;
+
+      int exitCode = -1;
+      std::string output;
+
+      callbacks.onExit = boost::bind(&checkExitCode, _1, &exitCode);
+      callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
+
+      // run command
+      std::string command = "whoami";
+      supervisor.runCommand(command, options, callbacks);
+
+      // wait for it to exit
+      bool success = supervisor.wait(boost::posix_time::seconds(5));
+
+      // verify process exited successfully and we got the expected output
+      std::string expectedOutput = "jdoe1\n";
+      CHECK(success);
+      CHECK(exitCode == 0);
+      CHECK(output == expectedOutput);
+   }
+   */
+
    test_that("AsioProcessSupervisor returns correct error code for failure exit")
    {
       IoServiceFixture fixture;
@@ -145,6 +193,8 @@ context("ProcessTests")
 
       // create process options and callbacks
       ProcessOptions options;
+      options.threadSafe = true;
+
       ProcessCallbacks callbacks;
 
       int exitCode = -1;
@@ -168,6 +218,10 @@ context("ProcessTests")
       IoServiceFixture fixture;
 
       ProcessOptions options;
+      options.threadSafe = true;
+
+      options.threadSafe = true;
+
       ProcessCallbacks callbacks;
 
       int exitCode = -1;
@@ -192,6 +246,97 @@ context("ProcessTests")
       CHECK(!timedOut);
       CHECK(exitCode == 0);
       CHECK(output == expectedOutput);
+   }
+
+   test_that("Can spawn multiple sync processes and they all return correct results")
+   {
+      // create new supervisor
+      ProcessSupervisor supervisor;
+
+      int exitCodes[10];
+      std::string outputs[10];
+      for (int i = 0; i < 10; ++i)
+      {
+         // construct program arguments
+         std::vector<std::string> args;
+         args.push_back("Hello, " + safe_convert::numberToString(i));
+
+         // create process options and callbacks
+         ProcessOptions options;
+         options.threadSafe = true;
+
+         ProcessCallbacks callbacks;
+
+         callbacks.onExit = boost::bind(&checkExitCode, _1, exitCodes + i);
+         callbacks.onStdout = boost::bind(&appendOutput, _2, outputs + i);
+
+         // run program
+         supervisor.runProgram("/bin/echo", args, options, callbacks);
+      }
+
+      // wait for processes to exit
+      bool success = supervisor.wait();
+
+      // verify correct exit statuses and outputs
+      for (int i = 0; i < 10; ++i)
+      {
+         CHECK(exitCodes[i] == 0);
+         CHECK(outputs[i] == "Hello, " + safe_convert::numberToString(i) + "\n");
+      }
+   }
+
+   test_that("Can spawn multiple async processes and they all return correct results")
+   {
+      IoServiceFixture fixture;
+
+      // create new supervisor
+      AsioProcessSupervisor supervisor(fixture.ioService);
+
+      const int numProcs = 1000;
+
+      int exitCodes[numProcs];
+      std::string outputs[numProcs];
+      std::atomic<int> numExited(0);
+      for (int i = 0; i < numProcs; ++i)
+      {
+         // set exit code to some initial bad value to ensure it is properly set when
+         // the process exits
+         exitCodes[i] = -1;
+
+         // construct program arguments
+         std::vector<std::string> args;
+         args.push_back("Hello, " + safe_convert::numberToString(i));
+
+         // create process options and callbacks
+         ProcessOptions options;
+         options.threadSafe = true;
+
+         ProcessCallbacks callbacks;
+
+         callbacks.onExit = [&exitCodes, &numExited, i](int exitCode) {
+            exitCodes[i] = exitCode;
+            numExited++;
+         };
+
+         callbacks.onStdout = boost::bind(&appendOutput, _2, outputs + i);
+
+         // run program
+         supervisor.runProgram("/bin/echo", args, options, callbacks);
+      }
+
+      // wait for processes to exit
+      bool success = supervisor.wait(boost::posix_time::seconds(10));
+      CHECK(success);
+
+      // check to make sure all processes really exited
+      CHECK(numExited == numProcs);
+
+      // verify correct exit statuses and outputs
+      for (int i = 0; i < numProcs; ++i)
+      {
+         CHECK(exitCodes[i] == 0);
+         CHECK(outputs[i] == "Hello, " + safe_convert::numberToString(i) + "\n");
+      }
    }
 }
 

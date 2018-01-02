@@ -296,6 +296,14 @@ namespace {
 
 const char * const kHttpDateFormat = "%a, %d %b %Y %H:%M:%S GMT";
 const char * const kAtomDateFormat = "%Y-%m-%dT%H:%M:%S%F%Q";
+
+// facet for http date (construct w/ a_ref == 1 so we manage memory)
+// statically initialized because init is very expensive
+boost::posix_time::time_facet s_httpDateFacet(kHttpDateFormat,
+                                              boost::posix_time::time_facet::period_formatter_type(),
+                                              boost::posix_time::time_facet::special_values_formatter_type(),
+                                              boost::posix_time::time_facet::date_gen_formatter_type(),
+                                              1);
    
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {
@@ -331,13 +339,9 @@ std::string httpDate(const boost::posix_time::ptime& datetime)
 {
    using namespace boost::posix_time;
    
-   // facet for http date (construct w/ a_ref == 1 so we manage memory)
-   time_facet httpDateFacet(1); 
-   httpDateFacet.format("%a, %d %b %Y %H:%M:%S GMT");
-   
    // output and return the date
    std::ostringstream dateStream;
-   dateStream.imbue(std::locale(dateStream.getloc(), &httpDateFacet));
+   dateStream.imbue(std::locale(dateStream.getloc(), &s_httpDateFacet));
    dateStream << datetime;
    return dateStream.str();
 }

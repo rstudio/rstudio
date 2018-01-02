@@ -22,8 +22,6 @@
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 
-#include <core/system/PosixChildProcess.hpp>
-
 namespace rstudio {
 namespace core {
 namespace system {
@@ -41,17 +39,17 @@ struct AsioProcessSupervisor::Impl
 
    Error runChild(boost::shared_ptr<AsioAsyncChildProcess> pChild, ProcessCallbacks callbacks)
    {
-      // run the child
-      Error error = pChild->run(callbacks);
-      if (error)
-         return error;
-
       LOCK_MUTEX(mutex_)
       {
          // add to the list of children
          children_.insert(pChild);
       }
       END_LOCK_MUTEX
+
+      // run the child
+      Error error = pChild->run(callbacks);
+      if (error)
+         return error;      
 
       // success
       return Success();
@@ -108,13 +106,28 @@ struct AsioProcessSupervisor::Impl
          return noChildrenSignal_.timed_wait(lock, maxWait) && children_.empty();
    }
 
-   void wrapExitCallback(boost::weak_ptr<AsioAsyncChildProcess> pChild,
-                         int exitCode,
-                         boost::function<void(int)> onExit)
+   static void wrapExitCallback(boost::weak_ptr<Impl> weak,
+                                boost::weak_ptr<AsioAsyncChildProcess> pChild,
+                                int exitCode,
+                                boost::function<void(int)> onExit)
+   {
+      // invoke exit callback only if we still exist
+      // it is possible that the child outlived the lifetime of the supervisor itself
+      // attempting to lock the weak pointer ensures we do not invoke the exit handler
+      // if the supervisor has already been freed, which would result in a crash
+      if (boost::shared_ptr<Impl> instance = weak.lock())
+      {
+         instance->onExit(pChild, exitCode, onExit);
+      }
+   }
+
+   void onExit(boost::weak_ptr<AsioAsyncChildProcess> pChild,
+               int exitCode,
+               boost::function<void(int)> onExit)
    {
       // remove exited children
       // we lock here because this method can potentially be invoked by multiple threads
-      // this is due to the fact that AsioAsyncChildProcess objects run on an io_serice
+      // this is due to the fact that AsioAsyncChildProcess objects run on an io_service
       LOCK_MUTEX(mutex_)
       {
          // upgrade this weak pointer to a shared pointer
@@ -122,8 +135,7 @@ struct AsioProcessSupervisor::Impl
          // this should always work because the actual child cannot die until we've erased it from
          // our collection. the weak pointer is used to ensure that the callbacks stored by the child
          // do not store a strong reference to itself, thus preventing the child from ever beeing freed
-         boost::shared_ptr<AsioAsyncChildProcess> child = pChild.lock();
-         if (child)
+         if (boost::shared_ptr<AsioAsyncChildProcess> child = pChild.lock())
             children_.erase(child);
       }
       END_LOCK_MUTEX
@@ -154,7 +166,8 @@ AsioProcessSupervisor::~AsioProcessSupervisor()
 Error AsioProcessSupervisor::runProgram(const std::string& executable,
                                         const std::vector<std::string>& args,
                                         const ProcessOptions& options,
-                                        const ProcessCallbacks& callbacks)
+                                        const ProcessCallbacks& callbacks,
+                                        boost::shared_ptr<AsioAsyncChildProcess>* pOutChild)
 {
    // create the child
    boost::shared_ptr<AsioAsyncChildProcess> pChild(
@@ -164,8 +177,11 @@ Error AsioProcessSupervisor::runProgram(const std::string& executable,
    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks
    // will not store a strong reference to itself, thus making it impossible to free
    ProcessCallbacks ourCallbacks = callbacks;
-   ourCallbacks.onExit = boost::bind(&Impl::wrapExitCallback, pImpl_.get(),
+   ourCallbacks.onExit = boost::bind(&Impl::wrapExitCallback, boost::weak_ptr<Impl>(pImpl_),
                                      boost::weak_ptr<AsioAsyncChildProcess>(pChild), _1, callbacks.onExit);
+
+   if (pOutChild)
+      *pOutChild = pChild;
 
    // run the child
    return pImpl_->runChild(pChild, ourCallbacks);
@@ -173,7 +189,8 @@ Error AsioProcessSupervisor::runProgram(const std::string& executable,
 
 Error AsioProcessSupervisor::runCommand(const std::string& command,
                                         const ProcessOptions& options,
-                                        const ProcessCallbacks& callbacks)
+                                        const ProcessCallbacks& callbacks,
+                                        boost::shared_ptr<AsioAsyncChildProcess>* pOutChild)
 {
    // create the child
    boost::shared_ptr<AsioAsyncChildProcess> pChild(
@@ -183,8 +200,11 @@ Error AsioProcessSupervisor::runCommand(const std::string& command,
    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks
    // will not store a strong reference to itself, thus making it impossible to free
    ProcessCallbacks ourCallbacks = callbacks;
-   ourCallbacks.onExit = boost::bind(&Impl::wrapExitCallback, pImpl_.get(),
+   ourCallbacks.onExit = boost::bind(&Impl::wrapExitCallback, boost::weak_ptr<Impl>(pImpl_),
                                      boost::weak_ptr<AsioAsyncChildProcess>(pChild), _1, callbacks.onExit);
+
+   if (pOutChild)
+      *pOutChild = pChild;
 
    // run the child
    return pImpl_->runChild(pChild, ourCallbacks);

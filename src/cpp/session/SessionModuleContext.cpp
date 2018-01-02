@@ -2236,6 +2236,8 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
 {
    r::exec::RFunction func(".rs.pandocSelfContainedHtml");
    func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(
+            session::options().rResourcesPath().complete("pandoc_template.html").absolutePath()));
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();
 }

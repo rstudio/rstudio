@@ -413,6 +413,9 @@ public class WebApplicationHeader extends Composite
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
+         
+         overlayUserCommandsPanel_ = new HorizontalPanel();
+         headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
         
          ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
               new ClickHandler() {
@@ -519,6 +522,12 @@ public class WebApplicationHeader extends Composite
    }
    
    @Override
+   public void addUserCommand(Widget widget)
+   {
+      overlayUserCommandsPanel_.add(widget);
+   }
+   
+   @Override
    public AppMenuBar getMainMenu()
    {
       return mainMenu_;
@@ -548,6 +557,7 @@ public class WebApplicationHeader extends Composite
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private HorizontalPanel projectBarCommandsPanel_;
+   private HorizontalPanel overlayUserCommandsPanel_;
    private Widget signOutSeparator_;
    private Widget projectMenuSeparator_;
    private ToolbarButton projectMenuButton_;

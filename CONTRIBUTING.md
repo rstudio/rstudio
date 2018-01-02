@@ -24,6 +24,10 @@ You're also welcome to submit ideas for enhancements to RStudio. When doing so, 
 
 If you're the first to propose the enhancement, describe it in as much detail as you can, and label your issue with **enhancement**. 
 
+## RStudio Pro
+
+This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the RStudio support team at <support@rstudio.com>.
+
 ## Contributing Code
 
 We welcome contributions to RStudio. To submit a contribution:

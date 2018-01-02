@@ -51,6 +51,17 @@ def run_tests(type, flavor, variant) {
     // mark build as unstable if it fails unit tests
     currentBuild.result = "UNSTABLE"
   }
+
+  /*
+   C++ unit tests disabled pending build hang investigation
+
+  try {
+    // attempt to run cpp unit tests
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
+  } catch(err) {
+    currentBuild.result = "UNSTABLE"
+  }
+  */
 }
 
 def s3_upload(type, flavor, os, arch) {

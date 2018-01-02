@@ -16,6 +16,7 @@
 
 #include <core/http/RequestParser.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace rstudio {
@@ -256,7 +257,7 @@ RequestParser::status RequestParser::consume(Request& req, char input)
       state_ = space_before_header_value;
       
       // look for special content-length state
-      if ( !req.headers_.back().name.compare("Content-Length") )
+      if ( boost::iequals(req.headers_.back().name, "Content-Length") )
          parsing_content_length_ = true ;
 
       return incomplete;

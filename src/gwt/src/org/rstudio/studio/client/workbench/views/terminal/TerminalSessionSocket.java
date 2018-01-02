@@ -60,6 +60,11 @@ public class TerminalSessionSocket
        * @param output output from server
        */
       void receivedOutput(String output);
+   
+      /**
+       * Called to disconnect the terminal
+       */
+      void connectionDisconnected();
    }
    
    public interface ConnectCallback
@@ -237,6 +242,7 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket closed");
                socket_ = null;
+               session_.connectionDisconnected();
             }
 
             @Override

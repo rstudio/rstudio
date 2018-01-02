@@ -105,6 +105,7 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionInit.hpp"
 #include "SessionMainProcess.hpp"
+#include "SessionRpc.hpp"
 #include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -409,6 +410,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    
       // client event service
       (startClientEventService)
+      
+      // rpc methods
+      (rpc::initialize)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))

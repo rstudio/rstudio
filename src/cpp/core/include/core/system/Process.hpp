@@ -111,7 +111,8 @@ struct ProcessOptions
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
-        trackCwd(false)
+        trackCwd(false),
+        threadSafe(false)
 #endif
    {
    }
@@ -175,6 +176,12 @@ struct ProcessOptions
    // Periodically track process' current working directory
    bool trackCwd;
 
+   // Indicates whether or not to use special safety logic when forking the child
+   // which should be used in a mulithreaded process to ensure the child does not hang
+   // consequently, many of the options are ignored in this mode as it is very strict
+   // and cannot accomplish many things that the thread unsafe mode can
+   bool threadSafe;
+
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
    // if you use runCommand, not runProgram, as we use the shell to do
@@ -187,6 +194,10 @@ struct ProcessOptions
    boost::function<void()> onAfterFork;
 
    core::FilePath workingDir;
+
+   // user to run the process as - optional
+   // if non is specified, the launching user is used
+   std::string runAsUser;
 };
 
 // Struct for returning output and exit status from a process
