@@ -75,7 +75,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
 
 #ifdef _WIN32
    boost::system::error_code ec = error.code();
-   bool noData = (ec.category() == boost::system::get_system_category()) &&
+   bool noData = (ec.category() == boost::system::system_category()) &&
                  (ec.value() == ERROR_NO_DATA);
 #else
    bool noData = false;
@@ -102,7 +102,7 @@ inline bool isConnectionUnavailableError(const Error& error)
       || error.code() == boost::system::windows_error::broken_pipe
       || error.code() == boost::system::error_code(
                                        ERROR_PIPE_BUSY,
-                                       boost::system::get_system_category())
+                                       boost::system::system_category())
  #endif
    );
 }
