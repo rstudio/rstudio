@@ -31,6 +31,8 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType);
 
+core::Error initialize();
+
 } // namespace rpc
 } // namespace session
 } // namespace rstudio

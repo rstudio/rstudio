@@ -27,7 +27,7 @@ namespace session {
 namespace {
 
 // json rpc methods
-core::json::JsonRpcAsyncMethods s_jsonRpcMethods;
+core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = NULL;
    
 void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
@@ -101,7 +101,7 @@ namespace module_context {
 Error registerAsyncRpcMethod(const std::string& name,
                              const core::json::JsonRpcAsyncFunction& function)
 {
-   s_jsonRpcMethods.insert(
+   s_pJsonRpcMethods->insert(
          std::make_pair(name, std::make_pair(false, function)));
    return Success();
 }
@@ -109,7 +109,7 @@ Error registerAsyncRpcMethod(const std::string& name,
 Error registerRpcMethod(const std::string& name,
                         const core::json::JsonRpcFunction& function)
 {
-   s_jsonRpcMethods.insert(
+   s_pJsonRpcMethods->insert(
          std::make_pair(name,
                         std::make_pair(true, json::adaptToAsync(function))));
    return Success();
@@ -117,7 +117,7 @@ Error registerRpcMethod(const std::string& name,
 
 void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method)
 {
-   s_jsonRpcMethods.insert(method);
+   s_pJsonRpcMethods->insert(method);
 }
 
 } // namespace module_context
@@ -134,9 +134,8 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    ptime executeStartTime = microsec_clock::universal_time();
    
    // execute the method
-   json::JsonRpcAsyncMethods::const_iterator it =
-                                     s_jsonRpcMethods.find(request.method);
-   if (it != s_jsonRpcMethods.end())
+   auto it = s_pJsonRpcMethods->find(request.method);
+   if (it != s_pJsonRpcMethods->end())
    {
       std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
       json::JsonRpcAsyncFunction handlerFunction = reg.second;
@@ -178,6 +177,18 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
 
       endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, NULL);
    }
+}
+
+Error initialize()
+{
+   // intentionally allocate methods on the heap and let them leak
+   // (we had seen issues in the past where an abnormally terminated
+   // R process could leak the process stuck in the destructor of
+   // this map pegging the processor at 100%; avoid this by allowing
+   // the OS to clean up memory itself after the process is gone)
+   s_pJsonRpcMethods = new core::json::JsonRpcAsyncMethods;
+   
+   return Success();
 }
 
 } // namespace rpc
