@@ -165,7 +165,7 @@ Error::Impl& Error::impl() const
 Error systemError(int value, const ErrorLocation& location) 
 {
    using namespace boost::system ;
-   return Error(error_code(value, get_system_category()), location);
+   return Error(error_code(value, system_category()), location);
 }
 
 Error systemError(int value,
@@ -173,7 +173,7 @@ Error systemError(int value,
                   const ErrorLocation& location)
 {
    using namespace boost::system ;
-   return Error(error_code(value, get_system_category()), cause, location);
+   return Error(error_code(value, system_category()), cause, location);
 }
 
 Error systemError(int value,
