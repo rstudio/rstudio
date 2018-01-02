@@ -44,6 +44,17 @@ void initializeSystemPrefs()
 {
    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
    [defaults setBool:NO forKey: @"NSFunctionBarAPIEnabled"];
+
+   // Remove (disable) the "Start Dictation..." and "Emoji & Symbols" menu items from the "Edit" menu
+   [defaults setBool:YES forKey:@"NSDisabledDictationMenuItem"];
+   [defaults setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+
+   // Remove (don't allow) the "Show Tab Bar" menu item from the "View" menu, if supported
+   if ([NSWindow respondsToSelector:@selector(allowsAutomaticWindowTabbing)])
+      NSWindow.allowsAutomaticWindowTabbing = NO;
+
+   // Remove the "Enter Full Screen" menu item from the "View" menu
+   [defaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];
 }
 
 } // anonymous namespace
