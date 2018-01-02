@@ -16,7 +16,7 @@
 #include "ChildProcessSubprocPoll.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <tests/TestThat.hpp>
 
@@ -39,9 +39,7 @@ const milliseconds kCheckCwdDelayExpired = milliseconds(45);
 
 void blockingwait(milliseconds ms)
 {
-   boost::asio::io_service io;
-   boost::asio::deadline_timer timer(io, ms);
-   timer.wait();
+   boost::this_thread::sleep(ms);
 }
 
 class NoSubProcPollingFixture

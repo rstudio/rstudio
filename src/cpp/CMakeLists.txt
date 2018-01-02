@@ -218,7 +218,7 @@ if(WIN32)
      include_directories(SYSTEM ${WINPTY_INCLUDEDIR})
 
      # openssl for Windows
-     if(RSTUDIO_SESSLIBRARY)
+     if(RSTUDIO_SESSION_WIN64 OR RSTUDIO_SESSLIBRARY)
         set(OPENSSL_ARCH "/x64/")
      else()
         set(OPENSSL_ARCH "/")
