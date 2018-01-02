@@ -103,7 +103,7 @@ private:
 
    virtual bool isShutdownError(const boost::system::error_code& ec)
    {
-      if (ec.category() == boost::system::get_system_category() &&
+      if (ec.category() == boost::system::system_category() &&
           (ec.value() == ERROR_PIPE_NOT_CONNECTED) )
       {
          return true;

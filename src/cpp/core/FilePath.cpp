@@ -962,7 +962,7 @@ FilePath FilePath::childPath(const std::string& path) const
                            "absolute path not permitted",
                            boost::system::error_code(
                               boost::system::errc::no_such_file_or_directory,
-                              boost::system::get_system_category()));
+                              boost::system::system_category()));
          }
 
          return complete(path);
