@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
@@ -101,22 +102,17 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
 
-      events.addHandler(RestartStatusEvent.TYPE, 
-                          new RestartStatusEvent.Handler()
-      {
-         @Override
-         public void onRestartStatus(RestartStatusEvent event)
-         {
-            if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
-            {
-               isRestartInProgress_ = true;
-            }
-            else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-            {
-               isRestartInProgress_ = false;
-            }
-         }
-      });
+      events.addHandler(RestartStatusEvent.TYPE,
+            event -> {
+               if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+               {
+                  isRestartInProgress_ = true;
+               }
+               else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+               {
+                  isRestartInProgress_ = false;
+               }
+            });
  
       ensureWidget();
    }
@@ -298,7 +294,6 @@ public class TerminalPane extends WorkbenchPane
             return;
          }
          events_.fireEvent(new SwitchToTerminalEvent(handle, postCreateText));
-         return;
       }
       else
       {
@@ -424,30 +419,9 @@ public class TerminalPane extends WorkbenchPane
                   "Are you sure you want to exit the terminal named \"" +
                         visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
                         false,
-                        new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  visibleTerminal.terminate();
-               }
-            },
-            new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  setFocusOnVisible();
-               }
-            },
-            new Operation()
-            {
-               @Override
-               public void execute()
-               {
-                  setFocusOnVisible();
-               }
-            }, "Terminate", "Cancel", true);
+                  visibleTerminal::terminate,
+                  this::setFocusOnVisible,
+                  this::setFocusOnVisible, "Terminate", "Cancel", true);
          }
          else
          {
@@ -501,40 +475,35 @@ public class TerminalPane extends WorkbenchPane
       globalDisplay_.promptForText("Rename Terminal",
             "Please enter the new terminal name:",
             origCaption,
-            new OperationWithInput<String>()
-            {
-               @Override
-               public void execute(final String newCaption)
-               {
-                  // rename in the UI
-                  renameVisibleTerminalInClient(newCaption);
+            newCaption -> {
+               // rename in the UI
+               renameVisibleTerminalInClient(newCaption);
 
-                  // rename on the server
-                  server_.processSetCaption(visibleTerminal.getHandle(), 
-                        newCaption,
-                        new ServerRequestCallback<Boolean>()
+               // rename on the server
+               server_.processSetCaption(visibleTerminal.getHandle(),
+                     newCaption,
+                     new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean result)
                         {
-                           @Override
-                           public void onResponseReceived(Boolean result)
+                           if (!result)
                            {
-                              if (result == false)
-                              {
-                                 globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-                                       "Name already in use",
-                                       "Please enter a unique name.");
-                                 // failed, put back original caption on client
-                                 renameVisibleTerminalInClient(origCaption);
-                              }
-                           }
-                           
-                           @Override
-                           public void onError(ServerError error)
-                           {
+                              globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                                    "Name already in use",
+                                    "Please enter a unique name.");
                               // failed, put back original caption on client
                               renameVisibleTerminalInClient(origCaption);
                            }
-                        });
-               }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           // failed, put back original caption on client
+                           renameVisibleTerminalInClient(origCaption);
+                        }
+                     });
             });
    }
 
@@ -619,7 +588,7 @@ public class TerminalPane extends WorkbenchPane
       });
    }
    
-   public String debug_dumpTerminalContext()
+   private String debug_dumpTerminalContext()
    {
       StringBuilder dump = new StringBuilder();
 
@@ -844,7 +813,7 @@ public class TerminalPane extends WorkbenchPane
       // Notification from a TerminalSession that it changed its title
       TerminalSession visibleTerm = getSelectedTerminal();
       TerminalSession retitledTerm = event.getTerminalSession();
-      if (visibleTerm != null && visibleTerm.getHandle() == retitledTerm.getHandle())
+      if (visibleTerm != null && Objects.equals(visibleTerm.getHandle(), retitledTerm.getHandle()))
       {
          // update the toolbar label if currently displayed terminal has changed
          // its title
@@ -877,7 +846,7 @@ public class TerminalPane extends WorkbenchPane
    /**
     * @return number of terminals loaded into panes
     */
-   public int getLoadedTerminalCount()
+   private int getLoadedTerminalCount()
    {
       return terminalSessionsPanel_.getWidgetCount();
    }
@@ -886,7 +855,7 @@ public class TerminalPane extends WorkbenchPane
     * @param i index of terminal to return
     * @return terminal at index, or null
     */
-   public TerminalSession getLoadedTerminalAtIndex(int i)
+   private TerminalSession getLoadedTerminalAtIndex(int i)
    {
       Widget widget = terminalSessionsPanel_.getWidget(i);
       if (widget instanceof TerminalSession)
@@ -907,7 +876,7 @@ public class TerminalPane extends WorkbenchPane
       for (int i = 0; i < total; i++)
       {
          TerminalSession t = getLoadedTerminalAtIndex(i);
-         if (t != null && t.getHandle() == handle)
+         if (t != null && Objects.equals(t.getHandle(), handle))
          {
             return t;
          }
@@ -926,7 +895,7 @@ public class TerminalPane extends WorkbenchPane
       for (int i = 0; i < total; i++)
       {
          TerminalSession t = getLoadedTerminalAtIndex(i);
-         if (t != null && t.getCaption() == caption)
+         if (t != null && Objects.equals(t.getCaption(), caption))
          {
             return t;
          }
@@ -938,7 +907,7 @@ public class TerminalPane extends WorkbenchPane
    /**
     * @return Selected terminal, or null if there is no selected terminal.
     */
-   public TerminalSession getSelectedTerminal()
+   private TerminalSession getSelectedTerminal()
    {
       return getTerminalWithCaption(null);
    }
@@ -949,7 +918,7 @@ public class TerminalPane extends WorkbenchPane
     * selected terminal; null if no terminals open.
     * @return
     */
-   public TerminalSession getTerminalWithCaption(String caption)
+   private TerminalSession getTerminalWithCaption(String caption)
    {
       if (StringUtil.isNullOrEmpty(caption))
       {
@@ -971,7 +940,7 @@ public class TerminalPane extends WorkbenchPane
    /**
     * If a terminal is visible give it focus and update dropdown selection.
     */
-   public void setFocusOnVisible()
+   private void setFocusOnVisible()
    {
       Scheduler.get().scheduleDeferred(() -> {
          TerminalSession visibleTerminal = getSelectedTerminal();
@@ -1033,21 +1002,19 @@ public class TerminalPane extends WorkbenchPane
          return;
       }
 
-      Scheduler.get().scheduleDeferred(() -> {
-         terminal.connect(new ResultCallback<Boolean, String>()
+      Scheduler.get().scheduleDeferred(() -> terminal.connect(new ResultCallback<Boolean, String>()
+      {
+         @Override
+         public void onSuccess(Boolean connected)
          {
-            @Override
-            public void onSuccess(Boolean connected) 
-            {
-            }
+         }
 
-            @Override
-            public void onFailure(String msg)
-            {
-               Debug.log(msg);
-            }
-         });
-      });
+         @Override
+         public void onFailure(String msg)
+         {
+            Debug.log(msg);
+         }
+      }));
 }
 
    @Override
@@ -1074,27 +1041,22 @@ public class TerminalPane extends WorkbenchPane
       if (terminal != null)
       {
          terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
-               new ValueChangeHandler<Boolean>() 
-         {
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> event)
-            {
-               // When terminal reports that there are child procs, there can
-               // be a lag before it (potentially) enters a full-screen program, 
-               // and our toolbar controls use both bits of information to 
-               // set state. We don't get a notification on full-screen terminal
-               // mode, we can only poll it. So, delay just a bit to improve
-               // chances of it being current.
-               Timer timer = new Timer()
-               {
-                  public void run() 
+               event -> {
+                  // When terminal reports that there are child procs, there can
+                  // be a lag before it (potentially) enters a full-screen program,
+                  // and our toolbar controls use both bits of information to
+                  // set state. We don't get a notification on full-screen terminal
+                  // mode, we can only poll it. So, delay just a bit to improve
+                  // chances of it being current.
+                  Timer timer = new Timer()
                   {
-                     updateTerminalToolbar();
-                  }
-               };
-               timer.schedule(200);
-            }
-         });
+                     public void run()
+                     {
+                        updateTerminalToolbar();
+                     }
+                  };
+                  timer.schedule(200);
+               });
       }
    }
    
@@ -1123,7 +1085,7 @@ public class TerminalPane extends WorkbenchPane
    private boolean creatingTerminal_;
    private ToolbarButton interruptButton_;
    private ToolbarButton closeButton_;
-   ToolbarButton clearButton_;
+   private ToolbarButton clearButton_;
    private HandlerRegistration terminalHasChildProcsHandler_;
    private boolean isRestartInProgress_;
    private boolean closingAll_;

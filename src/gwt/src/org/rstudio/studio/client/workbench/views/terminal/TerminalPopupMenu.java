@@ -1,7 +1,7 @@
 /*
  * TerminalPopupMenu.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+import java.util.Objects;
+
 /**
  * Drop-down menu used in terminal pane. Has commands, and a list of 
  * terminal sessions.
@@ -47,14 +49,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       terminals_ = terminals;
 
       eventBus_.addHandler(TerminalBusyEvent.TYPE,
-                          new TerminalBusyEvent.Handler()
-      {
-         @Override
-         public void onTerminalBusy(TerminalBusyEvent event)
-         {
-            refreshActiveTerminal();
-         }
-      });
+            event -> refreshActiveTerminal());
    }
 
    @Inject
@@ -79,14 +74,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       {
          for (final String handle : terminals_)
          {
-            Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
+            Scheduler.ScheduledCommand cmd = () ->
                   eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null));
-               }
-            };
 
             String caption = trimCaption(terminals_.getCaption(handle));
             if (caption == null)
@@ -184,8 +173,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
    /**
     * Refresh caption of active terminal based on busy status.
-    * @param caption caption of the active terminal
-    * @param handle handle of the active terminal
     */
    private void refreshActiveTerminal()
    {
@@ -277,7 +264,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          String prevHandle = null;
          for (final String handle : terminals_)
          {
-            if (activeTerminalHandle_ == handle)
+            if (Objects.equals(activeTerminalHandle_, handle))
             {
                if (prevHandle == null)
                {
@@ -304,11 +291,11 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          boolean foundCurrent = false;
          for (final String handle : terminals_)
          {
-            if (foundCurrent == true)
+            if (foundCurrent)
             {
                return handle;
             }
-            if (activeTerminalHandle_ == handle)
+            if (Objects.equals(activeTerminalHandle_, handle))
             {
                foundCurrent = true;
             }

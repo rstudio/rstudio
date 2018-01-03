@@ -1,7 +1,7 @@
 /*
  * TerminalTab.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,26 +114,21 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       events.addHandler(RemoveTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
 
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
-      {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            JsArray<ConsoleProcessInfo> procs =
-                  session.getSessionInfo().getConsoleProcesses();
-            final ArrayList<ConsoleProcessInfo> procList = new ArrayList<ConsoleProcessInfo>();
+      events.addHandler(SessionInitEvent.TYPE, sie -> {
+         JsArray<ConsoleProcessInfo> procs =
+               session.getSessionInfo().getConsoleProcesses();
+         final ArrayList<ConsoleProcessInfo> procList = new ArrayList<>();
 
-            for (int i = 0; i < procs.length(); i++)
+         for (int i = 0; i < procs.length(); i++)
+         {
+            final ConsoleProcessInfo proc = procs.get(i);
+            if (proc.isTerminal())
             {
-               final ConsoleProcessInfo proc = procs.get(i);
-               if (proc.isTerminal())
-               {
-                  addTerminalProcInfo(procList, proc);
-               }
+               addTerminalProcInfo(procList, proc);
             }
-            if (!procList.isEmpty())
-               shim_.onRepopulateTerminals(procList);
          }
+         if (!procList.isEmpty())
+            shim_.onRepopulateTerminals(procList);
       });
    }
 
@@ -160,7 +155,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
     * terminal sequence number. If duplicate sequence numbers are
     * encountered, all but the first will have the process killed.
     * 
-    * @param terminalProcs (in/out) sorted list of terminal processes
+    * @param procInfoList (in/out) sorted list of terminal processes
     * @param procInfo process to insert in the list
     */
    private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
