@@ -1,7 +1,7 @@
 /*
  * TerminalList.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -85,7 +86,7 @@ public class TerminalList implements Iterable<String>,
 
    /**
     * Add metadata from supplied TerminalSession
-    * @param terminal terminal to add
+    * @param term terminal to add
     */
    public void addTerminal(TerminalSession term)
    {
@@ -116,7 +117,7 @@ public class TerminalList implements Iterable<String>,
          return false;
       }
 
-      if (current.getTitle() != title)
+      if (!Objects.equals(current.getTitle(), title))
       {
          current.setTitle(title);
          return true;
@@ -157,7 +158,7 @@ public class TerminalList implements Iterable<String>,
       if (current == null)
          return;
 
-      if (current.getCwd() != cwd)
+      if (!Objects.equals(current.getCwd(), cwd))
       {
          current.setCwd(cwd);
       }
@@ -187,7 +188,7 @@ public class TerminalList implements Iterable<String>,
    /**
     * update caption
     * @param handle terminal handle
-    * @param zombie new caption
+    * @param caption new caption
     */
    public void setCaption(String handle, String caption)
    {
@@ -240,7 +241,7 @@ public class TerminalList implements Iterable<String>,
       int i = 0;
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getHandle() == handle)
+         if (Objects.equals(item.getValue().getCPI().getHandle(), handle))
          {
             return i;
          }
@@ -278,7 +279,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption() == caption)
+         if (Objects.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return false;
          }
@@ -296,7 +297,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption() == caption)
+         if (Objects.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return item.getValue().getCPI().getHandle();
          }
@@ -491,8 +492,8 @@ public class TerminalList implements Iterable<String>,
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, TerminalListData> terminals_ = 
-                new LinkedHashMap<String, TerminalListData>();
+   private LinkedHashMap<String, TerminalListData> terminals_ =
+         new LinkedHashMap<>();
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

@@ -1,7 +1,7 @@
 /*
  * TerminalSessionSocket.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -108,7 +108,7 @@ public class TerminalSessionSocket
       
       public InputEchoTimeMonitor()
       {
-         pending_ = new LinkedList<InputDatapoint>();
+         pending_ = new LinkedList<>();
       }
       
       public void inputReceived(String input)
@@ -281,7 +281,6 @@ public class TerminalSessionSocket
                      callback.onError("Unable to switch back to RPC mode");
                   }
                });
-               return;
             }
          });
          

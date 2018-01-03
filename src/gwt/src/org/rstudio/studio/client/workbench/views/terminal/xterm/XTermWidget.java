@@ -1,7 +1,7 @@
 /*
  * XTermWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,22 +93,10 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
       // Handle keystrokes from the xterm and dispatch them
-      addDataEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String data)
-         {
-            fireEvent(new TerminalDataInputEvent(data));
-         }
-      });
+      addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
       
       // Handle title events from the xterm and dispatch them
-      addTitleEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String title)
-         {
-            fireEvent(new XTermTitleEvent(title));
-         }
-      });
+      addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
    }
    
    /**
@@ -170,15 +158,10 @@ public class XTermWidget extends Widget implements RequiresResize,
       if (!initialized_)
       {
          initialized_ = true;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               terminal_.fit();
-               terminal_.focus();
-               terminalReady();
-            }
+         Scheduler.get().scheduleDeferred(() -> {
+            terminal_.fit();
+            terminal_.focus();
+            terminalReady();
          });
       }
    }
@@ -190,13 +173,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       if (initialized_)
       {
          initialized_ = false;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            public void execute()
-            {
-               terminal_.blur();
-            }
-         });
+         Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
    
@@ -266,7 +243,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.onTitleData(handler);
    }
    
-   public XTermDimensions getTerminalSize()
+   private XTermDimensions getTerminalSize()
    {
       return terminal_.proposeGeometry(); 
    }
@@ -427,22 +404,10 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    public static void load(final Command command)
    {
-      xtermLoader_.addCallback(new Callback()
-      {
-         @Override
-         public void onLoaded()
-         {
-            xtermFitLoader_.addCallback(new Callback()
-            {
-               @Override
-               public void onLoaded()
-               {
-                  if (command != null)
-                     command.execute();
-               }
-            });
-         }
-     });
+      xtermLoader_.addCallback(() -> xtermFitLoader_.addCallback(() -> {
+         if (command != null)
+            command.execute();
+      }));
    }
 
    private static final ExternalJavaScriptLoader xtermLoader_ =

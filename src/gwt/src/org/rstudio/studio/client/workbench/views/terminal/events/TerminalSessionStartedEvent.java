@@ -1,7 +1,7 @@
 /*
  * TerminalSessionStartedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,5 +62,5 @@ public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
   
    private TerminalSession terminalWidget_;
    
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
