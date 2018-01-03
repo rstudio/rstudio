@@ -8,6 +8,7 @@
 - Fix slow File Open dialog on RStudio Desktop for Linux (#1587)
 - Fix slow open of new files on Windows when using network drives (#1592)
 - Fix build pane freeze when `Rcpp::compileAttributes` results in parse errors (#1601)
+- Fix issue when migrating from RStudio 1.0 which could result in empty R files (#1623)
 - Fix incorrect output type when compiling R script to non-HTML report (#1631)
 - Improve spacing in account when username and servername are short (#1637)
 - Fix incorrect background highlighting after reindent (#1643)
