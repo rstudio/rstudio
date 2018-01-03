@@ -216,6 +216,32 @@ std::string pathFromProjectPath(json::Value projPathJson)
       return std::string();
 }
 
+Error attemptContentsMigration(json::Object& propertiesJson,
+                               const FilePath& propertiesPath)
+{
+   // extract contents from properties (if it exists)
+   if (!propertiesJson.count("contents"))
+      return Success();
+   
+   json::Value contentsJson = propertiesJson["contents"];
+   if (!json::isType<std::string>(contentsJson))
+      return Success();
+   
+   // if the contents string is empty, bail (no need to migrate empty document;
+   // also signals that an earlier migration occurred)
+   std::string contents = contentsJson.get_str();
+   if (contents.empty())
+      return Success();
+   
+   // if we already have a contents file, bail (migration already occurred)
+   FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+   if (contentsPath.exists())
+      return Success();
+   
+   // write contents sidecar file
+   return writeStringToFile(contentsPath, contents);
+}
+
 }  // anonymous namespace
 
 SourceDocument::SourceDocument(const std::string& type)
@@ -597,6 +623,12 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       
       // initialize doc from json
       json::Object jsonDoc = value.get_obj();
+      
+      // migration: if we have a 'contents' field, but no '-contents' side-car
+      // file, perform a one-time generation of that sidecar file from contents
+      error = attemptContentsMigration(jsonDoc, propertiesPath);
+      if (error)
+         LOG_ERROR(error);
       
       if (includeContents && !contents.empty())
          jsonDoc["contents"] = contents;
