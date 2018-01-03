@@ -84,6 +84,10 @@ Error prepareCacheConsoleOutputFile(const std::string& docId,
    *pChunkOutputFile =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputText);
    
+   error = pChunkOutputFile->removeIfExists();
+   if (error)
+      return error;
+   
    return Success();
 }
 
@@ -136,7 +140,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
    
    // prepare cache output file (use tempfile on failure)
-   FilePath targetPath = module_context::tempFile("rcpp-cache", "txt");
+   FilePath targetPath = module_context::tempFile("rcpp-cache-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
    if (error)
       LOG_ERROR(error);
@@ -452,63 +456,157 @@ Error runUserDefinedEngine(const std::string& docId,
    // always ensure we emit a 'execution complete' event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
    
-   // prepare cache output file (use tempfile on failure)
-   FilePath targetPath = module_context::tempFile("engine-cache", "txt");
-   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
+   // prepare cache folder
+   FilePath cachePath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+   error = cachePath.resetDirectory();
    if (error)
-      LOG_ERROR(error);
+      return error;
    
-   // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
-         module_context::events().onConsoleOutput.connect(
-            boost::bind(chunkConsoleOutputHandler, _1, _2, targetPath));
+   // helper function for emitting console text
+   unsigned int ordinal = 1;
    
-   // write input code to cache
-   error = appendConsoleOutput(
-            kChunkConsoleInput,
-            code,
-            targetPath);
-   if (error)
-      LOG_ERROR(error);
+   auto emitText = [&](const std::string& text) -> Error
+   {
+      Error error;
 
+      FilePath targetPath = notebook::chunkOutputFile(
+               docId,
+               chunkId,
+               nbCtxId,
+               ChunkOutputText);
+      
+      error = targetPath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      error = writeConsoleOutput(
+               kChunkConsoleOutput,
+               text,
+               targetPath,
+               true);
+      if (error)
+         return error;
+
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               ordinal++,
+               ChunkOutputText,
+               targetPath);
+
+      return Success();
+   };
+   
+   // TODO: do we need to capture console output? we already have a console
+   // output handler in the reticulate engine so we might want to avoid
+   // duplication of captured output, but should verify that errors and such
+   // are appropriately captured and reported
+   
    // run the user-defined engine
    SEXP outputSEXP = R_NilValue;
    Protect protect;
    error = RFunction(".rs.runUserDefinedEngine")
          .addParam(engine)
+         .addParam(code)
          .addParam(options)
          .call(&outputSEXP, &protect);
    
    // report errors during engine execution to user
    if (error)
    {
-      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
-                                r::endUserErrorMessage(error),
-                                targetPath);
+      FilePath targetPath = module_context::tempFile(
+               "reticulate-engine-",
+               ".txt");
+      
+      chunkConsoleOutputHandler(
+               module_context::ConsoleOutputError,
+               r::endUserErrorMessage(error),
+               targetPath);
       return error;
    }
    
-   // forward engine output
+   // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
-      // write generated output to file
-      appendConsoleOutput(
-               kChunkConsoleOutput,
-               asString(outputSEXP),
-               targetPath);
-      
-      // default output is just text, for forward that
-      enqueueChunkOutput(
-               docId,
-               chunkId,
-               nbCtxId,
-               0,
-               ChunkOutputText,
-               targetPath);
+      emitText(asString(outputSEXP));
+   }
+   
+   // evaluate-style (list) output
+   else if (isList(outputSEXP))
+   {
+      int n = length(outputSEXP);
+      for (int i = 0; i < n; i++)
+      {
+         SEXP elSEXP = VECTOR_ELT(outputSEXP, i);
+         
+         // determine the output type based on the type of the current element
+         if (isString(elSEXP))
+         {
+            Error error = emitText(asString(elSEXP));
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+         }
+         else if (inherits(elSEXP, "condition"))
+         {
+            std::string message;
+            Error error = RFunction("base:::conditionMessage")
+                  .addParam(elSEXP)
+                  .call(&message);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+            emitText(message);
+         }
+         else if (inherits(elSEXP, "reticulate_matplotlib_plot"))
+         {
+            std::string path;
+            Error error = getNamedListElement(elSEXP, "path", &path);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+            FilePath sourcePath = module_context::resolveAliasedPath(path);
+            FilePath targetPath = notebook::chunkOutputFile(
+                     docId,
+                     chunkId,
+                     nbCtxId,
+                     ChunkOutputPlot);
+            
+            error = targetPath.parent().ensureDirectory();
+            if (error)
+               return error;
+            
+            error = sourcePath.move(targetPath);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+            enqueueChunkOutput(
+                     docId,
+                     chunkId,
+                     nbCtxId,
+                     ordinal++,
+                     ChunkOutputPlot,
+                     targetPath);
+         }
+      }
    }
    else
    {
-      // TODO: properly handle evaluate()-style output as reticulate does
       Rf_warning(
                "don't know how to handle '%s' engine output",
                engine.c_str());
