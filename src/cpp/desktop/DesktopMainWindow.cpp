@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,6 @@ MainWindow::MainWindow(QUrl url) :
       pSessionLauncher_(nullptr),
       pCurrentSessionProcess_(nullptr)
 {
-   quitConfirmed_ = false;
    pToolbar_->setVisible(false);
 
    // create web channel and bind GWT callbacks
@@ -172,6 +171,7 @@ void MainWindow::onWorkbenchInitialized()
    // reset state (in case this occurred in response to a manual reload
    // or reload for a new project context)
    quitConfirmed_ = false;
+   geometrySaved_ = false;
 
    webPage()->runJavaScript(
             QStringLiteral("window.desktopHooks.getActiveProjectDir()"),
@@ -236,6 +236,12 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
+   if (!geometrySaved_)
+   {
+      desktop::options().saveMainWindowBounds(this);
+      geometrySaved_ = true;
+   }
+
    if (quitConfirmed_ ||
        pCurrentSessionProcess_ == nullptr ||
        pCurrentSessionProcess_->state() != QProcess::Running)
@@ -245,7 +251,6 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    
    pEvent->ignore();
-   desktop::options().saveMainWindowBounds(this);
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
             [&](QVariant hasQuitR) {
