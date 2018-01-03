@@ -481,6 +481,14 @@ if(RSTUDIO_BUNDLE_QT)
       # fixups needed after running macdeployqt
       install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@executable_path/../Frameworks\" \"${RSTUDIO_APP_BIN}\")")
 
+      # figure out where the system libcrypto lives
+      find_package(OpenSSL REQUIRED QUIET)
+      get_filename_component(LIBCRYPTO ${OPENSSL_CRYPTO_LIBRARY} REALPATH)
+      get_filename_component(LIBCRYPTO_FILE ${LIBCRYPTO} NAME)
+      get_filename_component(LIBSSL ${OPENSSL_SSL_LIBRARY} REALPATH)
+      get_filename_component(LIBSSL_FILE ${LIBSSL} NAME)
+      install(CODE "execute_process(COMMAND install_name_tool -change ${LIBCRYPTO} @executable_path/../Frameworks/${LIBCRYPTO_FILE} ${APPS}/Contents/Frameworks/${LIBSSL_FILE})")
+
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
 
