@@ -37,6 +37,11 @@
 
 .rs.addFunction("runUserDefinedEngine", function(engine, code, options)
 {
+   # if we're using the python engine, attempt to load reticulate (this
+   # will load the reticulate knitr engine and set it as the default engine)
+   if (identical(engine, "python") && !"reticulate" %in% loadedNamespaces())
+      requireNamespace("reticulate", quietly = TRUE)
+   
    # retrieve the engine
    knitrEngines <- knitr::knit_engines$get()
    if (!engine %in% names(knitrEngines))
@@ -52,14 +57,6 @@
    {
       fmt <- "engine '%s' is not a function"
       stop(sprintf(fmt, options))
-   }
-   
-   # if we're using the python engine, attempt to load reticulate (this
-   # will load the reticulate knitr engine and set it as the default engine)
-   if (identical(engine, "python") &&
-       !"reticulate" %in% loadedNamespaces())
-   {
-      requireNamespace("reticulate", quietly = TRUE)
    }
    
    # prepare the R environment for reticulate Python engine
