@@ -465,10 +465,17 @@ Error runUserDefinedEngine(const std::string& docId,
    if (error)
       return error;
    
+   // determine whether we want to emit warnings, errors in this chunk
+   bool emitWarnings = true;
+   core::json::readObject(options, "warning", &emitWarnings);
+   
+   bool emitErrors = true;
+   core::json::readObject(options, "error", &emitErrors);
+   
    unsigned int ordinal = 1;
    
    // helper function for emitting console text
-   auto emitText = [&](const std::string& text) -> Error
+   auto emitText = [&](const std::string& text, int outputType) -> Error
    {
       Error error;
 
@@ -483,7 +490,7 @@ Error runUserDefinedEngine(const std::string& docId,
          return error;
 
       error = writeConsoleOutput(
-               kChunkConsoleOutput,
+               outputType,
                text,
                targetPath,
                true);
@@ -501,10 +508,18 @@ Error runUserDefinedEngine(const std::string& docId,
       return Success();
    };
    
-   // TODO: do we need to capture console output? we already have a console
-   // output handler in the reticulate engine so we might want to avoid
-   // duplication of captured output, but should verify that errors and such
-   // are appropriately captured and reported
+   // output will be captured by engine, but evaluation errors may be
+   // emitted directly to console, so capture those
+   auto consoleHandler = [&](
+         module_context::ConsoleOutputType type,
+         const std::string& output)
+   {
+      if (type == module_context::ConsoleOutputError && emitErrors)
+         emitText(output, kChunkConsoleError);
+   };
+   
+   boost::signals::scoped_connection handler =
+         module_context::events().onConsoleOutput.connect(consoleHandler);
    
    // run the user-defined engine
    SEXP outputSEXP = R_NilValue;
@@ -532,7 +547,7 @@ Error runUserDefinedEngine(const std::string& docId,
    // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
-      emitText(asString(outputSEXP));
+      emitText(asString(outputSEXP), kChunkConsoleOutput);
    }
    
    // evaluate-style (list) output
@@ -543,18 +558,19 @@ Error runUserDefinedEngine(const std::string& docId,
       {
          SEXP elSEXP = VECTOR_ELT(outputSEXP, i);
          
-         // determine the output type based on the type of the current element
          if (isString(elSEXP))
          {
-            Error error = emitText(asString(elSEXP));
+            // plain old console text output -- emit as-is
+            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
             if (error)
             {
                LOG_ERROR(error);
                continue;
             }
          }
-         else if (inherits(elSEXP, "condition"))
+         else if (inherits(elSEXP, "condition") && emitWarnings)
          {
+            // captured R error -- emit as error message
             std::string message;
             Error error = RFunction("base:::conditionMessage")
                   .addParam(elSEXP)
@@ -564,11 +580,12 @@ Error runUserDefinedEngine(const std::string& docId,
                LOG_ERROR(error);
                continue;
             }
-            
-            emitText(message);
+
+            emitText(message, kChunkConsoleError);
          }
          else if (inherits(elSEXP, "reticulate_matplotlib_plot"))
          {
+            // matplotlib-generated plot -- forward the image path
             std::string path;
             Error error = getNamedListElement(elSEXP, "path", &path);
             if (error)
