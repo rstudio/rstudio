@@ -469,9 +469,6 @@ Error runUserDefinedEngine(const std::string& docId,
    bool emitWarnings = true;
    core::json::readObject(options, "warning", &emitWarnings);
    
-   bool emitErrors = true;
-   core::json::readObject(options, "error", &emitErrors);
-   
    unsigned int ordinal = 1;
    
    // helper function for emitting console text
@@ -509,12 +506,15 @@ Error runUserDefinedEngine(const std::string& docId,
    };
    
    // output will be captured by engine, but evaluation errors may be
-   // emitted directly to console, so capture those
+   // emitted directly to console, so capture those. note that the reticulate
+   // engine will automatically capture errors when 'error=TRUE', so if we
+   // receive an error it implies we should emit it to the chunk and execution
+   // will automatically stop
    auto consoleHandler = [&](
          module_context::ConsoleOutputType type,
          const std::string& output)
    {
-      if (type == module_context::ConsoleOutputError && emitErrors)
+      if (type == module_context::ConsoleOutputError)
          emitText(output, kChunkConsoleError);
    };
    
