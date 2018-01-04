@@ -154,7 +154,7 @@ bool isSslShutdownError(const core::Error& error)
           error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
 #else
    // OpenSSL 1.1.0
-   return error.code() == boost::asio::ssl::stream_truncated;
+   return error.code() == boost::asio::ssl::error::stream_truncated;
 #endif
 }
 #else
