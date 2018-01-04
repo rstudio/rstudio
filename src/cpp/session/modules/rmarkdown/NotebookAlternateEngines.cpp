@@ -519,7 +519,19 @@ Error runUserDefinedEngine(const std::string& docId,
          const std::string& output)
    {
       if (type == module_context::ConsoleOutputError)
-         emitText(output, kChunkConsoleError);
+      {
+         std::string errorPrefix =
+                "Error in py_run_string_impl(code, local, convert) : ";
+               
+         if (boost::algorithm::starts_with(output, errorPrefix))
+         {
+            emitText(output.substr(errorPrefix.size()), kChunkConsoleError);
+         }
+         else
+         {
+            emitText(output, kChunkConsoleError);
+         }
+      }
    };
    
    boost::signals::scoped_connection handler =
