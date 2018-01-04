@@ -137,7 +137,7 @@ public class SignatureToolTipManager
                   if (anchor_ != null && toolTip_.isShowing())
                   {
                      Position position = event.getPosition();
-                     if (anchor_.getRange().contains(position))
+                     if (position != null && anchor_.getRange().contains(position))
                      {
                         // Update the tooltip position if the cursor changes rows.
                         if (position.getRow() > tooltipPosition_.getRow())
