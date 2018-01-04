@@ -29,7 +29,7 @@ if(APPLE)
       set(LIBR_EXECUTABLE "${LIBR_HOME}/R" CACHE PATH "R executable")
    else()
       get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
-      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" DIRECTORY)
+      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
       set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
       execute_process(
          COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
@@ -194,7 +194,7 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
 
 if(LIBR_FOUND)
    message(STATUS "Found R: ${LIBR_HOME}")
-   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" DIRECTORY CACHE)
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
 endif()
 
 # mark low-level variables from FIND_* calls as advanced

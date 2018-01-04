@@ -142,7 +142,7 @@ if(RSTUDIO_PACKAGE_BUILD)
    # copy the libssl and libcrypto libraries to the install folder
    foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
       # extract the parent directory and actual filename
-      get_filename_component(LIB_DIR ${lib} DIRECTORY)
+      get_filename_component(LIB_DIR ${lib} PATH)
       execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
       # create a writable copy of the libraries we will later modify
