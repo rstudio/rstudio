@@ -465,9 +465,9 @@ Error runUserDefinedEngine(const std::string& docId,
    if (error)
       return error;
    
-   // helper function for emitting console text
    unsigned int ordinal = 1;
    
+   // helper function for emitting console text
    auto emitText = [&](const std::string& text) -> Error
    {
       Error error;
