@@ -447,7 +447,7 @@ Error runUserDefinedEngine(const std::string& docId,
                            const std::string& nbCtxId,
                            const std::string& engine,
                            const std::string& code,
-                           const json::Object& options)
+                           json::Object options)
 {
    using namespace r::sexp;
    using namespace r::exec;
@@ -464,6 +464,10 @@ Error runUserDefinedEngine(const std::string& docId,
    error = cachePath.resetDirectory();
    if (error)
       return error;
+   
+   // default to 'error=FALSE' when unset
+   if (!options.count("error"))
+      options["error"] = false;
    
    // determine whether we want to emit warnings, errors in this chunk
    bool emitWarnings = true;
