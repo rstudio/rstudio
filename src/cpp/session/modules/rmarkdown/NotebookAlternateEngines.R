@@ -54,6 +54,14 @@
       stop(sprintf(fmt, options))
    }
    
+   # if we're using the python engine, attempt to load reticulate (this
+   # will load the reticulate knitr engine and set it as the default engine)
+   if (identical(engine, "python") &&
+       !"reticulate" %in% loadedNamespaces())
+   {
+      requireNamespace("reticulate", quietly = TRUE)
+   }
+   
    # prepare the R environment for reticulate Python engine
    if ("reticulate" %in% loadedNamespaces())
    {
