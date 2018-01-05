@@ -1449,7 +1449,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 	color: #494949;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .emptyProjectMenu .toolbarButtonLabel {
+.rstudio-themes-flat .rstudio-themes-dark .emptyProjectMenu .toolbarButtonLabel,
+.rstudio-themes-flat .rstudio-themes-dark .webHeaderBarCommandsProjectMenu .toolbarButtonLabel {
    color: #FFF;
 }
 
