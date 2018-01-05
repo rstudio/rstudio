@@ -108,8 +108,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
-                      Provider<AceThemes> pAceThemes,
-                      Provider<ProductEditionInfo> pEdition)
+                      Provider<AceThemes> pAceThemes)
    {
       // save references
       view_ = view ;
@@ -127,7 +126,6 @@ public class Application implements ApplicationEventHandlers
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
       pAceThemes_ = pAceThemes;
-      pEdition_ = pEdition;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -899,13 +897,6 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().remove();
       }
       
-      // show support link only in RStudio Pro
-      if (pEdition_.get() != null)
-      {
-         if (!pEdition_.get().proLicense())
-            commands_.rstudioSupport().remove();
-      }
-      
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
       showToolbar( uiPrefs_.get().toolbarVisible().getValue());
@@ -1071,7 +1062,6 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
-   private final Provider<ProductEditionInfo> pEdition_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 
