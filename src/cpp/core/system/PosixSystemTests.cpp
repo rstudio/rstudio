@@ -191,12 +191,13 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "10000", NULL);
          expect_true(false); // shouldn't get here!
       }
       else
       {
          // we now have a subprocess
+         ::sleep(1);
          std::vector<SubprocInfo> children = getSubprocessesViaProcFs(getpid());
          expect_true(children.size() >= 1);
          if (children.size() >= 1)

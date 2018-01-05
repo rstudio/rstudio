@@ -1448,7 +1448,8 @@ std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
    return os;
 }
 
-Error ipAddresses(std::vector<IpAddress>* pAddresses)
+Error ipAddresses(std::vector<IpAddress>* pAddresses,
+                  bool includeIPv6)
 {
    // get addrs
    struct ifaddrs* pAddrs;
@@ -1461,12 +1462,16 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses)
       if (pAddr->ifa_addr == NULL)
          continue;
 
-      if (pAddr->ifa_addr->sa_family != AF_INET)
+      // filter out non-ip addresses
+      sa_family_t family = pAddr->ifa_addr->sa_family;
+      bool filterAddr = includeIPv6 ? (family != AF_INET && family != AF_INET6) : (family != AF_INET);
+      if (filterAddr)
          continue;
 
       char host[NI_MAXHOST];
       if (::getnameinfo(pAddr->ifa_addr,
-                        sizeof(struct sockaddr_in),
+                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                              sizeof(struct sockaddr_in6),
                         host, NI_MAXHOST,
                         NULL, 0, NI_NUMERICHOST) != 0)
       {

@@ -116,7 +116,7 @@ struct IpAddress
    std::string addr;
 };
 
-core::Error ipAddresses(std::vector<IpAddress>* pAddresses);
+core::Error ipAddresses(std::vector<IpAddress>* pAddresses, bool includeIPv6 = false);
 
 // core dump restriction
 core::Error restrictCoreDumps();

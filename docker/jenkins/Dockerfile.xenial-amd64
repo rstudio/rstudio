@@ -32,8 +32,10 @@ RUN apt-get update \
     libpango1.0-dev \
     libssl-dev \
     libxslt1-dev \
+    lsof \
     openjdk-8-jdk \
     pkg-config \
+    python \
     r-base \
     sudo \
     unzip \
