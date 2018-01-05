@@ -36,6 +36,10 @@ if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf ]
 then
    SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
 else
+   # set R environment variables needed by rsession tests
+   export R_HOME=$(R --slave --vanilla -e "cat(paste(R.home('home'),sep=':'))")
+   export R_DOC_DIR=$(R --slave --vanilla -e "cat(paste(R.home('doc'),sep=':'))")
+
    SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf
 fi
    
