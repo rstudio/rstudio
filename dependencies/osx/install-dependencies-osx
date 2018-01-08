@@ -3,7 +3,7 @@
 #
 # install-dependencies-osx
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,11 @@ cd ../common
 ./install-common
 cd ../osx
 
+# desktop dependencies (qt)
+if [ "$1" != "--exclude-qt-sdk" ]
+then
+   ./install-qt-sdk-osx
+fi
 
 # enable PAM
-sudo cp /etc/pam.d/ftpd /etc/pam.d/rstudio
+sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
