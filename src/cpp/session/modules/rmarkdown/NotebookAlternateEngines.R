@@ -73,7 +73,6 @@
       show <- getOption("reticulate.engine.matplotlib.show")
       on.exit(options(reticulate.engine.matplotlib.show = show), add = TRUE)
       options(reticulate.engine.matplotlib.show = function(plt, options) {
-         browser()
          path <- tempfile("reticulate-matplotlib-plot-", fileext = ".png")
          plt$savefig(path, dpi = options$dpi)
          structure(list(path = path), class = "reticulate_matplotlib_plot")
