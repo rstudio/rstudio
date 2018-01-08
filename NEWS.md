@@ -12,7 +12,7 @@
 - Fix incorrect output type when compiling R script to non-HTML report (#1631)
 - Improve spacing in account when username and servername are short (#1637)
 - Fix incorrect background highlighting after reindent (#1643)
-- Fix autocompletion of Rpp C++ objects (#1654)
+- Fix autocompletion of Rcpp C++ objects (#1654)
 - Better "hand" cursor position on RStudio Desktop for Linux (#1659)
 - Fix segfault that can occur when a notebook contains a Rcpp chunk with compilation failures (#1668)
 - Fix problems with Git for Windows installations into sub-directories of home directory (#1679)
