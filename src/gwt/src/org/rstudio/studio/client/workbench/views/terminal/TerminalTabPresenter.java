@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,7 +74,7 @@ public class TerminalTabPresenter extends BusyPresenter
 
       /**
        * Attach a list of server-side terminals to the pane.
-       * @param event list of terminals on server
+       * @param procList list of terminals on server
        */
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
@@ -265,13 +265,9 @@ public class TerminalTabPresenter extends BusyPresenter
    public void confirmClose(final Command onConfirmed)
    {
       final String caption = "Close Terminal(s) ";
-      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            shutDownTerminals();
-            onConfirmed.execute();
-         }
+      terminalHelper_.warnBusyTerminalBeforeCommand(() -> {
+         shutDownTerminals();
+         onConfirmed.execute();
       }, caption, "Are you sure you want to close all terminals? Any running jobs " +
             "will be stopped",
             uiPrefs_.terminalBusyMode().getValue());

@@ -38,7 +38,9 @@ RUN apt-get install -y \
     zlib1g \
     libattr1-dev \
     libcap-dev \
-    libacl1-dev
+    libacl1-dev \
+    lsof \
+    python
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15

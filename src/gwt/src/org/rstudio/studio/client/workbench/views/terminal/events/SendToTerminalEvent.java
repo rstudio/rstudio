@@ -1,7 +1,7 @@
 /*
  * SendToTerminalEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,5 +81,5 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    private String text_;
    private boolean setFocus_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

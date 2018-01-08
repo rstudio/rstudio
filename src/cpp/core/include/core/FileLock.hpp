@@ -84,9 +84,11 @@ public:
 public:
    static void log(const std::string& message);
    
+   static boost::posix_time::seconds getTimeoutInterval() { return s_timeoutInterval; }
+   static void setTimeoutInterval(boost::posix_time::seconds interval) { s_timeoutInterval = interval; }
+
    // getters only: set through 'initialize' method
    static LockType getDefaultType() { return s_defaultType; }
-   static boost::posix_time::seconds getTimeoutInterval() { return s_timeoutInterval; }
    static boost::posix_time::seconds getRefreshRate() { return s_refreshRate; }
    static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isNoLockAvailable(const Error& error)
