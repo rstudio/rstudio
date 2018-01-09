@@ -97,11 +97,13 @@ if not exist %BOOST_FILES:~0,-4%* (
 )
 
 if not exist C:\Qt%QT_VERSION% (
-  wget %WGET_ARGS% %BASEURL%%QT_FILE%
-  echo Extracting %QT_FILE%
-  7z x %QT_FILE%
-  del %QT_FILE%
-  move Qt%QT_VERSION% C:\Qt%QT_VERSION%
+  if not exist C:\Qt\Qt%QT_VERSION% (
+    wget %WGET_ARGS% %BASEURL%%QT_FILE%
+    echo Extracting %QT_FILE%
+    7z x %QT_FILE%
+    del %QT_FILE%
+    move Qt%QT_VERSION% C:\Qt%QT_VERSION%
+  )
 )
 
 if not exist ..\..\src\gwt\lib (
