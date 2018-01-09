@@ -509,6 +509,37 @@ Error runUserDefinedEngine(const std::string& docId,
       return Success();
    };
    
+   // helper function for emitting an image
+   auto emitImage = [&](const std::string& path) -> Error
+   {
+      Error error;
+      
+      FilePath sourcePath = module_context::resolveAliasedPath(path);
+      FilePath targetPath = notebook::chunkOutputFile(
+               docId,
+               chunkId,
+               nbCtxId,
+               ChunkOutputPlot);
+
+      error = targetPath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      error = sourcePath.move(targetPath);
+      if (error)
+         return error;
+
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               ordinal++,
+               ChunkOutputPlot,
+               targetPath);
+      
+      return Success();
+   };
+   
    // output will be captured by engine, but evaluation errors may be
    // emitted directly to console, so capture those. note that the reticulate
    // engine will automatically capture errors when 'error=TRUE', so if we
@@ -574,17 +605,7 @@ Error runUserDefinedEngine(const std::string& docId,
       {
          SEXP elSEXP = VECTOR_ELT(outputSEXP, i);
          
-         if (isString(elSEXP))
-         {
-            // plain old console text output -- emit as-is
-            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-         }
-         else if (inherits(elSEXP, "condition") && emitWarnings)
+         if (inherits(elSEXP, "condition") && emitWarnings)
          {
             // captured R error -- emit as error message
             std::string message;
@@ -599,6 +620,17 @@ Error runUserDefinedEngine(const std::string& docId,
 
             emitText(message, kChunkConsoleError);
          }
+         else if (inherits(elSEXP, "knit_image_paths"))
+         {
+            // handle a plot provided by e.g. knitr::include_graphics()
+            Error error = emitImage(r::sexp::asString(elSEXP));
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+         }
          else if (inherits(elSEXP, "reticulate_matplotlib_plot"))
          {
             // matplotlib-generated plot -- forward the image path
@@ -610,31 +642,28 @@ Error runUserDefinedEngine(const std::string& docId,
                continue;
             }
             
-            FilePath sourcePath = module_context::resolveAliasedPath(path);
-            FilePath targetPath = notebook::chunkOutputFile(
-                     docId,
-                     chunkId,
-                     nbCtxId,
-                     ChunkOutputPlot);
-            
-            error = targetPath.parent().ensureDirectory();
-            if (error)
-               return error;
-            
-            error = sourcePath.move(targetPath);
+            error = emitImage(path);
             if (error)
             {
                LOG_ERROR(error);
                continue;
             }
-            
-            enqueueChunkOutput(
-                     docId,
-                     chunkId,
-                     nbCtxId,
-                     ordinal++,
-                     ChunkOutputPlot,
-                     targetPath);
+         }
+         else if (isString(elSEXP))
+         {
+            // plain old console text output -- emit as-is
+            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+         }
+         else
+         {
+            Rf_warning(
+                     "don't know how to handle engine output of type '%s'",
+                     r::sexp::typeAsString(elSEXP).c_str());
          }
       }
    }
