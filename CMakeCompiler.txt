@@ -19,6 +19,9 @@ if(RSTUDIO_CMAKE_COMPILER_INCLUDED)
 endif()
 set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 
+# require position independent code for CMake targets
+set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
+
 # use clang on osx
 if(APPLE)
 

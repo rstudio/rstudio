@@ -100,7 +100,6 @@ if(UNIX)
       add_definitions(-Wformat -Wformat-security)
       add_definitions(-D_FORTIFY_SOURCE=2)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
-      add_definitions(-pie -fPIC)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now")
    endif()
 
