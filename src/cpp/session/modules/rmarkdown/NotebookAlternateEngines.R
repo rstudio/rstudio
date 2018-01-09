@@ -35,8 +35,19 @@
    }
 })
 
-.rs.addFunction("runUserDefinedEngine", function(engine, options)
+.rs.addFunction("runUserDefinedEngine", function(engine, code, options)
 {
+   # if we're using the python engine, attempt to load reticulate (this
+   # will load the reticulate knitr engine and set it as the default engine)
+   useReticulate <-
+      identical(engine, "python") &&
+      !identical(getOption("python.reticulate"), FALSE)
+   
+   if (useReticulate) {
+      # TODO: prompt user for installation of reticulate?
+      requireNamespace("reticulate", quietly = TRUE)
+   }
+   
    # retrieve the engine
    knitrEngines <- knitr::knit_engines$get()
    if (!engine %in% names(knitrEngines))
@@ -54,8 +65,43 @@
       stop(sprintf(fmt, options))
    }
    
-   # invoke engine
+   # prepare the R environment for reticulate Python engine
+   if (useReticulate)
+   {
+      # install our own matplotlib hook -- TODO here is to save the plot
+      # object itself so we can redraw the plot if needed on resize
+      show <- getOption("reticulate.engine.matplotlib.show")
+      on.exit(options(reticulate.engine.matplotlib.show = show), add = TRUE)
+      options(reticulate.engine.matplotlib.show = function(plt, options) {
+         path <- tempfile("reticulate-matplotlib-plot-", fileext = ".png")
+         plt$savefig(path, dpi = options$dpi)
+         structure(list(path = path), class = "reticulate_matplotlib_plot")
+      })
+      
+      # install our own wrap hook -- we want to avoid the post-processing
+      # typically done by knitr; we implement our own wrap behavior for
+      # notebooks
+      wrap <- getOption("reticulate.engine.wrap")
+      on.exit(options(reticulate.engine.wrap = wrap), add = TRUE)
+      options(reticulate.engine.wrap = function(outputs, options) {
+         outputs
+      })
+      
+      # use the global environment for rendering
+      environment <- getOption("reticulate.engine.environment")
+      on.exit(options(reticulate.engine.environment = environment), add = TRUE)
+      options(reticulate.engine.environment = globalenv())
+   }
+   
+   # prepare chunk options
    mergedOptions <- knitr::opts_chunk$merge(options)
+   code <- strsplit(code, "\n", fixed = TRUE)[[1]]
+   mergedOptions$code <- code
+   
+   # when invoking engines, we don't want to echo user code
+   mergedOptions$echo <- FALSE
+   
+   # invoke engine
    knitrEngine(mergedOptions)
    
 })
