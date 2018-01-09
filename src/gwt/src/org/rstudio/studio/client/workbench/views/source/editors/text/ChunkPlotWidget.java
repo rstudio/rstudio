@@ -20,6 +20,8 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -59,10 +61,23 @@ public class ChunkPlotWidget extends Composite
                   img.getStyle().setProperty("height", "auto");
                   img.getStyle().setProperty("maxWidth", "100%");
                }
-                  
+               
                plot_.setVisible(true);
                if (onRenderComplete != null)
-                  onRenderComplete.execute();
+               {
+                  // it seems that the 'onload' event can be fired after the
+                  // image has been loaded, but before the browser has actually
+                  // sized and rendered the image. defer the 'onRenderComplete()'
+                  // action just so the browser gets a chance to render the image
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        onRenderComplete.execute();
+                     }
+                  });
+               }
             }
          });
       
