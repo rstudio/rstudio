@@ -429,25 +429,30 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    std::string path, targetPath;
    Error error = json::readParams(request.params, &path, &targetPath);
    if (error)
-      return error ;
+      return error;
 
+   // detect case-only name changes
+   bool isCaseOnlyChange =
+         path != targetPath &&
+         string_utils::toLower(path) == string_utils::toLower(targetPath);
+   
    // if the destination already exists then send back file exists
-    FilePath destPath = module_context::resolveAliasedPath(targetPath) ;
-    if (destPath.exists())
-       return fileExistsError(ERROR_LOCATION);
-
+   FilePath destPath = module_context::resolveAliasedPath(targetPath);
+   if (!isCaseOnlyChange && destPath.exists())
+      return fileExistsError(ERROR_LOCATION);
+   
    // move the file
    FilePath sourcePath = module_context::resolveAliasedPath(path);
    Error renameError = sourcePath.move(destPath);
    if (renameError)
-      return renameError ;
-
-   // propagate rename to source database (non fatal if this fails)
-    error = source_database::rename(sourcePath, destPath);
-    if (error)
-       LOG_ERROR(error);
+      return renameError;
    
-   return Success() ;
+   // propagate rename to source database (non fatal if this fails)
+   error = source_database::rename(sourcePath, destPath);
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 void handleFilesRequest(const http::Request& request, 

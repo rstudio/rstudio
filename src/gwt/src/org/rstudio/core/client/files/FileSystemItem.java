@@ -45,10 +45,11 @@ public class FileSystemItem extends JavaScriptObject
       return create(path, false, -1, 0);
    }
 
-   private static final native FileSystemItem create(String path,
-                                                     boolean dir,
-                                                     double length,
-                                                     double lastModified) /*-{
+   public static final native FileSystemItem create(String path,
+                                                    boolean dir,
+                                                    double length,
+                                                    double lastModified)
+   /*-{
       // Boost "complete" function crashes rsession if it
       // sees e.g. "C:" as opposed to "C:/"
       if (path.match(/^[a-z]:$/im))
