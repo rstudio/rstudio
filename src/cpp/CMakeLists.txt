@@ -100,7 +100,8 @@ if(UNIX)
       add_definitions(-Wformat -Wformat-security)
       add_definitions(-D_FORTIFY_SOURCE=2)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now")
+      add_definitions(-fPIC)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -Wl,-z,relro,-z,now")
    endif()
 
 # Win32 specific global directives
