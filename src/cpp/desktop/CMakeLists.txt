@@ -489,7 +489,7 @@ if(RSTUDIO_BUNDLE_QT)
 
       # download linuxdeployqt tool
       set(LINUXDEPLOYQT_COMMAND "$ENV{HOME}/rstudio-tools/linuxdeployqt")
-      set(LINUXDEPLOYQT_URL "https://s3.amazonaws.com/rstudio-buildtools/linuxdeployqt")
+      set(LINUXDEPLOYQT_URL "http://s3.amazonaws.com/rstudio-buildtools/linuxdeployqt")
       set(LINUXDEPLOYQT_RPATHTOOL "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh")
       download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_COMMAND}")
 
