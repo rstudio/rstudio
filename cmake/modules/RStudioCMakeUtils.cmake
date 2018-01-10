@@ -7,7 +7,7 @@ function(download URL FILE)
    endif()
 
    # perform the download
-   message(STATUS "Downloading '${FILENAME}'")
+   message(STATUS "Downloading ${FILENAME}")
    file(DOWNLOAD "${URL}" "${FILE}" STATUS STATUS)
 
    # check status
@@ -16,6 +16,6 @@ function(download URL FILE)
    if(NOT EC EQUAL 0)
       message(FATAL_ERROR "Download failed: ${MSG}")
    endif()
-   message(STATUS "Downloading '${FILENAME}' -- Success")
+   message(STATUS "Downloading ${FILENAME} - Success")
 
 endfunction()
