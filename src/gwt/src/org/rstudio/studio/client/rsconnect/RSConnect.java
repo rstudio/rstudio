@@ -340,17 +340,24 @@ public class RSConnect implements SessionInitHandler,
                   publishAsCode(event, input.getWebsiteDir(), false);
                }
             }
-            else if (input.isSelfContained() && input.hasDocOutput())
-            {
-               // RStudio Connect is disabled, go straight to RPubs
-               publishAsRPubs(event);
-            }
-            else 
+            else if (!input.isSelfContained())
             {
                // we should generally hide the button in this case
                display_.showErrorMessage("Content Not Publishable", 
                      "Only self-contained documents can currently be " + 
                      "published to RPubs.");
+            }
+            else if (!input.hasDocOutput())
+            {
+               display_.showErrorMessage("Publish Document", 
+                     "Only rendered R Markdown documents can be published to RPubs. " +
+                     "To publish this document, click Knit to render it, then click " +
+                     "the Publish button above the rendered document.");
+            }
+            else if (input.isSelfContained() && input.hasDocOutput())
+            {
+               // RStudio Connect is disabled, go straight to RPubs
+               publishAsRPubs(event);
             }
          }
       }
