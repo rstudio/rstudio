@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -120,10 +120,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    }
    
    public void prepareForQuit(final String caption,
-                              final boolean allowCancel,
                               final QuitContext quitContext)
    {
-      prepareForQuit(caption, allowCancel, false /*forceSaveAll*/, quitContext);
+      prepareForQuit(caption, true /*allowCancel*/, false /*forceSaveAll*/, quitContext);
    }
 
    public void prepareForQuit(final String caption,
@@ -620,14 +619,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", true /*allowCancel*/, 
-            (boolean saveChanges) -> performQuit(saveChanges));
+      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(saveChanges));
    }
 
    @Handler
    public void onForceQuitSession()
    {
-      prepareForQuit("Quit R Session", false/*allowCancel*/,
+      prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(saveChanges));
    }
 

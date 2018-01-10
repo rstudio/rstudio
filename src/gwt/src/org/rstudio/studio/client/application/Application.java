@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -450,8 +450,7 @@ public class Application implements ApplicationEventHandlers
    public void onSwitchToRVersion(final SwitchToRVersionEvent event)
    {
       final ApplicationQuit applicationQuit = pApplicationQuit_.get();
-      applicationQuit.prepareForQuit("Switch R Version", true /*allowCancel*/,
-                                             new QuitContext() {
+      applicationQuit.prepareForQuit("Switch R Version", new QuitContext() {
          public void onReadyToQuit(boolean saveChanges)
          {
             // see if we have a project (otherwise switch to "None")
@@ -750,11 +749,11 @@ public class Application implements ApplicationEventHandlers
       pAceThemes_.get();
 
       // subscribe to ClientDisconnected event (wait to do this until here
-      // because there were spurious ClientDisconnected events occuring
+      // because there were spurious ClientDisconnected events occurring
       // after a session interrupt sequence. we couldn't figure out why,
       // and since this is a temporary hack why not add another temporary
       // hack to go with it here :-)
-      // TOOD: move this back tot he constructor after we revise the
+      // TODO: move this back to the constructor after we revise the
       // interrupt hack(s)
       events_.addHandler(ClientDisconnectedEvent.TYPE, this); 
       
