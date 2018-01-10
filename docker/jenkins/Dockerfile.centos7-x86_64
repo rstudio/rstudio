@@ -14,8 +14,6 @@ RUN yum install -y \
     gcc-c++ \
     git \
     gpg \
-    gstreamer-devel \
-    gstreamer-plugins-base-devel \
     java-1.8.0-openjdk  \
     java-1.8.0-openjdk-devel  \
     libffi \
@@ -28,6 +26,7 @@ RUN yum install -y \
     openssl-devel \
     pam-devel \
     pango-devel \
+    patchelf \
     R \
     rpmdevtools \
     rpmsign \
