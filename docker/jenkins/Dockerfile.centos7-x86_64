@@ -20,6 +20,9 @@ RUN yum install -y \
     java-1.8.0-openjdk-devel  \
     libffi \
     libuuid-devel \
+    libXcursor-devel \
+    libXrandr-devel \
+    libXScrnSaver-devel \
     lsof \
     make \
     openssl-devel \
