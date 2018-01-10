@@ -118,6 +118,12 @@ core::Error appendConsoleOutput(int chunkConsoleOutputType,
                                 const std::string& output,
                                 const core::FilePath& filePath);
 
+core::Error writeConsoleOutput(int chunkConsoleOutputType,
+                               const std::string& output,
+                               const core::FilePath& filePath,
+                               bool truncate);
+
+
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 

@@ -564,9 +564,10 @@ core::Error cleanChunkOutput(const std::string& docId,
    return Success();
 }
 
-core::Error appendConsoleOutput(int chunkConsoleType,
-                                const std::string& output,
-                                const core::FilePath& targetPath)
+core::Error writeConsoleOutput(int chunkConsoleType,
+                               const std::string& output,
+                               const core::FilePath& targetPath,
+                               bool truncate)
 {
    Error error;
    
@@ -583,8 +584,19 @@ core::Error appendConsoleOutput(int chunkConsoleType,
             targetPath,
             encoded,
             string_utils::LineEndingPassthrough,
-            false);
+            truncate);
    return error;
+}
+
+core::Error appendConsoleOutput(int chunkConsoleOutputType,
+                                const std::string& output,
+                                const FilePath& filePath)
+{
+   return writeConsoleOutput(
+            chunkConsoleOutputType,
+            output,
+            filePath,
+            false);
 }
 
 Error initOutput()

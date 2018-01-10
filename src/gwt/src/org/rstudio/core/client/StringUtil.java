@@ -174,49 +174,10 @@ public class StringUtil
       return val == null || val.length() == 0;
    }
 
-   // WARNING: I'm pretty sure this will fail for UTF-8
    public static String textToRLiteral(String value)
    {
-      StringBuffer sb = new StringBuffer();
-      sb.append('"');
-
-      for (char c : value.toCharArray())
-      {
-         switch (c)
-         {
-            case '"':
-               sb.append("\\\"");
-               break;
-            case '\n':
-               sb.append("\\n");
-               break;
-            case '\r':
-               sb.append("\\r");
-               break;
-            case '\t':
-               sb.append("\\t");
-               break;
-            case '\b':
-               sb.append("\\b");
-               break;
-            case '\f':
-               sb.append("\\f");
-               break;
-            case '\\':
-               sb.append("\\\\");
-               break;
-            default:
-               if (c < 32 || c > 126)
-                  sb.append("\\x").append(toHex(c));
-               else
-                  sb.append(c);
-               break;
-         }
-      }
-
-      sb.append('"');
-      
-      return sb.toString();
+      String escaped = value.replaceAll("([\"\\n\\r\\t\\b\\f\\\\])", "\\\\$1");
+      return '"' + escaped + '"';
    }
 
    private static String toHex(char c)

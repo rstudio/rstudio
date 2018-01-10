@@ -515,12 +515,12 @@ public class Files
             final FileSystemItem target =
                file.isDirectory() ?
                   FileSystemItem.createDir(path) :
-                  FileSystemItem.createFile(path);
+                  FileSystemItem.create(path, false, file.getLength(), file.getLastModifiedNative());
               
             // clear selection
             view_.selectNone();
             
-            // premptively rename in the UI then fallback to refreshing
+            // pre-emptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
             

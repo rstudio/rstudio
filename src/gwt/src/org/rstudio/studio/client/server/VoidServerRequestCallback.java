@@ -43,7 +43,10 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
       Debug.logError(error);
 
       if (progress_ != null)
+      {
          progress_.onError(error.getUserMessage());
+         progress_.onCompleted();
+      }
       
       onFailure();
       onCompleted();
