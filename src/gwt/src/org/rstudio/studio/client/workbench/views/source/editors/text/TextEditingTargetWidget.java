@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
@@ -410,7 +411,13 @@ public class TextEditingTargetWidget
          publishButton_ = new RSConnectPublishButton(
                RSConnectPublishButton.HOST_EDITOR,
                RSConnect.CONTENT_TYPE_APP, false, null);
-         publishButton_.onPublishInvoked(() -> target_.save());
+         publishButton_.onPublishInvoked(() -> 
+         {
+            if (!StringUtil.isNullOrEmpty(target_.getPath()))
+            {
+              target_.save(); 
+            }
+         });
          toolbar.addRightWidget(publishButton_);
       }
       
