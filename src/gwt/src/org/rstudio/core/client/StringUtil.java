@@ -176,7 +176,7 @@ public class StringUtil
 
    public static String textToRLiteral(String value)
    {
-      String escaped = value.replaceAll("([\"\\\n\\r\\t\\b\\f\\\\])", "\\\\$1");
+      String escaped = value.replaceAll("([\"\\n\\r\\t\\b\\f\\\\])", "\\\\$1");
       return '"' + escaped + '"';
    }
 
