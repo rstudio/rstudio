@@ -492,6 +492,7 @@ if(RSTUDIO_BUNDLE_QT)
       set(LINUXDEPLOYQT_URL "http://s3.amazonaws.com/rstudio-buildtools/linuxdeployqt")
       set(LINUXDEPLOYQT_RPATHTOOL "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh")
       download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_COMMAND}")
+      execute_process(COMMAND chmod 755 "${LINUXDEPLOYQT_COMMAND}")
 
       # configure and run cmake installer script
       configure_file(
