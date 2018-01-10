@@ -11,5 +11,5 @@ for file in lib/*.so*; do
 	rewrite-rpath "$file"
 done
 
-rm ../AppRun
+rm -f ../AppRun
 
