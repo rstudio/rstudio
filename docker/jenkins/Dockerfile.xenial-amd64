@@ -32,6 +32,7 @@ RUN apt-get update \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \
+    patchelf \
     pkg-config \
     python \
     r-base \
