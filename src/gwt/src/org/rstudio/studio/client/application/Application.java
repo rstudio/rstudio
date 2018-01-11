@@ -459,7 +459,8 @@ public class Application implements ApplicationEventHandlers
                project = Projects.NONE;
             
             // do the quit
-            applicationQuit.performQuit(saveChanges, 
+            applicationQuit.performQuit(null,
+                                        saveChanges,
                                         project, 
                                         event.getRVersionSpec());
          }   
