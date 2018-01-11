@@ -925,6 +925,7 @@ var RCodeModel = function(session, tokenizer,
          else if (!isInRMode &&
                   modeId === "mode/sweave" &&
                   type === "keyword" &&
+                  position.column === 0 &&
                   value.indexOf("\\") === 0 && (
                      value === "\\chapter" ||
                      value === "\\section" ||
