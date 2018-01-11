@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.O
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -97,6 +99,14 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    public void onActivate()
    {
       grid_.redraw();
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            grid_.setFocus(true);
+         }
+      });
    }
    
    public void onDeactivate()

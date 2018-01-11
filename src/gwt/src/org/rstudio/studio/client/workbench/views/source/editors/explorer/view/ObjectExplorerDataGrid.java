@@ -1156,6 +1156,18 @@ public class ObjectExplorerDataGrid
                   root_.updateChildOwnership();
                   root_.setExpansionState(ExpansionState.OPEN);
                   synchronize();
+                  
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        if (getData().size() > 0)
+                        {
+                           setKeyboardSelectedRow(0, true);
+                        }
+                     }
+                  });
                }
                
                @Override
