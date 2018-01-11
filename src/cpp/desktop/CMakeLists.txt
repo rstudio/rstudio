@@ -493,19 +493,17 @@ if(RSTUDIO_BUNDLE_QT)
       download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_BIN}")
       execute_process(COMMAND chmod 755 "${LINUXDEPLOYQT_BIN}")
 
-      # configure and run cmake installer script
-      set(INSTALL_QT_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
+      # configure and install qt
       configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.sh.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
-        @ONLY)
+         "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.sh.in"
+         "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
+         @ONLY)
 
-      configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.cmake"
-        @ONLY)
-
-      install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.cmake")
+      install_process(
+         COMMAND
+         "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
+         "${LINUXDEPLOYQT_BIN}"
+         "${QT_QMAKE_EXECUTABLE}")
 
    endif()
           

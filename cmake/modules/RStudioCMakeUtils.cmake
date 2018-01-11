@@ -1,3 +1,5 @@
+include(CMakeParseArguments)
+
 function(download URL FILE)
 
    get_filename_component(FILENAME "${FILE}" NAME)
@@ -18,4 +20,9 @@ function(download URL FILE)
    endif()
    message(STATUS "Downloading ${FILENAME} - Success")
 
+endfunction()
+
+function(install_process)
+   cmake_parse_arguments(install_process "" "" "COMMAND" ${ARGN})
+   install(CODE "execute_process(COMMAND ${install_process_COMMAND} WORKING_DIRECTORY \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")")
 endfunction()
