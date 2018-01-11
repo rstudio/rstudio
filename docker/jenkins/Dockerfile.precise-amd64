@@ -6,8 +6,6 @@ ARG AWS_REGION=us-east-1
 RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/' >> /etc/apt/sources.list \
     && apt-get update
 
 # add ppa repository so we can install java 8 (not in any official repo for precise)
@@ -42,7 +40,6 @@ RUN apt-get update \
     lsof \
     openjdk-8-jdk \
     pkg-config \
-    r-base \
     sudo \
     unzip \
     uuid-dev \
@@ -57,6 +54,40 @@ RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/jav
 # ensure that we use the gcc-4.7 compiler
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 40 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8
 RUN update-alternatives --config gcc
+
+# install packages needed to build R from source
+RUN apt-get update && apt-get install -y \
+    gfortran \
+    libreadline-dev  \
+    liblzma-dev
+
+# build zlib; this is an R prereq. ordinarily this would be satisfied by
+# zlib1g-dev, but on precise that lib is too old (1.2.5; R needs >= 1.2.8)
+RUN cd /tmp \
+    && wget http://zlib.net/zlib-1.2.11.tar.gz \
+    && tar xzvf zlib-1.2.11.tar.gz \
+    && cd zlib-1.2.11 \
+    && ./configure \
+    && make \
+    && make install
+
+# build pcre; it has a similar issue, since precise has 8.12 but R wants 8.20
+RUN cd /tmp \
+    && wget https://ftp.pcre.org/pub/pcre/pcre-8.41.tar.gz \
+    && tar xzvf pcre-8.41.tar.gz \
+    && cd pcre-8.41 \
+    && ./configure \
+    && make \
+    && make install
+
+# install R
+RUN cd /tmp \
+    && wget https://cran.r-project.org/src/base/R-3/R-3.0.3.tar.gz \
+    && tar xzvf R-3.0.3.tar.gz \
+    && cd R-3.0.3 \
+    && ./configure --enable-R-shlib \
+    && make \
+    && make install
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
