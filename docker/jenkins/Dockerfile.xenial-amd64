@@ -25,7 +25,6 @@ RUN apt-get update \
     libapparmor1 \
     libbz2-dev \
     libfuse2 \
-    libfuse-dev \
     libgl1-mesa-dev \
     libjpeg62 \
     libpam-dev \
