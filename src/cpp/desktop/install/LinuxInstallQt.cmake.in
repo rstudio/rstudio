@@ -1,0 +1,8 @@
+execute_process(
+   COMMAND
+      "@INSTALL_QT_SCRIPT@"
+      "@LINUXDEPLOYQT_BIN@"
+      "@QT_QMAKE_EXECUTABLE@"
+   WORKING_DIRECTORY
+      "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
+

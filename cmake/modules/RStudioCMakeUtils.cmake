@@ -2,7 +2,7 @@ function(download URL FILE)
 
    get_filename_component(FILENAME "${FILE}" NAME)
    if (EXISTS "${FILE}")
-      message(STATUS "'${FILENAME}' already exists; skipping download")
+      message(STATUS "${FILENAME} already exists; skipping download")
       return()
    endif()
 

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+OWD="${PWD}"
+LINUXDEPLOYQT="$1"
+QMAKE="$2"
+
+# invoke linuxdeployqt (running it twice is necessary to
+# pick up certain dependencies; e.g. OpenGL)
+# https://github.com/probonopd/linuxdeployqt/issues/150
+cd "$(dirname "${LINUXDEPLOYQT}")"
+[ -d squashfs-root ] || "${LINUXDEPLOYQT}" --appimage-extract
+cd squashfs-root
+./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
+./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
+cd "${OWD}"
+
+# now, force RPATHS (not RUNPATHS) so that LD_LIBRARY_PATH
+# shenanigans don't cause RStudio to load an incompatible
+# verison of Qt and crash inexplicably
+rewrite-rpath () {
+	patchelf --remove-rpath "$1"
+	patchelf --set-rpath '$ORIGIN/../lib' --force-rpath "$1"
+}
+
+rewrite-rpath libexec/QtWebEngineProcess
+rewrite-rpath bin/rstudio
+for file in lib/*.so*; do
+	rewrite-rpath "$file"
+done
+

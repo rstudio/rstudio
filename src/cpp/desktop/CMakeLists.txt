@@ -488,24 +488,24 @@ if(RSTUDIO_BUNDLE_QT)
       target_link_libraries(rstudio ${ICU_LIBRARIES})
 
       # download linuxdeployqt tool
-      set(LINUXDEPLOYQT_COMMAND "$ENV{HOME}/rstudio-tools/linuxdeployqt")
+      set(LINUXDEPLOYQT_BIN "$ENV{HOME}/rstudio-tools/linuxdeployqt")
       set(LINUXDEPLOYQT_URL "http://s3.amazonaws.com/rstudio-buildtools/linuxdeployqt")
-      set(LINUXDEPLOYQT_RPATHTOOL "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh")
-      download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_COMMAND}")
-      execute_process(COMMAND chmod 755 "${LINUXDEPLOYQT_COMMAND}")
+      download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_BIN}")
+      execute_process(COMMAND chmod 755 "${LINUXDEPLOYQT_BIN}")
 
       # configure and run cmake installer script
+      set(INSTALL_QT_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
       configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/LinuxDeployQt.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.sh.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
         @ONLY)
 
       configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/linux-rpath.sh.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/tools/linux-rpath.sh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.cmake"
         @ONLY)
 
-      install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/LinuxDeployQt.cmake")
+      install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.cmake")
 
    endif()
           
