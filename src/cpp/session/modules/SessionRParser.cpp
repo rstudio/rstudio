@@ -2454,11 +2454,14 @@ ARGUMENT_START:
       
       if (closesArgumentList(cursor, status))
       {
-         if (status.isWithinParenFunctionCall() &&
-             cursor.previousSignificantToken().isType(RToken::COMMA))
-         {
-            status.lint().missingArgumentToFunctionCall(cursor.previousSignificantToken());
-         }
+         // TODO: we previously warned about commas found before a closing
+         // parenthesis, e.g.
+         //
+         //    rnorm(a, b, )
+         //               ^
+         //
+         // but we relax that now as many tidyverse functions now permit
+         // an empty trailing argument
          goto ARGUMENT_LIST_END;
       }
       
