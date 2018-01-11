@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
