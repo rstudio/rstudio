@@ -333,43 +333,49 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
-   public void performQuit(boolean saveChanges)
+   public void performQuit(String invokedByTutorialApi, boolean saveChanges)
    {
-      performQuit(saveChanges, null, null);
+      performQuit(invokedByTutorialApi, saveChanges, null, null);
    }
    
-   public void performQuit(boolean saveChanges, 
+   public void performQuit(String invokedByTutorialApi,
+                           boolean saveChanges,
                            String switchToProject)
    {
-      performQuit(saveChanges, switchToProject, null);
+      performQuit(invokedByTutorialApi, saveChanges, switchToProject, null);
    }
    
-   public void performQuit(boolean saveChanges, 
+   public void performQuit(String invokedByTutorialApi,
+                           boolean saveChanges,
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(null, saveChanges, switchToProject, switchToRVersion);
+      performQuit(invokedByTutorialApi, null, saveChanges, switchToProject, switchToRVersion);
    }
    
-   public void performQuit(String progressMessage,
+   public void performQuit(String invokedByTutorialApi,
+                           String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(progressMessage, 
+      performQuit(invokedByTutorialApi,
+                  progressMessage,
                   saveChanges, 
                   switchToProject, 
                   switchToRVersion,
                   null);
    }
    
-   public void performQuit(String progressMessage,
+   public void performQuit(String invokedByTutorialApi,
+                           String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion,
                            Command onQuitAcknowledged)
    {
-      new QuitCommand(progressMessage, 
+      new QuitCommand(invokedByTutorialApi,
+                      progressMessage,
                       saveChanges, 
                       switchToProject,
                       switchToRVersion,
@@ -619,14 +625,14 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(saveChanges));
+      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    @Handler
    public void onForceQuitSession()
    {
       prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
-            (boolean saveChanges) -> performQuit(saveChanges));
+            (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
@@ -668,7 +674,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private class QuitCommand implements Command 
    { 
-      public QuitCommand(String progressMessage, 
+      public QuitCommand(String invokedByTutorialApi,
+                         String progressMessage,
                          boolean saveChanges, 
                          String switchToProject,
                          RVersionSpec switchToRVersion,
@@ -678,6 +685,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
          switchToRVersion_ = switchToRVersion;
+         invokedByTutorialApi_ = invokedByTutorialApi;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -748,26 +756,39 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                            if (switchToProject_ == null)
                               progress.dismiss();
                            
+                           if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                           {
+                              eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                    ApplicationTutorialEvent.API_SUCCESS, invokedByTutorialApi_));
+                           }
+                           
                            // fire onQuitAcknowledged
                            if (onQuitAcknowledged_ != null)
                               onQuitAcknowledged_.execute();
                         }
                         else
                         {
-                           onFailedToQuit();
+                           onFailedToQuit("server quitSession responded false");
                         }
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        onFailedToQuit();
+                        onFailedToQuit(error.getMessage());
                      }
                      
-                     private void onFailedToQuit()
+                     private void onFailedToQuit(String message)
                      {
                         progress.dismiss();
-
+                        
+                        if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                        {
+                           eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                 ApplicationTutorialEvent.API_ERROR,
+                                 invokedByTutorialApi_,
+                                 message));
+                        }
                         if (Desktop.isDesktop())
                         {
                            Desktop.getFrame().setPendingQuit(
@@ -796,9 +817,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       private final String switchToProject_;
       private final RVersionSpec switchToRVersion_;
       private final String progressMessage_;
+      private final String invokedByTutorialApi_;
       private final Command onQuitAcknowledged_;
-
-   };
+   }
 
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;

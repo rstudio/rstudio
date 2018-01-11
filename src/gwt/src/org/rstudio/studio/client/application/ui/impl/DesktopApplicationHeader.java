@@ -333,7 +333,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                   public void onReadyToQuit(boolean saveChanges)
                   {
                      Desktop.getFrame().browseUrl(result.getUpdateUrl());
-                     appQuit_.performQuit(saveChanges);
+                     appQuit_.performQuit(null, saveChanges);
                   }
                }); 
             }

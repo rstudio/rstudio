@@ -681,6 +681,7 @@ public class Projects implements OpenProjectFileHandler,
             if (!newProject.getOpenInNewWindow())
             {
                applicationQuit_.performQuit(
+                                 null,
                                  saveChanges,
                                  newProject.getProjectFile(),
                                  newProject.getRVersion());
@@ -777,7 +778,7 @@ public class Projects implements OpenProjectFileHandler,
       applicationQuit_.prepareForQuit("Close Project", new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
-            applicationQuit_.performQuit(saveChanges, NONE);
+            applicationQuit_.performQuit(null, saveChanges, NONE);
          }});
    }
    
@@ -897,7 +898,7 @@ public class Projects implements OpenProjectFileHandler,
    @Override
    public void onSwitchToProject(final SwitchToProjectEvent event)
    {
-      switchToProject(event.getProject(), event.getForceSaveAll());
+      switchToProject(event.getProject(), event.getForceSaveAll(), event.getInvokedByTutorialApi());
    }
    
    @Override
@@ -944,12 +945,15 @@ public class Projects implements OpenProjectFileHandler,
    
    private void switchToProject(String projectFilePath)
    {
-      switchToProject(projectFilePath, false);
+      switchToProject(projectFilePath, false, null);
    }
    
    private void switchToProject(final String projectFilePath, 
-                                final boolean forceSaveAll)
+                                final boolean forceSaveAll,
+                                final String invokedByTutorialApi)
    {
+      final boolean allowCancel = StringUtil.isNullOrEmpty(invokedByTutorialApi);
+      
       // validate that the switch will actually work
       projServer_.validateProjectPath(
                       projectFilePath,
@@ -961,12 +965,12 @@ public class Projects implements OpenProjectFileHandler,
             if (valid)
             {
                applicationQuit_.prepareForQuit("Switch Projects",
-                  true /*allowCancel*/,
+                  allowCancel,
                   forceSaveAll,
                   new ApplicationQuit.QuitContext() {
                   public void onReadyToQuit(final boolean saveChanges)
                   {
-                     applicationQuit_.performQuit(saveChanges, projectFilePath);
+                     applicationQuit_.performQuit(invokedByTutorialApi, saveChanges, projectFilePath);
                   }
                });
             }
@@ -1082,7 +1086,7 @@ public class Projects implements OpenProjectFileHandler,
                         else
                         {
                            // perform quit
-                           applicationQuit_.performQuit(saveChanges,
+                           applicationQuit_.performQuit(null, saveChanges,
                                  input.getProjectFile().getPath());
                         }
                      };
