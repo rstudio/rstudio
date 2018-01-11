@@ -760,9 +760,9 @@
    else if (is.factor(object))
    {
       fmt <- "Factor with %i levels: %s"
-      header <- head(object, n)
-      output <- sprintf(fmt, length(object), paste(.rs.surround(header, with = "\""), collapse = ", "))
-      more <- length(object) > n
+      header <- head(levels(object), n)
+      output <- sprintf(fmt, length(levels(object)), paste(.rs.surround(header, with = "\""), collapse = ", "))
+      more <- length(levels(object)) > n
       comma <- TRUE
    }
    else if (is.ordered(object))
