@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -777,7 +777,8 @@ QString GwtCallback::promptForText(QString title,
                                    bool extraOptionByDefault,
                                    bool numbersOnly,
                                    int selectionStart,
-                                   int selectionLength)
+                                   int selectionLength,
+                                   QString okButtonCaption)
 {
    InputDialog dialog(pOwner_->asWidget());
    dialog.setWindowTitle(title);
