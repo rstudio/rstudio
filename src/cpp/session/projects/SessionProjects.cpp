@@ -133,6 +133,13 @@ Error findProjectInFolder(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   boost::algorithm::trim(folder);
+   if (folder.empty())
+   {
+      pResponse->setResult("");
+      return Success();
+   }
+
    FilePath projectFilePath = module_context::resolveAliasedPath(folder);
    if (!projectFilePath.exists())
    {
