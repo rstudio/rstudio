@@ -20,6 +20,7 @@
 #include "NotebookOutput.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <core/StringUtils.hpp>
@@ -344,6 +345,7 @@ Error cleanReplayChunkPlotOutput(const json::JsonRpcRequest& request,
 core::Error initPlotReplay()
 {
    using namespace module_context;
+   using boost::bind;
 
    ExecBlock initBlock;
    initBlock.addFunctions()

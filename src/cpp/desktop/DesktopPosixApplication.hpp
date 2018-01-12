@@ -1,7 +1,7 @@
 /*
  * DesktopPosixApplication.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,9 +28,9 @@ class PosixApplication : public QtSingleApplication
     Q_OBJECT
 public:
 
-   PosixApplication(QString appName, int& argc, char* argv[])
+   PosixApplication(const QString& appName, int& argc, char* argv[])
     : QtSingleApplication(appName, argc, argv),
-      pAppLauncher_(NULL)
+      pAppLauncher_(nullptr)
    {
    }
 
@@ -48,7 +48,7 @@ signals:
     void openFileRequest(QString filename);
 
 protected:
-    virtual bool event(QEvent* pEvent);
+    bool event(QEvent* pEvent) override;
 
 private:
     QString startupOpenFileRequest_;

@@ -22,24 +22,65 @@
 
 #include <boost/foreach.hpp>
 
+#include <QObject>
+#include <QKeyEvent>
 #include <QProcess>
+#include <QDebug>
 
 namespace rstudio {
 namespace desktop {
 
 namespace {
 
-
 PosixApplication* app()
 {
    return qobject_cast<PosixApplication*>(qApp);
 }
 
+// helper for swapping Ctrl, Meta modifiers
+// https://bugreports.qt.io/browse/QTBUG-51293
+class MacEventFilter : public QObject
+{
+public:
+   MacEventFilter(QObject* parent)
+      : QObject(parent)
+   {
+   }
+   
+protected:
+   bool eventFilter(QObject* pObject, QEvent* pEvent)
+   {
+      if (pEvent->type() == QEvent::KeyPress)
+      {
+         auto* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
+         auto modifiers = pKeyEvent->modifiers();
+         
+         // fix up modifiers
+         if (modifiers.testFlag(Qt::MetaModifier) &&
+             !modifiers.testFlag(Qt::ControlModifier))
+         {
+            modifiers |= Qt::ControlModifier;
+            modifiers &= ~Qt::MetaModifier;
+            pKeyEvent->setModifiers(modifiers);
+         }
+         else if (modifiers.testFlag(Qt::ControlModifier) &&
+                  !modifiers.testFlag(Qt::MetaModifier))
+         {
+            modifiers |= Qt::MetaModifier;
+            modifiers &= ~Qt::ControlModifier;
+            pKeyEvent->setModifiers(modifiers);
+         }
+      }
+      
+      return QObject::eventFilter(pObject, pEvent);
+   }
+};
+
 } // anonymous namespace
 
 ApplicationLaunch::ApplicationLaunch() :
-    QWidget(NULL),
-    pMainWindow_(NULL)
+    QWidget(nullptr),
+    pMainWindow_(nullptr)
 {
    connect(app(), SIGNAL(messageReceived(QString)),
            this, SIGNAL(openFileRequest(QString)));
@@ -67,6 +108,10 @@ void ApplicationLaunch::init(QString appName,
    // connect app open file signal to app launch
    connect(app(), SIGNAL(openFileRequest(QString)),
            ppAppLaunch->get(), SIGNAL(openFileRequest(QString)));
+   
+#ifdef Q_OS_MAC
+   pSingleApplication->installEventFilter(new MacEventFilter(pSingleApplication));
+#endif
 }
 
 void ApplicationLaunch::setActivationWindow(QWidget* pWindow)

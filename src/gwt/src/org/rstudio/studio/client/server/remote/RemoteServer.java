@@ -1329,10 +1329,11 @@ public class RemoteServer implements Server
 
    public String getFileUrl(FileSystemItem file)
    {
-      if (Desktop.isDesktop())
-      {
-         return Desktop.getFrame().getUriForPath(file.getPath());
-      }
+//      // TODO: need to be asynchronous for desktop
+//      if (Desktop.isDesktop())
+//      {
+//         return Desktop.getFrame().getUriForPath(file.getPath());
+//      }
       
       if (!file.isDirectory())
       {

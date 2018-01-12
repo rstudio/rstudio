@@ -383,7 +383,11 @@ inline bool isSharedProject(const core::FilePath& sharedStoragePath,
    {
       // an entry exists, meaning this particular project is shared
       // determine if we can access it
+
+      // TODO: do we need some alternate implementation for Windows?
+#ifndef _WIN32
       core::system::isFileReadable(projectEntryPath, pHasAccess);
+#endif
       return true;
    }
    else

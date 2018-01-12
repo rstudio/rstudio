@@ -17,7 +17,7 @@
 #define DESKTOP_GWT_CALLBACK_HPP
 
 #include <QObject>
-#include <QtWebKit>
+#include <QClipboard>
 
 #include "DesktopGwtCallbackOwner.hpp"
 
@@ -54,13 +54,13 @@ signals:
 public slots:
    QString proportionalFont();
    QString fixedWidthFont();
-   bool isCocoa();
    void browseUrl(QString url);
 
    QString getOpenFileName(const QString& caption,
                            const QString& label,
                            const QString& dir,
-                           const QString& filter);
+                           const QString& filter,
+                           bool canChooseDirectories);
 
    QString getSaveFileName(const QString& caption,
                            const QString& label,
@@ -74,8 +74,8 @@ public slots:
 
    void onClipboardChanged(QClipboard::Mode mode);
 
-   void undo(bool forAce);
-   void redo(bool forAce);
+   void undo();
+   void redo();
 
    void clipboardCut();
    void clipboardCopy();
@@ -122,6 +122,10 @@ public slots:
                                int width,
                                int height);
 
+   void printText(QString text);
+   void paintPrintText(QPrinter* printer);
+   void printFinished(int result);
+
    bool supportsClipboardMetafile();
 
    int showMessageBox(int type,
@@ -141,7 +145,6 @@ public slots:
                          int selectionStart,
                          int selectionLength);
 
-   void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
 
@@ -171,10 +174,6 @@ public slots:
    QString getInitMessages();
    QString getLicenseStatusMessage();
    bool allowProductUsage();
-
-   void macZoomActualSize();
-   void macZoomIn();
-   void macZoomOut();
 
    QString getDesktopSynctexViewer();
 
@@ -209,7 +208,7 @@ public slots:
 
    void installRtools(QString version, QString installerPath);
 
-   int getDisplayDpi();
+   std::string getDisplayDpi();
 
 private:
    Synctex& synctex();
@@ -223,6 +222,7 @@ private:
    GwtCallbackOwner* pOwner_;
    Synctex* pSynctex_;
    int pendingQuit_;
+   QString printText_;
 #ifdef Q_OS_WIN32
    WordViewer wordViewer_;
 #endif

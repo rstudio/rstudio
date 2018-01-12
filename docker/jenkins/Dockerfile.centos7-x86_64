@@ -10,21 +10,24 @@ RUN yum install -y \
     cmake \
     expect \
     fakeroot \
+    fuse-libs \
     gcc \
     gcc-c++ \
     git \
     gpg \
-    gstreamer-devel \
-    gstreamer-plugins-base-devel \
     java-1.8.0-openjdk  \
     java-1.8.0-openjdk-devel  \
     libffi \
     libuuid-devel \
+    libXcursor-devel \
+    libXrandr-devel \
+    libXScrnSaver-devel \
     lsof \
     make \
     openssl-devel \
     pam-devel \
     pango-devel \
+    patchelf \
     R \
     rpmdevtools \
     rpmsign \
@@ -48,7 +51,7 @@ RUN bash /tmp/install-dependencies
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.0 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.9.2 && \
     /tmp/install-qt-sdk
 
 # install GWT libs

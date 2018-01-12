@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command.impl;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.MenuCallback;
 
@@ -28,12 +29,14 @@ public class DesktopMenuCallback implements MenuCallback
       $wnd.desktopMenuCallback.beginMenu(label);
    }-*/;
 
+   // TODO: Rather than adding commands one-at-a-time, we should
+   // see if we could instead add all of the commands in one message.
    public void addCommand(String commandId, AppCommand command)
    {
       addCommand(commandId,
-                 command.getMenuLabel(true),
-                 command.getTooltip(),
-                 command.getShortcutRaw(),
+                 StringUtil.notNull(command.getMenuLabel(true)),
+                 StringUtil.notNull(command.getTooltip()),
+                 StringUtil.notNull(command.getShortcutRaw()),
                  command.isCheckable());
    }
 
@@ -55,5 +58,22 @@ public class DesktopMenuCallback implements MenuCallback
 
    public native final void endMainMenu() /*-{
       $wnd.desktopMenuCallback.endMainMenu();
+   }-*/;
+   
+   public native static final void setCommandVisible(String commandId, boolean visible) /*-{
+      $wnd.desktopMenuCallback.setCommandVisible(commandId, visible);
+   }-*/;
+
+   public native static final void setCommandEnabled(String commandId, boolean enabled) /*-{
+      $wnd.desktopMenuCallback.setCommandEnabled(commandId, enabled);
+   }-*/;
+
+   public native static final void setCommandChecked(String commandId, boolean checked) /*-{
+      $wnd.desktopMenuCallback.setCommandChecked(commandId, checked);
+   }-*/;
+
+   public native static final void setCommandLabel(String commandId, String label) /*-{
+      label = @org.rstudio.core.client.command.AppMenuItem::replaceMnemonics(Ljava/lang/String;Ljava/lang/String;)(label, "&");
+      $wnd.desktopMenuCallback.setCommandLabel(commandId, label);
    }-*/;
 }

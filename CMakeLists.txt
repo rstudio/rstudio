@@ -13,11 +13,11 @@
 #
 #
 
-# set compiler
-include(CMakeCompiler.txt)
-
 cmake_minimum_required(VERSION 2.6)
 project (RStudio)
+
+# set compiler
+include(CMakeCompiler.txt)
 
 # project globals
 include(CMakeGlobals.txt)

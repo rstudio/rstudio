@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QMainWindow>
 #include <QFileDialog>
+#include <QWebEnginePage>
 
 #include <core/system/Process.hpp>
 

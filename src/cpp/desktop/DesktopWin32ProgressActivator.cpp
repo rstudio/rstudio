@@ -1,7 +1,7 @@
 /*
  * DesktopWin32ProgressActivator.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ ProgressActivator::ProgressActivator()
 {
   pImpl_->hWinEventHook = ::SetWinEventHook(
         EVENT_OBJECT_SHOW, EVENT_OBJECT_SHOW,
-        NULL, WinEventProc, 0, 0,
+        nullptr, WinEventProc, 0, 0,
         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
   if (pImpl_->hWinEventHook == 0)

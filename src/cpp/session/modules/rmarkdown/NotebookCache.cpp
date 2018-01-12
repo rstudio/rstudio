@@ -20,6 +20,7 @@
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <session/SessionUserSettings.hpp>
@@ -673,6 +674,7 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 Error initCache()
 {
    using namespace module_context;
+   using boost::bind;
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);

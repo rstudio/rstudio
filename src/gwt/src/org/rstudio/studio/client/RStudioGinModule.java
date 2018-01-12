@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.ApplicationVisibility;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
@@ -411,6 +412,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AddinsServerOperations.class).to(RemoteServer.class);
       bind(ProjectTemplateServerOperations.class).to(RemoteServer.class);
       bind(ObjectExplorerServerOperations.class).to(RemoteServer.class);
+      bind(DesktopInfo.class).asEagerSingleton();
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

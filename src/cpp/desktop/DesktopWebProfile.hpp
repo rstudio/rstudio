@@ -1,7 +1,7 @@
 /*
- * DesktopAboutDialog.hpp
+ * DesktopWebPage.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,25 +13,23 @@
  *
  */
 
-#ifndef DESKTOPABOUTDIALOG_HPP
-#define DESKTOPABOUTDIALOG_HPP
+#ifndef RSTUDIO_DESKTOP_WEB_PROFILE_HPP
+#define RSTUDIO_DESKTOP_WEB_PROFILE_HPP
 
-#include <QDialog>
+#include <QWebEngineProfile>
 
-namespace Ui {
-    class AboutDialog;
-}
+namespace rstudio {
+namespace desktop {
 
-class AboutDialog : public QDialog
+class WebProfile : public QWebEngineProfile
 {
-    Q_OBJECT
+   Q_OBJECT
 
 public:
-    explicit AboutDialog(QWidget *parent = 0);
-    ~AboutDialog();
-
-private:
-    Ui::AboutDialog *ui;
+   explicit WebProfile(QObject* parent = nullptr);
 };
 
-#endif // DESKTOPABOUTDIALOG_HPP
+} // end namespace desktop
+} // end namespace rstudio
+
+#endif /* RSTUDIO_DESKTOP_WEB_PROFILE_HPP */

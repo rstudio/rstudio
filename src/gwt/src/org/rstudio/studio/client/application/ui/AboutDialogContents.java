@@ -59,14 +59,16 @@ public class AboutDialogContents extends Composite
       
       if (editionInfo.proLicense() && Desktop.isDesktop())
       {
-         String licenseStatus = Desktop.getFrame().getLicenseStatusMessage();
-         int licenseLines = StringUtil.newlineCount(licenseStatus);
-         noticeBox.setVisibleLines(10);
-         licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
-         licenseLabel.setVisible(true);
-         licenseBox.setVisible(true);
-         licenseBox.setText(Desktop.getFrame().getLicenseStatusMessage());
-         
+         // TODO: since this runs asynchronously this might be problematic
+         Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
+         {
+            int licenseLines = StringUtil.newlineCount(licenseStatus);
+            noticeBox.setVisibleLines(10);
+            licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
+            licenseLabel.setVisible(true);
+            licenseBox.setVisible(true);
+            licenseBox.setText(licenseStatus);
+         });
       }
    }
 

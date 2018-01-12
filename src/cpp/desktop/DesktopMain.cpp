@@ -14,7 +14,6 @@
  */
 
 #include <QtGui>
-#include <QtWebKit>
 #include <QPushButton>
 
 #include <boost/bind.hpp>
@@ -173,7 +172,7 @@ void initializeStartupEnvironment(QString* pFilename)
    }
 }
 
-QString verifyAndNormalizeFilename(QString filename)
+QString verifyAndNormalizeFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return QString();
@@ -185,7 +184,7 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 }
 
-bool isNonProjectFilename(QString filename)
+bool isNonProjectFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return false;
@@ -198,6 +197,10 @@ bool isNonProjectFilename(QString filename)
 
 int main(int argc, char* argv[])
 {
+   // enable debug console
+   // TODO: better way of selecting a port?
+   qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QByteArrayLiteral("59009"));
+
    core::system::initHook();
 
    try
@@ -214,11 +217,17 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
-#ifdef __APPLE__
-      // font substituion for OSX Mavericks
-      // see: https://bugreports.qt-project.org/browse/QTBUG-32789
-      QFont::insertSubstitution(QString::fromUtf8(".Lucida Grande UI"),
-                                QString::fromUtf8("Lucida Grande"));
+      // set application attributes
+      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+#ifndef NDEBUG
+      // disable web security for development builds (so we can
+      // get access to sourcemaps)
+      static std::vector<char*> arguments(argv, argv + argc);
+      static char disableWebSecurity[] = "--disable-web-security";
+      arguments.push_back(disableWebSecurity);
+      argc = (int) arguments.size();
+      argv = &arguments[0];
 #endif
 
       boost::scoped_ptr<QApplication> pApp;
@@ -276,8 +285,6 @@ int main(int argc, char* argv[])
          initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
       }
 
-      pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
-
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
@@ -304,7 +311,6 @@ int main(int argc, char* argv[])
       bool devMode = false;
 
       // check for debug configuration
-#ifndef NDEBUG
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
       if (currentPath.complete("conf/rdesktop-dev.conf").exists())
       {
@@ -317,7 +323,6 @@ int main(int argc, char* argv[])
             sessionPath = installPath.complete("session/x64/rsession");
 #endif
       }
-#endif
 
       // if there is no conf path then release mode
       if (confPath.empty())
@@ -343,7 +348,7 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
       // set the scripts path in options
@@ -357,11 +362,19 @@ int main(int argc, char* argv[])
 
       int result = pApp->exec();
 
-      sessionLauncher.cleanupAtExit();
-
       options.cleanUpScratchTempDir();
 
       return result;
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
+
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance,
+                   HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine,
+                   int nShowCmd)
+{
+   return main(__argc, __argv);
+}
+#endif

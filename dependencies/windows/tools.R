@@ -119,4 +119,3 @@ ensure_dir <- function(...) {
             fatal("Failed to create directory '%s'\n", dir)
    }))
 }
-

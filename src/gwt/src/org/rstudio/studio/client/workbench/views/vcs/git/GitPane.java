@@ -18,16 +18,20 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -49,12 +53,25 @@ public class GitPane extends WorkbenchPane implements Display
                   CreateBranchToolbarButton createBranchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
+      
       commands_ = commands;
       switchBranchToolbarButton_ = switchBranchToolbarButton;
       createBranchToolbarButton_ = createBranchToolbarButton;     
       
       table_ = changelistTablePresenter.getView();
       table_.addStyleName("ace_editor_theme");
+      
+      if (Desktop.isDesktop())
+      {
+         WindowEx.addFocusHandler(new FocusHandler()
+         {
+            @Override
+            public void onFocus(FocusEvent event)
+            {
+               commands_.vcsRefreshNoError().execute();
+            }
+         });
+      }
    }
 
    @Override

@@ -1,7 +1,7 @@
 /*
  * DesktopGwtWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@ public:
                       bool adjustTitle,
                       QString name,
                       QUrl baseUrl = QUrl(),
-                      QWidget *parent = NULL);
+                      QWidget *parent = nullptr);
 
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 
@@ -38,10 +38,10 @@ public slots:
    void zoomOut();
 
 protected slots:
-   virtual void onJavaScriptWindowObjectCleared();
+   void finishLoading(bool) override;
 
 protected:
-   virtual bool event(QEvent* pEvent);
+   bool event(QEvent* pEvent) override;
    virtual double getZoomLevel();
    virtual void setZoomLevel(double zoomLevel);
 

@@ -16,7 +16,6 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
-
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>

@@ -29,7 +29,7 @@ if(APPLE)
       set(LIBR_EXECUTABLE "${LIBR_HOME}/R" CACHE PATH "R executable")
    else()
       get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
-      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" DIRECTORY)
+      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
       set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
       execute_process(
          COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
@@ -118,10 +118,18 @@ else()
 
       # set library hint path based on whether  we are doing a special session 64 build
       if(LIBR_FIND_WINDOWS_64BIT)
+         set(LIBR_ARCH "x64")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
       else()
+         set(LIBR_ARCH "i386")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/i386")
       endif()
+
+      # call dll2lib.R to ensure export files are generated
+      execute_process(
+         COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe" "dll2lib.R"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+         RESULT_VARIABLE LIBR_DLL2LIB_RESULT)
 
    endif()
 
@@ -186,6 +194,7 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
 
 if(LIBR_FOUND)
    message(STATUS "Found R: ${LIBR_HOME}")
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
 endif()
 
 # mark low-level variables from FIND_* calls as advanced

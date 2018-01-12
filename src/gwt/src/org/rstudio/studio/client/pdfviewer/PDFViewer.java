@@ -1,7 +1,7 @@
 /*
  * PDFViewer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -267,17 +267,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
              }
           });
           executeOnPdfJsLoad_ = loadPdf;
-          
-          if (Desktop.isDesktop() && Desktop.getFrame().isCocoa()) 
-          {
-             // on cocoa, we can open a native window
-             display_.openMinimalWindow(viewerUrl, false, width, height, options);
-          }
-          else
-          {
-             // on Qt, we need to open a web window so window.opener is wired
-             display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
-          }
+          display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
       }
       else
       {

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.dialog;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -48,13 +49,23 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
             delim = "|";
          }
 
-         int result = Desktop.getFrame().showMessageBox(type,
-                                                        caption,
-                                                        message_,
-                                                        buttons.toString(),
-                                                        defaultButton_,
-                                                        buttons_.size() - 1);
-
+         Desktop.getFrame().showMessageBox(
+               type,
+               caption,
+               message_,
+               buttons.toString(),
+               defaultButton_,
+               buttons_.size() - 1,
+               result ->
+               {
+                  Builder.this.execute(result);
+               });
+      }
+      
+      private void execute(String strResult)
+      {
+         int result = StringUtil.parseInt(strResult, -1);
+         
          if (result >= buttons_.size())
             return;
 

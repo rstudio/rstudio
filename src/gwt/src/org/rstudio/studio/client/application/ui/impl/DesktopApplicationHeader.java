@@ -62,6 +62,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -207,13 +208,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onUndoDummy()
    {
-      Desktop.getFrame().undo(isFocusInAceInstance());
+      Desktop.getFrame().undo();
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo(isFocusInAceInstance());
+      Desktop.getFrame().redo();
    }
 
    @Handler
@@ -259,6 +260,16 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       }.schedule(1000);
       
+   }
+   
+   @Handler
+   void onOpenDeveloperConsole()
+   {
+      // TODO: Request this port as part of the startup session info?
+      globalDisplay_.openMinimalWindow(
+            "http://127.0.0.1:59009",
+            Window.getClientWidth() - 20,
+            Window.getClientHeight() - 20);
    }
 
    @Handler

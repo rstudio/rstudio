@@ -17,7 +17,7 @@ fi
 
 ## On a Debug Mac IDE build via xcodebuild, the executables 
 ## will be in a Debug folder
-if [ ! -e ${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests ]
+if [ ! -e "${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests" ]
 then
     RSTUDIO_CORETEST_BIN="Debug/rstudio-core-tests"
     RSTUDIO_SESSION_BIN="Debug/rsession"

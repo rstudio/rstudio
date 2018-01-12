@@ -40,8 +40,8 @@ public:
       : confPath_(confPath),
         sessionPath_(sessionPath),
         pAppLaunch_(pAppLaunch),
-        pMainWindow_(NULL),
-        pRSessionProcess_(NULL),
+        pMainWindow_(nullptr),
+        pRSessionProcess_(nullptr),
         filename_(filename)
 {
 }
@@ -53,8 +53,6 @@ public:
    core::Error launchNextSession(bool reload);
 
    QString launchFailedErrorMessage() const;
-
-   void cleanupAtExit();
 
 public slots:
    void onRSessionExited(int exitCode, QProcess::ExitStatus exitStatus);

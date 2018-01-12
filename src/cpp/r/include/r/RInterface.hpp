@@ -24,18 +24,23 @@
 #include <R_ext/Boolean.h>
 #include <R_ext/RStartup.h>
 
-extern "C" void R_RestoreGlobalEnvFromFile(const char *, Rboolean);
-extern "C" void R_SaveGlobalEnvToFile(const char *);
-extern "C" void R_Suicide(const char *);
-extern "C" char *R_HomeDir(void);
-extern "C" void Rf_jump_to_toplevel(void);
-extern "C" void Rf_onintr(void);
+extern "C" {
+
+void R_RestoreGlobalEnvFromFile(const char *, Rboolean);
+void R_SaveGlobalEnvToFile(const char *);
+void R_Suicide(const char *);
+char *R_HomeDir(void);
+void Rf_jump_to_toplevel(void);
+void Rf_onintr(void);
 #define R_ClearerrConsole void
-extern "C" void R_FlushConsole();
-extern "C" int R_SignalHandlers;
-extern "C" void run_Rmainloop();
-extern "C" void Rf_mainloop(void);
-extern "C" void* R_GlobalContext;
+void R_FlushConsole();
+void run_Rmainloop();
+void Rf_mainloop(void);
+
+extern __declspec(dllimport) int R_SignalHandlers;
+extern __declspec(dllimport) void* R_GlobalContext;
+
+}
 
 typedef struct SEXPREC *SEXP;
 

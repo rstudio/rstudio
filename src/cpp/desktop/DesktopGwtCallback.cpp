@@ -28,7 +28,9 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
-#include <QWebFrame>
+
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintPreviewDialog>
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -37,7 +39,6 @@
 #include <core/system/Environment.hpp>
 #include <core/r_util/RUserData.hpp>
 
-#include "DesktopAboutDialog.hpp"
 #include "DesktopActivationOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
@@ -46,7 +47,6 @@
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
-#include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
 
 #ifdef __APPLE__
@@ -68,7 +68,7 @@ extern QString scratchPath;
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
-     pSynctex_(NULL),
+     pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
     QClipboard* clipboard = QApplication::clipboard();
@@ -84,15 +84,65 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
 
 Synctex& GwtCallback::synctex()
 {
-   if (pSynctex_ == NULL)
+   if (pSynctex_ == nullptr)
       pSynctex_ = Synctex::create(pMainWindow_);
 
    return *pSynctex_;
 }
 
-bool GwtCallback::isCocoa()
+void GwtCallback::printText(QString text)
 {
-   return false;
+   QPrintPreviewDialog dialog;
+   dialog.setWindowModality(Qt::WindowModal);
+
+   // QPrintPreviewDialog will call us back to paint the contents
+   connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
+           this, SLOT(paintPrintText(QPrinter*)));
+   connect(&dialog, SIGNAL(finished(int)),
+           this, SLOT(printFinished(int)));
+
+   // cache the requested print text to replay for the print preview
+   printText_ = text;
+
+   dialog.exec();
+}
+
+void GwtCallback::paintPrintText(QPrinter* printer)
+{
+    QPainter painter;
+    painter.begin(printer);
+
+    // look up the system fixed font
+    QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    fixedFont.setPointSize(10);
+    painter.setFont(fixedFont);
+
+    // break up the text into pages and draw each page
+    QStringList lines = printText_.split(QString::fromUtf8("\n"));
+    int i = 0;
+    while (i < lines.size())
+    {
+       // split off next chunk of lines and draw them
+       int end = std::min(i + 60, lines.size());
+       QStringList pageLines(lines.mid(i, 60));
+       painter.drawText(50, 50, 650, 900, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
+                        pageLines.join(QString::fromUtf8("\n")));
+
+       // start a new page if there are more lines
+       if (end < lines.size())
+          printer->newPage();
+
+       // move to next line group
+       i += 60;
+    }
+
+    painter.end();
+}
+
+void GwtCallback::printFinished(int result)
+{
+   // signal emitted by QPrintPreviewDialog when the dialog is dismissed
+   printText_.clear();
 }
 
 void GwtCallback::browseUrl(QString url)
@@ -157,7 +207,8 @@ QString resolveAliasedPath(const QString& path)
 QString GwtCallback::getOpenFileName(const QString& caption,
                                      const QString& label,
                                      const QString& dir,
-                                     const QString& filter)
+                                     const QString& filter,
+                                     bool canChooseDirectories)
 {
    QString resolvedDir = resolveAliasedPath(dir);
 
@@ -167,7 +218,11 @@ QString GwtCallback::getOpenFileName(const QString& caption,
             resolveAliasedPath(dir),
             filter);
 
-   dialog.setFileMode(QFileDialog::ExistingFile);
+   QFileDialog::FileMode mode = (canChooseDirectories)
+         ? QFileDialog::AnyFile
+         : QFileDialog::ExistingFile;
+   
+   dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
 
    QString result;
@@ -267,11 +322,11 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
       wchar_t szDir[MAX_PATH];
       BROWSEINFOW bi;
       bi.hwndOwner = (HWND)(pOwner_->asWidget()->winId());
-      bi.pidlRoot = NULL;
+      bi.pidlRoot = nullptr;
       bi.pszDisplayName = szDir;
       bi.lpszTitle = L"Select a folder:";
       bi.ulFlags = BIF_RETURNONLYFSDIRS;
-      bi.lpfn = NULL;
+      bi.lpfn = nullptr;
       bi.lpfn = 0;
       bi.iImage = -1;
       LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
@@ -303,7 +358,7 @@ void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
 {
     // for some reason, Qt can get stalled querying the clipboard
     // while a modal is active, so disable any such behavior here
-    if (QApplication::activeModalWidget() != NULL)
+    if (QApplication::activeModalWidget() != nullptr)
        return;
 
     // if this is a change in the selection contents, track it
@@ -330,7 +385,7 @@ void GwtCallback::onClipboardChanged(QClipboard::Mode mode)
 void GwtCallback::doAction(const QKeySequence& keys)
 {
    int keyCode = keys[0];
-   Qt::KeyboardModifier modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
+   auto modifiers = static_cast<Qt::KeyboardModifier>(keyCode & Qt::KeyboardModifierMask);
    keyCode &= ~Qt::KeyboardModifierMask;
 
    QKeyEvent* keyEvent = new QKeyEvent(QKeyEvent::KeyPress, keyCode, modifiers);
@@ -340,18 +395,18 @@ void GwtCallback::doAction(const QKeySequence& keys)
 void GwtCallback::doAction(QKeySequence::StandardKey key)
 {
    QList<QKeySequence> bindings = QKeySequence::keyBindings(key);
-   if (bindings.size() == 0)
+   if (bindings.empty())
       return;
 
    doAction(bindings.first());
 }
 
-void GwtCallback::undo(bool forAce)
+void GwtCallback::undo()
 {
    doAction(QKeySequence::Undo);
 }
 
-void GwtCallback::redo(bool forAce)
+void GwtCallback::redo()
 {
    // NOTE: On Windows, the default redo key sequence is 'Ctrl+Y';
    // however, we bind this to 'yank' and so 'redo' actions executed
@@ -530,7 +585,7 @@ void GwtCallback::openMinimalWindow(QString name,
 {
    bool named = !name.isEmpty() && name != QString::fromUtf8("_blank");
 
-   BrowserWindow* browser = NULL;
+   BrowserWindow* browser = nullptr;
    if (named)
       browser = s_windowTracker.getWindow(name);
 
@@ -603,9 +658,9 @@ void GwtCallback::activateSatelliteWindow(QString name)
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
-   pOwner_->webPage()->updatePositionDependentActions(
-         QPoint(left + (width/2), top + (height/2)));
-   pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
+   // TODO: 'updatePositionDependentActions()' is no longer available;
+   // we might only be able to copy the currently selected image?
+   pOwner_->triggerPageAction(QWebEnginePage::CopyImageToClipboard);
 }
 
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
@@ -651,7 +706,7 @@ bool GwtCallback::supportsClipboardMetafile()
 }
 
 namespace {
-   QMessageBox::ButtonRole captionToRole(QString caption)
+   QMessageBox::ButtonRole captionToRole(const QString& caption)
    {
       if (caption == QString::fromUtf8("OK"))
          return QMessageBox::AcceptRole;
@@ -678,17 +733,16 @@ int GwtCallback::showMessageBox(int type,
                                 int cancelButton)
 {
    // cancel other message box if it's visible
-   QMessageBox* pMsgBox = qobject_cast<QMessageBox*>(
+   auto* pMsgBox = qobject_cast<QMessageBox*>(
                         QApplication::activeModalWidget());
-   if (pMsgBox != NULL)
+   if (pMsgBox != nullptr)
       pMsgBox->close();
 
-   QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
-                       caption,
-                       message,
-                       QMessageBox::NoButton,
-                       pOwner_->asWidget(),
-                       Qt::Dialog | Qt::Sheet);
+   QMessageBox msgBox(pOwner_->asWidget());
+   msgBox.setText(caption);
+   msgBox.setInformativeText(message);
+   msgBox.setIcon(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)));
+   msgBox.setWindowFlags(Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
    msgBox.setTextFormat(Qt::PlainText);
 
@@ -794,14 +848,6 @@ void GwtCallback::showKeyboardShortcutHelp()
    desktop::openUrl(url);
 }
 
-void GwtCallback::showAboutDialog()
-{
-   // WA_DeleteOnClose
-   AboutDialog* about = new AboutDialog(pOwner_->asWidget());
-   about->setAttribute(Qt::WA_DeleteOnClose);
-   about->show();
-}
-
 void GwtCallback::bringMainFrameToFront()
 {
    desktop::raiseAndActivateWindow(pMainWindow_);
@@ -830,7 +876,7 @@ template <typename TValue>
 class CFReleaseHandle
 {
 public:
-   CFReleaseHandle(TValue value=NULL)
+   CFReleaseHandle(TValue value=nullptr)
    {
       value_ = value;
    }
@@ -866,7 +912,7 @@ OSStatus addToPasteboard(PasteboardRef pasteboard,
                          const QByteArray& data)
 {
    CFReleaseHandle<CFDataRef> dataRef = CFDataCreate(
-         NULL,
+         nullptr,
          reinterpret_cast<const UInt8*>(data.constData()),
          data.length());
 
@@ -1069,7 +1115,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    else
    {
       desktop::showWarning(
-         NULL,
+         nullptr,
          QString::fromUtf8("Terminal Not Found"),
          QString::fromUtf8(
                   "Unable to find a compatible terminal program to launch"));
@@ -1081,7 +1127,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    core::system::setenv("PATH", previousPath);
 }
 
-bool isProportionalFont(QString fontFamily)
+bool isProportionalFont(const QString& fontFamily)
 {
    QFont font(fontFamily, 12);
    return !isFixedWidthFont(font);
@@ -1152,19 +1198,6 @@ bool GwtCallback::allowProductUsage()
    return activation().allowProductUsage();
 }
 
-void GwtCallback::macZoomActualSize()
-{
-}
-
-void GwtCallback::macZoomIn()
-{
-}
-
-void GwtCallback::macZoomOut()
-{
-}
-
-
 QString GwtCallback::getDesktopSynctexViewer()
 {
     return Synctex::desktopViewerInfo().name;
@@ -1194,7 +1227,6 @@ void GwtCallback::launchSession(bool reload)
 void GwtCallback::activateAndFocusOwner()
 {
    desktop::raiseAndActivateWindow(pOwner_->asWidget());
-   pOwner_->webPage()->mainFrame()->setFocus();
 }
 
 void GwtCallback::reloadZoomWindow()
@@ -1283,9 +1315,9 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
-int GwtCallback::getDisplayDpi()
+std::string GwtCallback::getDisplayDpi()
 {
-   return getDpi();
+   return safe_convert::numberToString(getDpi());
 }
 
 } // namespace desktop

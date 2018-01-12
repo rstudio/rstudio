@@ -221,7 +221,7 @@ set (SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
-   ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
+   "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
 )
 
 # platform specific source files
@@ -243,6 +243,7 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
    )
 endif()
 
@@ -339,19 +340,6 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      COMMAND "${WINDRES}"
-         -I "."
-         -i "rsession.rc"
-         -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         -Ocoff
-      DEPENDS
-         "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
-         "${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest")
-   set(SESSION_SOURCE_FILES
-      ${SESSION_SOURCE_FILES}
-      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(consoleio)
    endif()
@@ -375,7 +363,7 @@ endif()
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
-   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} -ladvapi32)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
@@ -393,8 +381,8 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
-   ${LIBR_LIBRARIES}
    ${CMAKE_DL_LIBS}
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script
@@ -590,9 +578,9 @@ endif()
 if(APPLE AND RSTUDIO_PACKAGE_BUILD)
    find_package(OpenSSL REQUIRED QUIET)
    foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-      get_filename_component(LIB_DIR ${lib} DIRECTORY)
+      get_filename_component(LIB_DIR ${lib} PATH)
       execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
       add_custom_command (TARGET rsession POST_BUILD
-         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/openssl/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
    endforeach()
 endif()

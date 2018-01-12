@@ -1,7 +1,7 @@
 /*
  * DesktopInputDialog.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 InputDialog::InputDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::InputDialog()),
-    pOK_(NULL)
+    pOK_(nullptr)
 {
    ui->setupUi(this);
    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);

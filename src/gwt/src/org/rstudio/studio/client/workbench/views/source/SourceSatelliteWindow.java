@@ -1,7 +1,7 @@
 /*
  * SourceSatelliteWindow.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,6 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
@@ -98,15 +97,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
       BuildCommands.setBuildCommandState(
             RStudioGinjector.INSTANCE.getCommands(), 
             RStudioGinjector.INSTANCE.getSession().getSessionInfo());
-      
-      // initialize MRUs on Cocoa desktop (on Qt and in server mode the MRU
-      // menu entries aren't accessible from the source window)
-      if (Desktop.isDesktop() && Desktop.getFrame().isCocoa())
-      {
-         pFileMRUList_.get();
-         pProjectMRUList_.get();
-      }
-      
+
       // initialize working directory
       if (!StringUtil.isNullOrEmpty(windowParams.getWorkingDir())) 
       {

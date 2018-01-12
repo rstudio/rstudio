@@ -3102,14 +3102,16 @@ void onUserSettingsChanged()
 }
 
 Error statusToJson(const core::FilePath &path,
-                   const VCSStatus &status,
+                   const VCSStatus &vcsStatus,
                    core::json::Object *pObject)
 {
    json::Object& obj = *pObject;
-   obj["status"] = status.status();
+   std::string status = vcsStatus.status();
+
+   obj["status"] = status;
    obj["path"] = path.relativePath(s_git_.root());
    obj["raw_path"] = module_context::createAliasedPath(path);
-   obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
+   obj["discardable"] = !status.empty() && status[1] != ' ' && status[1] != '?';
    obj["is_directory"] = path.isDirectory();
    obj["size"] = static_cast<double>(path.size());
    return Success();

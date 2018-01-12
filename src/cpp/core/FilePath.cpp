@@ -193,17 +193,18 @@ Error FilePath::makeCurrent(const std::string& path)
 #define kHomePathAlias "~/"
 #define kHomePathLeafAlias "~"
 
-std::string FilePath::createAliasedPath(const FilePath& path,
-                              const FilePath& userHomePath)
+std::string FilePath::createAliasedPath(
+      const FilePath& path,
+      const FilePath& userHomePath)
 {
    // Special case for "~"
    if (path == userHomePath)
       return kHomePathLeafAlias;
 
    // if the path is contained within the home path then alias it
-   std::string homeRelativePath = path.relativePath(userHomePath);
-   if (!homeRelativePath.empty())
+   if (path.isWithin(userHomePath))
    {
+      std::string homeRelativePath = path.relativePath(userHomePath);
       std::string aliasedPath = kHomePathAlias + homeRelativePath;
       return aliasedPath;
    }
@@ -600,46 +601,31 @@ std::time_t FilePath::lastWriteTime() const
    }
 }
 
-// NOTE: this does not properly handle .. and . path elements
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
-   // get iterators to this path and parent path
-   path_t::iterator thisBegin = pImpl_->path.begin() ;
-   path_t::iterator thisEnd = pImpl_->path.end() ;
-   path_t::iterator parentBegin = parentPath.pImpl_->path.begin();
-   path_t::iterator parentEnd = parentPath.pImpl_->path.end() ;
-
-   // if the child is fully prefixed by the parent
-   path_t::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
-   if ( it == thisBegin )
+   path_t relPath;
+   try
    {
-      // search for mismatch location
-      std::pair<path_t::iterator,path_t::iterator> mmPair =
-                              std::mismatch(thisBegin, thisEnd, parentBegin);
-
-      // build relative path from mismatch on
-      path_t relativePath ;
-      path_t::iterator mmit = mmPair.first ;
-      while (mmit != thisEnd)
-      {
-         relativePath /= *mmit ;
-         mmit++ ;
-      }
-      return BOOST_FS_PATH2STR(relativePath) ;
+      relPath = boost::filesystem::relative(
+               this->pImpl_->path,
+               parentPath.pImpl_->path);
    }
-   else
+   catch(const boost::filesystem::filesystem_error& e)
    {
-      return std::string() ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
    }
+
+   return BOOST_FS_PATH2STR(relPath);
 }
 
 bool FilePath::isWithin(const FilePath& scopePath) const
 {
    if (*this == scopePath)
-      return true ;
+      return true;
 
-   std::string relativePath = this->relativePath(scopePath);
-   return !relativePath.empty();
+   return boost::algorithm::starts_with(
+            (*this).absolutePath(),
+            scopePath.absolutePath());
 }
 
 
@@ -982,7 +968,7 @@ FilePath FilePath::childPath(const std::string& path) const
 namespace {
 
 Error notFoundError(const FilePath& filePath,
-                        const ErrorLocation& location)
+                    const ErrorLocation& location)
 {
    Error error = pathNotFoundError(location);
    if (!filePath.empty())

@@ -28,19 +28,7 @@ else
   QT_ARCH=x86
 fi
 
-# presume 5.4.0
-QT_VERSION=5.4.0
-
-# test for libgstreamer
-which apt-cache > /dev/null
-if [ $? == 0 ]; then
-  # debian (currently no test for CentOS based systems)
-  apt-cache show libgstreamer1.0 > /dev/null
-  if [ $? == 0 ]; then
-    QT_VERSION=5.4.2
-  fi
-fi
-
+QT_VERSION=5.9.2
 QT_SDK_BINARY=QtSDK-${QT_VERSION}-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 

@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,9 @@
 #define DESKTOP_WEB_PAGE_HPP
 
 #include <QtGui>
-#include <QtWebKit>
-#include <QWebPage>
+#include <QWebEnginePage>
+
+#include "DesktopUtils.hpp"
 
 namespace rstudio {
 namespace desktop {
@@ -28,7 +29,7 @@ class MainWindow;
 struct PendingWindow
 {
    PendingWindow()
-      : name(), pMainWindow(NULL), x(-1), y(-1), width(-1), height(-1),
+      : name(), pMainWindow(nullptr), x(-1), y(-1), width(-1), height(-1),
         isSatellite(false), allowExternalNavigate(false), showToolbar(false)
    {
    }
@@ -47,7 +48,7 @@ struct PendingWindow
 
    PendingWindow(QString name, bool allowExternalNavigation,
                  bool showDesktopToolbar)
-      : name(name), pMainWindow(NULL), isSatellite(false),
+      : name(name), pMainWindow(nullptr), isSatellite(false),
         allowExternalNavigate(allowExternalNavigation),
         showToolbar(showDesktopToolbar)
    {
@@ -59,22 +60,22 @@ struct PendingWindow
 
    MainWindow* pMainWindow;
 
-   int x;
-   int y;
-   int width;
-   int height;
+   int x = 0;
+   int y = 0;
+   int width = 0;
+   int height = 0;
    bool isSatellite;
    bool allowExternalNavigate;
    bool showToolbar;
 };
 
 
-class WebPage : public QWebPage
+class WebPage : public QWebEnginePage
 {
    Q_OBJECT
 
 public:
-   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL,
+   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
@@ -85,22 +86,22 @@ public:
    void activateWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);
    void closeWindow(QString name);
-   virtual void triggerAction(QWebPage::WebAction action, bool checked = false);
+
+   void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
 
 public slots:
    bool shouldInterruptJavaScript();
    void closeRequested();
 
 protected:
-   QWebPage* createWindow(QWebPage::WebWindowType type);
-   void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
+   QWebEnginePage* createWindow(QWebEnginePage::WebWindowType type) override;
+   void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message,
+                                 int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
-   bool acceptNavigationRequest(QWebFrame* frame,
-                                const QNetworkRequest& request,
-                                NavigationType type);
+   bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame) override;
 
 private:
-   void handleBase64Download(QWebFrame* pWebFrame, QUrl url);
+   void handleBase64Download(QUrl url);
 
 private:
    QUrl baseUrl_;

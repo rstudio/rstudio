@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,6 @@
 #include "DesktopMenuCallback.hpp"
 #include <QDebug>
 #include <QApplication>
-#include "DesktopCommandInvoker.hpp"
-#include "DesktopSubMenu.hpp"
 
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
@@ -45,10 +43,8 @@ void MenuCallback::beginMenu(QString label)
    }
 #endif
 
-   SubMenu* pMenu = new SubMenu(label, pMainMenu_);
-
-   connect(pMenu, SIGNAL(manageCommandVisibility(QString,QAction*)),
-           this, SIGNAL(manageCommandVisibility(QString,QAction*)));
+   auto* pMenu = new SubMenu(label, pMainMenu_);
+   pMenu->setSeparatorsCollapsible(true);
 
    if (menuStack_.count() == 0)
       pMainMenu_->addMenu(pMenu);
@@ -60,10 +56,36 @@ void MenuCallback::beginMenu(QString label)
 
 QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString label,
-                                       QString tooltip)
+                                       QString tooltip,
+                                       QKeySequence keySequence,
+                                       bool checkable)
 {
 
-   QAction* pAction = NULL;
+   QAction* pAction = nullptr;
+
+#ifdef Q_OS_MAC
+   // On Mac, certain commands will be automatically moved to Application Menu by Qt. If we want them to also
+   // appear in RStudio menus, check for them here and return nullptr.
+   if (duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
+                              commandId, label, tooltip, keySequence, checkable))
+   {
+      return nullptr;
+   }
+   else if (duplicateAppMenuAction(QString::fromUtf8("quitSession"),
+                              commandId, label, tooltip, keySequence, checkable))
+   {
+      return nullptr;
+   }
+
+   // If we want a command to not be automatically moved to Application Menu, include it here and return the
+   // created action.
+   pAction = duplicateAppMenuAction(QString::fromUtf8("buildToolsProjectSetup"),
+                                    commandId, label, tooltip, keySequence, checkable);
+   if (pAction)
+      return pAction;
+
+#endif // Q_OS_MAC
+
    if (commandId == QString::fromUtf8("zoomIn"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
@@ -101,7 +123,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
 #endif
 
-   if (pAction != NULL)
+   if (pAction != nullptr)
    {
       pAction->setData(commandId);
       pAction->setToolTip(tooltip);
@@ -109,10 +131,36 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
    else
    {
-      return NULL;
+      return nullptr;
    }
 }
 
+QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
+                                              QString commandId,
+                                              QString label,
+                                              QString tooltip,
+                                              QKeySequence keySequence,
+                                              bool checkable)
+{
+   QAction* pAction = nullptr;
+   if (commandId == commandToDuplicate)
+   {
+      pAction = new QAction(QIcon(), label);
+      pAction->setMenuRole(QAction::NoRole);
+      pAction->setData(commandId);
+      pAction->setToolTip(tooltip);
+      pAction->setShortcut(keySequence);
+      if (checkable)
+         pAction->setCheckable(true);
+
+      menuStack_.top()->addAction(pAction);
+
+      auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction * )), this, SIGNAL(manageCommand(QString, QAction * )));
+      connect(pAction, SIGNAL(triggered()), this, SLOT(actionInvoked()));
+   }
+   return pAction;
+}
 
 void MenuCallback::addCommand(QString commandId,
                               QString label,
@@ -120,9 +168,35 @@ void MenuCallback::addCommand(QString commandId,
                               QString shortcut,
                               bool checkable)
 {
-   shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromUtf8("\n"));
-
+   // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
+   // Qt automatically maps that to the Command key
+   shortcut.replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
+   
    QKeySequence keySequence(shortcut);
+
+   // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
+   // populate those here when discovered
+   if (commandId == QStringLiteral("cutDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Cut);
+   }
+   else if (commandId == QStringLiteral("copyDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Copy);
+   }
+   else if (commandId == QStringLiteral("pasteDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Paste);
+   }
+   else if (commandId == QStringLiteral("undoDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Undo);
+   }
+   else if (commandId == QStringLiteral("redoDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::Redo);
+   }
+
 #ifndef Q_OS_MAC
    if (shortcut.contains(QString::fromUtf8("\n")))
    {
@@ -132,10 +206,10 @@ void MenuCallback::addCommand(QString commandId,
 #endif
 
    // allow custom action handlers first shot
-   QAction* pAction = addCustomAction(commandId, label, tooltip);
+   QAction* pAction = addCustomAction(commandId, label, tooltip, keySequence, checkable);
 
    // if there was no custom handler then do stock command-id processing
-   if (pAction == NULL)
+   if (pAction == nullptr)
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -147,15 +221,18 @@ void MenuCallback::addCommand(QString commandId,
       if (checkable)
          pAction->setCheckable(true);
 
-      MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      auto * pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
               this, SIGNAL(manageCommand(QString,QAction*)));
    }
+
+   // remember action for later
+   actions_[commandId] = pAction;
 }
 
 void MenuCallback::actionInvoked()
 {
-   QAction* action = qobject_cast<QAction*>(sender());
+   auto * action = qobject_cast<QAction*>(sender());
    QString commandId = action->data().toString();
    commandInvoked(commandId);
 }
@@ -176,6 +253,42 @@ void MenuCallback::endMainMenu()
    menuBarCompleted(pMainMenu_);
 }
 
+void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setEnabled(enabled);
+}
+
+void MenuCallback::setCommandVisible(QString commandId, bool visible)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setVisible(visible);
+}
+
+void MenuCallback::setCommandLabel(QString commandId, QString label)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setText(label);
+}
+
+void MenuCallback::setCommandChecked(QString commandId, bool checked)
+{
+   auto it = actions_.find(commandId);
+   if (it == actions_.end())
+       return;
+
+   it.value()->setChecked(checked);
+}
+
 MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)
 {
    connect(pMenu, SIGNAL(aboutToShow()), this, SLOT(onShowMenu()));
@@ -188,7 +301,6 @@ MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAc
 void MenuActionBinder::onShowMenu()
 {
    QString commandId = pAction_->data().toString();
-   manageCommand(commandId, pAction_);
    pAction_->setShortcut(keySequence_);
 }
 
@@ -249,7 +361,7 @@ void WindowMenu::onBringAllToFront()
    CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
    if (appUrlRef)
    {
-      LSOpenCFURLRef(appUrlRef, NULL);
+      LSOpenCFURLRef(appUrlRef, nullptr);
       CFRelease(appUrlRef);
    }
 #endif
@@ -272,14 +384,13 @@ void WindowMenu::onAboutToShow()
    }
 
    QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
+   for (auto pWindow : topLevels)
    {
-      QWidget* pWindow = topLevels.at(i);
       if (!pWindow->isVisible())
          continue;
 
       // construct with no parent (we free it manually)
-      QAction* pAction = new QAction(pWindow->windowTitle(), NULL);
+      QAction* pAction = new QAction(pWindow->windowTitle(), nullptr);
       pAction->setData(QVariant::fromValue(pWindow));
       pAction->setCheckable(true);
       if (pWindow->isActiveWindow())
@@ -298,10 +409,10 @@ void WindowMenu::onAboutToHide()
 
 void WindowMenu::showWindow()
 {
-   QAction* pAction = qobject_cast<QAction*>(sender());
+   auto* pAction = qobject_cast<QAction*>(sender());
    if (!pAction)
       return;
-   QWidget* pWidget = pAction->data().value<QWidget*>();
+   auto* pWidget = pAction->data().value<QWidget*>();
    if (!pWidget)
       return;
    if (pWidget->isMinimized())

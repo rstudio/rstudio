@@ -18,7 +18,7 @@ echo "Removing user $USERNAME with conflicting id $USERID"
 
 # use appropriate command for user deletion
 if hash userdel 2>/dev/null; then
-    userdel $GROUPNAME
+    userdel $USERNAME
 elif hash deluser 2>/dev/null; then
-    deluser $GROUPNAME
+    deluser $USERNAME
 fi

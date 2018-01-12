@@ -63,9 +63,9 @@ public class DesktopWindowOpener extends WebWindowOpener
    {
       Desktop.getFrame().prepareForNamedWindow(options.getName(),
             options.allowExternalNavigation(),
-            options.showDesktopToolbar());
-      super.openWebMinimalWindow(globalDisplay, url, options, width, 
-                                 height, showLocation);
+            options.showDesktopToolbar(), () ->
+               super.openWebMinimalWindow(globalDisplay, url, options, width, 
+                                          height, showLocation));
    }
 
    @Override
@@ -102,9 +102,8 @@ public class DesktopWindowOpener extends WebWindowOpener
          y = pos.getY();
       }
 
-      Desktop.getFrame().prepareForSatelliteWindow(windowName, x, y,
-                                                   width, height);
-      super.openSatelliteWindow(globalDisplay, mode, width, height, options);
+      Desktop.getFrame().prepareForSatelliteWindow(windowName, x, y, width, height, ()-> 
+         super.openSatelliteWindow(globalDisplay, mode, width, height, options));
    }
    
    @Override

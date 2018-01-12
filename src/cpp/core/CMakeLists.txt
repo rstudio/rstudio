@@ -21,6 +21,10 @@ add_subdirectory(tex/synctex)
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
+if(MSVC)
+   add_definitions(-DHUNSPELL_STATIC)
+endif()
+
 # source files
 set (CORE_SOURCE_FILES
    Assert.cpp
@@ -30,9 +34,9 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
-   Error.cpp 
+   Error.cpp
    Exec.cpp
-   FileInfo.cpp 
+   FileInfo.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
@@ -105,7 +109,6 @@ set (CORE_SOURCE_FILES
    r_util/RSessionContext.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
-   r_util/RTokenizerTests.cpp
    r_util/RUserData.cpp
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
@@ -186,11 +189,11 @@ if (UNIX)
    if(APPLE)
       if(${MACOSX_VERSION} VERSION_GREATER "10.10"
             AND EXISTS "/usr/local/opt/openssl")
-   
+
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
             -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-   
+
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
             /usr/local/opt/openssl/include)
@@ -278,10 +281,11 @@ else()
 
    # system libraries
    set (CORE_SYSTEM_LIBRARIES
-      -lws2_32
-      -lmswsock
-      -lrpcrt4
-      -lShlwapi
+      WS2_32
+      MsWSock
+      RpcRT4
+      ShLwApi
+      AdvAPI32
       ${OPENSSL_CRYPTO_LIBRARY}
    )
 
@@ -334,6 +338,7 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 # link dependencies
 target_link_libraries(
    rstudio-core
+   rstudio-core-hunspell
    ${Boost_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
@@ -357,4 +362,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${CORE_SYSTEM_LIBRARIES}
    )
 
+   if(WIN32)
+      target_link_libraries(rstudio-core-tests rstudio-core-zlib)
+   endif()
 endif()

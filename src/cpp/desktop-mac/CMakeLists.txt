@@ -142,7 +142,7 @@ if(RSTUDIO_PACKAGE_BUILD)
    # copy the libssl and libcrypto libraries to the install folder
    foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
       # extract the parent directory and actual filename
-      get_filename_component(LIB_DIR ${lib} DIRECTORY)
+      get_filename_component(LIB_DIR ${lib} PATH)
       execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
 
       # create a writable copy of the libraries we will later modify
@@ -166,23 +166,5 @@ if(RSTUDIO_PACKAGE_BUILD)
       # the system copies we linked against
       add_custom_command (TARGET RStudio POST_BUILD
          COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/openssl/${LIB_FILE} ${RSTUDIO_INSTALL_BIN}/RStudio)
-   endforeach()
-    
-
-   # now we need to go back and fix up the OpenSSL dylibs themselves so that
-   # their references to each other point at the installed copies
-   foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-      # look up the installation path computed above
-      if(lib STREQUAL ${OPENSSL_CRYPTO_LIBRARY})
-         set(LIB_INSTALLED ${LIBCRYPTO})
-      else()
-         set(LIB_INSTALLED ${LIBSSL})
-      endif()
-
-      # figure out which libcrypto we're linking against
-      execute_process(COMMAND bash "-c" "otool -L ${lib} | grep libcrypto | grep version | cut -d ' ' -f 1" OUTPUT_VARIABLE LIBCRYPTO_DYLIB OUTPUT_STRIP_TRAILING_WHITESPACE)
-      get_filename_component(LIBCRYPTO_FILE ${LIBCRYPTO} NAME)
-      add_custom_command (TARGET RStudio POST_BUILD
-         COMMAND install_name_tool -change ${LIBCRYPTO_DYLIB} @executable_path/openssl/${LIBCRYPTO_FILE} ${LIB_INSTALLED})
    endforeach()
 endif()

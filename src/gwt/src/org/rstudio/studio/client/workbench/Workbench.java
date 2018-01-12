@@ -443,7 +443,7 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onToggleFullScreen()
    {
-      if (Desktop.isDesktop() && Desktop.getFrame().supportsFullscreenMode())
+      if (Desktop.isDesktop())
          Desktop.getFrame().toggleFullscreenMode();
    }
    
@@ -468,11 +468,13 @@ public class Workbench implements BusyHandler,
       }
       else
       {
-         String message = Desktop.getFrame().getInitMessages();
-         if (!StringUtil.isNullOrEmpty(message))
+         Desktop.getFrame().getInitMessages(message ->
          {
-            globalDisplay_.showWarningBar(false, message);
-         }
+            if (!StringUtil.isNullOrEmpty(message))
+            {
+               globalDisplay_.showWarningBar(false, message);
+            }
+         });
       }
    }
     

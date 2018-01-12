@@ -16,6 +16,7 @@
 #include <core/RegexUtils.hpp>
 
 #include <vector>
+#include <sstream>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>

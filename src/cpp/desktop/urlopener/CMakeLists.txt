@@ -27,29 +27,26 @@ set(URLOPENER_SOURCE_FILES
   UrlOpenerMain.cpp
 )
 
+if(WIN32)
 
-# configure urlopener.rc
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.rc.in
-                ${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc)
+   list(
+      APPEND URLOPENER_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc")
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/urlopener.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc)
 
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
-                ${CMAKE_CURRENT_BINARY_DIR}/urlopener.exe.manifest COPYONLY)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/urlopener.exe.manifest COPYONLY)
 
-set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
-add_custom_command(
-   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-   COMMAND "${WINDRES}"
-      -I "."
-      -i "urlopener.rc"
-      -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      -Ocoff
-   DEPENDS
-      "${CMAKE_CURRENT_BINARY_DIR}/urlopener.rc"
-      "${CMAKE_CURRENT_SOURCE_DIR}/urlopener.exe.manifest")
-set(URLOPENER_SOURCE_FILES
-   ${URLOPENER_SOURCE_FILES}
-   "${CMAKE_CURRENT_BINARY_DIR}/res.o")
+   set(
+      CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
+
+endif()
 
 add_executable(urlopener
   ${URLOPENER_SOURCE_FILES}

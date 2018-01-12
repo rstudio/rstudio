@@ -85,7 +85,7 @@ RVersion autoDetect(Architecture architecture, bool preferredOnly=false);
 RVersion autoDetect();
 
 RVersion detectRVersion(bool forceUi,
-                        QWidget* parent = NULL);
+                        QWidget* parent = nullptr);
 
 } // namespace desktop
 } // namespace rstudio

@@ -1,7 +1,7 @@
 /*
  * DesktopPosixDetectRHome.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ namespace {
 void showRNotFoundError(const std::string& msg)
 {
    showMessageBox(QMessageBox::Critical,
-                  NULL,
+                  nullptr,
                   QString::fromUtf8("R Not Found"),
                   QString::fromUtf8(msg.c_str()));
 }

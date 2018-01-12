@@ -13,6 +13,12 @@
 #
 #
 
+# include guard
+if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
+   return()
+endif()
+set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
+
 # version info
 if ("$ENV{RSTUDIO_VERSION_MAJOR}" STREQUAL "")
   set(CPACK_PACKAGE_VERSION_MAJOR "99")
@@ -39,11 +45,12 @@ endif()
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
+   message(STATUS "CMake build type not set; defaulting to debug build")
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# enable testing on all builds unless specifically disabled
-if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
+# enable testing on debug builds
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT RSTUDIO_UNIT_TESTS_DISABLED)
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
@@ -64,8 +71,13 @@ if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desk
 endif()
 
 # set session64 if specified
-if (${RSTUDIO_TARGET} STREQUAL "SessionWin64")
+if(RSTUDIO_TARGET STREQUAL "SessionWin64")
    set(RSTUDIO_SESSION_WIN64 TRUE)
+endif()
+
+# prefer 64bit session when using 64bit toolchain
+if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(RSTUDIO_SESSION_WIN64 TRUE)
 endif()
 
 # record git revision hash (cache it since we don't use this in development
@@ -163,4 +175,5 @@ endif()
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
-
+# include utilities
+include(RStudioCMakeUtils)

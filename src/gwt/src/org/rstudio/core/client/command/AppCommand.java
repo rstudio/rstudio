@@ -29,6 +29,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -106,6 +107,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public AppCommand()
    {
+      if (Desktop.isDesktop())
+      {
+         addEnabledChangedHandler((command) ->
+            DesktopMenuCallback.setCommandEnabled(id_, enabled_));
+         addVisibleChangedHandler((command) ->
+            DesktopMenuCallback.setCommandVisible(id_, visible_));
+      }
    }
 
    void executeFromShortcut()
@@ -223,6 +231,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (!isCheckable())
          return;
       checked_ = checked;
+
+      // sync desktop menus
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setCommandChecked(id_, checked_);
    }
 
    public String getWindowMode()
@@ -372,6 +384,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
+
+      // sync with desktop frame
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 
    @Override

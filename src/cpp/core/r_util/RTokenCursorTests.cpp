@@ -1,7 +1,7 @@
 /*
  * SessionRTokenCursorTests.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,6 +114,40 @@ context("RTokenCursor")
       
       expect_true(cursor.moveToEndOfStatement(false));
       expect_true(cursor.contentEquals(L"bam"));
+   }
+
+   test_that("previousSignificantToken works at end of token list")
+   {
+      RTokens rTokens(L"a <- b");
+      RTokenCursor cursor(rTokens);
+      cursor.moveToEndOfTokenStream();
+      auto result = cursor.previousSignificantToken();
+      expect_true(result.isType(RToken::OPER));
+      expect_true(result.contentEquals(L"<-"));
+   }
+
+   test_that("previousSignificantToken works in middle of token list")
+   {
+      RTokens rTokens(L"a <- b");
+      RTokenCursor cursor(rTokens);
+      cursor.moveToEndOfTokenStream();
+      cursor.moveToPreviousSignificantToken();
+      auto result = cursor.previousSignificantToken();
+      expect_true(result.isType(RToken::ID));
+      expect_true(result.contentEquals(L"a"));
+   }
+
+   test_that("previousSignificantToken returns dummy token when already at beginning")
+   {
+      RTokens rTokens(L"a <- b");
+      RTokenCursor cursor(rTokens);
+      const auto& result = cursor.previousSignificantToken();
+      expect_true(result.isType(RToken::ERR));
+      expect_true(result.content().empty());
+      expect_true(result.length() == 0);
+
+      // isPipeOperator exercises the token's begin/end iterators
+      expect_false(token_utils::isPipeOperator(result));
    }
 }
 

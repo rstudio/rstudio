@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,8 @@ namespace rstudio {
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-    QWebView(parent),
+    QWebEngineView(parent),
     baseUrl_(baseUrl),
-    pWebInspector_(NULL),
     dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_OS_LINUX
@@ -50,22 +49,6 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
 #endif
    pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
    setPage(pWebPage_);
-
-   // QWebView can create its own QWebInspector instance, but it doesn't always
-   // destroy it correctly if the inspector is open when the associated browser
-   // window is closed (see case 3889), leading to a crash. To work around this,
-   // we create our own unbound web inspector, and clean it up manually when the
-   // WebView closes.
-   pWebInspector_ = new QWebInspector();
-   pWebInspector_->setVisible(false);
-   pWebInspector_->setPage(pWebPage_);
-
-   page()->setForwardUnsupportedContent(true);
-
-   connect(page(), SIGNAL(downloadRequested(QNetworkRequest)),
-           this, SLOT(downloadRequested(QNetworkRequest)));
-   connect(page(), SIGNAL(unsupportedContent(QNetworkReply*)),
-           this, SLOT(unsupportedContent(QNetworkReply*)));
 }
 
 void WebView::setBaseUrl(const QUrl& baseUrl)
@@ -85,7 +68,7 @@ void WebView::prepareForWindow(const PendingWindow& pendingWnd)
 }
 
 QString WebView::promptForFilename(const QNetworkRequest& request,
-                                   QNetworkReply* pReply = NULL)
+                                   QNetworkReply* pReply = nullptr)
 {
    QString defaultFileName = QFileInfo(request.url().path()).fileName();
 
@@ -105,138 +88,14 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
                                                    tr("Download File"),
                                                    defaultFileName,
                                                    QString(),
-                                                   0,
+                                                   nullptr,
                                                    standardFileDialogOptions());
    return fileName;
 }
 
-void WebView::keyPressEvent(QKeyEvent* pEv)
+void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
-   // emit close window shortcut signal if appropriate
-#ifndef _WIN32
-   if (pEv->key() == 'W')
-   {
-      // check modifier and emit signal
-      if (pEv->modifiers() & Qt::ControlModifier)
-         onCloseWindowShortcut();
-   }
-#endif
-
-  // flip control and meta on the mac
-#ifdef Q_OS_MAC
-   Qt::KeyboardModifiers modifiers = pEv->modifiers();
-   if (modifiers & Qt::MetaModifier && !(modifiers & Qt::ControlModifier))
-   {
-      modifiers &= ~Qt::MetaModifier;
-      modifiers |= Qt::ControlModifier;
-   }
-   else if (modifiers & Qt::ControlModifier && !(modifiers & Qt::MetaModifier))
-   {
-      modifiers &= ~Qt::ControlModifier;
-      modifiers |= Qt::MetaModifier;
-   }
-#endif
-
-   // Work around bugs in QtWebKit that result in numpad key
-   // presses resulting in keyCode=0 in the DOM's keydown events.
-   // This is due to some missing switch cases in the case
-   // where the keypad modifier bit is on, so we turn it off.
-   QKeyEvent newEv(pEv->type(),    
-                   pEv->key(),
-                   pEv->modifiers() & ~Qt::KeypadModifier,
-                   pEv->text(),
-                   pEv->isAutoRepeat(),
-                   pEv->count());
-  
-   // delegate to base
-   this->QWebView::keyPressEvent(&newEv);
-}
-
-void WebView::downloadRequested(const QNetworkRequest& request)
-{
-   QString fileName = promptForFilename(request);
-   if (fileName.isEmpty())
-      return;
-
-   // Ask the network manager to download
-   // the file and connect to the progress
-   // and finished signals.
-   QNetworkRequest newRequest = request;
-
-   QNetworkAccessManager* pNetworkManager = page()->networkAccessManager();
-   QNetworkReply* pReply = pNetworkManager->get(newRequest);
-   // DownloadHelper frees itself when downloading is done
-   new DownloadHelper(pReply, fileName);
-}
-
-void WebView::unsupportedContent(QNetworkReply* pReply)
-{
-   bool closeAfterDownload = false;
-   if (this->page()->history()->count() == 0)
-   {
-      /* This is for the case where a new browser window was launched just
-         to show a PDF or save a file. Otherwise we would have an empty
-         browser window with no history hanging around. */
-      window()->hide();
-      closeAfterDownload = true;
-   }
-
-   DownloadHelper* pDownloadHelper = NULL;
-
-   QString contentType =
-         pReply->header(QNetworkRequest::ContentTypeHeader).toString();
-   if (contentType.contains(QRegExp(QString::fromUtf8("^\\s*application/pdf($|;)"),
-                                    Qt::CaseInsensitive)))
-   {
-      core::FilePath dir(options().scratchTempDir());
-
-      QTemporaryFile pdfFile(QString::fromUtf8(
-            dir.childPath("rstudio-XXXXXX.pdf").absolutePath().c_str()));
-      pdfFile.setAutoRemove(false);
-      pdfFile.open();
-      pdfFile.close();
-
-      if (pReply->isFinished())
-      {
-         DownloadHelper::handleDownload(pReply, pdfFile.fileName());
-         openFile(pdfFile.fileName());
-      }
-      else
-      {
-         // DownloadHelper frees itself when downloading is done
-         pDownloadHelper = new DownloadHelper(pReply, pdfFile.fileName());
-         connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
-                 this, SLOT(openFile(QString)));
-      }
-   }
-   else
-   {
-      QString fileName = promptForFilename(pReply->request(), pReply);
-      if (fileName.isEmpty())
-      {
-         pReply->abort();
-         if (closeAfterDownload)
-            window()->close();
-      }
-      else
-      {
-         // DownloadHelper frees itself when downloading is done
-         if (pReply->isFinished())
-         {
-            DownloadHelper::handleDownload(pReply, fileName);
-         }
-         else
-         {
-            pDownloadHelper = new DownloadHelper(pReply, fileName);
-         }
-      }
-   }
-
-   if (closeAfterDownload && pDownloadHelper)
-   {
-      connect(pDownloadHelper, SIGNAL(downloadFinished(QString)),
-              window(), SLOT(close()));
-   }
+   QWebEngineView::keyPressEvent(pEvent);
 }
 
 void WebView::openFile(QString fileName)
@@ -257,7 +116,7 @@ void WebView::openFile(QString fileName)
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
 }
 
-// QWebView doesn't respect the system DPI and always renders as though
+// QWebEngineView doesn't respect the system DPI and always renders as though
 // it were at 96dpi. To work around this, we take the user-specified zoom level
 // and scale it by a DPI-determined constant before applying it to the view.
 // See: https://bugreports.qt-project.org/browse/QTBUG-29571
@@ -271,17 +130,13 @@ qreal WebView::dpiAwareZoomFactor()
    return zoomFactor() / dpiZoomScaling_;
 }
 
+bool WebView::event(QEvent* event)
+{
+   return this->QWebEngineView::event(event);
+}
+
 void WebView::closeEvent(QCloseEvent*)
 {
-   // When the webview closes, preemptively destroy the associated web
-   // inspector, if we have one.
-   if (pWebInspector_ != NULL)
-   {
-      pWebInspector_->setVisible(false);
-      pWebInspector_->disconnect();
-      pWebInspector_->deleteLater();
-      pWebInspector_ = NULL;
-   }
 }
 
 } // namespace desktop

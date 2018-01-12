@@ -1,7 +1,7 @@
 /*
  * DesktopSecondaryWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,8 +73,6 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
    connect(print_, SIGNAL(triggered()),
            this, SLOT(print()));
 
-   history_ = webView()->history();
-
    connect(webView(), SIGNAL(loadStarted()),
            this, SLOT(manageCommandState()));
    connect(webView(), SIGNAL(urlChanged(QUrl)),
@@ -92,15 +90,8 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
    }
 }
 
-void SecondaryWindow::print()
-{
-   printRequested(webView()->page()->mainFrame());
-}
-
 void SecondaryWindow::manageCommandState()
 {
-   back_->setEnabled(history_->canGoBack());
-   forward_->setEnabled(history_->canGoForward());
 }
 
 } // namespace desktop

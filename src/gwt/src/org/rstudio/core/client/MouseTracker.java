@@ -59,7 +59,7 @@ public class MouseTracker
    private boolean isSafariModifierKeyCausingMouseEvent(NativeEvent event,
                                                         int type)
    {
-      if (!IS_SAFARI)
+      if (!BrowseCap.isSafari())
          return false;
       
       // If the last event was a key event, and we just got a mouse event,
@@ -103,7 +103,4 @@ public class MouseTracker
    
    private int lastEventType_;
    private boolean suppressing_;
-   
-   private static final boolean IS_SAFARI =
-         BrowseCap.isSafari() || BrowseCap.isMacintoshDesktop();
 }

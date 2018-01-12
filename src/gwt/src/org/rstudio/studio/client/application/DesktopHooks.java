@@ -210,11 +210,6 @@ public class DesktopHooks
       return workbenchContext_.getREnvironmentPath();
    }
    
-   String getSumatraPdfExePath()
-   {
-      return session_.getSessionInfo().getSumatraPdfExePath();
-   }
-   
    boolean isSelectionEmpty()
    {
       return DesktopApplicationHeader.isSelectionEmpty();

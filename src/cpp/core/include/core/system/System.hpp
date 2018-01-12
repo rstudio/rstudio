@@ -18,7 +18,7 @@
 
 
 #if defined(_WIN32)
-#include <windef.h>
+#include <windows.h>
 typedef DWORD PidType;
 #else  // UNIX
 #include <sys/types.h>

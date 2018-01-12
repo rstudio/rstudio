@@ -27,13 +27,13 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -93,56 +93,49 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.isDesktop())
       {
-         // no zoom level on cocoa desktop
-         if (!BrowseCap.isCocoaDesktop())
+         int initialIndex = -1;
+         int normalIndex = -1;
+         String[] zoomValues = new String[] {
+               "0.25", "0.50", "0.75", "0.80", "0.90",
+               "1.00", "1.10", "1.25", "1.50", "1.75",
+               "2.00", "2.50", "3.00", "4.00", "5.00"
+         };
+         String[] zoomLabels = new String[zoomValues.length];
+         double currentZoomLevel = DesktopInfo.getZoomLevel();
+         for (int i = 0; i < zoomValues.length; i++)
          {
-            int initialIndex = -1;
-            int normalIndex = -1;
-            String[] zoomValues = 
-                  Desktop.getFrame().getZoomLevels().split("\\n");
-            String[] zoomLabels = new String[zoomValues.length];
-            for (int i=0; i<zoomValues.length; i++)
-            {
-               double zoomValue = Double.parseDouble(zoomValues[i]);
-               
-               if (zoomValue == 1.0)
-                  normalIndex = i;
-               
-               if (zoomValue == Desktop.getFrame().getZoomLevel())
-                  initialIndex = i;
-               
-               zoomLabels[i] = StringUtil.formatPercent(zoomValue);
-            }
+            double zoomValue = Double.parseDouble(zoomValues[i]);
             
-            if (initialIndex == -1)
-               initialIndex = normalIndex;
+            if (zoomValue == 1.0)
+               normalIndex = i;
             
-            zoomLevel_ = new SelectWidget("Zoom:",
-                                          zoomLabels,
-                                          zoomValues,
-                                          false);
-            zoomLevel_.getListBox().setSelectedIndex(initialIndex);
-            initialZoomLevel_ = zoomValues[initialIndex];
+            if (zoomValue == currentZoomLevel)
+               initialIndex = i;
             
-            leftPanel.add(zoomLevel_);
-            
-            zoomLevel_.getListBox().addChangeHandler(new ChangeHandler() {
-               @Override
-               public void onChange(ChangeEvent event)
-               {
-                  updatePreviewZoomLevel();
-               }
-            });
+            zoomLabels[i] = StringUtil.formatPercent(zoomValue);
          }
          
-         String[] fonts = Desktop.getFrame().getFixedWidthFontList().split("\\n");
+         if (initialIndex == -1)
+            initialIndex = normalIndex;
+         
+         zoomLevel_ = new SelectWidget("Zoom:",
+                                       zoomLabels,
+                                       zoomValues,
+                                       false);
+         zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+         initialZoomLevel_ = zoomValues[initialIndex];
+         
+         leftPanel.add(zoomLevel_);
+         
+         zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
+      
+         String[] fonts = DesktopInfo.getFixedWidthFontList().split("\\n");
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
          fontFace_.getListBox().setWidth("95%");
 
-         String value = Desktop.getFrame().getFixedWidthFont();
-         String label = Desktop.getFrame().getFixedWidthFont().replaceAll("\\\"",
-                                                                          "");
+         String value = DesktopInfo.getFixedWidthFont();
+         String label = value.replaceAll("\\\"", "");
          if (!fontFace_.setValue(label))
          {
             fontFace_.insertValue(0, label, value);
@@ -164,9 +157,8 @@ public class AppearancePreferencesPane extends PreferencesPane
          });
       }
 
-      // Ligatures are natively supported on Cocoa, but are opt-in on 
-      // QtWebKit
-      if (Desktop.isDesktop() && !BrowseCap.isCocoaDesktop())
+      // Ligatures are opt-in on desktop
+      if (Desktop.isDesktop())
       {
          // reduce padding on font face element to group with ligature check
          fontFace_.getElement().getStyle().setMarginBottom(3, Unit.PX);
@@ -261,10 +253,10 @@ public class AppearancePreferencesPane extends PreferencesPane
    private void updatePreviewZoomLevel()
    {
       // no zoom preview on desktop
-      if (Desktop.isDesktop() && !Desktop.getFrame().isCocoa())
+      if (Desktop.isDesktop())
       {
          preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
-                               Desktop.getFrame().getZoomLevel());
+                               DesktopInfo.getZoomLevel());
       }
    }
 
@@ -303,14 +295,11 @@ public class AppearancePreferencesPane extends PreferencesPane
             restartRequired = true;
          }
          
-         if (!Desktop.getFrame().isCocoa())
+         if (initialZoomLevel_ != zoomLevel_.getValue())
          {
-            if (initialZoomLevel_ != zoomLevel_.getValue())
-            {
-               double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
-               Desktop.getFrame().setZoomLevel(zoomLevel);
-               restartRequired = true;
-            }
+            double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
+            Desktop.getFrame().setZoomLevel(zoomLevel);
+            restartRequired = true;
          }
       }
 

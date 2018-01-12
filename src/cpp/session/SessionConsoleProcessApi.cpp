@@ -936,6 +936,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
 Error initializeApi()
 {
    using namespace module_context;
+   using boost::bind;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);

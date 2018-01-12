@@ -46,13 +46,13 @@ namespace desktop {
 
 namespace {
 
-static std::string s_launcherToken;
-         
-void launchProcess(std::string absPath,
-                   QStringList argList,
+std::string s_launcherToken;
+
+void launchProcess(const std::string& absPath,
+                   const QStringList& argList,
                    QProcess** ppProc)
 {
-   QProcess* pProcess = new QProcess();
+   auto* pProcess = new QProcess();
    if (options().runDiagnostics())
       pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
    else
@@ -123,6 +123,7 @@ Error SessionLauncher::launchFirstSession()
                            "...");
 
    pMainWindow_ = new MainWindow(url);
+   pMainWindow_->setAttribute(Qt::WA_DeleteOnClose);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
    pMainWindow_->setAppLauncher(pAppLaunch_);
@@ -174,9 +175,8 @@ Error SessionLauncher::launchFirstSession()
 void SessionLauncher::closeAllSatellites()
 {
    QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
+   for (auto pWindow : topLevels)
    {
-      QWidget* pWindow = topLevels.at(i);
       if (pWindow != pMainWindow_)
         pWindow->close();
    }
@@ -198,8 +198,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
-
-      pMainWindow_->evaluateJavaScript(
+      pMainWindow_->webView()->webPage()->runJavaScript(
                QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
 
       if (abendLogPath().exists())
@@ -269,11 +268,11 @@ Error SessionLauncher::launchNextSession(bool reload)
    pMainWindow_->disconnect(SIGNAL(firstWorkbenchInitialized()));
 
    // delete the old process object
-   pMainWindow_->setSessionProcess(NULL);
+   pMainWindow_->setSessionProcess(nullptr);
    if (pRSessionProcess_)
    {
       delete pRSessionProcess_;
-      pRSessionProcess_ = NULL;
+      pRSessionProcess_ = nullptr;
    }
 
    // build a new launch context -- re-use the same port if we aren't reloading
@@ -406,13 +405,6 @@ QString SessionLauncher::launchFailedErrorMessage() const
 }
 
 
-void SessionLauncher::cleanupAtExit()
-{
-   if (pMainWindow_)
-      desktop::options().saveMainWindowBounds(pMainWindow_);
-}
-
-
 void SessionLauncher::buildLaunchContext(QString* pHost,
                                          QString* pPort,
                                          QStringList* pArgList,
@@ -448,7 +440,7 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
       s_launcherToken = core::system::generateShortenedUuid();
    *pArgList << QString::fromUtf8("--launcher-token") <<
                 QString::fromUtf8(s_launcherToken.c_str());
-   
+
    if (options().runDiagnostics())
       *pArgList << QString::fromUtf8("--verify-installation") <<
                    QString::fromUtf8("1");
