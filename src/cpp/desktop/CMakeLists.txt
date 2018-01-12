@@ -79,8 +79,8 @@ else()
    endif()
 endif()
 
-if(QMAKE_QT50_SDK)
-   message(STATUS "Found Qt: ${QMAKE_QT50_SDK}")
+if(QT_QMAKE_EXECUTABLE)
+   message(STATUS "Found Qt: ${QT_QMAKE_EXECUTABLE}")
 endif()
 
 # set the cmake prefix path based on the location of the qmake executable
