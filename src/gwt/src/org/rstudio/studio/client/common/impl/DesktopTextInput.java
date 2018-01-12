@@ -1,7 +1,7 @@
 /*
  * DesktopTextInput.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,16 +36,16 @@ public class DesktopTextInput implements TextInput
                              Operation cancelOperation)
    {
       Desktop.getFrame().promptForText(
-            title,
-            label,
-            initialValue,
+            StringUtil.notNull(title),
+            StringUtil.notNull(label),
+            StringUtil.notNull(initialValue),
             usePasswordMask,
-            "",
-            false,
+            "", // extraOptionPrompt
+            false, // rememberByDefault
             numbersOnly,
             selectionStart,
             selectionLength,
-            okButtonCaption,
+            StringUtil.notNull(okButtonCaption),
             result ->
             {
                if (StringUtil.isNullOrEmpty(result))
@@ -78,16 +78,16 @@ public class DesktopTextInput implements TextInput
                                  Operation cancelOperation)
    {
       Desktop.getFrame().promptForText(
-            title,
-            label,
-            initialValue,
+            StringUtil.notNull(title),
+            StringUtil.notNull(label),
+            StringUtil.notNull(initialValue),
             usePasswordMask,
-            extraOptionPrompt,
+            StringUtil.notNull(extraOptionPrompt),
             extraOptionDefault,
-            false,
+            false, // numbersOnly
             selectionStart,
             selectionLength,
-            okButtonCaption,
+            StringUtil.notNull(okButtonCaption),
             result ->
             {
                if (StringUtil.isNullOrEmpty(result))
