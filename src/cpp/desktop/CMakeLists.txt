@@ -17,6 +17,10 @@ cmake_minimum_required(VERSION 2.8.8)
 
 project(DESKTOP)
 
+if(CMAKE_VERSION VERSION_GREATER "3.0.0")
+   cmake_policy(SET CMP0043 NEW)
+endif()
+
 set(QT_VERSION_SUBDIR "5.9.2")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
