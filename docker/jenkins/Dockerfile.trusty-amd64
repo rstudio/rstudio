@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:trusty
 
 ARG AWS_REGION=us-east-1
 
@@ -7,11 +7,16 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu xenial/' >> /etc/apt/sources.list \
+    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu trusty/' >> /etc/apt/sources.list \
     && apt-get update
 
+# add ppa repository so we can install java 8 (not in any official repo for precise)
 RUN apt-get update \
-  && apt-get install -y \
+  && apt-get install -y software-properties-common python-software-properties \
+  && add-apt-repository ppa:openjdk-r/ppa
+
+RUN apt-get update && \
+    apt-get install -y \
     ant \
     apparmor-utils \
     build-essential \
@@ -25,7 +30,9 @@ RUN apt-get update \
     libapparmor1 \
     libbz2-dev \
     libfuse2 \
+    libgtk-3-0 \
     libgl1-mesa-dev \
+    libegl1-mesa \
     libjpeg62 \
     libpam-dev \
     libpango1.0-dev \
@@ -33,7 +40,6 @@ RUN apt-get update \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \
-    patchelf \
     pkg-config \
     python \
     r-base \
@@ -42,6 +48,18 @@ RUN apt-get update \
     uuid-dev \
     wget \
     zlib1g-dev
+
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+
+## build patchelf
+RUN cd /tmp \
+    && wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.gz \
+    && tar xzvf patchelf-0.9.tar.gz \
+    && cd patchelf-0.9 \
+    && ./configure \
+    && make \
+    && make install
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
