@@ -145,6 +145,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopWordViewer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/DockTileView.hpp
 )
 
 if(WIN32)
@@ -230,6 +231,11 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
+    DockTileView.mm
+  )
+else()
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DockTileView.cpp
   )
 endif()
 
