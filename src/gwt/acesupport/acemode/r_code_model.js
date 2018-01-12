@@ -925,6 +925,7 @@ var RCodeModel = function(session, tokenizer,
          else if (!isInRMode &&
                   modeId === "mode/sweave" &&
                   type === "keyword" &&
+                  position.column === 0 &&
                   value.indexOf("\\") === 0 && (
                      value === "\\chapter" ||
                      value === "\\section" ||
@@ -1897,10 +1898,7 @@ var RCodeModel = function(session, tokenizer,
             }
          }
       }
-      else if (isOneOf(tokenCursor.currentValue(),
-                       ["else", "repeat", "<-", "<<-", "="]) ||
-               tokenCursor.hasType("infix") ||
-               tokenCursor.currentType() === "keyword.operator")
+      else if (isOneOf(tokenCursor.currentValue(), ["else", "repeat"]))
       {
          return this.$getIndent(this.$getLine(tokenCursor.$row));
       }

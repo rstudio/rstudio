@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,6 +213,13 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    @Handler
+   public void onClearRecentProjects()
+   {  
+      // Clear the contents of the most recently used list of projects
+      pMRUList_.get().clear();
+   }
+   
+   @Handler
    public void onNewProject()
    {
       handleNewProject(false, true);
@@ -224,6 +231,7 @@ public class Projects implements OpenProjectFileHandler,
       // first resolve the quit context (potentially saving edited documents   
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Save Current Workspace",
+         true /*allowCancel*/,
          forceSaveAll,
          new ApplicationQuit.QuitContext() {
            @Override
@@ -673,6 +681,7 @@ public class Projects implements OpenProjectFileHandler,
             if (!newProject.getOpenInNewWindow())
             {
                applicationQuit_.performQuit(
+                                 null,
                                  saveChanges,
                                  newProject.getProjectFile(),
                                  newProject.getRVersion());
@@ -766,11 +775,10 @@ public class Projects implements OpenProjectFileHandler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Close Project", true /*allowCancel*/,
-                                      new ApplicationQuit.QuitContext() {
+      applicationQuit_.prepareForQuit("Close Project", new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
-            applicationQuit_.performQuit(saveChanges, NONE);
+            applicationQuit_.performQuit(null, saveChanges, NONE);
          }});
    }
    
@@ -890,7 +898,7 @@ public class Projects implements OpenProjectFileHandler,
    @Override
    public void onSwitchToProject(final SwitchToProjectEvent event)
    {
-      switchToProject(event.getProject(), event.getForceSaveAll());
+      switchToProject(event.getProject(), event.getForceSaveAll(), event.getInvokedByTutorialApi());
    }
    
    @Override
@@ -937,12 +945,15 @@ public class Projects implements OpenProjectFileHandler,
    
    private void switchToProject(String projectFilePath)
    {
-      switchToProject(projectFilePath, false);
+      switchToProject(projectFilePath, false, null);
    }
    
    private void switchToProject(final String projectFilePath, 
-                                final boolean forceSaveAll)
+                                final boolean forceSaveAll,
+                                final String invokedByTutorialApi)
    {
+      final boolean allowCancel = StringUtil.isNullOrEmpty(invokedByTutorialApi);
+      
       // validate that the switch will actually work
       projServer_.validateProjectPath(
                       projectFilePath,
@@ -954,11 +965,12 @@ public class Projects implements OpenProjectFileHandler,
             if (valid)
             {
                applicationQuit_.prepareForQuit("Switch Projects",
+                  allowCancel,
                   forceSaveAll,
                   new ApplicationQuit.QuitContext() {
                   public void onReadyToQuit(final boolean saveChanges)
                   {
-                     applicationQuit_.performQuit(saveChanges, projectFilePath);
+                     applicationQuit_.performQuit(invokedByTutorialApi, saveChanges, projectFilePath);
                   }
                });
             }
@@ -1040,6 +1052,7 @@ public class Projects implements OpenProjectFileHandler,
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Switch Projects",
+                                      true /*allowCancel*/,
                                       forceSaveAll,
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
@@ -1073,7 +1086,7 @@ public class Projects implements OpenProjectFileHandler,
                         else
                         {
                            // perform quit
-                           applicationQuit_.performQuit(saveChanges,
+                           applicationQuit_.performQuit(null, saveChanges,
                                  input.getProjectFile().getPath());
                         }
                      };
