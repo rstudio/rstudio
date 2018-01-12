@@ -28,6 +28,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "DockTileView.hpp"
 
 using namespace rstudio::core;
 
@@ -180,9 +181,15 @@ void MainWindow::onWorkbenchInitialized()
       QString projectDir = qProjectDir.toString();
 
       if (projectDir.length() > 0)
+      {
          setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+         DockTileView::setLabel(projectDir);
+      }
       else
+      {
          setWindowTitle(QString::fromUtf8("RStudio"));
+         DockTileView::setLabel(QString());
+      }
 
       avoidMoveCursorIfNecessary();
    });
