@@ -1,7 +1,7 @@
 /*
  * ApplicationServerOperations.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -71,11 +71,11 @@ public interface ApplicationServerOperations extends PrefsServerOperations
                           ServerRequestCallback<Void> requestCallback);
    void ping(ServerRequestCallback<Void> requestCallback);
 
-   public void checkForUpdates(
+   void checkForUpdates(
          boolean manual,
          ServerRequestCallback<UpdateCheckResult> requestCallback);
 
-   public void getProductInfo(
+   void getProductInfo(
          ServerRequestCallback<ProductInfo> requestCallback);
    
    void getNewSessionUrl(String hostPageUrl,
@@ -101,4 +101,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    void setSessionLabel(String label,
          ServerRequestCallback<Void> requestCallback);
+   
+   void findProjectInFolder(String folder,
+         ServerRequestCallback<String> requestCallback);
 }
