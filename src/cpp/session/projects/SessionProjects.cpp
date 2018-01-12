@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,23 +15,16 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-#include <boost/algorithm/string/trim.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/Settings.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/system/System.hpp>
 #include <core/http/URL.hpp>
-#include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
-
-#include <session/projects/ProjectsSettings.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -54,8 +47,8 @@ ProjectContext s_projectContext;
 void onSuspend(Settings*)
 {
    // on suspend write out current project path as the one to use
-   // on resume. we read this back in initalize (rather than in
-   // the onResume handler) becuase we need it very early in the
+   // on resume. we read this back in initialize (rather than in
+   // the onResume handler) because we need it very early in the
    // processes lifetime and onResume happens too late
    projects::ProjectsSettings(options().userScratchPath()).
          setNextSessionProject(s_projectContext.file().absolutePath());
@@ -132,6 +125,37 @@ Error getProjectFilePath(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error findProjectInFolder(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string folder;
+   Error error = json::readParams(request.params, &folder);
+   if (error)
+      return error;
+
+   FilePath projectFilePath = module_context::resolveAliasedPath(folder);
+   if (!projectFilePath.exists())
+   {
+      pResponse->setResult("");
+      return Success();
+   }
+   if (!projectFilePath.isDirectory())
+   {
+      // handle being passed full path to an existing .Rproj file
+      if (projectFilePath.extensionLowerCase() == ".rproj")
+         pResponse->setResult(folder);
+      else
+         pResponse->setResult("");
+      return Success();
+   }
+
+   // finds .Rproj with same name as folder, otherwise if there's a
+   // single .Rproj return it, otherwise returns most recently modified
+   // project file in folder, otherwise returns blank path if no .Rproj
+   FilePath resultPath = r_util::projectFromDirectory(projectFilePath);
+   pResponse->setResult(module_context::createAliasedPath(resultPath));
+   return Success();
+}
 
 Error getNewProjectContext(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -177,7 +201,7 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 }
 
 Error createProject(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+                    json::JsonRpcResponse* /*pResponse*/)
 {
    // read params
    std::string projectFile;
@@ -464,7 +488,7 @@ Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
 }
 
 Error writeProjectOptions(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
+                         json::JsonRpcResponse* /*pResponse*/)
 {
    // get the project config, vcs options, and build options
    json::Object configJson, vcsOptionsJson, buildOptionsJson;
@@ -564,7 +588,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // read the buld options
+   // read the build options
    RProjectBuildOptions buildOptions;
    error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
    if (error)
@@ -594,7 +618,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 }
 
 Error writeProjectVcsOptions(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
+                             json::JsonRpcResponse* /*pResponse*/)
 {
    // read the vcs options
    json::Object vcsOptionsJson;
@@ -648,7 +672,7 @@ void onMonitoringDisabled()
 {
    // NOTE: if monitoring is disabled then we can't sync changes to the
    // project file -- we could poll for this however since it is only
-   // a conveninece to have these synced we don't do this
+   // a convenience to have these synced we don't do this
 }
 
 FilePath resolveProjectSwitch(const std::string& projectPath)
@@ -656,7 +680,7 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
    FilePath projectFilePath;
 
    // clear any initial context settings which may be leftover
-   // by a re-instatiation of rsession by desktop
+   // by a re-instantiation of rsession by desktop
    session::options().clearInitialContextSettings();
 
    // check for special "none" value (used for close project)
@@ -902,6 +926,7 @@ Error initialize()
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))
       (bind(registerRpcMethod, "write_project_vcs_options", writeProjectVcsOptions))
+      (bind(registerRpcMethod, "find_project_in_folder", findProjectInFolder))
    ;
    return initBlock.execute();
 }

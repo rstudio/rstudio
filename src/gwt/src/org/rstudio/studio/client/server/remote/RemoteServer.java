@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1665,6 +1665,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void findProjectInFolder(
+         String folder,
+         ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, "find_project_in_folder", folder, callback);
+   }
+   
+   @Override
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -3022,8 +3030,7 @@ public class RemoteServer implements Server
             public void onResponseReceived(Integer response)
             {
                // allow retry on success, otherwise handle unauthorized error
-               if (response.intValue() ==
-                                 RemoteServerAuth.CREDENTIALS_UPDATE_SUCCESS)
+               if (response == RemoteServerAuth.CREDENTIALS_UPDATE_SUCCESS)
                {
                   retryHandler.onRetry();
                }
@@ -3170,7 +3177,7 @@ public class RemoteServer implements Server
                                              RpcResponse response) /*-{
             responseCallback.onResponse(response);
          }-*/;
-      };
+      }
       final ResponseHandler responseHandler = new ResponseHandler();
       
       // setup a retry handler which will call back the second time with
