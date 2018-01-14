@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -298,7 +298,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private void navigate(String url)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().setViewerUrl(url);
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       // use setUrl rather than navigate to deal with same origin policy
       previewFrame_.setUrl(url);
    }

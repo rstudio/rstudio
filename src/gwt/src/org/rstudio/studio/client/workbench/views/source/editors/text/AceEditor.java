@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -493,7 +493,7 @@ public class AceEditor implements DocDisplay,
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
-         Desktop.getFrame().setClipboardText(text);
+         Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
          replaceRange(yankRange, "");
          clearEmacsMark();
       }
@@ -535,7 +535,7 @@ public class AceEditor implements DocDisplay,
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
-         Desktop.getFrame().setClipboardText(text);
+         Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
          replaceRange(yankRange, "");
          clearEmacsMark();
       }
@@ -1181,7 +1181,7 @@ public class AceEditor implements DocDisplay,
       if (Desktop.isDesktop())
       {
          // the desktop frame prints the code directly
-         Desktop.getFrame().printText(getCode());
+         Desktop.getFrame().printText(StringUtil.notNull(getCode()));
       }
       else
       {

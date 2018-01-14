@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -154,7 +155,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                public void execute()
                {
                   Desktop.getFrame().onWorkbenchInitialized(
-                        sessionInfo.getScratchDir());
+                        StringUtil.notNull(sessionInfo.getScratchDir()));
                   
                   if (sessionInfo.getDisableCheckForUpdates())
                      commands.checkForUpdates().remove();
@@ -173,7 +174,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       {
          public void onShowFolder(ShowFolderEvent event)
          {
-            Desktop.getFrame().showFolder(event.getPath().getPath());
+            Desktop.getFrame().showFolder(StringUtil.notNull(event.getPath().getPath()));
          }
       });
       
@@ -243,7 +244,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onShowLogFiles()
    {
-      Desktop.getFrame().showFolder(session_.getSessionInfo().getLogDir());
+      Desktop.getFrame().showFolder(StringUtil.notNull(session_.getSessionInfo().getLogDir()));
    }
    
    @Handler
@@ -343,7 +344,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                   @Override
                   public void onReadyToQuit(boolean saveChanges)
                   {
-                     Desktop.getFrame().browseUrl(result.getUpdateUrl());
+                     Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
                      appQuit_.performQuit(null, saveChanges);
                   }
                }); 

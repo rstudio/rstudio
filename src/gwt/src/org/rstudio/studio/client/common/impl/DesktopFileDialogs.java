@@ -1,7 +1,7 @@
 /*
  * DesktopFileDialogs.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -171,10 +171,10 @@ public class DesktopFileDialogs implements FileDialogs
                         final CommandWithArg<String> onCompleted)
          {
             Desktop.getFrame().getOpenFileName(
-                  caption,
-                  label,
-                  dir,
-                  filter,
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(label),
+                  StringUtil.notNull(dir),
+                  StringUtil.notNull(filter),
                   canChooseDirectories,
                   fileName -> 
                   {
@@ -215,10 +215,10 @@ public class DesktopFileDialogs implements FileDialogs
                         final CommandWithArg<String> onCompleted)
          {
             Desktop.getFrame().getSaveFileName(
-                  caption,
-                  buttonLabel,
-                  dir,
-                  defaultExtension,
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(buttonLabel),
+                  StringUtil.notNull(dir),
+                  StringUtil.notNull(defaultExtension),
                   forceDefaultExtension,
                   fileName ->
                   {
@@ -257,9 +257,9 @@ public class DesktopFileDialogs implements FileDialogs
                         final CommandWithArg<String> onCompleted)
          {
             Desktop.getFrame().getExistingDirectory(
-                  caption,
-                  label,
-                  initialDir != null ? initialDir.getPath() : null,
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(label),
+                  initialDir != null ? StringUtil.notNull(initialDir.getPath()) : "",
                   directory -> 
                      {
                         onCompleted.execute(directory);
