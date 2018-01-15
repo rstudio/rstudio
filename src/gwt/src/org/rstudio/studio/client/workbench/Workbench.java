@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -400,9 +400,10 @@ public class Workbench implements BusyHandler,
             @Override
             public void onResponseReceived(TerminalOptions options)
             {
-               Desktop.getFrame().openTerminal(options.getTerminalPath(),
-                     options.getWorkingDirectory(),
-                     options.getExtraPathEntries(),
+               Desktop.getFrame().openTerminal(
+                     StringUtil.notNull(options.getTerminalPath()),
+                     StringUtil.notNull(options.getWorkingDirectory()),
+                     StringUtil.notNull(options.getExtraPathEntries()),
                      options.getShellType());
             }
          });
@@ -610,8 +611,8 @@ public class Workbench implements BusyHandler,
    {
       if (BrowseCap.isWindowsDesktop())
       {
-         Desktop.getFrame().installRtools(event.getVersion(),
-                                          event.getInstallerPath());  
+         Desktop.getFrame().installRtools(StringUtil.notNull(event.getVersion()),
+                                          StringUtil.notNull(event.getInstallerPath())); 
       }
    }
    

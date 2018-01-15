@@ -1,7 +1,7 @@
 /*
  * NewConnectionShinyHost.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -181,7 +181,7 @@ public class NewConnectionShinyHost extends Composite
       String url = event.getURL();
       
       if (Desktop.isDesktop())
-         Desktop.getFrame().setShinyDialogUrl(url);
+         Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url));
 
       frame_.setUrl(StringUtil.makeAbsoluteUrl(url));
    }

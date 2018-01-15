@@ -1,7 +1,7 @@
 /*
  * ShinyGadgetDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.shiny.ui;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -92,7 +93,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
       frame_.setSize(size.width + "px", size.height + "px");
       
       if (Desktop.isDesktop())
-         Desktop.getFrame().setShinyDialogUrl(url_);
+         Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url_));
       
       frame_.setUrl(url_);
       return frame_;

@@ -23,6 +23,8 @@ import com.google.gwt.user.client.Command;
 /**
  * This is an interface straight through to a C++ object that lives
  * in the Qt desktop frame.
+ * 
+ * String arguments must not be null.
  */
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough

@@ -1,7 +1,7 @@
 /*
  * RmdOutput.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -565,7 +566,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          else if (previewer != UIPrefs.PDF_PREVIEW_NONE)
          {
             if (Desktop.isDesktop())
-               Desktop.getFrame().showPDF(result.getOutputFile(),
+               Desktop.getFrame().showPDF(StringUtil.notNull(result.getOutputFile()),
                                           result.getPreviewSlide());
             else 
                globalDisplay_.showHtmlFile(result.getOutputFile());
@@ -607,7 +608,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       else
       {
          if (Desktop.isDesktop())
-            Desktop.getFrame().showFile(result.getOutputFile());
+            Desktop.getFrame().showFile(StringUtil.notNull(result.getOutputFile()));
          else
          {
             showDownloadPreviewFileDialog(result, new Command() {

@@ -1,7 +1,7 @@
 /*
  * SatelliteManager.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -175,7 +175,7 @@ public class SatelliteManager implements CloseHandler<Window>
                   if (activate) 
                   {
                      Desktop.getFrame().activateSatelliteWindow(
-                       SatelliteUtils.getSatelliteWindowName(satellite.getName()));
+                       StringUtil.notNull(SatelliteUtils.getSatelliteWindowName(satellite.getName())));
                   }
                   callNotifyReactivated(window, params);
                   return;
@@ -273,7 +273,7 @@ public class SatelliteManager implements CloseHandler<Window>
       if (Desktop.isDesktop())
       {
          Desktop.getFrame().activateSatelliteWindow(
-               SatelliteUtils.getSatelliteWindowName(name));
+               SatelliteUtils.getSatelliteWindowName(StringUtil.notNull(name)));
       }
       else
       {
