@@ -1,7 +1,7 @@
 /*
  * SignatureToolTipManager.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,7 +140,8 @@ public class SignatureToolTipManager
                      if (position != null && anchor_.getRange().contains(position))
                      {
                         // Update the tooltip position if the cursor changes rows.
-                        if (position.getRow() > tooltipPosition_.getRow())
+                        if (tooltipPosition_ != null &&
+                              position.getRow() > tooltipPosition_.getRow())
                         {
                            // Allow tooltip to nudge right (but not left)
                            int newColumn = Math.max(
