@@ -123,6 +123,11 @@ public class BrowseCap
       return isUserAgent("chrome");
    }
    
+   public static boolean isChromeServer()
+   {
+      return isChrome() && !Desktop.isDesktop();
+   }
+   
    public static boolean isSafari()
    {
       return isUserAgent("safari") && !isChrome();
