@@ -36,7 +36,7 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-window
 
 # install visual c++
 RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuildtools_full.exe -OutFile C:\visualcppbuildtools_full.exe ;\
-  Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '-quiet -add Microsoft.VisualStudio.Workload.VCTools -includeRecommended' ;\
+  Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '/Quiet' ;\
   Remove-Item c:\visualcppbuildtools_full.exe
 
 # install qt (note that we are using the current directory's context)
