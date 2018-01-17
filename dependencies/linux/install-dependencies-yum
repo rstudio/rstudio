@@ -70,6 +70,7 @@ then
    sudo yum install -y mesa-libGL-devel
    sudo yum install -y libXScrnSaver-devel
    sudo yum install -y fakeroot
+   sudo yum install -y postgresql-devel
 
    # install Qt SDK
    ./install-qt-sdk
