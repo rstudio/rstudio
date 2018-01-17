@@ -2,15 +2,31 @@
 
 set -e
 
-CMAKE_VERSION=cmake-2.8.11.2
-CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
-wget http://www.cmake.org/files/v2.8/$CMAKE_TARBALL
-tar xf $CMAKE_TARBALL
-cd $CMAKE_VERSION
-./bootstrap 
-make
-sudo make install
-cd ..
-rm -rf $CMAKE_VERSION
-rm -f $CMAKE_TARBALL
- 
+# install cmake
+if ! command -v cmake &> /dev/null; then
+	CMAKE_VERSION=cmake-2.8.11.2
+	CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
+	wget http://www.cmake.org/files/v2.8/$CMAKE_TARBALL
+	tar xf $CMAKE_TARBALL
+	cd $CMAKE_VERSION
+	./bootstrap 
+	make
+	sudo make install
+	cd ..
+	rm -rf $CMAKE_VERSION
+	rm -f $CMAKE_TARBALL
+fi
+
+# install patchelf
+if ! command -v patchelf &> /dev/null; then
+	wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.gz
+	tar xzvf patchelf-0.9.tar.gz
+	cd patchelf-0.9
+	./configure
+	make
+	sudo make install
+	cd ..
+	rm -rf patchelf-0.9
+	rm -f patchelf-0.9.tar.gz
+fi
+
