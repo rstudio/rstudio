@@ -15,8 +15,8 @@ RUN yum install -y \
     gcc-c++ \
     git \
     gpg \
-    java-1.8.0-openjdk  \
-    java-1.8.0-openjdk-devel  \
+    java-1.8.0-openjdk \
+    java-1.8.0-openjdk-devel \
     libffi \
     libuuid-devel \
     libXcursor-devel \
@@ -28,6 +28,7 @@ RUN yum install -y \
     pam-devel \
     pango-devel \
     patchelf \
+    postgresql-devel \
     R \
     rpmdevtools \
     rpmsign \
