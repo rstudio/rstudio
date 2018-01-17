@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -117,7 +118,7 @@ public class TerminalList implements Iterable<String>,
          return false;
       }
 
-      if (!Objects.equals(current.getTitle(), title))
+      if (!StringUtil.equals(current.getTitle(), title))
       {
          current.setTitle(title);
          return true;
@@ -158,7 +159,7 @@ public class TerminalList implements Iterable<String>,
       if (current == null)
          return;
 
-      if (!Objects.equals(current.getCwd(), cwd))
+      if (!StringUtil.equals(current.getCwd(), cwd))
       {
          current.setCwd(cwd);
       }
@@ -241,7 +242,7 @@ public class TerminalList implements Iterable<String>,
       int i = 0;
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (Objects.equals(item.getValue().getCPI().getHandle(), handle))
+         if (StringUtil.equals(item.getValue().getCPI().getHandle(), handle))
          {
             return i;
          }
@@ -279,7 +280,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (Objects.equals(item.getValue().getCPI().getCaption(), caption))
+         if (StringUtil.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return false;
          }
@@ -297,7 +298,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (Objects.equals(item.getValue().getCPI().getCaption(), caption))
+         if (StringUtil.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return item.getValue().getCPI().getHandle();
          }

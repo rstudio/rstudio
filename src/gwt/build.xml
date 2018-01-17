@@ -249,7 +249,7 @@
    </target>
 
    <target name="build-unittests" description="Builds JUnit unit tests">
-       <javac srcdir="test" includes="org/rstudio/studio/client/**" encoding="utf-8"
+       <javac srcdir="test" includes="org/rstudio/**/client/**" encoding="utf-8"
              destdir="${build.dir}"
              source="1.8" target="1.8" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
