@@ -1172,10 +1172,9 @@ public class StringUtil
     * @param str2
     * @return true if non-null strings are equal, or both are null
     */
-   public static final boolean equals(String str1, String str2)
-   {
-      return Objects.equals(str1, str2);
-   }
+   public static native boolean equals(String str1, String str2) /*-{
+      return str1 == str2;
+   }-*/;
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
