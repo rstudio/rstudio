@@ -813,7 +813,7 @@ public class TerminalPane extends WorkbenchPane
       // Notification from a TerminalSession that it changed its title
       TerminalSession visibleTerm = getSelectedTerminal();
       TerminalSession retitledTerm = event.getTerminalSession();
-      if (visibleTerm != null && Objects.equals(visibleTerm.getHandle(), retitledTerm.getHandle()))
+      if (visibleTerm != null && StringUtil.equals(visibleTerm.getHandle(), retitledTerm.getHandle()))
       {
          // update the toolbar label if currently displayed terminal has changed
          // its title
@@ -876,7 +876,7 @@ public class TerminalPane extends WorkbenchPane
       for (int i = 0; i < total; i++)
       {
          TerminalSession t = getLoadedTerminalAtIndex(i);
-         if (t != null && Objects.equals(t.getHandle(), handle))
+         if (t != null && StringUtil.equals(t.getHandle(), handle))
          {
             return t;
          }
@@ -895,7 +895,7 @@ public class TerminalPane extends WorkbenchPane
       for (int i = 0; i < total; i++)
       {
          TerminalSession t = getLoadedTerminalAtIndex(i);
-         if (t != null && Objects.equals(t.getCaption(), caption))
+         if (t != null && StringUtil.equals(t.getCaption(), caption))
          {
             return t;
          }

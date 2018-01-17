@@ -264,7 +264,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          String prevHandle = null;
          for (final String handle : terminals_)
          {
-            if (Objects.equals(activeTerminalHandle_, handle))
+            if (StringUtil.equals(activeTerminalHandle_, handle))
             {
                if (prevHandle == null)
                {
@@ -295,7 +295,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             {
                return handle;
             }
-            if (Objects.equals(activeTerminalHandle_, handle))
+            if (StringUtil.equals(activeTerminalHandle_, handle))
             {
                foundCurrent = true;
             }

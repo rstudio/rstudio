@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class StringUtil
 {
@@ -122,7 +123,7 @@ public class StringUtil
       return FORMAT.format((double)size / divisor) + " " + LABELS[i];
    }
    
-   // Peform an integer division and return the result. GWT's division operator
+   // Perform an integer division and return the result. GWT's division operator
    // truncates the result to Int32 range. 
    public static native int nativeDivide(int num, int denom) 
    /*-{
@@ -1165,10 +1166,19 @@ public class StringUtil
       return (str.match(/\n/g)||[]).length;
    }-*/;
    
+   /**
+    * Compare two strings, works if one or both strings are null.
+    * @param str1
+    * @param str2
+    * @return true if non-null strings are equal, or both are null
+    */
+   public static native boolean equals(String str1, String str2) /*-{
+      return str1 == str2;
+   }-*/;
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
-
 }

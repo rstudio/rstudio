@@ -1,7 +1,7 @@
 /*
  * StringUtilTests.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -165,7 +165,53 @@ public class StringUtilTests extends GWTTestCase
       url = "8.8.8.8:443/notfound.html";
       assertEquals("8.8.8.8:443", StringUtil.getHostFromUrl(url));
    }
-
+   
+   public void testStringEquals()
+   {
+      String one_1 = "one";
+      String two_1 = "two";
+      String one_2 = "one";
+      String two_2 = "two";
+      String null_1 = null;
+      String null_2 = null;
+      
+      assertTrue(StringUtil.equals(one_1, one_2));
+      assertTrue(StringUtil.equals(one_2, one_1)); 
+      assertTrue(StringUtil.equals(two_1, two_2));
+      assertTrue(StringUtil.equals(two_2, two_1));
+      
+      assertTrue(StringUtil.equals(null_1, null_2));
+      assertTrue(StringUtil.equals(null_2, null_1));
+      
+      assertTrue(StringUtil.equals(one_1, one_1));
+      assertTrue(StringUtil.equals(one_2, one_2));
+      assertTrue(StringUtil.equals(two_1, two_1));
+      assertTrue(StringUtil.equals(two_2, two_2));
+      
+      assertTrue(StringUtil.equals(null_1, null_1));
+      assertTrue(StringUtil.equals(null_2, null_2));
+      
+      assertFalse(StringUtil.equals(one_1, two_1));
+      assertFalse(StringUtil.equals(two_1, one_1));
+      assertFalse(StringUtil.equals(one_2, two_2));
+      assertFalse(StringUtil.equals(two_2, one_2));
+      
+      assertFalse(StringUtil.equals(one_1, null_1));
+      assertFalse(StringUtil.equals(two_1, null_1));
+      assertFalse(StringUtil.equals(one_1, null_1));
+      assertFalse(StringUtil.equals(two_1, null_1));
+      
+      assertFalse(StringUtil.equals(one_2, null_1));
+      assertFalse(StringUtil.equals(two_2, null_1));
+      assertFalse(StringUtil.equals(one_2, null_1));
+      assertFalse(StringUtil.equals(two_2, null_1));
+      
+      assertFalse(StringUtil.equals(null_2, one_1));
+      assertFalse(StringUtil.equals(null_2, two_1));
+      assertFalse(StringUtil.equals(null_2, one_2));
+      assertFalse(StringUtil.equals(null_2, two_2));
+   } 
+   
    // -----------------------------------------------------------------------
 
    // TODO: Tests for remaining public StringUtil methods
@@ -421,5 +467,8 @@ public class StringUtilTests extends GWTTestCase
    // public static final native String crc32(String str)
 
    // -----------------------------------------------------------------------
+   
+   // public static native int newlineCount(String str)
 
+   // -----------------------------------------------------------------------
 }

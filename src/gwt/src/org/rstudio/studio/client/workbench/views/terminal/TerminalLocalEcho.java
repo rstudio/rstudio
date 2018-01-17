@@ -92,7 +92,7 @@ public class TerminalLocalEcho
          }
 
          String matchedValue = match.getValue();
-         if (Objects.equals(matchedValue, "\b")  && !localEcho_.isEmpty())
+         if (StringUtil.equals(matchedValue, "\b")  && !localEcho_.isEmpty())
          {
             // If the backspace was typed by the user, it will be in the
             // localecho buffer, and already echoed to the screen. If it isn't
@@ -101,7 +101,7 @@ public class TerminalLocalEcho
             // remove the backspace from the localEcho buffer so matching
             // doesn't break at this point.
             String popped = localEcho_.pop();
-            if (!Objects.equals(popped, "\b"))
+            if (!StringUtil.equals(popped, "\b"))
             {
                // Anything in localEcho at this point represents text written to
                // the local screen that the server doesn't know was written, so a
