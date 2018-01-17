@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,7 +86,7 @@ void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
    pendingWindow_ = pendingWnd;
 }
 
-QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
+QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 {
    QString name;
    bool isSatellite = false;
@@ -98,6 +98,24 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
    int y = -1;
    MainWindow* pMainWindow = nullptr;
    BrowserWindow* pWindow = nullptr;
+   bool show = true;
+   
+   // check if this is target="_blank";
+   if (type == QWebEnginePage::WebWindowType::WebBrowserTab)
+   {
+      // QtWebEngine behavior is to open a new browser window and send it the 
+      // acceptNavigationRequest we use to redirect to system browser; don't want
+      // that to be visible
+      show = false;
+      name = tr("_blank_redirector");
+      
+      // check for an existing hidden window
+      pWindow = s_windowTracker.getWindow(name);
+      if (pWindow)
+      {
+         return pWindow->webView()->webPage();
+      }
+   }
 
    // check if this is a satellite window
    if (!pendingWindow_.isEmpty())
@@ -176,7 +194,8 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType)
    }
 
    // show and return the browser
-   pWindow->show();
+   if (show)
+      pWindow->show();
    return pWindow->webView()->webPage();
 }
 
@@ -257,6 +276,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType navType, b
          // when not allowing external navigation, open an external browser
          // to view the URL
          desktop::openUrl(url);
+         navigated_ = true;
       }
       else if (boost::algorithm::ends_with(host, ".youtube.com") ||
             boost::algorithm::ends_with(host, ".vimeo.com")   ||
