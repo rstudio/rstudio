@@ -7,11 +7,15 @@ QMAKE="$2"
 # invoke linuxdeployqt (running it twice is necessary to
 # pick up certain dependencies; e.g. OpenGL)
 # https://github.com/probonopd/linuxdeployqt/issues/150
+#
+# also make sure we unset LD_PRELOAD as otherwise fakeroot (which is used when
+# cpack is invoked) can inject a library that interferes with the operation of
+# linuxdeployqt
 cd "$(dirname "${LINUXDEPLOYQT}")"
 [ -d squashfs-root ] || "${LINUXDEPLOYQT}" --appimage-extract
 cd squashfs-root
-./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
-./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
+LD_PRELOAD="" ./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
+LD_PRELOAD="" ./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
 cd "${OWD}"
 
 # now, force RPATHS (not RUNPATHS) so that LD_LIBRARY_PATH
