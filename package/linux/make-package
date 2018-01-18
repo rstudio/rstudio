@@ -64,7 +64,12 @@ make ${MAKEFLAGS}
 
 if [ "$2" != "DEB" ]
 then
-  fakeroot cpack -G $2
+  # fakeroot can cause issues when not run as root
+  if [ "$(id -u)" = "0" ]; then
+    cpack -G $2
+  else
+    fakeroot cpack -G $2
+  fi
 else
   cpack -G $2
   ../fix-debian-permissions `ls *.deb`
