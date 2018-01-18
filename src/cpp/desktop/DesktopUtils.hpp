@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,8 @@ namespace core {
 
 namespace rstudio {
 namespace desktop {
+
+class MainWindow;
 
 void reattachConsoleIfNecessary();
 
@@ -77,6 +79,9 @@ void toggleFullscreenMode(QMainWindow* pMainWindow);
 bool supportsFullscreenMode(QMainWindow* pMainWindow);
 
 void initializeLang();
+
+// Platform-specific initialization requiring main window object.
+void finalPlatformInitialize(MainWindow* pMainWindow);
 
 double getDpiZoomScaling();
 int getDpi();
