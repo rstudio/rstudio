@@ -34,6 +34,11 @@ def compile_package(type, flavor, variant) {
   if (rstudioVersionSuffix != 0) {
    env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}" 
   }
+
+  // currently our nodes have access to 4 cores, so give make some parallelism
+  env = "${env} MAKEFLAGS=-j8"
+
+  // perform the compilation
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 
   // sign the new package
