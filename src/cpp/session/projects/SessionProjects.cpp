@@ -136,6 +136,8 @@ Error findProjectInFolder(const json::JsonRpcRequest& request,
       return error;
 
    boost::algorithm::trim(folder);
+   while ((folder.back() == '/'))
+      folder.erase(folder.size()-1); // remove trailing slash
    if (folder.empty())
    {
       pResponse->setResult("");
