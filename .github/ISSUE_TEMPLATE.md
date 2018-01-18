@@ -2,7 +2,7 @@
 
 If you're here to report a bug in RStudio, please take the time to fill out as much of the below as you're able so that we can reproduce the problem you're seeing.  -->
 
-## System details
+### System details
 
     OS Version      :
     RStudio Version :
