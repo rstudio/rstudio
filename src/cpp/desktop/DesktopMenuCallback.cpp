@@ -168,6 +168,13 @@ void MenuCallback::addCommand(QString commandId,
                               QString shortcut,
                               bool checkable)
 {
+
+#ifdef Q_OS_MAC
+   // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
+   // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
+   shortcut.replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
+#endif
+
    // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
    // Qt automatically maps that to the Command key
    shortcut.replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
