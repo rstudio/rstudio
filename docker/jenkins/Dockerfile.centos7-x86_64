@@ -25,6 +25,7 @@ RUN yum install -y \
     libXScrnSaver-devel \
     lsof \
     make \
+    mariadb-libs \
     openssl-devel \
     pam-devel \
     pango-devel \
