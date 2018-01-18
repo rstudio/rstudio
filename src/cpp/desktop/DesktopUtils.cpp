@@ -35,6 +35,7 @@
 #include <core/system/Environment.hpp>
 
 #include "DesktopOptions.hpp"
+#include "DesktopMainWindow.hpp"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -44,8 +45,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
-
-class DesktopMainWindow;
 
 #ifdef Q_OS_WIN
 
