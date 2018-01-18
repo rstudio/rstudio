@@ -18,6 +18,7 @@
 #include <QNetworkReply>
 #include <QTemporaryFile>
 #include <QStyleFactory>
+#include <QMenu>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -137,6 +138,30 @@ bool WebView::event(QEvent* event)
 
 void WebView::closeEvent(QCloseEvent*)
 {
+}
+
+void WebView::contextMenuEvent(QContextMenuEvent *event)
+{
+   // retrieve the context menu Qt wants to show
+   QMenu* menu = page()->createStandardContextMenu();
+
+   // list of actions we don't want it to show
+   std::vector<QWebEnginePage::WebAction> blockedActions = 
+   {
+      QWebEnginePage::Back, 
+      QWebEnginePage::Forward,
+      QWebEnginePage::ViewSource,
+      QWebEnginePage::Reload
+   };
+
+   // remove each from the menu if present
+   for (auto action: blockedActions)
+   {
+      menu->removeAction(page()->action(action));
+   }
+
+   // show the menu
+   menu->exec(event->globalPos());
 }
 
 } // namespace desktop

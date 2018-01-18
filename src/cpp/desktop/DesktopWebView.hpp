@@ -46,6 +46,8 @@ public:
 
    WebPage* webPage() const { return pWebPage_; }
 
+   void contextMenuEvent(QContextMenuEvent* event) override;
+
 signals:
   void onCloseWindowShortcut();
 
