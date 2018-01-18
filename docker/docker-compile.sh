@@ -88,6 +88,15 @@ if [ -n "$VERSION" ]; then
     fi
 fi
 
+# if we have an nproc command, use it to infer make parallelism
+if hash nproc 2>/dev/null; then
+    # linux
+    ENV="$ENV MAKEFLAGS=-j$(nproc --all)"
+elif hash sysctl 2>/dev/null; then
+    # macos
+    ENV="$ENV MAKEFLAKGS=-j$(sysctl -n hw.ncpu)"
+fi
+
 # run compile step
 docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE clean $VARIANT"
 
