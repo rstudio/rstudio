@@ -1,7 +1,7 @@
 /*
  * DesktopUtilsMac.mm
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,10 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <QObject>
 #include <QWidget>
+#include <QMenu>
+#include <QString>
 
 #include <core/system/Environment.hpp>
 
@@ -25,7 +28,7 @@
 #import <AppKit/NSView.h>
 #import <AppKit/NSWindow.h>
 
-
+#include "DesktopMainWindow.hpp"
 
 using namespace rstudio;
 
@@ -39,6 +42,8 @@ NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
    NSView *nsview = (NSView *) pMainWindow->winId();
    return [nsview window];
 }
+
+static QMenu* s_pDockMenu;
 
 void initializeSystemPrefs()
 {
@@ -202,6 +207,22 @@ void initializeLang()
    core::system::setenv("LC_CTYPE", clang);
 
    initializeSystemPrefs();
+}
+
+void finalPlatformInitialize(MainWindow* pMainWindow)
+{
+   // Add to dock menu
+   s_pDockMenu = new QMenu();
+   s_pDockMenu->setAsDockMenu();
+   s_pDockMenu->addAction(QObject::tr("New RStudio Window"));
+   
+   // Lambda holds a raw pointer to MainWindow. When the main window
+   // goes away, so does the dock icon, thus the menu and the possibility of the
+   // user clicking it, so this is safe (though unpleasant).
+   QObject::connect(s_pDockMenu, &QMenu::triggered, [pMainWindow] (QAction* action) { 
+      std::vector<std::string> args;
+      pMainWindow->launchRStudio(args);
+   });
 }
 
 } // namespace desktop

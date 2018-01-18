@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,6 +164,7 @@ Error SessionLauncher::launchFirstSession()
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
    {
+      finalPlatformInitialize(pMainWindow_);
       pMainWindow_->show();
       pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
