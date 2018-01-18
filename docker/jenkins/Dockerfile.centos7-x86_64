@@ -15,6 +15,7 @@ RUN yum install -y \
     gcc-c++ \
     git \
     gpg \
+    gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     libffi \
@@ -24,6 +25,7 @@ RUN yum install -y \
     libXScrnSaver-devel \
     lsof \
     make \
+    mariadb-libs \
     openssl-devel \
     pam-devel \
     pango-devel \
