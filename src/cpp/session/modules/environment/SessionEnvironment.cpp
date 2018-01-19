@@ -107,7 +107,7 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-bool hasExternalPtr(SEXP env,      // environment to search for external pointers
+bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
                     bool nullPtr,  // whether to look for NULL pointers 
                     int level = 5) // maximum recursion depth (envs can have self-ref loops)
 {
@@ -123,16 +123,16 @@ bool hasExternalPtr(SEXP env,      // environment to search for external pointer
    {
       // not S4, coerce to environment
       SEXP envir = R_NilValue;
-      if (TYPEOF(env) == ENVSXP)
+      if (TYPEOF(obj) == ENVSXP)
       {
          // we were given a primitive environment (ENVSXP)
-         envir = env;
+         envir = obj;
       }
       else
       {
          // convert the passed environment into a primitive environment; this is required so that
          // e.g. reference objects that subclass 'environment' can be introspected below
-         Error error = r::sexp::asPrimitiveEnvironment(env, &envir, &rProtect);
+         Error error = r::sexp::asPrimitiveEnvironment(obj, &envir, &rProtect);
          if (error)
          {
             // can't search in here

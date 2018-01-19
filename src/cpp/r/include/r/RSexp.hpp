@@ -79,6 +79,7 @@ int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
 bool setNames(SEXP sexp, const std::vector<std::string>& names);
+void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables);
 
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
 bool hasActiveBinding(const std::string&, const SEXP);
