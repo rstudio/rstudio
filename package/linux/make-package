@@ -20,6 +20,12 @@ with-root () {
 
 }
 
+if-jenkins () {
+  if [ "$(whoami)" = "jenkins" ]; then
+    "$@"
+  fi
+}
+
 # raise the limit on number of open files
 ulimit -n 2048
 
@@ -83,14 +89,10 @@ make ${MAKEFLAGS}
 if [ "$2" != "DEB" ]
 then
   with-root cpack -G "$2"
+  if-jenkins sudo chown jenkins *.rpm
 else
   cpack -G $2
   ../fix-debian-permissions `ls *.deb`
-fi
-
-# if we're jenkins, then fix up ownership of the generated package
-if [ "$(whoami)" = "jenkins" ]; then
-  sudo chown jenkins *.deb *.rpm
 fi
 
 cd ..
