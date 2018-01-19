@@ -41,6 +41,8 @@ COMPONENTS=(
 	resources/qtwebengine_resources_200p.pak
 	resources/qtwebengine_resources.pak
 
+	translations/qtwebengine_locales
+
 )
 
 # copy required Qt components into installation
@@ -56,6 +58,14 @@ for COMPONENT in "${COMPONENTS[@]}"; do
 		cp "${src}" "${tgt}"
 	fi
 
+done
+
+# copy qtbase translation files
+mkdir -p translations
+for FILE in "${QT_INSTALL_PATH}"/translations/qtbase_*; do
+	src="${FILE}"
+	tgt="translations/$(basename "${src/qtbase_/qt_}")"
+	cp "${src}" "${tgt}"
 done
 
 # write qt.conf
