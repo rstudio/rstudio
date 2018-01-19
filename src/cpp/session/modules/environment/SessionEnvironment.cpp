@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,7 +114,26 @@ bool hasExternalPtr(SEXP env,      // environment to search for external pointer
    // list the contents of this environment
    std::vector<r::sexp::Variable> vars;
    r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(env, 
+
+   SEXP envir = R_NilValue;
+   if (TYPEOF(env) == ENVSXP)
+   {
+      // we were given a primitive environment (ENVSXP)
+      envir = env;
+   }
+   else
+   {
+      // convert the passed environment into a primitive environment; this is required so that e.g.
+      // reference objects that subclass 'environment' can be introspected below
+      Error error = r::sexp::asPrimitiveEnvironment(env, &envir, &rProtect);
+      if (error)
+      {
+         // can't search in here
+         return false;
+      }
+   }
+
+   r::sexp::listEnvironment(envir, 
                             true,  // include all values
                             false, // don't include last dot
                             &rProtect, &vars);
