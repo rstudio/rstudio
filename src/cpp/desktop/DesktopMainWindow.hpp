@@ -46,7 +46,7 @@ public:
    void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
                       const std::string& initialDir = std::string());
 
-public slots:
+public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
@@ -56,10 +56,10 @@ public slots:
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
    void onLicenseLost(QString licenseMessage);
 
-signals:
+Q_SIGNALS:
    void firstWorkbenchInitialized();
 
-protected slots:
+protected Q_SLOTS:
    void onCloseWindowShortcut();
    void onWorkbenchInitialized();
    void resetMargins();

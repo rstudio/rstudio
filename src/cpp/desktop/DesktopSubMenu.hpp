@@ -31,7 +31,7 @@ class SubMenu : public QMenu
 public:
    explicit SubMenu(const QString& title, QWidget* parent = nullptr);
 
-protected slots:
+protected Q_SLOTS:
    void onAboutToShow();
 };
 

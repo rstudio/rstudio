@@ -32,10 +32,10 @@ public:
 
     static void handleDownload(QNetworkReply* pReply, QString fileName);
 
-protected slots:
+protected Q_SLOTS:
     void onDownloadFinished();
 
-signals:
+Q_SIGNALS:
     void downloadFinished(QString fileName);
 
 private:

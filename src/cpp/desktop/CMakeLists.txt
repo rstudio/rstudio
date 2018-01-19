@@ -92,7 +92,10 @@ get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
 set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
 
 # find and include Qt
-add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
+add_definitions(
+   -DQT_NO_CAST_FROM_ASCII
+   -DQT_NO_CAST_TO_ASCII
+   -DQT_NO_SIGNALS_SLOTS_KEYWORDS)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt5Core REQUIRED)

@@ -39,7 +39,7 @@ public:
    bool preferR64();
    void setValue(const rstudio::desktop::RVersion& value, bool preferR64);
 
-protected slots:
+protected Q_SLOTS:
    void chooseOther();
    void validateSelection();
    void onModeChanged();

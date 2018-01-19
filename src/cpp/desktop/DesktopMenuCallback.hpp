@@ -34,7 +34,7 @@ class MenuCallback : public QObject
 public:
     explicit MenuCallback(QObject *parent = nullptr);
 
-public slots:
+public Q_SLOTS:
     // menu-building commands
     void beginMainMenu();
     void beginMenu(QString label);
@@ -54,7 +54,7 @@ public slots:
     void setCommandLabel(QString commandId, QString label);
     void setCommandChecked(QString commandId, bool checked);
 
-signals:
+Q_SIGNALS:
     void menuBarCompleted(QMenuBar* menuBar);
     void manageCommand(QString commandId, QAction* action);
     void manageCommandVisibility(QString commandId, QAction* action);
@@ -99,11 +99,11 @@ class MenuActionBinder : public QObject
 public:
    MenuActionBinder(QMenu* pMenu, QAction* action);
 
-public slots:
+public Q_SLOTS:
    void onShowMenu();
    void onHideMenu();
 
-signals:
+Q_SIGNALS:
    void manageCommand(QString commandId, QAction* action);
 
 private:
@@ -117,7 +117,7 @@ class WindowMenu : public QMenu
 public:
    explicit WindowMenu(QWidget *parent = nullptr);
 
-protected slots:
+protected Q_SLOTS:
    void onMinimize();
    void onZoom();
    void onBringAllToFront();

@@ -44,7 +44,7 @@ public:
        pAppLauncher_ = pAppLauncher;
    }
 
-signals:
+Q_SIGNALS:
     void openFileRequest(QString filename);
 
 protected:
