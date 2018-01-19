@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -273,6 +273,41 @@ SEXP findNamespace(const std::string& name)
    return ns;
 }
    
+Error asPrimitiveEnvironment(SEXP envirSEXP,
+                             SEXP* pTargetSEXP,
+                             Protect* pProtect)
+{
+   // fast-case: no need to call back into R
+   if (TYPEOF(envirSEXP) == ENVSXP)
+   {
+      pProtect->add(*pTargetSEXP = envirSEXP);
+      return Success();
+   }
+   
+   // for non-S4 objects, we can just return an error (false) early
+   if (TYPEOF(envirSEXP) != S4SXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // use R function to convert
+   Error error = RFunction("base:::as.environment")
+         .addParam(envirSEXP)
+         .call(pTargetSEXP, pProtect);
+   
+   if (error)
+      return error;
+   
+   // ensure that we actually succeeded in producing a primitive environment
+   if (pTargetSEXP == NULL  ||
+       *pTargetSEXP == NULL ||
+       !isPrimitiveEnvironment(*pTargetSEXP))
+   {
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
+   
+   // we have a primitive environment; all is well
+   return Success();
+}
+
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
@@ -328,41 +363,6 @@ void listEnvironment(SEXP env,
 }
 
 namespace {
-
-Error asPrimitiveEnvironment(SEXP envirSEXP,
-                             SEXP* pTargetSEXP,
-                             Protect* pProtect)
-{
-   // fast-case: no need to call back into R
-   if (TYPEOF(envirSEXP) == ENVSXP)
-   {
-      pProtect->add(*pTargetSEXP = envirSEXP);
-      return Success();
-   }
-   
-   // for non-S4 objects, we can just return an error (false) early
-   if (TYPEOF(envirSEXP) != S4SXP)
-      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-   
-   // use R function to convert
-   Error error = RFunction("base:::as.environment")
-         .addParam(envirSEXP)
-         .call(pTargetSEXP, pProtect);
-   
-   if (error)
-      return error;
-   
-   // ensure that we actually succeeded in producing a primitive environment
-   if (pTargetSEXP == NULL  ||
-       *pTargetSEXP == NULL ||
-       !isPrimitiveEnvironment(*pTargetSEXP))
-   {
-      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-   }
-   
-   // we have a primitive environment; all is well
-   return Success();
-}
 
 bool hasActiveBindingImpl(const std::string& name,
                           SEXP envirSEXP,
