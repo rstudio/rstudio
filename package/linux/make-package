@@ -2,30 +2,6 @@
 
 set -e
 
-with-root () {
-
-  if [ "$(id -u)" = "0" ]; then
-    # if we're already root, just execute commands as-is
-    "$@"
-  elif sudo -nv &> /dev/null; then
-    # the current user can use sudo without extra auth
-    sudo "$@"
-  elif [ "$(whoami)" = "jenkins" ]; then
-    # we're running on Jenkins, attempt sudo access
-    sudo "$@"
-  else
-    # can't elevate to root; just use fakeroot
-    fakeroot "$@"
-  fi
-
-}
-
-if-jenkins () {
-  if [ "$(whoami)" = "jenkins" ]; then
-    "$@"
-  fi
-}
-
 # raise the limit on number of open files
 ulimit -n 2048
 
@@ -57,7 +33,7 @@ if [ "$3" == "clean" ]
 then
    # remove existing build dir
    rm -rf $BUILD_DIR
-   
+
    # clean out ant build
    cd ../../src/gwt
    ant clean
@@ -88,8 +64,7 @@ make ${MAKEFLAGS}
 
 if [ "$2" != "DEB" ]
 then
-  with-root cpack -G "$2"
-  if-jenkins sudo chown jenkins *.rpm
+  fakeroot cpack -G "$2"
 else
   cpack -G $2
   ../fix-debian-permissions `ls *.deb`

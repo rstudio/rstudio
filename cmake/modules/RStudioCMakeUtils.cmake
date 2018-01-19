@@ -23,6 +23,5 @@ function(download URL FILE)
 endfunction()
 
 function(install_process)
-   cmake_parse_arguments(install_process "" "" "COMMAND" ${ARGN})
-   install(CODE "execute_process(COMMAND ${install_process_COMMAND} WORKING_DIRECTORY \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")")
+   install(CODE "execute_process(COMMAND ${ARGV} WORKING_DIRECTORY \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")")
 endfunction()

@@ -1,22 +1,73 @@
 #!/usr/bin/env bash
 
 OWD="${PWD}"
-LINUXDEPLOYQT="$1"
-QMAKE="$2"
 
-# invoke linuxdeployqt (running it twice is necessary to
-# pick up certain dependencies; e.g. OpenGL)
-# https://github.com/probonopd/linuxdeployqt/issues/150
-#
-# also make sure we unset LD_PRELOAD as otherwise fakeroot (which is used when
-# cpack is invoked) can inject a library that interferes with the operation of
-# linuxdeployqt
-cd "$(dirname "${LINUXDEPLOYQT}")"
-[ -d squashfs-root ] || "${LINUXDEPLOYQT}" --appimage-extract
-cd squashfs-root
-LD_PRELOAD="" ./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
-LD_PRELOAD="" ./AppRun "${OWD}/bin/rstudio" -qmake="${QMAKE}"
-cd "${OWD}"
+: ${QT_INSTALL_PATH="@QT_INSTALL_PATH@"}
+
+COMPONENTS=(
+
+	lib/libicudata.so.56
+	lib/libicui18n.so.56
+	lib/libicuuc.so.56
+	lib/libQt5Core.so.5
+	lib/libQt5DBus.so.5
+	lib/libQt5Gui.so.5
+	lib/libQt5Network.so.5
+	lib/libQt5OpenGL.so.5
+	lib/libQt5Positioning.so.5
+	lib/libQt5PrintSupport.so.5
+	lib/libQt5Qml.so.5
+	lib/libQt5Quick.so.5
+	lib/libQt5QuickWidgets.so.5
+	lib/libQt5WebChannel.so.5
+	lib/libQt5WebEngineCore.so.5
+	lib/libQt5WebEngineWidgets.so.5
+	lib/libQt5Widgets.so.5
+	lib/libQt5XcbQpa.so.5
+
+	libexec/QtWebEngineProcess
+
+	plugins/bearer
+	plugins/imageformats
+	plugins/platforminputcontexts
+	plugins/platforms
+	plugins/platformthemes
+	plugins/printsupport
+	plugins/xcbglintegrations
+
+	resources/icudtl.dat
+	resources/qtwebengine_devtools_resources.pak
+	resources/qtwebengine_resources_100p.pak
+	resources/qtwebengine_resources_200p.pak
+	resources/qtwebengine_resources.pak
+
+)
+
+# copy required Qt components into installation
+for COMPONENT in "${COMPONENTS[@]}"; do
+	src="${QT_INSTALL_PATH}/${COMPONENT}"
+	tgt="${COMPONENT}"
+
+	rm -rf tgt
+	mkdir -p "$(dirname "${tgt}")"
+	if [ -d "${src}" ]; then
+		cp -R "${src}" "${tgt}"
+	else
+		cp "${src}" "${tgt}"
+	fi
+
+done
+
+# write qt.conf
+read -r -d '' QTCONF <<- EOF
+[Paths]
+Prefix = ../
+EOF
+
+mkdir -p bin
+mkdir -p libexec
+printf "%s\n" "${QTCONF}" > bin/qt.conf
+printf "%s\n" "${QTCONF}" > libexec/qt.conf
 
 # now, force RPATHS (not RUNPATHS) so that LD_LIBRARY_PATH
 # shenanigans don't cause RStudio to load an incompatible
