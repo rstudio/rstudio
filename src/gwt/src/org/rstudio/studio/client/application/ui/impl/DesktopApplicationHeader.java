@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -271,6 +272,12 @@ public class DesktopApplicationHeader implements ApplicationHeader
             "http://127.0.0.1:59009",
             Window.getClientWidth() - 20,
             Window.getClientHeight() - 20);
+   }
+   
+   @Handler
+   void onReloadUi()
+   {
+      WindowEx.get().reload();
    }
 
    @Handler

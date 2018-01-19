@@ -494,6 +494,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
             <cmd refid="openDeveloperConsole"/>
+            <cmd refid="reloadUi"/>
             <separator/>
             <cmd refid="toggleEditorTokenInfo"/>
             <separator/>
@@ -2674,6 +2675,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Open Developer Console"
         rebindable="false"/>
         
+   <cmd id="reloadUi"
+        menuLabel="Reload UI"
+        rebindable="false"/>
+
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"
         rebindable="false"/>
