@@ -41,12 +41,12 @@ class SatelliteWindow : public GwtWindow
 public:
     SatelliteWindow(MainWindow* pMainWindow, QString name);
 
-signals:
+Q_SIGNALS:
 
-public slots:
+public Q_SLOTS:
 
 
-protected slots:
+protected Q_SLOTS:
    void onCloseWindowShortcut();
    void finishLoading(bool ok) override;
 

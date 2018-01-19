@@ -54,10 +54,10 @@ protected:
                      long * result);
 #endif
 
-signals:
+Q_SIGNALS:
     void openFileRequest(QString filename);
 
-public slots:
+public Q_SLOTS:
     bool sendMessage(QString filename);
 
 private:

@@ -31,10 +31,10 @@ public:
    explicit StringSlotBinder(QString arg,
                              QObject *parent = nullptr);
 
-signals:
+Q_SIGNALS:
    void triggered(QString arg);
 
-public slots:
+public Q_SLOTS:
    void trigger();
 
 private:
@@ -53,7 +53,7 @@ public:
    {
    }
 
-public slots:
+public Q_SLOTS:
    void execute()
    {
       func_();

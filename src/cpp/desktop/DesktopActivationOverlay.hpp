@@ -53,7 +53,7 @@ public:
 
    void showLicenseDialog();
 
-signals:
+Q_SIGNALS:
    void licenseLost(QString licenseMessage);
    void launchFirstSession();
    void launchError(QString message);

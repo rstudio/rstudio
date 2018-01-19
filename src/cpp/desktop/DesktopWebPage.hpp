@@ -89,7 +89,7 @@ public:
 
    void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
 
-public slots:
+public Q_SLOTS:
    bool shouldInterruptJavaScript();
    void closeRequested();
 
