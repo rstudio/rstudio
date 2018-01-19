@@ -448,6 +448,7 @@ public abstract class
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();
    public abstract AppCommand openDeveloperConsole();
+   public abstract AppCommand reloadUi();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
