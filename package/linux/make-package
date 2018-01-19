@@ -88,4 +88,9 @@ else
   ../fix-debian-permissions `ls *.deb`
 fi
 
+# if we're jenkins, then fix up ownership of the generated package
+if [ "$(whoami)" = "jenkins" ]; then
+  sudo chown jenkins *.deb *.rpm
+fi
+
 cd ..
