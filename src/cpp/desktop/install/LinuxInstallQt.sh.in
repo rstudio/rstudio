@@ -48,7 +48,7 @@ for COMPONENT in "${COMPONENTS[@]}"; do
 	src="${QT_INSTALL_PATH}/${COMPONENT}"
 	tgt="${COMPONENT}"
 
-	rm -rf tgt
+	rm -rf "${tgt}"
 	mkdir -p "$(dirname "${tgt}")"
 	if [ -d "${src}" ]; then
 		cp -R "${src}" "${tgt}"
