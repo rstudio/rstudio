@@ -114,29 +114,37 @@ bool hasExternalPtr(SEXP env,      // environment to search for external pointer
    // list the contents of this environment
    std::vector<r::sexp::Variable> vars;
    r::sexp::Protect rProtect;
-
-   SEXP envir = R_NilValue;
-   if (TYPEOF(env) == ENVSXP)
+   if (TYPEOF(obj) == S4SXP)
    {
-      // we were given a primitive environment (ENVSXP)
-      envir = env;
+      // for S4 objects, list the attributes (which correspond to slots)
+      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
    }
    else
    {
-      // convert the passed environment into a primitive environment; this is required so that e.g.
-      // reference objects that subclass 'environment' can be introspected below
-      Error error = r::sexp::asPrimitiveEnvironment(env, &envir, &rProtect);
-      if (error)
+      // not S4, coerce to environment
+      SEXP envir = R_NilValue;
+      if (TYPEOF(env) == ENVSXP)
       {
-         // can't search in here
-         return false;
+         // we were given a primitive environment (ENVSXP)
+         envir = env;
       }
-   }
+      else
+      {
+         // convert the passed environment into a primitive environment; this is required so that
+         // e.g. reference objects that subclass 'environment' can be introspected below
+         Error error = r::sexp::asPrimitiveEnvironment(env, &envir, &rProtect);
+         if (error)
+         {
+            // can't search in here
+            return false;
+         }
+      }
 
-   r::sexp::listEnvironment(envir, 
-                            true,  // include all values
-                            false, // don't include last dot
-                            &rProtect, &vars);
+      r::sexp::listEnvironment(envir, 
+                               true,  // include all values
+                               false, // don't include last dot
+                               &rProtect, &vars);
+   }
 
    // check for external pointers
    for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
