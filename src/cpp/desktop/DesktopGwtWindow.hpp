@@ -33,11 +33,11 @@ public:
 
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 
-public slots:
+public Q_SLOTS:
    void zoomIn();
    void zoomOut();
 
-protected slots:
+protected Q_SLOTS:
    void finishLoading(bool) override;
 
 protected:

@@ -48,10 +48,10 @@ public:
 
    int collectPendingQuitRequest();
 
-signals:
+Q_SIGNALS:
    void workbenchInitialized();
 
-public slots:
+public Q_SLOTS:
    QString proportionalFont();
    QString fixedWidthFont();
    void browseUrl(QString url);

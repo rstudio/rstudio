@@ -39,7 +39,7 @@ public:
                            bool allowExternalNavigate = false);
     WebView* webView();
 
-protected slots:
+protected Q_SLOTS:
 
      void adjustTitle();
      void setProgress(int p);

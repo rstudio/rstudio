@@ -34,7 +34,7 @@ public:
     BrowserWindow* getWindow(QString key);
     void addWindow(QString key, BrowserWindow* window);
 
-protected slots:
+protected Q_SLOTS:
     void onWindowDestroyed(QString key);
 
 private:

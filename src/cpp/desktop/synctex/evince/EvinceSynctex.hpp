@@ -50,7 +50,7 @@ public:
 
    virtual void syncView(const QString& pdfFile, int pdfPage);
 
-private slots:
+private Q_SLOTS:
    void onFindWindowFinished(QDBusPendingCallWatcher *pCall);
    void onSyncViewFinished(QDBusPendingCallWatcher *pCall);
    void onClosed();

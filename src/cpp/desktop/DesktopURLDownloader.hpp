@@ -40,12 +40,12 @@ class URLDownloader : public QObject
 
     bool manuallyInvoked() { return manuallyInvoked_; }
 
- signals:
+ Q_SIGNALS:
     void downloadComplete(const QByteArray& data);
     void downloadError(const QString& message);
     void downloadTimeout();
 
- protected slots:
+ protected Q_SLOTS:
     void complete();
     void error(QNetworkReply::NetworkError);
     void timeout();

@@ -48,10 +48,10 @@ public:
 
    void contextMenuEvent(QContextMenuEvent* event) override;
 
-signals:
+Q_SIGNALS:
   void onCloseWindowShortcut();
 
-public slots:
+public Q_SLOTS:
 
 protected:
    QString promptForFilename(const QNetworkRequest& request,
@@ -59,7 +59,7 @@ protected:
    void keyPressEvent(QKeyEvent* pEvent) override;
    void closeEvent(QCloseEvent* pEv) override;
 
-protected slots:
+protected Q_SLOTS:
    void openFile(QString file);
 
 private:
