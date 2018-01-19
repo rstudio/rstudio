@@ -280,6 +280,26 @@ add_subdirectory(core)
 # external libraries
 add_subdirectory(ext)
 
+# echo configuration modes
+if(RSTUDIO_DEVELOPMENT)
+   message(STATUS "Configured to build DEVELOPMENT")
+endif()
+if(RSTUDIO_SERVER)
+   message(STATUS "Configured to build SERVER")
+endif()
+if (RSTUDIO_DESKTOP)
+   message(STATUS "Configured to build DESKTOP")
+endif()
+if(RSTUDIO_CONFIG_CORE_DEV)
+   message(STATUS "Configured to build CORE_DEV")
+endif()
+if(RSTUDIO_CONFIG_MONITOR_ONLY)
+   message(STATUS "Configured to build MONITOR_ONLY")
+endif()
+if(RSTUDIO_SESSION_WIN64)
+   message(STATUS "Configured to build SESSION_WIN64")
+endif()
+
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
 if(RSTUDIO_CONFIG_CORE_DEV)
