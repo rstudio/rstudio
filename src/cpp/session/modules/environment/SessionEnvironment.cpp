@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -119,18 +119,36 @@ bool hasExternalPtr(SEXP obj,      // environment to search for external pointer
    // list the contents of this environment
    std::vector<r::sexp::Variable> vars;
    r::sexp::Protect rProtect;
-   if (r::sexp::isPrimitiveEnvironment(obj))
-   {
-      // for simple environments, list the objects in the environment
-      r::sexp::listEnvironment(obj, 
-                               true,  // include all values
-                               false, // don't include last dot
-                               &rProtect, &vars);
-   }
-   else if (TYPEOF(obj) == S4SXP)
+   if (TYPEOF(obj) == S4SXP)
    {
       // for S4 objects, list the attributes (which correspond to slots)
       r::sexp::listNamedAttributes(obj, &rProtect, &vars);
+   }
+   else
+   {
+      // not S4, coerce to environment
+      SEXP envir = R_NilValue;
+      if (TYPEOF(obj) == ENVSXP)
+      {
+         // we were given a primitive environment (ENVSXP)
+         envir = obj;
+      }
+      else
+      {
+         // convert the passed environment into a primitive environment; this is required so that
+         // e.g. reference objects that subclass 'environment' can be introspected below
+         Error error = r::sexp::asPrimitiveEnvironment(obj, &envir, &rProtect);
+         if (error)
+         {
+            // can't search in here
+            return false;
+         }
+      }
+
+      r::sexp::listEnvironment(envir, 
+                               true,  // include all values
+                               false, // don't include last dot
+                               &rProtect, &vars);
    }
 
    // check for external pointers
@@ -1074,8 +1092,6 @@ Error initialize()
    json::JsonRpcFunction requeryCtx =
          boost::bind(requeryContext, pContextDepth, pLineDebugState,
                      pCurrentContext, _1, _2);
-
-   initEnvironmentMonitoring();
 
    ExecBlock initBlock ;
    initBlock.addFunctions()

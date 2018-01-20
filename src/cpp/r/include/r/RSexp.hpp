@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ class Protect;
    
 // environments and namespaces
 SEXP asEnvironment(std::string name);
+core::Error asPrimitiveEnvironment(SEXP envirSEXP, SEXP* pTargetSEXP, Protect* pProtect);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);

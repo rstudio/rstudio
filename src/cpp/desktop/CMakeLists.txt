@@ -119,9 +119,10 @@ if(UNIX AND NOT APPLE)
    find_package(Qt5DBus REQUIRED)
 endif()
 
-set(QT_BINARY_PATH "${QT_BIN_DIR}" CACHE INTERNAL "")
-set(QT_PLUGIN_PATH "${QT_BIN_DIR}/../plugins" CACHE INTERNAL "")
-set(QT_LIBRARY_PATH "${QT_BIN_DIR}/../lib" CACHE INTERNAL "")
+get_filename_component(QT_BINARY_PATH  "${QT_BIN_DIR}"            ABSOLUTE CACHE)
+get_filename_component(QT_PLUGIN_PATH  "${QT_BIN_DIR}/../plugins" ABSOLUTE CACHE)
+get_filename_component(QT_LIBRARY_PATH "${QT_BIN_DIR}/../lib"     ABSOLUTE CACHE)
+get_filename_component(QT_INSTALL_PATH "${QT_BIN_DIR}/.."         ABSOLUTE CACHE)
 
 # disable clang warnings for qt sources
 if(APPLE)
@@ -500,12 +501,6 @@ if(RSTUDIO_BUNDLE_QT)
       endforeach()
       target_link_libraries(rstudio ${ICU_LIBRARIES})
 
-      # download linuxdeployqt tool
-      set(LINUXDEPLOYQT_BIN "$ENV{HOME}/rstudio-tools/linuxdeployqt")
-      set(LINUXDEPLOYQT_URL "http://s3.amazonaws.com/rstudio-buildtools/linuxdeployqt")
-      download("${LINUXDEPLOYQT_URL}" "${LINUXDEPLOYQT_BIN}")
-      execute_process(COMMAND chmod 755 "${LINUXDEPLOYQT_BIN}")
-
       # configure and install qt
       configure_file(
          "${CMAKE_CURRENT_SOURCE_DIR}/install/LinuxInstallQt.sh.in"
@@ -513,10 +508,7 @@ if(RSTUDIO_BUNDLE_QT)
          @ONLY)
 
       install_process(
-         COMMAND
-         "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
-         "${LINUXDEPLOYQT_BIN}"
-         "${QT_QMAKE_EXECUTABLE}")
+         "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
 
    endif()
           
