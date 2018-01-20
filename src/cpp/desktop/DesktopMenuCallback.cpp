@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #include "DesktopMenuCallback.hpp"
 #include <QDebug>
 #include <QApplication>
+#include <QWindow>
 
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
@@ -365,11 +366,9 @@ void WindowMenu::onZoom()
 void WindowMenu::onBringAllToFront()
 {
 #ifdef Q_OS_MAC
-   CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-   if (appUrlRef)
+   for (QWindow* appWindow : qApp->allWindows())
    {
-      LSOpenCFURLRef(appUrlRef, nullptr);
-      CFRelease(appUrlRef);
+      appWindow->raise();
    }
 #endif
 }
@@ -425,6 +424,7 @@ void WindowMenu::showWindow()
    if (pWidget->isMinimized())
       pWidget->setWindowState(pWidget->windowState() & ~Qt::WindowMinimized);
    pWidget->activateWindow();
+   pWidget->raise();
 }
 
 } // namespace desktop
