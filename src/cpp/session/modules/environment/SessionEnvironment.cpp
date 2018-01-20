@@ -131,7 +131,7 @@ bool hasExternalPtr(SEXP obj,      // environment to search for external pointer
       if (TYPEOF(obj) == ENVSXP)
       {
          // we were given a primitive environment (ENVSXP)
-         envir = env;
+         envir = obj;
       }
       else
       {
@@ -1092,8 +1092,6 @@ Error initialize()
    json::JsonRpcFunction requeryCtx =
          boost::bind(requeryContext, pContextDepth, pLineDebugState,
                      pCurrentContext, _1, _2);
-
-   initEnvironmentMonitoring();
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
