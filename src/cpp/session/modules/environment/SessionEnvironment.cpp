@@ -1093,6 +1093,8 @@ Error initialize()
          boost::bind(requeryContext, pContextDepth, pLineDebugState,
                      pCurrentContext, _1, _2);
 
+   initEnvironmentMonitoring();
+
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
