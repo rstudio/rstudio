@@ -172,6 +172,11 @@ if(NOT WIN32)
      ${CMAKE_CURRENT_SOURCE_DIR}/synctex/sumatra/SumatraSynctex.hpp
    )
 endif()
+if(NOT APPLE)
+   list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
+      ${CMAKE_CURRENT_SOURCE_DIR}/DockMenu.hpp
+   )
+endif()
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/desktop-config.h)
@@ -239,6 +244,7 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
+    DockMenu.cpp
     DockTileView.mm
   )
 else()
