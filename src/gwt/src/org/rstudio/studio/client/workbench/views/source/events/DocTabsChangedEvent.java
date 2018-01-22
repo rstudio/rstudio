@@ -21,17 +21,24 @@ public class DocTabsChangedEvent extends GwtEvent<DocTabsChangedHandler>
 {
    public static final Type<DocTabsChangedHandler> TYPE = new Type<DocTabsChangedHandler>();
 
-   public DocTabsChangedEvent(String[] ids,
+   public DocTabsChangedEvent(String activeId,
+                              String[] ids,
                               ImageResource[] icons,
                               String[] names,
                               String[] paths)
    {
+      activeId_ = activeId;
       ids_ = ids;
       this.icons = icons;
       this.names = names;
       this.paths = paths;
    }
 
+   public String getActiveId()
+   {
+      return activeId_;
+   }
+   
    public String[] getIds()
    {
       return ids_;
@@ -64,6 +71,7 @@ public class DocTabsChangedEvent extends GwtEvent<DocTabsChangedHandler>
       handler.onDocTabsChanged(this);
    }
 
+   private final String activeId_;
    private final String[] ids_;
    private final ImageResource[] icons;
    private final String[] names;
