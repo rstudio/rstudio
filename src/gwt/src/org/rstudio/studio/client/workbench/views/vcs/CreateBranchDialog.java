@@ -262,6 +262,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       TextBox textBox = new TextBox();
       textBox.getElement().getStyle().setProperty("minWidth", "200px");
+      textBox.getElement().setAttribute("spellcheck", "false");
       return textBox;
    }
    
