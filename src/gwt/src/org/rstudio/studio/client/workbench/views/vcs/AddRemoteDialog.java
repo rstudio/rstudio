@@ -124,6 +124,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       TextBox textBox = new TextBox();
       textBox.setWidth("260px");
       textBox.getElement().getStyle().setMarginBottom(6, Unit.PX);
+      textBox.getElement().setAttribute("spellcheck", "false");
       return textBox;
    }
    
