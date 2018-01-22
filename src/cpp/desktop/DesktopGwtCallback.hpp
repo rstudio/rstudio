@@ -83,9 +83,12 @@ public Q_SLOTS:
 
    void setClipboardText(QString text);
    QString getClipboardText();
-
+   
    void setGlobalMouseSelection(QString selection);
    QString getGlobalMouseSelection();
+
+   QString getCursorPosition();
+   QString doesWindowExistAtCursorPosition();
 
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);

@@ -16,6 +16,7 @@
 package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -38,6 +39,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -923,42 +925,80 @@ public class DocTabLayoutPanel
                   initDragParams_, null, destPos_));
          }
          
-         // this is the case when our own drag ends; if it ended outside our
-         // window and outside all satellites, treat it as a tab tear-off
-         if (dragElement_ != null && evt != null && action == ACTION_CANCEL)
+         if (Desktop.isDesktop())
          {
-            // if this is the last tab in satellite, we don't want to tear
-            // it out
-            boolean isLastSatelliteTab = getWidgetCount() == 1 && 
-                  Satellite.isCurrentWindowSatellite();
+            // on desktop, we call back to discover whether the cursor is
+            // currently outside of any RStudio window; in such a case we
+            // perform a pop-out.
+            Desktop.getFrame().doesWindowExistAtCursorPosition(
+                  new CommandWithArg<String>()
+                  {
+                     @Override
+                     public void execute(final String hasWindow)
+                     {
+                        if (Boolean.parseBoolean(hasWindow))
+                           return;
 
-            // did the user drag the tab outside this doc?
-            if (!isLastSatelliteTab &&
-                DomUtils.elementFromPoint(evt.getClientX(), 
-                  evt.getClientY()) == null)
+                        Desktop.getFrame().getCursorPosition(new CommandWithArg<String>()
+                        {
+                           @Override
+                           public void execute(String cursorPosition)
+                           {
+                              String[] parts = cursorPosition.split(",");
+                              Point point = new Point(
+                                    StringUtil.parseInt(parts[0], 0),
+                                    StringUtil.parseInt(parts[1], 0));
+                              
+                              events_.fireEvent(
+                                    new PopoutDocInitiatedEvent(
+                                          initDragParams_.getDocId(),
+                                          point));
+                           }
+                        });
+
+                     }
+                  });
+         }
+         else
+         {
+
+            // this is the case when our own drag ends; if it ended outside our
+            // window and outside all satellites, treat it as a tab tear-off
+            if (dragElement_ != null && evt != null && action == ACTION_CANCEL)
             {
-               // did it end in any RStudio satellite window?
-               String targetWindowName;
-               Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-               if (Satellite.isCurrentWindowSatellite())
+               // if this is the last tab in satellite, we don't want to tear
+               // it out
+               boolean isLastSatelliteTab = getWidgetCount() == 1 && 
+                     Satellite.isCurrentWindowSatellite();
+
+               // did the user drag the tab outside this doc?
+               if (!isLastSatelliteTab &&
+                     DomUtils.elementFromPoint(evt.getClientX(), 
+                           evt.getClientY()) == null)
                {
-                  // this is a satellite, ask the main window 
-                  targetWindowName = satellite.getWindowAtPoint(
-                        evt.getScreenX(), evt.getScreenY());
-               }
-               else
-               {
-                  // this is the main window, query our own satellites
-                  targetWindowName = 
-                     RStudioGinjector.INSTANCE.getSatelliteManager()
-                         .getWindowAtPoint(evt.getScreenX(), evt.getScreenY());
-               }
-               if (targetWindowName == null)
-               {
-                  // it was dragged over nothing RStudio owns--pop it out
-                  events_.fireEvent(new PopoutDocInitiatedEvent(
-                        initDragParams_.getDocId(), new Point(
-                              evt.getScreenX(), evt.getScreenY())));
+                  // did it end in any RStudio satellite window?
+                  String targetWindowName;
+                  Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
+                  if (Satellite.isCurrentWindowSatellite())
+                  {
+                     // this is a satellite, ask the main window 
+                     targetWindowName = satellite.getWindowAtPoint(
+                           evt.getScreenX(), evt.getScreenY());
+                  }
+                  else
+                  {
+                     // this is the main window, query our own satellites
+                     targetWindowName = 
+                           RStudioGinjector.INSTANCE.getSatelliteManager()
+                           .getWindowAtPoint(evt.getScreenX(), evt.getScreenY());
+                  }
+                  if (targetWindowName == null)
+                  {
+                     // it was dragged over nothing RStudio owns--pop it out
+                     events_.fireEvent(new PopoutDocInitiatedEvent(
+                           initDragParams_.getDocId(), new Point(
+                                 evt.getScreenX(), evt.getScreenY())));
+                  }
                }
             }
          }

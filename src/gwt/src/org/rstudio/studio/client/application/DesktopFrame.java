@@ -63,6 +63,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setGlobalMouseSelection(String selection);
    void getGlobalMouseSelection(CommandWithArg<String> callback);
    
+   void doesWindowExistAtCursorPosition(CommandWithArg<String> callback);
+   void getCursorPosition(CommandWithArg<String> callback);
+   
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);

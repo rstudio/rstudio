@@ -458,6 +458,22 @@ QString GwtCallback::getGlobalMouseSelection()
     return s_globalMouseSelection;
 }
 
+QString GwtCallback::getCursorPosition()
+{
+   QPoint cursorPosition = QCursor::pos();
+   return QString::asprintf(
+            "%i,%i",
+            cursorPosition.x(),
+            cursorPosition.y());
+}
+
+QString GwtCallback::doesWindowExistAtCursorPosition()
+{
+   return (qApp->topLevelAt(QCursor::pos()) == nullptr)
+         ? QStringLiteral("false")
+         : QStringLiteral("true");
+}
+
 QString GwtCallback::proportionalFont()
 {
    return options().proportionalFont();
