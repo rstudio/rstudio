@@ -518,6 +518,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.renderVerbatimConsoleInput", function(code, engine, indent)
 {
+   Encoding(code) <- "UTF-8"
+   
    if (length(code) == 1)
       code <- strsplit(code, "\n", fixed = TRUE)[[1]]
    
@@ -603,6 +605,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
   opts <- list()
 
+  Encoding(code) <- "UTF-8"
   # if several lines of code are passed, operate only on the first 
   code <- unlist(strsplit(code, "\n", fixed = TRUE))[[1]]
 
@@ -641,6 +644,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("extractChunkInnerCode", function(code)
 {
   # split into lines
+  Encoding(code) <- "UTF-8"   
   code <- unlist(strsplit(code, "\n", fixed = TRUE))
   
   # find chunk indicators (safe fallbacks if absent)

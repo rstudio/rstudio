@@ -176,6 +176,8 @@
 
    code <- deparse(func, width.cutoff = 59, control = control)
    
+   Encoding(code) <- "UTF-8"
+   
    # if we were asked not to use source refs, or we were but there wasn't a
    # source ref to use, then format the code according to user pref
    if (!useSource || is.null(attr(func, "srcref", exact = TRUE)))
