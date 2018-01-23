@@ -230,11 +230,14 @@ int main(int argc, char* argv[])
       arguments.push_back(disableWebSecurity);
 #endif
       
-      // disable chromium renderer accessibility (it causes slowdown
-      // when used in conjunction with some applications; see e.g.
+      // disable chromium renderer accessibility if requested (it can cause
+      // slowdown when used in conjunction with some applications; see e.g.
       // https://github.com/rstudio/rstudio/issues/1990)
-      static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
-      arguments.push_back(disableRendererAccessibility);
+      if (!core::system::getenv("RSTUDIO_NO_ACCESSIBILITY").empty())
+      {
+         static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
+         arguments.push_back(disableRendererAccessibility);
+      }
       
       // re-assign command line arguments
       argc = (int) arguments.size();
