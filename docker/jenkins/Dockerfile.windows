@@ -43,7 +43,7 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuild
 COPY windows/qt-noninteractive-install.qs c:\qt-noninteractive-install.qs
 RUN $ErrorActionPreference = 'Stop'; \
   $ProgressPreference = 'SilentlyContinue' ;\
-  Invoke-WebRequest http://download.qt.io/archive/qt/5.9/5.9.2/qt-opensource-windows-x86-5.9.2.exe -OutFile c:\qt.exe ;\
+  Invoke-WebRequest http://download.qt.io/archive/qt/5.10/5.10.0/qt-opensource-windows-x86-5.10.0.exe -OutFile c:\qt.exe ;\
   Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install.qs' ;\
   Remove-Item c:\qt.exe -Force
 
