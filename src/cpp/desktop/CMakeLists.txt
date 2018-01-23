@@ -80,6 +80,11 @@ else()
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
 
+      set(QMAKE_QT50_SDK "C:\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
+      if(EXISTS ${QMAKE_QT50_SDK})
+         set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
+      endif()
+
    endif()
 endif()
 
