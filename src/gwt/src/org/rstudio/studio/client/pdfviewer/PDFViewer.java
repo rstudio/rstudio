@@ -242,7 +242,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
-         pos = new Point(pdfJsWindow_.getLeft(), pdfJsWindow_.getTop());
+         pos = Point.create(pdfJsWindow_.getLeft(), pdfJsWindow_.getTop());
          pdfJsWindow_.close();
          pdfJsWindow_ = null;
       }

@@ -54,7 +54,7 @@ public class PopoutDocInitiatedEvent
    {
       if (posX_ == 0 && posY_ == 0)
          return null;
-      return new Point(posX_, posY_);
+      return Point.create(posX_, posY_);
    }
    
    @Override

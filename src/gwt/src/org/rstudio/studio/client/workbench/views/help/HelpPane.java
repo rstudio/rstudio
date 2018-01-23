@@ -607,7 +607,7 @@ public class HelpPane extends WorkbenchPane
       ensureWidget();
       bringToFront();
       navStack_.navigate(url);
-      setLocation(url, new Point(0, 0));
+      setLocation(url, Point.create(0, 0));
       navigated_ = true;
    }
      
@@ -666,7 +666,7 @@ public class HelpPane extends WorkbenchPane
    {
       String url = getUrl();
       if (url != null)
-         setLocation(url, new Point(0, 0));
+         setLocation(url, Point.create(0, 0));
    }
 
    private WindowEx getContentWindow()

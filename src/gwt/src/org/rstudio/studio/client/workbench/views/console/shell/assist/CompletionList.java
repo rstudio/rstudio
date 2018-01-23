@@ -59,8 +59,7 @@ class CompletionList<TItem> extends Composite
                return;
             }
          }
-         lastMouseMoveCoordinates_ = new Point(event.getScreenX(),
-                                               event.getScreenY());
+         lastMouseMoveCoordinates_ = Point.create(event.getScreenX(), event.getScreenY());
 
          if (firstEvent_)
          {

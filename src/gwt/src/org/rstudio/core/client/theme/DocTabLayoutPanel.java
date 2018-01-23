@@ -17,6 +17,7 @@ package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -443,7 +444,7 @@ public class DocTabLayoutPanel
 
             // cache the drop point for 250ms (see comments in event handler for
             // dragenter)
-            dropPoint_ = new Point(event.getClientX(), event.getClientY());
+            dropPoint_ = Point.create(event.getClientX(), event.getClientY());
             Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
             {
                @Override
@@ -930,34 +931,34 @@ public class DocTabLayoutPanel
             // on desktop, we call back to discover whether the cursor is
             // currently outside of any RStudio window; in such a case we
             // perform a pop-out.
-            Desktop.getFrame().doesWindowExistAtCursorPosition(
-                  new CommandWithArg<String>()
-                  {
-                     @Override
-                     public void execute(final String hasWindow)
+            if (dragElement_ != null &&
+                  evt != null &&
+                  StringUtil.equals(evt.getType(), "dragend"))
+            {
+               Desktop.getFrame().doesWindowExistAtCursorPosition(
+                     new CommandWithArg<Boolean>()
                      {
-                        if (Boolean.parseBoolean(hasWindow))
-                           return;
-
-                        Desktop.getFrame().getCursorPosition(new CommandWithArg<String>()
+                        @Override
+                        public void execute(final Boolean hasWindow)
                         {
-                           @Override
-                           public void execute(String cursorPosition)
-                           {
-                              String[] parts = cursorPosition.split(",");
-                              Point point = new Point(
-                                    StringUtil.parseInt(parts[0], 0),
-                                    StringUtil.parseInt(parts[1], 0));
-                              
-                              events_.fireEvent(
-                                    new PopoutDocInitiatedEvent(
-                                          initDragParams_.getDocId(),
-                                          point));
-                           }
-                        });
+                           if (hasWindow)
+                              return;
 
-                     }
-                  });
+                           Desktop.getFrame().getCursorPosition(new CommandWithArg<Point>()
+                           {
+                              @Override
+                              public void execute(Point cursorPosition)
+                              {
+                                 events_.fireEvent(
+                                       new PopoutDocInitiatedEvent(
+                                             initDragParams_.getDocId(),
+                                             cursorPosition));
+                              }
+                           });
+
+                        }
+                     });
+            }
          }
          else
          {
@@ -996,7 +997,7 @@ public class DocTabLayoutPanel
                   {
                      // it was dragged over nothing RStudio owns--pop it out
                      events_.fireEvent(new PopoutDocInitiatedEvent(
-                           initDragParams_.getDocId(), new Point(
+                           initDragParams_.getDocId(), Point.create(
                                  evt.getScreenX(), evt.getScreenY())));
                   }
                }

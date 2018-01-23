@@ -28,6 +28,7 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
+#include <QJsonObject>
 
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
@@ -458,20 +459,19 @@ QString GwtCallback::getGlobalMouseSelection()
     return s_globalMouseSelection;
 }
 
-QString GwtCallback::getCursorPosition()
+QJsonObject GwtCallback::getCursorPosition()
 {
    QPoint cursorPosition = QCursor::pos();
-   return QString::asprintf(
-            "%i,%i",
-            cursorPosition.x(),
-            cursorPosition.y());
+   
+   return QJsonObject {
+      { QStringLiteral("x"), cursorPosition.x() },
+      { QStringLiteral("y"), cursorPosition.y() }
+   };
 }
 
-QString GwtCallback::doesWindowExistAtCursorPosition()
+bool GwtCallback::doesWindowExistAtCursorPosition()
 {
-   return (qApp->topLevelAt(QCursor::pos()) == nullptr)
-         ? QStringLiteral("false")
-         : QStringLiteral("true");
+   return qApp->topLevelAt(QCursor::pos()) != nullptr;
 }
 
 QString GwtCallback::proportionalFont()
