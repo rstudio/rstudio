@@ -15,11 +15,14 @@
 
 #include "DesktopWebPage.hpp"
 
+#include <mutex>
+
 #include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/Thread.hpp>
 
 #include <QWidget>
 #include <QWebEnginePage>
@@ -44,6 +47,7 @@ namespace desktop {
 namespace {
 
 WindowTracker s_windowTracker;
+std::mutex s_mutex;
 
 } // anonymous namespace
 
@@ -81,13 +85,17 @@ void WebPage::closeWindow(QString name)
       desktop::closeWindow(pWindow);
 }
 
-void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
+void WebPage::prepareForWindow(const PendingWindow& pendingWindow)
 {
-   pendingWindow_ = pendingWnd;
+   std::lock_guard<std::mutex> lock(s_mutex);
+   
+   pendingWindows_.push(pendingWindow);
 }
 
 QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 {
+   std::lock_guard<std::mutex> lock(s_mutex);
+
    QString name;
    bool isSatellite = false;
    bool showToolbar = true;
@@ -99,7 +107,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
    MainWindow* pMainWindow = nullptr;
    BrowserWindow* pWindow = nullptr;
    bool show = true;
-   
+
    // check if this is target="_blank";
    if (type == QWebEnginePage::WebWindowType::WebBrowserTab)
    {
@@ -108,7 +116,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
       // that to be visible
       show = false;
       name = tr("_blank_redirector");
-      
+
       // check for an existing hidden window
       pWindow = s_windowTracker.getWindow(name);
       if (pWindow)
@@ -117,24 +125,26 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
       }
    }
 
-   // check if this is a satellite window
-   if (!pendingWindow_.isEmpty())
+   // check if we have a satellite window waiting to come up
+   if (!pendingWindows_.empty())
    {
+      // retrieve the window
+      PendingWindow pendingWindow = pendingWindows_.front();
+      pendingWindows_.pop();
+
       // capture pending window params then clear them (one time only)
-      name = pendingWindow_.name;
-      isSatellite = pendingWindow_.isSatellite;
-      showToolbar = pendingWindow_.showToolbar;
-      pMainWindow = pendingWindow_.pMainWindow;
-      allowExternalNavigate = pendingWindow_.allowExternalNavigate;
+      name = pendingWindow.name;
+      isSatellite = pendingWindow.isSatellite;
+      showToolbar = pendingWindow.showToolbar;
+      pMainWindow = pendingWindow.pMainWindow;
+      allowExternalNavigate = pendingWindow.allowExternalNavigate;
 
       // get width and height, and adjust for high DPI
       double dpiZoomScaling = getDpiZoomScaling();
-      width = pendingWindow_.width * dpiZoomScaling;
-      height = pendingWindow_.height * dpiZoomScaling;
-      x = pendingWindow_.x;
-      y = pendingWindow_.y;
-
-      pendingWindow_ = PendingWindow();
+      width = pendingWindow.width * dpiZoomScaling;
+      height = pendingWindow.height * dpiZoomScaling;
+      x = pendingWindow.x;
+      y = pendingWindow.y;
 
       // check for an existing window of this name
       pWindow = s_windowTracker.getWindow(name);
@@ -174,8 +184,8 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 
          // x is based on centering over main window
          int moveX = pMainWindow->x() +
-                     (pMainWindow->width() / 2) -
-                     (width / 2);
+               (pMainWindow->width() / 2) -
+               (width / 2);
 
          // perform move
          pWindow->move(moveX, moveY);
