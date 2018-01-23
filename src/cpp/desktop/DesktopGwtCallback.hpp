@@ -18,6 +18,7 @@
 
 #include <QObject>
 #include <QClipboard>
+#include <QJsonObject>
 
 #include "DesktopGwtCallbackOwner.hpp"
 
@@ -83,9 +84,12 @@ public Q_SLOTS:
 
    void setClipboardText(QString text);
    QString getClipboardText();
-
+   
    void setGlobalMouseSelection(QString selection);
    QString getGlobalMouseSelection();
+
+   QJsonObject getCursorPosition();
+   bool doesWindowExistAtCursorPosition();
 
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);

@@ -99,7 +99,7 @@ public class Rectangle
    
    public Point getLocation()
    {
-      return new Point(x, y) ;
+      return Point.create(x, y);
    }
    
    public Size getSize()
@@ -109,8 +109,9 @@ public class Rectangle
    
    public Point getCorner(boolean left, boolean top)
    {
-      return new Point(left ? getLeft() : getRight(),
-                       top ? getTop() : getBottom()) ;
+      return Point.create(
+            left ? getLeft() : getRight(),
+            top ? getTop() : getBottom());
    }
 
    public Rectangle move(int x, int y)
@@ -171,8 +172,9 @@ public class Rectangle
     */
    public Point center()
    {
-      return new Point((getLeft() + getRight()) / 2,
-                       (getTop() + getBottom()) / 2);
+      return Point.create(
+            (getLeft() + getRight()) / 2,
+            (getTop() + getBottom()) / 2);
    }
 
    /**

@@ -42,18 +42,10 @@ public class ThemeFonts
    static class DesktopThemeFontLoader implements ThemeFontLoader
    {
       public native final String getProportionalFont() /*-{
-         // if we were opened by another window, use its desktopInfo to
-         // populate our font cache (as our own might not have arrived yet)
-         if ($wnd.opener && $wnd.opener.desktopInfo)
-            return $wnd.opener.desktopInfo.proportionalFont;
-              
          return $wnd.desktopInfo.proportionalFont;
       }-*/;
 
       public native final String getFixedWidthFont() /*-{
-         if ($wnd.opener && $wnd.opener.desktopInfo)
-            return $wnd.opener.desktopInfo.fixedWidthFont;
-              
          return $wnd.desktopInfo.fixedWidthFont;
       }-*/;
    }

@@ -57,8 +57,9 @@ public class WordWrapCursorTracker
       else if (currentInputRow_ == row_ && inputColumn <= column_)
       {
          // Cursor position is inside the current chunk--nice!
-         output_ = new Point(outputColumn + (column_ - inputColumn),
-                             outputRow);
+         output_ = Point.create(
+               outputColumn + (column_ - inputColumn),
+               outputRow);
 //         Debug.devlogf("exact: {0}, {1}", output_.getY(), output_.getX());
       }
       else
@@ -66,7 +67,7 @@ public class WordWrapCursorTracker
 //         Debug.devlog("slop");
          // We've gone past the cursor position; use the current insertion
          // point before we get any further away
-         output_ = new Point(outputColumn, outputRow);
+         output_ = Point.create(outputColumn, outputRow);
       }
    }
 

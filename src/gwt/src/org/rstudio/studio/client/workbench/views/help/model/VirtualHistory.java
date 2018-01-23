@@ -30,7 +30,7 @@ public class VirtualHistory
       public Data(String url)
       {
          url_ = url;
-         scrollPos_ = new Point(0, 0);
+         scrollPos_ = Point.create(0, 0);
       }
       
       public String getUrl()

@@ -138,7 +138,7 @@ public class JavaScriptPassthroughGenerator extends Generator
                   }
                   else if (simpleName.equals("CommandWithArg"))
                   {
-                     w.print("(Ljava/lang/Object;)(result)");
+                     w.print("(*)(result)");
                   }
                   w.print(";");
                   w.print("}");

@@ -509,7 +509,7 @@ public class DomUtils
          child = child.getOffsetParent();
       }
 
-      return new Point(left, top);
+      return Point.create(left, top);
    }
 
    public static int ensureVisibleHoriz(Element container,
