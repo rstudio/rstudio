@@ -17,7 +17,6 @@ package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -935,29 +934,19 @@ public class DocTabLayoutPanel
                   evt != null &&
                   StringUtil.equals(evt.getType(), "dragend"))
             {
-               Desktop.getFrame().doesWindowExistAtCursorPosition(
-                     new CommandWithArg<Boolean>()
-                     {
-                        @Override
-                        public void execute(final Boolean hasWindow)
-                        {
-                           if (hasWindow)
-                              return;
+               Desktop.getFrame().doesWindowExistAtCursorPosition((Boolean hasWindow) ->
+               {
+                  if (hasWindow)
+                     return;
 
-                           Desktop.getFrame().getCursorPosition(new CommandWithArg<Point>()
-                           {
-                              @Override
-                              public void execute(Point cursorPosition)
-                              {
-                                 events_.fireEvent(
-                                       new PopoutDocInitiatedEvent(
-                                             initDragParams_.getDocId(),
-                                             cursorPosition));
-                              }
-                           });
-
-                        }
-                     });
+                  Desktop.getFrame().getCursorPosition((Point cursorPosition) ->
+                  {
+                     events_.fireEvent(
+                           new PopoutDocInitiatedEvent(
+                                 initDragParams_.getDocId(),
+                                 cursorPosition));
+                  });
+               });
             }
          }
          else
