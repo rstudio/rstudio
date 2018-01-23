@@ -32,7 +32,7 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
-set QT_VERSION=5.9.2
+set QT_VERSION=5.10.0
 set QT_FILE=QtSDK-%QT_VERSION%-msvc2015.7z
 
 if not exist gnudiff (
