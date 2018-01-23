@@ -16,6 +16,8 @@
 #ifndef DESKTOP_WEB_PAGE_HPP
 #define DESKTOP_WEB_PAGE_HPP
 
+#include <queue>
+
 #include <QtGui>
 #include <QWebEnginePage>
 
@@ -109,7 +111,7 @@ private:
    QString shinyDialogUrl_;
    bool navigated_;
    bool allowExternalNav_;
-   PendingWindow pendingWindow_;
+   std::queue<PendingWindow> pendingWindows_;
    QDir defaultSaveDir_;
 };
 
