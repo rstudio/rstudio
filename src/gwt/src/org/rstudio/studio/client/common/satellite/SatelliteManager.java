@@ -235,7 +235,7 @@ public class SatelliteManager implements CloseHandler<Window>
             final WindowEx win = satellite.getWindow();
             Document doc = win.getDocument();
             preferredSize = new Size(doc.getClientWidth(), doc.getClientHeight());
-            preferredPos = new Point(win.getLeft(), win.getTop());
+            preferredPos = Point.create(win.getLeft(), win.getTop());
             callNotifyPendingReactivate(win);
             satellite.close();
             break;

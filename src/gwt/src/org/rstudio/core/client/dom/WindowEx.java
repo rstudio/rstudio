@@ -101,7 +101,7 @@ public class WindowEx extends JavaScriptObject
    public final Point getScrollPosition()
    {
       JsArrayInteger pos = getScrollPositionInternal();
-      return new Point(pos.get(0), pos.get(1));
+      return Point.create(pos.get(0), pos.get(1));
    }
 
    public final void setScrollPosition(Point pos)

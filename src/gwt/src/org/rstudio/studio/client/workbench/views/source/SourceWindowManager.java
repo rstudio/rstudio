@@ -873,7 +873,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                size = new Size(window.getInnerWidth(), 
                      window.getInnerHeight());
                if (position == null)
-                  position = new Point(
+                  position = Point.create(
                         window.getScreenX() + 50,
                         window.getScreenY() + 50);
             }

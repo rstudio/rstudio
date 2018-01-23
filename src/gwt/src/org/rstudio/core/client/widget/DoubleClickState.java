@@ -37,7 +37,7 @@ public class DoubleClickState
 
       if (!isDoubleClick(event, now))
       {
-         lastClickPos_ = new Point(event.getClientX(), event.getClientY());
+         lastClickPos_ = Point.create(event.getClientX(), event.getClientY());
          lastClickTime_ = now;
          return false;
       }

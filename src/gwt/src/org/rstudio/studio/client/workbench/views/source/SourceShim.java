@@ -204,7 +204,8 @@ public class SourceShim extends Composite
       events.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
       asyncSource_ = asyncSource;
 
-      events.fireEvent(new DocTabsChangedEvent(new String[0],
+      events.fireEvent(new DocTabsChangedEvent(null,
+                                               new String[0],
                                                new ImageResource[0],
                                                new String[0],
                                                new String[0]));

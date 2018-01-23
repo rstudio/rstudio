@@ -3482,7 +3482,11 @@ public class Source implements InsertSourceHandler,
          paths[i] = target.getPath();
       }
 
-      events_.fireEvent(new DocTabsChangedEvent(ids, icons, names, paths));
+      String activeId = (activeEditor_ != null)
+            ? activeEditor_.getId()
+            : null;
+            
+      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
 
       view_.manageChevronVisibility();
    }

@@ -191,6 +191,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
                $wnd.opener.notifyRStudioSatelliteClosed(name);
             }),
             true);
+      
+      // inherit desktop frame from opener
+      $wnd.desktop             = $wnd.opener.desktop;
+      $wnd.desktopInfo         = $wnd.opener.desktopInfo;
+      $wnd.desktopMenuCallback = $wnd.opener.desktopMenuCallback;
 
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
