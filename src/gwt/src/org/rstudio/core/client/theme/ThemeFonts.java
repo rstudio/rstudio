@@ -15,6 +15,8 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
+
 import org.rstudio.core.client.BrowseCap;
 
 
@@ -41,12 +43,33 @@ public class ThemeFonts
 
    static class DesktopThemeFontLoader implements ThemeFontLoader
    {
-      public native final String getProportionalFont() /*-{
-         return $wnd.desktopInfo.proportionalFont;
-      }-*/;
-
-      public native final String getFixedWidthFont() /*-{
-         return $wnd.desktopInfo.fixedWidthFont;
+      public final String getProportionalFont()
+      {
+         return getDesktopInfo("proportionalFont");
+      }
+      
+      public final String getFixedWidthFont()
+      {
+         return getDesktopInfo("fixedWidthFont");
+      }
+      
+      private static final native String getDesktopInfo(String property)
+      /*-{
+         
+         // NOTE: because this is called very early during the startup process
+         // (GWT needs to generate CSS based on the value of these entries),
+         // it's possible (for satellite windows) that the 'desktopInfo' object
+         // will not yet be initialized -- so attempt to read it from an opener
+         // directly.
+         var window = $wnd;
+         while (window) {
+            if (window.desktopInfo)
+               break;
+            window = window.opener;
+         }
+         
+         return window.desktopInfo[property];
+         
       }-*/;
    }
 
