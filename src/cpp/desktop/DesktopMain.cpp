@@ -219,17 +219,28 @@ int main(int argc, char* argv[])
 
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
+      
+      // prepare command line arguments
+      static std::vector<char*> arguments(argv, argv + argc);
+      
 #ifndef NDEBUG
       // disable web security for development builds (so we can
       // get access to sourcemaps)
-      static std::vector<char*> arguments(argv, argv + argc);
       static char disableWebSecurity[] = "--disable-web-security";
       arguments.push_back(disableWebSecurity);
+#endif
+      
+      // disable chromium renderer accessibility (it causes slowdown
+      // when used in conjunction with some applications; see e.g.
+      // https://github.com/rstudio/rstudio/issues/1990)
+      static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
+      arguments.push_back(disableRendererAccessibility);
+      
+      // re-assign command line arguments
       argc = (int) arguments.size();
       argv = &arguments[0];
-#endif
 
+      // prepare application for launch
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromUtf8("RStudio"),
