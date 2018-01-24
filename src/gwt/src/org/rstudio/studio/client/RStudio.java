@@ -175,6 +175,16 @@ public class RStudio implements EntryPoint
             rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
          });
          
+         // set a timeout and attempt load just in case something goes wrong with
+         // Qt initialization (we don't want to just leave the user with a blank
+         // window)
+         setTimeout(function() {
+            if ($wnd.delayLoadApplication) {
+               $wnd.delayLoadApplication();
+               $wnd.delayLoadApplication = null;
+            }
+         }, 2000);
+         
          return;
       }
       
