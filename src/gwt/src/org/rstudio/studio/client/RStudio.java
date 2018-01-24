@@ -178,7 +178,7 @@ public class RStudio implements EntryPoint
             // Qt initialization (we don't want to just leave the user with a blank
             // window)
             setTimeout(function() {
-               if ($wnd.rstudioDelayLoadApplication) {
+               if (typeof $wnd.rstudioDelayLoadApplication == "function") {
                   $wnd.rstudioDelayLoadApplication();
                   $wnd.rstudioDelayLoadApplication = null;
                }
