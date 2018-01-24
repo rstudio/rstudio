@@ -60,12 +60,23 @@ MainWindow::MainWindow(QUrl url) :
    webChannelJsFile.close();
 
    // append our WebChannel initialization code
-   const char* webChannelInit =
-         "new QWebChannel(qt.webChannelTransport, function(channel) {"
-         "   for (var key in channel.objects) {"
-         "      window[key] = channel.objects[key];"
-         "   }"
-         "});";
+   const char* webChannelInit = R"EOF(
+      new QWebChannel(qt.webChannelTransport, function(channel) {
+
+         // export channel objects to the main window
+         for (var key in channel.objects) {
+            window[key] = channel.objects[key];
+         }
+
+         // notify that we're finished initialization and load
+         // GWT sources if necessary
+         window.qt.webChannelReady = true;
+         if (window.delayLoadApplication) {
+            window.delayLoadApplication();
+            window.delayLoadApplication = null;
+         }
+      });
+   )EOF";
 
    webChannelJs.append(QString::fromUtf8(webChannelInit));
 
