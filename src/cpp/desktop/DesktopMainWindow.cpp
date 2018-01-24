@@ -71,9 +71,9 @@ MainWindow::MainWindow(QUrl url) :
          // notify that we're finished initialization and load
          // GWT sources if necessary
          window.qt.webChannelReady = true;
-         if (window.delayLoadApplication) {
-            window.delayLoadApplication();
-            window.delayLoadApplication = null;
+         if (typeof window.rstudioDelayLoadApplication == "function") {
+            window.rstudioDelayLoadApplication();
+            window.rstudioDelayLoadApplication = null;
          }
       });
    )EOF";
