@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -267,11 +268,20 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onOpenDeveloperConsole()
    {
-      // TODO: Request this port as part of the startup session info?
-      globalDisplay_.openMinimalWindow(
-            "http://127.0.0.1:59009",
-            Window.getClientWidth() - 20,
-            Window.getClientHeight() - 20);
+      int port = DesktopInfo.getChromiumDevtoolsPort();
+      if (port == 0)
+      {
+         globalDisplay_.showErrorMessage(
+               "Error Opening Devtools",
+               "The Chromium devtools server could not be activated.");
+      }
+      else
+      {
+         globalDisplay_.openMinimalWindow(
+               ("http://127.0.0.1:" + DesktopInfo.getChromiumDevtoolsPort()),
+               Window.getClientWidth() - 20,
+               Window.getClientHeight() - 20);
+      }
    }
    
    @Handler

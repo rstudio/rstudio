@@ -101,5 +101,9 @@ public class DesktopInfo
       $wnd.desktopInfo.zoomLevel = zoomLevel;
    }-*/;
    
+   public static final native int getChromiumDevtoolsPort()
+   /*-{
+      return $wnd.desktopInfo.chromiumDevtoolsPort;
+   }-*/;
    
 }

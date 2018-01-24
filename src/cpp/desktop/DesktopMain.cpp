@@ -197,15 +197,24 @@ bool isNonProjectFilename(const QString &filename)
 
 int main(int argc, char* argv[])
 {
-   // enable debug console
-   // TODO: better way of selecting a port?
-   qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QByteArrayLiteral("59009"));
-
    core::system::initHook();
 
    try
    {
       initializeLang();
+      
+      // enable debug console
+      // use QTcpSocket to find an open port. this is unfortunately a bit racey
+      // but AFAICS there isn't a better solution for port selection
+      QByteArray port;
+      QTcpSocket* pSocket = new QTcpSocket();
+      if (pSocket->bind())
+      {
+         quint16 port = pSocket->localPort();
+         desktopInfo().setChromiumDevtoolsPort(port);
+         core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
+         pSocket->close();
+      }
 
       // initialize log
       core::system::initializeLog("rdesktop",

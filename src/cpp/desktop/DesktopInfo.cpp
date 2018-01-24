@@ -15,6 +15,8 @@
 
 #include "DesktopInfo.hpp"
 
+#include <core/SafeConvert.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -37,8 +39,23 @@ namespace {
 QString s_platform           = kUnknown;
 QString s_version            = kUnknown;
 QString s_sumatraPdfExePath  = kUnknown;
-QString s_fixedWidthFontList = kUnknown;
 double  s_zoomLevel          = 1.0;
+
+QString getFixedWidthFontList()
+{
+   QFontDatabase db;
+   QStringList fonts;
+   for (const QString& family : db.families())
+      if (db.isFixedPitch(family))
+         fonts.append(family);
+   return fonts.join(QStringLiteral("\n"));
+}
+
+QString& fixedWidthFontList()
+{
+   static QString instance = getFixedWidthFontList();
+   return instance;
+}
 
 #ifdef Q_OS_LINUX
 
@@ -145,15 +162,11 @@ DesktopInfo::DesktopInfo(QObject* parent)
             this,
             &DesktopInfo::zoomLevelChanged,
             &DesktopInfo::setZoomLevel);
-
-   // TODO: consider deferring this work as it may
-   // be expensive (don't want it to slow down startup)
-   QFontDatabase db;
-   QStringList fonts;
-   for (const QString& family : db.families())
-      if (db.isFixedPitch(family))
-         fonts.append(family);
-   s_fixedWidthFontList = fonts.join(QStringLiteral("\n"));
+   
+   QObject::connect(
+            this,
+            &DesktopInfo::chromiumDevtoolsPortChanged,
+            &DesktopInfo::setChromiumDevtoolsPort);
 }
 
 QString DesktopInfo::getPlatform()
@@ -179,12 +192,12 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   return s_fixedWidthFontList;
+   return fixedWidthFontList();
 }
 
 void DesktopInfo::setFixedWidthFontList(QString list)
 {
-   s_fixedWidthFontList = list;
+   fixedWidthFontList() = list;
 }
 
 QString DesktopInfo::getFixedWidthFont()
@@ -226,6 +239,17 @@ double DesktopInfo::getZoomLevel()
 void DesktopInfo::setZoomLevel(double zoomLevel)
 {
    s_zoomLevel = zoomLevel;
+}
+
+int DesktopInfo::getChromiumDevtoolsPort()
+{
+   std::string port = core::system::getenv("QTWEBENGINE_REMOTE_DEBUGGING");
+   return safe_convert::stringTo<int>(port, 0);
+}
+
+void DesktopInfo::setChromiumDevtoolsPort(int port)
+{
+   core::system::setenv("QT_WEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
 }
 
 } // end namespace desktop
