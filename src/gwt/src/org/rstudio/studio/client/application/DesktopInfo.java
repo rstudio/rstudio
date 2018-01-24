@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -29,6 +30,7 @@ public class DesktopInfo
 {
    @Inject
    public DesktopInfo(Session session,
+                      Commands commands,
                       EventBus events)
    {
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
@@ -36,6 +38,11 @@ public class DesktopInfo
          @Override
          public void onSessionInit(SessionInitEvent sie)
          {
+            // disable devtools command when unavailable
+            boolean devtoolsEnabled = getChromiumDevtoolsPort() > 0;
+            commands.openDeveloperConsole().setEnabled(devtoolsEnabled);
+            commands.openDeveloperConsole().setVisible(devtoolsEnabled);
+            
             if (Satellite.isCurrentWindowSatellite())
                return;
             
@@ -103,7 +110,7 @@ public class DesktopInfo
    
    public static final native int getChromiumDevtoolsPort()
    /*-{
-      return $wnd.desktopInfo.chromiumDevtoolsPort;
+      return $wnd.desktopInfo.chromiumDevtoolsPort || 0;
    }-*/;
    
 }
