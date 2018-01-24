@@ -51,7 +51,6 @@ protected:
      // implement GwtCallbackOwner
      QWidget* asWidget() override;
      WebPage* webPage() override;
-     bool event(QEvent *pEvent) override;
      void postWebViewEvent(QEvent *event) override;
      void triggerPageAction(QWebEnginePage::WebAction action) override;
      void closeEvent(QCloseEvent *event) override;
