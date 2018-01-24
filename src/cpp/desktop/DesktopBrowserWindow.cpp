@@ -146,6 +146,34 @@ WebPage* BrowserWindow::webPage()
    return webView()->webPage();
 }
 
+
+bool BrowserWindow::event(QEvent *pEvent)
+{
+
+#ifdef Q_OS_MAC
+   // NOTE: Ctrl + Tab, Ctrl + Shift + Tab need to be caught within an
+   // overridden event handler, as per
+   // https://doc.qt.io/qt-5/qcoreapplication.html#notify
+   if (pEvent->type() == QEvent::KeyPress)
+   {
+      QKeyEvent* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
+      if (pKeyEvent->matches(QKeySequence::NextChild))
+      {
+         webPage()->runJavaScript(QStringLiteral("window.desktopHooks.invokeCommand('nextTab')"));
+         return true;
+      }
+      else if (pKeyEvent->matches(QKeySequence::PreviousChild))
+      {
+         webPage()->runJavaScript(QStringLiteral("window.desktopHooks.invokeCommand('previousTab')"));
+         return true;
+      }
+   }
+#endif
+   
+   return QMainWindow::event(pEvent);
+}
+
+
 void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 {
    for (auto* child : webView()->children())
