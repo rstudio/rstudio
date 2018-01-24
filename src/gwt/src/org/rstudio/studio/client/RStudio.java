@@ -165,7 +165,6 @@ public class RStudio implements EntryPoint
          {
             // Qt is ready; load the application now
             rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
-            return;
          }
          else
          {
