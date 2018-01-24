@@ -193,6 +193,26 @@ bool isNonProjectFilename(const QString &filename)
    return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
 }
 
+bool useChromiumDevtools()
+{
+   // disable by default due to security concerns
+   // https://bugreports.qt.io/browse/QTBUG-50725
+   bool useDevtools = false;
+
+#ifndef NDEBUG
+   // but enable by default for development builds
+   useDevtools = true;
+#endif
+
+   // enable when environment variable is set
+   if (!core::system::getenv("RSTUDIO_USE_CHROMIUM_DEVTOOLS").empty())
+   {
+      useDevtools = true;
+   }
+
+   return useDevtools;
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -203,17 +223,19 @@ int main(int argc, char* argv[])
    {
       initializeLang();
       
-      // enable debug console
-      // use QTcpSocket to find an open port. this is unfortunately a bit racey
-      // but AFAICS there isn't a better solution for port selection
-      QByteArray port;
-      QTcpSocket* pSocket = new QTcpSocket();
-      if (pSocket->bind())
+      if (useChromiumDevtools())
       {
-         quint16 port = pSocket->localPort();
-         desktopInfo().setChromiumDevtoolsPort(port);
-         core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
-         pSocket->close();
+         // use QTcpSocket to find an open port. this is unfortunately a bit racey
+         // but AFAICS there isn't a better solution for port selection
+         QByteArray port;
+         QTcpSocket* pSocket = new QTcpSocket();
+         if (pSocket->bind())
+         {
+            quint16 port = pSocket->localPort();
+            desktopInfo().setChromiumDevtoolsPort(port);
+            core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
+            pSocket->close();
+         }
       }
 
       // initialize log
