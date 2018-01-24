@@ -103,6 +103,30 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             SIGNAL(zoomOut()),
                                             QKeySequence::ZoomOut);
    }
+#ifdef Q_OS_MAC
+   // NOTE: even though we seem to be using Meta as a modifier key here, Qt
+   // will translate that to CTRL (but only for Ctrl+Tab and Ctrl+Shift+Tab)
+   // TODO: using actionInvoke() also flashes the menu bar; that feels a little
+   // too aggressive for this command?
+   else if (commandId == QStringLiteral("nextTab"))
+   {
+      pAction = menuStack_.top()->addAction(
+               QIcon(),
+               label,
+               this,
+               SLOT(actionInvoked()),
+               QKeySequence(Qt::META + Qt::Key_Tab));
+   }
+   else if (commandId == QStringLiteral("previousTab"))
+   {
+      pAction = menuStack_.top()->addAction(
+               QIcon(),
+               label,
+               this,
+               SLOT(actionInvoked()),
+               QKeySequence(Qt::SHIFT + Qt::META + Qt::Key_Tab));
+   }
+#endif
 #ifdef Q_OS_LINUX
    else if (commandId == QString::fromUtf8("nextTab"))
    {
