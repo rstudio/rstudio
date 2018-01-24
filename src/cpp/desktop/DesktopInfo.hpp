@@ -32,6 +32,7 @@ Q_SIGNALS:
    void sumatraPdfExePathChanged(QString value);
    void fixedWidthFontListChanged(QString value);
    void zoomLevelChanged(double value);
+   void chromiumDevtoolsPortChanged(quint16 value);
 
 public:
    explicit DesktopInfo(QObject* parent = nullptr);
@@ -77,6 +78,13 @@ public:
               READ getZoomLevel
               WRITE setZoomLevel
               NOTIFY zoomLevelChanged)
+   
+   Q_INVOKABLE int getChromiumDevtoolsPort();
+   Q_INVOKABLE void setChromiumDevtoolsPort(int port);
+   Q_PROPERTY(int chromiumDevtoolsPort
+              READ getChromiumDevtoolsPort
+              WRITE setChromiumDevtoolsPort
+              NOTIFY chromiumDevtoolsPortChanged)
 };
 
 inline DesktopInfo& desktopInfo()
