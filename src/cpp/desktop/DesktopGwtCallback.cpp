@@ -741,6 +741,8 @@ namespace {
    }
 } // anonymous namespace
 
+#ifndef Q_OS_MAC
+
 int GwtCallback::showMessageBox(int type,
                                 QString caption,
                                 QString message,
@@ -784,6 +786,8 @@ int GwtCallback::showMessageBox(int type,
 
    return cancelButton;
 }
+
+#endif
 
 QString GwtCallback::promptForText(QString title,
                                    QString caption,

@@ -249,6 +249,7 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
+    DesktopGwtCallbackMac.mm
     DockMenu.cpp
     DockTileView.mm
   )
@@ -389,10 +390,13 @@ else()
 
    # collect list of icns files
    file(GLOB ICNS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/icns/*.icns)
+   file(GLOB PNG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/png/*.png)
 
    # set our icns as the bundle icon
    set(MACOSX_BUNDLE_ICON_FILE RStudio.icns)
    set_source_files_properties(${ICNS_FILES}
+      PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+   set_source_files_properties(${PNG_FILES}
       PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
    # define bundle name and executable
@@ -403,7 +407,8 @@ else()
       ${MOC_DESKTOP_SOURCE_FILES}
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
-      ${ICNS_FILES})
+      ${ICNS_FILES}
+      ${PNG_FILES})
 
    qt5_use_modules(RStudio ${RSTUDIO_QTMODULES})
 
