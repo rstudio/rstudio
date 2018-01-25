@@ -19,6 +19,10 @@
 #include <iostream>
 #include <iomanip>
 
+/* Work around Xcode indentation rules */
+#define RS_BEGIN_NAMESPACE(__X__) namespace __X__ {
+#define RS_END_NAMESPACE(__X__) }
+
 /* Compatibility Macros */
 #if defined(_MSVC_LANG) && _MSVC_LANG >= 201103L
 # define MOVE_THREAD(t) (std::move(t))
