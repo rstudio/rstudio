@@ -1,0 +1,194 @@
+{
+	"app-id": "com.rstudio.RStudio",
+	"runtime": "org.kde.Sdk",
+	"runtime-version": "5.9",
+	"sdk": "org.kde.Sdk",
+	"sdk-extensions": [
+		"org.freedesktop.Sdk.Extension.gfortran-62",
+		"org.freedesktop.Sdk.Extension.openjdk9"
+	],
+	"command": "rstudio",
+	"rename-icon": "rstudio",
+	"rename-desktop-file": "rstudio.desktop",
+	"finish-args":[
+		"--socket=x11",
+		"--socket=wayland",
+		"--share=ipc",
+		"--share=network",
+		"--filesystem=home",
+		"--env=PATH=/usr/bin:/app/bin:/usr/lib/sdk/gfortran-62/bin:/usr/lib/sdk/openjdk9/bin"
+	],
+	"build-options": {
+		"cflags": "-O2",
+		"cxxflags": "-O2",
+		"env": {
+			"PATH": "/usr/bin:/app/bin:/usr/lib/sdk/gfortran-62/bin:/usr/lib/sdk/openjdk9/bin"
+		}
+	},
+	"cleanup": [
+		"/include"
+	],
+	"modules":[	
+			{
+			"name": "qtwebkit",
+			"buildsystem": "simple",
+			"cleanup-platform": [
+				"/bin",
+				"/mkspecs"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://github.com/qt/qtwebkit/archive/v5.212.0-alpha2.tar.gz",
+					"sha256": "6db43b931f64857cfda7bcf89914e2730b82164871a8c24c1881620e6bfdeca1"
+				}
+			],
+			"build-commands": [
+				"qmake",
+				"grep -rl '/usr/local' . | xargs sed -i 's|/usr/local|/app|g'",
+				"make",
+				"find . -name \"cmake_install.cmake\" | xargs sed -i 's|/usr|/app|g'",
+				"make install"
+			]
+		},
+		{
+			"name": "boost",
+			"buildsystem": "simple",
+			"build-commands":[
+				"./bootstrap.sh",
+				"./b2 install --prefix=/app"
+			],
+			"sources":[
+				{
+					"type": "archive",
+					"url": "https://dl.bintray.com/boostorg/release/1.63.0/source/boost_1_63_0.tar.gz",
+					"sha256": "fe34a4e119798e10b8cc9e565b3b0284e9fd3977ec8a1b19586ad1dec397088b"
+				}
+			]
+		},
+		{
+			"name": "r",
+			"config-opts": [
+				"--enable-R-shlib"
+			],
+			"build-options": {
+				"ldflags": "-L/usr/lib/sdk/gfortran-62/lib"
+			},
+			"sources": [
+				{
+					"type":"archive",
+					"url": "https://cran.r-project.org/src/base/R-3/R-3.4.3.tar.gz",
+					"sha256":"7a3cb831de5b4151e1f890113ed207527b7d4b16df9ec6b35e0964170007f426"
+				}
+			]
+		},
+		{
+			"name": "ant",
+			"buildsystem": "simple",
+			"build-commands":[
+				"mv bin/* /app/bin/",
+				"mkdir -p /app/etc",
+				"mv etc/* /app/etc/",
+				"mv lib/* /app/lib/"
+			],
+			"sources":[
+				{
+					"type": "archive",
+					"url": "http://www-us.apache.org/dist//ant/binaries/apache-ant-1.10.1-bin.zip",
+					"sha256": "0acf6f46a71985912f9c2c768795b97e5c26bc9a7a0b61d27af8287f8b96cd8e"
+				}
+			]
+		},
+		{
+			"name": "rstudio",
+			"buildsystem": "cmake",
+			"config-opts": [
+				"-DRSTUDIO_TARGET=Desktop",
+				"-DCMAKE_BUILD_TYPE=Release",
+				"-DCMAKE_INSTALL_PREFIX=/app",
+				"-DQt5WebKitWidgets_DIR=/app/lib/cmake/Qt5WebKitWidgets",
+				"-DQT_QMAKE_EXECUTABLE=/usr/bin/qmake",
+				"-DRSTUDIO_INSTALL_FREEDESKTOP:BOOL=true"
+			],
+			"build-options": {
+				"ldflags": "-L/usr/lib/sdk/gfortran-62/lib",
+				"env": {
+					"GIT_DISCOVERY_ACROSS_FILESYSTEM": "true"
+				}
+			},
+			"sources":[
+				{
+					"type":"git",
+					"url": "https://github.com/rstudio/rstudio"
+				},
+				{
+					"type":"archive",
+					"url": "https://s3.amazonaws.com/rstudio-dictionaries/core-dictionaries.zip",
+					"sha256": "4341a9630efb9dcf7f215c324136407f3b3d6003e1c96f2e5e1f9f14d5787494",
+					"dest": "dependencies/common/dictionaries"
+				},
+				{
+					"type":"archive",
+					"url": "https://s3.amazonaws.com/rstudio-buildtools/mathjax-26.zip",
+					"sha256": "939a2d7f37e26287970be942df70f3e8f272bac2eb868ce1de18bb95d3c26c71",
+					"dest": "dependencies/common/mathjax-26"
+				},
+				{
+					"type":"file",
+					"url": "https://s3.amazonaws.com/rstudio-buildtools/pandoc/1.19.2.1/linux-64/pandoc.gz",
+					"sha256": "25dab022a12ec67575f4d2f8383c1130c42342ab064ef5e1954790b17e8f7b57",
+					"dest": "dependencies/common/pandoc"
+				},
+				{
+					"type":"file",
+					"url": "https://s3.amazonaws.com/rstudio-buildtools/pandoc/1.19.2.1/linux-64/pandoc-citeproc.gz",
+					"sha256": "1243ffd30f490ad0d793259acbbd5d0a95996d3051df7ead1b8f006fcbca0944",
+					"dest": "dependencies/common/pandoc"
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"cd dependencies/common/pandoc && gzip -d pandoc.gz",
+						"cd dependencies/common/pandoc && gzip -d pandoc-citeproc.gz"
+					]
+				},
+				{
+					"type":"archive",
+					"url": "https://s3.amazonaws.com/rstudio-buildtools/libclang-3.5.zip",
+					"sha256": "ecb06fb65ddf0eb7c04be28edd11cc38717102afbe4dbfd6e237ea58d1da85ea",
+					"dest": "dependencies/common/libclang/3.5"
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"mv dependencies/common/libclang/3.5/include/clang-c/ dependencies/common/libclang/builtin-headers"
+					]
+				},
+				{
+					"type":"archive",
+					"url": "https://s3.amazonaws.com/rstudio-buildtools/gin-2.1.2.zip",
+					"sha256": "b98e704164f54be596779696a3fcd11be5785c9907a99ec535ff6e9525ad5f9a",
+					"dest": "src/gwt/lib/gin/2.1.2"
+				},
+				{
+					"type":"archive",
+					"url": "https://storage.googleapis.com/gwt-releases/gwt-2.8.2.zip",
+					"sha256": "970701dacc55170088f5eb327137cb4a7581ebb4734188dfcc2fad9941745d1b",
+					"dest": "src/gwt/lib/gwt/2.8.2"
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"sed -i -- 's/2.8.1/2.8.2/g' src/gwt/build.xml"
+					]
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"sed -i -- 's/usr/app/g' src/cpp/desktop/CMakeLists.txt"
+					]
+				}
+			]
+		}
+	]
+}
