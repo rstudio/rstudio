@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 
 #include <QtGui>
-#include <QtWebKit>
 #include <QPushButton>
 
 #include <boost/bind.hpp>
@@ -173,7 +172,7 @@ void initializeStartupEnvironment(QString* pFilename)
    }
 }
 
-QString verifyAndNormalizeFilename(QString filename)
+QString verifyAndNormalizeFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return QString();
@@ -185,13 +184,33 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 }
 
-bool isNonProjectFilename(QString filename)
+bool isNonProjectFilename(const QString &filename)
 {
    if (filename.isNull() || filename.isEmpty())
       return false;
 
    FilePath filePath(filename.toUtf8().constData());
    return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+}
+
+bool useChromiumDevtools()
+{
+   // disable by default due to security concerns
+   // https://bugreports.qt.io/browse/QTBUG-50725
+   bool useDevtools = false;
+
+#ifndef NDEBUG
+   // but enable by default for development builds
+   useDevtools = true;
+#endif
+
+   // enable when environment variable is set
+   if (!core::system::getenv("RSTUDIO_USE_CHROMIUM_DEVTOOLS").empty())
+   {
+      useDevtools = true;
+   }
+
+   return useDevtools;
 }
 
 } // anonymous namespace
@@ -203,6 +222,21 @@ int main(int argc, char* argv[])
    try
    {
       initializeLang();
+      
+      if (useChromiumDevtools())
+      {
+         // use QTcpSocket to find an open port. this is unfortunately a bit racey
+         // but AFAICS there isn't a better solution for port selection
+         QByteArray port;
+         QTcpSocket* pSocket = new QTcpSocket();
+         if (pSocket->bind())
+         {
+            quint16 port = pSocket->localPort();
+            desktopInfo().setChromiumDevtoolsPort(port);
+            core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
+            pSocket->close();
+         }
+      }
 
       // initialize log
       core::system::initializeLog("rdesktop",
@@ -214,13 +248,33 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
-#ifdef __APPLE__
-      // font substituion for OSX Mavericks
-      // see: https://bugreports.qt-project.org/browse/QTBUG-32789
-      QFont::insertSubstitution(QString::fromUtf8(".Lucida Grande UI"),
-                                QString::fromUtf8("Lucida Grande"));
+      // set application attributes
+      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+      
+      // prepare command line arguments
+      static std::vector<char*> arguments(argv, argv + argc);
+      
+#ifndef NDEBUG
+      // disable web security for development builds (so we can
+      // get access to sourcemaps)
+      static char disableWebSecurity[] = "--disable-web-security";
+      arguments.push_back(disableWebSecurity);
 #endif
+      
+      // disable chromium renderer accessibility if requested (it can cause
+      // slowdown when used in conjunction with some applications; see e.g.
+      // https://github.com/rstudio/rstudio/issues/1990)
+      if (!core::system::getenv("RSTUDIO_NO_ACCESSIBILITY").empty())
+      {
+         static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
+         arguments.push_back(disableRendererAccessibility);
+      }
+      
+      // re-assign command line arguments
+      argc = (int) arguments.size();
+      argv = &arguments[0];
 
+      // prepare application for launch
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromUtf8("RStudio"),
@@ -276,8 +330,6 @@ int main(int argc, char* argv[])
          initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
       }
 
-      pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
-
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
@@ -301,21 +353,21 @@ int main(int argc, char* argv[])
 
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
+      bool devMode = false;
 
       // check for debug configuration
-#ifndef NDEBUG
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
       if (currentPath.complete("conf/rdesktop-dev.conf").exists())
       {
          confPath = currentPath.complete("conf/rdesktop-dev.conf");
          sessionPath = currentPath.complete("session/rsession");
          scriptsPath = currentPath.complete("desktop");
+         devMode = true;
 #ifdef _WIN32
          if (version.architecture() == ArchX64)
             sessionPath = installPath.complete("session/x64/rsession");
 #endif
       }
-#endif
 
       // if there is no conf path then release mode
       if (confPath.empty())
@@ -341,48 +393,33 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);
 
       // launch session
-      SessionLauncher sessionLauncher(sessionPath, confPath);
-      error = sessionLauncher.launchFirstSession(filename, pAppLaunch.get());
-      if (!error)
-      {
-         ProgressActivator progressActivator;
+      SessionLauncher sessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
+      sessionLauncher.launchFirstSession(installPath, devMode, pApp->arguments());
 
-         int result = pApp->exec();
+      ProgressActivator progressActivator;
 
-         sessionLauncher.cleanupAtExit();
+      int result = pApp->exec();
 
-         options.cleanUpScratchTempDir();
+      options.cleanUpScratchTempDir();
 
-         return result;
-      }
-      else
-      {
-         LOG_ERROR(error);
-
-         // These calls to processEvents() seem to be necessary to get
-         // readAllStandardError to work.
-         pApp->processEvents();
-         pApp->processEvents();
-         pApp->processEvents();
-
-         QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
-                              QString::fromUtf8("RStudio"),
-                              sessionLauncher.launchFailedErrorMessage());
-         errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
-                            QMessageBox::AcceptRole);
-         errorMsg.show();
-
-         pApp->exec();
-
-         return EXIT_FAILURE;
-      }
+      return result;
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
+
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance,
+                   HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine,
+                   int nShowCmd)
+{
+   return main(__argc, __argv);
+}
+#endif

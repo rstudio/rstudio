@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEve
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import java.util.ArrayList;
@@ -32,11 +33,13 @@ public class AddinsCommandManager
 {
    @Inject
    public AddinsCommandManager(EventBus events, 
+                               FilesServerOperations server,
                                final Session session)
    {
       events_ = events;
      
       bindings_ = new FileBacked<EditorKeyBindings>(
+            server,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());

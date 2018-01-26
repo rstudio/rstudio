@@ -1,11 +1,27 @@
+/*
+ * NewRSConnectAuthPage.java
+ *
+ * Copyright (C) 2009-18 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.Value;
@@ -113,7 +129,7 @@ public class NewRSConnectAuthPage
    @Override
    public void onWindowClosed(WindowClosedEvent event)
    {
-      if (event.getName().equals(AUTH_WINDOW_NAME))
+      if (event.getName() == AUTH_WINDOW_NAME)
       {
          waitingForAuth_.setValue(false, true);
          
@@ -323,7 +339,7 @@ public class NewRSConnectAuthPage
                   }
                   else
                   {
-                     Desktop.getFrame().browseUrl(result_.getPreAuthToken().getClaimUrl());
+                     Desktop.getFrame().browseUrl(StringUtil.notNull(result_.getPreAuthToken().getClaimUrl()));
                   }
                   
                   // close the window automatically when authentication finishes
@@ -371,7 +387,8 @@ public class NewRSConnectAuthPage
       if (!Desktop.isDesktop())
          return true;
       
-      if (Desktop.getFrame().isCentOS())
+      String platform = DesktopInfo.getPlatform();
+      if (platform.contentEquals("centos") || platform.contentEquals("rhel"))
          return false;
       
       return true;

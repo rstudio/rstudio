@@ -95,6 +95,12 @@ public:
       if (close)
          response_.setHeader("Connection", "close");
 
+      // make sure that if no body and content-length were specified,
+      // we send 0 for Content-Length
+      // otherwise, this response will be invalid
+      if (response_.body().empty() && response_.headerValue("Content-Length").empty())
+          response_.setContentLength(0);
+
       // call the response filter if we have one
       if (responseFilter_)
          responseFilter_(originalUri_, &response_);
@@ -115,6 +121,14 @@ public:
    {
       response_.assign(response);
       writeResponse(close);
+   }
+
+   virtual void writeResponseHeaders(Socket::Handler handler)
+   {
+      response_.setHeader("Date", util::httpDate());
+
+      // write only the header buffers
+      boost::asio::async_write(socket_, response_.headerBuffers(), handler);
    }
 
    virtual void writeError(const Error& error)

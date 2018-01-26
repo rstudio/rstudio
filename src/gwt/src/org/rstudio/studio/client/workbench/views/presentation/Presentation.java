@@ -2,7 +2,7 @@
  * Presentation.java
 
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -146,7 +146,7 @@ public class Presentation extends BasePresenter
             if (currentState_ != null)
             {
                FileSystemItem file = event.getSourceFile();
-               if (file.getPath().equals(currentState_.getFilePath()))
+               if (file.getPath() == currentState_.getFilePath())
                {    
                   int index = detectSlideIndex(event.getContents(),
                                                event.getCursorPos().getRow());
@@ -155,7 +155,7 @@ public class Presentation extends BasePresenter
                   
                   refreshPresentation();
                }
-               else if (file.getParentPathString().equals(getCurrentPresDir()) 
+               else if (file.getParentPathString() == getCurrentPresDir() 
                           &&
                         file.getExtension().toLowerCase().equals(".css"))
                {
@@ -243,7 +243,7 @@ public class Presentation extends BasePresenter
                @Override
                public void onResponseReceived(String path)
                {
-                  Desktop.getFrame().showFile(path);
+                  Desktop.getFrame().showFile(StringUtil.notNull(path));
                }
             });
       }

@@ -68,7 +68,6 @@ public class BrowseCap
       return Desktop.isDesktop() || !isSafari();
    }
    
-   
    public boolean isInternetExplorer()
    {
       return isUserAgent("trident");
@@ -93,12 +92,7 @@ public class BrowseCap
    {
       return Desktop.isDesktop() && isMacintosh();
    }
-   
-   public static boolean isCocoaDesktop()
-   {
-      return Desktop.isDesktop() && Desktop.getFrame().isCocoa();
-   }
-   
+  
    public static boolean isWindows()
    {
       return OPERATING_SYSTEM.equals("windows");
@@ -129,6 +123,11 @@ public class BrowseCap
       return isUserAgent("chrome");
    }
    
+   public static boolean isChromeServer()
+   {
+      return isChrome() && !Desktop.isDesktop();
+   }
+   
    public static boolean isSafari()
    {
       return isUserAgent("safari") && !isChrome();
@@ -151,10 +150,9 @@ public class BrowseCap
    
    public static double devicePixelRatio() 
    {
-      if (Desktop.isDesktop())
-         return Desktop.getFrame().devicePixelRatio();
-      else
-         return getDevicePixelRatio();
+      // TODO: validate that we can rely on browser to report even
+      // on desktop clients
+      return getDevicePixelRatio();
    }
 
    public static String getPlatformName()
@@ -243,9 +241,16 @@ public class BrowseCap
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
 
-      if (isWindowsDesktop() && Desktop.getFrame().getDisplayDpi() >= 192)
+      if (isWindowsDesktop())
       {
-         Document.get().getBody().addClassName("windows-highdpi");
+         Desktop.getFrame().getDisplayDpi(dpiString ->
+         {
+            Integer dpi = StringUtil.parseInt(dpiString, 96);
+            if (dpi >= 192)
+            {
+               Document.get().getBody().addClassName("windows-highdpi");
+            }
+         });
       }
 
       if (FIXED_UBUNTU_MONO)

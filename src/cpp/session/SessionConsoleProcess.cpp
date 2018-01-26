@@ -18,8 +18,6 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <core/Algorithm.hpp>
-
 #include <session/SessionModuleContext.hpp>
 
 #include "modules/SessionWorkbench.hpp"
@@ -60,13 +58,15 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
    core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                        "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
+                        R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")");
 
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
    {
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
+#else
+   core::system::setHomeToUserProfile(&shellEnv);
 #endif
 
    // ammend shell paths as appropriate
@@ -113,9 +113,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 }
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
-   : procInfo_(procInfo), interrupt_(false), interruptChild_(false),
-     newCols_(-1), newRows_(-1), pid_(-1), childProcsSent_(false), whitelistChildProc_(false),
-     lastInputSequence_(kIgnoreSequence), started_(false), envCaptureCmd_(kEnvCommand)
+   : procInfo_(procInfo), envCaptureCmd_(kEnvCommand)
 {
    regexInit();
 
@@ -128,9 +126,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
-     interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
-     pid_(-1), childProcsSent_(false), whitelistChildProc_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), envCaptureCmd_(kEnvCommand)
+     envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -140,9 +136,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
-     interrupt_(false), interruptChild_(false), newCols_(-1), newRows_(-1),
-     pid_(-1), childProcsSent_(false), whitelistChildProc_(false), lastInputSequence_(kIgnoreSequence),
-     started_(false), envCaptureCmd_(kEnvCommand)
+     envCaptureCmd_(kEnvCommand)
 {
    commonInit();
 }
@@ -308,18 +302,16 @@ void ConsoleProcess::enqueInput(const Input& input)
 
       // set everything in queue to "ignore" so it will be pulled from
       // queue as-is, even with gaps
-      for (std::deque<Input>::iterator it = inputQueue_.begin();
-           it != inputQueue_.end(); it++)
+      for (auto &it : inputQueue_)
       {
-         (*it).sequence = kIgnoreSequence;
+         it.sequence = kIgnoreSequence;
       }
       lastInputSequence_ = kIgnoreSequence;
       return;
    }
 
    // insert in order by sequence
-   for (std::deque<Input>::iterator it = inputQueue_.begin();
-        it != inputQueue_.end(); it++)
+   for (auto it = inputQueue_.begin(); it != inputQueue_.end(); it++)
    {
       if (input.sequence < (*it).sequence)
       {
@@ -360,11 +352,10 @@ ConsoleProcess::Input ConsoleProcess::dequeInput()
    {
       // set everything in queue to "ignore" so it will be pulled from
       // queue as-is, even with gaps
-      for (std::deque<Input>::iterator it = inputQueue_.begin();
-           it != inputQueue_.end(); it++)
+      for (auto &it : inputQueue_)
       {
-         lastInputSequence_ = (*it).sequence;
-         (*it).sequence = kIgnoreSequence;
+         lastInputSequence_ = it.sequence;
+         it.sequence = kIgnoreSequence;
       }
 
       input.sequence = kIgnoreSequence;
@@ -838,7 +829,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
    {
       // return existing ConsoleProcess if it is still running
       ConsoleProcessPtr proc = findProcByHandle(procInfo->getHandle());
-      if (proc != NULL && proc->isStarted())
+      if (proc != nullptr && proc->isStarted())
       {
          cp = proc;
          cp->procInfo_->setRestarted(false);
@@ -971,7 +962,7 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
       }
 
       std::string varName = line.substr(0, equalSign);
-      if (!varName.compare("_"))
+      if (varName == "_")
          continue;
 
       core::system::setenv(&environment,

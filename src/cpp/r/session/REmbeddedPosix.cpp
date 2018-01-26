@@ -320,7 +320,7 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
    // preserve old handler and set new one
    s_oldPolledEventHandler = R_PolledEvents;
    R_PolledEvents = polledEventHandler;
-
+   
    // set R_wait_usec
    if (R_wait_usec > 10000 || R_wait_usec == 0)
       R_wait_usec = 10000;

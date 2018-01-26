@@ -16,6 +16,8 @@
 #ifndef FILE_LOG_WRITER_HPP
 #define FILE_LOG_WRITER_HPP
 
+#include <boost/thread.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/LogWriter.hpp>
 
@@ -44,6 +46,7 @@ private:
     int logLevel_;
     FilePath logFile_;
     FilePath rotatedLogFile_;
+    boost::mutex mutex_;
 };
 
 } // namespace core

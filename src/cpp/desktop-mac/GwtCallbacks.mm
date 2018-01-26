@@ -1,3 +1,17 @@
+/*
+ * GwtCallbacks.mm
+ *
+ * Copyright (C) 2009-17 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -8,6 +22,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/Version.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -885,6 +900,7 @@ private:
 - (void) openTerminal: (NSString*) terminalPath
          workingDirectory: (NSString*) workingDirectory
          extraPathEntries: (NSString*) extraPathEntries
+         shellType: (int) shellType
 {
    // append extra path entries to our path before launching
    if ([extraPathEntries length] > 0)
@@ -1026,11 +1042,8 @@ private:
    NSString *systemVersion =
    [systemVersionDictionary objectForKey:@"ProductVersion"];
    
-   std::string version(
-                       [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-   
-   return boost::algorithm::starts_with(version, "10.9") ||
-          boost::algorithm::starts_with(version, "10.10");
+   core::Version currentVersion([systemVersion cStringUsingEncoding: NSASCIIStringEncoding]);
+   return currentVersion >= Version("10.9");
 }
 
 - (Boolean) isCentOS
@@ -1180,6 +1193,28 @@ enum RS_NSActivityOptions : uint64_t
       return YES;
    else
       return NO;
+}
+
+- (void) showLicenseDialog
+{
+   [[Activation sharedActivation] showLicenseDialog];
+}
+
+- (NSString *) getInitMessages
+{
+   std::string message = [[Activation sharedActivation] currentLicenseStateMessage];
+   return [NSString stringWithUTF8String:message.c_str()];
+}
+
+- (NSString*) getLicenseStatusMessage
+{
+   std::string message = [[Activation sharedActivation] licenseStatus];
+   return [NSString stringWithUTF8String:message.c_str()];
+}
+
+- (BOOL) allowProductUsage
+{
+   return [[Activation sharedActivation] allowProductUsage];
 }
 
 @end

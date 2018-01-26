@@ -316,9 +316,18 @@
         else
           return(paste("Oracle R frame:", sqlTable))
       }
-      else if (is(obj, "externalptr"))
+      else if (.rs.isExternalPointer(obj))
       {
-         return("External pointer")
+         class <- class(obj)
+         if (length(class) && !identical(class, "externalptr"))
+         {
+            fmt <- "External pointer of class '%s'"
+            return(sprintf(fmt, class[[1]]))
+         }
+         else
+         {
+            return("External pointer")
+         }
       }
       else if (is.data.frame(obj))
       {
@@ -423,7 +432,7 @@
    obj <- get(objName, env)
    # objects containing null external pointers can crash when
    # evaluated--display generically (see case 4092)
-   hasNullPtr <- .rs.hasNullExternalPointer(obj)
+   hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
    if (hasNullPtr) 
    {
       val <- "<Object with null pointer>"
@@ -633,33 +642,5 @@
 {
    .rs.valueContents(get(objName, env));
 })
-
-# attempt to determine whether the given object contains a null external
-# pointer
-.rs.addFunction("hasNullExternalPointer", function(obj)
-{
-   if (isS4(obj)) 
-   {
-      # this is an S4 object; recursively check its slots for null pointers
-      any(sapply(slotNames(obj), function(name) {
-         hasNullPtr <- FALSE
-         # it's possible to cheat the S4 object system and destroy the contents
-         # of a slot via attr<- assignments; in this case slotNames will
-         # contain slots that don't exist, and trying to access those slots 
-         # throws an error.
-         tryCatch({
-           hasNullPtr <- .rs.hasNullExternalPointer(slot(obj, name))
-           }, 
-           error = function(err) {})
-         hasNullPtr
-      }))
-   } 
-   else
-   {
-      # check the object itself for a null pointer
-      inherits(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
-   }
-})
-
 
 

@@ -1,7 +1,7 @@
 /*
  * DesktopPosixApplication.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ bool PosixApplication::event(QEvent* pEvent)
       // get filename
       QString filename = static_cast<QFileOpenEvent*>(pEvent)->file();
 
-      if (activationWindow() == NULL)
+      if (activationWindow() == nullptr)
       {
          // if we don't yet have an activation window then this is a startup
          // request -- save it so DesktopMain can pull it out later
@@ -63,7 +63,7 @@ bool PosixApplication::event(QEvent* pEvent)
          {
             std::vector<std::string> args;
             args.push_back(filePath.absolutePath());
-            launchRStudio(args);
+            pAppLauncher_->launchRStudio(args);
          }
          else
          {

@@ -67,8 +67,9 @@ public class LocatorPanel extends LayoutPanel
             int x = event.getNativeEvent().getClientX();
             int y = event.getNativeEvent().getClientY();
 
-            Point p = new Point(
-                  x - el.getAbsoluteLeft(), y - el.getAbsoluteTop());
+            Point p = Point.create(
+                  x - el.getAbsoluteLeft(),
+                  y - el.getAbsoluteTop());
 
             showFeedbackAt(p);
 

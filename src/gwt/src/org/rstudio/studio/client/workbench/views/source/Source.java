@@ -377,6 +377,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.notebookClearOutput());
       dynamicCommands_.add(commands.notebookClearAllOutput());
       dynamicCommands_.add(commands.notebookToggleExpansion());
+      dynamicCommands_.add(commands.sendToTerminal());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -1018,7 +1019,7 @@ public class Source implements InsertSourceHandler,
             continue;
          
          // check for identical titles
-         if (handle.getTitle().equals(target.getTitle()))
+         if (handle.getTitle() == target.getTitle())
          {
             ((ObjectExplorerEditingTarget)editors_.get(i)).update(handle);
             ensureVisible(false);
@@ -1089,7 +1090,7 @@ public class Source implements InsertSourceHandler,
       for (int idx = 0; idx < editors_.size(); idx++)
       {
          String path = editors_.get(idx).getPath();
-         if (path != null && profilePath.equals(path))
+         if (path != null && path == profilePath)
          {
             ensureVisible(false);
             view_.selectTab(idx);
@@ -1408,7 +1409,7 @@ public class Source implements InsertSourceHandler,
                   }  
                };
                
-               if (!result.type.equals(NewRdDialog.Result.TYPE_NONE))
+               if (result.type != NewRdDialog.Result.TYPE_NONE)
                {
                   server_.createRdShell(
                      result.name, 
@@ -2204,7 +2205,7 @@ public class Source implements InsertSourceHandler,
    private EditingTarget getEditingTargetForId(String id)
    {
       for (EditingTarget target : editors_)
-         if (id.equals(target.getId()))
+         if (id == target.getId())
             return target;
 
       return null;
@@ -2507,7 +2508,7 @@ public class Source implements InsertSourceHandler,
    {
       // determine the type
       final EditableFileType docType;
-      if (event.getType().equals(NewDocumentWithCodeEvent.R_SCRIPT))
+      if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
          docType = FileTypeRegistry.R;
       else
          docType = FileTypeRegistry.RMARKDOWN;
@@ -3338,7 +3339,7 @@ public class Source implements InsertSourceHandler,
 
       final String activeEditorId = activeEditor_.getId();
 
-      if (editors_.get(event.getTabIndex()).getId().equals(activeEditorId))
+      if (editors_.get(event.getTabIndex()).getId() == activeEditorId)
       {
          // scan the source navigation history for an entry that can
          // be used as the next active tab (anything that doesn't have
@@ -3348,7 +3349,7 @@ public class Source implements InsertSourceHandler,
                {
                   public boolean includeEntry(SourceNavigation navigation)
                   {
-                     return !navigation.getDocumentId().equals(activeEditorId);
+                     return navigation.getDocumentId() != activeEditorId;
                   }
                });
 
@@ -3358,7 +3359,7 @@ public class Source implements InsertSourceHandler,
          {
             for (int i=0; i<editors_.size(); i++)
             {
-               if (srcNav.getDocumentId().equals(editors_.get(i).getId()))
+               if (srcNav.getDocumentId() == editors_.get(i).getId())
                {
                   view_.selectTab(i);
                   break;
@@ -3481,7 +3482,11 @@ public class Source implements InsertSourceHandler,
          paths[i] = target.getPath();
       }
 
-      events_.fireEvent(new DocTabsChangedEvent(ids, icons, names, paths));
+      String activeId = (activeEditor_ != null)
+            ? activeEditor_.getId()
+            : null;
+            
+      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
 
       view_.manageChevronVisibility();
    }
@@ -3591,6 +3596,8 @@ public class Source implements InsertSourceHandler,
       
       // manage multi-tab commands
       manageMultiTabCommands();
+      
+      manageTerminalCommands();
       
       activeCommands_ = newCommands;
       
@@ -3747,7 +3754,12 @@ public class Source implements InsertSourceHandler,
       commands_.saveAllSourceDocs().setEnabled(false);
    }
    
-  
+   private void manageTerminalCommands()
+   {
+      if (!session_.getSessionInfo().getAllowShell())
+         commands_.sendToTerminal().setVisible(false);
+   }
+   
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
    {
       HashSet<AppCommand> temp = new HashSet<AppCommand>(commands);
@@ -4302,7 +4314,7 @@ public class Source implements InsertSourceHandler,
       // set the extended type of the specified source file
       for (EditingTarget editor : editors_)
       {
-         if (editor.getId().equals(e.getDocId()))
+         if (editor.getId() == e.getDocId())
          {
             editor.adaptToExtendedFileType(e.getExtendedType());
             break;

@@ -37,6 +37,7 @@ enum FileMode
    UserReadWriteExecuteMode,
    UserReadWriteGroupReadMode,
    UserReadWriteGroupEveryoneReadMode,
+   UserReadWriteExecuteGroupEveryoneReadExecuteMode,
    EveryoneReadMode,
    EveryoneReadWriteMode,
    EveryoneReadWriteExecuteMode
@@ -63,6 +64,10 @@ inline Error changeFileMode(const FilePath& filePath,
 
       case UserReadWriteGroupEveryoneReadMode:
          mode =  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+         break;
+
+      case UserReadWriteExecuteGroupEveryoneReadExecuteMode:
+         mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
          break;
 
       case EveryoneReadMode:
@@ -140,6 +145,8 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
       *pFileMode = EveryoneReadWriteMode;
    else if (mode == "rwxrwxrwx")
       *pFileMode = EveryoneReadWriteExecuteMode;
+   else if (mode == "rwxr-xr-x")
+      *pFileMode = UserReadWriteExecuteGroupEveryoneReadExecuteMode;
    else
        return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
@@ -162,6 +169,25 @@ inline Error isFileReadable(const FilePath& filePath, bool* pReadable)
    else 
    {
       // some other error (unexpected)
+      return systemError(errno, ERROR_LOCATION);
+   }
+   return Success();
+}
+
+inline Error isFileWriteable(const FilePath& filePath, bool* pWriteable)
+{
+   int result = ::access(filePath.absolutePath().c_str(), W_OK);
+   if (result == 0)
+   {
+      // user has access
+      *pWriteable = true;
+   }
+   else if (errno == EACCES)
+   {
+      *pWriteable = false;
+   }
+   else
+   {
       return systemError(errno, ERROR_LOCATION);
    }
    return Success();

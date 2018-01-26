@@ -243,7 +243,7 @@ public class TextEditingTargetRMarkdownHelper
          @Override
          public void execute(CompileNotebookv2Options input)
          { 
-            renderNotebookv2(sourceDoc, null, input.getFormat());
+            renderNotebookv2(sourceDoc, input.getFormat(), null);
             
             // save options for this document
             HashMap<String, String> changedProperties 
@@ -417,7 +417,6 @@ public class TextEditingTargetRMarkdownHelper
          else if (fileType.requiresKnit() && 
                   !session_.getSessionInfo().getRMarkdownPackageAvailable())
          {
-   
             showKnitrPreviewWarning(display, feature, "1.2");
             return false;
          }
@@ -532,9 +531,9 @@ public class TextEditingTargetRMarkdownHelper
          
          // If this format produces HTML and is marked as Shiny, treat it as
          // a Shiny format
-         if (template.getFormat(outFormat).getExtension().equals("html") &&
-             tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY).equals(
-                       RmdFrontMatter.SHINY_RUNTIME))
+         if (template.getFormat(outFormat).getExtension() == "html" &&
+             tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY) ==
+                       RmdFrontMatter.SHINY_RUNTIME)
          {
             isShiny = true;
          }
@@ -550,7 +549,7 @@ public class TextEditingTargetRMarkdownHelper
    
    public boolean isRuntimeShinyPrerendered(String yaml)
    {
-      return getRuntime(yaml).equals(RmdFrontMatter.SHINY_PRERENDERED_RUNTIME);
+      return getRuntime(yaml) == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME;
    }
    
    public boolean isRuntimeShiny(String yaml)
@@ -694,7 +693,7 @@ public class TextEditingTargetRMarkdownHelper
             }
             String treeFormat = yamlTree.getKeyValue(RmdFrontMatter.OUTPUT_KEY);
 
-            if (treeFormat.equals(format))
+            if (treeFormat == format)
             {
                // case 1: the output format is a simple format and we're not
                // changing to a different format
@@ -736,7 +735,7 @@ public class TextEditingTargetRMarkdownHelper
                // case 3: the output format is already not simple
                treeFormat = yamlTree.getKeyValue(format);
                
-               if (treeFormat.equals(RmdFrontMatter.DEFAULT_FORMAT))
+               if (treeFormat == RmdFrontMatter.DEFAULT_FORMAT)
                {
                   if (isDefault)
                   {

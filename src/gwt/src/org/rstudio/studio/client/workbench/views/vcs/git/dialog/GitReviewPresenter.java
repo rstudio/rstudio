@@ -283,7 +283,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
                   StatusAndPath vcsStatus = StatusAndPath.fromInfo(
                         event.getFileChange().getFile().getGitStatus());
-                  if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
+                  if (paths.get(0).getRawPath() == vcsStatus.getRawPath())
                   {
                      gitState.refresh(false);
                   }
@@ -444,7 +444,7 @@ public class GitReviewPresenter implements ReviewPresenter
                      }
                      else
                      {
-                        if (view_.getCommitMessage().getText().equals(description))
+                        if (view_.getCommitMessage().getText() == description)
                            view_.getCommitMessage().setText("");
                      }
                   }
@@ -778,7 +778,7 @@ public class GitReviewPresenter implements ReviewPresenter
       }
       softModeSwitch_ = false;
 
-      if (!item.getPath().equals(currentFilename_))
+      if (item.getPath() != currentFilename_)
       {
          clearDiff();
          currentFilename_ = item.getPath();

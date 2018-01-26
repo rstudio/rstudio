@@ -7,11 +7,16 @@ if "%1" == "clean" (
       if exist CMakeCache.txt del CMakeCache.txt
 )
 
-setlocal
+REM check for required programs on PATH
+for %%F in (ant cmake) do (
+      where /q %%F
+      if ERRORLEVEL 1 (
+            echo '%%F' not found on PATH; exiting
+            exit /b 1
+      )
+)
 
-REM Put our MinGW toolchain on the PATH
-set MINGW64_32BIT_PATH=%CD%\..\..\dependencies\windows\Rtools33\mingw_32\bin
-set PATH=%MINGW64_32BIT_PATH%;%PATH%
+setlocal
 
 REM Remove system Rtools from PATH
 call set PATH=%PATH:C:\Rtools\bin=%
@@ -31,12 +36,15 @@ cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
-cmake -G"MinGW Makefiles" ^
+
+REM Configure and build the project. (Note that Windows / MSVC builds require
+REM that we specify the build type both at configure time and at build time)
+cmake -G"Visual Studio 14 2015" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\.. || goto :error
-mingw32-make %MAKEFLAGS% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree
@@ -46,6 +54,8 @@ if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
 )
 
 REM create packages
+set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+set "VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC"
 cd "%BUILD_DIR%"
 if not "%1" == "quick" cpack -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP

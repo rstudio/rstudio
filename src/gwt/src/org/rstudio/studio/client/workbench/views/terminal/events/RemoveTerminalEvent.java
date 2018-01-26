@@ -1,7 +1,7 @@
 /*
  * RemoveTerminalEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,9 @@ import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent.Handler;
 
+/**
+ * Eliminate a terminal that was killed via rstudioapi::terminalKill.
+ */
 public class RemoveTerminalEvent extends GwtEvent<Handler>
 {
    public static class Data extends JavaScriptObject
@@ -60,5 +63,5 @@ public class RemoveTerminalEvent extends GwtEvent<Handler>
 
    private final String handle_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

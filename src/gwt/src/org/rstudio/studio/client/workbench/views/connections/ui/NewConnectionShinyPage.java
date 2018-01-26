@@ -31,10 +31,10 @@ import com.google.gwt.user.client.ui.Widget;
 public class NewConnectionShinyPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionShinyPage(final NewConnectionInfo info)
+   public NewConnectionShinyPage(final NewConnectionInfo info, String subTitle)
    {
       super(info.getName(),
-            "",
+            subTitle,
             info.getName() + " Connection",
             StringUtil.isNullOrEmpty(info.iconData()) ? null
                   : new ImageResourceUrl(new SafeUri()

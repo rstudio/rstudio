@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -215,9 +216,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
       if (name.length() > 0 && dir.length() > 0)
       {
          String projDir = FileSystemItem.createDir(dir).completePath(name);
-         String projFile = projFileFromDir(projDir);
+         String projFile = Projects.projFileFromDir(projDir);
          String newDefaultLocation = null;
-         if (!dir.equals(defaultNewProjectLocation_))
+         if (dir != defaultNewProjectLocation_.getPath())
             newDefaultLocation = dir;
          
          return new NewProjectResult(projFile, 
@@ -227,7 +228,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
                                      null,
                                      getNewPackageOptions(),
                                      getNewShinyAppOptions(),
-                                     getProjectTemplateOptions());
+                                     getProjectTemplateOptions(),
+                                     null);
       }
       else
       {

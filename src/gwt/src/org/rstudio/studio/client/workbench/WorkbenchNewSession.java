@@ -1,7 +1,7 @@
 /*
  * WorkbenchNewSession.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,18 @@
 
 package org.rstudio.studio.client.workbench;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.ProjectOpener;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 public class WorkbenchNewSession
 {    
    public void openNewSession(GlobalDisplay globalDisplay,
                               WorkbenchContext workbenchContext,
+                              final WorkbenchServerOperations serverOperations,
                               ProjectOpener projectOpener,
                               ApplicationServerOperations server)
    {
@@ -35,7 +38,7 @@ public class WorkbenchNewSession
       else
       {
          Desktop.getFrame().openSessionInNewWindow(
-               workbenchContext.getCurrentWorkingDir().getPath());
+               StringUtil.notNull(workbenchContext.getCurrentWorkingDir().getPath()));
       }
    }
 }

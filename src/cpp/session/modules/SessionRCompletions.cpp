@@ -61,24 +61,27 @@ char ends(char begins) {
 
 bool isBinaryOp(char character)
 {
-   return character == '~' ||
-         character == '!' ||
-         character == '@' ||
-         character == '$' ||
-         character == '%' ||
-         character == '^' ||
-         character == '&' ||
-         character == '*' ||
-         character == '-' ||
-         character == '+' ||
-         character == '*' ||
-         character == '/' ||
-         character == '=' ||
-         character == '|' ||
-         character == '<' ||
-         character == '>' ||
-         character == '?';
-
+  switch(character) {
+    case '~':
+    case '!':
+    case '@':
+    case '$':
+    case '%':
+    case '^':
+    case '&':
+    case '-':
+    case '+':
+    case '*':
+    case '/':
+    case '=':
+    case '|':
+    case '<':
+    case '>':
+    case '?':
+    return true;
+    default:
+    return false;
+  }
 }
 
 } // end anonymous namespace
@@ -90,7 +93,7 @@ std::string finishExpression(const std::string& expression)
    // If the last character of the expression is a binary op, then we
    // place a '.' after it
    int n = expression.length();
-   if (isBinaryOp(expression[n - 1]))
+   if (n > 0 && isBinaryOp(expression[n - 1]))
       result.append(".");
 
    std::vector<char> terminators;
@@ -412,6 +415,7 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
       builder.add("exports", pkgInfo.exports);
       builder.add("types", pkgInfo.types);
       builder.add("functions", core::r_util::infoToFormalMap(pkgInfo.functionInfo));
+      builder.add("datasets", pkgInfo.datasets);
       parent.add(*it, builder);
    }
    

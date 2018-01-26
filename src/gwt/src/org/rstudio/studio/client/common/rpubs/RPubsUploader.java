@@ -115,7 +115,7 @@ public class RPubsUploader
          {
             // make sure it applies to our context
             RPubsUploadStatusEvent.Status status = event.getStatus();
-            if (!status.getContextId().equals(contextId_))
+            if (status.getContextId() != contextId_)
                return;
             
             uploadInProgress_ = false;

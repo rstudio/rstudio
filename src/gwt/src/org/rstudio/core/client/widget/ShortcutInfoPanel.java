@@ -100,7 +100,7 @@ public class ShortcutInfoPanel extends Composite
                ShortcutInfo info = shortcuts.get(i);
                if (info.getDescription() == null ||
                    info.getShortcuts().size() == 0 || 
-                   !info.getGroupName().equals(colGroupName))
+                   info.getGroupName() != colGroupName)
                {
                   continue;
                }

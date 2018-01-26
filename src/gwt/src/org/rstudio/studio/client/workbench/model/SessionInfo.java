@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -195,7 +195,7 @@ public class SessionInfo extends JavaScriptObject
       String[] availableVcs = getAvailableVCS();
       for (int i=0; i<availableVcs.length; i++)
       {
-         if (availableVcs[i].equals(id))
+         if (availableVcs[i] == id)
             return true;
       }
       
@@ -367,6 +367,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
+   public final native boolean getAllowFullUI() /*-{
+      return this.allow_full_ui;
+   }-*/;
+  
    public final native boolean getAllowExternalPublish() /*-{
       return this.allow_external_publish;
    }-*/;
@@ -411,12 +415,24 @@ public class SessionInfo extends JavaScriptObject
       return this.rmarkdown_available;
    }-*/;
    
+   public final native void setRMarkdownPackageAvailable(boolean available) /*-{
+      this.rmarkdown_available = available;
+   }-*/;
+   
    public final native boolean getKnitParamsAvailable()  /*-{
       return this.knit_params_available;
    }-*/;
    
+   public final native void setKnitParamsAvailable(boolean available) /*-{
+      this.knit_params_available = available;
+   }-*/;
+   
    public final native boolean getKnitWorkingDirAvailable() /*-{
       return this.knit_working_dir_available;
+   }-*/;
+
+   public final native void setKnitWorkingDirAvailable(boolean available) /*-{
+      this.knit_working_dir_available = available;
    }-*/;
    
    public final native boolean getClangAvailable() /*-{
@@ -461,6 +477,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getTutorialApiAvailable() /*-{
       return this.tutorial_api_available;
+   }-*/;
+   
+   public final native boolean getTutorialApiParentNotifyAvailable() /*-{
+      return this.tutorial_api_parent_notify_available;
    }-*/;
    
    public final native String getTutorialApiClientOrigin() /*-{
@@ -509,5 +529,9 @@ public class SessionInfo extends JavaScriptObject
    
    public final native String getDefaultRSConnectServer() /*-{
       return this.default_rsconnect_server;
+   }-*/;
+   
+   public final native String getRLibsUser() /*-{
+      return this.r_libs_user;
    }-*/;
 }

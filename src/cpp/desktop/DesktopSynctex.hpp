@@ -88,7 +88,7 @@ protected:
    void onClosed(const QString& pdfFile);
    void onSyncSource(const QString& srcFile, const QPoint& sourceLoc);
 
-public slots:
+public Q_SLOTS:
    
 
 private:

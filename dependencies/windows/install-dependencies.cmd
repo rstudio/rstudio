@@ -8,10 +8,8 @@ set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_GCC493_FILE=boost-1.63-win-rtools33-gcc493.zip
-set RTOOLS_FILE=Rtools33.exe
-set GIN_FILE=gin-1.5.zip
-set GWT_FILE=gwt-2.7.0.zip
+set GIN_FILE=gin-2.1.2.zip
+set GWT_FILE=gwt-2.8.1.zip
 set SELENIUM_FILE=selenium-java-2.37.0.zip
 set SELENIUM_SERVER_FILE=selenium-server-standalone-2.37.0.jar
 set JUNIT_FILE=junit-4.9b3.jar
@@ -21,6 +19,8 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
+set OPENSSL_FILES=openssl-1.0.2m.zip
+set BOOST_FILES=boost-1.65.1-win-msvc14.zip
 
 set PANDOC_VERSION=1.19.2.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -32,25 +32,8 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
-set RTOOLS_DIR=%RTOOLS_FILE:.exe=%
-if not exist %RTOOLS_DIR% (
-  wget %WGET_ARGS% "%BASEURL%%RTOOLS_FILE%"
-  echo Installing '%RTOOLS_FILE%' -- please wait...
-  start /wait Rtools33.exe /verysilent /dir=%CD%\%RTOOLS_DIR%
-  if %ERRORLEVEL% EQU 0 (
-    echo '%RTOOLS_FILE%' successfully installed!
-    del %RTOOLS_FILE%
-  ) else (
-    echo Failed to install '%RTOOLS_FILE%'!
-  )
-)
-
-if not exist boost-1.63-win-rtools33-gcc493 (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC493_FILE%"
-  echo Unzipping %BOOST_GCC493_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_GCC493_FILE%" -d boost-1.63-win-rtools33-gcc493
-  del "%BOOST_GCC493_FILE%"
-)
+set QT_VERSION=5.10.0
+set QT_FILE=QtSDK-%QT_VERSION%-msvc2015.7z
 
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
@@ -99,25 +82,51 @@ if not exist winpty-0.4.3-msys2-2.7.0 (
   del %WINPTY_FILES%
 )
 
+if not exist %OPENSSL_FILES:~0,-4% (
+  wget %WGET_ARGS% "%BASEURL%%OPENSSL_FILES%"
+  echo Unzipping %OPENSSL_FILES%
+  unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
+  del %OPENSSL_FILES%
+)
+
+if not exist %BOOST_FILES:~0,-4%* (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_FILES%"
+  echo Unzipping %BOOST_FILES%
+  unzip %UNZIP_ARGS% "%BOOST_FILES%"
+  del %BOOST_FILES%
+)
+
+if not exist C:\Qt%QT_VERSION% (
+  if not exist C:\Qt\Qt%QT_VERSION% (
+    if not exist C:\Qt\%QT_VERSION% (
+      wget %WGET_ARGS% %BASEURL%%QT_FILE%
+      echo Extracting %QT_FILE%
+      7z x %QT_FILE%
+      del %QT_FILE%
+      move Qt%QT_VERSION% C:\Qt%QT_VERSION%
+    )
+  )
+)
+
 if not exist ..\..\src\gwt\lib (
   mkdir ..\..\src\gwt\lib
 )
 pushd ..\..\src\gwt\lib
 
-if not exist gin\1.5 (
+if not exist gin\2.1.2 (
   wget %WGET_ARGS% "%BASEURL%%GIN_FILE%"
-  mkdir gin\1.5
+  mkdir gin\2.1.2
   echo Unzipping %GIN_FILE%
-  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\1.5
+  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\2.1.2
   del "%GIN_FILE%"
 )
 
-if not exist gwt\2.7.0 (
+if not exist gwt\2.8.1 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.7.0 gwt\2.7.0
+  move gwt-2.8.1 gwt\2.8.1
   del "%GWT_FILE%"
 )
 

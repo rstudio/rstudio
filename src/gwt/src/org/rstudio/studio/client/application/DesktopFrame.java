@@ -1,7 +1,7 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,47 +14,59 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+
+import com.google.gwt.user.client.Command;
 
 /**
  * This is an interface straight through to a C++ object that lives
  * in the Qt desktop frame.
+ * 
+ * String arguments must not be null.
  */
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
 {
-   boolean isCocoa();
    void browseUrl(String url);
    
-   String getOpenFileName(String caption,
-                          String label,
-                          String dir,
-                          String filter,
-                          boolean canChooseDirectories);
+   void getOpenFileName(String caption,
+                        String label,
+                        String dir,
+                        String filter,
+                        boolean canChooseDirectories,
+                        CommandWithArg<String> callback);
    
-   String getSaveFileName(String caption,
-                          String label,
-                          String dir, 
-                          String defaultExtension, 
-                          boolean forceDefaultExtension);
+   void getSaveFileName(String caption,
+                        String label,
+                        String dir, 
+                        String defaultExtension, 
+                        boolean forceDefaultExtension,
+                        CommandWithArg<String> callback);
    
-   String getExistingDirectory(String caption,
-                               String label,
-                               String dir);
+   void getExistingDirectory(String caption,
+                             String label,
+                             String dir,
+                             CommandWithArg<String> callback);
    
-   void undo(boolean forAce);
-   void redo(boolean forAce);
+   void undo();
+   void redo();
    
    void clipboardCut();
    void clipboardCopy();
    void clipboardPaste();
    
    void setClipboardText(String text);
-   String getClipboardText();
+   void getClipboardText(CommandWithArg<String> callback);
    
    void setGlobalMouseSelection(String selection);
-   String getGlobalMouseSelection();
+   void getGlobalMouseSelection(CommandWithArg<String> callback);
+   
+   void doesWindowExistAtCursorPosition(CommandWithArg<Boolean> callback);
+   void getCursorPosition(CommandWithArg<Point> callback);
    
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
@@ -67,9 +79,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int x, int y, int width,
-                                  int height);
+                                  int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
-         boolean showDesktopToolbar);
+         boolean showDesktopToolbar, Command onPrepared);
    void closeNamedWindow(String name);
    
    // interface for plot export where coordinates are specified relative to
@@ -87,37 +99,36 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                int top, 
                                int width, 
                                int height);
+
+   void printText(String text);
    
-   boolean supportsClipboardMetafile();
+   void supportsClipboardMetafile(CommandWithArg<Boolean> callback);
 
-   int showMessageBox(int type,
-                      String caption,
-                      String message,
-                      String buttons,
-                      int defaultButton,
-                      int cancelButton);
+   void showMessageBox(int type,
+                       String caption,
+                       String message,
+                       String buttons,
+                       int defaultButton,
+                       int cancelButton,
+                       CommandWithArg<String> callback);
 
-   String promptForText(String title,
-                        String label,
-                        String initialValue,
-                        boolean usePasswordMask,
-                        String rememberPasswordPrompt,
-                        boolean rememberByDefault,
-                        boolean numbersOnly,
-                        int selectionStart,
-                        int selectionLength, String okButtonCaption);
+   void promptForText(String title,
+                      String label,
+                      String initialValue,
+                      boolean usePasswordMask,
+                      String rememberPasswordPrompt,
+                      boolean rememberByDefault,
+                      boolean numbersOnly,
+                      int selectionStart,
+                      int selectionLength,
+                      String okButtonCaption,
+                      CommandWithArg<String> callback);
 
-   void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
-
-   String getRVersion();
-   String chooseRVersion();
-   boolean canChooseRVersion();
-
-   double devicePixelRatio();
-   int getDisplayDpi();
    
+   void getDisplayDpi(CommandWithArg<String> callback);
+
    void cleanClipboard();
    
    public static final int PENDING_QUIT_NONE = 0;
@@ -134,22 +145,16 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void openTerminal(String terminalPath,
                      String workingDirectory,
-                     String extraPathEntries);
+                     String extraPathEntries,
+                     int shellType);
 
-   String getFixedWidthFontList();
-   String getFixedWidthFont();
    void setFixedWidthFont(String font);
-   
-   String getZoomLevels();
-   double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    
-   // mac-specific zoom calls
-   void macZoomActualSize();
-   void macZoomIn();
-   void macZoomOut();
-   
-   String getDesktopSynctexViewer();
+   void showLicenseDialog();
+   void getInitMessages(CommandWithArg<String> callback);
+   void getLicenseStatusMessage(CommandWithArg<String> callback);
+   void allowProductUsage(CommandWithArg<Boolean> callback);
    
    void externalSynctexPreview(String pdfPath, int page);
    
@@ -158,7 +163,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                             int line,
                             int column);
    
-   boolean supportsFullscreenMode();
    void toggleFullscreenMode();
    void showKeyboardShortcutHelp();
    
@@ -168,11 +172,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadViewerZoomWindow(String url);
    
    void setShinyDialogUrl(String url);
-   
-   boolean isOSXMavericks();
-   boolean isCentOS();
-
-   String getScrollingCompensationType();
    
    void setBusy(boolean busy);
    

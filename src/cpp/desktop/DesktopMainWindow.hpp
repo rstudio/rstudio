@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,9 +22,11 @@
 #include <QtGui>
 #include <QSessionManager>
 
+#include "DesktopInfo.hpp"
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
+#include "DesktopApplicationLaunch.hpp"
 
 namespace rstudio {
 namespace desktop {
@@ -36,38 +38,37 @@ class MainWindow : public GwtWindow
    Q_OBJECT
 
 public:
-   MainWindow(QUrl url=QUrl());
+   explicit MainWindow(QUrl url=QUrl());
 
 public:
    QString getSumatraPdfExePath();
-   void evaluateJavaScript(QString jsCode);
    void launchSession(bool reload);
+   void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
+                      const std::string& initialDir = std::string());
 
-public slots:
+public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
-   void manageCommand(QString cmdId, QAction* pAction);
-   void manageCommandVisibility(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
+   void onLicenseLost(QString licenseMessage);
 
-signals:
+Q_SIGNALS:
    void firstWorkbenchInitialized();
 
-protected slots:
+protected Q_SLOTS:
    void onCloseWindowShortcut();
-   void onJavaScriptWindowObjectCleared();
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);
 
 protected:
-   virtual void closeEvent(QCloseEvent*);
-   virtual double getZoomLevel();
-   virtual void setZoomLevel(double zoomLevel);
+   void closeEvent(QCloseEvent*) override;
+   double getZoomLevel() override;
+   void setZoomLevel(double zoomLevel) override;
 
 // private interface for SessionLauncher
 private:
@@ -77,6 +78,9 @@ private:
    // call launchProcess back on it)
    void setSessionLauncher(SessionLauncher* pSessionLauncher);
 
+   // same for application launches
+   void setAppLauncher(ApplicationLaunch* pAppLauncher);
+
    // allow SessionLauncher to give us a reference to the currently
    // active rsession process so that we can use it in closeEvent handling
    void setSessionProcess(QProcess* pSessionProcess);
@@ -84,15 +88,19 @@ private:
    // allow SessionLauncher to collect restart requests from GwtCallback
    int collectPendingQuitRequest();
 
+   // check whether desktop hooks have been initialized
    bool desktopHooksAvailable();
 
-   virtual void onActivated();
+   // callback when window is activated
+   void onActivated() override;
 
 private:
-   bool quitConfirmed_;
+   bool quitConfirmed_ = false;
+   bool geometrySaved_ = false;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
+   ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 };
 

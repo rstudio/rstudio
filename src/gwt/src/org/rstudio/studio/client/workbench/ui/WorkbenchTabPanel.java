@@ -15,12 +15,15 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -30,6 +33,7 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 
 import java.util.ArrayList;
@@ -44,11 +48,29 @@ class WorkbenchTabPanel
 {
    public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow)
    {
+      final int UTILITY_AREA_SIZE = 52;
+      panel_ = new LayoutPanel();
+      
       parentWindow_ = parentWindow;
+
       tabPanel_ = new ModuleTabLayoutPanel(owner);
+      panel_.add(tabPanel_);
+      panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
+      panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
+      
       tabPanel_.setSize("100%", "100%");
       tabPanel_.addStyleDependentName("Workbench");
-      initWidget(tabPanel_);
+
+      utilPanel_ = new HTML();
+      utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
+      utilPanel_.addStyleName(ThemeStyles.INSTANCE.multiPodUtilityTabArea());
+      panel_.add(utilPanel_);
+      panel_.setWidgetRightWidth(utilPanel_,
+                                 0, Unit.PX,
+                                 UTILITY_AREA_SIZE, Unit.PX);
+      panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
+
+      initWidget(panel_);
    }
 
    @Override
@@ -233,7 +255,7 @@ class WorkbenchTabPanel
          for (int i = 0; i < tabs_.size(); i++)
          {
             WorkbenchTab tab = tabs_.get(i);
-            if (tab.getTitle().equals(title))
+            if (tab.getTitle() == title)
             {
                selectTab(i);
                return;
@@ -306,5 +328,6 @@ class WorkbenchTabPanel
    private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
-   
+   private LayoutPanel panel_;
+   private HTML utilPanel_;
 }

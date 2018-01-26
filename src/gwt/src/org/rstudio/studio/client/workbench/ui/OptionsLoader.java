@@ -135,8 +135,8 @@ public class OptionsLoader
                                         String previousValue, 
                                         PrefValue<String> pref)
       {
-         if (!previousValue.equals(pref.getGlobalValue()) &&
-             !pref.getValue().equals(pref.getGlobalValue()))
+         if (previousValue   != pref.getGlobalValue() &&
+             pref.getValue() != pref.getGlobalValue())
          {
             globalDisplay_.showYesNoMessage(
                   MessageDialog.WARNING, 

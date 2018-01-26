@@ -16,9 +16,9 @@
 #include <core/FileSerializer.hpp>
 
 #include <utility>
-
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>

@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,7 @@
 #define DESKTOP_WEB_VIEW_HPP
 
 #include <QtGui>
-#include <QWebView>
-#include <QWebInspector>
+#include <QWebEngineView>
 
 #include "DesktopWebPage.hpp"
 
@@ -27,13 +26,13 @@ namespace desktop {
 
 class MainWindow;
 
-class WebView : public ::QWebView
+class WebView : public QWebEngineView
 {
    Q_OBJECT
 
 public:
    explicit WebView(QUrl baseUrl = QUrl(),
-                    QWidget *parent = NULL,
+                    QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
@@ -43,27 +42,28 @@ public:
    void setDpiAwareZoomFactor(qreal factor);
    qreal dpiAwareZoomFactor();
 
+   bool event(QEvent* event) override;
+
    WebPage* webPage() const { return pWebPage_; }
 
-signals:
+   void contextMenuEvent(QContextMenuEvent* event) override;
+
+Q_SIGNALS:
   void onCloseWindowShortcut();
 
-public slots:
+public Q_SLOTS:
 
 protected:
    QString promptForFilename(const QNetworkRequest& request,
                              QNetworkReply* pReply);
-   void keyPressEvent(QKeyEvent* pEv);
-   void closeEvent(QCloseEvent* pEv);
+   void keyPressEvent(QKeyEvent* pEvent) override;
+   void closeEvent(QCloseEvent* pEv) override;
 
-protected slots:
-   void downloadRequested(const QNetworkRequest&);
-   void unsupportedContent(QNetworkReply*);
+protected Q_SLOTS:
    void openFile(QString file);
 
 private:
    QUrl baseUrl_;
-   QWebInspector* pWebInspector_;
    WebPage* pWebPage_;
    double dpiZoomScaling_;
 };

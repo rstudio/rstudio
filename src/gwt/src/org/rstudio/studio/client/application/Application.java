@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
@@ -55,6 +56,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
@@ -63,6 +65,7 @@ import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
@@ -98,7 +101,6 @@ public class Application implements ApplicationEventHandlers
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
-                      MacZoomHandler zoomHandler,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -106,7 +108,8 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
-                      Provider<AceThemes> pAceThemes)
+                      Provider<AceThemes> pAceThemes,
+                      Provider<ProductEditionInfo> pEdition)
    {
       // save references
       view_ = view ;
@@ -124,6 +127,7 @@ public class Application implements ApplicationEventHandlers
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
       pAceThemes_ = pAceThemes;
+      pEdition_ = pEdition;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -194,7 +198,10 @@ public class Application implements ApplicationEventHandlers
                   }
                   
                   session_.setSessionInfo(sessionInfo);
-                        
+                  
+                  // load MathJax
+                  MathJaxLoader.ensureMathJaxLoaded();
+                  
                   // initialize workbench
                   initializeWorkbench();
                }
@@ -297,11 +304,17 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onRstudioCommunityForum()
+   {
+      globalDisplay_.openRStudioLink("community-forum");
+   }
+   
+   @Handler
    public void onRstudioSupport()
    {
       globalDisplay_.openRStudioLink("support");
    }
-   
+
    @Handler
    public void onRstudioAgreement()
    {
@@ -435,9 +448,8 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onSwitchToRVersion(final SwitchToRVersionEvent event)
    {
-      final ApplicationQuit applicaitonQuit = pApplicationQuit_.get();
-      applicaitonQuit.prepareForQuit("Switch R Version", 
-                                             new QuitContext() {
+      final ApplicationQuit applicationQuit = pApplicationQuit_.get();
+      applicationQuit.prepareForQuit("Switch R Version", new QuitContext() {
          public void onReadyToQuit(boolean saveChanges)
          {
             // see if we have a project (otherwise switch to "None")
@@ -446,7 +458,8 @@ public class Application implements ApplicationEventHandlers
                project = Projects.NONE;
             
             // do the quit
-            applicaitonQuit.performQuit(saveChanges, 
+            applicationQuit.performQuit(null,
+                                        saveChanges,
                                         project, 
                                         event.getRVersionSpec());
          }   
@@ -717,18 +730,30 @@ public class Application implements ApplicationEventHandlers
    
    private void initializeWorkbench()
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get(),
-                                     Document.get(),
-                                     rootPanel_.getElement());
+      CommandWithArg<String> changedTheme = new CommandWithArg<String>()
+      {
+         public void execute(String theme)
+         {
+            RStudioThemes.initializeThemes(uiPrefs_.get(),
+                                           Document.get(),
+                                           rootPanel_.getElement());
+
+            events_.fireEventToAllSatellites(new ThemeChangedEvent(theme));
+         }
+      };
+
+      uiPrefs_.get().getFlatTheme().bind(changedTheme);
+      uiPrefs_.get().theme().bind(changedTheme);
+      changedTheme.execute(uiPrefs_.get().getFlatTheme().getValue());
 
       pAceThemes_.get();
 
       // subscribe to ClientDisconnected event (wait to do this until here
-      // because there were spurious ClientDisconnected events occuring
+      // because there were spurious ClientDisconnected events occurring
       // after a session interrupt sequence. we couldn't figure out why,
       // and since this is a temporary hack why not add another temporary
       // hack to go with it here :-)
-      // TOOD: move this back tot he constructor after we revise the
+      // TODO: move this back to the constructor after we revise the
       // interrupt hack(s)
       events_.addHandler(ClientDisconnectedEvent.TYPE, this); 
       
@@ -748,6 +773,11 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.showShellDialog().remove();
          removeTerminalCommands();
+      }
+      
+      if (!sessionInfo.getAllowFullUI())
+      {
+         removeProjectCommands();
       }
 
       if (!sessionInfo.getAllowPackageInstallation())
@@ -850,12 +880,6 @@ public class Application implements ApplicationEventHandlers
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
-      // hide zoom actual size everywhere but cocoa desktop
-      if (!BrowseCap.isCocoaDesktop())
-      {
-         commands_.zoomActualSize().remove();
-      }
-      
       // hide zoom in and zoom out in web mode
       if (!Desktop.isDesktop())
       {
@@ -870,6 +894,13 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().setMenuLabel("New Session...");
          else
             commands_.newSession().remove();
+      }
+      
+      // show support link only in RStudio Pro
+      if (pEdition_.get() != null)
+      {
+         if (!pEdition_.get().proLicense())
+            commands_.rstudioSupport().remove();
       }
       
       // toolbar (must be after call to showWorkbenchView because
@@ -994,7 +1025,33 @@ public class Application implements ApplicationEventHandlers
       commands_.showTerminalInfo().remove();
       commands_.interruptTerminal().remove();
       commands_.sendTerminalToEditor().remove();
+      commands_.sendToTerminal().remove();
    }
+
+   private void removeProjectCommands()
+   {
+      commands_.openProject().remove();
+      commands_.newProject().remove();
+      commands_.closeProject().remove();
+      commands_.openProjectInNewWindow().remove();
+      commands_.clearRecentProjects().remove();
+      commands_.quitSession().remove();
+      commands_.projectMru0().remove();
+      commands_.projectMru1().remove();
+      commands_.projectMru2().remove();
+      commands_.projectMru3().remove();
+      commands_.projectMru4().remove();
+      commands_.projectMru5().remove();
+      commands_.projectMru6().remove();
+      commands_.projectMru7().remove();
+      commands_.projectMru8().remove();
+      commands_.projectMru9().remove();
+      commands_.projectMru10().remove();
+      commands_.projectMru11().remove();
+      commands_.projectMru12().remove();
+      commands_.projectMru13().remove();
+      commands_.projectMru14().remove();
+    }
 
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
@@ -1011,6 +1068,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
+   private final Provider<ProductEditionInfo> pEdition_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 

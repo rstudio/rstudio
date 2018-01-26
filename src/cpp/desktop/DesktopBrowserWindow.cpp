@@ -1,7 +1,7 @@
 /*
  * DesktopBrowserWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,8 @@
  */
 
 #include "DesktopBrowserWindow.hpp"
-#include <QWebFrame>
+
+#include <QApplication>
 #include <QToolBar>
 #include <QShortcut>
 
@@ -44,14 +45,9 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    progress_ = 0;
 
    pView_ = new WebView(baseUrl, this, allowExternalNavigate);
-   QWebFrame* mainFrame = pView_->page()->mainFrame();
-   connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
-           this, SLOT(onJavaScriptWindowObjectCleared()));
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
-   connect(pView_->page(), SIGNAL(printRequested(QWebFrame*)),
-           this, SLOT(printRequested(QWebFrame*)));
 
    // set zoom factor
    double zoomLevel = options().zoomLevel();
@@ -70,23 +66,9 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    desktop::enableFullscreenMode(this, false);
 }
 
-void BrowserWindow::printRequested(QWebFrame* frame)
-{
-   QPrinter printer;
-   printer.setOutputFormat(QPrinter::NativeFormat);
-   QPrintPreviewDialog dialog(&printer, window());
-   QSize size = printDialogMinimumSize();
-   if (!size.isNull())
-      dialog.setMinimumSize(size);
-   dialog.setWindowModality(Qt::WindowModal);
-   connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
-           frame, SLOT(print(QPrinter*)));
-   dialog.exec();
-}
-
 void BrowserWindow::closeEvent(QCloseEvent *event)
 {
-   if (pOpener_ == NULL)
+   if (pOpener_ == nullptr)
    {
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)
@@ -95,9 +77,9 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+      webPage()->runJavaScript(cmd);
    }
-   else if (pOpener_->mainFrame())
+   else if (pOpener_)
    {
       // if we do know where we were opened from and it has the appropriate
       // handlers, let it know we're closing
@@ -106,11 +88,11 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
                   "   window.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      pOpener_->mainFrame()->evaluateJavaScript(cmd);
+      webPage()->runJavaScript(cmd);
    }
 
-   // forward the close event to the web view
-   webView()->event(event);
+   // forward the close event to the page
+   webPage()->event(event);
 }
 
 void BrowserWindow::adjustTitle()
@@ -125,10 +107,20 @@ void BrowserWindow::setProgress(int p)
    adjustTitle();
 }
 
-void BrowserWindow::finishLoading(bool)
+void BrowserWindow::finishLoading(bool succeeded)
 {
    progress_ = 100;
    adjustTitle();
+
+   if (succeeded)
+   {
+      QString cmd = QString::fromUtf8("if (window.opener && "
+         "window.opener.registerDesktopChildWindow)"
+         "   window.opener.registerDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("', window);"));
+      webPage()->runJavaScript(cmd);
+   }
 }
 
 WebView* BrowserWindow::webView()
@@ -139,7 +131,7 @@ WebView* BrowserWindow::webView()
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
 #ifdef Q_OS_MAC
-   webView()->page()->mainFrame()->evaluateJavaScript(
+   webView()->page()->runJavaScript(
          QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 }
@@ -156,23 +148,13 @@ WebPage* BrowserWindow::webPage()
 
 void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 {
-   QCoreApplication::postEvent(webView(), keyEvent);
+   for (auto* child : webView()->children())
+      QApplication::sendEvent(child, keyEvent);
 }
 
-void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
+void BrowserWindow::triggerPageAction(QWebEnginePage::WebAction action)
 {
    webView()->triggerPageAction(action);
-}
-
-void BrowserWindow::onJavaScriptWindowObjectCleared()
-{
-   QString cmd = QString::fromUtf8("if (window.opener && "
-      "window.opener.registerDesktopChildWindow))"
-      "   window.opener.registerDesktopChildWindow('");
-   cmd.append(name_);
-   cmd.append(QString::fromUtf8("', window);"));
-
-   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
 }
 
 QString BrowserWindow::getName()

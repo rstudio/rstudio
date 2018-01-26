@@ -41,7 +41,9 @@ namespace http {
 
 // encodings
 extern const char * const kGzipEncoding;         
-   
+extern const char * const kTransferEncoding;
+extern const char * const kChunkedTransferEncoding;
+
 class Response;
    
 class Message : boost::noncopyable
@@ -93,6 +95,9 @@ public:
    void reset();
    
    std::vector<boost::asio::const_buffer> toBuffers(
+                              const Header& overrideHeader = Header()) const ;
+
+   std::vector<boost::asio::const_buffer> headerBuffers(
                               const Header& overrideHeader = Header()) const ;
    
 protected:

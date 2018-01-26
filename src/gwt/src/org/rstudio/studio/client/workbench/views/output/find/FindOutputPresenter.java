@@ -127,7 +127,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onFindResult(FindResultEvent event)
          {
-            if (!event.getHandle().equals(currentFindHandle_))
+            if (event.getHandle() != currentFindHandle_)
                return;
             view_.addMatches(event.getResults());
             
@@ -141,7 +141,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onFindOperationEnded(
                FindOperationEndedEvent event)
          {
-            if (event.getHandle().equals(currentFindHandle_))
+            if (event.getHandle() == currentFindHandle_)
             {
                currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);

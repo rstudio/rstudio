@@ -261,12 +261,7 @@ public class ChunkOutputStream extends FlowPanel
          @Override
          public void execute()
          {
-            if (themeColors_ != null) {
-               Element body = frame.getDocument().getBody();
-               
-               Style bodyStyle = body.getStyle();
-               bodyStyle.setColor(themeColors_.foreground);
-            }
+            ChunkHtmlPage.syncThemeTextColor(themeColors_, frame.getDocument().getBody());
          }
       };
 

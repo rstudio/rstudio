@@ -315,7 +315,7 @@ assign(x = ".rs.acCompletionTypes",
    dirPaths <- .rs.listFilesFuzzy(directory, tokenName)
    if (directoriesOnly)
    {
-      dirInfo <- file.info(dirPaths)
+      dirInfo <- .rs.fileInfo(dirPaths)
       dirPaths <- dirPaths[dirInfo$isdir]
    }
    absolutePaths <- sort(union(absolutePaths, dirPaths))
@@ -366,7 +366,7 @@ assign(x = ".rs.acCompletionTypes",
    # Otherwise, query the file info for the set of completions we're using
    else
    {
-      isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+      isDir <- .rs.fileInfo(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
       type <- ifelse(isDir,
                      .rs.acCompletionTypes$DIRECTORY,
                      .rs.acCompletionTypes$FILE)
@@ -570,6 +570,12 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!is.null(object) && is.function(object))
    {
+      # If we're attempting to get completions for an R6 'new()' function,
+      # then use a separate code path to derive that -- derive formals from
+      # the 'initialize()' method instead.
+      if (.rs.isR6NewMethod(object))
+         object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
+      
       matchedCall <- .rs.matchCall(object, functionCall)
       
       # Try to figure out what function arguments are
@@ -1128,22 +1134,21 @@ assign(x = ".rs.acCompletionTypes",
          dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
          if (is.function(dollarNamesMethod))
          {
-            allNames <- dollarNamesMethod(object)
+            allNames <- dollarNamesMethod(object, "")
             
-            # rJava will include closing parentheses as part of the
-            # completion list -- clean those up and use them to infer
-            # symbol types
-            if ("rJava" %in% loadedNamespaces() &&
-                identical(environment(dollarNamesMethod), asNamespace("rJava")))
-            {
-               types <- ifelse(
-                  grepl("[()]$", allNames),
-                  .rs.acCompletionTypes$FUNCTION,
-                  .rs.acCompletionTypes$UNKNOWN
-               )
-               allNames <- gsub("[()]*$", "", allNames)
-               attr(allNames, "types") <- types
-            }
+            # detect completion systems that append closing parentheses
+            # to the completion item, and assume those are functions
+            # rJava and Rcpp will do this for some objects
+            # for example:
+            # - rJava:::.DollarNames.jobjref
+            # - Rcpp:::.DollarNames.C++Object
+            types <- ifelse(
+               grepl("[()]\\s*$", allNames),
+               .rs.acCompletionTypes$FUNCTION,
+               .rs.acCompletionTypes$UNKNOWN
+            )
+            allNames <- gsub("[()]*\\s*$", "", allNames)
+            attr(allNames, "types") <- as.integer(types)
             
             # check for custom helpHandler
             helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
@@ -2400,6 +2405,9 @@ assign(x = ".rs.acCompletionTypes",
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
+      if (inherits(object, "python.builtin.object"))
+         return(.rs.emptyCompletions())
+      
       if (length(object))
       {
          objectNames <- .rs.getNames(object)
@@ -2715,7 +2723,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyUILastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyUICompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -2835,7 +2843,7 @@ assign(x = ".rs.acCompletionTypes",
    fileCacheName <- paste(file, "shinyServerLastModifiedTime", sep = "-")
    completionsCacheName <- paste(file, "shinyServerCompletions", sep = "-")
    
-   info <- file.info(file)
+   info <- .rs.fileInfo(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
        !is.null(.rs.get(completionsCacheName)))
@@ -3080,10 +3088,25 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getInferredCompletions", function(packages = character(),
                                                    simplify = TRUE)
 {
-   result <- .Call("rs_getInferredCompletions", as.character(packages))
-   if (simplify && length(result) == 1)
-      return(result[[1]])
-   result
+   # get completions from database
+   completionList <- .Call("rs_getInferredCompletions",
+                           as.character(packages),
+                           PACKAGE = "(embedding)")
+   
+   # append dataset completions on to export vector
+   completionList <- lapply(completionList, function(completion) {
+      datasetTypes <- rep.int(.rs.acCompletionTypes$DATASET, length(completion$datasets))
+      completion$exports  <- c(completion$exports, completion$datasets)
+      completion$types    <- c(completion$types, datasetTypes)
+      completion$datasets <- NULL
+      completion
+   })
+   
+   # simplify if requested
+   if (simplify && length(completionList) == 1)
+      return(completionList[[1]])
+   
+   completionList
 })
 
 .rs.addFunction("getCompletionsLibraryContextArgumentNames", function(token,
@@ -3300,20 +3323,26 @@ assign(x = ".rs.acCompletionTypes",
    utils:::.completeToken()
    results <- utils:::.retrieveCompletions()
    
+   packages <- NULL
+   type <- .rs.formCompletionVector(attr(results, "type"), .rs.acCompletionTypes$UNKNOWN, length(results))
+   if (type[[1]] %in% c(.rs.acCompletionTypes$UNKNOWN, .rs.acCompletionTypes$FUNCTION)) {
    packages <- sub('^package:', '', .rs.which(results))
    
    # ensure spaces around =
    results <- sub("=$", " = ", results)
    
-   choose = packages == '.GlobalEnv'
-   results.sorted = c(results[choose], results[!choose])
-   packages.sorted = c(packages[choose], packages[!choose])
+     choose <- packages == '.GlobalEnv'
+     results <- c(results[choose], results[!choose])
+     packages <- c(packages[choose], packages[!choose])
+     type <- c(type[choose], type[!choose])
    
-   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
+     packages <- sub('^\\.GlobalEnv$', '', packages)
+   }
    
    .rs.makeCompletions(
       token = token,
-      results = results.sorted,
-      packages = packages.sorted
+      results = results,
+      packages = packages,
+      type = type
    )
 })

@@ -1,7 +1,7 @@
 /*
  * DesktopNetworkProxyFactory.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ class NetworkProxyFactory : public QNetworkProxyFactory
 public:
     NetworkProxyFactory();
 
-    virtual QList<QNetworkProxy> queryProxy(const QNetworkProxyQuery& query = QNetworkProxyQuery());
+   QList<QNetworkProxy> queryProxy(const QNetworkProxyQuery& query = QNetworkProxyQuery()) override;
 };
 
 #endif // DESKTOPNETWORKPROXYFACTORY_HPP

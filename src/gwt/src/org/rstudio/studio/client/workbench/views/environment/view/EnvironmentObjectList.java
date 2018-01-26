@@ -326,8 +326,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          boolean isClickable =
                host_.enableClickableObjects() &&
                rowValue.getCategory() != RObjectEntry.Categories.Value;
-         if ((!title.equals(RObjectEntry.NO_VALUE)) &&
-             title != null)
+         if (title != RObjectEntry.NO_VALUE && title != null)
          {
             if (rowValue.isPromise())
             {
@@ -424,9 +423,10 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             detail.startTD().endTD();
             TableCellBuilder objectDetail = detail.startTD();
             String content = contents.get(idx);
-            // ignore the first two characters of output
-            // ("$ value:" becomes "value:")
-            content = content.substring(2, content.length()).trim();
+            // remove known R indentation prefixes
+            if (content.startsWith(" $") || content.startsWith("  ")) 
+               content = content.substring(2, content.length());
+            content = content.trim();
             objectDetail.colSpan(2)
                     .title(content)
                     .text(content)

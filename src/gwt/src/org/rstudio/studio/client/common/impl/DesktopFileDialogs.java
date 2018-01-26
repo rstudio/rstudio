@@ -1,7 +1,7 @@
 /*
  * DesktopFileDialogs.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,8 @@ package org.rstudio.studio.client.common.impl;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -34,7 +36,9 @@ public class DesktopFileDialogs implements FileDialogs
 {
    private abstract class FileDialogOperation
    {
-      abstract String operation(String caption, String dir);
+      abstract void operation(String caption,
+                              String dir,
+                              CommandWithArg<String> onCompleted);
 
       protected boolean shouldUpdateDetails()
       {
@@ -55,38 +59,53 @@ public class DesktopFileDialogs implements FileDialogs
          {
             public void execute()
             {
-               String file = operation(caption, dir);
-
-               FileSystemItem item =
-                     StringUtil.isNullOrEmpty(file)
-                     ? null
-                     : FileSystemItem.createFile(file);
-
-               if (item != null && shouldUpdateDetails())
-               {
-                  server_.stat(item.getPath(), new ServerRequestCallback<FileSystemItem>()
-                  {
-                     @Override
-                     public void onResponseReceived(FileSystemItem response)
+               operation(
+                     caption,
+                     dir,
+                     new CommandWithArg<String>()
                      {
-                        operation.execute(response, new NullProgressIndicator());
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        globalDisplay_.showErrorMessage("Error",
-                                                        error.getUserMessage());
-                        operation.execute(null, new NullProgressIndicator());
-                     }
-                  });
-               }
-               else
-               {
-                  operation.execute(item, new NullProgressIndicator());
-               }
+                        @Override
+                        public void execute(String result)
+                        {
+                           onOperationCompleted(result, operation);
+                        }
+                     });
             }
          });
+      }
+      
+      private void onOperationCompleted(
+            String file,
+            ProgressOperationWithInput<FileSystemItem> operation)
+      {
+         FileSystemItem item =
+               StringUtil.isNullOrEmpty(file)
+               ? null
+                  : FileSystemItem.createFile(file);
+
+         if (item != null && shouldUpdateDetails())
+         {
+            server_.stat(item.getPath(), new ServerRequestCallback<FileSystemItem>()
+            {
+               @Override
+               public void onResponseReceived(FileSystemItem response)
+               {
+                  operation.execute(response, new NullProgressIndicator());
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Error",
+                        error.getUserMessage());
+                  operation.execute(null, new NullProgressIndicator());
+               }
+            });
+         }
+         else
+         {
+            operation.execute(item, new NullProgressIndicator());
+         }
       }
    }
 
@@ -147,20 +166,25 @@ public class DesktopFileDialogs implements FileDialogs
          }
 
          @Override
-         String operation(String caption, String dir)
+         void operation(final String caption,
+                        final String dir,
+                        final CommandWithArg<String> onCompleted)
          {
-            String fileName = Desktop.getFrame().getOpenFileName(
-                  caption,
-                  label,
-                  dir,
-                  filter,
-                  canChooseDirectories);
+            Desktop.getFrame().getOpenFileName(
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(label),
+                  StringUtil.notNull(dir),
+                  StringUtil.notNull(filter),
+                  canChooseDirectories,
+                  fileName -> 
+                  {
+                     if (fileName != null)
+                     {
+                        updateWorkingDirectory(fileName, fsContext);
+                     }
+                     onCompleted.execute(fileName);
+                  });
             
-            if (fileName != null)
-            {
-               updateWorkingDirectory(fileName, fsContext);
-            }
-            return fileName;
          }
       }.execute(caption, fsContext, initialFilePath, operation);
    }
@@ -186,16 +210,24 @@ public class DesktopFileDialogs implements FileDialogs
       new FileDialogOperation()
       {
          @Override
-         String operation(String caption, String dir)
+         void operation(final String caption,
+                        final String dir,
+                        final CommandWithArg<String> onCompleted)
          {
-            String fileName = Desktop.getFrame().getSaveFileName(
-                  caption, buttonLabel, dir, defaultExtension, forceDefaultExtension);
-
-            if (fileName != null)
-            {
-               updateWorkingDirectory(fileName, fsContext);
-            }
-            return fileName;
+            Desktop.getFrame().getSaveFileName(
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(buttonLabel),
+                  StringUtil.notNull(dir),
+                  StringUtil.notNull(defaultExtension),
+                  forceDefaultExtension,
+                  fileName ->
+                  {
+                     if (fileName != null)
+                     {
+                        updateWorkingDirectory(fileName, fsContext);
+                     }
+                     onCompleted.execute(fileName);
+                  });
          }
       }.execute(caption,
                 fsContext,
@@ -220,12 +252,18 @@ public class DesktopFileDialogs implements FileDialogs
       new FileDialogOperation()
       {
          @Override
-         String operation(String caption, String dir)
+         void operation(final String caption,
+                        final String dir,
+                        final CommandWithArg<String> onCompleted)
          {
-            return Desktop.getFrame().getExistingDirectory(
-                  caption,
-                  label,
-                  initialDir != null ? initialDir.getPath() : null);
+            Desktop.getFrame().getExistingDirectory(
+                  StringUtil.notNull(caption),
+                  StringUtil.notNull(label),
+                  initialDir != null ? StringUtil.notNull(initialDir.getPath()) : "",
+                  directory -> 
+                     {
+                        onCompleted.execute(directory);
+                     });
          }
       }.execute(caption, fsContext, null, operation);
    }

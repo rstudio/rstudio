@@ -1,7 +1,7 @@
 /*
  * XTermNative.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,10 @@ import com.google.gwt.dom.client.Element;
 
 /**
  * <code>JavaScriptObject</code> wrapper for xterm.js
+ * 
+ * Reliance on xterm.js implementation details is marked with XTERM_IMP.
+ * Be careful of these when updating to a newer xterm.js build.
+ * The rest uses documented APIs: https://xtermjs.org/docs/api/terminal/
  */
 public class XTermNative extends JavaScriptObject
 {
@@ -104,16 +108,19 @@ public class XTermNative extends JavaScriptObject
       this.element.classList.add(classStr);
    }-*/;
    
+   // XTERM_IMP
    public final native int cursorX() /*-{
-      return this.x;
+      return this.buffer.x;
    }-*/;
    
+   // XTERM_IMP
    public final native int cursorY() /*-{
-      return this.y;
+      return this.buffer.y;
    }-*/;
  
+   // XTERM_IMP
    public final native boolean altBufferActive() /*-{
-      return this.normal != null;
+      return this.buffers.active == this.buffers.alt;
    }-*/;
    
    public final native void showPrimaryBuffer() /*-{
@@ -126,8 +133,9 @@ public class XTermNative extends JavaScriptObject
       this.write("\x1b[?1047h"); // show alt buffer
    }-*/;
     
+   // XTERM_IMP
    public final native String currentLine() /*-{
-      lineBuf = this.lines.get(this.y + this.ybase);
+      lineBuf = this.buffer.lines.get(this.y + this.ybase);
       if (!lineBuf) // resize may be in progress
          return null;
       current = "";
@@ -139,10 +147,11 @@ public class XTermNative extends JavaScriptObject
       return current;
    }-*/;
 
+   // XTERM_IMP
    public final native String getLocalBuffer() /*-{
       buffer = "";
       for (row = 0; row < this.rows; row++) {
-         lineBuf = this.lines.get(row);
+         lineBuf = this.buffer.lines.get(row);
          if (!lineBuf) // resize may be in progress
             return null;
       
@@ -184,12 +193,54 @@ public class XTermNative extends JavaScriptObject
     * @param container HTML element to attach to
     * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
     * @param focus <code>true</code> to give terminal focus by default
+    * @param supportMousewheel <code>true</code> to handle legacy mousewheel event
     * 
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container, boolean blink, boolean focus) /*-{
+   public static native XTermNative createTerminal(Element container, 
+                                                   boolean blink,
+                                                   boolean focus,
+                                                   boolean supportMousewheel) /*-{
       var nativeTerm_ = new $wnd.Terminal({cursorBlink: blink});
       nativeTerm_.open(container, focus);
+
+      // XTERM_IMP
+      if (supportMousewheel) {
+         // older browsers sent 'mousewheel' but xterm only handles 'wheel'
+         // logic to translate from mousewheel event to wheel event taken from:
+         // https://developer.mozilla.org/en-US/docs/Web/Events/wheel#Listening_to_this_event_across_browser
+         self = nativeTerm_;
+         nativeTerm_.element.addEventListener('mousewheel', function (ev) {
+            if (self.mouseEvents)
+               return;
+
+            // create a normalized 'wheel' event object
+            var event = {
+               // keep a ref to the original event object
+               ev: ev,
+               target: ev.target || ev.srcElement,
+               type: "wheel",
+               deltaMode: ev.type == "MozMousePixelScroll" ? 0 : 1,
+               deltaX: 0,
+               deltaY: 0,
+               deltaZ: 0,
+               preventDefault: function() {
+                  ev.preventDefault ?
+                  ev.preventDefault() :
+                  ev.returnValue = false;
+               }
+            };
+
+            // calculate deltaY (and deltaX) according to the event
+            event.deltaY = - 1/40 * ev.wheelDelta;
+
+            // Webkit also support wheelDeltaX
+            ev.wheelDeltaX && ( event.deltaX = - 1/40 * ev.wheelDeltaX );
+
+            self.viewport.onWheel(event);
+            return self.cancel(ev);
+         });
+      }
       return nativeTerm_;
    }-*/;
 } 

@@ -10,3 +10,5 @@ sumatra/
 winutils/
 rtools*
 winpty*/
+openssl*/
+*.zip

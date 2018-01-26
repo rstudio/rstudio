@@ -65,7 +65,7 @@ public class SatelliteWindowGeometry extends JavaScriptObject
    
    public final Point getPosition() 
    {
-      return new Point(getX(), getY());
+      return Point.create(getX(), getY());
    }
    
    public final Size getSize()

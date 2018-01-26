@@ -178,8 +178,24 @@
 
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
-  rownames <- row.names(x)
-  rownames[start:min(length(rownames), start+len)]
+   # detect whether this is a data.frame that contains
+   # row names, or if the row names are stored compactly
+   if (is.data.frame(x))
+   {
+      info <- .row_names_info(x, type = 0L)
+      if (is.integer(info) && is.na(info[[1]]))
+      {
+         # the second element indicates the number of rows, and is negative if they're 
+         # automatic
+         n <- abs(info[[2]])
+         range <- seq(from = start, to = min(n, start + len))
+         return(as.character(range))
+      }
+   }
+   
+   # otherwise, extract row names and subset as usual
+   rownames <- row.names(x)
+   rownames[start:min(length(rownames), start + len)]
 })
 
 # wrappers for nrow/ncol which will report the class of object for which we

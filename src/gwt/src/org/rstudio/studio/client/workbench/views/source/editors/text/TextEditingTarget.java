@@ -1911,7 +1911,7 @@ public class TextEditingTarget implements
             childIndent = indent + "&nbsp;&nbsp;";
 
             if (defaultFunction != null && defaultMenuItem == null &&
-                func.getLabel().equals(defaultFunction.getLabel()) &&
+                func.getLabel() == defaultFunction.getLabel() &&
                 func.getPreamble().getRow() == defaultFunction.getPreamble().getRow() &&
                 func.getPreamble().getColumn() == defaultFunction.getPreamble().getColumn())
             {
@@ -2432,11 +2432,11 @@ public class TextEditingTarget implements
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
                      final Command saveCommand = new Command() {
-
                         @Override
                         public void execute()
                         {
-                           if (!getPath().equals(saveItem.getPath()))
+                           if (getPath() != null &&
+                               !getPath().equals(saveItem.getPath()))
                            {
                               // breakpoints are file-specific, so when saving
                               // as a different file, clear the display of
@@ -2651,7 +2651,7 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.equals(SourceDocument.XT_RMARKDOWN))
+      if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
       extendedType_ = extendedType;
 
@@ -3730,7 +3730,7 @@ public class TextEditingTarget implements
                formatList.add(uiName);
                valueList.add(formats.get(i).getName());
                extensionList.add(formats.get(i).getExtension());
-               if (formats.get(i).getName().equals(selTemplate.format))
+               if (formats.get(i).getName() == selTemplate.format)
                {
                   formatUiName = uiName;
                }
@@ -4034,7 +4034,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
-      codeExecution_.executeSelection(true);
+      if (fileType_.isScript())
+         codeExecution_.sendSelectionToTerminal(true);
+      else
+         codeExecution_.executeSelection(true);
    }
    
    @Handler
@@ -4055,6 +4058,12 @@ public class TextEditingTarget implements
       codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
    }
 
+   @Handler
+   void onSendToTerminal()
+   {
+      codeExecution_.sendSelectionToTerminal(false);
+   }
+ 
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {
@@ -4168,13 +4177,135 @@ public class TextEditingTarget implements
       return Position.create(endRow, endColumn);
    }
    
+   // splits a chunk into two chunks
+   // chunk 1: first chunk line to linePos (not including linePos)
+   // chunk 2: linePos line to end
+   private void splitChunk(Scope chunk, int linePos)
+   {
+      Position chunkStart = chunk.getBodyStart();
+      Position chunkEnd = chunk.getEnd();
+      if (chunkEnd == null)
+         chunkEnd = docDisplay_.getDocumentEnd();
+      Position preamble = chunk.getPreamble();
+      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      
+      // if the cursor line is in the preamble of the chunk
+      // reset it to the body of the chunk to get the same semantics
+      // (empty chunk followed by the entire existing chunk)
+      if (linePos < chunkStart.getRow())
+         linePos = chunkStart.getRow();
+         
+      // get chunk contents from chunk start up to the specified line
+      Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), linePos, 0);
+      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      firstChunkContents = firstChunkContents.trim();
+      
+      // add preamble line and ending line for new first chunk
+      firstChunkContents = preambleLine + firstChunkContents;
+      if (!firstChunkContents.endsWith("\n"))
+         firstChunkContents += "\n";  
+      firstChunkContents += getChunkEnd() + "\n\n";
+      
+      // get second chunk contents from what's left
+      Range secondChunkRange = Range.create(linePos, 0, chunkEnd.getRow(), chunkEnd.getColumn());
+      String secondChunkContents = docDisplay_.getTextForRange(secondChunkRange);
+      secondChunkContents = secondChunkContents.trim();
+      
+      // add the preamble line of the original chunk to the second chunk (so we have the correct language)
+      secondChunkContents = preambleLine + secondChunkContents;
+      
+      // modify contents of original chunk with second chunk contents
+      Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
+      docDisplay_.replaceRange(chunkRange, secondChunkContents);
+      
+      // insert new chunk with first chunk contents
+      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      docDisplay_.insertCode(firstChunkContents, false);
+   }
+   
+   // splits a chunk into three chunks
+   // chunk 1: first chunk line to start pos
+   // chunk 2: start pos to end pos
+   // chunk 3: end pos to end of chunk
+   private void splitChunk(Scope chunk, Position startPos, Position endPos)
+   {
+      Position chunkStart = chunk.getBodyStart();
+      Position chunkEnd = chunk.getEnd();
+      if (chunkEnd == null)
+         chunkEnd = docDisplay_.getDocumentEnd();
+      Position preamble = chunk.getPreamble();
+      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      
+      // if the selected position is only within the preamble, do nothing as it makes no sense to do any splitting
+      if (startPos.getRow() == preamble.getRow() && endPos.getRow() == startPos.getRow())
+         return;
+      
+      // if the selected position starts within the preamble, reset the start position to not include the preamble
+      // as it does not make any sense to do any splitting within the preamble
+      if (startPos.getRow() == preamble.getRow())
+      {
+         startPos.setRow(preamble.getRow() + 1);
+         startPos.setColumn(0);
+      }
+      
+      // if the selected position ends within the footer (```), reset the end position to not include it
+      if (endPos.getRow() == chunkEnd.getRow() && endPos.getColumn() > 0)
+      {
+         endPos.setColumn(0);
+      }
+      
+      // get chunk contents from chunk start up to the specified start pos
+      Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), startPos.getRow(), startPos.getColumn());
+      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      firstChunkContents = firstChunkContents.trim();
+      
+      // add preamble line and ending line for new first chunk
+      firstChunkContents = preambleLine + firstChunkContents;
+      if (!firstChunkContents.endsWith("\n"))
+         firstChunkContents += "\n";  
+      firstChunkContents += getChunkEnd() + "\n\n";
+      
+      // get middle chunk contents from selected positions
+      Range middleChunkRange = Range.create(startPos.getRow(), startPos.getColumn(), endPos.getRow(), endPos.getColumn());
+      String middleChunkContents = docDisplay_.getTextForRange(middleChunkRange);
+      middleChunkContents = middleChunkContents.trim();
+      
+      // // add preamble line and ending line for middle chunk
+      middleChunkContents = preambleLine + middleChunkContents;
+      if (!middleChunkContents.endsWith("\n"))
+         middleChunkContents += "\n";  
+      middleChunkContents += getChunkEnd() + "\n\n";
+      
+      // get final chunk contents from ending selection position to ending chunk position
+      Range finalChunkRange = Range.create(endPos.getRow(), endPos.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
+      String finalChunkContents = docDisplay_.getTextForRange(finalChunkRange);
+      finalChunkContents = finalChunkContents.trim();
+      
+      // add preamble to final chunk
+      finalChunkContents = preambleLine + finalChunkContents;
+      
+      // modify contents of original chunk with final chunk contents
+      Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
+      docDisplay_.replaceRange(chunkRange, finalChunkContents);
+      
+      // insert first and middle chunk contents as new chunks
+      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      docDisplay_.insertCode(firstChunkContents, false);
+      Position middleChunkPos = docDisplay_.getCursorPosition();
+      docDisplay_.insertCode(middleChunkContents, false);
+      
+      // reset cursor position to middle chunk (selected text)
+      docDisplay_.setCursorPosition(middleChunkPos);
+   }
+   
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
-      String sel = null;
+      String sel = "";
       Range selRange = null;
       
-      // if currently in a chunk, add a blank line (for padding) and insert 
-      // beneath it
+      // if currently in a chunk
+      // with no selection, split this chunk into two chunks at the current line
+      // with selection, split this chunk into three chunks (prior to selection, selected, post selection)
       Scope currentChunk = docDisplay_.getCurrentChunk();
       if (currentChunk != null)
       {
@@ -4182,9 +4313,16 @@ public class TextEditingTarget implements
          sel = docDisplay_.getSelectionValue();
          selRange = docDisplay_.getSelectionRange();
          
-         docDisplay_.setCursorPosition(currentChunk.getEnd());
-         docDisplay_.insertCode("\n");
-         docDisplay_.moveCursorForward(1);
+         if (selRange.isEmpty())
+         {
+            splitChunk(currentChunk, docDisplay_.getCursorPosition().getRow()); 
+            return;
+         }
+         else
+         {
+            splitChunk(currentChunk, selRange.getStart() ,selRange.getEnd());
+            return;
+         }
       }
       
       Position pos = moveCursorToNextInsertLocation();
@@ -4222,6 +4360,21 @@ public class TextEditingTarget implements
       {
          assert false : "Mode did not have insertChunkInfo available";
       }
+   }
+   
+   String getChunkEnd()
+   {
+      InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
+      if (info == null)
+         return "```"; // default to Rmd
+      
+      // chunks are delimited by 2 new lines
+      // if not, we will fallback on an empty chunk end just for safety
+      String[] chunkParts = info.getValue().split("\n\n");
+      if (chunkParts.length == 2)
+         return chunkParts[1];
+      else
+         return "";
    }
 
    @Handler

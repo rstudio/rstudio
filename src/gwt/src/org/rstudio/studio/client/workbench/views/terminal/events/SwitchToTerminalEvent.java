@@ -1,7 +1,7 @@
 /*
  * SwitchToTerminalEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,9 +37,22 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
    }
    
-   public SwitchToTerminalEvent(String handle)
+   /**
+    * @param handle terminal to switch to
+    * @param input text to send to terminal, may be null
+    */
+   public SwitchToTerminalEvent(String handle, String input)
    {
       terminalHandle_ = handle;
+      inputText_ = input;
+      createdByApi_ = false;
+   }
+
+   public SwitchToTerminalEvent(String handle, String input, boolean createdByApi)
+   {
+      terminalHandle_ = handle;
+      inputText_ = input;
+      createdByApi_ = createdByApi;
    }
 
    @Override
@@ -58,8 +71,20 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       return terminalHandle_;
    }
-  
-   private String terminalHandle_;
    
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public String getInputText()
+   {
+      return inputText_;
+   }
+   
+   public boolean createdByApi()
+   {
+      return createdByApi_;
+   }
+
+   private String terminalHandle_;
+   private String inputText_;
+   private boolean createdByApi_;
+   
+   public static final Type<Handler> TYPE = new Type<>();
 }

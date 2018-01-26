@@ -133,10 +133,10 @@ public class ChooseFolderDialog extends FileSystemDialog
       // only use it IF it is the same as the name in the name textbox. The
       // name textbox takes precedence.
       FileSystemItem selectedItem = browser_.getSelectedItem();
-      if (selectedItem != null && selectedItem.getName().equals(name))
+      if (selectedItem != null && selectedItem.getName() == name)
             return selectedItem.getPath();
 
-      if (name.equals(context_.pwdItem().getName()))
+      if (name == context_.pwdItem().getName())
       {
          // The identity condition
          return context_.pwd();

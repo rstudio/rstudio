@@ -90,6 +90,11 @@ void handleSecureTemplateRequest(const std::string& username,
                                  const http::Request& request,
                                  http::Response* pResponse);
 
+core::Error renderTemplate(const core::FilePath& templateFile,
+                           const std::map<std::string, std::string> &vars,
+                           std::ostream& os);
+
+
 } // namespace text
 } // namespace core
 } // namespace rstudio

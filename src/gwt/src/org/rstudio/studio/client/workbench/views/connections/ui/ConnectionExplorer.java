@@ -94,9 +94,9 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       eventBus_ = eventBus;
    }
    
-   public void showConnectionProgress()
+   public void showConnectionProgress(String message)
    {
-      containerPanel_.showProgress(50); 
+      containerPanel_.showProgress(50, message); 
    }
    
    public void setConnection(Connection connection, String connectVia)
@@ -110,7 +110,12 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       activePanel_ = connected ? objectBrowser_ : disconnectedUI_;
       showActivePanel();
-      if (!connected)
+      if (connected)
+      {
+         if (connection_ != null)
+            updateObjectBrowser();
+      }
+      else
          objectBrowser_.clear();
    }
    
@@ -133,13 +138,17 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {   
       objectBrowser_.update(connection_, hint);
    }
+   
+   public void setFilterText(String text)
+   {
+      objectBrowser_.setFilterText(text);
+   }
   
    @Override
    public void onResize()
    {
       containerPanel_.onResize();
       codePanel_.onResize();
-      
    }
    
    private void showActivePanel()

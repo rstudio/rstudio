@@ -29,12 +29,12 @@ public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputHandler>
 
    public String getInput()
    {
-      return text_.getText();
+      return text_.text;
    }
    
    public String getConsole()
    {
-      return text_.getConsole();
+      return text_.console;
    }
 
    private final ConsoleText text_;

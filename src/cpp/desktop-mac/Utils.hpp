@@ -43,7 +43,12 @@ void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
 void browseURL(NSURL* url);
    
 core::system::ProcessSupervisor& processSupervisor();
-   
+
+core::Error runProgram(const std::string& executable,
+                       const std::vector<std::string>& args,
+                       const core::system::ProcessOptions& options,
+                       const core::system::ProcessCallbacks& cb);
+
 bool supportsFullscreenMode(NSWindow* window);
 void enableFullscreenMode(NSWindow* window, bool primary);
 void toggleFullscreenMode(NSWindow* window);

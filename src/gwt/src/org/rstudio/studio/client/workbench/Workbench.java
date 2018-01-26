@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,10 @@ import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
+import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
+import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerHandler;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
@@ -85,7 +89,8 @@ public class Workbench implements BusyHandler,
                                   ShinyGadgetDialogEvent.Handler,
                                   ExecuteUserCommandEvent.Handler,
                                   AdminNotificationHandler,
-                                  OpenFileDialogEvent.Handler
+                                  OpenFileDialogEvent.Handler,
+                                  ShowPageViewerHandler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -114,7 +119,8 @@ public class Workbench implements BusyHandler,
                     DependencyManager dm,                     // force gin to create
                     ApplicationVisibility av,                 // force gin to create
                     RmdOutput rmdOutput,                      // force gin to create    
-                    ProjectTemplateRegistryProvider provider) // force gin to create
+                    ProjectTemplateRegistryProvider provider, // force gin to create
+                    WorkbenchServerOperations serverOperations) // force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -131,6 +137,7 @@ public class Workbench implements BusyHandler,
       consoleDispatcher_ = consoleDispatcher;
       pGitState_ = pGitState;
       newSession_ = newSession;
+      serverOperations_ = serverOperations;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -148,6 +155,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ExecuteUserCommandEvent.TYPE, this);
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
       eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
+      eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -181,7 +189,7 @@ public class Workbench implements BusyHandler,
       checkForInitMessages();
       
       if (Desktop.isDesktop() && 
-          session_.getSessionInfo().getVcsName().equals(VCSConstants.GIT_ID))
+          session_.getSessionInfo().getVcsName() == VCSConstants.GIT_ID)
       {
          pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
    
@@ -314,6 +322,7 @@ public class Workbench implements BusyHandler,
    {
       newSession_.openNewSession(globalDisplay_, 
                                  workbenchContext_, 
+                                 serverOperations_,
                                  projectOpener_,
                                  server_);
    }
@@ -391,9 +400,11 @@ public class Workbench implements BusyHandler,
             @Override
             public void onResponseReceived(TerminalOptions options)
             {
-               Desktop.getFrame().openTerminal(options.getTerminalPath(),
-                     options.getWorkingDirectory(),
-                     options.getExtraPathEntries());
+               Desktop.getFrame().openTerminal(
+                     StringUtil.notNull(options.getTerminalPath()),
+                     StringUtil.notNull(options.getWorkingDirectory()),
+                     StringUtil.notNull(options.getExtraPathEntries()),
+                     options.getShellType());
             }
          });
       }
@@ -433,13 +444,12 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onToggleFullScreen()
    {
-      if (Desktop.isDesktop() && Desktop.getFrame().supportsFullscreenMode())
+      if (Desktop.isDesktop())
          Desktop.getFrame().toggleFullscreenMode();
    }
    
    private void checkForInitMessages()
    {
-      // only check for init messages in server mode
       if (!Desktop.isDesktop())
       {
          server_.getInitMessages(new ServerRequestCallback<String>() {
@@ -454,6 +464,16 @@ public class Workbench implements BusyHandler,
             public void onError(ServerError error)
             {
                // ignore
+            }
+         });
+      }
+      else
+      {
+         Desktop.getFrame().getInitMessages(message ->
+         {
+            if (!StringUtil.isNullOrEmpty(message))
+            {
+               globalDisplay_.showWarningBar(false, message);
             }
          });
       }
@@ -591,9 +611,19 @@ public class Workbench implements BusyHandler,
    {
       if (BrowseCap.isWindowsDesktop())
       {
-         Desktop.getFrame().installRtools(event.getVersion(),
-                                          event.getInstallerPath());  
+         Desktop.getFrame().installRtools(StringUtil.notNull(event.getVersion()),
+                                          StringUtil.notNull(event.getInstallerPath())); 
       }
+   }
+   
+   @Override
+   public void onShowPageViewer(ShowPageViewerEvent event) 
+   {   
+      // show the page viewer window
+      HTMLPreviewParams params = event.getParams();
+      eventBus_.fireEvent(new ShowHTMLPreviewEvent(params)); 
+      
+      // server will now take care of sending the html_preview_completed event
    }
    
    @Override
@@ -603,6 +633,7 @@ public class Workbench implements BusyHandler,
    }
    
    private final Server server_;
+   private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;
    private final Session session_;
    private final Provider<UIPrefs> pPrefs_;
@@ -619,6 +650,5 @@ public class Workbench implements BusyHandler,
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private WorkbenchNewSession newSession_;
-   private boolean nearQuotaWarningShown_ = false;
-   
+   private boolean nearQuotaWarningShown_ = false; 
 }

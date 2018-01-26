@@ -71,7 +71,7 @@ public class FindOutputCodec
          return false;
 
       return prevRow == null ||
-             !prevRow.getAttribute(DATA_FILE).equals(row.getAttribute(DATA_FILE));
+             prevRow.getAttribute(DATA_FILE) != row.getAttribute(DATA_FILE);
    }
 
    @Override

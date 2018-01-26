@@ -148,8 +148,14 @@ namespace {
 #ifndef _WIN32
 bool isSslShutdownError(const core::Error& error)
 {
+#ifdef SSL_R_SHORT_READ
+   // OpenSSL 1.0.0
    return error.code().category() == boost::asio::error::get_ssl_category() &&
           error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
+#else
+   // OpenSSL 1.1.0
+   return error.code() == boost::asio::ssl::error::stream_truncated;
+#endif
 }
 #else
 bool isSslShutdownError(const core::Error& error)

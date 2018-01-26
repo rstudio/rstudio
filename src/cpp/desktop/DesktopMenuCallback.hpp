@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,9 +32,10 @@ class MenuCallback : public QObject
 {
     Q_OBJECT
 public:
-    explicit MenuCallback(QObject *parent = 0);
+    explicit MenuCallback(QObject *parent = nullptr);
 
-public slots:
+public Q_SLOTS:
+    // menu-building commands
     void beginMainMenu();
     void beginMenu(QString label);
     void addCommand(QString commandId,
@@ -47,7 +48,13 @@ public slots:
     void endMainMenu();
     void actionInvoked();
 
-signals:
+    // runtime command state drivers
+    void setCommandEnabled(QString commandId, bool enabled);
+    void setCommandVisible(QString commandId, bool visible);
+    void setCommandLabel(QString commandId, QString label);
+    void setCommandChecked(QString commandId, bool checked);
+
+Q_SIGNALS:
     void menuBarCompleted(QMenuBar* menuBar);
     void manageCommand(QString commandId, QAction* action);
     void manageCommandVisibility(QString commandId, QAction* action);
@@ -59,11 +66,20 @@ signals:
 private:
     QAction* addCustomAction(QString commandId,
                              QString label,
-                             QString tooltip);
+                             QString tooltip,
+                             QKeySequence keySequence,
+                             bool checkable);
 
+    QAction* duplicateAppMenuAction(QString commandToDuplicate,
+                                    QString commandId,
+                                    QString label,
+                                    QString tooltip,
+                                    QKeySequence keySequence,
+                                    bool checkable);
 private:
     QMenuBar* pMainMenu_;
     QStack<SubMenu*> menuStack_;
+    QMap<QString, QAction*> actions_;
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,
@@ -83,11 +99,11 @@ class MenuActionBinder : public QObject
 public:
    MenuActionBinder(QMenu* pMenu, QAction* action);
 
-public slots:
+public Q_SLOTS:
    void onShowMenu();
    void onHideMenu();
 
-signals:
+Q_SIGNALS:
    void manageCommand(QString commandId, QAction* action);
 
 private:
@@ -99,9 +115,9 @@ class WindowMenu : public QMenu
 {
    Q_OBJECT
 public:
-   explicit WindowMenu(QWidget *parent = 0);
+   explicit WindowMenu(QWidget *parent = nullptr);
 
-protected slots:
+protected Q_SLOTS:
    void onMinimize();
    void onZoom();
    void onBringAllToFront();

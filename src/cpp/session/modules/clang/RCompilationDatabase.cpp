@@ -312,7 +312,11 @@ void RCompilationDatabase::updateForCurrentPackage()
 
    // Check for C++11 in SystemRequirements
    if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
+   {
+      // set both USE_CXX1X and USE_CXX11 to support older and newer R versions
       env.push_back(std::make_pair("USE_CXX1X", "1"));
+      env.push_back(std::make_pair("USE_CXX11", "1"));
+   }
 
    // Run R CMD SHLIB
    FilePath srcDir = pkgPath.childPath("src");
@@ -603,7 +607,7 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    core::system::ProcessOptions options;
    options.workingDir = srcPath.parent();
    options.environment = env;
-   return core::system::runCommand(rCmd.commandString(), options, pResult);
+   return core::system::runCommand(rCmd.shellCommand(), options, pResult);
 }
 
 bool RCompilationDatabase::isProjectTranslationUnit(

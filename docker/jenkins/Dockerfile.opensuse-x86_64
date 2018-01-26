@@ -14,10 +14,12 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     git \
     java-1_7_0-openjdk  \
     libuuid-devel \
+    lsof \
     make \
     openssl-devel \
     pam-devel \
     pango-devel \
+    python \
     R \
     rpm-build \
     sudo \

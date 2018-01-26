@@ -519,17 +519,14 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(id = "", show = TRUE) {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id))
-      stop("'id' must be NULL or a character vector of length one")
+.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE) {
+   if (!is.null(caption) && (!is.character(caption) || (length(caption) != 1)))
+      stop("'caption' must be NULL or a character vector of length one")
 
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalCreate", id, show)
+   .Call("rs_terminalCreate", caption, show)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {
@@ -558,10 +555,7 @@
 })
 
 .rs.addApiFunction("terminalActivate", function(id = NULL, show = TRUE) {
-   if (is.null(id))
-      id <- ""
-
-   if (!is.character(id) || (length(id) != 1))
+   if (!is.null(id) && (!is.character(id) || (length(id) != 1)))
       stop("'id' must be NULL or a character vector of length one")
 
    if (!is.logical(show))
@@ -666,43 +660,47 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    editor <- .Call("rs_readUiPref", "theme")
    global <- .Call("rs_readUiPref", "flat_theme")
 
+   if (is.null(editor)) {
+      editor <- "TextMate"
+   }
+
    global <- switch(
-    if (is.null(global)) "" else global,
-    alternate = "Sky",
-    default = "Modern",
-    "Classic"
-  )
+      if (is.null(global)) "" else global,
+      alternate = "Sky",
+      default = "Modern",
+      "Classic"
+   )
 
-  dark <- grepl(
-    paste(
-      "ambiance",
-      "chaos",
-      "clouds midnight",
-      "cobalt",
-      "idle fingers",
-      "kr theme",
-      "material",
-      "merbivore soft",
-      "merbivore",
-      "mono industrial",
-      "monokai",
-      "pastel on dark",
-      "solarized dark",
-      "tomorrow night blue",
-      "tomorrow night bright",
-      "tomorrow night 80s",
-      "tomorrow night",
-      "twilight",
-      "vibrant ink",
-      sep = "|"
-    ),
-    editor,
-    ignore.case = TRUE)
-  dark <- !identical(global, "Classic") && dark
+   dark <- grepl(
+      paste(
+         "ambiance",
+         "chaos",
+         "clouds midnight",
+         "cobalt",
+         "dracula",
+         "idle fingers",
+         "kr theme",
+         "material",
+         "merbivore soft",
+         "merbivore",
+         "mono industrial",
+         "monokai",
+         "pastel on dark",
+         "solarized dark",
+         "tomorrow night blue",
+         "tomorrow night bright",
+         "tomorrow night 80s",
+         "tomorrow night",
+         "twilight",
+         "vibrant ink",
+       sep = "|"
+     ),
+     editor,
+     ignore.case = TRUE)
 
-  list(
-    editor = editor,
-    global = global,
-    dark = dark
-  )
+   list(
+      editor = editor,
+      global = global,
+      dark = dark
+   )
 })

@@ -67,9 +67,9 @@ oop.inherits(RStudioEditor, Editor);
          // Read UI pref to determine what are eligible for surrounding
          var candidates = [];
          if (this.$surroundSelection === "quotes")
-            candidates = ["'", "\""];
+            candidates = ["'", "\"", "`"];
          else if (this.$surroundSelection === "quotes_and_brackets")
-            candidates = ["'", "\"", "(", "{", "["];
+            candidates = ["'", "\"", "`", "(", "{", "["];
 
          // in markdown documents, allow '_', '*' to surround selection
          do

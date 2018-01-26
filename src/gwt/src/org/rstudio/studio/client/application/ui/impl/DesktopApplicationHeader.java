@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,12 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -29,6 +31,7 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -62,6 +65,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -153,7 +157,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                public void execute()
                {
                   Desktop.getFrame().onWorkbenchInitialized(
-                        sessionInfo.getScratchDir());
+                        StringUtil.notNull(sessionInfo.getScratchDir()));
                   
                   if (sessionInfo.getDisableCheckForUpdates())
                      commands.checkForUpdates().remove();
@@ -172,7 +176,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       {
          public void onShowFolder(ShowFolderEvent event)
          {
-            Desktop.getFrame().showFolder(event.getPath().getPath());
+            Desktop.getFrame().showFolder(StringUtil.notNull(event.getPath().getPath()));
          }
       });
       
@@ -207,13 +211,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onUndoDummy()
    {
-      Desktop.getFrame().undo(isFocusInAceInstance());
+      Desktop.getFrame().undo();
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo(isFocusInAceInstance());
+      Desktop.getFrame().redo();
    }
 
    @Handler
@@ -242,7 +246,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onShowLogFiles()
    {
-      Desktop.getFrame().showFolder(session_.getSessionInfo().getLogDir());
+      Desktop.getFrame().showFolder(StringUtil.notNull(session_.getSessionInfo().getLogDir()));
    }
    
    @Handler
@@ -259,6 +263,31 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       }.schedule(1000);
       
+   }
+   
+   @Handler
+   void onOpenDeveloperConsole()
+   {
+      int port = DesktopInfo.getChromiumDevtoolsPort();
+      if (port == 0)
+      {
+         globalDisplay_.showErrorMessage(
+               "Error Opening Devtools",
+               "The Chromium devtools server could not be activated.");
+      }
+      else
+      {
+         globalDisplay_.openMinimalWindow(
+               ("http://127.0.0.1:" + DesktopInfo.getChromiumDevtoolsPort()),
+               Window.getClientWidth() - 20,
+               Window.getClientHeight() - 20);
+      }
+   }
+   
+   @Handler
+   void onReloadUi()
+   {
+      WindowEx.get().reload();
    }
 
    @Handler
@@ -310,7 +339,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
          for (int i = 0; i < ignoredUpdates.length(); i++)
          {
-            if (ignoredUpdates.get(i).equals(result.getUpdateVersion()))
+            if (ignoredUpdates.get(i) == result.getUpdateVersion())
             {
                ignoredUpdate = true;
             }
@@ -332,8 +361,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
                   @Override
                   public void onReadyToQuit(boolean saveChanges)
                   {
-                     Desktop.getFrame().browseUrl(result.getUpdateUrl());
-                     appQuit_.performQuit(saveChanges);
+                     Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
+                     appQuit_.performQuit(null, saveChanges);
                   }
                }); 
             }

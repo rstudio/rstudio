@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -122,10 +122,11 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public void prepareForQuit(final String caption,
                               final QuitContext quitContext)
    {
-      prepareForQuit(caption, false, quitContext);
+      prepareForQuit(caption, true /*allowCancel*/, false /*forceSaveAll*/, quitContext);
    }
-   
+
    public void prepareForQuit(final String caption,
+                              final boolean allowCancel,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
@@ -147,43 +148,41 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       if (busy && !forceSaveAll)
       {
-         globalDisplay_.showYesNoMessage(
-               MessageDialog.QUESTION,
-               caption, 
-               msg + " Are you sure you want to quit?",
-               new Operation() {
-                  @Override
-                  public void execute()
-                  {
-                     handleUnsavedChanges(caption, forceSaveAll, quitContext);
-                  }}, 
-               true);
+         if (allowCancel)
+         {
+            globalDisplay_.showYesNoMessage(
+                  MessageDialog.QUESTION,
+                  caption, 
+                  msg + " Are you sure you want to quit?",
+                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext),
+                  true);
+         }
+         else
+         {
+            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
+         }
       }
       else
       {
          // if we aren't restoring source documents then close them all now
          if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
          {
-            sourceShim_.closeAllSourceDocs(caption, new Command() {
-               @Override
-               public void execute()
-               {
-                  handleUnsavedChanges(caption, forceSaveAll, quitContext);
-               }
-            });
+            sourceShim_.closeAllSourceDocs(caption,
+                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext));
          }
          else
          {
-            handleUnsavedChanges(caption, forceSaveAll, quitContext);
+            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
          }
       }
    }
    
    private void handleUnsavedChanges(String caption, 
+                                     boolean allowCancel,
                                      boolean forceSaveAll,
                                      QuitContext quitContext)
    {
-      handleUnsavedChanges(saveAction_.getAction(), caption, forceSaveAll,
+      handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
             sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
    }
    
@@ -196,6 +195,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    public static void handleUnsavedChanges(final int saveAction, 
                                      String caption,
+                                     boolean allowCancel,
                                      boolean forceSaveAll,
                                      final SourceShim sourceShim,
                                      final WorkbenchContext workbenchContext,
@@ -260,18 +260,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                GlobalDisplay.MSG_QUESTION,
                caption,
                prompt,
-               true,
-               new Operation() { public void execute()
-               {
-                  quitContext.onReadyToQuit(true);      
-               }},
-               new Operation() { public void execute()
-               {
-                  quitContext.onReadyToQuit(false);
-               }},
-               new Operation() { public void execute()
-               {
-               }},
+               allowCancel,
+               () -> quitContext.onReadyToQuit(true),
+               () -> quitContext.onReadyToQuit(false),
+               () -> {},
                "Save",
                "Don't Save",
                true);        
@@ -341,43 +333,49 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
-   public void performQuit(boolean saveChanges)
+   public void performQuit(String invokedByTutorialApi, boolean saveChanges)
    {
-      performQuit(saveChanges, null, null);
+      performQuit(invokedByTutorialApi, saveChanges, null, null);
    }
    
-   public void performQuit(boolean saveChanges, 
+   public void performQuit(String invokedByTutorialApi,
+                           boolean saveChanges,
                            String switchToProject)
    {
-      performQuit(saveChanges, switchToProject, null);
+      performQuit(invokedByTutorialApi, saveChanges, switchToProject, null);
    }
    
-   public void performQuit(boolean saveChanges, 
+   public void performQuit(String invokedByTutorialApi,
+                           boolean saveChanges,
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(null, saveChanges, switchToProject, switchToRVersion);
+      performQuit(invokedByTutorialApi, null, saveChanges, switchToProject, switchToRVersion);
    }
    
-   public void performQuit(String progressMessage,
+   public void performQuit(String invokedByTutorialApi,
+                           String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(progressMessage, 
+      performQuit(invokedByTutorialApi,
+                  progressMessage,
                   saveChanges, 
                   switchToProject, 
                   switchToRVersion,
                   null);
    }
    
-   public void performQuit(String progressMessage,
+   public void performQuit(String invokedByTutorialApi,
+                           String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion,
                            Command onQuitAcknowledged)
    {
-      new QuitCommand(progressMessage, 
+      new QuitCommand(invokedByTutorialApi,
+                      progressMessage,
                       saveChanges, 
                       switchToProject,
                       switchToRVersion,
@@ -627,14 +625,16 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", new QuitContext() {
-         public void onReadyToQuit(boolean saveChanges)
-         {
-            performQuit(saveChanges);
-         }   
-      });
+      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(null, saveChanges));
    }
-   
+
+   @Handler
+   public void onForceQuitSession()
+   {
+      prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
+            (boolean saveChanges) -> performQuit(null, saveChanges));
+   }
+
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
    {
       @Override
@@ -665,7 +665,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private String buildSwitchMessage(String switchToProject)
    {
-      String msg = !switchToProject.equals("none") ?
+      String msg = switchToProject != "none" ?
         "Switching to project " + 
            FileSystemItem.createFile(switchToProject).getParentPathString() :
         "Closing project";
@@ -674,7 +674,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private class QuitCommand implements Command 
    { 
-      public QuitCommand(String progressMessage, 
+      public QuitCommand(String invokedByTutorialApi,
+                         String progressMessage,
                          boolean saveChanges, 
                          String switchToProject,
                          RVersionSpec switchToRVersion,
@@ -684,6 +685,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
          switchToRVersion_ = switchToRVersion;
+         invokedByTutorialApi_ = invokedByTutorialApi;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -713,27 +715,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                // failed). Now do the real quit.
 
                // notify the desktop frame that we are about to quit
-               String switchToProject = new String(switchToProject_);
+               String switchToProject = StringUtil.create(switchToProject_);
                if (Desktop.isDesktop())
                {
-                  if (Desktop.getFrame().isCocoa() && 
-                      switchToProject_ != null)
-                  {
-                     // on Cocoa there's an ugly intermittent crash that occurs 
-                     // when we reload, so exit this instance and start a new
-                     // one when switching projects
-                     Desktop.getFrame().setPendingProject(switchToProject_);
-                     
-                     // Since we're going to be starting a new process we don't
-                     // want to pass a switchToProject argument to quitSession
-                     switchToProject = null;
-                  }
-                  else
-                  {
-                     Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                              DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                              DesktopFrame.PENDING_QUIT_AND_EXIT);
-                  }
+                  Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
+                        DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
+                        DesktopFrame.PENDING_QUIT_AND_EXIT);
                }
                
                server_.quitSession(
@@ -754,26 +741,39 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                            if (switchToProject_ == null)
                               progress.dismiss();
                            
+                           if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                           {
+                              eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                    ApplicationTutorialEvent.API_SUCCESS, invokedByTutorialApi_));
+                           }
+                           
                            // fire onQuitAcknowledged
                            if (onQuitAcknowledged_ != null)
                               onQuitAcknowledged_.execute();
                         }
                         else
                         {
-                           onFailedToQuit();
+                           onFailedToQuit("server quitSession responded false");
                         }
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        onFailedToQuit();
+                        onFailedToQuit(error.getMessage());
                      }
                      
-                     private void onFailedToQuit()
+                     private void onFailedToQuit(String message)
                      {
                         progress.dismiss();
-
+                        
+                        if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                        {
+                           eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                 ApplicationTutorialEvent.API_ERROR,
+                                 invokedByTutorialApi_,
+                                 message));
+                        }
                         if (Desktop.isDesktop())
                         {
                            Desktop.getFrame().setPendingQuit(
@@ -802,9 +802,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       private final String switchToProject_;
       private final RVersionSpec switchToRVersion_;
       private final String progressMessage_;
+      private final String invokedByTutorialApi_;
       private final Command onQuitAcknowledged_;
-
-   };
+   }
 
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;

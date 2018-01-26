@@ -31,9 +31,10 @@
 #define kDistEvtEventData  "event_data"
 #define kDistEvtOrigin     "origin_session"
 
-#define kDistEvtTargetProject "project"
-#define kDistEvtTargetSession "session"
-#define kDistEvtTargetWorkspaces "workspaces"
+#define kDistEvtTargetProject     "project"
+#define kDistEvtTargetSession     "session"
+#define kDistEvtTargetWorkspaces  "workspaces"
+#define kDistEvtTargetServer      "server"
 
 namespace rstudio {
 namespace core {
@@ -57,7 +58,10 @@ enum DistEvtType
    DistEvtNotebookChunkOutput,
    DistEvtNotebookConsoleOutput,
    DistEvtShutdownSessions,
-   DistEvtKillSessions
+   DistEvtKillSessions,
+   DistEvtPamPasswordUpdated,
+   DistEvtPamPasswordRemoved,
+   DistEvtSuspendSessions
 };
 
 class DistributedEvent

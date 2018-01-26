@@ -18,7 +18,7 @@
 
 #include <QWidget>
 #include <QString>
-#include <QWebPage>
+#include <QWebEnginePage>
 
 namespace rstudio {
 namespace desktop {
@@ -33,7 +33,7 @@ public:
    virtual QWidget* asWidget() = 0;
    virtual WebPage* webPage() = 0;
    virtual void postWebViewEvent(QEvent *event) = 0;
-   virtual void triggerPageAction(QWebPage::WebAction action) = 0;
+   virtual void triggerPageAction(QWebEnginePage::WebAction action) = 0;
 };
 
 } // namespace desktop

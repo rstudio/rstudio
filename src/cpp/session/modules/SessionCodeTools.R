@@ -269,6 +269,77 @@
    FALSE
 })
 
+.rs.addFunction("getUseMethodGeneric", function(x)
+{
+   if (is.function(x))
+      x <- body(x)
+   
+   if (!is.call(x))
+      return(NULL)
+   
+   UseMethod <- as.name("UseMethod")
+   generic <- NULL
+   .rs.recursiveSearch(x, function(node) {
+      
+      if (!is.call(node) || length(node) < 2 || length(node) > 3)
+         return(FALSE)
+      
+      lhs <- node[[1]]
+      if (!identical(lhs, UseMethod))
+         return(FALSE)
+      
+      matched <- tryCatch(
+         match.call(function(generic, object) {}, node),
+         error = function(e) NULL
+      )
+      
+      if (is.character(matched[["generic"]]))
+      {
+         generic <<- matched[["generic"]]
+         return(TRUE)
+      }
+      
+      FALSE
+   })
+   
+   generic
+})
+
+.rs.addFunction("getS3MethodDefinitions", function(generic)
+{
+   if (is.function(generic))
+      generic <- .rs.getUseMethodGeneric(generic)
+   
+   if (!is.character(generic))
+      return(NULL)
+   
+   call <- substitute(
+      methods(generic),
+      list(generic = generic)
+   )
+   
+   methods <- eval(call, envir = globalenv())
+   info <- attr(methods, "info")
+   if (!is.data.frame(info))
+      return(NULL)
+   
+   defns <- lapply(seq_len(nrow(info)), function(i) {
+      method <- rownames(info)[[i]]
+      generic <- info$generic[[i]]
+      class <- substring(method, nchar(generic) + 2)
+      
+      call <- substitute(
+         utils::getS3method(generic, class, optional = TRUE),
+         list(generic = generic, class = class)
+      )
+      
+      eval(call, envir = globalenv())
+   })
+   
+   names(defns) <- rownames(info)
+   defns
+})
+
 .rs.addFunction("getS3MethodsForFunction", function(func, envir = parent.frame())
 {
   tryCatch({
@@ -1246,11 +1317,9 @@
          .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
       })
       
-      # Figure out which functions perform NSE. TODO: Figure out which
-      # arguments are actually involved in NSE.
-      performsNse <- as.integer(
-         .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
-      )
+      # Figure out which functions perform NSE.
+      # TODO: Figure out which arguments are actually involved in NSE.
+      performsNse <- .rs.performsNonstandardEvaluation(f)
       
       formalInfo <- lapply(seq_along(formalNames), function(i) {
          as.integer(c(
@@ -1263,16 +1332,20 @@
       list(
          formal_names = formalNames,
          formal_info  = formalInfo,
-         performs_nse = I(performsNse)
+         performs_nse = I(as.integer(performsNse))
       )
    })
+   
+   # List data objects exported by this package
+   datasets <- .rs.listDatasetsProvidedByPackage(package)
    
    # Generate the output
    output <- list(
       package = I(package),
       exports = exports,
       types = types,
-      function_info = functionInfo
+      function_info = functionInfo,
+      datasets = datasets
    )
    
    # Write the JSON to stdout; parent processes
@@ -1285,17 +1358,24 @@
 
 .rs.setVar("nse.primitives", c(
    "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq", "lazy_dots"
+   "enquote", "bquote", "evalq", "lazy_dots", "compat_as_lazy_dots",
+   "select_vars", "quo", "quos", "enquo", "named_quos"
 ))
 
-.rs.addFunction("performsNonstandardEvaluation", function(functionBody)
+.rs.addFunction("performsNonstandardEvaluation", function(object)
 {
-   # Allow callers to just pass in functions
-   if (is.function(functionBody))
-      functionBody <- body(functionBody)
+   # For S3 generics, search methods as well as the generic for
+   # potential usages of non-standard evaluation.
+   methods <- .rs.getS3MethodDefinitions(object)
+   for (method in methods)
+      if (.rs.performsNonstandardEvaluation(method))
+         return(TRUE)
+   
+   if (is.function(object))
+      object <- body(object)
    
    nsePrimitives <- .rs.getVar("nse.primitives")
-   .rs.recursiveSearch(functionBody,
+   .rs.recursiveSearch(object,
                        .rs.performsNonstandardEvaluationImpl,
                        nsePrimitives = nsePrimitives)
 })
@@ -1912,4 +1992,64 @@
    
    fmt <- "'%s' is not a length-one character vector"
    stop(sprintf(fmt, .rs.deparse(substitute(object))), call. = FALSE)
+})
+
+.rs.addFunction("isR6NewMethod", function(object)
+{
+   if (!is.function(object))
+      return(FALSE)
+   
+   envir <- environment(object)
+   if (!inherits(envir, "R6ClassGenerator"))
+      return(FALSE)
+   
+   identical(object, envir$new)
+})
+
+.rs.addFunction("getR6ClassGeneratorMethod", function(object, method)
+{
+   if (is.function(object))
+      object <- environment(object)
+   
+   if (!is.environment(object))
+      return(NULL)
+   
+   if (!inherits(object, "R6ClassGenerator"))
+      return(NULL)
+   
+   tryCatch(
+      object$public_methods[[method]],
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("isExternalPointer", function(object)
+{
+   identical(typeof(object), "externalptr")
+})
+
+.rs.addFunction("fileInfo", function(..., extra_cols = TRUE)
+{
+   suppressWarnings(file.info(..., extra_cols = extra_cols))
+})
+
+.rs.addFunction("listDatasetsProvidedByPackage", function(package)
+{
+   # verify we have a non-empty length-one string
+   if (!is.character(package) || length(package) != 1 || !nzchar(package))
+      return(character())
+   
+   # find the installed package location (returns empty vector on failure)
+   location <- find.package(package, quiet = TRUE)
+   if (!length(location) || !file.exists(location))
+      return(character())
+   
+   # construct path to datalist file
+   datalist <- file.path(location, "data/datalist")
+   if (!file.exists(datalist))
+      return(character())
+   
+   # read the names of the provided objects
+   readLines(datalist, warn = FALSE)
+   
 })

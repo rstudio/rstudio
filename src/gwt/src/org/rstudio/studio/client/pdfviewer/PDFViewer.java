@@ -1,7 +1,7 @@
 /*
  * PDFViewer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,7 +103,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       // only handle PDF compile events when we're the preferred viewer
-      if (!prefs_.pdfPreview().getValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+      if (prefs_.pdfPreview().getValue() != UIPrefs.PDF_PREVIEW_RSTUDIO)
          return;
       
       // only handle successful compiles
@@ -134,7 +134,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onSynctexViewPdf(SynctexViewPdfEvent event)
    {
-      if (event.getPdfLocation().getFile().equals(lastSuccessfulPdfPath_))
+      if (event.getPdfLocation().getFile() == lastSuccessfulPdfPath_)
       {
          PdfJsWindow.navigateTo(pdfJsWindow_, event.getPdfLocation());
          if (Desktop.isDesktop())
@@ -173,7 +173,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    @Override
    public void onWindowOpened(WindowOpenedEvent event)
    {
-      if (event.getName().equals(WINDOW_NAME))
+      if (event.getName() == WINDOW_NAME)
       {
          initializePdfJsWindow(event.getWindow());
       }
@@ -216,8 +216,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       Point pos = null;
       
       // if there's a window open, restore the position when we're done
-      if (restorePosition && 
-          url.equals(lastSuccessfulPdfUrl_))
+      if (restorePosition && url == lastSuccessfulPdfUrl_)
       {
          // if we don't have an active window, we'll use the hash stored when
          // the window closed
@@ -243,7 +242,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
-         pos = new Point(pdfJsWindow_.getLeft(), pdfJsWindow_.getTop());
+         pos = Point.create(pdfJsWindow_.getLeft(), pdfJsWindow_.getTop());
          pdfJsWindow_.close();
          pdfJsWindow_ = null;
       }
@@ -268,17 +267,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
              }
           });
           executeOnPdfJsLoad_ = loadPdf;
-          
-          if (Desktop.isDesktop() && Desktop.getFrame().isCocoa()) 
-          {
-             // on cocoa, we can open a native window
-             display_.openMinimalWindow(viewerUrl, false, width, height, options);
-          }
-          else
-          {
-             // on Qt, we need to open a web window so window.opener is wired
-             display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
-          }
+          display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
       }
       else
       {

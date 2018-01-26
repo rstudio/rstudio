@@ -80,6 +80,13 @@ public:
       BOOST_ASSERT(!running_);
       abortOnResourceError_ = abortOnResourceError;
    }
+
+   virtual void addProxyHandler(const std::string& prefix,
+                                const AsyncUriHandlerFunction& handler)
+   {
+      BOOST_ASSERT(!running_);
+      uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler, true));
+   }
    
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler)
@@ -325,17 +332,33 @@ private:
 
          // call the appropriate handler to generate a response
          std::string uri = pRequest->uri();
-         AsyncUriHandlerFunction handler = uriHandlers_.handlerFor(uri);
-         if (handler)
+         AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
+         AsyncUriHandlerFunction handlerFunc = handler.function();
+
+         // if no handler was assigned but we have a default, use it instead
+         if (!handlerFunc && defaultHandler_)
+            handlerFunc = defaultHandler_;
+
+         if (!handler.isProxyHandler())
          {
-            // call the handler
-            handler(pAsyncConnection) ;
+            // check to ensure the request is for a supported method
+            // proxy handlers do not perform this checking as we
+            // flow all traffic like a proxy
+            const std::string& method = pRequest->method();
+            if (method != "GET" &&
+                method != "PUT" &&
+                method != "POST")
+            {
+               // invalid method - fail out
+               LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
+               pConnection->response().setStatusCode(http::status::MethodNotAllowed);
+               return;
+            }
          }
-         else if (defaultHandler_)
-         {
-            // call the default handler
-            defaultHandler_(pAsyncConnection);
-         }
+
+         // call handler if we have one
+         if (handlerFunc)
+            handlerFunc(pAsyncConnection) ;
          else
          {
             // log error
@@ -465,7 +488,7 @@ private:
    void checkForResourceExhaustion(const boost::system::error_code& ec,
                                    const core::ErrorLocation& location)
    {
-      if ( ec.category() == boost::system::get_system_category() &&
+      if ( ec.category() == boost::system::system_category() &&
           (ec.value() == boost::system::errc::too_many_files_open ||
            ec.value() == boost::system::errc::not_enough_memory) )
       {

@@ -145,7 +145,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                @Override
                public void onResponseReceived(Void response)
                {
-                  if (baseDir.equals(workingDir_))
+                  if (baseDir == workingDir_)
                   {
                      progress.onCompleted();
                      if (callbacks_ != null)

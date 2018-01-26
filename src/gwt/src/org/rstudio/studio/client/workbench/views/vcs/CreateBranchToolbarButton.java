@@ -177,7 +177,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       boolean hasBranch = false;
       for (String branch : JsUtil.asIterable(branchesInfo.getBranches()))
       {
-         if (branch.equals(input.getBranch()))
+         if (branch == input.getBranch())
          {
             hasBranch = true;
             break;
@@ -246,7 +246,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                @Override
                public boolean test(String branch)
                {
-                  return branch.equals(targetBranch);
+                  return branch == targetBranch;
                }
             });
       

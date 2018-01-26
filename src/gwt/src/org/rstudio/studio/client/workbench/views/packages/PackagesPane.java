@@ -146,7 +146,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       List<PackageInfo> packages = packagesDataProvider_.getList();
       for (int i=0; i<packages.size(); i++)
       {
-         if (packages.get(i).getName().equals(status.getName()) &&
+         if (packages.get(i).getName() == status.getName() &&
              i != row)
          {
             packages.set(i, packages.get(i).asUnloaded());
@@ -167,8 +167,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       for (int i=0; i<packages.size(); i++)
       {
          PackageInfo packageInfo = packages.get(i);
-         if (packageInfo.getName().equals(packageName) &&
-             packageInfo.getLibrary().equals(packageLib))
+         if (packageInfo.getName() == packageName &&
+             packageInfo.getLibrary() == packageLib)
          {
             row = i ;
             break;
@@ -410,11 +410,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                      if (pkgInfo.getInPackratLibary())
                      {
                         String source = pkgInfo.getPackratSource();
-                        if (source.equals("github"))
+                        if (source == "github")
                            return "GitHub";
-                        else if (source.equals("Bioconductor"))
+                        else if (source == "Bioconductor")
                            return "BioC";
-                        else if (source.equals("source"))
+                        else if (source == "source")
                            return "Source";
                         else
                            return source;

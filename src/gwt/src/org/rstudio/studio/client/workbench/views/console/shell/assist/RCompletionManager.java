@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -247,6 +248,20 @@ public class RCompletionManager implements CompletionManager
          }
       }));
       
+      // hide the autocompletion popup if the user executes
+      // an Ace editor command (e.g. insert pipe operator)
+      handlers_.add(eventBus_.addHandler(
+            AceEditorCommandEvent.TYPE,
+            new AceEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onEditorCommand(AceEditorCommandEvent event)
+               {
+                  invalidatePendingRequests();
+                  close();
+               }
+            }));
+      
    }
    
    @Inject
@@ -336,7 +351,7 @@ public class RCompletionManager implements CompletionManager
             for (int i = 0; i < scopes.length(); i++)
             {
                ScopeFunction scope = scopes.get(i);
-               if (scope.getFunctionName().equals(functionName))
+               if (scope.getFunctionName() == functionName)
                {
                   navigableSourceEditor_.navigateToPosition(
                         SourcePosition.create(scope.getPreamble().getRow(),
@@ -802,8 +817,8 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
-               UIPrefsAccessor.COMPLETION_ALWAYS);
+         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue() ==
+               UIPrefsAccessor.COMPLETION_ALWAYS;
 
          if (!autoPopupEnabled)
             return false;
@@ -851,7 +866,14 @@ public class RCompletionManager implements CompletionManager
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
             
-            sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+               }
+            });
          }
          
          if (
@@ -1185,7 +1207,7 @@ public class RCompletionManager implements CompletionManager
       
       // fix up roxygen autocompletion for case where '@' is snug against
       // the comment marker
-      if (context.getToken().equals("'@"))
+      if (context.getToken() == "'@")
          context.setToken(context.getToken().substring(1));
       
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
@@ -1619,7 +1641,7 @@ public class RCompletionManager implements CompletionManager
       Position startPosition = clone.currentPosition();
       
       // Include the opening paren if that's what we found
-      if (clone.currentValue().equals("("))
+      if (clone.currentValue() == "(")
          startPosition.setColumn(startPosition.getColumn() + 1);
       
       String beforeText = editor.getTextForRange(Range.fromPoints(
@@ -1641,7 +1663,7 @@ public class RCompletionManager implements CompletionManager
          
          // Bail if we find a closing paren (we should walk over matched
          // pairs properly, so finding one implies that we have a parse error).
-         if (value.equals("]") || value.equals("}"))
+         if (value == "]" || value == "}")
             break;
          
          if (clone.fwdToMatchingToken())
@@ -1670,22 +1692,22 @@ public class RCompletionManager implements CompletionManager
          // Bail if we encounter tokens that we don't expect as part
          // of the current expression -- this implies we're not really
          // within a named argument, although this isn't perfect.
-         if (argsValue.equals(",") ||
-             argsValue.equals("(") ||
-             argsValue.equals("$") ||
-             argsValue.equals("@") ||
-             argsValue.equals("::") ||
-             argsValue.equals(":::") ||
-             argsValue.equals("]") ||
-             argsValue.equals(")") ||
-             argsValue.equals("}"))
+         if (argsValue == "," ||
+             argsValue == "(" ||
+             argsValue == "$" ||
+             argsValue == "@" ||
+             argsValue == "::" ||
+             argsValue == ":::" ||
+             argsValue == "]" ||
+             argsValue == ")" ||
+             argsValue == "}")
          {
             break;
          }
          
          // If we encounter an '=', we assume that this is
          // a function argument.
-         if (argsValue.equals("=") && argsCursor.moveToPreviousToken())
+         if (argsValue == "=" && argsCursor.moveToPreviousToken())
          {
             if (!isFileCompletion)
                context.setToken(token);
@@ -1848,7 +1870,7 @@ public class RCompletionManager implements CompletionManager
          // the popup to ensure that backspace can re-load completions from
          // the cache
          if (results.length == 1 &&
-             completions.token.equals(results[0].name.replaceAll(":*", "")))
+             completions.token == results[0].name.replaceAll(":*", ""))
          {
             // For snippets we need to apply the completion if explicitly requested
             if (results[0].type == RCompletionType.SNIPPET && canAutoAccept_)
@@ -1987,7 +2009,7 @@ public class RCompletionManager implements CompletionManager
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
          
-         if (qualifiedName.source.equals("`chunk-option`"))
+         if (qualifiedName.source == "`chunk-option`")
          {
             applyValueRmdOption(qualifiedName.name);
             return;

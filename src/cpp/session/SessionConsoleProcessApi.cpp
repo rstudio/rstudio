@@ -16,7 +16,6 @@
 #include "SessionConsoleProcessApi.hpp"
 
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
@@ -36,14 +35,14 @@ namespace console_process {
 
 namespace {
 
-// findProcByCaption that reports an R error for unknown caption
-ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
+// findProcByHandle that reports an R error for unknown terminal handle
+ConsoleProcessPtr findProcByHandleReportUnknown(const std::string& handle)
 {
-   ConsoleProcessPtr proc = findProcByCaption(caption);
-   if (proc == NULL)
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc == nullptr)
    {
-      std::string error("Unknown terminal '");
-      error += caption;
+      std::string error("Unknown terminal identifier '");
+      error += handle;
       error += "'";
       r::exec::error(error);
    }
@@ -51,7 +50,7 @@ ConsoleProcessPtr findProcByCaptionReportUnknown(const std::string& caption)
 }
 
 // Return buffer for a terminal, optionally stripping out Ansi codes.
-std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
+std::string getTerminalBuffer(const ConsoleProcessPtr& proc, bool stripAnsi)
 {
    std::string buffer = proc->getBuffer();
 
@@ -83,7 +82,7 @@ std::string getTerminalBuffer(ConsoleProcessPtr proc, bool stripAnsi)
 
 // R APIs ---------------------------------------------------------------
 
-// Return vector of all terminal ids (captions)
+// Return vector of all terminal ids (handles)
 SEXP rs_terminalList()
 {
    r::sexp::Protect protect;
@@ -91,12 +90,12 @@ SEXP rs_terminalList()
    if (!session::options().allowShell())
       return R_NilValue;
 
-   return r::sexp::create(getAllCaptions(), &protect);
+   return r::sexp::create(getAllHandles(), &protect);
 }
 
-// Create a terminal with given id (caption). If null, create with automatically
-// generated name. Returns resulting name in either case.
-SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
+// Create a terminal with given caption. If null, create with automatically
+// generated name.
+SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP)
 {
    r::sexp::Protect protect;
 
@@ -104,15 +103,17 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
       return R_NilValue;
 
    std::pair<int, std::string> termSequence = nextTerminalName();
-   std::string terminalId = r::sexp::asString(typeSEXP);
-   if (terminalId.empty())
+   std::string terminalCaption;
+   if (!r::sexp::isNull(captionSEXP))
+      terminalCaption = r::sexp::asString(captionSEXP);
+   if (terminalCaption.empty())
    {
-      terminalId = termSequence.second;
+      terminalCaption = termSequence.second;
    }
-   else if (findProcByCaption(terminalId) != NULL)
+   else if (findProcByCaption(terminalCaption) != nullptr)
    {
-      std::string msg = "Terminal id already in use: '";
-      msg += terminalId;
+      std::string msg = "Terminal caption already in use: '";
+      msg += terminalCaption;
       msg += "'";
       r::exec::error(msg);
       return R_NilValue;
@@ -122,7 +123,7 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
 
    boost::shared_ptr<ConsoleProcessInfo> pCpi(
             new ConsoleProcessInfo(
-               terminalId,
+               terminalCaption,
                std::string() /*title*/,
                std::string() /*handle*/,
                termSequence.first,
@@ -132,6 +133,8 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
                core::system::kDefaultCols, core::system::kDefaultRows,
                false /*zombie*/,
                session::userSettings().terminalTrackEnv()));
+
+   pCpi->setHasChildProcs(false);
 
    std::string handle;
    Error error = createTerminalConsoleProc(pCpi, &handle);
@@ -171,7 +174,7 @@ SEXP rs_terminalCreate(SEXP typeSEXP, SEXP showSEXP)
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
-   return r::sexp::create(terminalId, &protect);
+   return r::sexp::create(handle, &protect);
 }
 
 // Returns busy state of a terminal (i.e. does the shell have any child
@@ -185,10 +188,10 @@ SEXP rs_terminalBusy(SEXP terminalsSEXP)
       return R_NilValue;
 
    std::vector<bool> isBusy;
-   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   for (const std::string& terminalId : terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
-      if (proc == NULL)
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
+      if (proc == nullptr)
       {
          isBusy.push_back(false);
          continue;
@@ -208,10 +211,10 @@ SEXP rs_terminalRunning(SEXP terminalsSEXP)
       return R_NilValue;
 
    std::vector<bool> isRunning;
-   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   for (const std::string& terminalId : terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
-      if (proc == NULL)
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
+      if (proc == nullptr)
       {
          isRunning.push_back(false);
          continue;
@@ -228,8 +231,8 @@ SEXP rs_terminalContext(SEXP terminalSEXP)
 
    std::string terminalId = r::sexp::asString(terminalSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
-   if (proc == NULL)
+   ConsoleProcessPtr proc = findProcByHandle(terminalId);
+   if (proc == nullptr)
    {
       return R_NilValue;
    }
@@ -268,8 +271,8 @@ SEXP rs_terminalBuffer(SEXP idSEXP, SEXP stripSEXP)
    std::string terminalId = r::sexp::asString(idSEXP);
    bool stripAnsi = r::sexp::asLogical(stripSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
-   if (proc == NULL)
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
+   if (proc == nullptr)
       return R_NilValue;
 
    std::string buffer = getTerminalBuffer(proc, stripAnsi);
@@ -284,10 +287,10 @@ SEXP rs_terminalKill(SEXP terminalsSEXP)
       return R_NilValue;
 
    std::string handle;
-   BOOST_FOREACH(const std::string& terminalId, terminalIds)
+   for (const std::string& terminalId : terminalIds)
    {
-      ConsoleProcessPtr proc = findProcByCaption(terminalId);
-      if (proc != NULL)
+      ConsoleProcessPtr proc = findProcByHandle(terminalId);
+      if (proc != nullptr)
       {
          handle = proc->handle();
          proc->interrupt();
@@ -315,18 +318,18 @@ SEXP rs_terminalVisible()
       return R_NilValue;
 
    ConsoleProcessPtr proc = getVisibleProc();
-   if (proc == NULL)
+   if (proc == nullptr)
       return R_NilValue;
 
-   return r::sexp::create(proc->getCaption(), &protect);
+   return r::sexp::create(proc->handle(), &protect);
 }
 
 SEXP rs_terminalClear(SEXP idSEXP)
 {
    std::string terminalId = r::sexp::asString(idSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
-   if (proc == NULL)
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
+   if (proc == nullptr)
       return R_NilValue;
 
    // clear the server-side log directly
@@ -335,7 +338,7 @@ SEXP rs_terminalClear(SEXP idSEXP)
    // send the event to the client; if not connected, it will get the cleared
    // server-side buffer next time it connects.
    json::Object eventData;
-   eventData["id"] = terminalId;
+   eventData["id"] = proc->getCaption();
 
    ClientEvent clearNamedTerminalEvent(client_events::kClearTerminal, eventData);
    module_context::enqueClientEvent(clearNamedTerminalEvent);
@@ -349,7 +352,7 @@ SEXP rs_terminalSend(SEXP idSEXP, SEXP textSEXP)
    std::string terminalId = r::sexp::asString(idSEXP);
    std::string text = r::sexp::asString(textSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+   ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
    if (!proc)
       return R_NilValue;
 
@@ -366,15 +369,18 @@ SEXP rs_terminalSend(SEXP idSEXP, SEXP textSEXP)
 // Activate a terminal to ensure it is running (and optionally visible).
 SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
 {
-   std::string terminalId = r::sexp::asString(idSEXP);
+   std::string terminalId;
+   if (!r::sexp::isNull(idSEXP))
+      terminalId = r::sexp::asString(idSEXP);
    bool show = r::sexp::asLogical(showSEXP);
 
    if (!session::options().allowShell())
       return R_NilValue;
 
+   std::string caption;
    if (!terminalId.empty())
    {
-      ConsoleProcessPtr proc = findProcByCaptionReportUnknown(terminalId);
+      ConsoleProcessPtr proc = findProcByHandleReportUnknown(terminalId);
       if (!proc)
          return R_NilValue;
 
@@ -396,12 +402,13 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
             return R_NilValue;
          }
       }
+      caption = proc->getCaption();
    }
 
    if (show)
    {
       json::Object eventData;
-      eventData["id"] = terminalId;
+      eventData["id"] = caption;
 
       ClientEvent activateTerminalEvent(client_events::kActivateTerminal, eventData);
       module_context::enqueClientEvent(activateTerminalEvent);
@@ -451,7 +458,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    }
 
    core::system::Options customEnv;
-   BOOST_FOREACH(const std::string& str, env)
+   for (const std::string& str : env)
    {
       core::system::Option envVar;
       if (!core::system::parseEnvVar(str, &envVar))
@@ -467,10 +474,9 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
 
    bool show = r::sexp::asLogical(showSEXP);
 
-   std::string title = command;
    std::string handle;
    Error error = createTerminalExecuteConsoleProc(
-            title,
+            command /*title*/,
             command,
             currentDir,
             customEnv,
@@ -511,7 +517,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
 
-   return r::sexp::create(ptrProc->getCaption(), &protect);
+   return r::sexp::create(handle, &protect);
 }
 
 // Return terminal exit codes
@@ -521,8 +527,8 @@ SEXP rs_terminalExitCode(SEXP idSEXP)
 
    std::string terminalId = r::sexp::asString(idSEXP);
 
-   ConsoleProcessPtr proc = findProcByCaption(terminalId);
-   if (proc == NULL)
+   ConsoleProcessPtr proc = findProcByHandle(terminalId);
+   if (proc == nullptr)
    {
       return R_NilValue;
    }
@@ -536,14 +542,14 @@ SEXP rs_terminalExitCode(SEXP idSEXP)
 // RPC APIs ---------------------------------------------------------------
 
 Error procStart(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+                json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
    if (error)
       return error;
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
    {
       return proc->start();
    }
@@ -556,14 +562,14 @@ Error procStart(const json::JsonRpcRequest& request,
 }
 
 Error procInterrupt(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+                    json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
    if (error)
       return error;
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
    {
       proc->interrupt();
       return Success();
@@ -577,14 +583,14 @@ Error procInterrupt(const json::JsonRpcRequest& request,
 }
 
 Error procInterruptChild(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
+                         json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
    if (error)
       return error;
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
    {
       proc->interruptChild();
       return Success();
@@ -598,7 +604,7 @@ Error procInterruptChild(const json::JsonRpcRequest& request,
 }
 
 Error procReap(const json::JsonRpcRequest& request,
-               json::JsonRpcResponse* pResponse)
+               json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
@@ -606,7 +612,7 @@ Error procReap(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
       return reapConsoleProcess(*proc);
    else
       return systemError(boost::system::errc::invalid_argument,
@@ -615,7 +621,7 @@ Error procReap(const json::JsonRpcRequest& request,
 }
 
 Error procWriteStdin(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                     json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParam(request.params, 0, &handle);
@@ -632,7 +638,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
    {
       proc->enqueInputInternalLock(input);
       return Success();
@@ -646,7 +652,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
 }
 
 Error procSetSize(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+                        json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    int cols, rows;
@@ -658,7 +664,7 @@ Error procSetSize(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc != NULL)
+   if (proc != nullptr)
    {
       proc->resize(cols, rows);
       return Success();
@@ -685,7 +691,7 @@ Error procSetCaption(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
    {
       return systemError(boost::system::errc::invalid_argument,
                          "Error setting terminal caption",
@@ -693,7 +699,7 @@ Error procSetCaption(const json::JsonRpcRequest& request,
    }
 
    // make sure we don't have this name already
-   if (findProcByCaption(caption) != NULL)
+   if (findProcByCaption(caption) != nullptr)
    {
       pResponse->setResult(false /*duplicate name*/);
       return Success();
@@ -706,7 +712,7 @@ Error procSetCaption(const json::JsonRpcRequest& request,
 }
 
 Error procSetTitle(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
+                         json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    std::string title;
@@ -718,7 +724,7 @@ Error procSetTitle(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
    {
       return systemError(boost::system::errc::invalid_argument,
                          "Error setting terminal title",
@@ -730,7 +736,7 @@ Error procSetTitle(const json::JsonRpcRequest& request,
 }
 
 Error procEraseBuffer(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    bool lastLineOnly;
@@ -742,7 +748,7 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
    {
       return systemError(boost::system::errc::invalid_argument,
                          "Error erasing terminal buffer",
@@ -770,7 +776,7 @@ Error procGetBufferChunk(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
       return systemError(boost::system::errc::invalid_argument,
                          "Error getting buffer chunk",
                          ERROR_LOCATION);
@@ -798,7 +804,7 @@ Error procGetBuffer(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
       return systemError(boost::system::errc::invalid_argument,
                          "Error getting buffer chunk",
                          ERROR_LOCATION);
@@ -815,7 +821,7 @@ Error procGetBuffer(const json::JsonRpcRequest& request,
 }
 
 Error procUseRpc(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+                 json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
 
@@ -825,7 +831,7 @@ Error procUseRpc(const json::JsonRpcRequest& request,
       return error;
 
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
       return systemError(boost::system::errc::invalid_argument,
                          "Error switching terminal to RPC",
                          ERROR_LOCATION);
@@ -847,14 +853,14 @@ Error procTestExists(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   bool exists = (findProcByHandle(handle) == NULL) ? false : true;
+   bool exists = !(findProcByHandle(handle) == nullptr);
    pResponse->setResult(exists);
    return Success();
 }
 
 // Notification from client of currently-selected terminal.
 Error procNotifyVisible(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+                        json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
 
@@ -872,7 +878,7 @@ Error procNotifyVisible(const json::JsonRpcRequest& request,
 
    // make sure this handle actually exists
    ConsoleProcessPtr proc = findProcByHandle(handle);
-   if (proc == NULL)
+   if (proc == nullptr)
    {
       clearVisibleProc();
       return systemError(boost::system::errc::invalid_argument,
@@ -930,6 +936,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
 Error initializeApi()
 {
    using namespace module_context;
+   using boost::bind;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
    RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);

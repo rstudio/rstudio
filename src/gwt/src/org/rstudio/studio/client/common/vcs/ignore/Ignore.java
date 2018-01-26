@@ -244,7 +244,7 @@ public class Ignore
          String thisParent = 
                       FileSystemItem.createFile(path).getParentPathString();
          
-         if (!parentPath.equals(thisParent))
+         if (parentPath != thisParent)
          {
             GlobalDisplay gDisp = RStudioGinjector.INSTANCE.getGlobalDisplay();
             gDisp.showMessage(

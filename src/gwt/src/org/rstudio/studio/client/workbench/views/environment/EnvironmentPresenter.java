@@ -18,11 +18,13 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
@@ -105,6 +108,8 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
+      void setEnvironmentMonitoring(boolean monitoring);
+      boolean environmentMonitoring();
       void setCallFrames(JsArray<CallFrame> frames, boolean autoSize);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
@@ -195,7 +200,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
             {
-               refreshView();
+               refreshViewIfEnabled();
             }
          }
       });
@@ -208,6 +213,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             loadNewContextState(event.getContextDepth(), 
                   event.getEnvironmentName(),
+                  event.environmentMonitoring(),
                   event.getFunctionEnvName(),
                   event.environmentIsLocal(),
                   event.getCallFrames(),
@@ -548,24 +554,49 @@ public class EnvironmentPresenter extends BasePresenter
    public void onOpenDataFile(OpenDataFileEvent event)
    {
       final String dataFilePath = event.getFile().getPath();
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-           "Confirm Load RData",
+      
+      if (Pattern.create("[.]rds$", "i").test(dataFilePath))
+      {
+         globalDisplay_.promptForText(
+               "Load R Object",
+               "Load '" + dataFilePath + "' into an R object named:",
+               FilePathUtils.fileNameSansExtension(dataFilePath),
+               new ProgressOperationWithInput<String>()
+               {
+                  @Override
+                  public void execute(String input, ProgressIndicator indicator)
+                  {
+                     if (!RegexUtil.isSyntacticRIdentifier(input))
+                        input = "`" + input.replaceAll("`", "\\\\`") + "`";
+                     
+                     consoleDispatcher_.executeCommand(
+                           input + " <- readRDS",
+                           dataFilePath);
+                     indicator.onCompleted();
+                  }
+               });
+      }
+      else
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+              "Confirm Load RData",
 
-           "Do you want to load the R data file \"" + dataFilePath + "\" " +
-           "into the global environment?",
+              "Do you want to load the R data file \"" + dataFilePath + "\" " +
+              "into the global environment?",
 
-           new ProgressOperation() {
-              public void execute(ProgressIndicator indicator)
-              {
-                 consoleDispatcher_.executeCommand(
-                         "load",
-                         FileSystemItem.createFile(dataFilePath));
+              new ProgressOperation() {
+                 public void execute(ProgressIndicator indicator)
+                 {
+                    consoleDispatcher_.executeCommand(
+                            "load",
+                            FileSystemItem.createFile(dataFilePath));
 
-                 indicator.onCompleted();
-              }
-           },
+                    indicator.onCompleted();
+                 }
+              },
 
-           true);
+              true);
+      }
    }
 
    @Override
@@ -588,7 +619,7 @@ public class EnvironmentPresenter extends BasePresenter
          if (environmentList == null ||
              environmentList.length() == 0)
          {
-            refreshView();
+            refreshViewIfEnabled();
          }
          else
          {
@@ -615,6 +646,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.environmentName(),
+            environmentState.environmentMonitoring(),
             environmentState.functionEnvName(),
             environmentState.environmentIsLocal(),
             environmentState.callFrames(),
@@ -654,6 +686,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
+         boolean environmentMonitoring,
          String functionEnvName,
          boolean isLocalEvironment, 
          JsArray<CallFrame> callFrames,
@@ -664,6 +697,7 @@ public class EnvironmentPresenter extends BasePresenter
       environmentName_ = environmentName;
       functionEnvName_ = functionEnvName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
+      view_.setEnvironmentMonitoring(environmentMonitoring);
       if (callFrames != null && 
           callFrames.length() > 0 &&
           contextDepth > 0)
@@ -688,7 +722,7 @@ public class EnvironmentPresenter extends BasePresenter
          // but both frames are viewed from source, since in this case an
          // unnecessary close and reopen of the source viewer would be 
          // triggered.
-         if ((!newBrowseFile.equals(currentBrowseFile_) ||
+         if ((newBrowseFile != currentBrowseFile_ ||
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
          {
@@ -696,7 +730,7 @@ public class EnvironmentPresenter extends BasePresenter
          }
 
          useCurrentBrowseSource_ = useBrowseSources;
-         if (!currentBrowseSource_.equals(functionCode))
+         if (currentBrowseSource_ != functionCode)
          {
             currentBrowseSource_ = functionCode;
             sourceChanged = true;
@@ -728,7 +762,7 @@ public class EnvironmentPresenter extends BasePresenter
       
       for (UnsavedChangesTarget target: unsavedSourceDocs)
       {
-         if (target.getPath().equals(path))
+         if (target.getPath() == path)
          {
             return true;
          }
@@ -830,6 +864,16 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.clearObjects();
       view_.addObjects(objects);
+   }
+   
+   /***
+    * Refreshes the state of the environment, but only if the environment is currently being 
+    * monitored (otherwise it's pointless to ask for a new object list as one won't be returned)
+    */
+   private void refreshViewIfEnabled()
+   {
+      if (view_ == null || view_.environmentMonitoring())
+         refreshView();
    }
     
    private void refreshView()
@@ -934,24 +978,24 @@ public class EnvironmentPresenter extends BasePresenter
       StringBuilder code = new StringBuilder(command);
       code.append("(");
       code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
-      if (!input.getEncoding().equals(settings.getEncoding()))
+      if (input.getEncoding() != settings.getEncoding())
          code.append(", encoding=" + StringUtil.textToRLiteral(input.getEncoding()));
       if (input.isHeader() != settings.isHeader())
          code.append(", header=" + (input.isHeader() ? "TRUE" : "FALSE"));
-      if (!input.getRowNames().equals(settings.getRowNames()))
+      if (input.getRowNames() != settings.getRowNames())
       {
          // appended literally, since it's the string "1" or the string "NULL"
          code.append(", row.names=" + input.getRowNames());
       }
-      if (!input.getSep().equals(settings.getSep()))
+      if (input.getSep() != settings.getSep())
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
-      if (!input.getDec().equals(settings.getDec()))
+      if (input.getDec() != settings.getDec())
          code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
-      if (!input.getQuote().equals(settings.getQuote()))
+      if (input.getQuote() != settings.getQuote())
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
-      if (!input.getComment().equals(settings.getComment()))
+      if (input.getComment() != settings.getComment())
          code.append(", comment.char=" + StringUtil.textToRLiteral(input.getComment()));
-      if (!input.getNAStrings().equals(settings.getNAStrings()))
+      if (input.getNAStrings() != settings.getNAStrings())
          code.append(", na.strings=" + StringUtil.textToRLiteral(input.getNAStrings()));
       if (input.getStringsAsFactors() != settings.getStringsAsFactors())
          code.append(", stringsAsFactors=" + (input.getStringsAsFactors() ? "TRUE" : "FALSE"));

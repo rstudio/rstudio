@@ -1149,9 +1149,10 @@ public:
    
    ParseState peekState(std::size_t depth = 0) const
    {
-      if (depth > parseStateStack_.size())
+      std::size_t n = parseStateStack_.size();
+      if (depth >= n)
          return ParseStateTopLevel;
-      return parseStateStack_[parseStateStack_.size() - depth - 1];
+      return parseStateStack_[n - depth - 1];
    }
    
    ParseState currentState() const { return parseStateStack_.peek(); }

@@ -20,10 +20,12 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -86,6 +88,12 @@ public class ObjectBrowserModel implements TreeViewModel
       if (objectProvider_ != null)
          objectProvider_.clear();
    }
+   
+   public void setFilterText(String filterText)
+   {
+      filter_ = filterText;
+      objectProvider_.applyFilter(filterText);
+    }
    
    @Override
    public <T> NodeInfo<?> getNodeInfo(T value)
@@ -219,7 +227,6 @@ public class ObjectBrowserModel implements TreeViewModel
             @Override
             public void execute(JsArray<DatabaseObject> objects)
             {
-               prefetchedObjectList_ = objects;
                for (HasData<DatabaseObject> display : getDataDisplays())
                {
                  display.setVisibleRangeAndClearData(display.getVisibleRange(), 
@@ -227,6 +234,55 @@ public class ObjectBrowserModel implements TreeViewModel
                }
             }
          });
+      }
+      
+      /**
+       * Applies a text filter to this node and its children
+       * @param filter The text to filter on
+       * @return true if this object or any of its children matched the search
+       */
+      public boolean applyFilter(String filter)
+      {
+         // ignore if not fetched yet
+         if (prefetchedObjectList_ == null)
+            return false;
+
+         boolean anyMatched = false;
+         
+         // don't be case sensitive
+         String lowerFilter = filter.toLowerCase();
+         
+         for (int i = 0; i < prefetchedObjectList_.length(); i++)
+         {
+            // retrieve name of object for matching
+            DatabaseObject object = prefetchedObjectList_.get(i);
+            String name = object.getName();
+            if (name == null)
+               continue;
+            
+            // don't match by default
+            boolean matches = false;
+            
+            // if we have a provider for this object, apply the filter
+            // recursively; we also match if any child object matches
+            if (objectProviders_.containsKey(object))
+               matches |= objectProviders_.get(object).applyFilter(filter);
+            
+            // we match if our own name matches
+            matches |= name.toLowerCase().contains(lowerFilter);
+            
+            // remember whether we matched; we'll use this later to render a CSS
+            // class to indicate the match
+            object.setMatches(matches);
+
+            anyMatched |= matches;
+         }
+         
+         // redraw
+         updateData(prefetchedObjectList_);
+
+         // indicate whether any of the child nodes matched
+         return anyMatched;
       }
       
       @Override
@@ -239,7 +295,6 @@ public class ObjectBrowserModel implements TreeViewModel
         else if (prefetchedObjectList_ != null)
         {
            JsArray<DatabaseObject> objects = prefetchedObjectList_;
-           prefetchedObjectList_ = null;
            updateData(objects);
         }
         else
@@ -258,6 +313,7 @@ public class ObjectBrowserModel implements TreeViewModel
       {
          updateRowCount(0, true);
          updateRowData(0, new ArrayList<DatabaseObject>());
+         prefetchedObjectList_ = null; 
          fireUpdateCompleted();
       }
       
@@ -271,6 +327,14 @@ public class ObjectBrowserModel implements TreeViewModel
       
       private void listObjects(final CommandWithArg<JsArray<DatabaseObject>> onCompleted)
       {
+         objectListContinuations_.add(onCompleted);
+         if (objectListContinuations_.size() > 1)
+         {
+            // if we're currently waiting for objects to come back, just leave this one on the stack
+            return;
+         }
+         
+         // create the specifier
          ConnectionObjectSpecifier specifier = null;
          if (parent_ == null)
             specifier = new ConnectionObjectSpecifier();
@@ -286,7 +350,27 @@ public class ObjectBrowserModel implements TreeViewModel
                {
                   for (int i = 0; i < objects.length(); i++)
                      objects.get(i).setParent(parent_);
-                  onCompleted.execute(objects);
+                  
+                  // save object list for later manipulation
+                  prefetchedObjectList_ = objects;
+                  
+                  // execute each continuation, w/ try/catch so that any that throw exceptions
+                  // won't prevent execution of further continuations (nor leave us with a stack
+                  // of uncompleted continuations)
+                  for (CommandWithArg<JsArray<DatabaseObject>> cmd: objectListContinuations_)
+                  {
+                     try
+                     {
+                        cmd.execute(objects);
+                     }
+                     catch (Exception e)
+                     {
+                        Debug.logException(e);
+                     }
+                  }
+                  
+                  // clear completed continuations
+                  objectListContinuations_.clear();
                   dequeNodeExpansion(parent_);
                }
                
@@ -294,6 +378,7 @@ public class ObjectBrowserModel implements TreeViewModel
                public void onError(ServerError error)
                {
                   super.onError(error);
+                  objectListContinuations_.clear();
                   clearData();
                }
             });
@@ -395,7 +480,15 @@ public class ObjectBrowserModel implements TreeViewModel
       public void render(Cell.Context context, DatabaseObject container, 
             SafeHtmlBuilder sb)
       {
-         SafeHtmlUtil.appendSpan(sb, "", container.getName());
+         sb.appendHtmlConstant("<span class=\"" + (container.matches() ? 
+            ObjectBrowser.RES.cellTreeStyle().searchMatches() :
+            ObjectBrowser.RES.cellTreeStyle().searchHidden()) +
+               "\">");
+                                 
+         SafeHtmlUtil.highlightSearchMatch(sb, container.getName(), filter_, 
+               ThemeStyles.INSTANCE.filterMatch());
+         
+         sb.appendHtmlConstant("</span>");
          
          ConnectionObjectType type = connection_.getObjectType(
                container.getType());
@@ -448,7 +541,7 @@ public class ObjectBrowserModel implements TreeViewModel
                               = new HashMap<DatabaseObject,ObjectProvider>();
    
    private Connection connection_;
-   
+   private String filter_;
    
    private Set<DatabaseObject> expandedNodeRefreshQueue_ = null;
    private Command onTableUpdateCompleted_ = null;
@@ -456,6 +549,9 @@ public class ObjectBrowserModel implements TreeViewModel
    
    private ConnectionsServerOperations server_;
    private EventBus eventBus_;
+
+   private final ArrayList<CommandWithArg<JsArray<DatabaseObject>>> objectListContinuations_ = 
+         new ArrayList<CommandWithArg<JsArray<DatabaseObject>>>();
    
    private static NoSelectionModel<DatabaseObject> noObjectSelectionModel_ = 
          new NoSelectionModel<DatabaseObject>();
@@ -463,5 +559,4 @@ public class ObjectBrowserModel implements TreeViewModel
          new NoSelectionModel<Field>();
    
    static final ObjectBrowser.Resources RES = ObjectBrowser.RES;
-  
 }

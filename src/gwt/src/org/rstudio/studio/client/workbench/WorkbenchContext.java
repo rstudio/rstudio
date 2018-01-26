@@ -150,7 +150,7 @@ public class WorkbenchContext
             rEnvDir = FileSystemItem.createDir(
                                         sessionInfo.getProjectUserDataDir());
          }
-         else if (sessionInfo.getMode().equals(SessionInfo.DESKTOP_MODE))
+         else if (sessionInfo.getMode() == SessionInfo.DESKTOP_MODE)
          {
             rEnvDir = currentWorkingDir_;
          }

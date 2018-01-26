@@ -34,11 +34,16 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-window
   Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;\
   Remove-Item c:\nsis-2.50-setup.exe
 
+# install visual c++
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuildtools_full.exe -OutFile C:\visualcppbuildtools_full.exe ;\
+  Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '/Quiet' ;\
+  Remove-Item c:\visualcppbuildtools_full.exe
+
 # install qt (note that we are using the current directory's context)
 COPY windows/qt-noninteractive-install.qs c:\qt-noninteractive-install.qs
 RUN $ErrorActionPreference = 'Stop'; \
   $ProgressPreference = 'SilentlyContinue' ;\
-  Invoke-WebRequest http://download.qt.io/archive/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe -OutFile c:\qt.exe ;\
+  Invoke-WebRequest http://download.qt.io/archive/qt/5.10/5.10.0/qt-opensource-windows-x86-5.10.0.exe -OutFile c:\qt.exe ;\
   Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install.qs' ;\
   Remove-Item c:\qt.exe -Force
 

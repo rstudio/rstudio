@@ -87,6 +87,13 @@ const char * const kVcsId = "Git";
 
 namespace {
 
+// override gitArgs so that we can force Git to avoid
+// escaping UTF-8 paths (as Git understands them natively)
+ShellArgs gitArgs()
+{
+   return ShellArgs() << DefaultEncoding;
+}
+
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
 std::vector<std::string> s_branches;
@@ -122,8 +129,7 @@ core::system::ProcessOptions procOptions()
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   core::system::setHomeToUserProfile(&childEnv);
 #endif
 
    // set custom environment
@@ -483,7 +489,7 @@ public:
       std::vector<FileWithStatus> files;
       
       // build shell arguments
-      ShellArgs arguments;
+      ShellArgs arguments = gitArgs();
       
       arguments << "status" << "-z" << "--porcelain" << "--" << dir;
       
@@ -508,10 +514,9 @@ public:
          std::string filePath = line.substr(3);
          file.status = status;
          
-         // if this was a git rename, we need to capture the rename target
-         // from the next field. note that Git flips the order of filenames
-         // when running with '-z'
-         if (status == "R ")
+         // if this was a git rename or copy, we need to capture the rename target from the next
+         // field. note that Git flips the order of filenames when running with '-z'
+         if (status == "R " || status == "C ")
             filePath = *(++it) + " -> " + filePath;
 
          // remove trailing slashes
@@ -532,12 +537,12 @@ public:
 
    core::Error add(const std::vector<FilePath>& filePaths)
    {
-      return runGit(ShellArgs() << "add" << "--" << filePaths);
+      return runGit(gitArgs() << "add" << "--" << filePaths);
    }
 
    core::Error remove(const std::vector<FilePath>& filePaths)
    {
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       args << "rm" << "--";
       appendPathArgs(filePaths, &args);
       return runGit(args);
@@ -559,7 +564,7 @@ public:
       if (!trackedPaths.empty())
       {
          // -f means don't fail on unmerged entries
-         return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+         return runGit(gitArgs() << "checkout" << "-f" << "--" << trackedPaths);
       }
       else
       {
@@ -628,12 +633,12 @@ public:
 
       // Detect if HEAD does not exist (i.e. no commits in repo yet)
       int exitCode;
-      error = runGit(ShellArgs() << "rev-parse" << "HEAD", NULL, NULL,
+      error = runGit(gitArgs() << "rev-parse" << "HEAD", NULL, NULL,
                      &exitCode);
       if (error)
          return error;
 
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       if (exitCode == 0)
          args << "reset" << "HEAD" << "--" ;
       else
@@ -654,7 +659,7 @@ public:
                             boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(
-               ShellArgs() << "checkout" << "-B" << branch,
+               gitArgs() << "checkout" << "-B" << branch,
                "Git Branch",
                ppCP);
    }
@@ -665,7 +670,7 @@ public:
       std::vector<std::string> lines;
 
       std::string output;
-      Error error = runGit(ShellArgs() << "branch" << "-a", &output);
+      Error error = runGit(gitArgs() << "branch" << "-a", &output);
       if (error)
          return error;
       lines = split(output);
@@ -687,8 +692,41 @@ public:
    
    core::Error listRemotes(json::Array* pRemotes)
    {
+      Error error;
+      
+      // learn the remote associated with the current
+      // branch (if any)
+      std::vector<std::string> branches;
+      boost::optional<std::size_t> index;
+      error = listBranches(&branches, &index);
+      if (error)
+         LOG_ERROR(error);
+      
+      // extract the active branch and tracking remote
+      std::string activeRemote;
+      if (index)
+      {
+         std::string activeBranch = branches[*index];
+         if (!activeBranch.empty())
+         {
+            std::string configKey = std::string() +
+                  "branch." + activeBranch + ".remote";
+
+            std::string output;
+            Error error = runGit(
+                     gitArgs() << "config" << configKey,
+                     &output);
+
+            if (error)
+               LOG_ERROR(error);
+
+            activeRemote = string_utils::trimWhitespace(output);
+         }
+      }
+      
+      // list the available branches
       std::string output;
-      Error error = runGit(ShellArgs() << "remote" << "--verbose", &output);
+      error = runGit(gitArgs() << "remote" << "--verbose", &output);
       if (error)
          return error;
       
@@ -696,6 +734,7 @@ public:
       if (trimmed.empty())
          return Success();
       
+      // split and parse remotes output
       boost::regex reSpaces("\\s+");
       std::vector<std::string> splat = split(trimmed);
       BOOST_FOREACH(const std::string& line, splat)
@@ -723,6 +762,7 @@ public:
          objectJson["remote"] = string_utils::trimWhitespace(remote);
          objectJson["url"] = string_utils::trimWhitespace(url);
          objectJson["type"] = string_utils::trimWhitespace(type);
+         objectJson["active"] = string_utils::trimWhitespace(remote) == activeRemote;
          pRemotes->push_back(objectJson);
       }
 
@@ -732,13 +772,13 @@ public:
    core::Error addRemote(const std::string& name,
                          const std::string& url)
    {
-      return runGit(ShellArgs() << "remote" << "add" << name << url);
+      return runGit(gitArgs() << "remote" << "add" << name << url);
    }
 
    core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       if (id.find("remotes/") == 0)
       {
          std::vector<std::string> splat = core::algorithm::split(id, "/");
@@ -783,7 +823,7 @@ public:
       std::string remoteBranch = remote + "/" + branch;
       
       return createConsoleProc(
-               ShellArgs() << "checkout" << "-b" << localBranch << remoteBranch,
+               gitArgs() << "checkout" << "-b" << localBranch << remoteBranch,
                "Git Checkout " + branch,
                ppCP);
    }
@@ -798,7 +838,7 @@ public:
       // detect the active commit encoding for this project
       std::string encoding;
       int exitCode;
-      Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
+      Error error = runGit(gitArgs() << "config" << "i18n.commitencoding",
                            &encoding,
                            NULL,
                            &exitCode);
@@ -856,7 +896,7 @@ public:
       pStream.reset();  // release file handle
 
       // override a user-specified default encoding if necessary
-      ShellArgs args;
+      ShellArgs args = gitArgs();
       if (encoding != "UTF-8")
          args << "-c" << "i18n.commitencoding=utf-8";
       args << "commit" << "-F" << tempFile;
@@ -879,7 +919,7 @@ public:
       // SPECIAL: happens in different working directory than usual
 
       return
-            createConsoleProc(ShellArgs() << "clone" << "--progress" << url << dirName,
+            createConsoleProc(gitArgs() << "clone" << "--progress" << url << dirName,
                               "Clone Repository",
                               ppCP,
                               boost::optional<FilePath>(parentPath));
@@ -911,7 +951,7 @@ public:
                     std::string* pMerge)
    {
       int exitStatus;
-      Error error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".remote",
+      Error error = runGit(gitArgs() << "config" << "--get" << "branch." + branch + ".remote",
                            pRemote,
                            NULL,
                            &exitStatus);
@@ -924,7 +964,7 @@ public:
          return false;
       boost::algorithm::trim(*pRemote);
 
-      error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".merge",
+      error = runGit(gitArgs() << "config" << "--get" << "branch." + branch + ".merge",
                      pMerge,
                      NULL,
                      &exitStatus);
@@ -947,7 +987,7 @@ public:
       if (error)
          return error;
 
-      ShellArgs args = ShellArgs() << "push";
+      ShellArgs args = gitArgs() << "push";
 
       std::string remote, merge;
       if (remoteMerge(branch, &remote, &merge))
@@ -963,14 +1003,14 @@ public:
                           boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(
-               ShellArgs() << "push" << "-u" << remote << branch,
+               gitArgs() << "push" << "-u" << remote << branch,
                "Git Push",
                ppCP);
    }
 
    core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      return createConsoleProc(ShellArgs() << "pull",
+      return createConsoleProc(gitArgs() << "pull",
                                "Git Pull", ppCP);
    }
 
@@ -981,7 +1021,7 @@ public:
                           bool ignoreWhitespace,
                           std::string* pOutput)
    {
-      ShellArgs args = ShellArgs() << "diff";
+      ShellArgs args = gitArgs() << "diff";
       args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
@@ -1052,7 +1092,7 @@ public:
    core::Error applyPatch(const FilePath& patchFile,
                           PatchMode patchMode)
    {
-      ShellArgs args = ShellArgs() << "apply";
+      ShellArgs args = gitArgs() << "apply";
       if (patchMode == PatchModeStage)
          args << "--cached";
       args << "--";
@@ -1104,7 +1144,7 @@ public:
    {
       if (searchText.empty())
       {
-         ShellArgs args = ShellArgs() << "log";
+         ShellArgs args = gitArgs() << "log";
          args << "--pretty=oneline";
          if (!rev.empty())
             args << rev;
@@ -1138,11 +1178,11 @@ public:
                    const std::string& searchText,
                    std::vector<CommitInfo>* pOutput)
    {
-      ShellArgs args = ShellArgs() << "log" << "--encoding=UTF-8"
+      ShellArgs args = gitArgs() << "log" << "--encoding=UTF-8"
                        << "--pretty=raw" << "--decorate=full"
                        << "--date-order";
 
-      ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
+      ShellArgs revListArgs = gitArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
       if (!fileFilter.empty())
@@ -1340,7 +1380,10 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      ShellArgs args = ShellArgs() << "show" << "--pretty=oneline" << "-M";
+      ShellArgs args = gitArgs()
+            << "-c" << "core.quotepath=false"
+            << "show" << "--pretty=oneline" << "-M";
+      
       if (s_gitVersion >= GIT_1_7_2)
          args << "-c";
       args << rev;
@@ -1354,7 +1397,7 @@ public:
    {
       boost::format fmt("%1%:%2%");
       ShellArgs args =
-            ShellArgs() << "show" << boost::str(fmt % rev % filename);
+            gitArgs() << "show" << boost::str(fmt % rev % filename);
 
       return runGit(args, pOutput);
    }
@@ -1379,7 +1422,7 @@ public:
          std::string name = remote + "/" + branch;
 
          // list the commits between the current upstream and HEAD
-         ShellArgs args = ShellArgs() << "log" << "@{u}..HEAD" << "--oneline";
+         ShellArgs args = gitArgs() << "log" << "@{u}..HEAD" << "--oneline";
          std::string output;
          Error error = runGit(args, &output);
          if (error)
@@ -1678,8 +1721,6 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 Error vcsCheckout(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string id;
    Error error = json::readParams(request.params, &id);
    if (error)
@@ -1698,8 +1739,6 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit scope;
-   
    std::string branch, remote;
    Error error = json::readParams(request.params, &branch, &remote);
    if (error)
@@ -1774,8 +1813,6 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
 Error vcsCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    std::string commitMsg;
    bool amend, signOff;
    Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
@@ -2040,7 +2077,7 @@ std::string getUpstream(const std::string& branch = std::string())
    // get the upstream
    std::string upstream;
    core::system::ProcessResult result;
-   Error error = gitExec(ShellArgs() <<
+   Error error = gitExec(gitArgs() <<
                            "rev-parse" << "--abbrev-ref" << query,
                          s_git_.root(),
                          &result);
@@ -2086,7 +2123,7 @@ std::string githubUrl(const std::string& view,
 
    // now get the remote url
    core::system::ProcessResult result;
-   Error error = gitExec(ShellArgs() <<
+   Error error = gitExec(gitArgs() <<
                    "config" << "--get" << ("remote." + upstreamName + ".url"),
                    s_git_.root(),
                    &result);
@@ -3065,14 +3102,16 @@ void onUserSettingsChanged()
 }
 
 Error statusToJson(const core::FilePath &path,
-                   const VCSStatus &status,
+                   const VCSStatus &vcsStatus,
                    core::json::Object *pObject)
 {
    json::Object& obj = *pObject;
-   obj["status"] = status.status();
+   std::string status = vcsStatus.status();
+
+   obj["status"] = status;
    obj["path"] = path.relativePath(s_git_.root());
    obj["raw_path"] = module_context::createAliasedPath(path);
-   obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
+   obj["discardable"] = !status.empty() && status[1] != ' ' && status[1] != '?';
    obj["is_directory"] = path.isDirectory();
    obj["size"] = static_cast<double>(path.size());
    return Success();
@@ -3146,7 +3185,7 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    std::string remoteOriginUrl;
 
    core::system::ProcessResult result;
-   Error error = gitExec(ShellArgs() <<
+   Error error = gitExec(gitArgs() <<
                            "config" << "--get" << "remote.origin.url",
                          workingDir,
                          &result);
@@ -3218,11 +3257,14 @@ core::Error initialize()
    }
    else
    {
-#ifdef _WIN32
+#if defined(_WIN32)
       // Windows probably unlikely to have either ssh-agent or askpass
       interceptAskPass = true;
+#elif defined(__APPLE__)
+      // newer versions of macOS no longer provide ssh-askpass
+      interceptAskPass = core::system::getenv("SSH_ASKPASS").empty();
 #else
-      // Everything fine on Mac and Linux
+      // Everything fine on Linux
       interceptAskPass = false;
 #endif
    }

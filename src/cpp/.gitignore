@@ -1,5 +1,6 @@
 CMakeLists.txt.user*
 .ycm_extra_conf.py
 .ycm_extra_conf.pyc
+.vs/
 compile_commands.json
 

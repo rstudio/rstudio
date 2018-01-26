@@ -1,8 +1,7 @@
-
 /*
  * CreateTerminalEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +20,8 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 /**
- * Event to trigger creation of a terminal session.
+ * Event to trigger creation of a terminal session, with optional text to insert
+ * in terminal after creation.
  */
 public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Handler>
 {  
@@ -36,8 +36,14 @@ public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Ha
 
    public CreateTerminalEvent()
    {
+      postCreateText_ = null;
    }
-    
+
+   public CreateTerminalEvent(String postCreateText)
+   {
+      postCreateText_ = postCreateText;
+   }
+     
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -49,6 +55,16 @@ public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Ha
    {
       handler.onCreateTerminal(this);
    }
+   
+   /**
+    * @return text to insert in terminal after creation, may be null
+    */
+   public String getPostCreateText()
+   {
+      return postCreateText_;
+   }
+   
+   private final String postCreateText_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

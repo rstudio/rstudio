@@ -66,11 +66,11 @@ var Mode = function(suppressHighlighting, session) {
 
    var rMarkdownFoldingRules = new RMarkdownFoldMode();
    var cFoldingRules = new CFoldMode();
-
+   
    // Patch tokenizer to allow for YAML start at beginning of document
    this.$tokenizer.getLineTokens = function(line, state, row) {
       if (row === 0)
-         state = "allowBlock";
+         state = "firstLine";
       return Tokenizer.prototype.getLineTokens.call(this, line, state, row);
    }
 

@@ -82,13 +82,13 @@ public class RoxygenHelper
       {
          String enclosingScope = findEnclosingScope(cursor);
          
-         if (enclosingScope.equals("setClass"))
+         if (enclosingScope == "setClass")
             insertRoxygenSkeletonS4Class(cursor);
-         else if (enclosingScope.equals("setGeneric"))
+         else if (enclosingScope == "setGeneric")
             insertRoxygenSkeletonSetGeneric(cursor);
-         else if (enclosingScope.equals("setMethod"))
+         else if (enclosingScope == "setMethod")
             insertRoxygenSkeletonSetMethod(cursor);
-         else if (enclosingScope.equals("setRefClass"))
+         else if (enclosingScope == "setRefClass")
             insertRoxygenSkeletonSetRefClass(cursor);
             
          if (enclosingScope != null)
@@ -128,7 +128,7 @@ public class RoxygenHelper
       if (!clone.moveToNextToken())
          return null;
       
-      if (!clone.currentValue().equals("("))
+      if (clone.currentValue() != "(")
          return null;
       
       if (!clone.fwdToMatchingToken())
@@ -341,7 +341,7 @@ public class RoxygenHelper
          return cursor.currentValue();
       }
          
-      while (cursor.currentValue().equals(")"))
+      while (cursor.currentValue() ==")")
          if (!cursor.moveToPreviousToken())
             return null;
       

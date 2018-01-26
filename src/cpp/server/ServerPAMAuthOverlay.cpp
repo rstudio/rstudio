@@ -15,6 +15,8 @@
 
 #include "ServerPAMAuth.hpp"
 
+#include <core/Error.hpp>
+
 namespace rstudio {
 namespace server {
 namespace pam_auth {
@@ -35,11 +37,20 @@ void onUserAuthenticated(const std::string& username,
 
 }
 
-void onUserUnauthenticated(const std::string& username)
+void onUserUnauthenticated(const std::string& username,
+                           bool signedOut)
 {
 
 }
 
+namespace overlay {
+
+core::Error initialize()
+{
+   return core::Success();
+}
+
+} // namespace overlay
 } // namespace pam_auth
 } // namespace server
 } // namespace rstudio

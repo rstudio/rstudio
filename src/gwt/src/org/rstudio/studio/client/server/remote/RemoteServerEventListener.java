@@ -362,7 +362,7 @@ class RemoteServerEventListener
       String type = event.getType();
       
       // we handle async completions directly
-      if (type.equals(ClientEvent.AsyncCompletion))
+      if (type == ClientEvent.AsyncCompletion)
       {
          AsyncCompletion completion = event.getData();
          String handle = completion.getHandle();
@@ -385,7 +385,7 @@ class RemoteServerEventListener
          // if there is a quit event then we set an internal flag to avoid 
          // ensureListening/ensureEvents calls trying to spark the event 
          // stream back up after the user has quit
-         if (type.equals(ClientEvent.Quit))
+         if (type == ClientEvent.Quit)
             sessionWasQuit_ = true;
         
          // perform standard handling

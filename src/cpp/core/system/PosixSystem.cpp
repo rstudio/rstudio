@@ -1448,7 +1448,8 @@ std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
    return os;
 }
 
-Error ipAddresses(std::vector<IpAddress>* pAddresses)
+Error ipAddresses(std::vector<IpAddress>* pAddresses,
+                  bool includeIPv6)
 {
    // get addrs
    struct ifaddrs* pAddrs;
@@ -1461,12 +1462,16 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses)
       if (pAddr->ifa_addr == NULL)
          continue;
 
-      if (pAddr->ifa_addr->sa_family != AF_INET)
+      // filter out non-ip addresses
+      sa_family_t family = pAddr->ifa_addr->sa_family;
+      bool filterAddr = includeIPv6 ? (family != AF_INET && family != AF_INET6) : (family != AF_INET);
+      if (filterAddr)
          continue;
 
       char host[NI_MAXHOST];
       if (::getnameinfo(pAddr->ifa_addr,
-                        sizeof(struct sockaddr_in),
+                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                              sizeof(struct sockaddr_in6),
                         host, NI_MAXHOST,
                         NULL, 0, NI_NUMERICHOST) != 0)
       {
@@ -2012,6 +2017,42 @@ bool effectiveUserIsRoot()
    return ::geteuid() == 0;
 }
 
+namespace {
+
+Error restorePrivImpl(uid_t uid)
+{
+   // reset error state
+   errno = 0;
+
+   // set effective user to saved privid
+   if (::seteuid(uid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // verify
+   if (::geteuid() != uid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   // get user info to use in group calls
+   struct passwd* pPrivPasswd = ::getpwuid(uid);
+   if (pPrivPasswd == NULL)
+      return systemError(errno, ERROR_LOCATION);
+
+   // supplemental groups
+   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // set effective group
+   if (::setegid(pPrivPasswd->pw_gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // verify
+   if (::getegid() != pPrivPasswd->pw_gid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   // success
+   return Success();
+}
+
+} // anonymous namespace
+
 // privilege manipulation for systems that support setresuid/getresuid
 #if defined(HAVE_SETRESUID)
 
@@ -2223,40 +2264,17 @@ Error permanentlyDropPriv(const std::string& newUsername)
    return Success();
 }
 
-
 Error restorePriv()
 {
-   // reset error state
-   errno = 0;
-
-   // set effective user to saved privid
-   if (::seteuid(s_privUid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::geteuid() != s_privUid)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // get user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(s_privUid);
-   if (pPrivPasswd == NULL)
-      return systemError(errno, ERROR_LOCATION);
-
-   // supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set effective group
-   if (::setegid(pPrivPasswd->pw_gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getegid() != pPrivPasswd->pw_gid)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // success
-   return Success();
+   return restorePrivImpl(s_privUid);
 }
 
 #endif
+
+Error restoreRoot()
+{
+   return restorePrivImpl(0);
+}
 
 
 } // namespace system

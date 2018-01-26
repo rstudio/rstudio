@@ -94,7 +94,7 @@
    # an empty list, or a stored RPubs upload ID if one was given (below)
    tryCatch({
      # included "orphaned" deployments; we will filter later
-     deploymentsFrame <- rsconnect::deployments(path, excludeOrphaned = FALSE)
+     deploymentsFrame <- rsconnect::deployments(appPath = path, excludeOrphaned = FALSE)
      deployments <- .rs.scalarListFromFrame(deploymentsFrame)
 
      # create the list of servers and accounts (for later filtering)
@@ -111,9 +111,9 @@
      servers <- servers[
          as.character(servers$name) %in% as.character(accounts$server),]
 
-     # extract names and URLs from the remaining servers
+     # extract names and URLs from the remaining servers (include the virtual server rpubs.com)
      urls <- as.character(servers[["url"]])
-     names <- as.character(servers[["name"]])
+     names <- c(as.character(servers[["name"]]), "rpubs.com")
 
      # compute whether the deployment is orphaned; note that this differs from
      # the definition of "orphaned" used by the rsconnect package in that it
@@ -185,11 +185,11 @@
 })
 
 .rs.addJsonRpcHandler("remove_rsconnect_account", function(account, server) {
-   rsconnect::removeAccount(account, server)
+   rsconnect::removeAccount(name = account, server = server)
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
-   .rs.scalarListFromFrame(rsconnect::applications(account, server))
+   .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) { 
@@ -199,10 +199,11 @@
 
    # attempt to get app ID from server
    tryCatch({
-     appList <- rsconnect:::getAppById(id, account, server, hostUrl)
+     appList <- rsconnect:::getAppById(id = id, account = account, server = server, 
+                                       hostUrl = hostUrl)
    }, error = function(e) {
       # record the error message when a failure occurs (will be passed to the client for display)
-      errorMessage <- conditionMessage(e)
+      appError <<- conditionMessage(e)
    })
    
    list(error = .rs.scalar(appError), 
@@ -212,23 +213,23 @@
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
    # suppress output when validating server URL (timeouts otherwise emitted to
    # console)
-   capture.output(serverInfo <- rsconnect:::validateServerUrl(url))
+   capture.output(serverInfo <- rsconnect:::validateServerUrl(url = url))
    .rs.scalarListFromList(serverInfo)
 })
 
 .rs.addJsonRpcHandler("get_auth_token", function(name) {
-   .rs.scalarListFromList(rsconnect:::getAuthToken(name))
+   .rs.scalarListFromList(rsconnect:::getAuthToken(server = name))
 })
 
 .rs.addJsonRpcHandler("get_user_from_token", function(url, token, privateKey) {
-   user <- rsconnect:::getUserFromRawToken(url, token, privateKey)
+   user <- rsconnect:::getUserFromRawToken(serverUrl = url, token = token, privateKey = privateKey)
    .rs.scalarListFromList(user)
 })
 
 .rs.addJsonRpcHandler("register_user_token", function(serverName, accountName,
    userId, token, privateKey) {
-  rsconnect:::registerUserToken(serverName, accountName, userId, token, 
-                                privateKey)
+  rsconnect:::registerUserToken(serverName = serverName, accountName = accountName, userId = userId,
+                                token = token, privateKey = privateKey)
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_lint_results", function(target) {
@@ -245,15 +246,15 @@
        if (info$isdir) {
          # a directory was specified--lint the whole thing
          basePath <- target
-         results <- rsconnect::lint(basePath)
+         results <- rsconnect::lint(project = basePath)
        } else if (tolower(tools::file_ext(target)) == "r") {
          # a single-file Shiny app--lint the directory (with file hint)
          basePath <- dirname(target)
-         results <- rsconnect::lint(basePath, appPrimaryDoc = basename(target))
+         results <- rsconnect::lint(project = basePath, appPrimaryDoc = basename(target))
        } else {
          # a single file was specified--lint just that file
          basePath <- dirname(target)
-         results <- rsconnect::lint(basePath, basename(target))
+         results <- rsconnect::lint(project = basePath, files = basename(target))
        }
     }, error = function(e) {
       err <<- e$message
@@ -269,7 +270,7 @@
 
   # we have a list of lint results; convert them to markers and emit them to
   # the Markers pane
-  rsconnect:::showRstudioSourceMarkers(basePath, results)
+  rsconnect:::showRstudioSourceMarkers(basePath = basePath, results = results)
   
   # return the result to the client
   list(
@@ -316,7 +317,7 @@
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
   if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
-    return(rsconnect::listBundleFiles(dirname(target)))
+    return(rsconnect::listBundleFiles(appDir = dirname(target)))
   }
 
   # find the resources used by each document
@@ -354,7 +355,7 @@
    if (ext %in% c("rmd", "html", "htm", "md"))
      .rs.docDeployList(target, asMultipleDoc)
    else
-     rsconnect::listBundleFiles(target)
+     rsconnect::listBundleFiles(appDir = target)
 })
 
 

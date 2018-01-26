@@ -1,7 +1,7 @@
 /*
  * DesktopWindowTracker.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,12 +29,12 @@ class WindowTracker : public QObject
 {
     Q_OBJECT
 public:
-    explicit WindowTracker(QObject *parent = 0);
+    explicit WindowTracker(QObject *parent = nullptr);
 
     BrowserWindow* getWindow(QString key);
     void addWindow(QString key, BrowserWindow* window);
 
-protected slots:
+protected Q_SLOTS:
     void onWindowDestroyed(QString key);
 
 private:

@@ -1,7 +1,7 @@
 /*
  * DesktopURLDownloader.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,16 +36,16 @@ class URLDownloader : public QObject
                   int timeoutMs,
                   bool manuallyInvoked,
                   QObject* pParent);
-    ~URLDownloader() {}
+    ~URLDownloader() override = default;
 
     bool manuallyInvoked() { return manuallyInvoked_; }
 
- signals:
+ Q_SIGNALS:
     void downloadComplete(const QByteArray& data);
     void downloadError(const QString& message);
     void downloadTimeout();
 
- protected slots:
+ protected Q_SLOTS:
     void complete();
     void error(QNetworkReply::NetworkError);
     void timeout();

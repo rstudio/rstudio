@@ -302,8 +302,7 @@
         args <- args[names(args) == ""]
 
       # call rstudio fileEdit function
-      files <- path.expand(args)
-      invisible(.Call("rs_fileEdit", files))
+      invisible(.Call("rs_fileEdit", args))
    })
 })
 

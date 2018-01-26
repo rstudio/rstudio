@@ -67,12 +67,12 @@ public class NodeRelativePosition
          {
             Element el = (Element) here;
             String tag = el.getTagName().toLowerCase();
-            if (tag.equals("br"))
+            if (tag == "br")
             {
                counter[0] += 1;
                return false;
             }
-            if (tag.equals("script") || tag.equals("style"))
+            if (tag == "script" || tag == "style")
                return false;
 
             // Otherwise continue to iteration code below
@@ -117,14 +117,14 @@ public class NodeRelativePosition
          case Node.ELEMENT_NODE:
             Element el = (Element) here;
             String tagName = el.getTagName().toLowerCase();
-            if (tagName.equals("br"))
+            if (tagName == "br")
             {
                if (counter[0] <= 0)
                   return new NodeRelativePosition(here, 0);
                counter[0] -= 1;
                return null;
             }
-            else if (tagName.equals("script") || tagName.equals("style"))
+            else if (tagName == "script" || tagName == "style")
                return null;
             break;
       }

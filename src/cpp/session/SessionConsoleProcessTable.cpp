@@ -146,14 +146,14 @@ void setVisibleProc(const std::string& handle)
    s_visibleTerminalHandle = handle;
 }
 
-std::vector<std::string> getAllCaptions()
+std::vector<std::string> getAllHandles()
 {
-   std::vector<std::string> allCaptions;
+   std::vector<std::string> allHandles;
    for (ProcTable::const_iterator it = s_procs.begin(); it != s_procs.end(); it++)
    {
-      allCaptions.push_back(it->second->getCaption());
+      allHandles.push_back(it->second->handle());
    }
-   return allCaptions;
+   return allHandles;
 }
 
 // Determine next terminal sequence and name
@@ -323,6 +323,10 @@ Error createTerminalExecuteConsoleProc(
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    core::system::getModifiedEnv(env, &childEnv);
+
+#ifdef _WIN32
+   core::system::setHomeToUserProfile(&childEnv);
+#endif
    options.environment = childEnv;
 
    options.smartTerminal = true;

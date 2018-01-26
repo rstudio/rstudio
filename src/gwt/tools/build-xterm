@@ -10,15 +10,15 @@ fi
 cd xterm.js
 git clean -dfx
 
-# xterm version 2.8.1
-git checkout 2b92996
+# xterm version 2.9.2
+git checkout ea07bf8
 
 XTERM_DIST_DIR=./dist
 XTERM_ADDONS_DIR=./dist/addons
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
 
 # stylesheet
-cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm.css
+cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm-orig.css
 
 # uncompressed js
 cp ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm-uncompressed.js
@@ -34,7 +34,7 @@ minify () {
 minify ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm.js
 minify ${XTERM_ADDONS_DIR}/fit/fit.js ${XTERM_TARGET_DIR}/fit.js
 
-#echo "Tweaking CSS"
+echo "Tweaking CSS"
 cd src
 ../../tweak-xterm-css.R
 echo "xterm.css adjusted. Be sure to rebuild Ace themes if necessary (compile-themes.R)."

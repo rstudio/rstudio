@@ -578,20 +578,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       EditorCommandEvent event = dispatchEvent.getEvent();
       
       String type = event.getType();
-      if (type.equals(EditorCommandEvent.TYPE_EDITOR_CONTEXT))
+      if (type == EditorCommandEvent.TYPE_EDITOR_CONTEXT)
       {
          GetEditorContextEvent.Data data = event.getData();
          fireEventToLastFocusedWindow(new GetEditorContextEvent(data));
       }
-      else if (type.equals(EditorCommandEvent.TYPE_REPLACE_RANGES))
+      else if (type == EditorCommandEvent.TYPE_REPLACE_RANGES)
       {
          ReplaceRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new ReplaceRangesEvent(data));
+         fireEventForDocument(data.getId(), new ReplaceRangesEvent(data));
       }
-      else if (type.equals(EditorCommandEvent.TYPE_SET_SELECTION_RANGES))
+      else if (type == EditorCommandEvent.TYPE_SET_SELECTION_RANGES)
       {
          SetSelectionRangesEvent.Data data = event.getData();
-         fireEventToLastFocusedWindow(new SetSelectionRangesEvent(data));
+         fireEventForDocument(data.getId(), new SetSelectionRangesEvent(data));
       }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
@@ -801,6 +801,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    // Private methods ---------------------------------------------------------
    
+   private void fireEventForDocument(String docId, CrossWindowEvent<?> event)
+   {
+      if (StringUtil.isNullOrEmpty(docId))
+      {
+         fireEventToLastFocusedWindow(event);
+         return;
+      }
+      
+      String windowId = getWindowIdOfDocId(docId);
+      if (StringUtil.isNullOrEmpty(windowId))
+         events_.fireEventToMainWindow(event);
+      else
+         fireEventToSourceWindow(windowId, event, false);
+   }
+   
    private void fireEventToSourceWindow(String windowId, 
          CrossWindowEvent<?> evt,
          boolean focus)
@@ -858,7 +873,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                size = new Size(window.getInnerWidth(), 
                      window.getInnerHeight());
                if (position == null)
-                  position = new Point(
+                  position = Point.create(
                         window.getScreenX() + 50,
                         window.getScreenY() + 50);
             }
@@ -1305,11 +1320,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private boolean hasSourceAndConsolePaired(String pane1, String pane2)
    {
-      return (pane1.equals(PaneConfig.SOURCE) &&
-              pane2.equals(PaneConfig.CONSOLE))
+      return (pane1 == PaneConfig.SOURCE &&
+              pane2 == PaneConfig.CONSOLE)
                  ||
-             (pane1.equals(PaneConfig.CONSOLE) &&
-              pane2.equals(PaneConfig.SOURCE));
+             (pane1 == PaneConfig.CONSOLE &&
+              pane2 == PaneConfig.SOURCE);
    }
 
    // Private types -----------------------------------------------------------

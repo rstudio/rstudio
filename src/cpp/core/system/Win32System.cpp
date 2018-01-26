@@ -843,8 +843,7 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
    if (!sizeRequired)
       return systemError(::GetLastError(), ERROR_LOCATION);
 
-   std::vector<char> buffer;
-   buffer.reserve(sizeRequired);
+   std::vector<char> buffer(sizeRequired);
    int result = ::ExpandEnvironmentStrings(value.c_str(),
                                            &buffer[0],
                                            buffer.capacity());
@@ -1112,6 +1111,11 @@ Error terminateChildProcesses()
    return Success();
 }
 
+void setHomeToUserProfile(core::system::Options* pChildEnv)
+{
+   std::string userProfile = core::system::getenv(*pChildEnv, "USERPROFILE");
+   core::system::setenv(pChildEnv, "HOME", userProfile);
+}
 
 } // namespace system
 } // namespace core

@@ -36,7 +36,7 @@ public class RmdChoiceOption extends RmdNullableOption
       for (int i = 0; i < choiceList.length(); i++)
       {
          choices_.addItem(choiceList.get(i));
-         if (choiceList.get(i).equals(initialValue))
+         if (choiceList.get(i) == initialValue)
          {
             selectedIdx = i;
          }

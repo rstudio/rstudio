@@ -119,7 +119,7 @@ public class PaneConfig extends JavaScriptObject
       int idx;
       for (idx = 0; idx < replacedTabs.length; idx++)
       {
-         if (tab.equals(replacedTabs[idx]))
+         if (tab == replacedTabs[idx])
          {
             return idx;
          }
@@ -160,7 +160,7 @@ public class PaneConfig extends JavaScriptObject
    {
       JsArrayString panes = getPanes();
       for (int i = 0; i<panes.length(); i++)
-         if (panes.get(i).equals("Console"))
+         if (panes.get(i) == "Console")
             return i;
       
       throw new IllegalStateException();
@@ -169,7 +169,7 @@ public class PaneConfig extends JavaScriptObject
    public final boolean getConsoleLeft()
    {
       JsArrayString panes = getPanes();
-      return panes.get(0).equals("Console") || panes.get(1).equals("Console");
+      return panes.get(0) == "Console" || panes.get(1) == "Console";
    }
    
    public final boolean getConsoleRight()
@@ -215,7 +215,7 @@ public class PaneConfig extends JavaScriptObject
       // visible tabs). This is normally an invariant but for a time during 
       // the v0.99-1000 preview we allowed the Connections tab to be the 
       // last one in the tabset.
-      if (!ts1.get(ts1.length() - 1).equals("Presentation"))
+      if (ts1.get(ts1.length() - 1) != "Presentation")
       {
          Debug.logToConsole("Invaliding tabset config (Presentation index)");
          return false;
@@ -243,7 +243,7 @@ public class PaneConfig extends JavaScriptObject
       // is well-defined)
       for (String tab : getAddableTabs())
          if (addableTabs.contains(tab))
-            if (tab.equals("Viewer"))
+            if (tab == "Viewer")
                ts2.push(tab);
             else
                ts1.push(tab);
@@ -304,7 +304,7 @@ public class PaneConfig extends JavaScriptObject
       Arrays.sort(b);
 
       for (int i = 0; i < b.length; i++)
-         if (!a1.get(i).equals(b[i]))
+         if (a1.get(i) != b[i])
             return false;
 
       return true;

@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-15 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -121,19 +121,17 @@
   # the repos option is canonically a named character vector, but could also
   # be a named list
   if (is.character(repos) || is.list(repos)) {
-    if (is.null(names(repos))) {
-      # no indication of which repo is which, presume the first entry to be
-      # CRAN if it's of character type
-      if (length(repos) > 0 && is.character(repos[[1]]))
-        repo <- repos[[1]]
-    } else {
-      # use repo named CRAN
-      repo <- as.character(repos["CRAN"])
+    # check for a repo named "CRAN"
+    repo <- as.character(repos["CRAN"])
+
+    # if no repo named "CRAN", blindly guess that the first repo is a CRAN mirror 
+    if (length(repo) < 1 || is.na(repo)) {
+      repo <- as.character(repos[[1]])
     }
   }
 
   # if no default repo and no repo marked CRAN, give up
-  if (is.na(repo)) {
+  if (length(repo) < 1 || is.na(repo)) {
     return(list(version = "", satisfied = FALSE))
   }
 
@@ -292,3 +290,65 @@
 .rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 })
+
+
+.rs.addFunction("pandocSelfContainedHtml", function(input, template, output) {
+   
+   # make input file path absolute
+   input <- normalizePath(input)
+
+   # create a temporary copy of the file for conversion
+   inputFile <- tempfile(tmpdir = dirname(input), fileext = ".html")
+   inputLines <- readLines(con = input, warn = FALSE)
+
+   # write all the lines from the input except the DOCTYPE declaration, which pandoc will not treat
+   # as HTML (starting in pandoc 2)
+   writeLines(text = inputLines[!grepl("<!DOCTYPE", inputLines, fixed = TRUE)],
+              con  = inputFile)
+
+   # ensure output file exists and make its path absolute
+   if (!file.exists(output))
+      file.create(output)
+   output <- normalizePath(output)
+   
+   # convert from markdown to html to get base64 encoding. note there is no markdown in the source
+   # document but we still need to do this "conversion" to get the base64 encoding; we also don't
+   # want to convert from HTML since that will cause pandoc to convert only the <body>
+   args <- c(inputFile)
+   args <- c(args, "--from", "markdown_strict")
+   args <- c(args, "--output", output)
+
+   # define a title for the document. this value is not actually consumed by the template, but
+   # pandoc requires it in metadata when converting to HTML, so supply a dummy value to keep the
+   # output clean.
+   args <- c(args, "--metadata", "title:RStudio")
+   
+   # set stack size
+   stack_size <- getOption("pandoc.stack.size", default = "512m")
+   args <- c(c("+RTS", paste0("-K", stack_size), "-RTS"), args)
+   
+   # additional options
+   args <- c(args, "--self-contained")
+   args <- c(args, "--template", template)
+   
+   # build the conversion command
+   pandoc <- file.path(Sys.getenv("RSTUDIO_PANDOC"), "pandoc")
+   command <- paste(shQuote(c(pandoc, args)), collapse = " ")
+   
+   # setwd temporarily
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(dirname(inputFile))
+   
+   # execute it
+   result <- system(command)
+   if (result != 0) {
+      stop("pandoc document conversion failed with error ", result,
+           call. = FALSE)
+   }
+   
+   # return output file
+   invisible(output)
+})
+
+

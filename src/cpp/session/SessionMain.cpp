@@ -105,6 +105,7 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionInit.hpp"
 #include "SessionMainProcess.hpp"
+#include "SessionRpc.hpp"
 #include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -197,6 +198,19 @@ using namespace rsession::client_events;
 // forward-declare overlay methods
 namespace rstudio {
 namespace session {
+
+bool disableExecuteRprofile()
+{
+   bool disableExecuteRprofile = false;
+
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      disableExecuteRprofile = projContext.config().disableExecuteRprofile;
+   }
+
+   return disableExecuteRprofile;
+}
 
 bool quitChildProcesses()
 {
@@ -396,6 +410,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    
       // client event service
       (startClientEventService)
+      
+      // rpc methods
+      (rpc::initialize)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
@@ -496,6 +513,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
+      (bind(sourceModuleRFile, "SessionPatches.R"))
    
       // unsupported functions
       (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))
@@ -587,7 +605,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // begin session
    using namespace module_context;
-   activeSession().beginSession(rVersion(), rHomeDir());
+   activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
 
    // setup fork handlers
    main_process::setupForkHandlers();
@@ -1512,7 +1530,7 @@ bool ensureUtf8Charset()
 int main (int argc, char * const argv[]) 
 {
    try
-   {      
+   {
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -1771,6 +1789,9 @@ int main (int argc, char * const argv[])
       if (!options.rDocDirOverride().empty())
          core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
+      // set ANSI support environment variable before running code from .Rprofile
+      userSettings().syncConsoleColorEnv();
+
       // r options
       rstudio::r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
@@ -1798,8 +1819,10 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
+      rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       
       // r callbacks

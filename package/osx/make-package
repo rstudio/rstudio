@@ -31,7 +31,10 @@ cmake -DRSTUDIO_TARGET=Desktop \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       ../../..
 
-make
+MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
+
+echo "Building with flags $MAKEFLAGS..."
+make $MAKEFLAGS
 
 cpack -G DragNDrop
 

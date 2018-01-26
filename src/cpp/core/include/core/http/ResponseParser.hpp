@@ -102,6 +102,12 @@ public:
       pResponse->body_ += bodyStream.str();
    }
 
+   static void appendToBody(const std::string& buff,
+                            Response* pResponse)
+   {
+      pResponse->body_ += buff;
+   }
+
    template <typename SyncReadStream>
    static Error parseFromStream(SyncReadStream& stream, Response* pResponse)
    {

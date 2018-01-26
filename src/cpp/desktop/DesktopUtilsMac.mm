@@ -1,7 +1,7 @@
 /*
  * DesktopUtilsMac.mm
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,15 +17,13 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <QWidget>
-
 #include <core/system/Environment.hpp>
 
 #import <Foundation/NSString.h>
 #import <AppKit/NSView.h>
 #import <AppKit/NSWindow.h>
 
-
+#include "DockMenu.hpp"
 
 using namespace rstudio;
 
@@ -40,7 +38,26 @@ NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
    return [nsview window];
 }
 
+static DockMenu* s_pDockMenu;
+
+void initializeSystemPrefs()
+{
+   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+   [defaults setBool:NO forKey: @"NSFunctionBarAPIEnabled"];
+
+   // Remove (disable) the "Start Dictation..." and "Emoji & Symbols" menu items from the "Edit" menu
+   [defaults setBool:YES forKey:@"NSDisabledDictationMenuItem"];
+   [defaults setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+
+   // Remove (don't allow) the "Show Tab Bar" menu item from the "View" menu, if supported
+   if ([NSWindow respondsToSelector:@selector(allowsAutomaticWindowTabbing)])
+      NSWindow.allowsAutomaticWindowTabbing = NO;
+
+   // Remove the "Enter Full Screen" menu item from the "View" menu
+   [defaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];
 }
+
+} // anonymous namespace
 
 double devicePixelRatio(QMainWindow* pMainWindow)
 {
@@ -71,6 +88,10 @@ bool isOSXMavericks()
    return boost::algorithm::starts_with(version, "10.9");
 }
 
+bool isCentOS()
+{
+   return false;
+}
 
 namespace {
 
@@ -179,6 +200,16 @@ void initializeLang()
    const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
    core::system::setenv("LANG", clang);
    core::system::setenv("LC_CTYPE", clang);
+
+   initializeSystemPrefs();
+}
+
+void finalPlatformInitialize(MainWindow* pMainWindow)
+{
+   if (!s_pDockMenu)
+   {
+      s_pDockMenu = new DockMenu(pMainWindow);
+   }
 }
 
 } // namespace desktop

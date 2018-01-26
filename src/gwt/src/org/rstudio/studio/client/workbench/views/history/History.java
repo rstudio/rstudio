@@ -159,7 +159,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
                      public void onResponseReceived(
                            RpcObjectList<HistoryEntry> response)
                      {
-                        if (!query.equals(searchQuery_))
+                        if (query == searchQuery_)
                            return;
 
                         ArrayList<HistoryEntry> entries = toList(response);
@@ -173,7 +173,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       {
          String query = event.getValue();
          searchQuery_ = query;
-         if (searchQuery_.equals(""))
+         if (searchQuery_ == "")
          {
             view_.dismissSearchResults();
          }

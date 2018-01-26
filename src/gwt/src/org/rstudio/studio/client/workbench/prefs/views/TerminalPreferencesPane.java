@@ -129,7 +129,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       if (haveCaptureEnvPref())
       {
-         CheckBox chkCaptureEnv = checkboxPref("Save and Restore Environment Variables",
+         CheckBox chkCaptureEnv = checkboxPref("Save and restore environment variables",
                prefs_.terminalTrackEnvironment(),
                "Terminal occasionally runs a hidden command to capture state of environment variables.");
          add(chkCaptureEnv);
@@ -165,8 +165,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink); 
       helpLink.addStyleName(res_.styles().newSection()); 
-      // TODO (gary) -- uncomment once we've published the support article
-      //add(helpLink);
+      add(helpLink);
    }
 
    @Override

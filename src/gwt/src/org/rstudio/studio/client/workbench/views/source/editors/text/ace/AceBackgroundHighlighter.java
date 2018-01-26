@@ -35,6 +35,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -173,7 +174,6 @@ public class AceBackgroundHighlighter
       highlightPatterns_ = new ArrayList<HighlightPattern>();
       handlers_ = new HandlerRegistrations(
             editor.addEditorModeChangedHandler(this),
-            editor.addDocumentChangedHandler(this),
             editor.addAttachHandler(this));
       
       int n = editor.getRowCount();
@@ -217,14 +217,25 @@ public class AceBackgroundHighlighter
    public void onEditorModeChanged(EditorModeChangedEvent event)
    {
       // nothing to do if mode did not change
-      if (event.getMode().equals(activeModeId_))
+      if (event.getMode() == activeModeId_)
          return;
       
       activeModeId_ = event.getMode();
       clearMarkers();
       clearRowState();
       refreshHighlighters();
-      synchronizeFrom(0);
+      
+      if (documentChangedHandler_ != null)
+      {
+         documentChangedHandler_.removeHandler();
+         documentChangedHandler_ = null;
+      }
+      
+      if (!highlightPatterns_.isEmpty())
+      {
+         documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
+         synchronizeFrom(0);
+      }
    }
    
    @Override
@@ -267,6 +278,11 @@ public class AceBackgroundHighlighter
       if (!event.isAttached())
       {
          handlers_.removeHandler();
+         if (documentChangedHandler_ != null)
+         {
+            documentChangedHandler_.removeHandler();
+            documentChangedHandler_ = null;
+         }
       }
    }
    
@@ -442,11 +458,13 @@ public class AceBackgroundHighlighter
    
    private final AceEditor editor_;
    private final EditSession session_;
-   private HighlightPattern activeHighlightPattern_;
-   private String activeModeId_;
-   private boolean enabled_;
    private final List<HighlightPattern> highlightPatterns_;
    private final HandlerRegistrations handlers_;
+   
+   private HighlightPattern activeHighlightPattern_;
+   private String activeModeId_;
+   private HandlerRegistration documentChangedHandler_;
+   private boolean enabled_;
    
    private final JsVectorInteger rowStates_;
    private final JsVectorInteger markerIds_;

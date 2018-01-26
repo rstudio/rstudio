@@ -1,7 +1,7 @@
 /*
  * DefaultGlobalDisplay.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -367,7 +368,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    public void showHtmlFile(String path)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().showFile(path);
+         Desktop.getFrame().showFile(StringUtil.notNull(path));
       else
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }
@@ -376,7 +377,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    public void showWordDoc(String path)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().showWordDoc(path);
+         Desktop.getFrame().showWordDoc(StringUtil.notNull(path));
       else
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }

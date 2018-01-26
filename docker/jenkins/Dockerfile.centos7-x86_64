@@ -8,21 +8,32 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     cmake \
+    expect \
     fakeroot \
+    fuse-libs \
     gcc \
     gcc-c++ \
     git \
-    gstreamer-devel \
-    gstreamer-plugins-base-devel \
-    java-1.6.0-openjdk  \
+    gpg \
+    gtk3 \
+    java-1.8.0-openjdk \
+    java-1.8.0-openjdk-devel \
     libffi \
     libuuid-devel \
+    libXcursor-devel \
+    libXrandr-devel \
+    libXScrnSaver-devel \
+    lsof \
     make \
+    mariadb-libs \
     openssl-devel \
     pam-devel \
     pango-devel \
+    patchelf \
+    postgresql-devel \
     R \
     rpmdevtools \
+    rpmsign \
     sudo \
     wget \
     xml-commons-apis \
@@ -40,18 +51,25 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# remove users/groups with colliding jenkins ids
-RUN userdel systemd-bus-proxy && userdel systemd-network && groupdel input
-
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.4.0 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.10.0 && \
     /tmp/install-qt-sdk
 
-# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+# install GWT libs
+COPY dependencies/common/install-gwt /tmp/
+RUN mkdir -p /opt/rstudio-tools/gwt && \
+    /tmp/install-gwt
+
+# remove any previous users with conflicting IDs
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
+COPY docker/jenkins/*.sh /tmp/
+RUN /tmp/clean-uid.sh $JENKINS_UID && \
+    /tmp/clean-gid.sh $JENKINS_GID
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

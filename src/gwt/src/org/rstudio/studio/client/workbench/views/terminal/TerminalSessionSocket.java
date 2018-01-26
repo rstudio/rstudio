@@ -1,7 +1,7 @@
 /*
  * TerminalSessionSocket.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,6 +60,11 @@ public class TerminalSessionSocket
        * @param output output from server
        */
       void receivedOutput(String output);
+   
+      /**
+       * Called to disconnect the terminal
+       */
+      void connectionDisconnected();
    }
    
    public interface ConnectCallback
@@ -103,7 +108,7 @@ public class TerminalSessionSocket
       
       public InputEchoTimeMonitor()
       {
-         pending_ = new LinkedList<InputDatapoint>();
+         pending_ = new LinkedList<>();
       }
       
       public void inputReceived(String input)
@@ -237,6 +242,7 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket closed");
                socket_ = null;
+               session_.connectionDisconnected();
             }
 
             @Override
@@ -275,7 +281,6 @@ public class TerminalSessionSocket
                      callback.onError("Unable to switch back to RPC mode");
                   }
                });
-               return;
             }
          });
          

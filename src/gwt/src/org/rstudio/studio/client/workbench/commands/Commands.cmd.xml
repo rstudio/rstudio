@@ -233,6 +233,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
+         <cmd refid="sendToTerminal"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
@@ -274,7 +275,6 @@ well as menu structures (for main menu and popup menus).
          
          <separator/>
          
-         <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
          <separator/>
@@ -465,17 +465,21 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="checkForUpdates"/>
          <separator/>
          <cmd refid="helpUsingRStudio"/>
+         <cmd refid="rstudioCommunityForum"/>
          <cmd refid="rstudioSupport"/>
          <separator/>
          <menu label="_Cheatsheets">
             <cmd refid="openRStudioIDECheatSheet"/>'
             <cmd refid="openDataTransformationCheatSheet"/>
             <cmd refid="openDataVisualizationCheatSheet"/>
+            <cmd refid="openPurrrCheatSheet"/>
             <cmd refid="openPackageDevelopmentCheatSheet"/>
             <cmd refid="openShinyCheatSheet"/>
             <cmd refid="openSparklyrCheatSheet"/>
             <cmd refid="openRMarkdownCheatSheet"/>
             <cmd refid="openRMarkdownReferenceGuide"/>
+            <separator/>
+            <cmd refid="browseCheatSheets"/>
          </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
@@ -489,6 +493,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
+            <cmd refid="openDeveloperConsole"/>
+            <cmd refid="reloadUi"/>
             <separator/>
             <cmd refid="toggleEditorTokenInfo"/>
             <separator/>
@@ -529,8 +535,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="extractLocalVariable" value="Cmd+Alt+V"/>
          <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
          <shortcut refid="reindent" value="Cmd+I"/>
-         <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!(org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChrome())"/>
-         <shortcut refid="reflowComment" value="Cmd+Alt+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChrome()"/>
+         <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!(org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer())"/>
+         <shortcut refid="reflowComment" value="Cmd+Alt+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer()"/>
          <shortcut refid="reformatCode" value="Cmd+Shift+A"/>
          <shortcut refid="showDiagnosticsProject" value="Cmd+Shift+Alt+D"/>
          <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
@@ -601,7 +607,7 @@ well as menu structures (for main menu and popup menus).
          
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
-         <shortcut refid="activateTerminal" value="Ctrl+Shift+T"/>
+         <shortcut refid="activateTerminal" value="Alt+Shift+T"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
          <shortcut refid="activateFiles" value="Ctrl+5"/>
@@ -645,8 +651,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
          
          <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim"/>
-         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
-         <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
          
          <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim"/>
          <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
@@ -675,7 +681,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
-         <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()" disableModes="vim,emacs"/>
          <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
          <shortcut refid="executeCodeWithoutMovingCursor" value="Alt+Enter"/>
@@ -689,6 +694,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Shift+Enter"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+         <shortcut refid="sendToTerminal" value="Cmd+Alt+Enter"/>
       </shortcutgroup>
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
@@ -734,9 +740,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
-         <shortcut refid="newTerminal" value="Alt+Shift+T"/>
-         <shortcut refid="renameTerminal" value="Alt+Shift+R"/>
-         <shortcut refid="clearTerminalScrollbackBuffer" value="Ctrl+Shift+L"/>
+         <shortcut refid="newTerminal" value="Alt+Shift+R"/>
          <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
       </shortcutgroup>
@@ -1073,10 +1077,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleToolbar"
         label="Toggle Visibility of Toolbar"
         menuLabel="Toggle Toolbar"/>
-        
-   <cmd id="zoomActualSize"
-        label="Zoom to Actual Size"
-        menuLabel="Actual Size"/>
         
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
@@ -1747,6 +1747,11 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Data Visualization with ggplot2"
          desc="Data visualization with ggplot2"
          context="help"/>
+         
+    <cmd id="openPurrrCheatSheet"
+         menuLabel="List manipulation with purrr"
+         desc="List manipulation with purrr"
+         context="help"/>
 
     <cmd id="openPackageDevelopmentCheatSheet"
          menuLabel="Package Development with devtools"
@@ -1786,6 +1791,11 @@ well as menu structures (for main menu and popup menus).
     <cmd id="openShinyCheatSheet"
          menuLabel="Web Applications with shiny"
          desc="Build web applications with Shiny"
+         context="help"/>
+         
+    <cmd id="browseCheatSheets"
+         menuLabel="Browse Cheatsheets..."
+         desc="Browse available cheatsheets in your web browser"
          context="help"/>
 
    <cmd id="knitDocument"
@@ -2508,7 +2518,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Copy Terminal to _Editor"
         desc="Copy current terminal's buffer to a new editor buffer"/>
- 
+
+   <cmd id="sendToTerminal"
+        label="Send Selection to Terminal"
+        buttonLabel=""
+        menuLabel="Send to Terminal"
+        desc="Send the current line or selection to terminal"/>
+
    <cmd id="browseAddins"
         label="Browse Addins"
         menuLabel="_Browse Addins..."
@@ -2655,6 +2671,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Write Diagnostics Report"
         visible="false"/>
         
+   <cmd id="openDeveloperConsole"
+        menuLabel="Open Developer Console"
+        rebindable="false"/>
+        
+   <cmd id="reloadUi"
+        menuLabel="Reload UI"
+        rebindable="false"/>
+
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"
         rebindable="false"/>
@@ -2690,6 +2714,13 @@ well as menu structures (for main menu and popup menus).
         desc="Quit the current R session"
         windowMode="main"/>
 
+   <cmd id="forceQuitSession"
+        label="Quit the Current R Session Even if Busy"
+        menuLabel="Force Quit Session..."
+        buttonLabel=""
+        desc="Quit the current R session even if busy"
+        windowMode="main"/>
+
    <cmd id="showAboutDialog"
         label="About RStudio..."
         menuLabel="_About RStudio"
@@ -2704,6 +2735,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="updateCredentials"
         menuLabel="_Update Credentials"
         rebindable="false"/>
+
+   <cmd id="rstudioCommunityForum"
+        menuLabel="RStudio Community _Forum"
+        rebindable="false"
+        windowMode="main"/>
 
    <cmd id="rstudioSupport"
         menuLabel="RStudio _Support"
@@ -2720,21 +2756,19 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="buildAll"
-        label="Build and Reload"
-        buttonLabel="Build &amp; Reload"
-        menuLabel="_Build and Reload"
-        desc="Build and reload the package"
-        windowMode="background"/>
-        context="packageDevelopment"
-        windowMode="main"/>
+        label="Install and Restart"
+        buttonLabel="Install and Restart"
+        menuLabel="_Install and Restart"
+        desc="Install the package and restart R"
+        windowMode="main"
+        context="packageDevelopment"/>
 
    <cmd id="rebuildAll"
         label="Clean and Rebuild"
         menuLabel="Clean and _Rebuild"
         desc="Clean previous output and rebuild all"
-        windowMode="background"/>
-        context="packageDevelopment"
-        windowMode="main"/>
+        windowMode="main"
+        context="packageDevelopment"/>
 
    <cmd id="cleanAll"
         label="Clean All"
@@ -2776,7 +2810,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="testPackage"
         menuLabel="_Test Package"
         desc="Run tests for package"
-        windowMode="background"/>
+        windowMode="background"
         context="packageDevelopment"/>
 
    <cmd id="stopBuild"
@@ -2947,6 +2981,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Save Profile As..."
         buttonLabel=""
         desc="Saves current profile into a file"/>
+
+   <cmd id="openProfileInBrowser"
+        label="Open Profile in Browser..."
+        menuLabel="_Open Profile in Browser"
+        buttonLabel=""
+        desc="Opens current profile in a web browser"/>
 
    <cmd id="profileHelp"
         label="Show Guide on Profiling with RStudio"

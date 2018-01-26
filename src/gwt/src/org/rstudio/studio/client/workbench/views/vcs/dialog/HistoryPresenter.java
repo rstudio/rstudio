@@ -325,7 +325,7 @@ public class HistoryPresenter
 
       if (!noSizeWarning
           && commitInfo != null
-          && commitInfo.getId().equals(commitShowing_))
+          && commitInfo.getId() == commitShowing_)
       {
          return;
       }

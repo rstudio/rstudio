@@ -306,8 +306,8 @@ public class Packages
                installOptions_ = request.getOptions();
                
                boolean usingDefaultLibrary = 
-                  request.getOptions().getLibraryPath().equals(
-                                       installContext.getDefaultLibraryPath());
+                  request.getOptions().getLibraryPath() ==
+                                       installContext.getDefaultLibraryPath();
 
                StringBuilder command = new StringBuilder();
                command.append("install.packages(");
@@ -483,7 +483,7 @@ public class Packages
          if (libPathUpdates.size() > 1)
             command.append(")");
          
-         if (!libPath.equals(installContext.getDefaultLibraryPath()))
+         if (libPath != installContext.getDefaultLibraryPath())
          {
             command.append(", lib=\"");
             command.append(libPath);
@@ -634,8 +634,8 @@ public class Packages
          @Override
          public void execute(final PackageInstallContext installContext)
          {
-            final boolean usingDefaultLibrary = packageInfo.getLibrary().equals(
-                                       installContext.getDefaultLibraryPath());
+            final boolean usingDefaultLibrary = packageInfo.getLibrary() ==
+                                       installContext.getDefaultLibraryPath();
             
             StringBuilder message = new StringBuilder();
             message.append("Are you sure you wish to permanently uninstall the '"); 
@@ -753,8 +753,8 @@ public class Packages
       for (int i = 0; i<allPackages_.size(); i++)
       {
          PackageInfo packageInfo = allPackages_.get(i);
-         if (packageInfo.getName().equals(status.getName()) &&
-             packageInfo.getLibrary().equals(status.getLib()))
+         if (packageInfo.getName() == status.getName() &&
+             packageInfo.getLibrary() == status.getLib())
          {
             allPackages_.set(i, status.isLoaded() ? packageInfo.asLoaded() :
                                                     packageInfo.asUnloaded());

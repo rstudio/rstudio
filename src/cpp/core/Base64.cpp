@@ -171,7 +171,7 @@ private:
    {
       table_.resize(1 << CHAR_BIT, (Byte) -1);
       const Byte* pData = reinterpret_cast<const Byte*>(table.c_str());
-      for (Byte i = 0, n = table.size(); i < n; ++i)
+      for (Byte i = 0, n = (Byte) table.size(); i < n; ++i)
          table_[pData[i]] = i;
    }
    

@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,12 +27,14 @@
 #include <core/r_util/RUserData.hpp>
 
 #include <QProcess>
+#include <QPushButton>
 #include <QtNetwork/QTcpSocket>
 
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopGwtCallback.hpp"
+#include "DesktopActivationOverlay.hpp"
 
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
@@ -44,13 +46,13 @@ namespace desktop {
 
 namespace {
 
-static std::string s_launcherToken;
-         
-void launchProcess(std::string absPath,
-                   QStringList argList,
+std::string s_launcherToken;
+
+void launchProcess(const std::string& absPath,
+                   const QStringList& argList,
                    QProcess** ppProc)
 {
-   QProcess* pProcess = new QProcess();
+   auto* pProcess = new QProcess();
    if (options().runDiagnostics())
       pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
    else
@@ -73,13 +75,19 @@ void logEnvVar(const std::string& name)
 
 } // anonymous namespace
 
-
-Error SessionLauncher::launchFirstSession(const QString& filename,
-                                          ApplicationLaunch* pAppLaunch)
+void SessionLauncher::launchFirstSession(const core::FilePath& installPath,
+                                         bool devMode,
+                                         const QStringList& arguments)
 {
-   // save reference to app launch
-   pAppLaunch_ = pAppLaunch;
+   connect(&activation(), &DesktopActivation::launchFirstSession,
+           this, &SessionLauncher::onLaunchFirstSession, Qt::QueuedConnection);
+   connect(&activation(), &DesktopActivation::launchError,
+           this, &SessionLauncher::onLaunchError, Qt::QueuedConnection);
+   activation().getInitialLicense(arguments, installPath, devMode);
+}
 
+Error SessionLauncher::launchFirstSession()
+{
    // build a new new launch context
    QString host, port;
    QStringList argList;
@@ -115,18 +123,20 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                            "...");
 
    pMainWindow_ = new MainWindow(url);
+   pMainWindow_->setAttribute(Qt::WA_DeleteOnClose);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);
-   pAppLaunch->setActivationWindow(pMainWindow_);
+   pMainWindow_->setAppLauncher(pAppLaunch_);
+   pAppLaunch_->setActivationWindow(pMainWindow_);
 
    desktop::options().restoreMainWindowBounds(pMainWindow_);
 
    RUN_DIAGNOSTICS_LOG("\nConnected to R session, attempting to initialize...\n");
 
-   // one-time workbench intiailized hook for startup file association
-   if (!filename.isNull() && !filename.isEmpty())
+   // one-time workbench initialized hook for startup file association
+   if (!filename_.isNull() && !filename_.isEmpty())
    {
-      StringSlotBinder* filenameBinder = new StringSlotBinder(filename);
+      StringSlotBinder* filenameBinder = new StringSlotBinder(filename_);
       pMainWindow_->connect(pMainWindow_,
                             SIGNAL(firstWorkbenchInitialized()),
                             filenameBinder,
@@ -146,24 +156,28 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
 
+   pMainWindow_->connect(&activation(),
+                         SIGNAL(licenseLost(QString)),
+                         pMainWindow_,
+                         SLOT(onLicenseLost(QString)));
 
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
    {
+      finalPlatformInitialize(pMainWindow_);
       pMainWindow_->show();
-      pAppLaunch->activateWindow();
+      pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
    }
-
+   qApp->setQuitOnLastWindowClosed(true);
    return Success();
 }
 
-void SessionLauncher::closeAllSatillites()
+void SessionLauncher::closeAllSatellites()
 {
    QWidgetList topLevels = QApplication::topLevelWidgets();
-   for (int i = 0; i < topLevels.size(); i++)
+   for (auto pWindow : topLevels)
    {
-      QWidget* pWindow = topLevels.at(i);
       if (pWindow != pMainWindow_)
         pWindow->close();
    }
@@ -184,9 +198,8 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // if there was no pending quit set then this is a crash
    if (pendingQuit == PendingQuitNone)
    {
-      closeAllSatillites();
-
-      pMainWindow_->evaluateJavaScript(
+      closeAllSatellites();
+      pMainWindow_->webView()->webPage()->runJavaScript(
                QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
 
       if (abendLogPath().exists())
@@ -207,10 +220,27 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    // otherwise this is a restart so we need to launch the next session
    else
    {
+      if (!activation().allowProductUsage())
+      {
+         std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
+         std::string licenseMessage = activation().currentLicenseStateMessage();
+         if (licenseMessage.empty())
+            licenseMessage = "None Available";
+         message += "\n\nDetails: ";
+         message += licenseMessage;
+         showMessageBox(QMessageBox::Critical,
+                        pMainWindow_,
+                        QString::fromUtf8("RStudio"),
+                        QString::fromUtf8(message.c_str()));
+         closeAllSatellites();
+         pMainWindow_->quit();
+         return;
+      }
+
       // close all satellite windows if we are reloading
       bool reload = (pendingQuit == PendingQuitRestartAndReload);
       if (reload)
-         closeAllSatillites();
+         closeAllSatellites();
 
       // launch next session
       Error error = launchNextSession(reload);
@@ -231,7 +261,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 Error SessionLauncher::launchNextSession(bool reload)
 {
    // unset the initial project environment variable it this doesn't
-   // polute future sessions
+   // pollute future sessions
    core::system::unsetenv(kRStudioInitialProject);
 
    // disconnect the firstWorkbenchInitialized event so it doesn't occur
@@ -239,11 +269,11 @@ Error SessionLauncher::launchNextSession(bool reload)
    pMainWindow_->disconnect(SIGNAL(firstWorkbenchInitialized()));
 
    // delete the old process object
-   pMainWindow_->setSessionProcess(NULL);
+   pMainWindow_->setSessionProcess(nullptr);
    if (pRSessionProcess_)
    {
       delete pRSessionProcess_;
-      pRSessionProcess_ = NULL;
+      pRSessionProcess_ = nullptr;
    }
 
    // build a new launch context -- re-use the same port if we aren't reloading
@@ -268,7 +298,7 @@ Error SessionLauncher::launchNextSession(bool reload)
 
    if (reload)
    {
-      // load url -- use a delay because on occation we've seen the
+      // load url -- use a delay because on occasion we've seen the
       // mac client crash during switching of projects and this could
       // be some type of timing related issue
       nextSessionUrl_ = url;
@@ -284,7 +314,15 @@ void SessionLauncher::onReloadFrameForNextSession()
    nextSessionUrl_.clear();
 }
 
-
+void SessionLauncher::onLaunchFirstSession()
+{
+   Error error = launchFirstSession();
+   if (error)
+   {
+      LOG_ERROR(error);
+      activation().emitLaunchError(launchFailedErrorMessage());
+   }
+}
 
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
@@ -299,6 +337,17 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                      sessionPath_.absolutePath(),
                      argList,
                      ppRSessionProcess));
+}
+
+void SessionLauncher::onLaunchError(QString message)
+{
+  QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
+      QString::fromUtf8("RStudio"),
+      message);
+  errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
+      QMessageBox::AcceptRole);
+  errorMsg.exec();
+  qApp->exit(EXIT_FAILURE);
 }
 
 QString SessionLauncher::collectAbendLogMessage() const
@@ -357,13 +406,6 @@ QString SessionLauncher::launchFailedErrorMessage() const
 }
 
 
-void SessionLauncher::cleanupAtExit()
-{
-   if (pMainWindow_)
-      desktop::options().saveMainWindowBounds(pMainWindow_);
-}
-
-
 void SessionLauncher::buildLaunchContext(QString* pHost,
                                          QString* pPort,
                                          QStringList* pArgList,
@@ -384,7 +426,7 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
    {
       // explicitly pass "none" so that rsession doesn't read an
       // /etc/rstudio/rsession.conf file which may be sitting around
-      // from a previous configuratin or install
+      // from a previous configuration or install
       *pArgList << QString::fromUtf8("--config-file") <<
                    QString::fromUtf8("none");
    }
@@ -399,7 +441,7 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
       s_launcherToken = core::system::generateShortenedUuid();
    *pArgList << QString::fromUtf8("--launcher-token") <<
                 QString::fromUtf8(s_launcherToken.c_str());
-   
+
    if (options().runDiagnostics())
       *pArgList << QString::fromUtf8("--verify-installation") <<
                    QString::fromUtf8("1");

@@ -1,7 +1,7 @@
 /*
  * DesktopChooseRHome.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ RVersion toVersion(QListWidgetItem* pItem)
 ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ChooseRHome()),
-    pOK_(NULL)
+    pOK_(nullptr)
 {
     ui->setupUi(this);
     if (!rstudio::core::system::isWin64())

@@ -26,29 +26,30 @@ import org.rstudio.studio.client.workbench.views.plots.ui.export.PlotsPanePrevie
 
 public class ExportPlotDesktop extends ExportPlot
 {
-
    @Override
    public void copyPlotToClipboard(
-                              PlotsServerOperations server,
-                              ExportPlotOptions options,
-                              OperationWithInput<ExportPlotOptions> onClose)
-   {   
-      if (Desktop.getFrame().supportsClipboardMetafile())
+                              final PlotsServerOperations server,
+                              final ExportPlotOptions options,
+                              final OperationWithInput<ExportPlotOptions> onClose)
+   {
+      Desktop.getFrame().supportsClipboardMetafile(supported ->
       {
-         new CopyPlotToClipboardDesktopMetafileDialog(
-                        new PlotsPanePreviewer(server, true),
-                        new PlotsPaneClipboard(server),
-                        options, 
-                        onClose).showModal();
-      }
-      else
-      {
-         new CopyPlotToClipboardDesktopDialog(
-                        new PlotsPanePreviewer(server, true),
-                        new PlotsPaneClipboard(server),
-                        options, 
-                        onClose).showModal();
-      }
+         if (supported)
+         {
+            new CopyPlotToClipboardDesktopMetafileDialog(
+                  new PlotsPanePreviewer(server, true),
+                  new PlotsPaneClipboard(server),
+                  options, 
+                  onClose).showModal();
+         }
+         else
+         {
+            new CopyPlotToClipboardDesktopDialog(
+                  new PlotsPanePreviewer(server, true),
+                  new PlotsPaneClipboard(server),
+                  options, 
+                  onClose).showModal();
+         }
+      });
    }
-
 }

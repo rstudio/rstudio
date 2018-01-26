@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -493,7 +493,7 @@ public class AceEditor implements DocDisplay,
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
-         Desktop.getFrame().setClipboardText(text);
+         Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
          replaceRange(yankRange, "");
          clearEmacsMark();
       }
@@ -535,7 +535,7 @@ public class AceEditor implements DocDisplay,
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
-         Desktop.getFrame().setClipboardText(text);
+         Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
          replaceRange(yankRange, "");
          clearEmacsMark();
       }
@@ -779,8 +779,8 @@ public class AceEditor implements DocDisplay,
          return;
 
       boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
-      boolean live = uiPrefs_.codeCompleteOther().getValue().equals(
-                                       UIPrefsAccessor.COMPLETION_ALWAYS);
+      boolean live = uiPrefs_.codeCompleteOther().getValue() ==
+                                       UIPrefsAccessor.COMPLETION_ALWAYS;
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
       
@@ -1178,10 +1178,20 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      PrintIFrame printIFrame = new PrintIFrame(
-            getCode(),
-            RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
-      RootPanel.get().add(printIFrame);
+      if (Desktop.isDesktop())
+      {
+         // the desktop frame prints the code directly
+         Desktop.getFrame().printText(StringUtil.notNull(getCode()));
+      }
+      else
+      {
+         // in server mode, we render the code to an IFrame and then print
+         // the frame using the browser
+         PrintIFrame printIFrame = new PrintIFrame(
+               getCode(),
+               RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
+         RootPanel.get().add(printIFrame);
+      }
    }
 
    public String getText()
@@ -3157,9 +3167,9 @@ public class AceEditor implements DocDisplay,
             continue;
          
          String tokenValue = token.getValue();
-         return tokenValue.equals("}") ||
-                tokenValue.equals(")") ||
-                tokenValue.equals("]");
+         return tokenValue == "}" ||
+                tokenValue == ")" ||
+                tokenValue == "]";
       }
       
       return false;
@@ -3180,9 +3190,9 @@ public class AceEditor implements DocDisplay,
             continue;
          
          String tokenValue = token.getValue();
-         return tokenValue.equals("{") ||
-                tokenValue.equals("(") ||
-                tokenValue.equals("[");
+         return tokenValue == "{" ||
+                tokenValue == "(" ||
+                tokenValue == "[";
       }
       
       return false;
@@ -3298,6 +3308,10 @@ public class AceEditor implements DocDisplay,
       // discover start of current statement
       while (startRow >= startRowLimit)
       {
+         // if we've hit the start of the document, bail
+         if (startRow <= 0)
+            break;
+         
          // if the row starts with an open bracket, expand to its match
          if (rowStartsWithClosingBracket(startRow))
          {
@@ -3308,12 +3322,23 @@ public class AceEditor implements DocDisplay,
                continue;
             }
          }
-         else if (startRow >= 0 && rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         
+         // keep going if the line is empty or previous ends w/binary op
+         if (rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
          {
             startRow--;
             continue;
          }
          
+         // keep going if we're in a multiline string
+         String state = getSession().getState(startRow - 1);
+         if (state == "qstring" || state == "qqstring")
+         {
+            startRow--;
+            continue;
+         }
+         
+         // bail out of the loop -- we've found the start of the statement
          break;
       }
       
@@ -3337,14 +3362,14 @@ public class AceEditor implements DocDisplay,
          {
             String value = token.getValue();
             
-            parenCount += value.equals("(") ? 1 : 0;
-            parenCount -= value.equals(")") ? 1 : 0;
+            parenCount += value == "(" ? 1 : 0;
+            parenCount -= value == ")" ? 1 : 0;
             
-            braceCount += value.equals("{") ? 1 : 0;
-            braceCount -= value.equals("}") ? 1 : 0;
+            braceCount += value == "{" ? 1 : 0;
+            braceCount -= value == "}" ? 1 : 0;
             
-            bracketCount += value.equals("[") ? 1 : 0;
-            bracketCount -= value.equals("]") ? 1 : 0;
+            bracketCount += value == "[" ? 1 : 0;
+            bracketCount -= value == "]" ? 1 : 0;
          }
          
          // continue search if line ends with binary operator
@@ -3356,6 +3381,14 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
+         {
+            endRow++;
+            continue;
+         }
+         
+         // continue search if we're in a multi-line string
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring")
          {
             endRow++;
             continue;
@@ -3749,7 +3782,7 @@ public class AceEditor implements DocDisplay,
       for (int i = 0; i<lineWidgets.length(); i++)
       {
          LineWidget lineWidget = lineWidgets.get(i);
-         if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
+         if (lineWidget.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
          {
             ChunkDefinition chunk = lineWidget.getData();
             chunks.push(chunk.with(lineWidget.getRow(), 

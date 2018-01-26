@@ -22,6 +22,8 @@
 
 #include <core/Thread.hpp>
 
+#include <iostream>
+
 namespace rstudio {
 namespace core {
 namespace trace {

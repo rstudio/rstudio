@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,6 +56,11 @@ EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 // browser state by pushing new contexts / frames on the stack
 bool s_browserActive = false;
 
+// are we currently monitoring the environment? this is almost always true, but can be 
+// disabled by the user to help mitigate pathological cases in which environment monitoring
+// has undesirable side effects.
+bool s_monitoring = true;
+
 namespace {
 
 // Keeps track of the data related to the most recent debugging event
@@ -105,6 +110,84 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    {
       return false;
    }
+}
+
+bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
+                    bool nullPtr,  // whether to look for NULL pointers 
+                    int level = 5) // maximum recursion depth (envs can have self-ref loops)
+{
+   // list the contents of this environment
+   std::vector<r::sexp::Variable> vars;
+   r::sexp::Protect rProtect;
+   if (TYPEOF(obj) == S4SXP)
+   {
+      // for S4 objects, list the attributes (which correspond to slots)
+      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
+   }
+   else
+   {
+      // not S4, coerce to environment
+      SEXP envir = R_NilValue;
+      if (TYPEOF(obj) == ENVSXP)
+      {
+         // we were given a primitive environment (ENVSXP)
+         envir = obj;
+      }
+      else
+      {
+         // convert the passed environment into a primitive environment; this is required so that
+         // e.g. reference objects that subclass 'environment' can be introspected below
+         Error error = r::sexp::asPrimitiveEnvironment(obj, &envir, &rProtect);
+         if (error)
+         {
+            // can't search in here
+            return false;
+         }
+      }
+
+      r::sexp::listEnvironment(envir, 
+                               true,  // include all values
+                               false, // don't include last dot
+                               &rProtect, &vars);
+   }
+
+   // check for external pointers
+   for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
+   {
+      if (r::sexp::isExternalPointer(it->second) && 
+          r::sexp::isNullExternalPointer(it->second) == nullPtr)
+      {
+         return true;
+      }
+
+      if (r::sexp::isPrimitiveEnvironment(it->second) || TYPEOF(it->second) == S4SXP)
+      {
+         // if this object is itself an environment, check it recursively for external pointers. 
+         // (we do this only if there's sufficient recursion depth remaining)
+         if (level > 0 && hasExternalPtr(it->second, nullPtr, level - 1))
+            return true;
+      }
+   }
+
+   return false;
+}
+
+SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
+{
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   r::sexp::Protect protect;
+   bool hasPtr = false;
+   if (r::sexp::isExternalPointer(objSEXP))
+   {
+      // object is an external pointer itself
+      hasPtr = r::sexp::isNullExternalPointer(objSEXP) == nullPtr;
+   }
+   else if (r::sexp::isPrimitiveEnvironment(objSEXP) || TYPEOF(objSEXP) == S4SXP)
+   {
+      // object is an environment; check it for external pointers
+      hasPtr = hasExternalPtr(objSEXP, nullPtr);
+   }
+   return r::sexp::create(hasPtr, &protect);
 }
 
 // Construct a simulated source reference from a context containing a
@@ -475,6 +558,7 @@ json::Value environmentNames(SEXP env)
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
    int depth,
+   bool includeContents,
    LineDebugState* pLineDebugState)
 {
    json::Object varJson;
@@ -482,8 +566,12 @@ json::Object commonEnvironmentStateData(
    std::string functionCode;
    bool inFunctionEnvironment = false;
 
+   // emit the current list of values in the environment, but only if not monitoring (as the intent
+   // of the monitoring switch is to avoid implicit environment listing)
+   varJson["environment_monitoring"] = s_monitoring;
+   varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
+   
    varJson["context_depth"] = depth;
-   varJson["environment_list"] = environmentListAsJson();
    varJson["call_frames"] = callFramesAsJson(pLineDebugState);
    varJson["function_name"] = "";
 
@@ -570,7 +658,7 @@ void enqueContextDepthChangedEvent(int depth,
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, pLineDebugState));
+                      commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -611,6 +699,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(commonEnvironmentStateData(*pContextDepth,
+                                                   true, // include contents
                                                    pLineDebugState.get()));
    return Success();
 }
@@ -619,6 +708,10 @@ void onDetectChanges(module_context::ChangeSource source)
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
+
+   // Ignore if not monitoring
+   if (!s_monitoring)
+      return;
 
    s_pEnvironmentMonitor->checkForChanges();
 }
@@ -747,6 +840,9 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
 
 void initEnvironmentMonitoring()
 {
+   // Restore monitoring state
+   s_monitoring = persistentState().environmentMonitoring();
+
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
@@ -769,6 +865,21 @@ void initEnvironmentMonitoring()
          }
       }
    }
+}
+
+Error setEnvironmentMonitoring(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   bool monitoring = false;
+   Error error = json::readParam(request.params, 0, &monitoring);
+   if (error)
+      return error;
+
+   // save the user's requested monitoring state
+   s_monitoring = monitoring;
+   persistentState().setEnvironmentMonitoring(s_monitoring);
+
+   return Success();
 }
 
 // Remove the given objects from the currently monitored environment.
@@ -900,13 +1011,21 @@ json::Value environmentStateAsJson()
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inBrowseContext())
       contextDepth = 0;
-   return commonEnvironmentStateData(contextDepth, NULL);
+   return commonEnvironmentStateData(contextDepth, 
+         s_monitoring, // include contents if actively monitoring
+         NULL);
 }
 
 SEXP rs_isBrowserActive()
 {
    r::sexp::Protect protect;
    return r::sexp::create(s_browserActive, &protect);
+}
+
+bool isSuspendable()
+{
+   // suppress suspension if any object has a live external pointer; these can't be restored
+   return !hasExternalPtr(R_GlobalEnv, false);
 }
 
 Error initialize()
@@ -939,6 +1058,8 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_jumpToFunction ;
    methodDef.numArgs = 3;
    r::routines::addCallMethod(methodDef);
+
+   RS_REGISTER_CALL_METHOD(rs_hasExternalPointer, 2);
 
    // subscribe to events
    using boost::bind;
@@ -987,6 +1108,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_environment_state", getEnv))
       (bind(registerRpcMethod, "get_object_contents", getObjectContents))
       (bind(registerRpcMethod, "requery_context", requeryCtx))
+      (bind(registerRpcMethod, "set_environment_monitoring", setEnvironmentMonitoring))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

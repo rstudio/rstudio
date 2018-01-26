@@ -112,7 +112,7 @@ public class CheckSpelling
          @Override
          public void onClick(ClickEvent event)
          {
-            if (!view_.getMisspelledWord().getText().equals(view_.getReplacement().getText()))
+            if (view_.getMisspelledWord().getText() != view_.getReplacement().getText())
             {
                changeAll_.put(view_.getMisspelledWord().getText(),
                               view_.getReplacement().getText());

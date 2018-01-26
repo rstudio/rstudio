@@ -1,7 +1,7 @@
 /*
  * ViewerPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
@@ -177,7 +178,7 @@ public class ViewerPresenter extends BasePresenter
          display_.maximize();
       rmdPreviewParams_ = event.getParams();
       if (Desktop.isDesktop())
-         Desktop.getFrame().setViewerUrl(event.getParams().getOutputUrl());
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getOutputUrl()));
       display_.previewRmd(event.getParams());
    }
    
@@ -192,7 +193,7 @@ public class ViewerPresenter extends BasePresenter
          manageCommands(true);
          display_.bringToFront();
          if (Desktop.isDesktop())
-            Desktop.getFrame().setViewerUrl(event.getParams().getUrl());
+            Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
          display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
       }
@@ -396,16 +397,18 @@ public class ViewerPresenter extends BasePresenter
    private void navigate(String url)
    {
       if (Desktop.isDesktop())
-         Desktop.getFrame().setViewerUrl(url);
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
    }
    
    private void updateZoomWindow(String url)
    {
-      if (Desktop.isDesktop())
-         Desktop.getFrame().reloadViewerZoomWindow(url);
-      else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
+      if (Desktop.isDesktop()) {
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
+         Desktop.getFrame().reloadViewerZoomWindow(StringUtil.notNull(url));
+      } else if ((zoomWindow_ != null) && !zoomWindow_.isClosed()) {
          zoomWindow_.setLocationHref(url);
+      }
    }
    
    private void stop(boolean interruptR)

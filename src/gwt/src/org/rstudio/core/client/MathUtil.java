@@ -36,4 +36,15 @@ public class MathUtil
          return value;
    }
    
+   /**
+    * Checks if an int value is in a range.
+    * @param value value to check
+    * @param min min value
+    * @param max max value
+    * @return whether value is in the range, inclusively.
+    */
+   public static boolean inRange(int value, int min, int max) {
+       return (value <= max) && (value >= min);
+   }
+
 }

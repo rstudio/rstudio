@@ -1,7 +1,7 @@
 /*
  * ChunkHtmlPage.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -97,18 +98,24 @@ public class ChunkHtmlPage extends ChunkOutputPage
             Element body = frame_.getDocument().getBody();
 
             Style bodyStyle = body.getStyle();
-      
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
 
-            if (themeColors_ != null)
-            {
-               bodyStyle.setColor(themeColors_.foreground);
-            }
+            syncThemeTextColor(themeColors_, body);
          }
       };
 
       frame_.runAfterRender(afterRender_);
+   }
+   
+   public static void syncThemeTextColor(Colors themeColors, Element body)
+   {
+      Style bodyStyle = body.getStyle();
+      if (StringUtil.isNullOrEmpty(bodyStyle.getBackgroundColor()) &&
+          StringUtil.isNullOrEmpty(body.getClassName()))
+      {
+         bodyStyle.setColor(themeColors.foreground);
+      }
    }
       
    @Override

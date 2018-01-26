@@ -32,9 +32,13 @@ bool pamLogin(const std::string& username, const std::string& password);
 
 core::Error initialize();
 
+namespace overlay {
+
+core::Error initialize();
+
+} // namespace overlay
 } // namespace pam_auth
 } // namespace server
 } // namespace rstudio
 
 #endif // SERVER_PAM_AUTH_HPP
-

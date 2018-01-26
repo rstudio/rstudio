@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
@@ -446,6 +447,10 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       catch (NullPointerException npe)
       {
          return;
+      }
+      catch (JavaScriptException ex)
+      {
+    	  	 return;
       }
 
       boolean isCurrentlySelected = isSelected(row);

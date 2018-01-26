@@ -59,9 +59,10 @@
                   text="Publish To Account:"
                   ui:field="publishToLabel_">
          </g:Label>
-         <rsc:RSConnectAccountEntry styleName="{res.style.accountEntry}"
-                                    ui:field="accountEntry_">
-         </rsc:RSConnectAccountEntry>
+         <g:HTMLPanel styleName="{res.style.accountEntry}" ui:field="accountEntryPanel_">
+            <rsc:RSConnectAccountEntry ui:field="accountEntry_">
+            </rsc:RSConnectAccountEntry>
+         </g:HTMLPanel>
          <g:HTMLPanel ui:field="newAppPanel_">
             <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
                      text="Title:"></g:Label>

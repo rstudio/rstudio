@@ -88,24 +88,33 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
    }
    (*pDocJson)["notebook"] = notebook;
    
-   // discover project-specific settings when available
+   // discover project-specific settings when available (only applied when
+   // opening a file that belongs to a project separate from the active project)
    r_util::RProjectConfig projConfig;
-   FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
-   FilePath projDir = projects::projectContext().directory();
-   bool hasConfig = false;
+   bool useConfig = false;
    
-   if (docPath.isWithin(projDir))
+   if (!pDoc->path().empty())
    {
-      projConfig = projects::projectContext().config();
-      hasConfig = true;
-   }
-   else
-   {
-      Error error = r_util::findProjectConfig(docPath, &projConfig);
-      hasConfig = !error;
+      FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+
+      if (projects::projectContext().hasProject() &&
+          docPath.isWithin(projects::projectContext().directory()))
+      {
+         // this file belongs to the active project: do nothing here and let
+         // other machinery handle setting of project-specific options
+         useConfig = false;
+      }
+      else
+      {
+         Error error = r_util::findProjectConfig(
+                  docPath,
+                  module_context::userHomePath(),
+                  &projConfig);
+         useConfig = !error;
+      }
    }
    
-   if (hasConfig)
+   if (useConfig)
    {
       json::Object projConfigJson;
       
@@ -973,11 +982,11 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
       path = filePath.relativePath(currentPath);
       if (interpreter.empty())
       {
-#ifndef _WINDOWS
+#ifndef _WIN32
          if (path.find_first_of('/') == std::string::npos)
             path = "./" + path;
-      }
 #endif
+      }
    }
    else
    {
@@ -989,7 +998,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
       path = "\\\"" + path + "\\\"";
 
    // if there's no interpreter then we may need to do a chmod
-#ifndef _WINDOWS
+#ifndef _WIN32
    if (interpreter.empty())
    {
       error = r::exec::RFunction(
@@ -1111,8 +1120,10 @@ void enqueFileEditEvent(const std::string& file)
    if (file.empty())
       return;
 
-   // calculate full path
-   FilePath filePath = module_context::safeCurrentPath().complete(file);
+   // construct file path from full path
+   FilePath filePath = (boost::algorithm::starts_with(file, "~"))
+         ? module_context::resolveAliasedPath(file)
+         : module_context::safeCurrentPath().complete(file);
 
    // if it doesn't exist then create it
    if (!filePath.exists())

@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -258,7 +258,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       codeExecution_.executeLastCode();
    }
    
-   
+   @Handler 
+   void onSendToTerminal() 
+   { 
+      codeExecution_.sendSelectionToTerminal(false);
+   } 
+
    @Handler
    void onPrintSourceDoc()
    {
@@ -437,6 +442,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
+      commands.add(commands_.sendToTerminal());
+
       if (SourceWindowManager.isMainSourceWindow())
          commands.add(commands_.popoutDoc());
       else
@@ -557,7 +564,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
-      return getContext().equals(position.getContext()) &&
+      return getContext() == position.getContext() &&
              docDisplay_.isAtSourceRow(position);
    }
    
@@ -741,7 +748,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
    private void ensureContext(String context, final Command onRestored)
    {
-      if (!context.equals(getContext()))
+      if (context != getContext())
       {
          // get namespace and function
          String[] contextElements = context.split(":::");

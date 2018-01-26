@@ -1,7 +1,7 @@
 /*
  * SessionLauncher.mm
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@
 
 #import "Options.hpp"
 #import "Utils.hpp"
+#import "ActivationOverlay.h"
 
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
                    std::cout << (message) << std::endl;
@@ -301,6 +302,23 @@ void SessionLauncher::onRSessionExited(
    // otherwise this is a restart so we need to launch the next session
    else
    {
+      if (![[Activation sharedActivation] allowProductUsage])
+      {
+         std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
+         std::string licenseMessage = [[Activation sharedActivation] currentLicenseStateMessage];
+         if (licenseMessage.empty())
+            licenseMessage = "None Available";
+         message += "\n\nDetails: ";
+         message += licenseMessage;
+         [NSApp activateIgnoringOtherApps: YES];
+         utils::showMessageBox(NSCriticalAlertStyle,
+                               @"RStudio Pro",
+                               [NSString stringWithUTF8String: message.c_str()]);
+         closeAllWindows();
+         [[MainFrameController instance] quit];
+         return;
+      }
+
       // close all satellite windows if we are reloading
       bool reload = (pendingQuit == PendingQuitRestartAndReload);
       if (reload)

@@ -18,10 +18,14 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
@@ -40,13 +44,15 @@ public class ObjectBrowser extends Composite implements RequiresResize
 {
    public ObjectBrowser()
    {
-      // create scroll panel and set the vertical wrapper as it's widget
+      hostPanel_ = new SimplePanelWithProgress();
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.setSize("100%", "100%");
+      hostPanel_.setWidget(scrollPanel_);
+      hostPanel_.setSize("100%", "100%");
       connection_ = null;
        
       // init widget
-      initWidget(scrollPanel_);
+      initWidget(hostPanel_);
    }
   
    public void clear()
@@ -85,6 +91,9 @@ public class ObjectBrowser extends Composite implements RequiresResize
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
 
+      // show progress while updating the connection
+      hostPanel_.showProgress(50, "Loading objects");
+            
       // update the table then restore expanded nodes
       objectsModel_.update(
          connection,      // connection 
@@ -93,6 +102,10 @@ public class ObjectBrowser extends Composite implements RequiresResize
             @Override
             public void execute()
             {
+               // clear progress and show the object tree again
+               hostPanel_.setWidget(scrollPanel_);
+               
+               // restore expanded nodes
                TreeNode rootNode = objects_.getRootTreeNode();
                if (!rootNode.isDestroyed())
                {
@@ -128,19 +141,18 @@ public class ObjectBrowser extends Composite implements RequiresResize
          });
 
       // create new widget
-      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES);
+      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES, Integer.MAX_VALUE);
       
       // create the top level list of objects
-      objects_.setDefaultNodeSize(Integer.MAX_VALUE);
       objects_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
       objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
-      VerticalPanel verticalWrapper = new VerticalPanel();
-      verticalWrapper.setWidth("100%");
-      verticalWrapper.add(objects_);
+      objectsWrapper_ = new VerticalPanel();
+      objectsWrapper_.setWidth("100%");
+      objectsWrapper_.add(objects_);
       
-      scrollPanel_.setWidget(verticalWrapper);
+      scrollPanel_.setWidget(objectsWrapper_);
       
       // cache connection
       connection_ = connection;
@@ -180,6 +192,8 @@ public class ObjectBrowser extends Composite implements RequiresResize
          String fieldType();
          String tableViewDataset();
          String containerIcon();
+         String searchMatches();
+         String searchHidden();
       }
    }
    
@@ -197,11 +211,54 @@ public class ObjectBrowser extends Composite implements RequiresResize
      String emptyTree();
    }
    
+   public void setFilterText(String text)
+   {
+      objectsModel_.setFilterText(text);
+      
+      // defer execution of the matched element filter so the celltree can
+      // render
+      Scheduler.get().scheduleDeferred(() ->
+         hideUnmatchedElements(objects_.getElement()));
+   }
+   
+   /**
+    * Hides nodes in the hierarchy which contain objects that don't match the
+    * query. GWT's CellTree doesn't provide a way to temporarily remove nodes
+    * from the tree or hide them, so we work around this by labeling the values
+    * to be hidden, and then making pass through them here to hide elements
+    * that don't match using the DOM directly.
+    * @param ele Root element of the 
+    */
+   private void hideUnmatchedElements(Element ele)
+   {
+      // get all the rendered nodes in the CellTree
+      Element[] parents = DomUtils.getElementsByClassName(
+            ele, RES.cellTreeStyle().cellTreeItem());
+      for (int i = 0; i < parents.length; i++)
+      {
+         // see if this rendered node contains any matches for the search
+         Element[] matches = DomUtils.getElementsByClassName(parents[i], 
+               RES.cellTreeStyle().searchMatches());
+         if (matches.length == 0) 
+         {
+            // none of the child nodes has a match, so hide this parent
+            parents[i].addClassName(RES.cellTreeStyle().searchHidden());
+         }
+         else
+         {
+            // at least one child node hsa a match
+            parents[i].removeClassName(RES.cellTreeStyle().searchHidden());
+         }
+      }
+   }
+   
    private static final TableBrowserMessages MESSAGES 
                               = GWT.create(TableBrowserMessages.class);
    
+   private final SimplePanelWithProgress hostPanel_;
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
+   private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
 }

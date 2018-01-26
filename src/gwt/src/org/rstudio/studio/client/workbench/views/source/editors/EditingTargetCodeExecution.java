@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
 
@@ -141,7 +143,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         moveCursorAfterExecution(selectionRange);
+         moveCursorAfterExecution(selectionRange, true);
       }
    }
    
@@ -156,6 +158,30 @@ public class EditingTargetCodeExecution
    public void executeRange(Range range)
    {
       executeRange(range, null, false);
+   }
+   
+   public void sendSelectionToTerminal(boolean skipBlankLines)
+   {
+      // send selection from this editor to the terminal
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // current line
+         int row = docDisplay_.getSelectionStart().getRow();
+         selectionRange = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      if (!(code.endsWith("\n") || code.endsWith("\r")))
+         code = code + "\n";
+      events_.fireEvent(new SendToTerminalEvent(code, prefs_.focusConsoleAfterExec().getValue()));
+
+      if (noSelection)
+      {
+         moveCursorAfterExecution(selectionRange, skipBlankLines);
+      }
    }
    
    public void profileSelection()
@@ -194,7 +220,7 @@ public class EditingTargetCodeExecution
       setLastExecuted(range.getStart(), range.getEnd());
       
       // trim intelligently
-      code = code.trim();
+      code = StringUtil.trimBlankLines(code);
       if (code.length() == 0)
          code = "\n";
       
@@ -233,7 +259,7 @@ public class EditingTargetCodeExecution
    {
       Range range = getRangeFromBehavior(executionBehavior);
       executeRange(range, null, false);
-      moveCursorAfterExecution(range);
+      moveCursorAfterExecution(range, true);
    }
    
    private Range getRangeFromBehavior(String executionBehavior)
@@ -259,6 +285,22 @@ public class EditingTargetCodeExecution
          // the region to execute
          range = docDisplay_.getMultiLineExpr(
                docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
+         
+         // expand to include comments (10 lines max)
+         int startRow = range.getStart().getRow();
+         for (int i = 0; i < 10; i++)
+         {
+            if (startRow == 0)
+               break;
+            
+            String line = docDisplay_.getLine(startRow - 1);
+            Pattern pattern = Pattern.create("^\\s*#");
+            if (!pattern.test(line))
+               break;
+            
+            startRow--;
+         }
+         range.getStart().setRow(startRow);
       }
       else if (executionBehavior == UIPrefsAccessor.EXECUTE_PARAGRAPH)
       {
@@ -410,11 +452,11 @@ public class EditingTargetCodeExecution
       return true;
    }
    
-   private void moveCursorAfterExecution(Range selectionRange)
+   private void moveCursorAfterExecution(Range selectionRange, boolean skipBlankLines)
    {
       docDisplay_.setCursorPosition(Position.create(
             selectionRange.getEnd().getRow(), 0));
-      if (!docDisplay_.moveSelectionToNextLine(true))
+      if (!docDisplay_.moveSelectionToNextLine(skipBlankLines))
          docDisplay_.moveSelectionToBlankLine();
       docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }

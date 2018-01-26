@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,37 @@
 cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
+# check for externals
+set(GWT_LIB_DIR "/opt/rstudio-tools/gwt/lib")
+if(NOT EXISTS "${GWT_LIB_DIR}")
+   set(GWT_LIB_DIR "lib")
+endif()
+
+# define output dirs
+set(GWT_BIN_DIR "bin")
+set(GWT_WWW_DIR "www")
+set(GWT_EXTRAS_DIR "extras")
+
 # invoke ant to build
 add_custom_target(gwt_build ALL)
 add_custom_command(
    TARGET gwt_build
-   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-   COMMAND ant)
+   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+   COMMAND ant -Dbuild.dir="${GWT_BIN_DIR}"
+               -Dwww.dir="${GWT_WWW_DIR}"
+               -Dextras.dir="${GWT_EXTRAS_DIR}"
+               -Dlib.dir="${GWT_LIB_DIR}")
+
+# create test script and copy to binary directory with executable permissions
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
+               ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+          GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 # installation rules
 install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-install(DIRECTORY extras/rstudio/symbolMaps/
+install(DIRECTORY "${GWT_WWW_DIR}" DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+install(DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)

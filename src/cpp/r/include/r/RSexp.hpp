@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ class Protect;
    
 // environments and namespaces
 SEXP asEnvironment(std::string name);
+core::Error asPrimitiveEnvironment(SEXP envirSEXP, SEXP* pTargetSEXP, Protect* pProtect);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
@@ -88,6 +89,7 @@ SEXP functionBody(SEXP functionSEXP);
 
 // type checking
 bool isString(SEXP object);
+bool isFunction(SEXP object);
 bool isLanguage(SEXP object);
 bool isList(SEXP object);
 bool isMatrix(SEXP object);
@@ -110,8 +112,12 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet);
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
+void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables);
 
 // weak/external pointers and finalizers
+bool isExternalPointer(SEXP object);
+bool isNullExternalPointer(SEXP object);
+
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
 void registerFinalizer(SEXP s, R_CFinalizer_t fun);
 SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);

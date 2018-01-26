@@ -14,7 +14,6 @@
  */
 #include "ServerPAMAuth.hpp"
 
-
 #include <core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
@@ -28,6 +27,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/http/SecureCookie.hpp>
+
 #include <core/text/TemplateFilter.hpp>
 
 #include <monitor/MonitorClient.hpp>
@@ -36,7 +37,6 @@
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
-#include <server/auth/ServerSecureCookie.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
@@ -46,11 +46,14 @@ namespace rstudio {
 namespace server {
 namespace pam_auth {
 
+using namespace rstudio::core;
+
 bool canSetSignInCookies();
 bool canStaySignedIn();
 void onUserAuthenticated(const std::string& username,
                          const std::string& password);
-void onUserUnauthenticated(const std::string& username);
+void onUserUnauthenticated(const std::string& username,
+                           bool signedOut = false);
 
 namespace {
 
@@ -148,7 +151,7 @@ std::string getUserIdentifier(const core::http::Request& request)
    if (server::options().authNone())
       return core::system::username();
    else
-      return auth::secure_cookie::readSecureCookie(request, kUserId);
+      return core::http::secure_cookie::readSecureCookie(request, kUserId);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -225,10 +228,10 @@ void refreshCredentialsThenContinue(
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
-   auth::secure_cookie::remove(request,
-                               kUserId,
-                               "/",
-                               pResponse);
+   core::http::secure_cookie::remove(request,
+                                     kUserId,
+                                     "/",
+                                     pResponse);
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -244,7 +247,9 @@ void signIn(const http::Request& request,
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
    else
-      variables[kFormAction] = "action=\"" + variables["action"] + "\"";
+      variables[kFormAction] = "action=\"" + variables["action"] + "\" "
+                               "onsubmit=\"return verifyMe()\"";
+
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
@@ -288,19 +293,20 @@ void setSignInCookies(const core::http::Request& request,
    else
       expiry = boost::none;
 
-   auth::secure_cookie::set(kUserId,
-                            username,
-                            request,
-                            boost::posix_time::time_duration(24*staySignedInDays,
-                                                             0,
-                                                             0,
-                                                             0),
-                            expiry,
-                            "/",
-                            pResponse);
+   core::http::secure_cookie::set(kUserId,
+                                  username,
+                                  request,
+                                  boost::posix_time::time_duration(24*staySignedInDays,
+                                                                   0,
+                                                                   0,
+                                                                   0),
+                                  expiry,
+                                  "/",
+                                  pResponse,
+                                  options().getOverlayOption("ssl-enabled") == "1");
 
    // add cross site request forgery detection cookie
-   auth::csrf::setCSRFTokenCookie(request, pResponse);
+   auth::csrf::setCSRFTokenCookie(request, expiry, "", pResponse);
 }
 
 void doSignIn(const http::Request& request,
@@ -413,13 +419,13 @@ void signOut(const http::Request& request,
                               "",
                               username));
 
-      onUserUnauthenticated(username);
+      onUserUnauthenticated(username, true);
    }
 
-   auth::secure_cookie::remove(request,
-                               kUserId,
-                               "/",
-                               pResponse);
+   core::http::secure_cookie::remove(request,
+                                     kUserId,
+                                     "/",
+                                     pResponse);
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
@@ -442,6 +448,13 @@ bool pamLogin(const std::string& username, const std::string& password)
    std::vector<std::string> args;
    args.push_back(username);
 
+   // don't try to login with an empty password (this hangs PAM as it waits for input)
+   if (password.empty())
+   {
+      LOG_WARNING_MESSAGE("No PAM password provided for user '" + username + "'; refusing login");
+      return false;
+   }
+
    // options (assume priv after fork)
    core::system::ProcessOptions options;
    options.onAfterFork = assumeRootPriv;
@@ -463,7 +476,6 @@ bool pamLogin(const std::string& username, const std::string& password)
    return result.exitStatus == 0;
 }
 
-
 Error initialize()
 {
    // register ourselves as the auth handler
@@ -483,10 +495,14 @@ Error initialize()
    uri_handlers::addBlocking(kDoSignIn, doSignIn);
    uri_handlers::addBlocking(kPublicKey, publicKey);
 
+   // initialize overlay
+   Error error = overlay::initialize();
+   if (error)
+      return error;
+
    // initialize crypto
    return core::system::crypto::rsaInit();
 }
-
 
 } // namespace pam_auth
 } // namespace server

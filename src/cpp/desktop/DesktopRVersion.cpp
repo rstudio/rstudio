@@ -1,7 +1,7 @@
 /*
  * DesktopRVersion.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ DWORD getVersion(QString path)
    if (!QFile::exists(path))
       return 0;
 
-   DWORD bytesNeeded = ::GetFileVersionInfoSize(path.toLocal8Bit(), NULL);
+   DWORD bytesNeeded = ::GetFileVersionInfoSize(path.toLocal8Bit(), nullptr);
    if (bytesNeeded == 0)
       return 0;
 

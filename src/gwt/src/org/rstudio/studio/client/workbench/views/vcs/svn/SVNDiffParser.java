@@ -103,7 +103,7 @@ public class SVNDiffParser implements DiffParser
 
       sectionsToUse.add(sections_.remove(0));
       String filename = sectionsToUse.get(0).filename;
-      while (sections_.size() > 0 && sections_.get(0).filename.equals(filename))
+      while (sections_.size() > 0 && sections_.get(0).filename == filename)
       {
          sectionsToUse.add(sections_.remove(0));
       }

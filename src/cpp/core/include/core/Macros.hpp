@@ -19,11 +19,17 @@
 #include <iostream>
 #include <iomanip>
 
+/* Work around Xcode indentation rules */
+#define RS_BEGIN_NAMESPACE(__X__) namespace __X__ {
+#define RS_END_NAMESPACE(__X__) }
+
 /* Compatibility Macros */
-#if __cplusplus < 201103L
-# define MOVE_THREAD(t) t.move()
+#if defined(_MSVC_LANG) && _MSVC_LANG >= 201103L
+# define MOVE_THREAD(t) (std::move(t))
+#elif __cplusplus < 201103L
+# define MOVE_THREAD(t) (t.move())
 #else
-# define MOVE_THREAD(t) std::move(t)
+# define MOVE_THREAD(t) (std::move(t))
 #endif
 
 /* Utility Macros */
@@ -32,8 +38,8 @@
 # define LIKELY(x)   __builtin_expect(!!(x), 1)
 # define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
-# define LIKELY(x)   __builtin_expect(!!(x), 1)
-# define UNLIKELY(x) __builtin_expect(!!(x), 0)
+# define LIKELY(x)   (x)
+# define UNLIKELY(x) (x)
 #endif
 
 /* Logging Macros */

@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -273,6 +273,41 @@ SEXP findNamespace(const std::string& name)
    return ns;
 }
    
+Error asPrimitiveEnvironment(SEXP envirSEXP,
+                             SEXP* pTargetSEXP,
+                             Protect* pProtect)
+{
+   // fast-case: no need to call back into R
+   if (TYPEOF(envirSEXP) == ENVSXP)
+   {
+      pProtect->add(*pTargetSEXP = envirSEXP);
+      return Success();
+   }
+   
+   // for non-S4 objects, we can just return an error (false) early
+   if (TYPEOF(envirSEXP) != S4SXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // use R function to convert
+   Error error = RFunction("base:::as.environment")
+         .addParam(envirSEXP)
+         .call(pTargetSEXP, pProtect);
+   
+   if (error)
+      return error;
+   
+   // ensure that we actually succeeded in producing a primitive environment
+   if (pTargetSEXP == NULL  ||
+       *pTargetSEXP == NULL ||
+       !isPrimitiveEnvironment(*pTargetSEXP))
+   {
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
+   
+   // we have a primitive environment; all is well
+   return Success();
+}
+
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
@@ -327,42 +362,37 @@ void listEnvironment(SEXP env,
    }
 }
 
-namespace {
 
-Error asPrimitiveEnvironment(SEXP envirSEXP,
-                             SEXP* pTargetSEXP,
-                             Protect* pProtect)
+void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
 {
-   // fast-case: no need to call back into R
-   if (TYPEOF(envirSEXP) == ENVSXP)
+   // reset passed vars
+   pVariables->clear();
+
+   // extract the attributes and ensure we got a pairlist
+   SEXP attrs = ATTRIB(obj);
+   if (TYPEOF(attrs) != LISTSXP)
+      return;
+
+   // extract the names from the pairlist
+   std::vector<std::string> names;
+   r::sexp::getNames(attrs, &names);
+   
+   // loop over the attributes and fill in the variable vector
+   SEXP attr = R_NilValue; 
+   SEXP nextAttr = R_NilValue;
+   size_t i = 0;
+   for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
    {
-      pProtect->add(*pTargetSEXP = envirSEXP);
-      return Success();
+      pProtect->add(attr);
+      pVariables->push_back(std::make_pair(names.at(i), attr));
+
+      // sanity: break if we run out of names
+      if (++i >= names.size()) 
+         break;
    }
-   
-   // for non-S4 objects, we can just return an error (false) early
-   if (TYPEOF(envirSEXP) != S4SXP)
-      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-   
-   // use R function to convert
-   Error error = RFunction("base:::as.environment")
-         .addParam(envirSEXP)
-         .call(pTargetSEXP, pProtect);
-   
-   if (error)
-      return error;
-   
-   // ensure that we actually succeeded in producing a primitive environment
-   if (pTargetSEXP == NULL  ||
-       *pTargetSEXP == NULL ||
-       !isPrimitiveEnvironment(*pTargetSEXP))
-   {
-      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-   }
-   
-   // we have a primitive environment; all is well
-   return Success();
 }
+
+namespace {
 
 bool hasActiveBindingImpl(const std::string& name,
                           SEXP envirSEXP,
@@ -568,6 +598,11 @@ bool isString(SEXP object)
 {
    return Rf_isString(object);
 }
+
+bool isFunction(SEXP object)
+{
+   return Rf_isFunction(object);
+}
    
 bool isMatrix(SEXP object)
 {
@@ -664,6 +699,18 @@ SEXP getAttrib(SEXP object, const std::string& attrib)
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val)
 {
    return Rf_setAttrib(object, Rf_install(attrib.c_str()), val);
+}
+
+bool isExternalPointer(SEXP object)
+{
+   return TYPEOF(object) == EXTPTRSXP;
+}
+
+bool isNullExternalPointer(SEXP object)
+{
+   return
+         isExternalPointer(object) &&
+         R_ExternalPtrAddr(object) == NULL;
 }
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)

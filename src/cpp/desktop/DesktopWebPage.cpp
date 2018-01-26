@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,21 +15,26 @@
 
 #include "DesktopWebPage.hpp"
 
+#include <mutex>
+
 #include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/Thread.hpp>
 
 #include <QWidget>
-#include <QWebFrame>
+#include <QWebEnginePage>
+#include <QWebEngineSettings>
+
 #include <QtDebug>
-#include "DesktopNetworkAccessManager.hpp"
+
 #include "DesktopWindowTracker.hpp"
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopMainWindow.hpp"
-
+#include "DesktopWebProfile.hpp"
 #include "DesktopUtils.hpp"
 
 using namespace rstudio::core;
@@ -42,24 +47,21 @@ namespace desktop {
 namespace {
 
 WindowTracker s_windowTracker;
+std::mutex s_mutex;
 
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebPage(parent),
+      QWebEnginePage(new WebProfile, parent),
       baseUrl_(baseUrl),
       navigated_(false),
       allowExternalNav_(allowExternalNavigate)
 {
-   settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
-   settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
-   settings()->setAttribute(QWebSettings::JavascriptCanAccessClipboard, true);
-   QString storagePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-   settings()->setOfflineStoragePath(storagePath);
-   settings()->enablePersistentStorage(storagePath);
+   settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
+   settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
+   settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
 
-   setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
@@ -83,13 +85,17 @@ void WebPage::closeWindow(QString name)
       desktop::closeWindow(pWindow);
 }
 
-void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
+void WebPage::prepareForWindow(const PendingWindow& pendingWindow)
 {
-   pendingWindow_ = pendingWnd;
+   std::lock_guard<std::mutex> lock(s_mutex);
+   
+   pendingWindows_.push(pendingWindow);
 }
 
-QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
+QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 {
+   std::lock_guard<std::mutex> lock(s_mutex);
+
    QString name;
    bool isSatellite = false;
    bool showToolbar = true;
@@ -98,27 +104,47 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    int height = 0;
    int x = -1;
    int y = -1;
-   MainWindow* pMainWindow = NULL;
-   BrowserWindow* pWindow = NULL;
+   MainWindow* pMainWindow = nullptr;
+   BrowserWindow* pWindow = nullptr;
+   bool show = true;
 
-   // check if this is a satellite window
-   if (!pendingWindow_.isEmpty())
+   // check if this is target="_blank";
+   if (type == QWebEnginePage::WebWindowType::WebBrowserTab)
    {
+      // QtWebEngine behavior is to open a new browser window and send it the 
+      // acceptNavigationRequest we use to redirect to system browser; don't want
+      // that to be visible
+      show = false;
+      name = tr("_blank_redirector");
+
+      // check for an existing hidden window
+      pWindow = s_windowTracker.getWindow(name);
+      if (pWindow)
+      {
+         return pWindow->webView()->webPage();
+      }
+   }
+
+   // check if we have a satellite window waiting to come up
+   if (!pendingWindows_.empty())
+   {
+      // retrieve the window
+      PendingWindow pendingWindow = pendingWindows_.front();
+      pendingWindows_.pop();
+
       // capture pending window params then clear them (one time only)
-      name = pendingWindow_.name;
-      isSatellite = pendingWindow_.isSatellite;
-      showToolbar = pendingWindow_.showToolbar;
-      pMainWindow = pendingWindow_.pMainWindow;
-      allowExternalNavigate = pendingWindow_.allowExternalNavigate;
+      name = pendingWindow.name;
+      isSatellite = pendingWindow.isSatellite;
+      showToolbar = pendingWindow.showToolbar;
+      pMainWindow = pendingWindow.pMainWindow;
+      allowExternalNavigate = pendingWindow.allowExternalNavigate;
 
       // get width and height, and adjust for high DPI
       double dpiZoomScaling = getDpiZoomScaling();
-      width = pendingWindow_.width * dpiZoomScaling;
-      height = pendingWindow_.height * dpiZoomScaling;
-      x = pendingWindow_.x;
-      y = pendingWindow_.y;
-
-      pendingWindow_ = PendingWindow();
+      width = pendingWindow.width * dpiZoomScaling;
+      height = pendingWindow.height * dpiZoomScaling;
+      x = pendingWindow.x;
+      y = pendingWindow.y;
 
       // check for an existing window of this name
       pWindow = s_windowTracker.getWindow(name);
@@ -127,7 +153,7 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
          desktop::raiseAndActivateWindow(pWindow);
-         return NULL;
+         return nullptr;
       }
    }
 
@@ -158,8 +184,8 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
 
          // x is based on centering over main window
          int moveX = pMainWindow->x() +
-                     (pMainWindow->width() / 2) -
-                     (width / 2);
+               (pMainWindow->width() / 2) -
+               (width / 2);
 
          // perform move
          pWindow->move(moveX, moveY);
@@ -167,7 +193,7 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
    else
    {
-      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, NULL, this,
+      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, nullptr, this,
                                     allowExternalNavigate);
    }
 
@@ -178,7 +204,8 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
 
    // show and return the browser
-   pWindow->show();
+   if (show)
+      pWindow->show();
    return pWindow->webView()->webPage();
 }
 
@@ -194,22 +221,14 @@ bool WebPage::shouldInterruptJavaScript()
    return false;
 }
 
-void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*/, const QString& /*sourceID*/)
+void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel /*level*/, const QString& message,
+                                       int /*lineNumber*/, const QString& /*sourceID*/)
 {
    qDebug() << message;
 }
 
-QString WebPage::userAgentForUrl(const QUrl &url) const
+bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType navType, bool isMainFrame)
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
-}
-
-bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
-                                       const QNetworkRequest& request,
-                                       NavigationType navType)
-{
-   QUrl url = request.url();
-
    if (url.toString() == QString::fromUtf8("about:blank"))
       return true;
 
@@ -241,7 +260,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       navigated_ = true;
       return true;
    }
-   // allow shiny dialiog urls to be handled internally by Qt
+   // allow shiny dialog urls to be handled internally by Qt
    else if (isLocal && !shinyDialogUrl_.isEmpty() &&
             url.toString().startsWith(shinyDialogUrl_))
    {
@@ -251,10 +270,10 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    else
    {
       if (url.scheme() == QString::fromUtf8("data") &&
-          (navType == QWebPage::NavigationTypeLinkClicked ||
-           navType == QWebPage::NavigationTypeFormSubmitted))
+          (navType == QWebEnginePage::NavigationTypeLinkClicked ||
+           navType == QWebEnginePage::NavigationTypeFormSubmitted))
       {
-         handleBase64Download(pWebFrame, url);
+         handleBase64Download(url);
       }
       else if (allowExternalNav_)
       {
@@ -262,11 +281,12 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
          navigated_ = true;
          return true;
       }
-      else if (navType == QWebPage::NavigationTypeLinkClicked)
+      else if (navType == QWebEnginePage::NavigationTypeLinkClicked)
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
          desktop::openUrl(url);
+         navigated_ = true;
       }
       else if (boost::algorithm::ends_with(host, ".youtube.com") ||
             boost::algorithm::ends_with(host, ".vimeo.com")   ||
@@ -283,7 +303,7 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
    }
 }
 
-void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
+void WebPage::handleBase64Download(QUrl url)
 {
    // look for beginning of base64 data
    QString base64 = QString::fromUtf8("base64,");
@@ -301,40 +321,44 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    QByteArray byteArray = QByteArray::fromBase64(base64ByteArray);
 
    // find the a tag in the page with this href
-   QWebElement aTag;
-   QString urlString = url.toString(QUrl::None);
-   QWebElementCollection aElements = pWebFrame->findAllElements(
-                                             QString::fromUtf8("a"));
-   for (int i=0; i<aElements.count(); i++)
-   {
-      QWebElement a = aElements.at(i);
-      QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
-      if (href == urlString)
-      {
-         aTag = a;
-         break;
-      }
-   }
 
-   // if no a tag was found then bail
-   if (aTag.isNull())
-   {
-      LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
-      return;
-   }
+   // TODO: may need to use custom JavaScript here?
+   // QWebElement aTag;
+   // QString urlString = url.toString(QUrl::None);
+   // QWebElementCollection aElements = pWebPage->findAllElements(
+   //                                           QString::fromUtf8("a"));
+   // for (int i=0; i<aElements.count(); i++)
+   // {
+   //    QWebElement a = aElements.at(i);
+   //    QString href = a.attribute(QString::fromUtf8("href"));
+   //    href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
+   //    if (href == urlString)
+   //    {
+   //       aTag = a;
+   //       break;
+   //    }
+   // }
 
-   // get the download attribute (default filename)
-   QString download = aTag.attribute(QString::fromUtf8("download"));
+   // // if no a tag was found then bail
+   // if (aTag.isNull())
+   // {
+   //    LOG_ERROR_MESSAGE("Unable to finding matching a tag for data url");
+   //    return;
+   // }
+
+   // // get the download attribute (default filename)
+   // QString download = aTag.attribute(QString::fromUtf8("download"));
+
+   QString download = QString::fromUtf8("");
    QString defaultFilename = defaultSaveDir_.absoluteFilePath(download);
 
    // prompt for filename
    QString filename = QFileDialog::getSaveFileName(
-                                            NULL,
+                                            nullptr,
                                             tr("Download File"),
                                             defaultFilename,
                                             defaultSaveDir_.absolutePath(),
-                                            0,
+                                            nullptr,
                                             standardFileDialogOptions());
    if (!filename.isEmpty())
    {
@@ -397,16 +421,22 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 void WebPage::triggerAction(WebAction action, bool checked)
 {
    // swallow copy events when the selection is empty
-   if (action == QWebPage::Copy || action == QWebPage::Cut)
+   if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
    {
-      QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
-      bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
-      if (emptySelection)
-         return;
-   }
+      runJavaScript(
+               QStringLiteral("window.desktopHooks.isSelectionEmpty()"),
+               [&](const QVariant& emptySelection)
+      {
+         if (emptySelection.toBool())
+            return;
 
-   // delegate to base
-   QWebPage::triggerAction(action, checked);
+         QWebEnginePage::triggerAction(action, checked);
+      });
+   }
+   else
+   {
+      QWebEnginePage::triggerAction(action, checked);
+   }
 }
 
 } // namespace desktop

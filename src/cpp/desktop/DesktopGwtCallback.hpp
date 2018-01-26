@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,8 @@
 #define DESKTOP_GWT_CALLBACK_HPP
 
 #include <QObject>
-#include <QtWebKit>
+#include <QClipboard>
+#include <QJsonObject>
 
 #include "DesktopGwtCallbackOwner.hpp"
 
@@ -48,19 +49,19 @@ public:
 
    int collectPendingQuitRequest();
 
-signals:
+Q_SIGNALS:
    void workbenchInitialized();
 
-public slots:
+public Q_SLOTS:
    QString proportionalFont();
    QString fixedWidthFont();
-   bool isCocoa();
    void browseUrl(QString url);
 
    QString getOpenFileName(const QString& caption,
                            const QString& label,
                            const QString& dir,
-                           const QString& filter);
+                           const QString& filter,
+                           bool canChooseDirectories);
 
    QString getSaveFileName(const QString& caption,
                            const QString& label,
@@ -74,8 +75,8 @@ public slots:
 
    void onClipboardChanged(QClipboard::Mode mode);
 
-   void undo(bool forAce);
-   void redo(bool forAce);
+   void undo();
+   void redo();
 
    void clipboardCut();
    void clipboardCopy();
@@ -83,9 +84,12 @@ public slots:
 
    void setClipboardText(QString text);
    QString getClipboardText();
-
+   
    void setGlobalMouseSelection(QString selection);
    QString getGlobalMouseSelection();
+
+   QJsonObject getCursorPosition();
+   bool doesWindowExistAtCursorPosition();
 
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
@@ -122,6 +126,10 @@ public slots:
                                int width,
                                int height);
 
+   void printText(QString text);
+   void paintPrintText(QPrinter* printer);
+   void printFinished(int result);
+
    bool supportsClipboardMetafile();
 
    int showMessageBox(int type,
@@ -139,9 +147,9 @@ public slots:
                          bool rememberByDefault,
                          bool numbersOnly,
                          int selectionStart,
-                         int selectionLength);
+                         int selectionLength,
+                         QString okButtonCaption);
 
-   void showAboutDialog();
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
 
@@ -156,7 +164,8 @@ public slots:
 
    void openTerminal(QString terminalPath,
                      QString workingDirectory,
-                     QString extraPathEntries);
+                     QString extraPathEntries,
+                     int shellType);
 
    QString getFixedWidthFontList();
    QString getFixedWidthFont();
@@ -166,9 +175,10 @@ public slots:
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
 
-   void macZoomActualSize();
-   void macZoomIn();
-   void macZoomOut();
+   void showLicenseDialog();
+   QString getInitMessages();
+   QString getLicenseStatusMessage();
+   bool allowProductUsage();
 
    QString getDesktopSynctexViewer();
 
@@ -203,7 +213,7 @@ public slots:
 
    void installRtools(QString version, QString installerPath);
 
-   int getDisplayDpi();
+   std::string getDisplayDpi();
 
 private:
    Synctex& synctex();
@@ -217,6 +227,7 @@ private:
    GwtCallbackOwner* pOwner_;
    Synctex* pSynctex_;
    int pendingQuit_;
+   QString printText_;
 #ifdef Q_OS_WIN32
    WordViewer wordViewer_;
 #endif

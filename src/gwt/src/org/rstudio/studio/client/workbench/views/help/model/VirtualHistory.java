@@ -15,58 +15,94 @@
 package org.rstudio.studio.client.workbench.views.help.model;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
+
+import com.google.gwt.user.client.ui.Frame;
 
 public class VirtualHistory
 {
+   public static class Data
+   {
+      public Data(String url)
+      {
+         url_ = url;
+         scrollPos_ = Point.create(0, 0);
+      }
+      
+      public String getUrl()
+      {
+         return url_;
+      }
+      
+      public Point getScrollPosition()
+      {
+         return scrollPos_;
+      }
+      
+      public void setScrollPosition(Point scrollPos)
+      {
+         scrollPos_ = scrollPos;
+      }
+      
+      private final String url_;
+      private Point scrollPos_;
+   }
+   
+   public VirtualHistory(Frame frame)
+   {
+      frame_ = frame;
+   }
+   
    public void navigate(String url)
    {
       // truncate the stack to the current pos
       while (stack_.size() > pos_ + 1)
          stack_.remove(stack_.size() - 1) ;
       
-      stack_.add(url) ;
+      saveScrollPosition();
+      stack_.add(new Data(url)) ;
       pos_ = stack_.size() - 1;
-      
-      dump() ;
    }
 
-   public String back()
+   public Data back()
    {
       if (pos_ <= 0)
-         return null ;
-      pos_-- ;
+         return null;
+      
+      saveScrollPosition();
+      pos_--;
 
-      dump() ;
-
-      return stack_.get(pos_) ;
+      return stack_.get(pos_);
    }
    
-   public String forward()
+   public Data forward()
    {
       if (pos_ >= stack_.size() - 1)
-         return null ;
-      pos_++ ;
+         return null;
       
-      dump() ;
+      saveScrollPosition();
+      pos_++ ;
 
-      return stack_.get(pos_) ;
+      return stack_.get(pos_);
    }
    
-   private void dump()
+   private void saveScrollPosition()
    {
-      /*
-      StringBuffer out = new StringBuffer() ;
-      for (int i = stack_.size() - 1; i >= 0; i--)
-      {
-         if (i == pos_)
-            out.append('*') ;
-         out.append(stack_.get(i)) ;
-         out.append('\n') ;
-      }
-      Debug.log(out.toString()) ;
-      */
+      if (pos_ < 0 || pos_ >= stack_.size())
+         return;
+      
+      WindowEx contentWindow =
+            ((IFrameElementEx) frame_.getElement().cast()).getContentWindow();
+      
+      Data data = stack_.get(pos_);
+      data.setScrollPosition(contentWindow.getScrollPosition());
    }
    
-   private ArrayList<String> stack_ = new ArrayList<String>() ;
-   private int pos_ = -1 ;
+   private final Frame frame_;
+   private List<Data> stack_ = new ArrayList<Data>();
+   private int pos_ = -1;
 }

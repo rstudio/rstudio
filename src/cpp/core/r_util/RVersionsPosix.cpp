@@ -89,6 +89,10 @@ void scanForRHomePaths(const core::FilePath& rootDir,
 std::ostream& operator<<(std::ostream& os, const RVersion& version)
 {
    os << version.number();
+
+   if (!version.label().empty())
+      os << version.label() << std::endl;
+
    os << std::endl;
    os << version.homeDir() << std::endl;
    BOOST_FOREACH(const core::system::Option& option, version.environment())
@@ -102,6 +106,7 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
 
 std::vector<RVersion> enumerateRVersions(
                               std::vector<FilePath> rHomePaths,
+                              std::vector<r_util::RVersion> rEntries,
                               bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath)
@@ -130,6 +135,72 @@ std::vector<RVersion> enumerateRVersions(
    std::sort(rHomePaths.begin(), rHomePaths.end());
    rHomePaths.erase(std::unique(rHomePaths.begin(), rHomePaths.end()),
                     rHomePaths.end());
+
+   // resolve user defined r entries first
+   // when duplicates are removed, the default paths
+   // that are equivalent to the user defined entries (but which contain less metadata) will be removed
+   BOOST_FOREACH(r_util::RVersion& rEntry, rEntries)
+   {
+      // compute R script path
+      FilePath rScriptPath = rEntry.homeDir().childPath("bin/R");
+      if (!rScriptPath.exists())
+         continue;
+
+      // get the prelaunch script to be executed before attempting to load R to read version info
+      // if the prelaunch script is specific to users (starts with ~), don't attempt to use it
+      // as it is likely not available for the RStudio account
+      std::string prelaunchScript = rEntry.prelaunchScript();
+      if (prelaunchScript.find('~') == 0)
+      {
+         prelaunchScript = "";
+      }
+
+      std::string rDiscoveredScriptPath, rVersion, errMsg;
+      core::system::Options env;
+      if (detectREnvironment(rScriptPath,
+                             ldPathsScript,
+                             ldLibraryPath,
+                             &rDiscoveredScriptPath,
+                             &rVersion,
+                             &env,
+                             &errMsg,
+                             prelaunchScript))
+      {
+         // merge the found environment with the existing user-overridden environment
+         // we ensure that the user overrides overwrite whatever environment we established automatically
+         core::system::Options userEnv = rEntry.environment();
+         core::system::Options mergedEnv;
+
+         // set automatically found variables first
+         BOOST_FOREACH(const core::system::Option& option, env)
+         {
+            core::system::setenv(&mergedEnv, option.first, option.second);
+         }
+
+         // override them with whatever was explicitly set by the user
+         BOOST_FOREACH(const core::system::Option& option, userEnv)
+         {
+            // do not override R_HOME as it was corrected while detecting the environment
+            // this is necessary because the user-specified path might be just the root directory
+            // and not the full install directory
+            if (option.first == "R_HOME")
+               continue;
+
+            core::system::setenv(&mergedEnv, option.first, option.second);
+         }
+
+         rEntry.setNumber(rVersion);
+         rEntry.setEnvironment(mergedEnv);
+
+         rVersions.push_back(rEntry);
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE("Error scanning R version at " +
+                           rScriptPath.absolutePath() + ": " +
+                           errMsg);
+      }
+   }
 
    // probe versions
    BOOST_FOREACH(const FilePath& rHomePath, rHomePaths)
@@ -216,8 +287,12 @@ std::vector<RVersion> enumerateRVersions(
    }
 #endif
 
-   // sort the versions
-   std::sort(rVersions.begin(), rVersions.end());
+   // sort the versions using stable sort
+   // this gaurantees that versions specified in the versions file will come first
+   // this makes sure that versions that have user-defined metadata (such as labels)
+   // will not be erased in the subsequent erase call, but the equivalent default versions that were
+   // found will be erased instead
+   std::stable_sort(rVersions.begin(), rVersions.end());
 
    // remove duplicates
    rVersions.erase(std::unique(rVersions.begin(), rVersions.end()),
@@ -322,6 +397,10 @@ json::Object rVersionToJson(const RVersion& version)
    json::Object versionJson;
    versionJson["number"] = version.number();
    versionJson["environment"] = json::toJsonObject(version.environment());
+   versionJson["label"] = version.label();
+   versionJson["module"] = version.module();
+   versionJson["prelaunchScript"] = version.prelaunchScript();
+
    return versionJson;
 }
 
@@ -330,14 +409,26 @@ Error rVersionFromJson(const json::Object& versionJson,
 {
    std::string number;
    json::Object environmentJson;
+   std::string label;
+   std::string module;
+   std::string prelaunchScript;
+
    Error error = json::readObject(versionJson,
                                   "number", &number,
-                                  "environment", &environmentJson);
+                                  "environment", &environmentJson,
+                                  "label", &label,
+                                  "module", &module,
+                                  "prelaunchScript", &prelaunchScript);
    if (error)
       return error;
 
    *pVersion = RVersion(number,
                         json::optionsFromJson(environmentJson));
+
+   pVersion->setLabel(label);
+   pVersion->setModule(module);
+   pVersion->setPrelaunchScript(prelaunchScript);
+
    return Success();
 }
 

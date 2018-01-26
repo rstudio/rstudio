@@ -1,7 +1,7 @@
 /*
  * TerminalPopupMenu.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+import java.util.Objects;
+
 /**
  * Drop-down menu used in terminal pane. Has commands, and a list of 
  * terminal sessions.
@@ -47,14 +49,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       terminals_ = terminals;
 
       eventBus_.addHandler(TerminalBusyEvent.TYPE,
-                          new TerminalBusyEvent.Handler()
-      {
-         @Override
-         public void onTerminalBusy(TerminalBusyEvent event)
-         {
-            refreshActiveTerminal();
-         }
-      });
+            event -> refreshActiveTerminal());
    }
 
    @Inject
@@ -79,14 +74,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       {
          for (final String handle : terminals_)
          {
-            Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
-               }
-            };
+            Scheduler.ScheduledCommand cmd = () ->
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null));
 
             String caption = trimCaption(terminals_.getCaption(handle));
             if (caption == null)
@@ -174,18 +163,16 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       });
    }
    
-   public void setActiveTerminalByCaption(String caption)
+   public void setActiveTerminalByCaption(String caption, boolean createdByApi)
    {
       String handle = terminals_.handleForCaption(caption);
       if (StringUtil.isNullOrEmpty(handle))
          return;
-      eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+      eventBus_.fireEvent(new SwitchToTerminalEvent(handle, null, createdByApi));
    }
 
    /**
     * Refresh caption of active terminal based on busy status.
-    * @param caption caption of the active terminal
-    * @param handle handle of the active terminal
     */
    private void refreshActiveTerminal()
    {
@@ -224,7 +211,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String prevHandle = getPreviousTerminalHandle();
       if (prevHandle != null)
       {
-         eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
+         eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle, null));
       }
    }
 
@@ -236,7 +223,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String nextHandle = getNextTerminalHandle();
       if (nextHandle != null)
       {
-         eventBus_.fireEvent(new SwitchToTerminalEvent(nextHandle));
+         eventBus_.fireEvent(new SwitchToTerminalEvent(nextHandle, null));
       }
    }
 
@@ -277,7 +264,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          String prevHandle = null;
          for (final String handle : terminals_)
          {
-            if (activeTerminalHandle_.equals(handle))
+            if (StringUtil.equals(activeTerminalHandle_, handle))
             {
                if (prevHandle == null)
                {
@@ -304,11 +291,11 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          boolean foundCurrent = false;
          for (final String handle : terminals_)
          {
-            if (foundCurrent == true)
+            if (foundCurrent)
             {
                return handle;
             }
-            if (activeTerminalHandle_.equals(handle))
+            if (StringUtil.equals(activeTerminalHandle_, handle))
             {
                foundCurrent = true;
             }

@@ -59,8 +59,7 @@ void printBacktrace(std::ostream& os)
    char** stackStrings;
    stackStrings = ::backtrace_symbols(stackAddrs, stackDepth);
    
-   std::vector<std::string> demangled;
-   demangled.reserve(stackDepth);
+   std::vector<std::string> demangled(stackDepth);
    
    // Each printed string will have output of the form:
    //

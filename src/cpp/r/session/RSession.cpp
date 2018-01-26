@@ -62,7 +62,16 @@
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
-extern "C" SA_TYPE SaveAction;
+
+extern "C" {
+
+#ifndef _WIN32
+SA_TYPE SaveAction;
+#else
+__declspec(dllimport) SA_TYPE SaveAction;
+#endif
+
+}
 
 #define CTXT_BROWSER 16
 
@@ -1494,14 +1503,18 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    bool loadInitFile = false;
    if (restartContext().hasSessionState())
    {
-      loadInitFile = restartContext().rProfileOnRestore();
+      loadInitFile = restartContext().rProfileOnRestore() && !options.disableRProfileOnStart;
    }
    else
    {
-      loadInitFile = !s_suspendedSessionPath.exists()
-                     || options.rProfileOnResume
-                     || r::session::state::packratModeEnabled(
-                                                s_suspendedSessionPath);
+      // we run the .Rprofile if this is a brand new session and
+      // we are in a project and the DisableExecuteProfile setting is not set, or we are not in a project
+      // alternatively, if we are resuming a session and the option is set to possibly run the .Rprofile
+      // we will only run it if the DisableExecuteProfile project setting is not set (or we are not in a project)
+      // finally, if this is a packrat project, we always run the Rprofile as it is required for correct operation
+      loadInitFile = (!options.disableRProfileOnStart && (!s_suspendedSessionPath.exists() || options.rProfileOnResume))
+                     || options.packratEnabled
+                     || r::session::state::packratModeEnabled(s_suspendedSessionPath);
    }
 
    // quiet for resume cases
@@ -1721,7 +1734,7 @@ void quit(bool saveWorkspace, int status)
       LOG_ERROR_MESSAGE(quitErr);
    }
  #else
-   Error error = r::exec::RFunction("q", save, status, true).call();
+   Error error = r::exec::RFunction("base:::q", save, status, true).call();
    if (error)
    {
       REprintf((r::endUserErrorMessage(error) + "\n").c_str());

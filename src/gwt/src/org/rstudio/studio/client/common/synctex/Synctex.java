@@ -1,7 +1,7 @@
 /*
  * Synctex.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -102,9 +102,9 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       
       boolean synctexSupported =
                   // internal previewer
-                  pdfPreview.equals(UIPrefs.PDF_PREVIEW_RSTUDIO) ||
+                  pdfPreview == UIPrefs.PDF_PREVIEW_RSTUDIO ||
                   // platform-specific desktop previewer
-                  (pdfPreview.equals(UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+                  (pdfPreview == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX &&
                    Desktop.isDesktop());
       
       boolean synctexAvailable = synctexSupported && 
@@ -124,7 +124,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          if (event.getResult().isSynctexAvailable())
             page = event.getResult().getPdfLocation().getPage();
          Desktop.getFrame().externalSynctexPreview(
-                                 event.getResult().getPdfPath(), 
+                                 StringUtil.notNull(event.getResult().getPdfPath()), 
                                  page);
       }
    }
@@ -186,8 +186,8 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                if (sourceLocation != null)
                {
                   Desktop.getFrame().externalSynctexView(
-                                 pdfFile,
-                                 sourceLocation.getFile(),
+                                 StringUtil.notNull(pdfFile),
+                                 StringUtil.notNull(sourceLocation.getFile()),
                                  sourceLocation.getLine(),
                                  sourceLocation.getColumn());    
                }
@@ -339,8 +339,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return Desktop.isDesktop() && 
              !Satellite.isCurrentWindowSatellite() &&
-             prefs_.pdfPreview().getValue().equals(
-                                   UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX);
+             prefs_.pdfPreview().getValue() == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX;
    }
 
    private ProgressIndicator getSyncProgress()

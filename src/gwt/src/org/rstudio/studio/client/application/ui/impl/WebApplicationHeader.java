@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,7 +78,7 @@ public class WebApplicationHeader extends Composite
                   final Commands commands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
-                  ThemeResources themeResources,
+                  final ThemeResources themeResources,
                   final Session session,
                   Provider<CodeSearch> pCodeSearch)
    {
@@ -86,6 +86,10 @@ public class WebApplicationHeader extends Composite
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
       overlay_ = new WebApplicationHeaderOverlay();
+      
+      // remove some desktop-only commands
+      commands.reloadUi().remove();
+      commands.openDeveloperConsole().remove();
       
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
@@ -174,6 +178,14 @@ public class WebApplicationHeader extends Composite
          {
             SessionInfo sessionInfo = session.getSessionInfo();
             
+            hostedMode_ = !sessionInfo.getAllowFullUI();
+            
+            if (hostedMode_)
+            {
+               mainMenu_.addStyleName(themeResources.themeStyles().noLogo());
+               toolbar_.addStyleName(themeResources.themeStyles().noLogo());
+            }
+            
             // complete toolbar initialization
             toolbar_.completeInitialization(sessionInfo);
              
@@ -230,13 +242,17 @@ public class WebApplicationHeader extends Composite
     
    public void showToolbar(boolean showToolbar)
    {
+      toolbarVisible_ = showToolbar;
       outerPanel_.clear();
       
       if (showToolbar)
       {
-         logoAnchor_.getElement().removeAllChildren();
-         logoAnchor_.getElement().appendChild(logoLarge_.getElement());
-         outerPanel_.add(logoAnchor_);
+         if (!hostedMode_)
+         {
+            logoAnchor_.getElement().removeAllChildren();
+            logoAnchor_.getElement().appendChild(logoLarge_.getElement());
+            outerPanel_.add(logoAnchor_);
+         }
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
          outerPanel_.add(headerPanel);
          preferredHeight_ = 65;
@@ -244,12 +260,14 @@ public class WebApplicationHeader extends Composite
       }
       else
       {
-         logoAnchor_.getElement().removeAllChildren();
-         logoAnchor_.getElement().appendChild(logoSmall_.getElement());
-         outerPanel_.add(logoAnchor_);
+         if (!hostedMode_)
+         {
+            logoAnchor_.getElement().removeAllChildren();
+            logoAnchor_.getElement().appendChild(logoSmall_.getElement());
+            outerPanel_.add(logoAnchor_);
+         }
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          outerPanel_.add(menubarPanel);
-         mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
          preferredHeight_ = 45;
          showProjectMenu(true);
       }
@@ -259,7 +277,7 @@ public class WebApplicationHeader extends Composite
    
    public boolean isToolbarVisible()
    {
-      return !projectMenuButton_.isVisible();
+      return toolbarVisible_;
    }
    
    public void focusGoToFunction()
@@ -269,6 +287,10 @@ public class WebApplicationHeader extends Composite
    
    private void showProjectMenu(boolean show)
    {
+      if (hostedMode_)
+      {
+         show = false;
+      }
       projectMenuSeparator_.setVisible(show);
       projectMenuButton_.setVisible(show);
    }
@@ -384,7 +406,7 @@ public class WebApplicationHeader extends Composite
    private void initCommandsPanel(final SessionInfo sessionInfo)
    {  
       // add username 
-      if (sessionInfo.getShowIdentity())
+      if (sessionInfo.getShowIdentity() && sessionInfo.getAllowFullUI())
       {
          ToolbarLabel usernameLabel = new ToolbarLabel();
          usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
@@ -395,6 +417,9 @@ public class WebApplicationHeader extends Composite
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
+         
+         overlayUserCommandsPanel_ = new HorizontalPanel();
+         headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
         
          ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
               new ClickHandler() {
@@ -411,7 +436,8 @@ public class WebApplicationHeader extends Composite
       
       overlay_.addCommands(this);
       
-      headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
+      if (sessionInfo.getAllowFullUI())
+         headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
 
    private Widget createCommandSeparator()
@@ -500,6 +526,12 @@ public class WebApplicationHeader extends Composite
    }
    
    @Override
+   public void addUserCommand(Widget widget)
+   {
+      overlayUserCommandsPanel_.add(widget);
+   }
+   
+   @Override
    public AppMenuBar getMainMenu()
    {
       return mainMenu_;
@@ -529,6 +561,7 @@ public class WebApplicationHeader extends Composite
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private HorizontalPanel projectBarCommandsPanel_;
+   private HorizontalPanel overlayUserCommandsPanel_;
    private Widget signOutSeparator_;
    private Widget projectMenuSeparator_;
    private ToolbarButton projectMenuButton_;
@@ -538,4 +571,6 @@ public class WebApplicationHeader extends Composite
    private GlobalDisplay globalDisplay_;
    private Commands commands_; 
    private WebApplicationHeaderOverlay overlay_;
+   private boolean hostedMode_;
+   private boolean toolbarVisible_;
 }

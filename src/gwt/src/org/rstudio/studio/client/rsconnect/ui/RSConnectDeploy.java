@@ -221,9 +221,12 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            forgetPreviousDeployment();
             event.preventDefault();
             event.stopPropagation();
+            display_.showMessage(GlobalDisplay.MSG_INFO, 
+                  "Create New Content", 
+                  "To publish this content to a new location, click the Publish drop-down menu " +
+                  "and choose Other Destination.");
          }
       });
 
@@ -401,6 +404,7 @@ public class RSConnectDeploy extends Composite
    public void setOnDeployDisabled(Command cmd)
    {
       appName_.setOnNameIsInvalid(cmd);
+      onDeployDisabled_ = cmd;
    }
    
    public DeployStyle getStyle()
@@ -580,7 +584,7 @@ public class RSConnectDeploy extends Composite
          {
             for (int j = 0; j < ignoredFiles.size(); j++)
             {
-               if (ignoredFiles.get(j).equals(files.get(i)))
+               if (ignoredFiles.get(j) == files.get(i))
                {
                   checked = false; 
                   break;
@@ -594,7 +598,7 @@ public class RSConnectDeploy extends Composite
          {
             for (int j = 0; j < additionalFiles.size(); j++)
             {
-               if (additionalFiles.get(j).equals(files.get(i)))
+               if (additionalFiles.get(j) == files.get(i))
                {
                   add = false; 
                   break;
@@ -628,7 +632,7 @@ public class RSConnectDeploy extends Composite
    {
       if (accountList_.isVisible())
          return accountList_.getSelectedAccount();
-      else if (accountEntry_.isVisible())
+      else if (accountEntryPanel_.isVisible())
          return accountEntry_.getAccount();
       else
          return null;
@@ -688,6 +692,11 @@ public class RSConnectDeploy extends Composite
                         {
                            onAppsReceived_.onError(info.getError());
                         }
+                        else
+                        {
+                           onAppsReceived_.onError("Error retrieving application " + 
+                             fromPrevious_.getAppId() + ".");
+                        }
                      }
 
                      @Override
@@ -711,7 +720,7 @@ public class RSConnectDeploy extends Composite
    private void setSingleAccount(RSConnectAccount account)
    {
       accountEntry_.setAccount(account);
-      accountEntry_.setVisible(true);
+      accountEntryPanel_.setVisible(true);
    }
    
    private void populateAccountList(final ProgressIndicator indicator,
@@ -761,7 +770,7 @@ public class RSConnectDeploy extends Composite
 
       // populate the accounts in the UI (the account display widget filters
       // based on account criteria)
-      accountEntry_.setVisible(false);
+      accountEntryPanel_.setVisible(false);
       publishToLabel_.setVisible(false);
       int numAccounts = setAccountList(accounts);
 
@@ -957,7 +966,7 @@ public class RSConnectDeploy extends Composite
                         ArrayList<String> files = getFileList();
                         for (String file: files)
                         {
-                           if (file.equals(path))
+                           if (file == path)
                            {
                               indicator.onCompleted();
                               return;
@@ -980,7 +989,7 @@ public class RSConnectDeploy extends Composite
       for (int i = 0; i < fileChecks_.size(); i++)
       {
          DirEntryCheckBox fileCheck = fileChecks_.get(i);
-         if (fileCheck.getPath().equals(path))
+         if (fileCheck.getPath() == path)
          {
             // don't allow the user to unselect the primary file
             fileCheck.setEnabled(false);
@@ -1213,7 +1222,11 @@ public class RSConnectDeploy extends Composite
          appProgressPanel_.setVisible(false);
          showAppInfo(null);
          if (!StringUtil.isNullOrEmpty(error))
+         {
             showAppError(error);
+            if (onDeployDisabled_ != null)
+               onDeployDisabled_.execute();
+         }
       }
 
       @Override
@@ -1244,6 +1257,7 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel rootPanel_;
    @UiField HTMLPanel appErrorPanel_;
+   @UiField HTMLPanel accountEntryPanel_;
    @UiField Image deployIllustration_;
    @UiField Image descriptionImage_;
    @UiField InlineLabel deployLabel_;
@@ -1279,6 +1293,7 @@ public class RSConnectDeploy extends Composite
    private boolean asStatic_;
    private int contentType_;
    private Command onDeployEnabled_;
+   private Command onDeployDisabled_;
    private RSConnectDeploymentRecord fromPrevious_;
    private boolean allChecked_ = true;
 

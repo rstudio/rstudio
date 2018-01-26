@@ -1,9 +1,11 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
- * This program is licensed to you under the terms of version 3 of the
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
@@ -345,9 +347,9 @@ public class ConnectionsPane extends WorkbenchPane
    }
    
    @Override
-   public void showConnectionProgress()
+   public void showConnectionProgress(String message)
    {
-      connectionExplorer_.showConnectionProgress();
+      connectionExplorer_.showConnectionProgress(message);
    }
    
    @Override
@@ -371,6 +373,20 @@ public class ConnectionsPane extends WorkbenchPane
                   new Response(new ArrayList<Suggestion>()));
          }
       });
+
+      objectSearchWidget_ = new SearchWidget(new SuggestOracle() {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
+         }
+      });
+
+      objectSearchWidget_.addValueChangeHandler(event -> 
+         connectionExplorer_.setFilterText(event.getValue()));
       
       backToConnectionsButton_ = new ToolbarButton(
             commands_.helpBack().getImageResource(), (ClickHandler)null);
@@ -614,6 +630,9 @@ public class ConnectionsPane extends WorkbenchPane
       connectionName_.setText(connection.getDisplayName());
       connectionIcon_.setUrl(connection.getIconData());
       connectionType_.setText(connection.getId().getType());
+
+      toolbar_.addRightWidget(objectSearchWidget_);
+      
       setSecondaryToolbarVisible(true);
    }
    
@@ -657,6 +676,7 @@ public class ConnectionsPane extends WorkbenchPane
    private List<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
    private SearchWidget searchWidget_;
+   private SearchWidget objectSearchWidget_;
    private ToolbarButton backToConnectionsButton_;
    private ToolbarButton connectMenuButton_;
    

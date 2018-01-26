@@ -73,7 +73,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       for (int i = row; i < max; i++)
       {
          String line = display_.getLine(i);
-         if (line.equals("```"))
+         if (line == "```")
             return i;
       }
       
@@ -133,7 +133,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             break;
          
          Position startPos = iterator.getCurrentTokenPosition();
-         if (!token.getValue().equals("opts_chunk"))
+         if (token.getValue() != "opts_chunk")
             continue;
          
          Position knitrPrefixPos = findKnitrPrefix(iterator.clone());
@@ -141,15 +141,15 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             startPos = knitrPrefixPos;
          
          token = iterator.stepForward();
-         if (!token.getValue().equals("$"))
+         if (token.getValue() != "$")
             continue;
          
          token = iterator.stepForward();
-         if (!token.getValue().equals("set"))
+         if (token.getValue() != "set")
             continue;
          
          token = iterator.stepForward();
-         if (!token.getValue().equals("("))
+         if (token.getValue() != "(")
             continue;
          
          if (!iterator.fwdToMatchingToken())

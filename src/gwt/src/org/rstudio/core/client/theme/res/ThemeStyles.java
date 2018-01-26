@@ -1,7 +1,7 @@
 /*
  * ThemeStyles.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -131,6 +131,8 @@ public interface ThemeStyles extends CssResource
    String environmentDataFrameCol();
    String environmentFunctionCol();
 
+   String filterMatch();
+
    String odd();
    
    String showFile();
@@ -145,6 +147,7 @@ public interface ThemeStyles extends CssResource
    String locatorPanel();
 
    String multiPodUtilityArea();
+   String multiPodUtilityTabArea();
 
    String tabOverflowPopup();   
    
@@ -203,4 +206,6 @@ public interface ThemeStyles extends CssResource
    String tabIcon();
    
    String menuCheckable();
+   
+   String noLogo();
 }

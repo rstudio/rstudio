@@ -124,11 +124,10 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          @Override
          public void onChange(ChangeEvent event)
          {
-            boolean isNone = sbRemote_.getValue().equals(REMOTE_NONE);
+            boolean isNone = sbRemote_.getValue() == REMOTE_NONE;
             cbPush_.setVisible(!isNone);
          }
       });
-      setRemotes(remotesInfo);
       
       btnAddRemote_ = new SmallButton("Add Remote...");
       btnAddRemote_.addClickHandler(new ClickHandler()
@@ -147,7 +146,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                   @Override
                   public boolean test(RemotesInfo info)
                   {
-                     return info.getRemote().equals(currentRemote);
+                     return info.getRemote() == currentRemote;
                   }
                });
 
@@ -165,8 +164,10 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       });
       
       cbPush_ = new CheckBox("Sync branch with remote");
-      cbPush_.setVisible(!sbRemote_.getValue().equals(REMOTE_NONE));
+      cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
       cbPush_.setValue(true);
+      
+      setRemotes(remotesInfo);
       
       Grid ctrBranch = new Grid(1, 2);
       ctrBranch.setWidth("100%");
@@ -191,9 +192,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_.add(cbPush_);
    }
    
-   public void setRemotes(JsArray<RemotesInfo> remotes)
+   public void setRemotes(JsArray<RemotesInfo> remotesInfo)
    {
-      setRemotes(null, remotes);
+      setRemotes(null, remotesInfo);
    }
    
    public void setRemotes(String activeRemote,
@@ -203,19 +204,45 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       List<String> remotes = new ArrayList<String>();
       for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
+      {
          if (!remotes.contains(info.getRemote()))
+         {
+            String remote = info.getRemote();
             remotes.add(info.getRemote());
+            if (activeRemote == null && info.isActive())
+               activeRemote = remote;
+         }
+      }
       
       String[] choices = new String[remotes.size() + 1];
       for (int i = 0; i < remotes.size(); i++)
          choices[i] = remotes.get(i);
       choices[remotes.size()] = REMOTE_NONE;
       
+      // if we haven't set an active remote, try defaulting to the one called
+      // 'origin' (if it exists)
+      if (activeRemote == null)
+      {
+         for (int i = 0; i < choices.length; i++)
+         {
+            if (REMOTE_ORIGIN == choices[i])
+            {
+               activeRemote = REMOTE_ORIGIN;
+               break;
+            }
+         }
+      }
+      
+      // if we still haven't found anything, just default to the first entry
+      // (note that because we always add the (none) remote there will always
+      // be an entry available here)
       if (activeRemote == null)
          activeRemote = choices[0];
       
       sbRemote_.setChoices(choices);
       sbRemote_.setValue(activeRemote);
+      
+      cbPush_.setVisible(choices.length > 1);
    }
 
    @Override
@@ -235,6 +262,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       TextBox textBox = new TextBox();
       textBox.getElement().getStyle().setProperty("minWidth", "200px");
+      textBox.getElement().setAttribute("spellcheck", "false");
       return textBox;
    }
    
@@ -247,4 +275,5 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    private final CheckBox cbPush_;
    
    private static final String REMOTE_NONE = "(None)";
+   private static final String REMOTE_ORIGIN = "origin";
 }

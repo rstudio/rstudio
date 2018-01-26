@@ -13,19 +13,26 @@
  *
  */
 
-
 #include <core/system/OutputCapture.hpp>
 
 #include <windows.h>
+#include <io.h>
 
 #include <stdio.h>
 #include <fcntl.h>
-
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
+
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
+#endif
 
 namespace rstudio {
 namespace core {
@@ -64,7 +71,7 @@ void standardStreamCaptureThread(
 Error ioError(const std::string& description, const ErrorLocation& location)
 {
    boost::system::error_code ec(boost::system::errc::io_error,
-                                boost::system::get_system_category());
+                                boost::system::system_category());
    Error error(ec, location);
    error.addProperty("description", description);
    return error;

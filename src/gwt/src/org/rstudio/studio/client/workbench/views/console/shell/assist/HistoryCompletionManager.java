@@ -193,7 +193,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          {
             HistoryMatch[] entries = new HistoryMatch[resp.length()];
             for (int i = 0; i < entries.length; i++)
-               entries[i] = new HistoryMatch(resp.get(i).getCommand(), text_);
+               entries[i] = new HistoryMatch(resp.get(entries.length - i - 1).getCommand(), text_);
             popup_ = new CompletionListPopupPanel<HistoryMatch>(entries);
             mode_ = desiredMode_;
          }

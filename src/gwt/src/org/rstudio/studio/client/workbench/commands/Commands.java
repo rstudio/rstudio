@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,8 @@ public abstract class
    public abstract AppCommand openShinyCheatSheet();
    public abstract AppCommand openRoxygenQuickReference();
    public abstract AppCommand openSparklyrCheatSheet();
+   public abstract AppCommand openPurrrCheatSheet();
+   public abstract AppCommand browseCheatSheets();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
@@ -275,7 +277,6 @@ public abstract class
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
    public abstract AppCommand toggleToolbar();
-   public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();
    public abstract AppCommand jumpTo();
@@ -356,7 +357,7 @@ public abstract class
    public abstract AppCommand activatePackages();
    public abstract AppCommand layoutZoomPackages();
    
-   // // packrat
+   // packrat
    public abstract AppCommand packratBootstrap();
    public abstract AppCommand packratOptions();
    public abstract AppCommand packratBundle();
@@ -379,6 +380,7 @@ public abstract class
    public abstract AppCommand openProfile();
    public abstract AppCommand profileHelp();
    public abstract AppCommand gotoProfileSource();
+   public abstract AppCommand openProfileInBrowser();
    
    // Tools
    public abstract AppCommand showShellDialog();
@@ -397,6 +399,7 @@ public abstract class
    public abstract AppCommand showTerminalInfo();
    public abstract AppCommand interruptTerminal();
    public abstract AppCommand sendTerminalToEditor();
+   public abstract AppCommand sendToTerminal();
     
    // Help
    public abstract AppCommand helpBack();
@@ -441,10 +444,14 @@ public abstract class
    public abstract AppCommand newSession();
    public abstract AppCommand suspendSession();
    public abstract AppCommand quitSession();
+   public abstract AppCommand forceQuitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();
+   public abstract AppCommand openDeveloperConsole();
+   public abstract AppCommand reloadUi();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
+   public abstract AppCommand rstudioCommunityForum();
    public abstract AppCommand rstudioAgreement();
 
    public abstract AppCommand showWarningBar();
@@ -477,6 +484,7 @@ public abstract class
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
 
+   // Placeholder for most recently used files
    public abstract AppCommand mru0();
    public abstract AppCommand mru1();
    public abstract AppCommand mru2();

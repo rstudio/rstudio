@@ -99,7 +99,7 @@ public class ConnectionsPresenter extends BasePresenter
       String getConnectVia();
       String getConnectCode();
       
-      void showConnectionProgress();
+      void showConnectionProgress(String message);
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -314,25 +314,24 @@ public class ConnectionsPresenter extends BasePresenter
       String connectVia = event.getConnectVia();
       String connectCode = event.getConnectCode();
      
-      if (connectVia.equals(
-            ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
+      if (connectVia == ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD)
       {
          DomUtils.copyCodeToClipboard(connectCode);
       }
-      else if (connectVia.equals(ConnectionOptions.CONNECT_R_CONSOLE))
+      else if (connectVia == ConnectionOptions.CONNECT_R_CONSOLE)
       {
          eventBus_.fireEvent(
                new SendToConsoleEvent(connectCode, true));
          
-         display_.showConnectionProgress();
+         display_.showConnectionProgress("Connecting");
       }
-      else if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT) ||
-               connectVia.equals(ConnectionOptions.CONNECT_NEW_R_NOTEBOOK))
+      else if (connectVia == ConnectionOptions.CONNECT_NEW_R_SCRIPT ||
+               connectVia == ConnectionOptions.CONNECT_NEW_R_NOTEBOOK)
       {
          String type;
          String code = connectCode;
          SourcePosition cursorPosition = null;
-         if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT))
+         if (connectVia == ConnectionOptions.CONNECT_NEW_R_SCRIPT)
          {
             type = NewDocumentWithCodeEvent.R_SCRIPT;
             code = code + "\n\n";
@@ -359,7 +358,7 @@ public class ConnectionsPresenter extends BasePresenter
          eventBus_.fireEvent(
             new NewDocumentWithCodeEvent(type, code, cursorPosition, true));
          
-         display_.showConnectionProgress();
+         display_.showConnectionProgress("Connecting");
       }
    }
    
@@ -487,7 +486,7 @@ public class ConnectionsPresenter extends BasePresenter
       {
          for (int i = 0; i<connections.length(); i++)
          {
-            if (connections.get(i).getId().equals(exploredConnection_.getId()))
+            if (connections.get(i).getId() == exploredConnection_.getId())
             {
                exploredConnection_ = connections.get(i);
                display_.setExploredConnection(exploredConnection_);

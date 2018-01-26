@@ -108,6 +108,7 @@ public class EditorCommandManager
       manager_ = AceCommandManager.create();
       
       bindings_ = new FileBacked<EditorKeyBindings>(
+            files_,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());

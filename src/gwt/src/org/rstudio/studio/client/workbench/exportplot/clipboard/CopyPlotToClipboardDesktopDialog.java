@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardDesktopDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.user.client.Command;
 
 public class CopyPlotToClipboardDesktopDialog 
       extends CopyPlotToClipboardDesktopDialogBase
@@ -49,44 +48,31 @@ public class CopyPlotToClipboardDesktopDialog
    {  
       final ExportPlotSizeEditor sizeEditor = getSizeEditor();
       
-      sizeEditor.prepareForExport(new Command() {
-
-         @Override
-         public void execute()
+      sizeEditor.prepareForExport(() -> {
+         if (BrowseCap.isMacintoshDesktop())
          {
-            if (BrowseCap.isCocoaDesktop()) 
-            {
-               clipboard_.copyPlotToCocoaPasteboard(
-                     sizeEditor.getImageWidth(),
-                     sizeEditor.getImageHeight(),
-                     new Command() 
-                     {
-                        @Override
-                        public void execute()
-                        {
-                           onCompleted.execute();
-                        }
-                     });
-            }
-            else
-            {
-               WindowEx win = sizeEditor.getPreviewIFrame().getContentWindow();
-               Document doc = win.getDocument();
-               NodeList<Element> images = doc.getElementsByTagName("img");
-               if (images.getLength() > 0)
-               {
-                  ElementEx img = images.getItem(0).cast();
-                  DesktopFrame frame = Desktop.getFrame();
-                  frame.copyImageToClipboard(img.getClientLeft(),
-                                             img.getClientTop(),
-                                             img.getClientWidth(),
-                                             img.getClientHeight());
-               }
-               
-               onCompleted.execute();
-            }
+            clipboard_.copyPlotToCocoaPasteboard(
+                  sizeEditor.getImageWidth(),
+                  sizeEditor.getImageHeight(),
+                  onCompleted::execute);
          }
-         
+         else
+         {
+            WindowEx win = sizeEditor.getPreviewIFrame().getContentWindow();
+            Document doc = win.getDocument();
+            NodeList<Element> images = doc.getElementsByTagName("img");
+            if (images.getLength() > 0)
+            {
+               ElementEx img = images.getItem(0).cast();
+               DesktopFrame frame = Desktop.getFrame();
+               frame.copyImageToClipboard(img.getClientLeft(),
+                                          img.getClientTop(),
+                                          img.getClientWidth(),
+                                          img.getClientHeight());
+            }
+            
+            onCompleted.execute();
+         }
       });
    }
    

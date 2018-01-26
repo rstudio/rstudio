@@ -122,6 +122,11 @@ bool detectSystemRVersion(core::r_util::RVersion* pVersion,
    return result;
 }
 
+void overrideSystemRVersion(const core::r_util::RVersion& version)
+{
+   s_systemVersion = version;
+}
+
 bool detectRVersion(const core::FilePath& rScriptPath,
                     core::r_util::RVersion* pVersion,
                     std::string* pErrMsg)

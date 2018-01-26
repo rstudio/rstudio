@@ -60,7 +60,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
       {
          String choice = choices.get(i);
          listBox_.addItem(choice);
-         if (choice.equals(value))
+         if (choice == value)
             selectedIndex = i;
       }
       listBox_.setSelectedIndex(selectedIndex);

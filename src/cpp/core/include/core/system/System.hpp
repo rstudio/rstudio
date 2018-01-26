@@ -18,7 +18,7 @@
 
 
 #if defined(_WIN32)
-#include <windef.h>
+#include <windows.h>
 typedef DWORD PidType;
 #else  // UNIX
 #include <sys/types.h>
@@ -162,6 +162,8 @@ private:
    ErrorLocation location_;
 };
 
+// set $HOME to $USERPROFILE
+void setHomeToUserProfile(core::system::Options* pChildEnv);
 
 #endif
 

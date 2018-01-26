@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.r;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -86,7 +87,7 @@ public class RTokenizer
          assert false : "matchNumber() returned a zero-length token" ;
       }
       
-      if (Character.isLetter(c) || c == '.')
+      if (StringUtil.isLetter(c) || c == '.')
       {
          // From Section 10.3.2, identifiers must not start with
          // a period followed by a digit.

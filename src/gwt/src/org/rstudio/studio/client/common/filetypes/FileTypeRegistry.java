@@ -1,7 +1,7 @@
 /*
  * FileTypeRegistry.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -138,7 +138,7 @@ public class FileTypeRegistry
 
    public static final TextFileType PYTHON = new ScriptFileType(
      "python", "Python", EditorLanguage.LANG_PYTHON, ".py",new ImageResource2x(ICONS.iconPython2x()),
-     "python", true);
+     "python", false, true);
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
@@ -147,7 +147,7 @@ public class FileTypeRegistry
 
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", new ImageResource2x(ICONS.iconSh2x()),
-         null, false);
+         null, true, false);
    
    public static final TextFileType TOML =
          new TextFileType("toml", "TOML", EditorLanguage.LANG_TOML, ".toml",
@@ -266,6 +266,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
    
    public static final RDataType RDATA = new RDataType();
+   public static final RDSDataType RDS = new RDSDataType();
    public static final RProjectType RPROJECT = new RProjectType();
 
    public static final DataFrameType DATAFRAME = new DataFrameType();
@@ -310,7 +311,9 @@ public class FileTypeRegistry
       register("Renviron.site", SH, new ImageResource2x(icons.iconSh2x()));
       register("DESCRIPTION", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("INDEX", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("LICENSE", TEXT, new ImageResource2x(icons.iconText2x()));
       register("LICENCE", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("CITATION", TEXT, new ImageResource2x(icons.iconText2x()));
       register("MD5", TEXT, new ImageResource2x(icons.iconText2x()));
       register("NEWS", TEXT, new ImageResource2x(icons.iconText2x()));
       register("PORTING", TEXT, new ImageResource2x(icons.iconText2x()));
@@ -371,6 +374,7 @@ public class FileTypeRegistry
       register("*.rd", RD, new ImageResource2x(icons.iconRd2x()));
       register("*.rdata", RDATA, new ImageResource2x(icons.iconRdata2x()));
       register("*.rda", RDATA, new ImageResource2x(icons.iconRdata2x()));
+      register("*.rds", RDS, new ImageResource2x(icons.iconRdata2x()));
       register("*.Rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.mmd", MERMAID, new ImageResource2x(icons.iconMermaid2x()));

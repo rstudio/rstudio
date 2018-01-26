@@ -238,14 +238,14 @@ std::string stripSecondaryBuffer(const std::string& strInput, bool* pAltBufferAc
          break;
 
       case HAVE_QM:
-         if (::isdigit(ch))
+         if (isdigit(ch))
             parse.setNewState(HAVE_INT, i, ch);
          else
             parse.setNewState(NORMAL, i, ch);
          break;
 
       case HAVE_INT:
-         if (::isdigit(ch))
+         if (isdigit(ch))
             parse.continueState(i, ch);
          else
             parse.setNewState(HAVE_TERM, i, ch);

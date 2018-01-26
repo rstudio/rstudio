@@ -17,34 +17,27 @@ package org.rstudio.core.client.files;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 public class FileBacked<T extends JavaScriptObject>
 {
-   public FileBacked(String filePath,
+   public FileBacked(FilesServerOperations server,
+                     String filePath,
                      boolean logErrorIfNotFound,
                      T defaultValue)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
+      server_ = server;
       filePath_ = filePath;
       logErrorIfNotFound_ = logErrorIfNotFound;
       object_ = defaultValue;
       
       loaded_ = false;
       loading_ = false;
-   }
-   
-   @Inject
-   private void initialize(FilesServerOperations server)
-   {
-      server_ = server;
    }
    
    public boolean isLoaded()

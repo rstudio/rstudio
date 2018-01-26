@@ -59,6 +59,8 @@ Thu Jun 19 09:39:21 UTC 2008
  *  In particular, the HAVE_LOCALE_H and HAVE_SETLOCALE macros should be properly defined.
  *  With this design, you should not need to edit this file. */
 
+#define SYNCTEX_USE_CHARINDEX
+
 #   if defined(SYNCTEX_USE_LOCAL_HEADER)
 #       include "synctex_parser_local.h"
 #   else

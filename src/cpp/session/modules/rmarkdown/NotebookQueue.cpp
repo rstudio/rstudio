@@ -437,11 +437,16 @@ private:
             execUnit_ = unit;
 
             enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
-            error = executeAlternateEngineChunk(
+
+            // actually execute the chunk with the alternate engine; store the error separately
+            // and log if necessary
+            Error execError = executeAlternateEngineChunk(
                unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
                engine, innerCode, options.mergedOptions());
-            if (error)
-               LOG_ERROR(error);
+            if (execError)
+            {
+               LOG_ERROR(execError);
+            }
          }
       }
 
@@ -599,7 +604,7 @@ private:
 
          // update running queue if present
          if (!queue_.empty() && !workingDir.empty())
-            queue_.front()->setWorkingDir(workingDir);
+            queue_.front()->setWorkingDir(workingDir, SetupChunkDir);
       }
       else if (!error)
       {
@@ -609,8 +614,10 @@ private:
                kChunkWorkingDir, json::Value());
          if (error)
             LOG_ERROR(error);
-         if (!queue_.empty())
-            queue_.front()->setWorkingDir("");
+
+         // if the running queue got its working directory from the setup chunk, clear it
+         if (!queue_.empty() && queue_.front()->getWorkingDirSource() == SetupChunkDir)
+            queue_.front()->setWorkingDir("", SetupChunkDir);
       }
 
       error = r::exec::RFunction(".rs.defaultChunkOptions")

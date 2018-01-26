@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,10 @@ add_subdirectory(tex/synctex)
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
+if(MSVC)
+   add_definitions(-DHUNSPELL_STATIC)
+endif()
+
 # source files
 set (CORE_SOURCE_FILES
    Assert.cpp
@@ -30,9 +34,9 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
-   Error.cpp 
+   Error.cpp
    Exec.cpp
-   FileInfo.cpp 
+   FileInfo.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp
@@ -81,6 +85,7 @@ set (CORE_SOURCE_FILES
    http/Header.cpp
    http/Message.cpp
    http/MultipartRelated.cpp
+   http/ChunkParser.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
@@ -104,12 +109,12 @@ set (CORE_SOURCE_FILES
    r_util/RSessionContext.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
-   r_util/RTokenizerTests.cpp
    r_util/RUserData.cpp
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
    system/ChildProcessSubprocPoll.cpp
+   system/Crypto.cpp
    system/Environment.cpp
    system/Process.cpp
    system/ShellUtils.cpp
@@ -184,11 +189,11 @@ if (UNIX)
    if(APPLE)
       if(${MACOSX_VERSION} VERSION_GREATER "10.10"
             AND EXISTS "/usr/local/opt/openssl")
-   
+
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
             -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-   
+
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
             /usr/local/opt/openssl/include)
@@ -200,17 +205,24 @@ if (UNIX)
       endif()
    endif()
 
+   find_package(OpenSSL REQUIRED QUIET)
+   set(CORE_SYSTEM_LIBRARIES
+         ${CORE_SYSTEM_LIBRARIES}
+         ${OPENSSL_LIBRARIES}
+      )
+   set(CORE_INCLUDE_DIRS
+      ${CORE_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIRS}
+   )
+
    if(RSTUDIO_SERVER)
-      find_package(OpenSSL REQUIRED QUIET)
       find_package(PAM REQUIRED)
       set(CORE_SYSTEM_LIBRARIES
          ${CORE_SYSTEM_LIBRARIES}
-         ${OPENSSL_LIBRARIES}
          ${PAM_LIBRARIES}
       )
       set(CORE_INCLUDE_DIRS
          ${CORE_INCLUDE_DIRS}
-         ${OPENSSL_INCLUDE_DIRS}
          ${PAM_INCLUDE_DIRS}
       )
    endif()
@@ -236,13 +248,15 @@ if (UNIX)
       system/PosixUser.cpp
       system/PosixGroup.cpp
       system/PosixChildProcess.cpp
+      system/PosixProcess.cpp
    )
 
    if(RSTUDIO_SERVER)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          DistributedEvents.cpp
+         SecureKeyFile.cpp
          SocketRpc.cpp
-         system/PosixCrypto.cpp
+         http/SecureCookie.cpp
          system/Pam.cpp
       )
    endif()
@@ -266,7 +280,14 @@ else()
    add_subdirectory(zlib)
 
    # system libraries
-   set (CORE_SYSTEM_LIBRARIES -lws2_32 -lmswsock -lrpcrt4 -lShlwapi)
+   set (CORE_SYSTEM_LIBRARIES
+      WS2_32
+      MsWSock
+      RpcRT4
+      ShLwApi
+      AdvAPI32
+      ${OPENSSL_CRYPTO_LIBRARY}
+   )
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
@@ -317,6 +338,7 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 # link dependencies
 target_link_libraries(
    rstudio-core
+   rstudio-core-hunspell
    ${Boost_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
@@ -340,4 +362,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${CORE_SYSTEM_LIBRARIES}
    )
 
+   if(WIN32)
+      target_link_libraries(rstudio-core-tests rstudio-core-zlib)
+   endif()
 endif()

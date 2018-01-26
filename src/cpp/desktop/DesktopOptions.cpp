@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
 
 using namespace rstudio::core;
@@ -48,10 +49,13 @@ void Options::initFromCommandLine(const QStringList& arguments)
 {
    for (int i=1; i<arguments.size(); i++)
    {
-      QString arg = arguments.at(i);
+      const QString &arg = arguments.at(i);
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
    }
+
+   // synchronize zoom level with desktop frame
+   desktopInfo().setZoomLevel(zoomLevel());
 }
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
@@ -92,13 +96,9 @@ QString Options::portNumber() const
 #ifdef _WIN32
       QString localPeer = QString::fromUtf8("\\\\.\\pipe\\") +
                           portNumber_ + QString::fromUtf8("-rsession");
-#else
-      QString localPeer = QDir(QDir::tempPath()).absolutePath() +
-                          QString::fromUtf8("/") + portNumber_ +
-                          QString::fromUtf8("-rsession");
-#endif
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
+#endif
    }
 
    return portNumber_;
@@ -222,10 +222,9 @@ double Options::zoomLevel() const
 
 void Options::setZoomLevel(double zoomLevel)
 {
+   desktopInfo().setZoomLevel(zoomLevel);
    settings_.setValue(QString::fromUtf8("view.zoomLevel"), zoomLevel);
 }
-
-
 
 #ifdef _WIN32
 QString Options::rBinDir() const

@@ -1,7 +1,7 @@
 /*
  * RUtil.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -161,6 +161,8 @@ core::Error iconvstr(const std::string& value,
             Error error = systemError(errno, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", value.length());
+            error.addProperty("from", from);
+            error.addProperty("to", to);
             return error;
          }
       }

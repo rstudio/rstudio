@@ -25,7 +25,6 @@ import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
-import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.CaptionWithHelp;
@@ -35,6 +34,7 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
@@ -194,7 +194,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(UserCommandManager manager);
    void injectMembers(EditorCommandManager manager);
    void injectMembers(ApplicationCommandManager manager);
-   void injectMembers(FileBacked<?> object);
    void injectMembers(TextEditingTargetNotebook notebook);
    void injectMembers(WindowFrame frame);
    void injectMembers(ShinyGadgetDialog dialog);
@@ -238,6 +237,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RStudioThemedFrame frame);
    void injectMembers(AceBackgroundHighlighter highlighter);
    void injectMembers(AddinsToolbarButton button);
+   void injectMembers(AboutDialog aboutDialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

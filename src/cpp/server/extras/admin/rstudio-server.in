@@ -124,6 +124,11 @@ case "$1" in
         echo "${CPACK_PACKAGE_VERSION}"
         ;;
 
+    license-manager)
+        echo "This open-source edition of RStudio Server does not require activation. Download and install RStudio Server Pro to use a licensed version of RStudio Server."
+        exit 1
+        ;;
+
     *)
         echo $"Usage: rstudio-server {status|start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|kill-session|kill-all|offline|online|active-sessions|version}"
         exit 2

@@ -119,13 +119,13 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
           if (!module_context::isRtoolsCompatible(rTools))
           {
             boost::format fmt(
-             "WARNING: Rtools version %1% is on the PATH (intalled at %2%) "
+             "WARNING: Rtools version %1% is on the PATH (installed at %2%) "
              "but is "
              "not compatible with the currently running version of R."
              "\n\nPlease download and install the appropriate version of "
              "Rtools to ensure that packages are built correctly:"
              "\n\nhttps://cran.rstudio.com/bin/windows/Rtools/"
-             "\n\nNote that in addition to installing a compatible verison you "
+             "\n\nNote that in addition to installing a compatible version you "
              "also need to remove the incompatible version from your PATH");
             *pWarningMessage = boost::str(
                fmt % rTools.name() % formatPath(rTools.installPath()));

@@ -77,18 +77,12 @@ var YamlHighlightRules = function() {
                 regex : /[|>][-+\d\s]*$/,
                 onMatch: function(val, state, stack, line) {
                     var indent = /^\s*/.exec(line)[0];
-                    if (stack.length < 1) {
-                        stack.push(this.next);
-                    } else {
-                        stack[0] = "mlString";
-                    }
 
-                    if (stack.length < 2) {
-                        stack.push(indent.length);
-                    }
-                    else {
-                        stack[1] = indent.length;
-                    }
+                    // save prior state + indent length
+                    stack.length = 2;
+                    stack[0] = state;
+                    stack[1] = indent.length;
+
                     return this.token;
                 },
                 next : "mlString"
@@ -120,21 +114,18 @@ var YamlHighlightRules = function() {
                 token : "indent",
                 regex : /^\s*/,
                 onMatch: function(val, state, stack) {
-                    var curIndent = stack[1];
 
-                    if (curIndent >= val.length) {
-
-                        // TODO: it seems like this should not be necessary?
-                        if (/^yaml/.test(state))
-                            this.next = "yaml-start";
-                        else
-                            this.next = "start";
-
+                    // if the indent has decreased relative to what
+                    // was used to start the multiline string, then
+                    // exit multiline string state
+                    var indent = stack[1];
+                    if (indent >= val.length) {
+                        this.next = stack[0];
                         stack.splice(0);
-                    }
-                    else {
+                    } else {
                         this.next = state;
                     }
+
                     return this.token;
                 },
                 next : "mlString"

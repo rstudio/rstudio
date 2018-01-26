@@ -54,7 +54,6 @@ namespace connections {
 
 namespace {
 
-
 SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
    // read params -- note that these attributes are already guaranteed to
@@ -546,6 +545,21 @@ SEXP rs_connectionAddPackage(SEXP packageSEXP, SEXP extensionSEXP)
    return R_NilValue;
 }
 
+SEXP rs_embeddedViewer(SEXP urlSEXP)
+{
+   std::string url = r::sexp::safeAsString(urlSEXP);
+
+   std::string mappedUrl = module_context::mapUrlPorts(url);
+
+   json::Object dataJson;
+   dataJson["url"] = mappedUrl;
+
+   ClientEvent event(client_events::kNavigateShinyFrame, dataJson);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
+}
+
 bool connectionsEnabled()
 {
    return true;
@@ -581,6 +595,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
    RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
    RS_REGISTER_CALL_METHOD(rs_connectionAddPackage, 2);
+   RS_REGISTER_CALL_METHOD(rs_embeddedViewer, 1);
 
    // initialize environment
    initEnvironment();

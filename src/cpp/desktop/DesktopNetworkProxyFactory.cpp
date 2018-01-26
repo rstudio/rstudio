@@ -1,7 +1,7 @@
 /*
  * DesktopNetworkProxyFactory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,7 @@
 
 #include "DesktopNetworkProxyFactory.hpp"
 
-NetworkProxyFactory::NetworkProxyFactory()
-{
-}
+NetworkProxyFactory::NetworkProxyFactory() = default;
 
 QList<QNetworkProxy> NetworkProxyFactory::queryProxy(const QNetworkProxyQuery& query)
 {

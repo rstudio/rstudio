@@ -206,34 +206,6 @@ SEXP rs_removeUiPref(SEXP prefName)
    return R_NilValue;
 }
 
-void syncConsoleColorEnv()
-{
-   // Use rsession alias to avoid collision with 'session'
-   // object brought in by Catch
-   namespace rsession = rstudio::session;
-   using namespace rsession;
-
-   // Mirror ansi_color_mode user preference with RSTUDIO_CONSOLE_COLOR
-   // environment variable so it can be inherited by spawned R processes, such
-   // as package builds, which cannot query RStudio IDE settings.
-   if (userSettings().ansiConsoleMode() == core::text::AnsiColorOn)
-   {
-      core::system::setenv("RSTUDIO_CONSOLE_COLOR", "256");
-
-      if (rsession::options().defaultConsoleTerm().length() > 0)
-         core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
-      if (rsession::options().defaultCliColorForce())
-         core::system::setenv("CLICOLOR_FORCE", "1");
-   }
-   else
-   {
-      core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
-      core::system::unsetenv("TERM");
-      core::system::unsetenv("CLICOLOR_FORCE");
-   }
-}
-
-
 } // anonymous namespace
    
 UserSettings& userSettings()
@@ -440,6 +412,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int terminalBusyMode = readPref<int>(prefs, "busy_detection", core::system::busy_detection::Always);
    pTerminalBusyMode_.reset(new int(terminalBusyMode));
+
+   bool showRmdRenderCommand = readPref<bool>(prefs, "show_rmd_render_command", false);
+   pShowRmdRenderCommand_.reset(new bool(showRmdRenderCommand));
 
    core::json::Array defWhitelist;
    defWhitelist.push_back("tmux");
@@ -672,6 +647,11 @@ bool UserSettings::terminalTrackEnv() const
    return readUiPref<bool>(pTerminalTrackEnv_);
 }
 
+bool UserSettings::showRmdRenderCommand() const
+{
+   return readUiPref<bool>(pShowRmdRenderCommand_);
+}
+
 core::system::busy_detection::Mode UserSettings::terminalBusyMode() const
 {
    return static_cast<core::system::busy_detection::Mode>(readUiPref<int>(pTerminalBusyMode_));
@@ -788,7 +768,7 @@ FilePath UserSettings::gitExePath() const
 {
    std::string dir = settings_.get("vcsGitExePath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
@@ -802,7 +782,7 @@ FilePath UserSettings::svnExePath() const
 {
    std::string dir = settings_.get("vcsSvnExePath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
@@ -816,7 +796,7 @@ FilePath UserSettings::vcsTerminalPath() const
 {
    std::string dir = settings_.get("vcsTerminalPath");
    if (!dir.empty())
-      return FilePath(dir);
+      return module_context::resolveAliasedPath(dir);
    else
       return FilePath();
 }
@@ -1025,6 +1005,33 @@ bool UserSettings::reuseSessionsForProjectLinks() const
 void UserSettings::setReuseSessionsForProjectLinks(bool reuse)
 {
    settings_.set(kReuseSessionsForProjectLinksSettings, reuse);
+}
+
+void UserSettings::syncConsoleColorEnv() const
+{
+   // Use rsession alias to avoid collision with 'session'
+   // object brought in by Catch
+   namespace rsession = rstudio::session;
+   using namespace rsession;
+
+   // Mirror ansi_color_mode user preference with RSTUDIO_CONSOLE_COLOR
+   // environment variable so it can be inherited by spawned R processes, such
+   // as package builds, which cannot query RStudio IDE settings.
+   if (userSettings().ansiConsoleMode() == core::text::AnsiColorOn)
+   {
+      core::system::setenv("RSTUDIO_CONSOLE_COLOR", "256");
+
+      if (rsession::options().defaultConsoleTerm().length() > 0)
+         core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
+      if (rsession::options().defaultCliColorForce())
+         core::system::setenv("CLICOLOR_FORCE", "1");
+   }
+   else
+   {
+      core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
+      core::system::unsetenv("TERM");
+      core::system::unsetenv("CLICOLOR_FORCE");
+   }
 }
 
 } // namespace session

@@ -397,7 +397,7 @@ public class Files
             
             server_.copyFile(selectedFiles.get(0),
                  targetFile,
-                 false,
+                 true,
                  new VoidServerRequestCallback(progress) {
                      @Override
                      protected void onSuccess()
@@ -444,8 +444,8 @@ public class Files
                FileSystemItem file = selectedFiles.get(i);
                FileSystemItem fileParent = file.getParentPath();
                
-               if (file.getPath().equals(targetDir.getPath()) ||
-                   fileParent.getPath().equals(targetDir.getPath()))
+               if (file.getPath() == targetDir.getPath() ||
+                   fileParent.getPath() == targetDir.getPath())
                {
                   progress.onError("Invalid target folder");
                   return ;
@@ -515,12 +515,12 @@ public class Files
             final FileSystemItem target =
                file.isDirectory() ?
                   FileSystemItem.createDir(path) :
-                  FileSystemItem.createFile(path);
+                  FileSystemItem.create(path, false, file.getLength(), file.getLastModifiedNative());
               
             // clear selection
             view_.selectNone();
             
-            // premptively rename in the UI then fallback to refreshing
+            // pre-emptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
             

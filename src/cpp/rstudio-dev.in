@@ -15,26 +15,6 @@
 #
 #
 
-PLUGIN_PREFIX=""
-
-if [[ -e ~/Qt5.4.2/5.4/gcc_64/plugins ]] 
-then
-  # newer 64 bit systems
-  PLUGIN_PREFIX=~/Qt5.4.2/5.4/gcc_64/plugins
-elif [[ -e ~/Qt5.4.0/5.4/gcc_64/plugins ]] 
-then
-  # 64 bit systems
-  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc_64/plugins
-elif [[ -e ~/Qt5.40/5.4/gcc/plugins ]]
-then
-  # 32 bit systems
-  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc/plugins
-fi
-
-if [[ $PLUGIN_PREFIX ==  "" ]]
-then
-  desktop/rstudio "$@"
-else
-  QT_PLUGIN_PATH=$PLUGIN_PREFIX desktop/rstudio "$@"
-fi
-
+QT_PLUGIN_PATH="@QT_PLUGIN_PATH@" \
+    LD_LIBRARY_PATH="@QT_LIBRARY_PATH@" \
+    desktop/rstudio "$@"

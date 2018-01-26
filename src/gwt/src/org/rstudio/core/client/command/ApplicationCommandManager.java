@@ -24,6 +24,7 @@ import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
@@ -41,6 +42,7 @@ public class ApplicationCommandManager
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       bindings_ = new FileBacked<EditorKeyBindings>(
+            server_,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());
@@ -70,9 +72,10 @@ public class ApplicationCommandManager
    }
    
    @Inject
-   private void initialize(EventBus events, Commands commands)
+   private void initialize(EventBus events, FilesServerOperations server, Commands commands)
    {
       events_ = events;
+      server_ = server;
       commands_ = commands;
    }
    
@@ -169,5 +172,6 @@ public class ApplicationCommandManager
    
    // Injected ----
    private EventBus events_;
+   private FilesServerOperations server_;
    private Commands commands_;
 }

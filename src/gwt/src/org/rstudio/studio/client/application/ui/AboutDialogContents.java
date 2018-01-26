@@ -1,7 +1,7 @@
 /*
  * AboutDialogContents.java
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
 import com.google.gwt.core.client.GWT;
@@ -22,6 +25,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -45,15 +49,33 @@ public class AboutDialogContents extends Composite
       uiBinder.createAndBindUi(this);
    }
 
-   public AboutDialogContents(ProductInfo info)
+   public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.getVersion());
+      versionLabel.setText(info.version);
       userAgentLabel.setText(Window.Navigator.getUserAgent());
-      noticeBox.setValue(info.getNotice());
+      noticeBox.setValue(info.notice);
+      productName.setText(editionInfo.editionName());
+      
+      if (editionInfo.proLicense() && Desktop.isDesktop())
+      {
+         // TODO: since this runs asynchronously this might be problematic
+         Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
+         {
+            int licenseLines = StringUtil.newlineCount(licenseStatus);
+            noticeBox.setVisibleLines(10);
+            licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
+            licenseLabel.setVisible(true);
+            licenseBox.setVisible(true);
+            licenseBox.setText(licenseStatus);
+         });
+      }
    }
 
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField TextArea noticeBox;
+   @UiField Label licenseLabel;
+   @UiField TextArea licenseBox;
+   @UiField Label productName;
 }

@@ -113,10 +113,10 @@
    CGFloat minY = CGRectGetMinY(rect) + puffer;
    
    CGContextBeginPath(context);
-   NSColor* fillNsColor = [NSColor colorWithCalibratedRed: 0.05f  // iOS badge
-                                                  green: 0.58f
-                                                   blue: 1.0f
-                                                  alpha: 1.0f];
+   NSColor* fillNsColor = [NSColor colorWithCalibratedRed: 0.459f  // iOS badge
+                                                  green: 0.667f
+                                                   blue: 0.859f
+                                                  alpha: 1.000f];
    CGColorRef fillColor = [self CGColorFromNSColor: fillNsColor];
    CGContextSetFillColorWithColor(context, fillColor);
    CGContextAddArc(context, maxX-radius, minY+radius, radius,

@@ -371,6 +371,32 @@ inline std::string projectIdToProject(
                                          (projectId);
 }
 
+inline bool isSharedProject(const core::FilePath& sharedStoragePath,
+                            const core::r_util::ProjectId& projectId,
+                            bool* pHasAccess)
+{
+#ifndef _WIN32
+   core::FilePath projectEntryPath =
+         sharedStoragePath.complete(kProjectSharedDir)
+                          .complete(projectId.asString() + kProjectEntryExt);
+   if (projectEntryPath.exists())
+   {
+      // an entry exists, meaning this particular project is shared
+      // determine if we can access it
+
+      // TODO: do we need some alternate implementation for Windows?
+#ifndef _WIN32
+      core::system::isFileReadable(projectEntryPath, pHasAccess);
+#endif
+      return true;
+   }
+   else
+      return false;
+#else
+   return false; // project sharing not supported on Windows
+#endif
+}
+
 
 } // namespace session
 } // namespace rstudio

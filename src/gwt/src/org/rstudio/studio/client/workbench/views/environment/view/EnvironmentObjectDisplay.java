@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 
 import java.util.List;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 
 import com.google.gwt.cell.client.FieldUpdater;
@@ -62,28 +64,8 @@ public abstract class EnvironmentObjectDisplay
          public SafeHtml render(String str)
          {
             SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            boolean hasMatch = false;
-            String filterText = host_.getFilterText();
-            if (filterText.length() > 0)
-            {
-               int idx = str.toLowerCase().indexOf(filterText);
-               if (idx >= 0)
-               {
-                  hasMatch = true;
-                  sb.appendEscaped(str.substring(0, idx));
-                  sb.appendHtmlConstant(
-                        "<span class=\"" + 
-                        environmentStyle_.filterMatch() + 
-                        "\">");
-                  sb.appendEscaped(str.substring(idx, 
-                        idx + filterText.length()));
-                  sb.appendHtmlConstant("</span>");
-                  sb.appendEscaped(str.substring(idx + filterText.length(), 
-                        str.length()));
-               }
-            }
-            if (!hasMatch)
-               sb.appendEscaped(str);
+            SafeHtmlUtil.highlightSearchMatch(sb, str, host_.getFilterText(), 
+                  ThemeStyles.INSTANCE.filterMatch());
             return sb.toSafeHtml();
          }
       };
@@ -117,7 +99,7 @@ public abstract class EnvironmentObjectDisplay
    
    protected boolean selectionEnabled()
    {
-      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
+      return environmentName_ == EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
    }
 
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;

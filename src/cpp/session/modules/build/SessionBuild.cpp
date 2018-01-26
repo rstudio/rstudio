@@ -536,7 +536,15 @@ private:
                enqueBuildOutput(module_context::kCompileOutputError,
                                 result.stdErr);
             enqueBuildOutput(module_context::kCompileOutputNormal, "\n");
-            return result.exitStatus == EXIT_SUCCESS;
+            if (result.exitStatus == EXIT_SUCCESS)
+            {
+               return true;
+            }
+            else
+            {
+               terminateWithErrorStatus(result.exitStatus);
+               return false;
+            }
          }
          else
          {
@@ -1459,7 +1467,7 @@ private:
          {
             while (++endIndex < n)
             {
-               if (std::isspace(extraArgs[endIndex]))
+               if (isspace(extraArgs[endIndex]))
                   break;
             }
             libPath = extraArgs.substr(startIndex, endIndex - startIndex + 1);
@@ -1993,7 +2001,7 @@ bool canBuildCpp()
    options.environment = childEnv;
 
    core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd.commandString(), options, &result);
+   error = core::system::runCommand(rCmd.shellCommand(), options, &result);
    if (error)
    {
       LOG_ERROR(error);

@@ -21,6 +21,7 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -628,6 +629,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("terminal_track_env", true);
    }
+   
+   public PrefValue<Boolean> showRmdRenderCommand()
+   {
+      return bool("show_rmd_render_command", false);
+   }
 
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;
@@ -695,7 +701,7 @@ public class UIPrefsAccessor extends Prefs
       if (Desktop.isDesktop())
       {
          // if there is a desktop synctex viewer available then default to it
-         if (Desktop.getFrame().getDesktopSynctexViewer().length() > 0)
+         if (DesktopInfo.getDesktopSynctexViewer().length() > 0)
          {
             return PDF_PREVIEW_DESKTOP_SYNCTEX;
          }

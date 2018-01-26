@@ -84,11 +84,11 @@ public class HelpInfo extends JavaScriptObject
          {
             Element heading = headings.get(i) ;
             String name = heading.getInnerText() ;
-            if (name.equals("Arguments"))
+            if (name == "Arguments")
             {
                parseArguments(args, heading);
             }
-            if (name.equals("Slots"))
+            if (name == "Slots")
             {
                parseDescriptionList(slots, heading);
             }

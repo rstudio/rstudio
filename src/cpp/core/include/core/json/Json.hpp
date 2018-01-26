@@ -62,6 +62,12 @@ bool isType(const Value& value)
       return value.type() == BooleanType;
    else if (boost::is_same<T, int>::value)
       return value.type() == IntegerType; 
+   else if (boost::is_same<T, unsigned int>::value)
+      return value.type() == IntegerType;
+   else if (boost::is_same<T, int64_t>::value)
+      return value.type() == IntegerType;
+   else if (boost::is_same<T, unsigned long>::value)
+      return value.type() == IntegerType;
    else if (boost::is_same<T, double>::value)
       return value.type() == RealType || value.type() == IntegerType;
    else

@@ -13,7 +13,6 @@
  *
  */
 
-#include "ChildProcess.hpp"
 #include "ChildProcessSubprocPoll.hpp"
 #include "Win32Pty.hpp"
 
@@ -25,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/system/ChildProcess.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/FilePath.hpp>
@@ -157,7 +157,8 @@ struct ChildProcess::Impl
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
         closeProcess_(&hProcess, ERROR_LOCATION),
         pid(static_cast<PidType>(-1)),
-        ctrlC(0x03)
+        ctrlC(0x03),
+        terminated(false)
    {
    }
 
@@ -168,6 +169,7 @@ struct ChildProcess::Impl
    PidType pid;
    WinPty pty;
    char ctrlC;
+   bool terminated;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
@@ -399,7 +401,7 @@ Error ChildProcess::run()
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // populate startup info
-   STARTUPINFO si = { sizeof(STARTUPINFO) };
+   STARTUPINFOW si = { sizeof(STARTUPINFOW) };
    si.dwFlags |= STARTF_USESTDHANDLES;
    si.hStdOutput = hStdOutWrite;
    si.hStdError = options_.redirectStdErrToStdOut ? hStdOutWrite
@@ -427,32 +429,37 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdErrFile(&hStdErrWriteFile, ERROR_LOCATION);
 
    // build command line
-   std::vector<TCHAR> cmdLine;
+   std::vector<WCHAR> cmdLine;
 
-   bool exeQuot = std::string::npos != exe_.find(' ')
-         && std::string::npos == exe_.find('"');
+   bool exeQuot =
+         std::string::npos != exe_.find(' ') &&
+         std::string::npos == exe_.find('"');
+
    if (exeQuot)
-      cmdLine.push_back('"');
-   std::copy(exe_.begin(), exe_.end(), std::back_inserter(cmdLine));
+      cmdLine.push_back(L'"');
+   std::wstring exeWide = string_utils::utf8ToWide(exe_);
+   std::copy(exeWide.begin(), exeWide.end(), std::back_inserter(cmdLine));
    if (exeQuot)
-      cmdLine.push_back('"');
+      cmdLine.push_back(L'"');
 
    BOOST_FOREACH(std::string& arg, args_)
    {
-      cmdLine.push_back(' ');
+      cmdLine.push_back(L' ');
 
       // This is kind of gross. Ideally we would be more deterministic
       // than this.
-      bool quot = std::string::npos != arg.find(' ')
-            && std::string::npos == arg.find('"');
+      bool quot =
+            std::string::npos != arg.find(' ') &&
+            std::string::npos == arg.find('"');
 
       if (quot)
-         cmdLine.push_back('"');
-      std::copy(arg.begin(), arg.end(), std::back_inserter(cmdLine));
+         cmdLine.push_back(L'"');
+      std::wstring argWide = string_utils::utf8ToWide(arg);
+      std::copy(argWide.begin(), argWide.end(), std::back_inserter(cmdLine));
       if (quot)
-         cmdLine.push_back('"');
+         cmdLine.push_back(L'"');
    }
-   cmdLine.push_back('\0');
+   cmdLine.push_back(L'\0');
 
    // specify custom environment if requested
    DWORD dwFlags = 0;
@@ -492,18 +499,18 @@ Error ChildProcess::run()
    if (options_.breakawayFromJob)
       dwFlags |= CREATE_BREAKAWAY_FROM_JOB;
 
-   std::string workingDir;
+   std::wstring workingDir;
    if (!options_.workingDir.empty())
    {
-      workingDir = string_utils::utf8ToSystem(
+      workingDir = string_utils::utf8ToWide(
             options_.workingDir.absolutePathNative());
    }
 
    // Start the child process.
    PROCESS_INFORMATION pi;
-   ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
-   BOOL success = ::CreateProcess(
-     exe_.c_str(),    // Process
+   ::ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+   BOOL success = ::CreateProcessW(
+     exeWide.c_str(), // Process
      &(cmdLine[0]),   // Command line
      NULL,            // Process handle not inheritable
      NULL,            // Thread handle not inheritable
@@ -513,7 +520,7 @@ Error ChildProcess::run()
                       // Use parent's starting directory
      workingDir.empty() ? NULL : workingDir.c_str(),
      &si,             // Pointer to STARTUPINFO structure
-     &pi );   // Pointer to PROCESS_INFORMATION structure
+     &pi);            // Pointer to PROCESS_INFORMATION structure
 
    if (!success)
       return systemError(::GetLastError(), ERROR_LOCATION);
@@ -669,12 +676,13 @@ void AsyncChildProcess::poll()
    // call onContinue
    if (callbacks_.onContinue)
    {
-      if (!callbacks_.onContinue(*this))
+      if (!callbacks_.onContinue(*this) && !pImpl_->terminated)
       {
-         // terminate the proces
+         // terminate the process
          Error error = terminate();
          if (error)
             LOG_ERROR(error);
+         pImpl_->terminated = true;
       }
    }
 

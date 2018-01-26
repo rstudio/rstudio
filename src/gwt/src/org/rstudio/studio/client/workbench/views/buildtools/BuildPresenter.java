@@ -189,7 +189,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onUiPrefsChanged(UiPrefsChangedEvent e)
          {
-            if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
+            if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
                devtoolsLoadAllPath_ = null;
          }
       });
@@ -325,8 +325,7 @@ public class BuildPresenter extends BasePresenter
    
    private void startBuild(final String type, final String subType)
    {
-      if (session_.getSessionInfo().getBuildToolsType().equals(
-                                       SessionInfo.BUILD_TOOLS_WEBSITE))
+      if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
           dependencyManager_.withRMarkdown("Building sites", new Command() {
             @Override
@@ -344,41 +343,51 @@ public class BuildPresenter extends BasePresenter
    
    private void executeBuild(final String type, final String subType)
    {
-      // attempt to start a build (this will be a silent no-op if there
-      // is already a build running)
-      final String caption = "Build";
+      if (type != "build-all" && type != "rebuild-all")
+      {
+         executeBuildNoBusyCheck(type, subType);
+         return;
+      }
+      
       terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
          @Override
          public void execute()
          {
-            workbenchContext_.setBuildInProgress(true);
-            sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-               @Override
-               public void execute()
-               {
-                  server_.startBuild(type, subType, 
-                        new SimpleRequestCallback<Boolean>() {
-                     @Override
-                     public void onResponseReceived(Boolean response)
-                     {
-
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        super.onError(error);
-                        workbenchContext_.setBuildInProgress(false);
-                     }
-
-                  });
-               }
-            }, caption);
+            executeBuildNoBusyCheck(type, subType);
          }
-      }, caption, "Terminal jobs will be terminated. Are you sure?", 
+      }, "Build", "Terminal jobs will be terminated. Are you sure?", 
             uiPrefs_.terminalBusyMode().getValue());
    }
-   
+
+   private void executeBuildNoBusyCheck(final String type, final String subType)
+   {
+      // attempt to start a build (this will be a silent no-op if there
+      // is already a build running)
+      workbenchContext_.setBuildInProgress(true);
+      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+         @Override
+         public void execute()
+         {
+            server_.startBuild(type, subType, 
+                  new SimpleRequestCallback<Boolean>() {
+               @Override
+               public void onResponseReceived(Boolean response)
+               {
+
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  super.onError(error);
+                  workbenchContext_.setBuildInProgress(false);
+               }
+
+            });
+         }
+      }, "Build");
+   }
+
    void onStopBuild()
    {
        server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(

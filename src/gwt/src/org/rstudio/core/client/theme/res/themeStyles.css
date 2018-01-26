@@ -44,6 +44,8 @@
 @external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
 @external rstudio-themes-dark-menus;
 
+@external rstudio-classic-inverts;
+
 @external rstudio-animating;
 
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
@@ -80,6 +82,8 @@
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 @eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
+
+@eval THEME_DARK_SEARCHRESULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -288,11 +292,11 @@ button {
 
 @if rstudio.desktop true {
 .linux button {
-   cursor: HANDCURSOR, pointer;
+   cursor: HANDCURSOR 8 4, pointer;
 }
 
 .linux .handCursor {
-   cursor: HANDCURSOR, pointer;
+   cursor: HANDCURSOR 8 4, pointer;
 }
 }
 
@@ -648,6 +652,10 @@ pre {
 
 .rstudio-themes-flat .mainMenu {
    margin-left: 58px;
+}
+
+.rstudio-themes-flat .mainMenu.noLogo {
+   margin-left: 6px;
 }
 
 .mainMenu .gwt-MenuItem {
@@ -1189,7 +1197,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .multiPodUtilityArea {
    background: MULTIPODTOPFADE left top repeat-y;
 }
+.multiPodUtilityTabArea {
+   height: 0px;
+}
 .firstTabSelected {
+}
+
+.rstudio-themes-flat .multiPodUtilityTabArea {
+   height: 22px;
 }
 
 /** Toolbar **/
@@ -1443,7 +1458,8 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 	color: #494949;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .emptyProjectMenu .toolbarButtonLabel {
+.rstudio-themes-flat .rstudio-themes-dark .emptyProjectMenu .toolbarButtonLabel,
+.rstudio-themes-flat .rstudio-themes-dark .webHeaderBarCommandsProjectMenu .toolbarButtonLabel {
    color: #FFF;
 }
 
@@ -1484,6 +1500,15 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
  @else { .webGlobalToolbar {
       margin-left: 55px;
       padding-right: 51px;
+   }
+ }
+
+ @if user.agent gecko1_8 { .webGlobalToolbar.noLogo {
+      margin-left: 2px;
+   }
+ }
+ @else { .webGlobalToolbar.noLogo {
+      margin-left: 4px;
    }
  }
 
@@ -1641,6 +1666,16 @@ body.ubuntu_mono .searchBox {
    gwt-image: 'viewFunctionCode2x';
    background-position: right center;
    background-size: 32px 15px;
+}
+
+.filterMatch
+{
+	background-color: #e8e8ff;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .filterMatch
+{
+   background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
 
 .odd {
@@ -2346,6 +2381,7 @@ body.ubuntu_mono .searchBox {
   margin-right: 3px;
 }
 
+.editor_dark img.rstudio-classic-inverts,
 .rstudio-themes-flat .rstudio-themes-dark .rstudio-themes-inverts img,
 .rstudio-themes-flat .rstudio-themes-dark img.rstudio-themes-inverts {
    -webkit-filter: invert(100%);

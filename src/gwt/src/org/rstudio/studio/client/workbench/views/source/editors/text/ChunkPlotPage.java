@@ -51,20 +51,16 @@ public class ChunkPlotPage extends ChunkOutputPage
             @Override
             public void execute()
             {
-               ImageElementEx plot = plot_.getElement().cast();
                ImageElementEx img = thumbnail.getElement().cast();
-               if (plot.naturalHeight() < plot.naturalWidth())
-               {
-                  img.getStyle().setProperty("width", "100%");
-                  img.getStyle().setProperty("height", "auto");
-               }
-               else
-               {
-                  img.getStyle().setProperty("height", "100%");
-                  img.getStyle().setProperty("width", "auto");
-               }
+               
+               img.getStyle().setProperty("width", "100%");
+               img.getStyle().setProperty("height", "100%");
+               img.getStyle().setProperty("objectFit", "contain");
+               
                thumbnail.setUrl(url);
-               onRenderComplete.execute();
+               
+               if (onRenderComplete != null)
+                  onRenderComplete.execute();
             }
          }, chunkOutputSize);
       }

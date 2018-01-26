@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,17 @@
 
 #include "DesktopUtils.hpp"
 
+#include <QPointer>
 #include <QProcess>
 #include <QPushButton>
+#include <QTimer>
+#include <QEventLoop>
 #include <QDesktopServices>
 
+#include <boost/atomic.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
+#include <boost/ref.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -29,6 +35,7 @@
 #include <core/system/Environment.hpp>
 
 #include "DesktopOptions.hpp"
+#include "DesktopMainWindow.hpp"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -116,6 +123,11 @@ bool supportsFullscreenMode(QMainWindow* pMainWindow)
 
 void initializeLang()
 {
+}
+
+void finalPlatformInitialize(MainWindow* pMainWindow)
+{
+
 }
 
 #endif
@@ -224,35 +236,9 @@ void showFileError(const QString& action,
                  QString::fromUtf8(" ") + file +
                  QString::fromUtf8(" - ") + error;
    showMessageBox(QMessageBox::Critical,
-                  NULL,
+                  nullptr,
                   QString::fromUtf8("File Error"),
                   msg);
-}
-
-void launchRStudio(const std::vector<std::string>& args)
-{
-#ifdef _WIN32
-   core::system::ProcessOptions options;
-   options.breakawayFromJob = true;
-   options.detachProcess = true;
-   Error error = core::system::runProgram(
-      desktop::options().executablePath().absolutePath(),
-      args,
-      "",
-      options,
-      NULL);
-   if (error)
-      LOG_ERROR(error);
-#else
-   QStringList argList;
-   BOOST_FOREACH(const std::string& arg, args)
-   {
-      argList.append(QString::fromStdString(arg));
-   }
-   QString exePath = QString::fromUtf8(
-      desktop::options().executablePath().absolutePath().c_str());
-   QProcess::startDetached(exePath, argList);
-#endif
 }
 
 bool isFixedWidthFont(const QFont& font)
@@ -260,9 +246,9 @@ bool isFixedWidthFont(const QFont& font)
    QFontMetrics metrics(font);
    int width = metrics.width(QChar::fromLatin1(' '));
    char chars[] = {'m', 'i', 'A', '/', '-', '1', 'l', '!', 'x', 'X', 'y', 'Y'};
-   for (size_t i = 0; i < sizeof(chars); i++)
+   for (char i : chars)
    {
-      if (metrics.width(QChar::fromLatin1(chars[i])) != width)
+      if (metrics.width(QChar::fromLatin1(i)) != width)
          return false;
    }
    return true;
@@ -271,9 +257,9 @@ bool isFixedWidthFont(const QFont& font)
 int getDpi()
 {
 #ifdef _WIN32
-   HDC defaultDC = GetDC(NULL);
+   HDC defaultDC = GetDC(nullptr);
    int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
-   ReleaseDC(NULL, defaultDC);
+   ReleaseDC(nullptr, defaultDC);
    return dpi;
 #else
    // presume 96 DPI on other Qt platforms (i.e. Linux) for now
@@ -358,7 +344,7 @@ void openUrl(const QUrl& url)
 
 QFileDialog::Options standardFileDialogOptions()
 {
-   return 0;
+   return nullptr;
 }
 
 #endif

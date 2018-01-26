@@ -13,9 +13,9 @@
  *
  */
 
-#include "ChildProcess.hpp"
 #include "ChildProcessSubprocPoll.hpp"
 
+#include <atomic>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
@@ -32,17 +32,18 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/system/System.hpp>
+#include <core/system/PosixChildProcess.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/Thread.hpp>
 
 #include <core/PerformanceTimer.hpp>
-
-#include "ChildProcess.hpp"
 
 namespace rstudio {
 namespace core {
@@ -67,6 +68,10 @@ const boost::posix_time::milliseconds kCheckSubprocDelay =
 // how often we query and store current working directory of subprocess
 const boost::posix_time::milliseconds kCheckCwdDelay =
                                          boost::posix_time::milliseconds(2000);
+
+// exit code for when a thread-safe spawn fails - chosen to be something "unique" enough to identify
+// since thread-safe forks cannot actually log effectively
+const int kThreadSafeForkErrorExit = 1535;
 
 int resolveExitStatus(int status)
 {
@@ -344,11 +349,20 @@ Error ChildProcess::terminate()
    // special code path for pseudoterminal
    if (options_.pseudoterminal)
    {
-      // on OSX you need to close all of the terminal handles to get
-      // bash to quit, however some other processes (like svn+ssh
-      // require the signal)
-#ifdef __APPLE__
-      pImpl_->closeAll(false, ERROR_LOCATION);
+#ifndef __APPLE__
+      // On Linux only do this if dealing with a Terminal-pane process.
+      // This is to reduce scope of this change for 1.1
+      // TODO: review post 1.1
+      if (options().smartTerminal)
+      {
+#endif
+         // you need to close all of the terminal handles to get
+         // bash to quit, however some other processes (like svn+ssh
+         // require the signal)
+         pImpl_->closeAll(false, ERROR_LOCATION);
+
+#ifndef __APPLE__
+      }
 #endif
 
       if (::killpg(::getpgid(pImpl_->pid), SIGTERM) == -1)
@@ -422,6 +436,37 @@ Error ChildProcess::run()
    int fdError[2] = {0,0};
    int fdMaster = 0;
 
+   // build args (on heap so they stay around after exec)
+   // create set of args to pass (needs to include the cmd)
+   // this is done before calling fork as it is unsafe to use fork in multithreaded programs
+   // as any calls to malloc could potentially deadlock the child
+   std::vector<std::string> args;
+   args.push_back(exe_);
+   args.insert(args.end(), args_.begin(), args_.end());
+   using core::system::ProcessArgs;
+   ProcessArgs* pProcessArgs = new ProcessArgs(args);
+   ProcessArgs* pEnvironment = NULL;
+
+   if (options_.environment)
+   {
+      // build env (on heap, see comment above)
+      std::vector<std::string> env;
+      const Options& options = options_.environment.get();
+      for (Options::const_iterator
+               it = options.begin(); it != options.end(); ++it)
+      {
+         env.push_back(it->first + "=" + it->second);
+      }
+      pEnvironment = new ProcessArgs(env);
+   }
+
+   if (options_.threadSafe && options_.pseudoterminal)
+   {
+      return systemError(boost::system::errc::operation_not_supported,
+                         "Usage of threadSafe and pseudoterminal options together is not supported",
+                         ERROR_LOCATION);
+   }
+
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
@@ -485,159 +530,194 @@ Error ChildProcess::run()
       // and continue rather than calling ::exit (we do this to avoid
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
-
-      // check for an onAfterFork function
-       if (options_.onAfterFork)
-          options_.onAfterFork();
-
-      // if we didn't create a pseudoterminal then check the detachSession
-      // and terminateChildren options to see whether we need to setsid
-      // or setpgid(0,0). we skip the check for pseudoterminals because
-      // forkpty calls setsid internally
-      if (!options_.pseudoterminal)
+      if (!options_.threadSafe)
       {
-         // If options.detachSession is requested then separate.
-         if (options_.detachSession)
+         // note: forking is dangerous in a multithreaded environment
+         // the following code uses functions that are not async signal-safe
+         // (see http://man7.org/linux/man-pages/man7/signal-safety.7.html)
+         // if you spawn children within a multithreaded process, you MUST
+         // set threadSafe to true on process options, which provides much less
+         // functionality but guarantees that the child will not hang
+
+         // change user here if requested
+         if (!options_.runAsUser.empty())
          {
-            if (::setsid() == -1)
+            // restore root
+            Error error = core::system::restorePriv();
+            if (error)
+               LOG_ERROR(error);
+
+            // switch user
+            error = core::system::permanentlyDropPriv(options_.runAsUser);
+            if (error)
+               LOG_ERROR(error);
+         }
+
+         // check for an onAfterFork function
+          if (options_.onAfterFork)
+             options_.onAfterFork();
+
+         // if we didn't create a pseudoterminal then check the detachSession
+         // and terminateChildren options to see whether we need to setsid
+         // or setpgid(0,0). we skip the check for pseudoterminals because
+         // forkpty calls setsid internally
+         if (!options_.pseudoterminal)
+         {
+            // If options.detachSession is requested then separate.
+            if (options_.detachSession)
             {
-               LOG_ERROR(systemError(errno, ERROR_LOCATION));
-               // intentionally fail forward (see note above)
+               if (::setsid() == -1)
+               {
+                  LOG_ERROR(systemError(errno, ERROR_LOCATION));
+                  // intentionally fail forward (see note above)
+               }
+            }
+            else if (options_.terminateChildren)
+            {
+               // No need to call ::setpgid(0,0) if ::setsid() was already called
+
+               // if options.terminateChildren is requested then obtain a new
+               // process group (using our own process id). this enables terminate
+               // to specify -pid to kill which will kill this process and all of
+               // its children. note that another side-effect is that this process
+               // will not automatically die with its parent, so the parent
+               // may want to kill all children from the processSupervisor on exit
+               if (::setpgid(0,0) == -1)
+               {
+                  LOG_ERROR(systemError(errno, ERROR_LOCATION));
+                  // intentionally fail forward (see note above)
+               }
             }
          }
-         else if (options_.terminateChildren)
-         {
-            // No need to call ::setpgid(0,0) if ::setsid() was already called
 
-            // if options.terminateChildren is requested then obtain a new
-            // process group (using our own process id). this enables terminate
-            // to specify -pid to kill which will kill this process and all of
-            // its children. note that another side-effect is that this process
-            // will not automatically die with its parent, so the parent
-            // may want to kill all children from the processSupervisor on exit
-            if (::setpgid(0,0) == -1)
-            {
-               LOG_ERROR(systemError(errno, ERROR_LOCATION));
-               // intentionally fail forward (see note above)
-            }
+         // clear the child signal mask
+         Error error = core::system::clearSignalMask();
+         if (error)
+         {
+            LOG_ERROR(error);
+            // intentionally fail forward (see note above)
          }
-      }
 
-      // clear the child signal mask
-      Error error = core::system::clearSignalMask();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }  
-
-      // pseudoterminal mode: file descriptor work is already handled
-      // by forkpty, all we need to do is configure terminal behavior
-      if (options_.pseudoterminal)
-      {
-         // get current attributes
-         struct termios termp;
-         Error error = posixCall<int>(
-            boost::bind(::tcgetattr, STDIN_FILENO, &termp),
-            ERROR_LOCATION);
-         if (!error)
+         // pseudoterminal mode: file descriptor work is already handled
+         // by forkpty, all we need to do is configure terminal behavior
+         if (options_.pseudoterminal)
          {
-            if (!options_.smartTerminal)
+            // get current attributes
+            struct termios termp;
+            Error error = posixCall<int>(
+               boost::bind(::tcgetattr, STDIN_FILENO, &termp),
+               ERROR_LOCATION);
+            if (!error)
             {
-               // Specify raw mode; not doing this for terminal (versus dumb
-               // shell) because on Linux, it broke things like "passwd"
-               // command's ability to collect passwords).
-               ::cfmakeraw(&termp);
+               if (!options_.smartTerminal)
+               {
+                  // Specify raw mode; not doing this for terminal (versus dumb
+                  // shell) because on Linux, it broke things like "passwd"
+                  // command's ability to collect passwords).
+                  ::cfmakeraw(&termp);
+               }
+               else
+               {
+                  // for smart terminals we need to echo back the user input
+                  termp.c_lflag |= ECHO;
+                  termp.c_oflag |= OPOST|ONLCR;
+
+                  // Turn off XON/XOFF flow control so Ctrl+S can be used by
+                  // the shell command-line editing instead of suspending output.
+                  termp.c_iflag &= ~(IXON|IXOFF);
+               }
+
+               // Don't ignore signals -- this is done
+               // so we can send Ctrl-C for interrupts
+               termp.c_lflag |= ISIG;
+
+               // set attribs
+               safePosixCall<int>(
+                     boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),
+                     ERROR_LOCATION);
+
+               // save the VINTR character
+               pImpl_->ctrlC = termp.c_cc[VINTR];
             }
             else
             {
-               // for smart terminals we need to echo back the user input
-               termp.c_lflag |= ECHO;
-               termp.c_oflag |= OPOST|ONLCR;
-
-               // Turn off XON/XOFF flow control so Ctrl+S can be used by
-               // the shell command-line editing instead of suspending output.
-               termp.c_iflag &= ~(IXON|IXOFF);
+               LOG_ERROR(error);
             }
-
-            // Don't ignore signals -- this is done
-            // so we can send Ctrl-C for interrupts
-            termp.c_lflag |= ISIG;
-
-            // set attribs
-            safePosixCall<int>(
-                  boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),
-                  ERROR_LOCATION);
-
-            // save the VINTR character
-            pImpl_->ctrlC = termp.c_cc[VINTR];
          }
+
+         // standard mode: close/redirect pipes
          else
          {
+            // close unused pipes -- intentionally fail forward (see note above)
+            closePipe(fdInput[WRITE], ERROR_LOCATION);
+            closePipe(fdOutput[READ], ERROR_LOCATION);
+            closePipe(fdError[READ], ERROR_LOCATION);
+
+            // wire standard streams (intentionally fail forward)
+            safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
+                               ERROR_LOCATION);
+            safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
+                               ERROR_LOCATION);
+            safePosixCall<int>(
+                  boost::bind(::dup2,
+                              options_.redirectStdErrToStdOut ? fdOutput[WRITE]
+                                                              : fdError[WRITE],
+                              STDERR_FILENO),
+                  ERROR_LOCATION);
+         }
+
+         // close all open file descriptors other than std streams
+         error = core::system::closeNonStdFileDescriptors();
+         if (error)
+         {
             LOG_ERROR(error);
+            // intentionally fail forward (see note above)
+         }
+
+         if (!options_.workingDir.empty())
+         {
+            if (::chdir(options_.workingDir.absolutePath().c_str()))
+            {
+               std::string message = "Error changing directory: '";
+               message += options_.workingDir.absolutePath().c_str();
+               message += "'";
+               LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
+            }
          }
       }
-
-      // standard mode: close/redirect pipes
       else
       {
-         // close unused pipes -- intentionally fail forward (see note above)
-         closePipe(fdInput[WRITE], ERROR_LOCATION);
-         closePipe(fdOutput[READ], ERROR_LOCATION);
-         closePipe(fdError[READ], ERROR_LOCATION);
+         // note: forking is dangerous in a multithreaded environment (see note above)
+         // this block must ONLY use async signal-safe functions and CANNOT
+         // dynamically allocate ANY memory or take locks of any kind
 
-         // wire standard streams (intentionally fail forward)
-         safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
-                            ERROR_LOCATION);
-         safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
-                            ERROR_LOCATION);
-         safePosixCall<int>(
-               boost::bind(::dup2,
-                           options_.redirectStdErrToStdOut ? fdOutput[WRITE]
-                                                           : fdError[WRITE],
-                           STDERR_FILENO),
-               ERROR_LOCATION);
+         // close pipe end that we do not need
+         // this is not critical and as such, is best effort
+         // no error checking is done as a result
+         ::close(fdInput[WRITE]);
+         ::close(fdOutput[READ]);
+         ::close(fdError[READ]);
+
+         // wire standard streams
+         // if an error occurs, we exit immediately as this is a critical error
+         // we use the form of exit, _exit, which forcefully tears down the process
+         // and does not attempt to run c++ cleanup code (as noted problematic above)
+         int result = ::dup2(fdInput[READ], STDIN_FILENO);
+         if (result == -1)
+            ::_exit(kThreadSafeForkErrorExit);
+
+         result = ::dup2(fdOutput[WRITE], STDOUT_FILENO);
+         if (result == -1)
+            ::_exit(kThreadSafeForkErrorExit);
+
+         result = ::dup2(options_.redirectStdErrToStdOut ? fdOutput[WRITE] : fdError[WRITE],
+                             STDERR_FILENO);
+         if (result == -1)
+            ::_exit(kThreadSafeForkErrorExit);
       }
-
-      // close all open file descriptors other than std streams
-      error = core::system::closeNonStdFileDescriptors();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }
-
-      if (!options_.workingDir.empty())
-      {
-         if (::chdir(options_.workingDir.absolutePath().c_str()))
-         {
-            std::string message = "Error changing directory: '";
-            message += options_.workingDir.absolutePath().c_str();
-            message += "'";
-            LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
-         }
-      }
-
-      // build args (on heap so they stay around after exec)
-      // create set of args to pass (needs to include the cmd)
-      std::vector<std::string> args;
-      args.push_back(exe_);
-      args.insert(args.end(), args_.begin(), args_.end());
-      using core::system::ProcessArgs;
-      ProcessArgs* pProcessArgs = new ProcessArgs(args);
 
       if (options_.environment)
       {
-         // build env (on heap, see comment above)
-         std::vector<std::string> env;
-         const Options& options = options_.environment.get();
-         for (Options::const_iterator
-                  it = options.begin(); it != options.end(); ++it)
-         {
-            env.push_back(it->first + "=" + it->second);
-         }
-         ProcessArgs* pEnvironment = new ProcessArgs(env);
-
          // execute
          ::execve(exe_.c_str(), pProcessArgs->args(), pEnvironment->args());
       }
@@ -647,13 +727,18 @@ Error ChildProcess::run()
          ::execv(exe_.c_str(), pProcessArgs->args()) ;
       }
 
-      // in the normal case control should never return from execv (it starts
-      // anew at main of the process pointed to by path). therefore, if we get
-      // here then there was an error
-      error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("exe", exe_);
-      LOG_ERROR(error);
-      ::exit(EXIT_FAILURE);
+      if (!options_.threadSafe)
+      {
+         // in the normal case control should never return from execv (it starts
+         // anew at main of the process pointed to by path). therefore, if we get
+         // here then there was an error
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("exe", exe_);
+         LOG_ERROR(error);
+         ::exit(EXIT_FAILURE);
+      }
+      else
+         ::_exit(kThreadSafeForkErrorExit);
    }
 
    // parent
@@ -678,6 +763,8 @@ Error ChildProcess::run()
          // record pipe handles
          pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
       }
+
+      delete pProcessArgs;
 
       return Success();
    }
@@ -771,14 +858,21 @@ AsyncChildProcess::~AsyncChildProcess()
 
 Error AsyncChildProcess::terminate()
 {
-#ifdef __APPLE__
-   if (options().pseudoterminal)
+#ifndef __APPLE__
+   // On Linux only do this if dealing with a Terminal-pane process.
+   // This is to reduce scope of this change for 1.1
+   // TODO: review post 1.1
+   if (options().smartTerminal)
    {
-      pAsyncImpl_->finishedStderr_ = true;
-      pAsyncImpl_->finishedStdout_ = true;
+#endif
+      if (options().pseudoterminal)
+      {
+         pAsyncImpl_->finishedStderr_ = true;
+         pAsyncImpl_->finishedStdout_ = true;
+      }
+#ifndef __APPLE__
    }
 #endif
-
    return ChildProcess::terminate();
 }
 
@@ -961,6 +1055,472 @@ void AsyncChildProcess::poll()
 bool AsyncChildProcess::exited()
 {
    return pAsyncImpl_->exited_;
+}
+
+struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioAsyncChildProcess::Impl>
+{
+   Impl(AsioAsyncChildProcess* parent,
+        boost::asio::io_service& ioService) :
+      parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
+      stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
+      stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false)
+   {
+   }
+
+   void attachDescriptors()
+   {
+      stdOutDescriptor_.assign(parent_->pImpl_->fdStdout);
+      stdErrDescriptor_.assign(parent_->pImpl_->fdStderr);
+      stdInDescriptor_.assign(parent_->pImpl_->fdStdin);
+   }
+
+   void beginReadStdOut()
+   {
+      return stdOutDescriptor_.async_read_some(boost::asio::buffer(stdOutBuff_, 1024),
+                                               boost::bind(&Impl::stdOutCallback,
+                                                           boost::weak_ptr<Impl>(shared_from_this()),
+                                                           boost::asio::placeholders::error,
+                                                           _2));
+   }
+
+   void beginReadStdErr()
+   {
+      return stdErrDescriptor_.async_read_some(boost::asio::buffer(stdErrBuff_, 1024),
+                                               boost::bind(&Impl::stdErrCallback,
+                                                           boost::weak_ptr<Impl>(shared_from_this()),
+                                                           boost::asio::placeholders::error,
+                                                           _2));
+   }
+
+
+   void beginWriteStdIn(const boost::unique_lock<boost::mutex>& lock)
+   {
+      // requires prior synchronization
+      BOOST_ASSERT(lock.owns_lock());
+
+      if (exited_)
+         return;
+
+      if (writeBuffer_.empty()) return;
+
+      std::pair<std::string, bool>& writeData = writeBuffer_.front();
+      std::string& input = writeData.first;
+      bool eof = writeData.second;
+
+      boost::asio::async_write(stdInDescriptor_, boost::asio::buffer(input, input.size()),
+                               boost::bind(&Impl::writeCallback,
+                                           boost::weak_ptr<Impl>(shared_from_this()),
+                                           boost::asio::placeholders::error,
+                                           eof));
+   }
+
+   static void stdOutCallback(const boost::weak_ptr<Impl>& instance,
+                              const boost::system::error_code& ec, size_t bytesRead)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onReadStdOut(ec, bytesRead);
+      }
+   }
+
+   static void stdErrCallback(const boost::weak_ptr<Impl>& instance,
+                              const boost::system::error_code& ec, size_t bytesRead)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onReadStdErr(ec, bytesRead);
+      }
+   }
+
+   void onReadStdOut(const boost::system::error_code& ec, size_t bytesRead)
+   {
+      if (ec)
+      {
+         stdoutFailure_ = true;
+         return handleError(ec);
+      }
+
+      std::string out(stdOutBuff_, bytesRead);
+      if (callbacks_.onStdout)
+         callbacks_.onStdout(*(static_cast<ProcessOperations*>(parent_)), out);
+
+      // continue reading stdout
+      beginReadStdOut();
+   }
+
+   void onReadStdErr(const boost::system::error_code& ec, size_t bytesRead)
+   {
+      if (ec)
+      {
+         stderrFailure_ = true;
+         return handleError(ec);
+      }
+
+      std::string out(stdErrBuff_, bytesRead);
+      if (callbacks_.onStderr)
+         callbacks_.onStderr(*(static_cast<ProcessOperations*>(parent_)), out);
+
+      // continue reading stdout
+      beginReadStdErr();
+   }
+
+   static void writeCallback(const boost::weak_ptr<Impl>& instance, const boost::system::error_code& ec, bool eof)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->onWriteStdIn(ec, eof);
+      }
+   }
+
+   void onWriteStdIn(const boost::system::error_code& ec, bool eof)
+   {
+      if (exited_)
+         return;
+
+      boost::unique_lock<boost::mutex> lock(mutex_);
+
+      // free the message that was just written
+      // we do this here because the message has to exist in memory
+      // for the entire duration of the asynchronous write
+      writeBuffer_.pop();
+
+      if (ec)
+      {
+         lock.unlock();
+         return handleError(ec);
+      }
+
+      if (eof)
+      {
+         // close std in stream and stop writing
+         parent_->pImpl_->closeFD(&parent_->pImpl_->fdStdin, ERROR_LOCATION);
+      }
+      else
+      {
+         // continue writing until our write queue is drained
+         beginWriteStdIn(lock);
+      }
+   }
+
+   // writes need synchronization because we could have an outstanding write while a request
+   // comes in to write more data. async io requires that we only have one outstanding write
+   // operation to avoid interleaving of message content
+   void writeInput(const std::string& input, bool eof)
+   {
+      if (exited_)
+         return;
+
+      bool beginWriting = false;
+
+      boost::unique_lock<boost::mutex> lock(mutex_);
+
+      beginWriting = writeBuffer_.empty();
+      writeBuffer_.push(std::make_pair(input, eof));
+
+      if (beginWriting)
+         beginWriteStdIn(lock);
+   }
+
+   void handleError(const boost::system::error_code& ec)
+   {
+      // if we were aborted, we did this ourselves so do not propagate the error
+      if (ec == boost::asio::error::operation_aborted) return;
+
+      checkExited(boost::posix_time::seconds(5), ec);
+   }
+
+   static void invokeErrorHandler(boost::weak_ptr<Impl> weak,
+                                  const Error& error)
+   {
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = weak.lock())
+      {
+         // invoke the actual callback on the shared ptr
+         impl->callbacks_.onError(*(static_cast<ProcessOperations*>(impl->parent_)), error);
+      }
+   }
+
+   bool exited()
+   {
+      return exited_;
+   }
+
+   static void checkExitedTimer(const boost::weak_ptr<Impl>& instance,
+                                const boost::system::error_code& timerEc,
+                                const boost::posix_time::time_duration& waitTime,
+                                const boost::system::error_code& errorCode,
+                                bool forceExit,
+                                boost::posix_time::ptime startTime)
+   {
+      if (timerEc == boost::asio::error::operation_aborted)
+         return;
+
+      // check to make sure the instance is still alive
+      // if not, we just ignore this callback as it is stale, with no object alive to service it
+      if (boost::shared_ptr<Impl> impl = instance.lock())
+      {
+         // invoke the actual method on the shared ptr
+         impl->checkExited(waitTime, errorCode, forceExit, startTime);
+      }
+   }
+
+   void checkExited(const boost::posix_time::time_duration& waitTime =
+                       boost::posix_time::time_duration(boost::posix_time::not_a_date_time),
+                    const boost::system::error_code& errorCode = boost::system::error_code(),
+                    bool forceExit = false,
+                    boost::posix_time::ptime startTime = boost::posix_time::second_clock::universal_time())
+   {
+      using namespace boost::posix_time;
+      using namespace boost::asio;
+
+      if (exited_)
+         return;
+
+      // only check for exit if both stdout and stderr have failed
+      // without this check, it would be possible for us to exit before processing any buffered output
+      // from the other pipe
+      if ((!stderrFailure_ || !stdoutFailure_) && !forceExit)
+         return;
+
+      bool transitioned = false;
+
+      // lock the mutex to ensure only one thread checks for exit at a time
+      LOCK_MUTEX(mutex_)
+      {
+         // check exited once more - this ensures that if another thread acquired the lock while we
+         // attempted to grab it, that we won't check for exit if it has already been done
+         if (exited_)
+            return;
+
+         // perform a wait on the pid to determine if we exited
+         // the waitTime parameter determines how long we should wait for the process to exit
+         // blocking is useful if we know we have killed the child ourselves as we will
+         // want to make sure we get the notification when it finally goes down
+         // it is also useful because when processes go down, sometimes they take some time
+         // to register as being dead after closing their read/write pipes
+         int status = 0;
+         PidType result = posixCall<PidType>(boost::bind(::waitpid, parent_->pImpl_->pid, &status, WNOHANG));
+
+         if (result != 0)
+         {
+            exited_ = true;
+            transitioned = true;
+
+            cleanup();
+
+            if (result > 0)
+               exitCode_ = resolveExitStatus(status);
+            else
+               exitCode_ = -1;
+         }
+         else
+         {
+            // if we have not waited for the entire duration yet, keep checking for exit
+            if (waitTime != not_a_date_time &&
+                second_clock::universal_time() - startTime < waitTime)
+            {
+               // check again in 20 milliseconds - this is a short amount of time, but long enough
+               // to play nice with the rest of the system. in terms of process cleanup time,
+               // in most cases this should be a significant amount of time
+               exitTimer_.reset(new deadline_timer(ioService_, milliseconds(20)));
+               exitTimer_->async_wait(boost::bind(&Impl::checkExitedTimer,
+                                                  boost::weak_ptr<Impl>(shared_from_this()),
+                                                  boost::asio::placeholders::error,
+                                                  waitTime, errorCode, forceExit, startTime));
+               return;
+            }
+         }
+
+         if (forceExit && !exited_)
+         {
+            // act like this process exited, even if it didn't
+            // this ensures poorly behaved children don't cause us to wait forever
+            exited_ = true;
+            transitioned = true;
+
+            cleanup();
+
+            exitCode_ = -1;
+         }
+      }
+      END_LOCK_MUTEX
+
+      // invoke the exit callback on the thread pool
+      // we do that instead of immediately to ensure a clean exit
+      if (transitioned && callbacks_.onExit)
+      {
+         // copy the function before posting the error to the thread pool
+         // we do this because this instance could be destroyed while in the
+         // io_service queue, and so we want to copy these variables
+         // to ensure we don't try to access any members
+         boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
+         ioService_.post(handler);
+      }
+      else if (errorCode)
+      {
+         // this was no exit, but a legitimate error
+         Error error = systemError(errorCode.value(), errorCode.message(), ERROR_LOCATION);
+         if (callbacks_.onError)
+         {
+            // copy members before posting the error to the thread pool
+            // we do this because this instance could be destroyed while in the
+            // io_service queue, and so we want to copy these variables
+            // to ensure we don't try to access any members
+            boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
+                                                              boost::weak_ptr<Impl>(shared_from_this()),
+                                                              error);
+            ioService_.post(handler);
+         }
+         else
+            LOG_ERROR(error);
+
+         // if we had an unexpected closure of the stream but no exit, terminate
+         error = parent_->terminate();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   void cleanup()
+   {
+      // close descriptors and cancel outstanding io operations
+      boost::system::error_code ec;
+
+      // note: errors are swallowed - we do not care about errors when closing descriptors
+      // according to boost documentation, the descriptors are guaranteed to be closed
+      // even if an error occurs
+      stdOutDescriptor_.close(ec);
+      stdErrDescriptor_.close(ec);
+      stdInDescriptor_.close(ec);
+   }
+
+   pid_t pid() const
+   {
+      return parent_->pImpl_->pid;
+   }
+
+   AsioAsyncChildProcess* parent_;
+   boost::asio::io_service& ioService_;
+   boost::asio::posix::stream_descriptor stdOutDescriptor_;
+   boost::asio::posix::stream_descriptor stdErrDescriptor_;
+   boost::asio::posix::stream_descriptor stdInDescriptor_;
+   std::atomic<bool> exited_;
+   std::atomic<bool> stdoutFailure_;
+   std::atomic<bool> stderrFailure_;
+   int exitCode_;
+
+   boost::shared_ptr<boost::asio::deadline_timer> exitTimer_;
+
+   ProcessCallbacks callbacks_;
+
+   char stdOutBuff_[1024];
+   char stdErrBuff_[1024];
+
+   bool writing_;
+   std::queue<std::pair<std::string, bool> > writeBuffer_;
+
+   boost::mutex mutex_;
+};
+
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+                                             const std::string& exe,
+                                             const std::vector<std::string>& args,
+                                             const ProcessOptions& options) :
+   AsyncChildProcess(exe, args, options),
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+{
+}
+
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+                                             const std::string& command,
+                                             const ProcessOptions& options) :
+   AsyncChildProcess(command, options),
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+{
+}
+
+AsioAsyncChildProcess::~AsioAsyncChildProcess()
+{
+}
+
+Error AsioAsyncChildProcess::run(const ProcessCallbacks& callbacks)
+{
+   pAsioImpl_->callbacks_ = callbacks;
+
+   Error error = ChildProcess::run();
+   if (error)
+      return error;
+
+   pAsioImpl_->attachDescriptors();
+   pAsioImpl_->beginReadStdOut();
+   pAsioImpl_->beginReadStdErr();
+
+   return Success();
+}
+
+void AsioAsyncChildProcess::asyncWriteToStdin(const std::string& input, bool eof)
+{
+   return pAsioImpl_->writeInput(input, eof);
+}
+
+bool AsioAsyncChildProcess::exited()
+{
+   return pAsioImpl_->exited();
+}
+
+Error AsioAsyncChildProcess::terminate()
+{
+   if (exited()) return Success();
+
+   Error error = AsyncChildProcess::terminate();
+   if (!error)
+   {
+      // wait for the process to exit
+      // we wait for a maximum of 30 seconds, which should be plenty of time for the process
+      // to exit gracefully - if it still has not exited after the timeout, invoke exit callback anyway
+      // as there is something wrong with the process and we want to continue as if it has exited
+      pAsioImpl_->checkExited(boost::posix_time::time_duration(boost::posix_time::seconds(30)),
+                              boost::system::error_code(), true);
+   }
+
+   return error;
+}
+
+bool AsioAsyncChildProcess::hasNonWhitelistSubprocess() const
+{
+   return AsyncChildProcess::hasNonWhitelistSubprocess();
+}
+
+bool AsioAsyncChildProcess::hasWhitelistSubprocess() const
+{
+   return AsyncChildProcess::hasWhitelistSubprocess();
+}
+
+core::FilePath AsioAsyncChildProcess::getCwd() const
+{
+   // not relevant
+   return FilePath();
+}
+
+bool AsioAsyncChildProcess::hasRecentOutput() const
+{
+   // not relevant
+   return false;
+}
+
+pid_t AsioAsyncChildProcess::pid() const
+{
+   return pAsioImpl_->pid();
 }
 
 } // namespace system

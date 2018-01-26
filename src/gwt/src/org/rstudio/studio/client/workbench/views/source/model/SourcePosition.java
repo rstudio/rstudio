@@ -68,7 +68,7 @@ public class SourcePosition extends JavaScriptObject
       else if (other.getContext() == null && getContext() != null)
          return false;
       else
-         return other.getContext().equals(getContext()) &&
+         return other.getContext() == getContext() &&
                 (other.getRow() == getRow());
    }
    

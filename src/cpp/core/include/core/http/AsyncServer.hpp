@@ -45,6 +45,9 @@ public:
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler) = 0;
 
+   virtual void addProxyHandler(const std::string& prefix,
+                                const AsyncUriHandlerFunction& handler) = 0;
+
 
    virtual void addBlockingHandler(const std::string& prefix,
                                    const UriHandlerFunction& handler) = 0;
@@ -66,9 +69,12 @@ public:
 
    virtual Error run(std::size_t threadPoolSize = 1) = 0;
 
+   virtual bool isRunning() = 0;
+
    virtual void stop() = 0;
    
    virtual void waitUntilStopped() = 0;
+
 };
 
 } // namespace http

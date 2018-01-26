@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class StringUtil
 {
@@ -47,6 +48,13 @@ public class StringUtil
          out.append(' ');
       out.append(value);
       return out.toString();
+   }
+   
+   public static String create(String source)
+   {
+      if (source == null)
+         return null;
+      return new String(source);
    }
 
    public static int parseInt(String value, int defaultValue)
@@ -116,7 +124,7 @@ public class StringUtil
       return FORMAT.format((double)size / divisor) + " " + LABELS[i];
    }
    
-   // Peform an integer division and return the result. GWT's division operator
+   // Perform an integer division and return the result. GWT's division operator
    // truncates the result to Int32 range. 
    public static native int nativeDivide(int num, int denom) 
    /*-{
@@ -168,49 +176,10 @@ public class StringUtil
       return val == null || val.length() == 0;
    }
 
-   // WARNING: I'm pretty sure this will fail for UTF-8
    public static String textToRLiteral(String value)
    {
-      StringBuffer sb = new StringBuffer();
-      sb.append('"');
-
-      for (char c : value.toCharArray())
-      {
-         switch (c)
-         {
-            case '"':
-               sb.append("\\\"");
-               break;
-            case '\n':
-               sb.append("\\n");
-               break;
-            case '\r':
-               sb.append("\\r");
-               break;
-            case '\t':
-               sb.append("\\t");
-               break;
-            case '\b':
-               sb.append("\\b");
-               break;
-            case '\f':
-               sb.append("\\f");
-               break;
-            case '\\':
-               sb.append("\\\\");
-               break;
-            default:
-               if (c < 32 || c > 126)
-                  sb.append("\\x").append(toHex(c));
-               else
-                  sb.append(c);
-               break;
-         }
-      }
-
-      sb.append('"');
-      
-      return sb.toString();
+      String escaped = value.replaceAll("([\"\\n\\r\\t\\b\\f\\\\])", "\\\\$1");
+      return '"' + escaped + '"';
    }
 
    private static String toHex(char c)
@@ -986,7 +955,7 @@ public class StringUtil
    
    public static boolean isComplementOf(String self, String other)
    {
-      return COMPLEMENTS.get(self).equals(other);
+      return COMPLEMENTS.get(self) == other;
    }
    
    private static final HashMap<String, String> makeComplementsMap()
@@ -1062,7 +1031,7 @@ public class StringUtil
    public static boolean isOneOf(String string, String... candidates)
    {
       for (String candidate : candidates)
-         if (candidate.equals(string))
+         if (candidate == string)
             return true;
       return false;
    }
@@ -1073,6 +1042,26 @@ public class StringUtil
          if (ch == candidate)
             return true;
       return false;
+   }
+
+   /**
+    * A better implementation of isLetter -- the default GWT version doesn't support non-English characters.
+    * Adapted from: https://github.com/gwtproject/gwt/issues/1989
+    * @param c the character to check
+    * @return whether the character represents an alphabetic symbol.
+    */
+   public static boolean isLetter(char c) 
+   {
+      int val = (int) c;
+
+      return MathUtil.inRange(val, 65, 90)     || 
+             MathUtil.inRange(val, 97, 122)    || 
+             MathUtil.inRange(val, 192, 687)   || 
+             MathUtil.inRange(val, 900, 1159)  || 
+             MathUtil.inRange(val, 1162, 1315) || 
+             MathUtil.inRange(val, 1329, 1366) || 
+             MathUtil.inRange(val, 1377, 1415) || 
+             MathUtil.inRange(val, 1425, 1610);
    }
 
    public static final String makeRandomId(int length) 
@@ -1123,7 +1112,15 @@ public class StringUtil
    public static final native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
    }-*/;
-   
+
+   /**
+    * Convert string line endings to carriage returns to mimic keyboard entry
+    * of text on Windows.
+    */
+   public static final native String normalizeNewLinesToCR(String string) /*-{
+      return string.replace(/\r\n|\n\r|\n/g, "\r");
+   }-*/;
+    
    public static final native JsArrayString split(String string, String delimiter) /*-{
       return string.split(delimiter);
    }-*/;
@@ -1243,10 +1240,19 @@ public class StringUtil
       return detectedIndentSize;
    }
     
+   /**
+    * Compare two strings, works if one or both strings are null.
+    * @param str1
+    * @param str2
+    * @return true if non-null strings are equal, or both are null
+    */
+   public static native boolean equals(String str1, String str2) /*-{
+      return str1 == str2;
+   }-*/;
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
-
 }

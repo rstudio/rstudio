@@ -1,7 +1,7 @@
 /*
  * ExistingDirectoryPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
@@ -58,7 +59,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       if (dir.length() > 0)
       {
          return new NewProjectResult(
-                     projFileFromDir(dir), false, false, null, null, null, null, null);
+                     Projects.projFileFromDir(dir), false, false, null, null, null, null, null, null);
       }
       else
       {

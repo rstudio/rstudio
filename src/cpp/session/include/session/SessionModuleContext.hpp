@@ -98,6 +98,7 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
    
 // r session info
 std::string rVersion();
+std::string rVersionLabel();
 std::string rHomeDir();
 
 // active sessions
@@ -109,6 +110,8 @@ core::FilePath tempFile(const std::string& prefix,
                         const std::string& extension);
 
 core::FilePath tempDir();
+
+std::string rLibsUser();
 
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
@@ -745,6 +748,8 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
+
+bool isSessionTempPath(core::FilePath filePath);
 
 std::string sessionTempDirUrl(const std::string& sessionTempPath);
 

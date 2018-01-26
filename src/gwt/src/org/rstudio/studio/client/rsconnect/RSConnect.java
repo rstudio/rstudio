@@ -211,7 +211,7 @@ public class RSConnect implements SessionInitHandler,
          case CONTENT_TYPE_HTML:
          case CONTENT_TYPE_DOCUMENT:
          case CONTENT_TYPE_WEBSITE:
-            if (event.getFromPrevious().getServer().equals("rpubs.com"))
+            if (event.getFromPrevious().getServer() == "rpubs.com")
             {
                publishAsRPubs(event);
             }
@@ -340,17 +340,24 @@ public class RSConnect implements SessionInitHandler,
                   publishAsCode(event, input.getWebsiteDir(), false);
                }
             }
-            else if (input.isSelfContained() && input.hasDocOutput())
-            {
-               // RStudio Connect is disabled, go straight to RPubs
-               publishAsRPubs(event);
-            }
-            else 
+            else if (!input.isSelfContained())
             {
                // we should generally hide the button in this case
                display_.showErrorMessage("Content Not Publishable", 
                      "Only self-contained documents can currently be " + 
                      "published to RPubs.");
+            }
+            else if (!input.hasDocOutput())
+            {
+               display_.showErrorMessage("Publish Document", 
+                     "Only rendered R Markdown documents can be published to RPubs. " +
+                     "To publish this document, click Knit to render it, then click " +
+                     "the Publish button above the rendered document.");
+            }
+            else if (input.isSelfContained() && input.hasDocOutput())
+            {
+               // RStudio Connect is disabled, go straight to RPubs
+               publishAsRPubs(event);
             }
          }
       }
@@ -914,7 +921,7 @@ public class RSConnect implements SessionInitHandler,
          }
          else
          {
-            if (record.getUrl().equals(lastRecord.getUrl()))
+            if (record.getUrl() == lastRecord.getUrl())
                recordList.set(0, record);
          }
       }
@@ -950,7 +957,7 @@ public class RSConnect implements SessionInitHandler,
          for (int j = 0; j < apps.length(); j++)
          {
             RSConnectApplicationInfo candidate = apps.get(j);
-            if (candidate.getName().equals(records.get(i).getName()))
+            if (candidate.getName() == records.get(i).getName())
             {
                // show the management ui
                display_.openWindow(candidate.getConfigUrl());

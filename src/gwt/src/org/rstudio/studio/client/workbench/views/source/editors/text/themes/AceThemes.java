@@ -42,6 +42,7 @@ public class AceThemes
    public static final String COBALT = "Cobalt";
    public static final String CRIMSON_EDITOR = "Crimson Editor";
    public static final String DAWN = "Dawn";
+   public static final String DRACULA = "Dracula";
    public static final String DREAMWEAVER = "Dreamweaver";
    public static final String ECLIPSE = "Eclipse";
    public static final String IDLE_FINGERS = "Idle Fingers";
@@ -84,6 +85,7 @@ public class AceThemes
       addTheme(COBALT, res.cobalt(), true);
       addTheme(CRIMSON_EDITOR, res.crimson_editor(), false);
       addTheme(DAWN, res.dawn(), false);
+      addTheme(DRACULA, res.dracula(), true);
       addTheme(DREAMWEAVER, res.dreamweaver(), false);
       addTheme(ECLIPSE, res.eclipse(), false);
       addTheme(IDLE_FINGERS, res.idle_fingers(), true);

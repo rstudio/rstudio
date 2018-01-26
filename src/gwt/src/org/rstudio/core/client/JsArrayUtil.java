@@ -30,7 +30,7 @@ public class JsArrayUtil
    {
       for (int i = 0; i < haystack.length(); i++)
       {
-         if (haystack.get(i).equals(needle))
+         if (haystack.get(i) == needle)
             return true;
       }
       return false;
@@ -101,7 +101,7 @@ public class JsArrayUtil
          return false;
       for (int i = 0; i < first.length(); i++)
       {
-         if (!first.get(i).equals(second.get(i)))
+         if (first.get(i) != second.get(i))
             return false;
       }
       return true;

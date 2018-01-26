@@ -87,6 +87,7 @@ struct RProjectConfig
         customScriptPath(),
         tutorialPath(),
         quitChildProcessesOnExit(DefaultValue),
+        disableExecuteRprofile(false),
         defaultOpenDocs()
    {
    }
@@ -119,13 +120,16 @@ struct RProjectConfig
    std::string customScriptPath;
    std::string tutorialPath;
    int quitChildProcessesOnExit;
+   bool disableExecuteRprofile;
    std::string defaultOpenDocs;
 };
 
 Error findProjectFile(FilePath filePath,
+                      FilePath anchorPath,
                       FilePath* pProjPath);
 
 Error findProjectConfig(FilePath filePath,
+                        const FilePath& anchorPath,
                         RProjectConfig* pConfig);
 
 Error readProjectFile(const FilePath& projectFilePath,

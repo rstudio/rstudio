@@ -62,6 +62,10 @@ public class ActiveSession extends JavaScriptObject
       return this.r_version;
    }-*/;
    
+   public native final String getRVersionLabel() /*-{
+      return this.r_version_label;
+   }-*/;
+   
    public native final String getRVersionHome() /*-{
       return this.r_version_home;
    }-*/;

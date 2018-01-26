@@ -63,7 +63,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
            false);
          RVersionSpec rVersion = RVersionSpec.create(
                rVersions.getDefaultRVersion(),
-               rVersions.getDefaultRVersionHome());
+               rVersions.getDefaultRVersionHome(),
+               rVersions.getRVersionLabel());
          rVersionSelector_.setRVersion(rVersion);
          addLeftWidget(rVersionSelector_);
          rVersionSelector_.getElement().getStyle().setMarginRight(8, Unit.PX);

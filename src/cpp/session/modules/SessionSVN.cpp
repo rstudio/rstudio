@@ -142,8 +142,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   core::system::setHomeToUserProfile(&childEnv);
 #endif
 
    // set the SVN_EDITOR if it is available
@@ -1191,7 +1190,7 @@ struct CommitInfo
    std::string author;
    std::string subject;
    std::string description;
-   boost::posix_time::time_duration::sec_type date;
+   boost::uint64_t date;
 };
 
 bool commitIsMatch(const std::vector<std::string>& patterns,

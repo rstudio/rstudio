@@ -24,9 +24,14 @@ apt-get install -y libssh2-1-dev
 apt-get install -y curl 
 apt-get install -y libcurl4-openssl-dev
 
-# install GNU debugger and a JDK
+# install GNU debugger
 apt-get install -y gdb
-apt-get install -y openjdk-7-jdk
+
+# add ppa repository so we can install java 8 (not in any official repo for trusty)
+apt-get install -y software-properties-common python-software-properties
+add-apt-repository -y ppa:openjdk-r/ppa 
+apt-get update
+apt-get install -y openjdk-8-jdk
 
 # create SSH key if needed
 if [ ! -f /rstudio/vagrant/vagrant_key_rsa ]; then

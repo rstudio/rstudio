@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
+import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -265,7 +266,7 @@ public class RemoteServer implements Server
       listeningForEvents_ = true;
       
       // only check credentials if we are in server mode
-      if (session_.getSessionInfo().getMode().equals(SessionInfo.SERVER_MODE))
+      if (session_.getSessionInfo().getMode() == SessionInfo.SERVER_MODE)
          serverAuth_.schedulePeriodicCredentialsUpdate();
       
       // start event listener
@@ -1328,10 +1329,11 @@ public class RemoteServer implements Server
 
    public String getFileUrl(FileSystemItem file)
    {
-      if (Desktop.isDesktop())
-      {
-         return Desktop.getFrame().getUriForPath(file.getPath());
-      }
+//      // TODO: need to be asynchronous for desktop
+//      if (Desktop.isDesktop())
+//      {
+//         return Desktop.getFrame().getUriForPath(file.getPath());
+//      }
       
       if (!file.isDirectory())
       {
@@ -1664,6 +1666,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void findProjectInFolder(
+         String folder,
+         ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, "find_project_in_folder", folder, callback);
+   }
+   
+   @Override
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -1781,6 +1791,8 @@ public class RemoteServer implements Server
                             String contents,
                             ServerRequestCallback<String> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
@@ -1804,6 +1816,8 @@ public class RemoteServer implements Server
                                 String hash,
                                 ServerRequestCallback<String> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
@@ -1954,6 +1968,7 @@ public class RemoteServer implements Server
                                   String rnwWeave,
                                   ServerRequestCallback<Void> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(contents));
       params.set(1, JSONBoolean.getInstance(sweave));
@@ -1981,6 +1996,8 @@ public class RemoteServer implements Server
          HashMap<String, String> properties,
          ServerRequestCallback<Void> requestCallback)
    {
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
+
       JSONObject obj = new JSONObject();
       for (Map.Entry<String, String> entry : properties.entrySet())
       {
@@ -2904,6 +2921,11 @@ public class RemoteServer implements Server
             // first crack goes to globally registered rpc error handlers
             if (!handleRpcErrorInternally(error))
             {
+               eventBus_.fireEvent(new ApplicationTutorialEvent(
+                     ApplicationTutorialEvent.API_ERROR,
+                     "rpc",
+                     error.getEndUserMessage()));
+               
                // no global handlers processed it, send on to caller
                responseHandler.onResponseReceived(RpcResponse.create(error));
             }
@@ -3009,8 +3031,7 @@ public class RemoteServer implements Server
             public void onResponseReceived(Integer response)
             {
                // allow retry on success, otherwise handle unauthorized error
-               if (response.intValue() ==
-                                 RemoteServerAuth.CREDENTIALS_UPDATE_SUCCESS)
+               if (response == RemoteServerAuth.CREDENTIALS_UPDATE_SUCCESS)
                {
                   retryHandler.onRetry();
                }
@@ -3157,7 +3178,7 @@ public class RemoteServer implements Server
                                              RpcResponse response) /*-{
             responseCallback.onResponse(response);
          }-*/;
-      };
+      }
       final ResponseHandler responseHandler = new ResponseHandler();
       
       // setup a retry handler which will call back the second time with
@@ -3960,6 +3981,18 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE,
                   REQUERY_CONTEXT,
+                  requestCallback);
+   }
+
+   @Override
+   public void setEnvironmentMonitoring(boolean monitoring,
+                                        ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(monitoring));
+      sendRequest(RPC_SCOPE,
+                  SET_ENVIRONMENT_MONITORING,
+                  params,
                   requestCallback);
    }
 
@@ -5500,6 +5533,7 @@ public class RemoteServer implements Server
    private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
    private static final String GET_OBJECT_CONTENTS = "get_object_contents";
    private static final String REQUERY_CONTEXT = "requery_context";
+   private static final String SET_ENVIRONMENT_MONITORING = "set_environment_monitoring";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
@@ -5601,5 +5635,4 @@ public class RemoteServer implements Server
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
-
 }

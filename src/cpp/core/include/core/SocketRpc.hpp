@@ -31,6 +31,8 @@ class FilePath;
 namespace socket_rpc {
 
 core::Error initialize();
+core::Error initializeSecret(const std::string& rpcSecret);
+
 core::Error invokeRpc(const FilePath& socketPath,
                       const std::string& endpoint,
                       const core::json::Object& request,

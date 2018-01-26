@@ -1,7 +1,7 @@
 /*
  * DesktopSatelliteWindow.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 #define DESKTOP_SATELLITE_WINDOW_HPP
 
 #include <QMainWindow>
-#include <QtWebKit>
 #include "DesktopGwtWindow.hpp"
 
 #include "DesktopGwtCallback.hpp"
@@ -27,6 +26,13 @@
 namespace rstudio {
 namespace desktop {
 
+enum CloseStage
+{
+   CloseStageOpen,
+   CloseStagePending,
+   CloseStageAccepted
+};
+
 class MainWindow;
 
 class SatelliteWindow : public GwtWindow
@@ -35,30 +41,25 @@ class SatelliteWindow : public GwtWindow
 public:
     SatelliteWindow(MainWindow* pMainWindow, QString name);
 
-signals:
+Q_SIGNALS:
 
-public slots:
+public Q_SLOTS:
 
 
-protected slots:
+protected Q_SLOTS:
    void onCloseWindowShortcut();
-   void finishLoading(bool ok);
-   void onJavaScriptWindowObjectCleared();
+   void finishLoading(bool ok) override;
 
 protected:
-   virtual void closeEvent(QCloseEvent *event);
-
-   virtual QSize printDialogMinimumSize()
-   {
-      return this->size();
-   }
+   void closeEvent(QCloseEvent *event) override;
+   void closeSatellite(QCloseEvent *event);
 
 private:
-   virtual void onActivated();
-
+   void onActivated() override;
 
 private:
    GwtCallback gwtCallback_;
+   CloseStage close_;
 };
 
 } // namespace desktop

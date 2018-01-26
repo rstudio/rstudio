@@ -17,13 +17,14 @@
 package org.rstudio.studio.client.common.synctex;
 
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopInfo;
 
 public class SynctexUtils
 {
    public static String getDesktopSynctexViewer()
    {
       if (Desktop.isDesktop())
-         return Desktop.getFrame().getDesktopSynctexViewer();
+         return DesktopInfo.getDesktopSynctexViewer();
       else
          return "";
    }

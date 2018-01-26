@@ -1,7 +1,7 @@
 /*
  * TerminalHelper.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,14 +38,7 @@ public class TerminalHelper
       
       // track busy terminals
       events_.addHandler(TerminalBusyEvent.TYPE,
-                          new TerminalBusyEvent.Handler()
-      {
-         @Override
-         public void onTerminalBusy(TerminalBusyEvent event)
-         {
-            warnBeforeClosing_ = event.isBusy();
-         }
-      });
+            event -> warnBeforeClosing_ = event.isBusy());
    }
    
    public boolean warnBeforeClosing(int busyMode)
@@ -71,12 +64,7 @@ public class TerminalHelper
             MessageDialog.QUESTION,
             caption, 
             "The terminal is currently busy. " + question,
-            new Operation() {
-               @Override
-               public void execute()
-               {
-                  command.execute();
-               }}, 
+            command::execute,
             true);
    }
    

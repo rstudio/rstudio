@@ -1,7 +1,7 @@
 /*
  * TerminalList.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,10 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -86,7 +87,7 @@ public class TerminalList implements Iterable<String>,
 
    /**
     * Add metadata from supplied TerminalSession
-    * @param terminal terminal to add
+    * @param term terminal to add
     */
    public void addTerminal(TerminalSession term)
    {
@@ -117,7 +118,7 @@ public class TerminalList implements Iterable<String>,
          return false;
       }
 
-      if (!current.getTitle().equals(title))
+      if (!StringUtil.equals(current.getTitle(), title))
       {
          current.setTitle(title);
          return true;
@@ -158,7 +159,7 @@ public class TerminalList implements Iterable<String>,
       if (current == null)
          return;
 
-      if (current.getCwd() != cwd)
+      if (!StringUtil.equals(current.getCwd(), cwd))
       {
          current.setCwd(cwd);
       }
@@ -188,7 +189,7 @@ public class TerminalList implements Iterable<String>,
    /**
     * update caption
     * @param handle terminal handle
-    * @param zombie new caption
+    * @param caption new caption
     */
    public void setCaption(String handle, String caption)
    {
@@ -241,7 +242,7 @@ public class TerminalList implements Iterable<String>,
       int i = 0;
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getHandle().equals(handle))
+         if (StringUtil.equals(item.getValue().getCPI().getHandle(), handle))
          {
             return i;
          }
@@ -279,7 +280,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption().equals(caption))
+         if (StringUtil.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return false;
          }
@@ -297,7 +298,7 @@ public class TerminalList implements Iterable<String>,
    {
       for (final java.util.Map.Entry<String, TerminalListData> item : terminals_.entrySet())
       {
-         if (item.getValue().getCPI().getCaption().equals(caption))
+         if (StringUtil.equals(item.getValue().getCPI().getCaption(), caption))
          {
             return item.getValue().getCPI().getHandle();
          }
@@ -349,38 +350,28 @@ public class TerminalList implements Iterable<String>,
    {
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
             uiPrefs_.terminalTrackEnvironment().getValue());
-      startTerminal(info, callback);
+      startTerminal(info, false /*createdByApi*/, callback);
    }
 
    /**
     * Reconnect to a known terminal.
     * @param handle
+    * @param callback result of reconnect attempt
     * @return true if terminal was known and reconnect initiated
     */
-   public boolean reconnectTerminal(String handle)
+   public void reconnectTerminal(String handle,
+                                 boolean createdByApi,
+                                 final ResultCallback<Boolean, String> callback) 
    {
       ConsoleProcessInfo existing = getMetadataForHandle(handle);
       if (existing == null)
       {
-         return false;
+         callback.onFailure("Tried to switch to unknown terminal handle"); 
+         return;
       }
 
       existing.setHandle(handle);
-      startTerminal(existing, new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected) 
-         {
-         }
-
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.log(msg);
-         }
-      });
-
-      return true;
+      startTerminal(existing, createdByApi, callback); 
    }
 
    /**
@@ -427,6 +418,7 @@ public class TerminalList implements Iterable<String>,
    }
 
    private void startTerminal(ConsoleProcessInfo info, 
+                              boolean createdByApi,
                               final ResultCallback<Boolean, String> callback)
    {
       // When terminals are created via the R API, guard against creation of multiple
@@ -440,7 +432,7 @@ public class TerminalList implements Iterable<String>,
       }
 
       TerminalSession newSession = new TerminalSession(
-            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/);
+            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, createdByApi);
 
       if (existing != null)
       {
@@ -501,8 +493,8 @@ public class TerminalList implements Iterable<String>,
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, TerminalListData> terminals_ = 
-                new LinkedHashMap<String, TerminalListData>();
+   private LinkedHashMap<String, TerminalListData> terminals_ =
+         new LinkedHashMap<>();
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

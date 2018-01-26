@@ -47,7 +47,8 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       commitMode_(commitMode),
       pixelWidth_(pixelWidth),
       charWidth_(charWidth),
-      maxUnits_(maxUnits)
+      maxUnits_(maxUnits),
+      workingDirSource_(DefaultDir)
 {
    source_database::getPath(docId_, &docPath_);
 
@@ -68,12 +69,12 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
    {
       // working directory set in setup chunk (i.e. knitr root.dir) takes
       // precedence
-      setWorkingDir(docWorkingDir);
+      setWorkingDir(docWorkingDir, SetupChunkDir);
    }
    else if (!workingDir.empty())
    {
       // working directory given by IDE (current dir or project dir)
-      setWorkingDir(workingDir);
+      setWorkingDir(workingDir, GlobalDir);
    }
 
    // read external code chunk contents
@@ -243,7 +244,7 @@ void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
    defaultOptions_ = options;
 }
 
-void NotebookDocQueue::setWorkingDir(const std::string& workingDir)
+void NotebookDocQueue::setWorkingDir(const std::string& workingDir, WorkingDirSource source)
 {
    core::FilePath dir;
    if (workingDir.empty())
@@ -281,6 +282,14 @@ void NotebookDocQueue::setWorkingDir(const std::string& workingDir)
       workingDir_ = dir;
    else
       workingDir_ = FilePath();
+
+   // record source of the working directory
+   workingDirSource_ = source;
+}
+
+WorkingDirSource NotebookDocQueue::getWorkingDirSource()
+{
+   return workingDirSource_;
 }
 
 void NotebookDocQueue::setExternalChunks(const json::Object& chunks)

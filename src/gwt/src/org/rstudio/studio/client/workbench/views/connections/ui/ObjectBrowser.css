@@ -111,3 +111,15 @@
 .cellTreeWidget div[aria-level="4"] {
    margin-left: -15px;
 }
+
+/* These two classes just let us tag search results for easy lookup in the DOM
+ * later */
+.searchMatches {
+}
+
+.searchHidden {
+}
+
+.cellTreeItem.searchHidden {
+   display: none;
+}

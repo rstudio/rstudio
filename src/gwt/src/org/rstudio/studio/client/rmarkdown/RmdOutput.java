@@ -1,7 +1,7 @@
 /*
  * RmdOutput.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -159,8 +160,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // When a Word document starts rendering, tell the desktop frame 
       // (if it exists) to get ready; this generally involves closing the 
       // document in preparation for a refresh
-      if (event.getFormat().getFormatName()
-            .equals(RmdOutputFormat.OUTPUT_WORD_DOCUMENT) &&
+      if (event.getFormat().getFormatName() == RmdOutputFormat.OUTPUT_WORD_DOCUMENT &&
           Desktop.isDesktop())
       {
          Desktop.getFrame().prepareShowWordDoc();
@@ -285,7 +285,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // emitted updated slide navigation information and then plumbed that
       // information back into the preview window.
       if (shinyDoc_ != null &&
-          event.getSourceFile().equals(shinyDoc_.getFile()) &&
+          event.getSourceFile() == shinyDoc_.getFile() &&
           !shinyDoc_.getFormat().getFormatName().endsWith(
                 RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) &&
           (result_ == null || "shiny".equals(result_.getRuntime())))
@@ -352,9 +352,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
       String typeId = fileType.getTypeId();
       if (fileType.isR() ||
-          typeId.equals(FileTypeRegistry.HTML.getTypeId()) ||
-          typeId.equals(FileTypeRegistry.YAML.getTypeId()) ||
-          typeId.equals(FileTypeRegistry.JSON.getTypeId()))
+          typeId == FileTypeRegistry.HTML.getTypeId() ||
+          typeId == FileTypeRegistry.YAML.getTypeId() ||
+          typeId == FileTypeRegistry.JSON.getTypeId())
       {
          reRenderPreview();
       }
@@ -367,7 +367,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             reRenderPreview();
          
          // files in subdirectories are also includes so re-render them also
-         if (!file.getParentPathString().equals(websiteDir))
+         if (file.getParentPathString() != websiteDir)
             reRenderPreview();
          
          // ...otherwise leave it alone (requires a knit)
@@ -556,17 +556,17 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (".pdf".equals(extension))
       {
          String previewer = prefs_.pdfPreview().getValue();
-         if (previewer.equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+         if (previewer == UIPrefs.PDF_PREVIEW_RSTUDIO)
          {
             pdfViewer_.viewPdfUrl(
                   result.getOutputUrl(), 
                   result.getPreviewSlide() >= 0 ? 
                         result.getPreviewSlide() : null);
          }
-         else if (!previewer.equals(UIPrefs.PDF_PREVIEW_NONE))
+         else if (previewer != UIPrefs.PDF_PREVIEW_NONE)
          {
             if (Desktop.isDesktop())
-               Desktop.getFrame().showPDF(result.getOutputFile(),
+               Desktop.getFrame().showPDF(StringUtil.notNull(result.getOutputFile()),
                                           result.getPreviewSlide());
             else 
                globalDisplay_.showHtmlFile(result.getOutputFile());
@@ -608,7 +608,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       else
       {
          if (Desktop.isDesktop())
-            Desktop.getFrame().showFile(result.getOutputFile());
+            Desktop.getFrame().showFile(StringUtil.notNull(result.getOutputFile()));
          else
          {
             showDownloadPreviewFileDialog(result, new Command() {
@@ -707,7 +707,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (needsReopen || 
             (win != null && 
              result_ != null && 
-             !result_.getFormatName().equals(result.getFormatName())))
+             result_.getFormatName() != result.getFormatName()))
       {
          outputFrame_.closeOutputFrame(false);
          outputFrame_ = null;
@@ -743,8 +743,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // output file as the last one
       boolean isRefresh = win != null &&
                           result_ != null && 
-                          result_.getOutputFile().equals(
-                                result.getOutputFile());
+                          result_.getOutputFile() == result.getOutputFile();
 
       // if this isn't a refresh but there's a window up, cache the scroll
       // position of the old document before we replace it

@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
@@ -410,6 +411,13 @@ public class TextEditingTargetWidget
          publishButton_ = new RSConnectPublishButton(
                RSConnectPublishButton.HOST_EDITOR,
                RSConnect.CONTENT_TYPE_APP, false, null);
+         publishButton_.onPublishInvoked(() -> 
+         {
+            if (!StringUtil.isNullOrEmpty(target_.getPath()))
+            {
+              target_.save(); 
+            }
+         });
          toolbar.addRightWidget(publishButton_);
       }
       
@@ -554,13 +562,20 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
+      boolean isRMarkdown2 = extendedType_ == "rmarkdown";
       boolean canPreviewFromR = fileType.canPreviewFromR();
+      boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
+      
+      if (isScript && !terminalAllowed)
+      {
+         commands_.executeCode().setEnabled(false);
+         commands_.executeCodeWithoutFocus().setEnabled(false);
+      }
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !isShinyFile());
-      runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
+            !isShinyFile() && !(isScript && !terminalAllowed));
+      runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
       insertChunkMenu_.setVisible(isRMarkdown2);
@@ -578,7 +593,7 @@ public class TextEditingTargetWidget
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
-            (canExecuteCode && !fileType.canAuthorContent()) ||
+            (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());   
      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
@@ -804,7 +819,7 @@ public class TextEditingTargetWidget
             StringBuilder sb = new StringBuilder();
             for (String s : chars)
             {
-               if (s.equals("."))
+               if (s == ".")
                   sb.append('\n');
                else
                   sb.append((char)Integer.parseInt(s));
@@ -1104,14 +1119,14 @@ public class TextEditingTargetWidget
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
       if (isShinyFile())
       {
-         if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
+         if (shinyAppState_ == ShinyApplicationParams.STATE_STARTED) 
          {
             sourceCommandText_ = "Reload App";
             sourceCommandDesc = "Save changes and reload the Shiny application";
             sourceButton_.setLeftImage(
                   commands_.reloadShinyApp().getImageResource());
          }
-         else if (shinyAppState_.equals(ShinyApplicationParams.STATE_STOPPED))
+         else if (shinyAppState_ == ShinyApplicationParams.STATE_STOPPED)
          {
             sourceCommandText_ = "Run App";
             sourceCommandDesc = "Run the Shiny application";

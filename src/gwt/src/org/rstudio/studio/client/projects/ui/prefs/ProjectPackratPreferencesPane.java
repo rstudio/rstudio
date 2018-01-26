@@ -171,7 +171,8 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    
    private void manageUI(boolean packified)
    {
-      boolean vcsActive = !session_.getSessionInfo().getVcsName().equals("");
+      boolean vcsActive = !StringUtil.isNullOrEmpty(
+            session_.getSessionInfo().getVcsName());
       
       chkAutoSnapshot_.setVisible(packified);
       chkUseCache_.setVisible(packified);
@@ -212,7 +213,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       ArrayList<String> result = new ArrayList<String>();
       for (String s : values)
       {
-         if (!s.equals(""))
+         if (!StringUtil.isNullOrEmpty(s))
          {
             result.add(s);
          }

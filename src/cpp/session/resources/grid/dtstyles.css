@@ -1,0 +1,463 @@
+/*
+ * dtstyles.css
+ *
+ * Copyright (C) 2009-17 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+body {
+    height: 100%;
+    margin: 0px;
+    font-family: 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    background-color: #ffffff;
+}
+
+thead {
+    color: #555555;
+    background-color: #f7f8f9;
+}
+
+#rsGridData {
+    margin: 0px 0px 36px 0px;
+}
+
+table.dataTable tbody td {
+    padding: 4px 5px;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
+    font-size: 11px;
+}
+
+.rstudio-themes-flat table.dataTable tbody td  {
+    background: none;
+}
+
+th {
+    text-align: left; 
+}
+
+th, td.first-child {
+    font-size: 11px;
+    color: #555555;
+    background-color: #f7f8f9;
+    font-weight: bold;
+}
+
+.rstudio-themes-flat th,
+.rstudio-themes-flat td.first-child {
+    color: #000;
+}
+
+.rstudio-themes-flat.editor_dark th,
+.rstudio-themes-flat.editor_dark td.first-child {
+    color: #FFF;
+    font-weight: 400;
+}
+
+td.first-child {
+    text-align: right; 
+}
+
+table.dataTable thead th,
+table.dataTable thead td {
+    padding: 5px 5px;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
+}
+
+th.first-child {
+}
+
+th.first-child div {
+    margin-right: 12px;
+}
+
+.dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border: none;
+}
+
+table.dataTable {
+    display: block;
+}
+
+#errorWrapper {
+    margin-left: auto;
+    margin-right: auto;
+    width: 33%;
+    margin-top: 10%;
+    text-align: center;
+    display: none;
+    padding: 30px;
+    font-size: 12px;
+    border: 2px solid #e0e0e0;
+    z-index: 100;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: white;
+    position: absolute;
+    left: 29%;
+}
+
+.errorWrapper input {
+    margin-top: 30px;
+}
+
+#error
+{
+}
+
+#errorMask {
+    background-color: rgba(0, 0, 0, 0.3);
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: none;
+    position: absolute;
+}
+
+.colFilter {
+    border: 1px solid #c0c0c0;
+    border-radius: 1px;
+    margin-top: 4px;
+    background-color: #ffffff;
+    border-radius: 3px;
+    white-space: nowrap;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 2px; 
+    padding-bottom: 2px; 
+    position: relative;
+    font-weight: normal;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter {
+    border-color: rgb(45,60,75);
+    background: rgb(108,121,131);
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey .textFilterBox {
+    background: rgb(108,121,131);
+    color: #FFF;
+}
+
+.unfiltered {
+    font-style: italic;
+    color: #abacad;
+    min-width: 35px;
+}
+
+.filterPopup {
+    position: absolute;
+    overflow: hidden;
+    z-index: 25;
+    font-size: 11px;
+    background-color: #ffffff;
+    border: 1px solid #cfd4d8;
+    -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+    -moz-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+    box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+}
+
+.rstudio-themes-dark-menus .filterPopup {
+    background: #2f3941;
+    border: solid 1px #4e5c68;
+}
+
+.numericFilterPopup {
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 8px;
+}
+
+.choiceList {
+    max-height: 300px;
+    max-width: 400px;
+    min-width: 50px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.choiceListItem {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 8px;
+    padding-left: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+}
+
+.choiceListItem:hover {
+    background-color: #bce0fc;
+}
+
+.rstudio-themes-dark-menus .choiceListItem:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.filterValue {
+    padding-right: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.textFilterBox {
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+}
+
+.textFilterBox:focus {
+    outline: none;
+}
+
+.clearFilter {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 11px;
+    height: 11px;
+    padding: 2px;
+}
+
+#filterActions {
+    margin-top: 3px;
+    text-align: right;
+}
+
+table.dataTable thead .sorting {
+    background: url("datatables/images/sort_both.png") no-repeat right top;
+}
+
+table.dataTable thead .sorting_desc {
+    background: url("datatables/images/sort_desc.png") no-repeat right top;
+}
+
+table.dataTable thead .sorting_asc {
+    background: url("datatables/images/sort_asc.png") no-repeat right top;
+}
+
+table.dataTable thead th div {
+    margin-right: 10px;
+}
+
+th:focus {
+    outline: none;
+}
+
+.colLabel {
+    font-size: 10px;
+    font-weight: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    margin-top: 2px;
+    max-width: 300px;
+}
+
+.numSlider {
+    font-size: 9px;
+    width: 150px;
+    margin-right: 7px;
+    margin-left: 7px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.numMin {
+    width: 75px;
+    padding-left: 4px;
+    text-align: left;
+    display: inline-block;
+    font-size: 11px;
+    overflow: hidden;
+}
+
+.numMax {
+    width: 75px;
+    text-align: right;
+    padding-right: 4px;
+    display: inline-block;
+    font-size: 11px;
+    overflow: hidden;
+}
+
+#rsGridData_info {
+    background-color: #f7f8f9;
+    font-size: 11px;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid #cfd4d8;
+    height: 25px;
+    text-align: left;
+}
+
+.rstudio-themes-flat.editor_dark #rsGridData_info {
+    color: #FFF;
+}
+
+.numberCell {
+    text-align: right;
+}
+
+.numberCell, .textCell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFF;
+}
+
+.autoSize .numberCell, .autoSize .textCell {
+    max-width: 300px; 
+}
+
+.manualSize .numberCell, .manualSize .textCell {
+    max-width: 100%;
+}
+
+.manualSize, .autoSize {
+    table-layout: fixed;
+}
+
+#rsGridData.manualSize {
+    display: table;
+}
+
+.cell, .headerCell {
+    position: relative;
+}
+
+.searchMatch {
+    background-color: #e8e8ff;
+}
+
+.rstudio-themes-flat.editor_dark .searchMatch {
+    background-color: #6d787f;
+}
+
+.naCell {
+    color: #b0b0b0;
+    font-style: italic;
+}
+
+div.DTS div.DTS_Loading {
+    border: none;
+    background: none;
+    color: #ffffff;
+}
+
+div.DTS div.DTS_Loading.showLoading {
+    transition: color 0.5s ease;
+    color: #aaabac;
+} 
+
+#rsGridData tbody tr.even {
+    background-color: #fdfdfd;
+}
+
+.rstudio-themes-flat.editor_dark #rsGridData #rsGridData tbody tr.even {
+    background: none;
+}
+
+#rsGridData tbody tr.even, 
+#rsGridData tbody tr.odd {
+    height: 23px;
+}
+
+.rstudio-themes-flat #rsGridData tbody tr.even {
+    background: none;
+}
+
+.rstudio-themes-flat #rsGridData tbody tr.odd {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.rstudio-themes-flat.editor_dark #rsGridData tbody tr.odd {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#rsGridData {
+    display: block;
+}
+
+.columnTypeHeader {
+    font-weight: normal;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+table.dataTable thead th.columnClickable {
+    cursor: pointer;
+    vertical-align: bottom;
+}
+
+table.dataTable thead th.columnClickable div {
+    padding-right: 15px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+table.dataTable thead th.columnClickable .columnTypeWrapper {
+    background: url("datatables/images/header_expand.png") no-repeat right top;
+    background-position-y: -5px;
+    padding-right: 15px;
+}
+
+table.dataTable thead th.columnClickable .columnTypeHeader {
+    padding-right: 0px;
+}
+
+.columnTypeWrapper {
+    text-align: right;
+    padding-right: 0px;
+}
+
+.disabledColumn {
+    background-color: #f7f8f9;
+}
+
+.resizer {
+    position: absolute;
+    height: 23px;   
+    top: -4px;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 5;
+}
+
+.cell .resizer {
+    right: -7px;
+}
+
+.headerCell .resizer {
+    right: -28px;
+}
+
+div.dataTables_scroll div.dataTables_scrollHead {
+    background: none !important;
+}

@@ -118,7 +118,7 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
 
    public boolean isValueRow(TableRowElement row)
    {
-      return !timestampClass_.equals(row.getClassName());
+      return timestampClass_ != row.getClassName();
    }
 
    public boolean hasNonValueRows()

@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QApplication>
+#include <QProcess>
 #include <boost/scoped_ptr.hpp>
 
 namespace rstudio {
@@ -42,6 +43,9 @@ public:
 
    QString startupOpenFileRequest() const;
 
+   void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
+                      const std::string& initialWorkingDir = std::string());
+
 protected:
     explicit ApplicationLaunch();
 #ifdef _WIN32
@@ -50,14 +54,15 @@ protected:
                      long * result);
 #endif
 
-signals:
+Q_SIGNALS:
     void openFileRequest(QString filename);
 
-public slots:
+public Q_SLOTS:
     bool sendMessage(QString filename);
 
 private:
     QWidget* pMainWindow_;
+    QProcessEnvironment launchEnv_;
 };
 
 } // namespace desktop

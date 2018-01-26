@@ -32,7 +32,7 @@ public class RmdFileOption extends RmdNullableOption
       panel.add(getOptionLabelWidget());
       
       fileChooser_ = new FileChooserTextBox("", null);
-      if (!initialValue.equals("null"))
+      if (initialValue != "null")
          fileChooser_.setText(initialValue);
       fileChooser_.getElement().getStyle().setMarginLeft(20, Unit.PX);
       fileChooser_.getElement().getStyle().setMarginTop(3, Unit.PX);
@@ -46,7 +46,7 @@ public class RmdFileOption extends RmdNullableOption
    @Override
    public boolean valueIsDefault()
    {
-      if (valueIsNull() && defaultValue_.equals("null"))
+      if (valueIsNull() && defaultValue_ == "null")
          return true;
       return getValue() == defaultValue_;
    }

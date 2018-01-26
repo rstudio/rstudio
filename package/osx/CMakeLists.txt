@@ -1,3 +1,10 @@
+# define package suffix
+set(RSTUDIO_PACKAGE_SUFFIX "-")
+
+# include overlay if it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+   include(CMakeOverlay.txt)
+endif()
 
 # developer-id code signing
 if (RSTUDIO_PACKAGE_BUILD)
@@ -20,7 +27,7 @@ if (RSTUDIO_PACKAGE_BUILD)
 endif()
 
 # package attributes
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
 
 # create drag and drop installer
 set(CPACK_BINARY_DRAGNDROP ON)

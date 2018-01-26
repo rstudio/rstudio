@@ -1,7 +1,7 @@
 /*
  * XTermWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.StringSink;
@@ -41,6 +43,8 @@ import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -80,29 +84,19 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().addClassName(XTERM_CLASS);
       getElement().addClassName("ace_editor");
 
+      boolean legacyMouseWheel = BrowseCap.isWindowsDesktop() || BrowseCap.isLinuxDesktop();
+
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink, focus);
+      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink, focus, legacyMouseWheel);
       terminal_.addClass("ace_editor");
       terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
       // Handle keystrokes from the xterm and dispatch them
-      addDataEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String data)
-         {
-            fireEvent(new TerminalDataInputEvent(data));
-         }
-      });
+      addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
       
       // Handle title events from the xterm and dispatch them
-      addTitleEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String title)
-         {
-            fireEvent(new XTermTitleEvent(title));
-         }
-      });
+      addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
    }
    
    /**
@@ -139,7 +133,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    public void clear()
    {
       terminal_.clear();
-      setFocus(true);
    }
 
    /**
@@ -165,15 +158,10 @@ public class XTermWidget extends Widget implements RequiresResize,
       if (!initialized_)
       {
          initialized_ = true;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               terminal_.fit();
-               terminal_.focus();
-               terminalReady();
-            }
+         Scheduler.get().scheduleDeferred(() -> {
+            terminal_.fit();
+            terminal_.focus();
+            terminalReady();
          });
       }
    }
@@ -185,13 +173,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       if (initialized_)
       {
          initialized_ = false;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            public void execute()
-            {
-               terminal_.blur();
-            }
-         });
+         Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
    
@@ -261,7 +243,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.onTitleData(handler);
    }
    
-   public XTermDimensions getTerminalSize()
+   private XTermDimensions getTerminalSize()
    {
       return terminal_.proposeGeometry(); 
    }
@@ -358,17 +340,36 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.showAltBuffer();
    }
     
-   public static boolean isXTerm(Element el)
+   /**
+    * @param el Element to test, may be null
+    * @return If element is part of an XTermWidget, return that widget, otherwise null.
+    */
+   public static XTermWidget tryGetXTerm(Element el)
    {
       while (el != null)
       {
          if (el.hasClassName(XTERM_CLASS))
-            return true;
+         {
+            EventListener listener = DOM.getEventListener(el);
+            if (listener == null)
+            {
+               Debug.log("Unexpected failure to get XTERM_CLASS listener");
+            }
+            else if (listener instanceof XTermWidget)
+            {
+               return (XTermWidget) listener;
+            }
+            else
+            {
+               Debug.log("Unexpected: XTERM_CLASS listener was not an XTermWidget");
+            }
+            return null;
+         }
          el = el.getParentElement();
       }
-      return false;
+      return null;
    }
-   
+
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
    {
@@ -403,22 +404,10 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    public static void load(final Command command)
    {
-      xtermLoader_.addCallback(new Callback()
-      {
-         @Override
-         public void onLoaded()
-         {
-            xtermFitLoader_.addCallback(new Callback()
-            {
-               @Override
-               public void onLoaded()
-               {
-                  if (command != null)
-                     command.execute();
-               }
-            });
-         }
-     });
+      xtermLoader_.addCallback(() -> xtermFitLoader_.addCallback(() -> {
+         if (command != null)
+            command.execute();
+      }));
    }
 
    private static final ExternalJavaScriptLoader xtermLoader_ =

@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
 
+checkUnitTestFailure() {
+   RET_CODE=$?
+   if [ $RET_CODE != 0 ];
+   then
+      UNIT_TEST_FAILURE=true
+   fi
+}
+
 ## Any arguments passed in are considered arguments to valgrind
 if [ "$#" -eq 0 ]; then
 	VALGRIND=
@@ -7,11 +15,43 @@ else
 	VALGRIND="valgrind --dsymutil=yes $@"
 fi
 
+## On a Debug Mac IDE build via xcodebuild, the executables 
+## will be in a Debug folder
+if [ ! -e "${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests" ]
+then
+    RSTUDIO_CORETEST_BIN="Debug/rstudio-core-tests"
+    RSTUDIO_SESSION_BIN="Debug/rsession"
+else
+    RSTUDIO_CORETEST_BIN="rstudio-core-tests"
+    RSTUDIO_SESSION_BIN="rsession"
+fi
+
+
 echo Running 'core' tests...
-$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests
+$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN -s
+checkUnitTestFailure
 
 echo Running 'rsession' tests...
-$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/rsession \
-    --run-tests \
-    --config-file=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
+if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf ]
+then
+   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
+else
+   # set R environment variables needed by rsession tests
+   export R_HOME=$(R --slave --vanilla -e "cat(paste(R.home('home'),sep=':'))")
+   export R_DOC_DIR=$(R --slave --vanilla -e "cat(paste(R.home('doc'),sep=':'))")
 
+   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf
+fi
+   
+$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
+   --run-tests \
+   --config-file=$SESSION_CONF_FILE
+checkUnitTestFailure
+
+# return an error exit code if any unit tests failed
+if [ "$UNIT_TEST_FAILURE" = true ] ; then
+    exit 1
+fi
+
+# otherwise, return success
+exit 0

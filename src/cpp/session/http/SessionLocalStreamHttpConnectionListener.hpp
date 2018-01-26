@@ -77,7 +77,7 @@ private:
       if (permittedClients_.size() > 0)
       {
          // get socket
-         int socket = ptrConnection->socket().native();
+         int socket = ptrConnection->socket().native_handle();
 
          // get client identity
          core::system::user::UserIdentity userIdentity;

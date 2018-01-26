@@ -6,9 +6,10 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '100'))
   }
   parameters {
-      string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version')
-      string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '1', description: 'RStudio Minor Version')
-      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_MAJOR',  defaultValue: '1', description: 'RStudio Major Version')
+      string(name: 'RSTUDIO_VERSION_MINOR',  defaultValue: '1', description: 'RStudio Minor Version')
+      string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_SUFFIX', defaultValue: '0', description: 'RStudio Pro Suffix Version')
       string(name: 'SLACK_CHANNEL', defaultValue: '#rstudio', description: 'Slack channel to publish build message.')
   }
 

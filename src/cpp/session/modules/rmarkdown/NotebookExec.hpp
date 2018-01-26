@@ -1,7 +1,7 @@
 /*
  * NotebookExec.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,7 @@ private:
    int pixelWidth_;
    int charWidth_;
    int prevCharWidth_;
+   int lastOutputType_;
    ExecScope execScope_;
    r::sexp::PreservedSEXP prevWarn_;
 

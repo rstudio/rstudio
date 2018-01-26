@@ -79,9 +79,16 @@ Error invokeRpc(const FilePath& socketPath,
 
 Error initialize()
 {
-   // extract shared secret 
+   // extract shared secret
    s_sessionSharedSecret = core::system::getenv(kServerRpcSecretEnvVar);
    core::system::unsetenv(kServerRpcSecretEnvVar);
+
+   return Success();
+}
+
+Error initializeSecret(const std::string& rpcSecret)
+{
+   s_sessionSharedSecret = rpcSecret;
 
    return Success();
 }

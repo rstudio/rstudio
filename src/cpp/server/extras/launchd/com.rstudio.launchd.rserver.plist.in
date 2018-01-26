@@ -5,6 +5,11 @@
 <dict>
         <key>Label</key>
         <string>com.rstudio.launchd.rserver</string>
+        <key>EnvironmentVariables</key>
+        <dict>
+               <key>LANG</key>
+               <string>en_US.UTF-8</string>
+        </dict>
         <key>ProgramArguments</key>
         <array>
                 <string>${CMAKE_INSTALL_PREFIX}/bin/rserver</string>

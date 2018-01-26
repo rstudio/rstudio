@@ -28,15 +28,15 @@ GwtWindow::GwtWindow(bool showToolbar,
    BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent),
    zoomLevel_(options().zoomLevel())
 {
-   // initialize zoom levels
-   zoomLevels_.push_back(1.0);
-   zoomLevels_.push_back(1.1);
-   zoomLevels_.push_back(1.20);
-   zoomLevels_.push_back(1.30);
-   zoomLevels_.push_back(1.40);
-   zoomLevels_.push_back(1.50);
-   zoomLevels_.push_back(1.75);
-   zoomLevels_.push_back(2.00);
+   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
+   double levels[] = {
+      0.25, 0.50, 0.75, 0.80, 0.90,
+      1.00, 1.10, 1.25, 1.50, 1.75,
+      2.00, 2.50, 3.00, 4.00, 5.00
+   };
+   
+   for (double level : levels)
+      zoomLevels_.push_back(level);
 }
 
 void GwtWindow::zoomIn()
@@ -63,8 +63,13 @@ void GwtWindow::zoomOut()
    }
 }
 
-void GwtWindow::onJavaScriptWindowObjectCleared()
+void GwtWindow::finishLoading(bool succeeded)
 {
+   BrowserWindow::finishLoading(succeeded);
+
+   if (!succeeded)
+       return;
+
    if (getZoomLevel() != webView()->dpiAwareZoomFactor())
       webView()->setDpiAwareZoomFactor(getZoomLevel());
 }

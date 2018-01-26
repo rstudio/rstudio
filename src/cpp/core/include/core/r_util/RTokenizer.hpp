@@ -1,7 +1,7 @@
 /*
  * RTokenizer.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,19 +47,12 @@ namespace r_util {
 
 // Make RToken non-subclassable (since it has copy/byval semantics any
 // subclass would be sliced
-class RToken_lock
-{
-   friend class RToken ;
-private:
-   RToken_lock() {}
-   RToken_lock(const RToken_lock&) {}
-};
-
+//
 // RToken. Note that RToken instances are only valid as long as the class
 // which yielded them (RTokenizer or RTokens) is alive. This is because
 // they contain iterators into the original source data rather than their
 // own copy of their contents.
-class RToken : public virtual RToken_lock
+class RToken final
 {
 public:
 
@@ -85,14 +78,8 @@ public:
    };
 
 public:
-   
-   RToken()
-      : offset_(-1)
-   {}
-   
-   explicit RToken(TokenType type)
-      : type_(type), offset_(-1)
-   {}
+
+   RToken() = default;
 
    RToken(TokenType type,
           std::wstring::const_iterator begin,
@@ -190,12 +177,13 @@ public:
    }
 
 private:
-   TokenType type_;
-   std::wstring::const_iterator begin_;
-   std::wstring::const_iterator end_;
-   std::size_t offset_;
-   std::size_t row_;
-   std::size_t column_;
+   std::wstring emptyToken_;
+   TokenType type_ = TokenType::ERR;
+   std::wstring::const_iterator begin_ = emptyToken_.cbegin();
+   std::wstring::const_iterator end_ = emptyToken_.cend();
+   std::size_t offset_ = -1;
+   std::size_t row_ = 0;
+   std::size_t column_ = 0;
 };
 
 // Tokenize R code. Note that the RToken instances which are returned are
@@ -223,7 +211,6 @@ public:
 
 private:
    RToken matchWhitespace();
-   RToken matchNewline();
    RToken matchStringLiteral();
    RToken matchNumber();
    RToken matchIdentifier();
@@ -293,16 +280,10 @@ public:
    const_iterator begin() const { return tokens_.begin(); }
    const_iterator end() const { return tokens_.end(); }
    
-   RTokens()
-      : tokenizer_(L""),
-        dummyToken_(RToken::ERR)
-   {}
-   
    explicit RTokens(const std::wstring& code, int flags = None)
-      : tokenizer_(code), dummyToken_(RToken::ERR)
+      : tokenizer_(code)
    {
-      RToken token;
-      while ((token = tokenizer_.nextToken()))
+      while (RToken token = tokenizer_.nextToken())
       {
          if ((flags & StripWhitespace) && token.type() == RToken::WHITESPACE)
             continue;
@@ -612,8 +593,8 @@ inline bool isNaKeyword(const RToken& rToken)
       return false;
    
    static const std::vector<std::wstring> naKeywords = makeNaKeywords();
-   for (std::size_t i = 0, n = naKeywords.size(); i < n; ++i)
-      if (rToken.contentEquals(naKeywords[i]))
+   for (const auto& naKeyword : naKeywords)
+      if (rToken.contentEquals(naKeyword))
          return true;
    return false;
 }

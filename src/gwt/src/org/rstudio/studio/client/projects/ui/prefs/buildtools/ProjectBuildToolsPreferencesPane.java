@@ -94,7 +94,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       // if the initial type isn't package then we need to provide package
       // defaults if the user switches to a package
       providePackageBuildTypeDefaults_ = 
-            !buildType.equals(RProjectConfig.BUILD_TYPE_PACKAGE);
+            buildType != RProjectConfig.BUILD_TYPE_PACKAGE;
    }
    
    @Override
@@ -111,7 +111,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       String initialBuildType = initialConfig_.getBuildType();
       String selectedBuildType = buildTypeSelect_.getValue();
         
-      return !initialBuildType.equals(selectedBuildType);
+      return initialBuildType != selectedBuildType;
    }
    
    
@@ -159,7 +159,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
             public void onChange(ChangeEvent event)
             {
                String buildType = getValue();
-               if (buildType.equals(RProjectConfig.BUILD_TYPE_PACKAGE) &&
+               if (buildType == RProjectConfig.BUILD_TYPE_PACKAGE &&
                    providePackageBuildTypeDefaults_)
                {
                   providePackageBuildTypeDefaults_ = false;

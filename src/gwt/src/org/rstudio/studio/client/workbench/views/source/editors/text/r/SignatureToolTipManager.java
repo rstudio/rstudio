@@ -1,7 +1,7 @@
 /*
  * SignatureToolTipManager.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,10 +137,11 @@ public class SignatureToolTipManager
                   if (anchor_ != null && toolTip_.isShowing())
                   {
                      Position position = event.getPosition();
-                     if (anchor_.getRange().contains(position))
+                     if (position != null && anchor_.getRange().contains(position))
                      {
                         // Update the tooltip position if the cursor changes rows.
-                        if (position.getRow() > tooltipPosition_.getRow())
+                        if (tooltipPosition_ != null &&
+                              position.getRow() > tooltipPosition_.getRow())
                         {
                            // Allow tooltip to nudge right (but not left)
                            int newColumn = Math.max(
@@ -503,11 +504,7 @@ public class SignatureToolTipManager
    
    private void resolvePositionAndShow(String signature, Position position)
    {
-      // Default to displaying before cursor; however, display above
-      // if doing so would place the tooltip too close (or off) of
-      // the window.
-      toolTip_.setText(signature);
-      setTooltipPosition(position);
+      toolTip_.resolvePositionAndShow(signature, position);
    }
    
    private void setTooltipPosition(Position position)

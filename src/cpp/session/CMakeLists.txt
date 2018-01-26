@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -28,12 +28,15 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
+
+# we often install embedded versions of these packages but don't do so currently
+
 # if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
 #   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
 # endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
-  message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
-endif()
+# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
+#   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
+# endif()
 
 # verify libclang is installed
 if(WIN32)
@@ -83,7 +86,6 @@ set (SESSION_SOURCE_FILES
    SessionPasswordManager.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
-   SessionRUtil.cpp
    SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
@@ -135,6 +137,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionRParser.cpp
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
+   modules/SessionRUtil.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSnippets.cpp
    modules/SessionSource.cpp
@@ -218,7 +221,7 @@ set (SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
-   ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
+   "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
 )
 
 # platform specific source files
@@ -240,6 +243,7 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
    )
 endif()
 
@@ -336,19 +340,6 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-      COMMAND "${WINDRES}"
-         -I "."
-         -i "rsession.rc"
-         -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
-         -Ocoff
-      DEPENDS
-         "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
-         "${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest")
-   set(SESSION_SOURCE_FILES
-      ${SESSION_SOURCE_FILES}
-      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
    if(NOT RSTUDIO_SESSION_WIN64)
       add_subdirectory(consoleio)
    endif()
@@ -372,7 +363,7 @@ endif()
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
-   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} -ladvapi32)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
@@ -390,8 +381,8 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
-   ${LIBR_LIBRARIES}
    ${CMAKE_DL_LIBS}
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script
@@ -495,6 +486,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "resources/pagedtable"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install profiler
+   install(DIRECTORY "resources/profiler"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
@@ -576,4 +571,16 @@ endif()
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
+endif()
+
+# if doing a package build on MacOS, reroute the OpenSSL libraries to our
+# bundled copies
+if(APPLE AND RSTUDIO_PACKAGE_BUILD)
+   find_package(OpenSSL REQUIRED QUIET)
+   foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+      get_filename_component(LIB_DIR ${lib} PATH)
+      execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+      add_custom_command (TARGET rsession POST_BUILD
+         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+   endforeach()
 endif()

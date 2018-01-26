@@ -181,9 +181,9 @@ public class GlobalToolbar extends Toolbar
          vcsMenu.addItem(commands_.versionControlProjectSetup().createMenuItem(false));
       
          ImageResource vcsIcon = null;
-         if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
+         if (sessionInfo.getVcsName() == VCSConstants.GIT_ID)
             vcsIcon = new ImageResource2x(icons.git2x());
-         else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
+         else if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             vcsIcon = new ImageResource2x(icons.svn2x());
          
          ToolbarButton vcsButton = new ToolbarButton(
@@ -233,9 +233,12 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(new AddinsToolbarButton());
       
       // project popup menu
-      ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
+      if (sessionInfo.getAllowFullUI())
+      {
+         ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
-      addRightWidget(projectMenu.getToolbarButton());
+         addRightWidget(projectMenu.getToolbarButton());
+      }
    }
    
    @Override

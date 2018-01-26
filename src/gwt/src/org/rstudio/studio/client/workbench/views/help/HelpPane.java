@@ -29,6 +29,8 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -41,7 +43,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -99,22 +103,20 @@ public class HelpPane extends WorkbenchPane
          }
       });
 
-      ensureWidget();
-   }
-
-   @Override 
-   protected Widget createMainWidget()
-   {
       frame_ = new RStudioThemedFrame(
          null,
+         ".rstudio-themes-flat.editor_dark div#TOC,\n" +
          ".rstudio-themes-flat.editor_dark h1,\n" +
          ".rstudio-themes-flat.editor_dark h2,\n" +
          ".rstudio-themes-flat.editor_dark h3,\n" +
          ".rstudio-themes-flat.editor_dark h4,\n" +
-         ".rstudio-themes-flat.editor_dark table,\n" +
-         ".rstudio-themes-flat.editor_dark pre {\n" +
+         ".rstudio-themes-flat.editor_dark table {\n" +
          "  background: none !important;\n" +
          "  color: white !important;\n" +
+         "}\n" +
+         "\n" +
+         ".rstudio-themes-flat.editor_dark ::selection {\n" +
+         "  background-color: #CCC;\n" +
          "}\n",
          null,
          false);
@@ -122,7 +124,15 @@ public class HelpPane extends WorkbenchPane
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
       ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
+      
+      navStack_ = new VirtualHistory(frame_);
+      
+      ensureWidget();
+   }
 
+   @Override 
+   protected Widget createMainWidget()
+   {
       return new AutoGlassPanel(frame_);
    }
    
@@ -596,12 +606,13 @@ public class HelpPane extends WorkbenchPane
    {
       ensureWidget();
       bringToFront();
-      navStack_.navigate(url) ;
-      setLocation(url);
+      navStack_.navigate(url);
+      setLocation(url, Point.create(0, 0));
       navigated_ = true;
    }
      
-   private void setLocation(final String url)
+   private void setLocation(final String url,
+                            final Point scrollPos)
    {
       // allow subsequent calls to setLocation to override any previous 
       // call (necessary so two consecutive calls like we get during
@@ -610,40 +621,52 @@ public class HelpPane extends WorkbenchPane
       targetUrl_ = url;
       
       RepeatingCommand navigateCommand = new RepeatingCommand() {
+         
+         private HandlerRegistration handler_ = frame_.addLoadHandler(new LoadHandler()
+         {
+            @Override
+            public void onLoad(LoadEvent event)
+            {
+               getIFrameEx().getContentWindow().setScrollPosition(scrollPos);
+               handler_.removeHandler();
+               handler_ = null;
+            }
+         });
+         
          @Override
          public boolean execute()
          {
-            if (getIFrameEx() != null && 
-                  getIFrameEx().getContentWindow() != null)
+            if (getIFrameEx() == null)
+               return true;
+            
+            if (getIFrameEx().getContentWindow() == null)
+               return true;
+
+            if (targetUrl_ == getUrl())
             {
-               if (targetUrl_.equals(getUrl()))
-               {
-                  getIFrameEx().getContentWindow().reload();
-               }
-               else
-               {
-                  frame_.setUrl(targetUrl_);
-                  replaceFrameUrl(frame_.getIFrame().cast(), targetUrl_);
-               }
-               
-               return false;
+               getIFrameEx().getContentWindow().reload();
             }
             else
             {
-               return true;
+               frame_.setUrl(targetUrl_);
+               replaceFrameUrl(frame_.getIFrame().cast(), targetUrl_);
             }
+
+            return false;
          }
       };
 
       if (navigateCommand.execute())
-         Scheduler.get().scheduleFixedDelay(navigateCommand, 100);      
+      {
+         Scheduler.get().scheduleFixedDelay(navigateCommand, 100);
+      }
    }
    
    public void refresh()
    {
       String url = getUrl();
       if (url != null)
-         setLocation(url);
+         setLocation(url, Point.create(0, 0));
    }
 
    private WindowEx getContentWindow()
@@ -653,16 +676,16 @@ public class HelpPane extends WorkbenchPane
 
    public void back()
    {
-      String backUrl = navStack_.back() ;
-      if (backUrl != null)
-         setLocation(backUrl) ;
+      VirtualHistory.Data back = navStack_.back();
+      if (back != null)
+         setLocation(back.getUrl(), back.getScrollPosition());
    }
 
    public void forward()
    {
-      String fwdUrl = navStack_.forward() ;
-      if (fwdUrl != null)
-         setLocation(fwdUrl) ;
+      VirtualHistory.Data fwd = navStack_.forward();
+      if (fwd != null)
+         setLocation(fwd.getUrl(), fwd.getScrollPosition());
    }
 
    public void print()
@@ -744,7 +767,7 @@ public class HelpPane extends WorkbenchPane
    private static final Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
 
-   private final VirtualHistory navStack_ = new VirtualHistory() ;
+   private final VirtualHistory navStack_ ;
    private final ToolbarLinkMenu history_ ;
  
    private Label title_ ;

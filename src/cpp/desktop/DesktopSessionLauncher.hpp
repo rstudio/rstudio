@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,33 +34,38 @@ class SessionLauncher : public QObject
    Q_OBJECT
 public:
    SessionLauncher(const core::FilePath& sessionPath,
-                   const core::FilePath& confPath)
+                   const core::FilePath& confPath,
+                   const QString& filename,
+                   ApplicationLaunch* pAppLaunch)
       : confPath_(confPath),
         sessionPath_(sessionPath),
-        pAppLaunch_(NULL),
-        pMainWindow_(NULL),
-        pRSessionProcess_(NULL)
-   {
-   }
+        pAppLaunch_(pAppLaunch),
+        pMainWindow_(nullptr),
+        pRSessionProcess_(nullptr),
+        filename_(filename)
+{
+}
 
-   core::Error launchFirstSession(const QString& filename,
-                                  ApplicationLaunch* pAppLaunch);
+   void launchFirstSession(const core::FilePath& installPath,
+                           bool devMode,
+                           const QStringList& arguments);
 
    core::Error launchNextSession(bool reload);
 
    QString launchFailedErrorMessage() const;
 
-   void cleanupAtExit();
-
-public slots:
+public Q_SLOTS:
    void onRSessionExited(int exitCode, QProcess::ExitStatus exitStatus);
    void onReloadFrameForNextSession();
+   void onLaunchFirstSession();
+   void onLaunchError(QString message);
 
 private:
+   core::Error launchFirstSession();
 
    QString collectAbendLogMessage() const;
 
-   void closeAllSatillites();
+   void closeAllSatellites();
 
    core::Error launchSession(const QStringList& argList,
                              QProcess** ppRSessionProcess);
@@ -78,6 +83,7 @@ private:
    MainWindow* pMainWindow_;
    QProcess* pRSessionProcess_;
    QUrl nextSessionUrl_;
+   QString filename_;
 };
 
 } // namespace desktop

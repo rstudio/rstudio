@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -48,14 +49,23 @@ public class TerminalTabPresenter extends BusyPresenter
    public interface Display extends WorkbenchView
    {
       /**
-       * Ensure terminal pane is visible.
+       * Callback when Display is selected
        */
-      void activateTerminal();
+      interface DisplaySelectedCallback {
+         void displaySelected();
+      }
 
       /**
-       * Create a new terminal session.
+       * Ensure terminal pane is visible. Callback to perform actions after pane has
+       * been made visible and received onSelected.
        */
-      void createTerminal();
+      void activateTerminal(DisplaySelectedCallback callback);
+
+      /**
+       * Create a new terminal session
+       * @param postCreateText text to insert in terminal after created, may be null
+       */
+      void createTerminal(String postCreateText);
 
       /**
        * Terminate current terminal.
@@ -64,7 +74,7 @@ public class TerminalTabPresenter extends BusyPresenter
 
       /**
        * Attach a list of server-side terminals to the pane.
-       * @param event list of terminals on server
+       * @param procList list of terminals on server
        */
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
@@ -86,7 +96,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void previousTerminal();
       void nextTerminal();
       void showTerminalInfo();
-      void sendToTerminal(String text, String caption);
+      void sendToTerminal(String text, boolean setFocus);
       
       /**
        * Send SIGINT to child process of the terminal shell.
@@ -102,7 +112,7 @@ public class TerminalTabPresenter extends BusyPresenter
       void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
       
       /**
-       * Remove a terminal from the list.
+       * Remove a terminal that was killed via rstudioapi::terminalKill.
        * @param handle terminal to remove
        * caption
        */
@@ -112,13 +122,19 @@ public class TerminalTabPresenter extends BusyPresenter
        * Activate (display) terminal with given caption. If none specified,
        * do nothing.
        * @param caption
+       * @param createdByApi terminal just created via rstudioapi?
        */
-      void activateNamedTerminal(String caption);
+      void activateNamedTerminal(String caption, boolean createdByApi);
       
       /**
        * Send current terminal's buffer to a new editor buffer.
        */
       void sendTerminalToEditor();
+
+      /**
+       * Ensure there is at least one terminal.
+       */
+      void ensureTerminal();
    }
 
    @Inject
@@ -135,12 +151,9 @@ public class TerminalTabPresenter extends BusyPresenter
    @Handler
    public void onActivateTerminal()
    {
-      if (!uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(true);
-         uiPrefs_.writeUIPrefs();
-      }
-      view_.activateTerminal();
+      // "Move focus to terminal" command; does same thing as clicking the 
+      // terminal tab
+      view_.activateTerminal(null);
    }
 
    @Handler
@@ -192,16 +205,16 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onCreateTerminal(CreateTerminalEvent event)
+   public void onCreateTerminal(final CreateTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.createTerminal();
+      // New Terminal command, always creates a new terminal
+      view_.activateTerminal(() -> view_.createTerminal(event.getPostCreateText()));
    }
 
    @Override
    public void onSendToTerminal(SendToTerminalEvent event)
    {
-      view_.sendToTerminal(event.getText(), event.getId());
+      view_.sendToTerminal(event.getText(), event.getSetFocus());
    }
 
    @Override
@@ -211,14 +224,17 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onAddTerminal(AddTerminalEvent event)
+   public void onAddTerminal(final AddTerminalEvent event)
    {
+      // A new terminal was created server-side via the API. Now add it to the
+      // client side terminal list
       view_.addTerminal(event.getProcessInfo(), false /*hasSession*/);
-      
       if (event.getShow())
       {
-         onActivateTerminal();
-         view_.activateNamedTerminal(event.getProcessInfo().getCaption());
+         // And optionally bring tab forward and select the requested terminal
+         view_.activateTerminal(
+               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption(), 
+                                                 true /*createdByApi*/));
       }
    }
 
@@ -229,10 +245,16 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Override
-   public void onActivateNamedTerminal(ActivateNamedTerminalEvent event)
+   public void onActivateNamedTerminal(final ActivateNamedTerminalEvent event)
    {
-      onActivateTerminal();
-      view_.activateNamedTerminal(event.getId());
+      // Request to display the terminal tab and optionally select a specific terminal; if
+      // no terminal is specified, then make sure there is an active terminal
+      view_.activateTerminal(() -> {
+         if (StringUtil.isNullOrEmpty(event.getId()))
+            view_.ensureTerminal();
+         else
+            view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
+      });
    }
 
    public void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
@@ -243,13 +265,9 @@ public class TerminalTabPresenter extends BusyPresenter
    public void confirmClose(final Command onConfirmed)
    {
       final String caption = "Close Terminal(s) ";
-      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            shutDownTerminals();
-            onConfirmed.execute();
-         }
+      terminalHelper_.warnBusyTerminalBeforeCommand(() -> {
+         shutDownTerminals();
+         onConfirmed.execute();
       }, caption, "Are you sure you want to close all terminals? Any running jobs " +
             "will be stopped",
             uiPrefs_.terminalBusyMode().getValue());
@@ -257,11 +275,6 @@ public class TerminalTabPresenter extends BusyPresenter
 
    private void shutDownTerminals()
    {
-      if (uiPrefs_.showTerminalTab().getValue())
-      {
-         uiPrefs_.showTerminalTab().setGlobalValue(false);
-         uiPrefs_.writeUIPrefs();
-      }
       view_.terminateAllTerminals();
    }
 

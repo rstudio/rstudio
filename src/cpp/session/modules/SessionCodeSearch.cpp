@@ -929,6 +929,7 @@ private:
                filename == "Makevars.win" ||
                filename == "LICENSE" ||
                filename == "LICENCE" ||
+               filename == "CITATION" ||
                filePath.hasTextMimeType());
    }
 

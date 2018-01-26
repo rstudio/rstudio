@@ -193,13 +193,31 @@ bool get(const AssociativeContainer& container,
    return true;
 }
 
-template <typename ContainerType>
-void append(ContainerType* pContainer, const ContainerType& other)
+namespace detail {
+
+template <typename Container, typename Iterator>
+typename boost::enable_if_c<type_traits::has_key_type<Container>::value, void>::type
+append(Container* pContainer, Iterator begin, Iterator end, boost::true_type)
 {
-   pContainer->insert(
-            pContainer->end(),
-            other.begin(),
-            other.end());
+   pContainer->insert(begin, end);
+}
+
+template <typename Container, typename Iterator>
+typename boost::disable_if_c<type_traits::has_key_type<Container>::value, void>::type
+append(Container* pContainer, Iterator begin, Iterator end, boost::false_type)
+{
+   pContainer->insert(pContainer->end(), begin, end);
+}
+
+} // namespace detail
+
+template <typename ContainerType, typename OtherType>
+void append(ContainerType* pContainer, const OtherType& other)
+{
+   detail::append(pContainer,
+                  other.begin(),
+                  other.end(),
+                  type_traits::has_key_type<ContainerType>());
 }
 
 inline std::vector<std::string> split(const std::string& string,

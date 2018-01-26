@@ -20,6 +20,7 @@
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookWorkingDir.hpp"
 
+#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/StringUtils.hpp>
@@ -28,7 +29,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
-
+#include <r/RSexp.hpp>
 
 using namespace rstudio::core;
 
@@ -84,6 +85,10 @@ Error prepareCacheConsoleOutputFile(const std::string& docId,
    *pChunkOutputFile =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputText);
    
+   error = pChunkOutputFile->removeIfExists();
+   if (error)
+      return error;
+   
    return Success();
 }
 
@@ -136,7 +141,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
    
    // prepare cache output file (use tempfile on failure)
-   FilePath targetPath = module_context::tempFile("rcpp-cache", "");
+   FilePath targetPath = module_context::tempFile("rcpp-cache-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
    if (error)
       LOG_ERROR(error);
@@ -213,7 +218,7 @@ Error executeStanEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
    
    // prepare console output file -- use tempfile on failure
-   FilePath targetPath = module_context::tempFile("stan-cache-", "");
+   FilePath targetPath = module_context::tempFile("stan-cache-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
    if (error)
       LOG_ERROR(error);
@@ -227,7 +232,7 @@ Error executeStanEngineChunk(const std::string& docId,
                         targetPath)); 
    
    // write code to file
-   FilePath tempFile = module_context::tempFile("stan-", ".stan");
+   FilePath tempFile = module_context::tempFile("stan-", "stan");
    error = writeStringToFile(tempFile, code + "\n");
    if (error)
    {
@@ -346,10 +351,10 @@ Error executeStanEngineChunk(const std::string& docId,
 }
 
 Error executeSqlEngineChunk(const std::string& docId,
-                             const std::string& chunkId,
-                             const std::string& nbCtxId,
-                             const std::string& code,
-                             const json::Object& options)
+                            const std::string& chunkId,
+                            const std::string& nbCtxId,
+                            const std::string& code,
+                            const json::Object& options)
 {
    Error error;
    
@@ -357,7 +362,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    ChunkExecCompletedScope execScope(docId, chunkId);
 
    // prepare console output file -- use tempfile on failure
-   FilePath consolePath = module_context::tempFile("data-console-", "");
+   FilePath consolePath = module_context::tempFile("data-console-", "txt");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &consolePath);
    if (error)
       LOG_ERROR(error);
@@ -438,6 +443,241 @@ Error executeSqlEngineChunk(const std::string& docId,
    return Success();
 }
 
+Error runUserDefinedEngine(const std::string& docId,
+                           const std::string& chunkId,
+                           const std::string& nbCtxId,
+                           const std::string& engine,
+                           const std::string& code,
+                           json::Object options)
+{
+   using namespace r::sexp;
+   using namespace r::exec;
+   Error error;
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   // prepare cache folder
+   FilePath cachePath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+   error = cachePath.resetDirectory();
+   if (error)
+      return error;
+   
+   // default to 'error=FALSE' when unset
+   if (!options.count("error"))
+      options["error"] = false;
+   
+   // determine whether we want to emit warnings, errors in this chunk
+   bool emitWarnings = true;
+   core::json::readObject(options, "warning", &emitWarnings);
+   
+   unsigned int ordinal = 1;
+   
+   // helper function for emitting console text
+   auto emitText = [&](const std::string& text, int outputType) -> Error
+   {
+      Error error;
+
+      FilePath targetPath = notebook::chunkOutputFile(
+               docId,
+               chunkId,
+               nbCtxId,
+               ChunkOutputText);
+      
+      error = targetPath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      error = writeConsoleOutput(
+               outputType,
+               text,
+               targetPath,
+               true);
+      if (error)
+         return error;
+
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               ordinal++,
+               ChunkOutputText,
+               targetPath);
+
+      return Success();
+   };
+   
+   // helper function for emitting an image
+   auto emitImage = [&](const std::string& path) -> Error
+   {
+      Error error;
+      
+      FilePath sourcePath = module_context::resolveAliasedPath(path);
+      FilePath targetPath = notebook::chunkOutputFile(
+               docId,
+               chunkId,
+               nbCtxId,
+               ChunkOutputPlot);
+
+      error = targetPath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      error = sourcePath.move(targetPath);
+      if (error)
+         return error;
+
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               ordinal++,
+               ChunkOutputPlot,
+               targetPath);
+      
+      return Success();
+   };
+   
+   // output will be captured by engine, but evaluation errors may be
+   // emitted directly to console, so capture those. note that the reticulate
+   // engine will automatically capture errors when 'error=TRUE', so if we
+   // receive an error it implies we should emit it to the chunk and execution
+   // will automatically stop
+   auto consoleHandler = [&](
+         module_context::ConsoleOutputType type,
+         const std::string& output)
+   {
+      if (type == module_context::ConsoleOutputError)
+      {
+         std::string errorPrefix =
+                "Error in py_run_string_impl(code, local, convert) : ";
+               
+         if (boost::algorithm::starts_with(output, errorPrefix))
+         {
+            emitText(output.substr(errorPrefix.size()), kChunkConsoleError);
+         }
+         else
+         {
+            emitText(output, kChunkConsoleError);
+         }
+      }
+   };
+   
+   boost::signals::scoped_connection handler =
+         module_context::events().onConsoleOutput.connect(consoleHandler);
+   
+   // run the user-defined engine
+   SEXP outputSEXP = R_NilValue;
+   Protect protect;
+   error = RFunction(".rs.runUserDefinedEngine")
+         .addParam(engine)
+         .addParam(code)
+         .addParam(options)
+         .call(&outputSEXP, &protect);
+   
+   // report errors during engine execution to user
+   if (error)
+   {
+      FilePath targetPath = module_context::tempFile(
+               "reticulate-engine-",
+               ".txt");
+      
+      chunkConsoleOutputHandler(
+               module_context::ConsoleOutputError,
+               r::endUserErrorMessage(error),
+               targetPath);
+      return error;
+   }
+   
+   // generic engine output (as a single string of console output)
+   if (isString(outputSEXP))
+   {
+      emitText(asString(outputSEXP), kChunkConsoleOutput);
+   }
+   
+   // evaluate-style (list) output
+   else if (isList(outputSEXP))
+   {
+      int n = length(outputSEXP);
+      for (int i = 0; i < n; i++)
+      {
+         SEXP elSEXP = VECTOR_ELT(outputSEXP, i);
+         
+         if (inherits(elSEXP, "condition") && emitWarnings)
+         {
+            // captured R error -- emit as error message
+            std::string message;
+            Error error = RFunction("base:::conditionMessage")
+                  .addParam(elSEXP)
+                  .call(&message);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            emitText(message, kChunkConsoleError);
+         }
+         else if (inherits(elSEXP, "knit_image_paths"))
+         {
+            // handle a plot provided by e.g. knitr::include_graphics()
+            Error error = emitImage(r::sexp::asString(elSEXP));
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+         }
+         else if (inherits(elSEXP, "reticulate_matplotlib_plot"))
+         {
+            // matplotlib-generated plot -- forward the image path
+            std::string path;
+            Error error = getNamedListElement(elSEXP, "path", &path);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            
+            error = emitImage(path);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+         }
+         else if (isString(elSEXP))
+         {
+            // plain old console text output -- emit as-is
+            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+         }
+         else
+         {
+            Rf_warning(
+                     "don't know how to handle engine output of type '%s'",
+                     r::sexp::typeAsString(elSEXP).c_str());
+         }
+      }
+   }
+   else
+   {
+      Rf_warning(
+               "don't know how to handle '%s' engine output",
+               engine.c_str());
+   }
+   
+   return Success();
+}
+
 Error interruptEngineChunk(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -488,7 +728,27 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else if (engine == "sql")
       error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
    else
-      runChunk(docId, chunkId, nbCtxId, engine, code, options);
+   {
+      // check to see if this is a known interpreter; if so, we'll
+      // use own own shim to run the engine. if not, we'll just call
+      // the engine as-is
+      using namespace r::exec;
+      using namespace r::sexp;
+      
+      bool isSystemInterpreter = false;
+      Error error = RFunction(".rs.isSystemInterpreter")
+            .addParam(engine)
+            .call(&isSystemInterpreter);
+      
+      if (isSystemInterpreter)
+      {
+         runChunk(docId, chunkId, nbCtxId, engine, code, options);
+      }
+      else
+      {
+         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
+      }
+   }
 
    // release working directory
    dir.disconnect();
@@ -499,9 +759,11 @@ Error executeAlternateEngineChunk(const std::string& docId,
 Error initAlternateEngines()
 {
    using namespace module_context;
+   using boost::bind;
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "NotebookAlternateEngines.R"))
       (bind(registerRpcMethod, "interrupt_chunk", interruptEngineChunk));
    return initBlock.execute();
 }

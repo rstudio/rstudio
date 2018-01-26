@@ -48,6 +48,9 @@ var RMarkdownHighlightRules = function() {
 
    // Base rule set (markdown)
    this.$rules = new MarkdownHighlightRules().getRules();
+
+   // use 'firstLine' rule so that YAML rules can apply only there
+   this.$rules["firstLine"] = this.$rules["allowBlock"].slice();
    
    // Embed R highlight rules
    Utils.embedRules(
@@ -146,7 +149,7 @@ var RMarkdownHighlightRules = function() {
       "yaml",
       "^\\s*---\\s*$",
       "^\\s*(?:---|\\.\\.\\.)\\s*$",
-      ["fieldblock", "listblock", "allowBlock"]
+      ["firstLine"]
    );
 
    this.$rules["yaml-start"].unshift({

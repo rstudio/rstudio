@@ -155,10 +155,27 @@ var snippets = [
    },
 
    /* Utilities */
-
    {
       name: "ts",
       content: '`r paste("#", date(), "------------------------------\\n")`'
+   },
+
+   /* Shiny */
+   {
+      name: "shinyapp",
+      content: [
+         'library(shiny)',
+         '',
+         'ui <- fluidPage(',
+         '  ${0}',
+         ')',
+         '',
+         'server <- function(input, output, session) {',
+         '  ',
+         '}',
+         '',
+         'shinyApp(ui, server)'
+      ].join("\n")
    }
 ];
 

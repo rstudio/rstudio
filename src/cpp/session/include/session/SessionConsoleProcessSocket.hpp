@@ -24,6 +24,7 @@
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <core/Error.hpp>
 #include <core/Thread.hpp>

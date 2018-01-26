@@ -1,7 +1,7 @@
 /*
  * TerminalLocalEcho.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
+import java.util.Objects;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringSink;
@@ -91,7 +92,7 @@ public class TerminalLocalEcho
          }
 
          String matchedValue = match.getValue();
-         if (matchedValue.equals("\b")  && !localEcho_.isEmpty())
+         if (StringUtil.equals(matchedValue, "\b")  && !localEcho_.isEmpty())
          {
             // If the backspace was typed by the user, it will be in the
             // localecho buffer, and already echoed to the screen. If it isn't
@@ -100,7 +101,7 @@ public class TerminalLocalEcho
             // remove the backspace from the localEcho buffer so matching
             // doesn't break at this point.
             String popped = localEcho_.pop();
-            if (!popped.equals("\b"))
+            if (!StringUtil.equals(popped, "\b"))
             {
                // Anything in localEcho at this point represents text written to
                // the local screen that the server doesn't know was written, so a
@@ -129,19 +130,19 @@ public class TerminalLocalEcho
     */
    private int outputNonEchoed(String outputToMatch)
    {
-      String lastOutput = "";
+      StringBuilder lastOutput = new StringBuilder();
       while (!localEcho_.isEmpty() && lastOutput.length() < outputToMatch.length())
       {
-         lastOutput += localEcho_.poll();
+         lastOutput.append(localEcho_.poll());
       }
 
-      if (lastOutput.equals(outputToMatch))
+      if (lastOutput.toString().equals(outputToMatch))
       {
          // all matched, nothing to output
          return outputToMatch.length();
       }
 
-      else if (outputToMatch.startsWith(lastOutput))
+      else if (outputToMatch.startsWith(lastOutput.toString()))
       {
          // output is superset of what was local-echoed; write out the
          // unmatched part
@@ -156,7 +157,7 @@ public class TerminalLocalEcho
          // diagnostics to help isolate cases where local-echo is 
          // not matching as expected 
          diagnostic("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
-               "' Had: '" + AnsiCode.prettyPrint(lastOutput) + "'");
+               "' Had: '" + AnsiCode.prettyPrint(lastOutput.toString()) + "'");
          
          localEcho_.clear();
          writer_.write(outputToMatch);
@@ -234,5 +235,5 @@ public class TerminalLocalEcho
    private StringBuilder diagnostic_;
    
    private final StringSink writer_;
-   private LinkedList<String> localEcho_ = new LinkedList<String>();
+   private LinkedList<String> localEcho_ = new LinkedList<>();
 }

@@ -1,9 +1,24 @@
+argument <- function(index, default) {
+   args <- commandArgs(TRUE)
+   if (length(args) < index)
+      default
+   else
+      args[[index]]
+}
+
+# parse some command line arguments
+args <- as.list(commandArgs(TRUE))
+variant <- argument(1, "debug")
+link    <- argument(2, "static")
+
 # some laziness to ensure we move to the 'install-boost' folder
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-boost")
 
-source("tools.R")
+source("../tools.R")
 section("The working directory is: '%s'", getwd())
+progress("Producing '%s' build with '%s' linking", variant, link)
+owd <- getwd()
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)
@@ -14,17 +29,16 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://sourceforge.net/projects/boost/files/boost/1.63.0/boost_1_63_0.7z"
-output_file <- "boost-1.63-win-rtools33-gcc493.zip"
-output_dir <- file.path("..", tools::file_path_sans_ext(output_file))
-toolchain_bin   <- normalizePath("../Rtools33/bin", mustWork = TRUE)
-toolchain_32bit <- normalizePath("../Rtools33/mingw_32/bin", mustWork = TRUE)
-toolchain_64bit <- normalizePath("../Rtools33/mingw_64/bin", mustWork = TRUE)
+boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
+output_name <- sprintf("boost-1.65.1-win-msvc14-%s-%s.zip", variant, link)
+output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
+output_file <- file.path(output_dir, output_name)
+install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
 
 # clear out the directory we'll create boost in
-unlink(output_dir, recursive = TRUE)
-ensure_dir(output_dir)
-output_dir <- normalizePath(output_dir)
+unlink(install_dir, recursive = TRUE)
+ensure_dir(install_dir)
+install_dir <- normalizePath(install_dir)
 
 # boost modules we need to alias
 boost_modules <- c(
@@ -62,10 +76,6 @@ if (!file.exists(boost_dirname)) {
 if (!file.exists(boost_dirname))
    fatal("'%s' doesn't exist (download / extract failed?)", boost_dirname)
 
-# clean up the path
-PATH$remove(toolchain_32bit)
-PATH$remove(toolchain_64bit)
-
 # enter boost folder
 enter(boost_dirname)
 
@@ -78,14 +88,14 @@ invisible(lapply(docs, function(doc) {
       unlink(doc, recursive = TRUE)
 }))
 
+
 # bootstrap the boost build directory
-PATH$prepend(toolchain_32bit)
 section("Bootstrapping boost...")
-exec("cmd.exe", "/C call bootstrap.bat gcc --without-libraries=python")
+exec("cmd.exe", "/C call bootstrap.bat vc14")
 
 # create bcp executable (so we can create Boost
 # using a private namespace)
-exec("b2", "toolset=gcc -j 4 tools\\bcp")
+exec("b2", "-j 4 tools\\bcp")
 invisible(file.copy("dist/bin/bcp.exe", "bcp.exe"))
 
 # use bcp to copy boost into 'rstudio' sub-directory
@@ -97,69 +107,55 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat gcc --without-libraries=python")
-PATH$remove(toolchain_32bit)
+exec("cmd.exe", "/C call bootstrap.bat vc14")
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
    
-   prefix <- file.path(output_dir, sprintf("boost%s", bitness))
-   cxxflags <- "-march=core2 -mtune=generic"
-   
+   prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
    unlink(prefix, recursive = TRUE)
    
    paste(
-      "toolset=gcc",
       sprintf("address-model=%s", bitness),
-      sprintf("--prefix=%s", prefix),
+      "toolset=msvc-14.0",
+      sprintf("--prefix=\"%s\"", prefix),
+      "--abbreviate-paths",
       "--without-python",
-      "variant=release",
-      "link=static",
-      "runtime-link=static",
+      sprintf("variant=%s", variant),
+      sprintf("link=%s", link),
+      sprintf("runtime-link=shared", link),
       "threading=multi",
-      sprintf("cxxflags=\"%s\"", cxxflags),
       "define=BOOST_USE_WINDOWS_H",
       "install"
    )
 }
 
 # build 32bit Boost
-PATH$prepend(toolchain_32bit)
 section("Building Boost 32bit...")
 exec("b2", b2_build_args("32"))
-PATH$remove(toolchain_32bit)
 
 # build 64bit Boost
-PATH$prepend(toolchain_64bit)
 section("Building Boost 64bit...")
 exec("b2", b2_build_args("64"))
-PATH$remove(toolchain_64bit)
 
 # enter the build directory
-enter(output_dir)
-
-# rename the libraries (remove rstudio prefix)
-setwd("boost32/lib")
-src <- list.files()
-tgt <- gsub("rstudio_", "", src)
-file.rename(src, tgt)
-setwd("../..")
-
-setwd("boost64/lib")
-src <- list.files()
-tgt <- gsub("rstudio_", "", src)
-file.rename(src, tgt)
-setwd("../..")
+enter(install_dir)
 
 # zip it all up
-section("Creating archive at '%s'...", output_file)
-PATH$prepend(toolchain_bin) # for zip.exe
-if (file.exists(output_file))
-   unlink(output_file)
+section("Creating archive '%s'...", output_name)
+if (file.exists(output_name))
+   unlink(output_name)
 
-zip(output_file, files = c("boost32", "boost64"), extras = "-q")
-if (file.exists(output_file))
-   progress("Archive created at '%s'.", output_file)
-file.rename(output_file, file.path("..", output_file))
+zip(output_name, files = c("boost32", "boost64"), extras = "-q")
+if (!file.exists(output_name))
+   fatal("Failed to create archive '%s'.", output_name)
+progress("Created archive '%s'.", output_name)
 
-# success!
+# copy the generated file to the boost
+file.rename(output_name, output_file)
+if (!file.exists(output_file))
+   fatal("Failed to move archive to path '%s'.", output_file)
+progress("Moved archive to path '%s'.", output_file)
+
+# rejoice
+progress("Boost built successfully!")

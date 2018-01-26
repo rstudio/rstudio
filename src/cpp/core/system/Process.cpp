@@ -27,8 +27,7 @@
 #include <core/BoostThread.hpp>
 
 #include <core/PerformanceTimer.hpp>
-
-#include "ChildProcess.hpp"
+#include <core/system/ChildProcess.hpp>
 
 namespace rstudio {
 namespace core {
