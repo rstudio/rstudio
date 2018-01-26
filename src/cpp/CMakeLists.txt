@@ -327,17 +327,11 @@ else()
 
       # verify we got the required R version
       if(LIBR_FOUND AND RSTUDIO_VERIFY_R_VERSION)
-         include(CheckCSourceRuns)
          set(CMAKE_REQUIRED_INCLUDES ${LIBR_INCLUDE_DIRS})
-         check_c_source_runs("
-           #include <Rversion.h>
-           int main()
-           {
-              int meetsRequirement = R_VERSION >= R_Version(${RSTUDIO_R_MAJOR_VERSION_REQUIRED},${RSTUDIO_R_MINOR_VERSION_REQUIRED},${RSTUDIO_R_PATCH_VERSION_REQUIRED});
-              return !meetsRequirement;
-           }"
-           LIBR_MINIMUM_VERSION)
-         if(NOT LIBR_MINIMUM_VERSION)
+         execute_process(
+             COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "--slave" "-e" "cat(as.character(getRversion()))"
+             OUTPUT_VARIABLE LIBR_VERSION)
+         if (LIBR_VERSION VERSION_LESS "3.0.1")
             message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found.")
          endif()
       endif()
