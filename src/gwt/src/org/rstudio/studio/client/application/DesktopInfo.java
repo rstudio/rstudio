@@ -33,6 +33,10 @@ public class DesktopInfo
                       Commands commands,
                       EventBus events)
    {
+      // do no work in server mode
+      if (!Desktop.isDesktop())
+         return;
+      
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
       {
          @Override
