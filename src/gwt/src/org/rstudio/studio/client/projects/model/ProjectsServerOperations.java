@@ -1,7 +1,7 @@
 /*
  * ProjectsServerOperations.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,12 +30,19 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                             ServerRequestCallback<Boolean> callback);
    
    void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
-     
+   
+   /**
+    * @param projectFile project file to create if none found
+    * @param newPackageOptions
+    * @param newShinyAppOptions
+    * @param projectTemplateOptions
+    * @param callback if an existing .Rproj is found, return it, otherwise null
+    */
    void createProject(String projectFile,
                       NewPackageOptions newPackageOptions,
                       NewShinyAppOptions newShinyAppOptions,
                       ProjectTemplateOptions projectTemplateOptions,
-                      ServerRequestCallback<Void> callback);
+                      ServerRequestCallback<String> callback);
    
    void createProjectFile(String projectFile,
                           ServerRequestCallback<Boolean> callback);
