@@ -70,7 +70,12 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(), 
             false /*defaultSpace*/)));
-      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));   
+      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));
+      editingPanel.add(checkboxPref(
+            "Auto-detect code indentation",
+            prefs_.autoDetectIndentation(),
+            "When enabled, the indentation for documents not part of an RStudio project " +
+            "will be automatically detected."));
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
@@ -78,7 +83,8 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
-            "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
+            "When enabled, pressing Enter will continue comments on new lines. " +
+            "Press Shift + Enter to exit a comment."));
       
       delimiterSurroundWidget_ = new SelectWidget(
             "Surround selection on text insertion:",
@@ -113,6 +119,7 @@ public class EditingPreferencesPane extends PreferencesPane
             false,
             true,
             false);
+      editorMode_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       
       keyboardPanel.add(editorMode_);
       SmallButton editShortcuts = new SmallButton("Modify Keyboard Shortcuts...");
@@ -151,6 +158,7 @@ public class EditingPreferencesPane extends PreferencesPane
             false,
             true,
             false);
+      executionBehavior_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       editingPanel.add(executionBehavior_);
       
       Label snippetsLabel = headerLabel("Snippets");

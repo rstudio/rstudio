@@ -19,6 +19,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
 
+import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
@@ -1166,6 +1167,79 @@ public class StringUtil
       return (str.match(/\n/g)||[]).length;
    }-*/;
    
+   // Automatically detect the indent size within a document (for documents
+   // indented with spaces). If the document appears to be use tabs for
+   // indentation, this function will return -1.
+   public static final int detectIndent(JsArrayString lines)
+   {
+      // map indents -> counts
+      SafeMap<Integer, Integer> indentMap = new SafeMap<Integer, Integer>();
+      
+      // use the first 1000 lines in the document
+      int end = Math.min(lines.length() - 1, 1000);
+      
+      // detect tab counts separately
+      int tabIndentCount = 0;
+      
+      for (int i = 0, n = end; i < n; i++)
+      {
+         String line = lines.get(i);
+         String indent = StringUtil.getIndent(line);
+         
+         // detect tab indent separately
+         if (indent.startsWith("\t"))
+         {
+            tabIndentCount++;
+            continue;
+         }
+         
+         // skip lines with no indent or unlikely indent
+         int indentSize = indent.length();
+         if (indentSize == 0 || indentSize > 8)
+            continue;
+         
+         // update indent count
+         if (!indentMap.containsKey(indentSize))
+            indentMap.put(indentSize, 0);
+         int count = indentMap.get(indentSize);
+         indentMap.put(indentSize, count + 1);
+      }
+      
+      // now, we want to try and detect what indentation pattern is most common.
+      // for example, in a document with two-space indent, we should see indents
+      // like '2, 4, 6, ...'; in a document with three-space indent, we should see
+      // '3, 6, 9, ...'. note that we'll need to account for vertical alignment
+      // in the detected indentation as well.
+      
+      int detectedIndentSize = 0;
+      int detectedIndentScore = 0;
+      for (int potentialIndent : new int[] { 2, 3, 4, 8 })
+      {
+         int score = 0;
+         for (Map.Entry<Integer, Integer> entry : indentMap.entrySet())
+         {
+            int indentSize = entry.getKey();
+            int indentCount = entry.getValue();
+            
+            if ((indentSize % potentialIndent) == 0)
+               score += indentCount;
+         }
+         
+         // record if this is the highest scoring indent (penalize small indents
+         // a bit)
+         if (score - potentialIndent >= detectedIndentScore)
+         {
+            detectedIndentSize = potentialIndent;
+            detectedIndentScore = score;
+         }
+      }
+      
+      if (tabIndentCount > detectedIndentSize)
+         return -1;
+      
+      return detectedIndentSize;
+   }
+    
    /**
     * Compare two strings, works if one or both strings are null.
     * @param str1
