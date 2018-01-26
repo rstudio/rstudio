@@ -37,6 +37,8 @@
 
 .rs.addFunction("runUserDefinedEngine", function(engine, code, options)
 {
+   Encoding(code) <- "UTF-8" 
+   
    # if we're using the python engine, attempt to load reticulate (this
    # will load the reticulate knitr engine and set it as the default engine)
    useReticulate <-
