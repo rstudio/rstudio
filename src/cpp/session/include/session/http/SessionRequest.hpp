@@ -1,7 +1,7 @@
 /*
  * SessionRequest.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,8 +57,11 @@ inline core::Error sendSessionRequest(const std::string& uri,
    {
       // if no standalone port, make an authenticated session request
       tcpipPort = core::system::getenv(kRSessionPortNumber);
-      request.setHeader("X-Shared-Secret", core::system::getenv("RS_SHARED_SECRET"));
-      return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
+      if (!tcpipPort.empty())
+      {
+         request.setHeader("X-Shared-Secret", core::system::getenv("RS_SHARED_SECRET"));
+         return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
+      }
    }
 
 #ifndef _WIN32
