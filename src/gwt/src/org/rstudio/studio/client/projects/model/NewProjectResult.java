@@ -1,7 +1,7 @@
 /*
  * NewProjectResult.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,11 @@ public class NewProjectResult
    public String getProjectFile()
    {
       return projectFile_;
+   }
+   
+   public void setProjectFile(String projectFile)
+   {
+      projectFile_ = projectFile;
    }
    
    public boolean getCreateGitRepo()
@@ -113,7 +118,7 @@ public class NewProjectResult
    private final boolean usePackrat_;
    private boolean openInNewWindow_;
    private RVersionSpec rVersion_;
-   private final String projectFile_;
+   private String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;

@@ -531,11 +531,18 @@ public class Projects implements OpenProjectFileHandler,
                      newProject.getNewPackageOptions(),
                      newProject.getNewShinyAppOptions(),
                      newProject.getProjectTemplateOptions(),
-                     new VoidServerRequestCallback(indicator)
+                     new SimpleRequestCallback<String>()
                      {
                         @Override
-                        public void onSuccess()
+                        public void onResponseReceived(String foundProjectFile)
                         {
+                           if (!StringUtil.isNullOrEmpty(foundProjectFile))
+                           {
+                              // found an existing project file with different name than the
+                              // parent folder; have to update here so that's what we end up
+                              // opening
+                              newProject.setProjectFile(foundProjectFile);
+                           }
                            continuation.execute();
                         }
                      });

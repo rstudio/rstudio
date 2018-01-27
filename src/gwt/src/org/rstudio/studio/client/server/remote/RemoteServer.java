@@ -1682,11 +1682,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, EXECUTE_R_CODE, params, requestCallback);
    }
    
+   @Override
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
                              ProjectTemplateOptions projectTemplateOptions,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(projectFile));
