@@ -133,19 +133,6 @@ Error findExistingProjFileInFolder(const std::string& inFolder, std::string* pRe
    
    std::string folder = inFolder;
    boost::algorithm::trim(folder);
-   
-   if (folder.length() > 1) // don't tamper with "/" or "\\"
-   {
-      // r_util::projectFromDirectory doesn't like a path with trailing slash(es),
-      // so strip them off
-      while (folder.back() == '/' || folder.back() == '\\')
-         folder.erase(folder.size()-1); // remove trailing slash
-      if (folder.empty())
-      {
-         return Success();
-      }
-   }
-   
    FilePath projectFilePath = module_context::resolveAliasedPath(folder);
    if (!projectFilePath.exists())
    {

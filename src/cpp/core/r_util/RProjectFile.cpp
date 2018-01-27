@@ -1011,8 +1011,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
                             string_utils::LineEndingNative);
 }
 
-FilePath projectFromDirectory(const FilePath& directoryPath)
+FilePath projectFromDirectory(const FilePath& path)
 {
+   // canonicalize the path; this handles the case (among others) where the incoming
+   // path ends with a "/"; without removing that, the matching logic below fails
+   FilePath directoryPath(path.canonicalPath());
+
    // first use simple heuristic of a case sentitive match between
    // directory name and project file name
    std::string dirName = directoryPath.filename();
