@@ -127,16 +127,30 @@ Error getProjectFilePath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error findExistingProjFileInFolder(const std::string& inFolder, std::string* pResult)
+bool findProjectFile(const std::string& path, std::string* pResult)
 {
-   pResult->clear();
-   
-   std::string folder = inFolder;
+   // Tries to find an EXISTING .Rproj file in the input path. If found, sets the
+   // path in pResult and return true. Otherwise returns false.
+   //
+   // If input specifies an existing .Rproj file, e.g. (/home/gary/foo/existing.Rproj),
+   // sets that as the result and returns true.
+   //
+   // Otherwise, looks for an .Rproj file in the specified path as follows:
+   // 
+   // 1. If it finds an .Rproj with same name as folder, returns it:
+   //          /home/gary/foo -> /home/gary/foo/foo.Rproj
+   //
+   // 2. If it finds a single .Rproj in the folder, returns it:
+   //
+   // 3. If there are multiple .Rproj's in the folder, returns the most recently modified.
+   //
+   // 4. If none are found, returns false.
+   std::string folder = path;
    boost::algorithm::trim(folder);
    FilePath projectFilePath = module_context::resolveAliasedPath(folder);
    if (!projectFilePath.exists())
    {
-      return Success();
+      return false;
    }
    if (!projectFilePath.isDirectory())
    {
@@ -144,18 +158,21 @@ Error findExistingProjFileInFolder(const std::string& inFolder, std::string* pRe
       if (projectFilePath.extensionLowerCase() == ".rproj")
       {
          *pResult = folder;
+         return true;
       }
-      return Success();
+      else
+      {
+         return false; 
+      }
    }
 
-   // finds .Rproj with same name as folder, otherwise if there's a
-   // single .Rproj return it, otherwise returns most recently modified
-   // project file in folder, otherwise returns blank path if no .Rproj
    FilePath resultPath = r_util::projectFromDirectory(projectFilePath);
    *pResult = module_context::createAliasedPath(resultPath);
-   return Success();
+   return true;
 }
 
+// Find an existing .Rproj in a folder, return its full path. Returns empty
+// string if none found.
 Error findProjectInFolder(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -165,10 +182,7 @@ Error findProjectInFolder(const json::JsonRpcRequest& request,
       return error;
    
    std::string result;
-   error = findExistingProjFileInFolder(folder, &result);
-   if (error)
-      return error;
-
+   findProjectFile(folder, &result);
    pResponse->setResult(result);
    return Success();
 }
@@ -258,12 +272,7 @@ Error createProject(const json::JsonRpcRequest& request,
       addFirstRunDoc(projectFilePath, "app.R");
 
       std::string existingProjectFilePath;
-      error = findExistingProjFileInFolder(projectFilePath.parent().absolutePath(),
-                                           &existingProjectFilePath);
-      if (error)
-         return error;
-      
-      if (existingProjectFilePath.empty())
+      if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
       {
          // create the project file
          return r_util::writeProjectFile(projectFilePath,
@@ -293,12 +302,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
 
    std::string existingProjectFilePath;
-   error = findExistingProjFileInFolder(projectFilePath.parent().absolutePath(),
-                                        &existingProjectFilePath);
-   if (error)
-      return error;
-   
-   if (existingProjectFilePath.empty())
+   if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
    {
       // create the project file
       error = r_util::writeProjectFile(projectFilePath,
