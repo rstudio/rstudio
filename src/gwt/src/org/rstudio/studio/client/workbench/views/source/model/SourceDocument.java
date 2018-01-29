@@ -165,6 +165,14 @@ public class SourceDocument extends JavaScriptObject
      this.collab_params = params;
    }-*/;
    
+   public native final boolean isReadOnly() /*-{
+      return !!this.read_only;
+   }-*/;
+   
+   public native final String getReadOnlyAlternative() /*-{
+      return this.read_only_alternative;
+   }-*/;
+   
    public final static String XT_RMARKDOWN = "rmarkdown";
    public final static String XT_SHINY_PREFIX = "shiny-";
    public final static String XT_SHINY_DIR = "shiny-dir";
