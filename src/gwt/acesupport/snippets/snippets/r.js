@@ -176,6 +176,21 @@ var snippets = [
          '',
          'shinyApp(ui, server)'
       ].join("\n")
+   },
+   {
+      name: "shinymod",
+      content: [
+         '${1:name}_UI <- function(id) {',
+         '  ns <- NS(id)',
+         '  tagList(',
+         '    ${0}',
+         '  )',
+         '}',
+         '',
+         '${1:name} <- function(input, output, session) {',
+         '  ',
+         '}'
+      ].join("\n")
    }
 ];
 
