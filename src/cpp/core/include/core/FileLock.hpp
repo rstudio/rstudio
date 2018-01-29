@@ -32,10 +32,6 @@
 namespace rstudio {
 namespace core {
 
-namespace file_lock {
-void initialize();
-} // end namespace file_lock
-
 class Error;
 class FilePath;
 
@@ -91,6 +87,7 @@ public:
    static LockType getDefaultType() { return s_defaultType; }
    static boost::posix_time::seconds getRefreshRate() { return s_refreshRate; }
    static bool isLoggingEnabled() { return s_loggingEnabled; }
+   static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool isNoLockAvailable(const Error& error)
    {
       return error.code() == boost::system::errc::no_lock_available;
@@ -101,6 +98,7 @@ protected:
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
    static bool s_loggingEnabled;
+   static bool s_isLoadBalanced;
    static FilePath s_logFile;
 };
 
