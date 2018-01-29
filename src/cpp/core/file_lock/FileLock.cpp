@@ -23,18 +23,15 @@
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/SocketUtils.hpp>
+#include <core/system/Environment.hpp>
 
 #include <boost/algorithm/string.hpp>
 
+// borrowed from SessionConstants.hpp
+#define kRStudioSessionRoute "RSTUDIO_SESSION_ROUTE"
+
 namespace rstudio {
 namespace core {
-
-namespace file_lock {
-void initialize()
-{
-   FileLock::initialize();
-}
-} // end namespace file_lock
 
 namespace {
 
@@ -112,6 +109,7 @@ bool FileLock::verifyInitialized()
    return s_isInitialized;
 }
 
+
 void FileLock::initialize(FilePath locksConfPath)
 {
    if (locksConfPath.empty())
@@ -161,7 +159,10 @@ void FileLock::initialize(const Settings& settings)
          << std::endl;
       FileLock::log(ss.str());
    }
-   
+
+   FileLock::s_isLoadBalanced =
+         !core::system::getenv(kRStudioSessionRoute).empty();
+
    s_isInitialized = true;
 }
 
@@ -214,6 +215,7 @@ FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
 boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
 bool FileLock::s_loggingEnabled(false);
+bool FileLock::s_isLoadBalanced(false);
 FilePath FileLock::s_logFile;
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)

@@ -150,9 +150,16 @@ bool isLockFileOrphaned(const FilePath& lockFilePath)
 
 bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
 {
-   // check for orphaned lockfile
-   if (isLockFileOrphaned(lockFilePath))
-      return true;
+   // TODO: currently, we write the process ID of the owning process to the
+   // lockfile, in order to detect whether the owning process has crashed
+   // and the lockfile is orphaned. in load-balanced configurations, this is
+   // unreliable as sessions across multiple machines may be attempting to
+   // read / write lockfiles, so we disable this check here
+   if (!s_isLoadBalanced)
+   {
+      if (isLockFileOrphaned(lockFilePath))
+         return true;
+   }
    
    double seconds = s_timeoutInterval.total_seconds();
    double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
