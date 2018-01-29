@@ -262,7 +262,7 @@
     
     # as.data.frame uses the name of its argument to label unlabeled columns,
     # so label these back to the original name
-    if (!is.null(frame))
+    if (!is.null(frame) && !is.null(names(frame)))
       names(frame)[names(frame) == "x"] <- name
     x <- frame 
   }
@@ -270,6 +270,11 @@
   # if coercion was successful (or we started with a frame), flatten the frame
   # if necessary and requested
   if (is.data.frame(x)) {
+    
+    # generate column names if we didn't have any to start
+    if (is.null(names(x)))
+      names(x) <- paste("V", seq_along(x), sep = "")
+    
     if (!flatten) {
       return(x)
     }
