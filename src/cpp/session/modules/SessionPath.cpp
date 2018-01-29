@@ -68,12 +68,17 @@ void safeReadPathsFromFile(const FilePath& filePath,
 
 void addToPathIfNecessary(const std::string& entry, std::string* pPath)
 {
-   if (!regex_search(*pPath, boost::regex("(^|:)" + entry + "/?($|:)")))
+   // guard against user input which may not parse as a valid regular expression
+   try
    {
-      if (!pPath->empty())
-         pPath->push_back(':');
-      pPath->append(entry);
+      if (!regex_search(*pPath, boost::regex("(^|:)" + entry + "/?($|:)")))
+      {
+         if (!pPath->empty())
+            pPath->push_back(':');
+         pPath->append(entry);
+      }
    }
+   CATCH_UNEXPECTED_EXCEPTION;
 }
 
 } // anonymous namespace
