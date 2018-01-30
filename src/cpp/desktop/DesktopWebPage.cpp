@@ -61,6 +61,12 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
    settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+   
+#ifdef Q_OS_MAC
+   // disable scrollbars entirely for now as otherwise they persist indefinitely
+   // and look terribly ugly (pending a better fix / workaround)
+   settings()->setAttribute(QWebEngineSettings::ShowScrollBars, false);
+#endif
 
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
