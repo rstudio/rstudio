@@ -73,7 +73,7 @@ public Q_SLOTS:
                                 const QString& label,
                                 const QString& dir);
 
-   void onClipboardChanged(QClipboard::Mode mode);
+   void onClipboardSelectionChanged();
 
    void undo();
    void redo();
