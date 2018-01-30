@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
@@ -165,7 +166,7 @@ public class DesktopHooks
       // inject a 100ms delay between execution of commands to prevent
       // issues with commands being delivered out of order by cocoa
       // networking to the server (it appears as if when you put e.g. 10
-      // requests in flight simultaneously it's not guarnateed that they
+      // requests in flight simultaneously it's not guaranteed that they
       // will be received in the order they were sent).
       commandQueue_.addCommand(new SerializedCommand() {
          @Override
@@ -182,7 +183,7 @@ public class DesktopHooks
                {
                   continuation.execute();  
                }
-            }.schedule(100);;
+            }.schedule(100);
          }
       });
       
@@ -223,10 +224,9 @@ public class DesktopHooks
          message = message + "\n\nDetails: ";
          message = message + licenseMessage;
       }
-      globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message);
-      
-      commands_.forceQuitSession().execute();
-   }
+      globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message,
+            (Operation) () -> commands_.forceQuitSession().execute());
+   } 
 
    private final Commands commands_;
    private final EventBus events_;
