@@ -741,27 +741,27 @@ bool GwtCallback::supportsClipboardMetafile()
 #endif
 }
 
-namespace {
-   QMessageBox::ButtonRole captionToRole(const QString& caption)
-   {
-      if (caption == QString::fromUtf8("OK"))
-         return QMessageBox::AcceptRole;
-      else if (caption == QString::fromUtf8("Cancel"))
-         return QMessageBox::RejectRole;
-      else if (caption == QString::fromUtf8("Yes"))
-         return QMessageBox::YesRole;
-      else if (caption == QString::fromUtf8("No"))
-         return QMessageBox::NoRole;
-      else if (caption == QString::fromUtf8("Save"))
-         return QMessageBox::AcceptRole;
-      else if (caption == QString::fromUtf8("Don't Save"))
-         return QMessageBox::DestructiveRole;
-      else
-         return QMessageBox::ActionRole;
-   }
-} // anonymous namespace
-
 #ifndef Q_OS_MAC
+
+namespace {
+QMessageBox::ButtonRole captionToRole(const QString& caption)
+{
+   if (caption == QString::fromUtf8("OK"))
+      return QMessageBox::AcceptRole;
+   else if (caption == QString::fromUtf8("Cancel"))
+      return QMessageBox::RejectRole;
+   else if (caption == QString::fromUtf8("Yes"))
+      return QMessageBox::YesRole;
+   else if (caption == QString::fromUtf8("No"))
+      return QMessageBox::NoRole;
+   else if (caption == QString::fromUtf8("Save"))
+      return QMessageBox::AcceptRole;
+   else if (caption == QString::fromUtf8("Don't Save"))
+      return QMessageBox::DestructiveRole;
+   else
+      return QMessageBox::ActionRole;
+}
+} // anonymous namespace
 
 int GwtCallback::showMessageBox(int type,
                                 QString caption,
