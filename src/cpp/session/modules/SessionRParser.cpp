@@ -2415,15 +2415,13 @@ ARGUMENT_LIST:
          status.pushFunctionCallState(
                   ParseStatus::ParseStateSingleBracketArgumentList,
                   cursor.previousSignificantToken().content(),
-                  status.isWithinNseCall() ||
-                     mightPerformNonstandardEvaluation(cursor, status));
+                  status.isWithinNseCall());
          break;
       case RToken::LDBRACKET:
          status.pushFunctionCallState(
                   ParseStatus::ParseStateDoubleBracketArgumentList,
                   cursor.previousSignificantToken().content(),
-                  status.isWithinNseCall() ||
-                  mightPerformNonstandardEvaluation(cursor, status));
+                  status.isWithinNseCall());
          break;
       default:
          GOTO_INVALID_TOKEN(cursor);
