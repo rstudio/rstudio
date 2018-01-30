@@ -20,8 +20,19 @@ if (RSTUDIO_PACKAGE_BUILD)
      file(GLOB_RECURSE CODESIGN_MACOS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS\")
      list (APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
 
+     # flags to pass to codesign executable
+     set(CODESIGN_FLAGS \"-s\" \"8A388E005EF927A09B952C6E71B0E8F2F467AB26\" \"-i\" \"org.rstudio.RStudio\")
+
+     # deep sign all targets
      foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
-        execute_process(COMMAND codesign \"-s\" \"8A388E005EF927A09B952C6E71B0E8F2F467AB26\" \"--deep\" \"-i\" \"org.rstudio.RStudio\" \"\${CODESIGN_TARGET}\")
+         execute_process(COMMAND codesign \"--deep\" \${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
+     endforeach()
+
+     # these special libraries are already signed so require a forceful
+     # re-signature with our own certificate
+     file(GLOB CODESIGN_OVERRIDES \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/libTurbo*.dylib\")
+     foreach(CODESIGN_OVERRIDES \${CODESIGN_TARGET})
+         execute_process(COMMAND codesign \"--force\" \${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
      endforeach()
      ")
 endif()
