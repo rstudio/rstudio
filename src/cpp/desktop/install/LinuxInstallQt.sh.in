@@ -20,6 +20,7 @@ COMPONENTS=(
 	lib/libQt5Quick.so.5
 	lib/libQt5QuickWidgets.so.5
 	lib/libQt5WebChannel.so.5
+	lib/libQt5WebEngine.so.5
 	lib/libQt5WebEngineCore.so.5
 	lib/libQt5WebEngineWidgets.so.5
 	lib/libQt5Widgets.so.5
