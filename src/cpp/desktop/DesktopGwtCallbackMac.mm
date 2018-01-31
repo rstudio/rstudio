@@ -85,15 +85,20 @@ int GwtCallback::showMessageBox(int type,
    [alert setMessageText:caption];
    [alert setInformativeText:message];
    [alert setAlertStyle: style];
-   
+
    for (NSString* buttonText in dialogButtons)
    {
       [alert addButtonWithTitle: buttonText];
    }
 
    // Make Enter invoke the default button, and ESC the cancel button.
+   // Guard against the case where the default button is the cancel button.
    [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
-   [[[alert buttons] objectAtIndex: cancelButton]  setKeyEquivalent: @"\033"];
+   if (cancelButton != defaultButton)
+   {
+      [[[alert buttons] objectAtIndex: cancelButton] setKeyEquivalent: @"\033"];
+   }
+   
    [alert beginSheetModalForWindow: [[NSApplication sharedApplication] mainWindow] completionHandler: ^(NSModalResponse response) {
       [[NSApplication sharedApplication] stopModalWithCode: response];
    }];
