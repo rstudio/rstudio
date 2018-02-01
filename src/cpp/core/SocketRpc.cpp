@@ -54,9 +54,10 @@ Error invokeRpc(const FilePath& socketPath,
 
    if (resp.statusCode() != core::http::status::Ok)
    {
-      LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint +
+      LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint + " " +
                           safe_convert::numberToString(resp.statusCode()) +
-                          "\n" + resp.statusMessage());
+                          " " + resp.statusMessage() + "\n" +
+                          resp.body());
       return Error(json::errc::ExecutionError, ERROR_LOCATION);
    }
    else if (resp.body().empty())
