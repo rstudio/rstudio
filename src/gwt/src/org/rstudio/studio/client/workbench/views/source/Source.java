@@ -3261,6 +3261,11 @@ public class Source implements InsertSourceHandler,
       
       events_.fireEvent(new SourceDocAddedEvent(doc, mode));
       
+      if (target instanceof TextEditingTarget && doc.isReadOnly())
+      {
+         ((TextEditingTarget) target).setIntendedAsReadOnly(doc.getReadOnlyAlternative());
+      }
+      
       // adding a tab may enable commands that are only available when 
       // multiple documents are open; if this is the second document, go check
       if (editors_.size() == 2)

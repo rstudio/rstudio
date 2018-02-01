@@ -6679,6 +6679,17 @@ public class TextEditingTarget implements
       }
    }
    
+   public void setIntendedAsReadOnly(String alternative)
+   {
+      String msg = "This file is read only.";
+      if (!StringUtil.isNullOrEmpty(alternative))
+      {
+         msg += " Consider editing the file at '" + alternative + "' instead.";
+      }
+      
+      view_.showWarningBar(msg);
+   }
+   
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
