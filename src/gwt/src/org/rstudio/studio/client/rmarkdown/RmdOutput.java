@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
@@ -157,13 +158,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdRenderStarted(RmdRenderStartedEvent event)
    {
-      // When a Word document starts rendering, tell the desktop frame 
-      // (if it exists) to get ready; this generally involves closing the 
-      // document in preparation for a refresh
-      if (event.getFormat().getFormatName() == RmdOutputFormat.OUTPUT_WORD_DOCUMENT &&
-          Desktop.isDesktop())
+      if (Desktop.isDesktop())
       {
-         Desktop.getFrame().prepareShowWordDoc();
+         // When an Office document starts rendering, tell the desktop frame 
+         // (if it exists) to get ready; this generally involves closing the 
+         // document in preparation for a refresh
+         String format = event.getFormat().getFormatName();
+         if (StringUtil.equals(format, RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
+            Desktop.getFrame().prepareShowWordDoc();
+         else if (StringUtil.equals(format, RmdOutputFormat.OUTPUT_PPT_PRESENTATION))
+            Desktop.getFrame().prepareShowPptPresentation(); 
       }
    }
    
@@ -545,6 +549,27 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             RmdOutput.TYPE_SHINY, null, null, result.getViewerType()));
    }
    
+   private void displayOfficeDoc(final RmdRenderResult result, 
+                                 final CommandWithArg<String> displayResult)
+   {
+      // in desktop mode, the document can be displayed directly
+      if (Desktop.isDesktop())
+         displayResult.execute(result.getOutputFile());
+      
+      // it's not possible to show Office docs inline in a useful way from
+      // within the browser, so just offer to download the file.
+      else
+      {
+         showDownloadPreviewFileDialog(result, new Command() {
+            @Override
+            public void execute()
+            {
+               displayResult.execute(result.getOutputFile());
+            }  
+         });
+      }
+   }
+   
    private void displayRenderResult(final RmdRenderResult result)
    {
       // don't display anything if user doesn't want to
@@ -576,21 +601,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                ".rtf".equals(extension) ||
                ".odt".equals(extension))
       {
-         if (Desktop.isDesktop())
-            globalDisplay_.showWordDoc(result.getOutputFile());
-         
-         // it's not possible to show Word docs inline in a useful way from
-         // within the browser, so just offer to download the file.
-         else
-         {
-            showDownloadPreviewFileDialog(result, new Command() {
-               @Override
-               public void execute()
-               {
-                  globalDisplay_.showWordDoc(result.getOutputFile());  
-               }  
-            });
-         }
+         displayOfficeDoc(result, (r) -> globalDisplay_.showWordDoc(r));
+      }
+      else if (".pptx".equals(extension))
+      {
+         displayOfficeDoc(result, (r) -> globalDisplay_.showPptPresentation(r));
       }
       else if (".html".equals(extension) ||
                NOTEBOOK_EXT.equals(extension))

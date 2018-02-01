@@ -382,10 +382,18 @@ public class DefaultGlobalDisplay extends GlobalDisplay
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }
 
+   @Override
+   public void showPptPresentation(String path)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().showPptPresentation(StringUtil.notNull(path));
+      else
+         openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
+   }
+
    private final Provider<ApplicationView> view_;
    private final Session session_;
    private final ApplicationServerOperations server_;
    private final WindowOpener windowOpener_ = GWT.create(WindowOpener.class);
-  
 }
 

@@ -98,6 +98,7 @@ public Q_SLOTS:
    void showWordDoc(QString path);
    void showPDF(QString path, int pdfPage);
    void prepareShowWordDoc();
+   void prepareShowPptPresentation();
 
    QString getRVersion();
    QString chooseRVersion();

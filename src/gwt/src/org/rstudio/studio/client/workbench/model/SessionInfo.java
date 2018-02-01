@@ -435,6 +435,14 @@ public class SessionInfo extends JavaScriptObject
       this.knit_working_dir_available = available;
    }-*/;
    
+   public final native boolean getPptAvailable() /*-{
+      return this.ppt_available;
+   }-*/;
+   
+   public final native void setPptAvailable(boolean available) /*-{
+      this.ppt_available = available;
+   }-*/;
+   
    public final native boolean getClangAvailable() /*-{
       return this.clang_available;
    }-*/;

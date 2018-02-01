@@ -75,6 +75,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showWordDoc(String path);
    void showPDF(String path, int pdfPage);
    void prepareShowWordDoc();
+   void prepareShowPptPresentation();
+   void showPptPresentation(String path);
    void openMinimalWindow(String name, String url, int width, int height);
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);

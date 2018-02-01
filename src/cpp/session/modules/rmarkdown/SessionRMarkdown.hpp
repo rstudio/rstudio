@@ -39,6 +39,8 @@ bool knitParamsAvailable();
 
 bool knitWorkingDirAvailable();
 
+bool pptAvailable();
+
 core::Error evaluateRmdParams(const std::string& docId);
 
 core::Error initialize();

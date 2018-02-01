@@ -574,6 +574,11 @@ void GwtCallback::prepareShowWordDoc()
 #endif
 }
 
+void GwtCallback::prepareShowPptPresentation()
+{
+   // TODO: implement
+}
+
 QString GwtCallback::getRVersion()
 {
 #ifdef Q_OS_WIN32

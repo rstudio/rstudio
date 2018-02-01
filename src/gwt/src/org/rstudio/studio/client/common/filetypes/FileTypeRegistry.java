@@ -425,6 +425,8 @@ public class FileTypeRegistry
       registerIcon(".pdf", new ImageResource2x(icons.iconPdf2x()));
       registerIcon(".csv", new ImageResource2x(icons.iconCsv2x()));
       registerIcon(".docx", new ImageResource2x(icons.iconWord2x()));
+      // TODO: need a powerpoint icon
+      registerIcon(".pptx", new ImageResource2x(icons.iconWord2x()));
 
       for (FileType fileType : FileType.ALL_FILE_TYPES)
       {

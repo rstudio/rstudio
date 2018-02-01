@@ -1,7 +1,7 @@
 /*
  * RmdTemplateData.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -249,6 +249,14 @@ public class RmdTemplateData
                               "fig_crop", "fig_caption", "highlight", 
                               "keep_tex"],
             format_notes: "PDF output requires TeX (MiKTeX on Windows, MacTeX 2013+ on OS X, TeX Live 2013+ on Linux)."
+            },
+            {
+            format_name: "powerpoint_presentation",
+            format_ui_name: "PowerPoint",
+            format_extension: "pptx",
+            format_options: [ "toc", "fig_width", "fig_height", "fig_caption", 
+                              "df_print", "smart"],
+            format_notes: "PowerPoint output requires Pandoc 2.0.5."
             }
          ],
          template_options: [
