@@ -3725,6 +3725,14 @@ public class TextEditingTarget implements
                {
                   continue;
                }
+               
+               // hide powerpoint if not available
+               if (!session_.getSessionInfo().getPptAvailable() &&
+                    StringUtil.equals(formats.get(i).getName(), 
+                                      RmdOutputFormat.OUTPUT_PPT_PRESENTATION))
+               {
+                  continue;
+               }
 
                String uiName = formats.get(i).getUiName();
                formatList.add(uiName);

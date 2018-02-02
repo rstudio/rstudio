@@ -113,7 +113,7 @@
 	
 	</ui:style>
 	<g:HTMLPanel>
-	<g:HorizontalPanel height="325px" styleName="{style.templatePanel}">
+	<g:HorizontalPanel height="375px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
