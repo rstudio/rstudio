@@ -236,6 +236,10 @@ public class FileSystemItem extends JavaScriptObject
 
    public final String mimeType(String defaultType)
    {
+      String reportedMimeType = getMimeTypeInternal();
+      if (reportedMimeType != null)
+         return reportedMimeType;
+      
       String ext = getExtension().toLowerCase();
       if (ext.length() > 0)
       {
@@ -322,6 +326,10 @@ public class FileSystemItem extends JavaScriptObject
 
    public final native boolean exists() /*-{
       return this.exists;
+   }-*/;
+   
+   private final native String getMimeTypeInternal() /*-{
+      return this.mime_type;
    }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp
