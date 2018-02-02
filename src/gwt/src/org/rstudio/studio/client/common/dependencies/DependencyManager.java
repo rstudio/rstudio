@@ -212,6 +212,10 @@ public class DependencyManager implements InstallShinyEvent.Handler,
               session_.getSessionInfo().setRMarkdownPackageAvailable(true);
               session_.getSessionInfo().setKnitWorkingDirAvailable(true);
               
+              // TODO (jmcphers): Enable this once we require rmarkdown 1.8.10+
+              // and pandoc 2.0.5+
+              // session_.getSessionInfo().setPptAvailable(true);
+              
               // restore removed commands
               commands_.knitWithParameters().restore();
            }
