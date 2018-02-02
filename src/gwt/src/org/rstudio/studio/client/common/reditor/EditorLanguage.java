@@ -84,6 +84,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", false, true);
    public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", false, true);
    public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", false, true);
+   public static final EditorLanguage LANG_INI = new EditorLanguage("ace/mode/ini", false, true);
    public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", false, true);
    public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", false, true);
    public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", false, true);
