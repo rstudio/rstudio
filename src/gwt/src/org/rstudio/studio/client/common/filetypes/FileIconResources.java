@@ -131,6 +131,9 @@ public interface FileIconResources extends ClientBundle
    @Source("iconWord_2x.png")
    ImageResource iconWord2x();
 
+   @Source("iconPowerpoint_2x.png")
+   ImageResource iconPowerpoint2x();
+
    @Source("iconDCF_2x.png")
    ImageResource iconDCF2x();
 
