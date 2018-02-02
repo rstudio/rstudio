@@ -36,9 +36,6 @@ using namespace rstudio;
 
 static MainFrameController* instance_;
 
-// context for tracking all running applications
-const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
-
 namespace
 {
 
@@ -137,11 +134,6 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
 
 - (void) dealloc
 {
-   // unsubscribe to changes in the list of running applications
-   [[NSWorkspace sharedWorkspace] removeObserver:self
-                                      forKeyPath:@"runningApplications"
-                                         context:&kRunningApplicationsContext];
-   
    instance_ = nil;
    [dockTile_ release];
    [menu_ release];
