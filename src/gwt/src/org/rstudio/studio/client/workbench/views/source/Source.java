@@ -3263,7 +3263,7 @@ public class Source implements InsertSourceHandler,
       
       if (target instanceof TextEditingTarget && doc.isReadOnly())
       {
-         ((TextEditingTarget) target).setIntendedAsReadOnly(doc.getReadOnlyAlternative());
+         ((TextEditingTarget) target).setIntendedAsReadOnly(doc.getReadOnlyAlternatives());
       }
       
       // adding a tab may enable commands that are only available when 

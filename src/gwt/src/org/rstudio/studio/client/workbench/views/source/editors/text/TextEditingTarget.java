@@ -6679,12 +6679,13 @@ public class TextEditingTarget implements
       }
    }
    
-   public void setIntendedAsReadOnly(String alternative)
+   public void setIntendedAsReadOnly(JsArrayString alternatives)
    {
       String msg = "This file is read only.";
-      if (!StringUtil.isNullOrEmpty(alternative))
+      if (alternatives.length() > 0)
       {
-         msg += " Consider editing the file at '" + alternative + "' instead.";
+         String joined = alternatives.join(", ");
+         msg += " Generated from: " + joined;
       }
       
       view_.showWarningBar(msg);

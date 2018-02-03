@@ -285,6 +285,9 @@ inline std::wstring trimWhitespace(const std::wstring& string)
 }
 
 std::string makeRandomByteString(std::size_t n);
+bool extractCommentHeader(const std::string& contents,
+                          const std::string& reCommentPrefix,
+                          std::string* pHeader);
 
 } // namespace string_utils
 
