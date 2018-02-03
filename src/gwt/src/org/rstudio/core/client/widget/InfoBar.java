@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -109,6 +110,7 @@ public class InfoBar extends Composite
             anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
             anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
             anchor.getElement().getStyle().setCursor(Cursor.POINTER);
+            anchor.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
             anchor.addClickHandler((ClickEvent event) -> {
                Session session = RStudioGinjector.INSTANCE.getSession();
                FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
