@@ -576,7 +576,7 @@ void GwtCallback::prepareShowWordDoc()
 
 void GwtCallback::prepareShowPptPresentation()
 {
-   // TODO: implement
+   // TODO (jmcphers): as with Word, we will close the document if it's currently open on Windows.
 }
 
 QString GwtCallback::getRVersion()
