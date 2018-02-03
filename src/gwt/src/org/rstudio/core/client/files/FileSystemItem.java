@@ -236,6 +236,10 @@ public class FileSystemItem extends JavaScriptObject
 
    public final String mimeType(String defaultType)
    {
+      String reportedMimeType = getMimeTypeInternal();
+      if (reportedMimeType != null)
+         return reportedMimeType;
+      
       String ext = getExtension().toLowerCase();
       if (ext.length() > 0)
       {
@@ -323,6 +327,10 @@ public class FileSystemItem extends JavaScriptObject
    public final native boolean exists() /*-{
       return this.exists;
    }-*/;
+   
+   private final native String getMimeTypeInternal() /*-{
+      return this.mime_type;
+   }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp
    private final static HashMap<String,String> MIME_TYPES =
@@ -375,6 +383,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "tsv",   "text/tab-separated-values" );
       MIME_TYPES.put( "tab",   "text/tab-separated-values" );
       MIME_TYPES.put( "dcf",   "text/debian-control-file" );
+      MIME_TYPES.put( "ini",   "text/plain" );
       MIME_TYPES.put( "txt",   "text/plain" );
       MIME_TYPES.put( "mml",   "text/mathml" );
       MIME_TYPES.put( "log",   "text/plain");
