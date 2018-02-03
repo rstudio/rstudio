@@ -69,6 +69,12 @@ public class FileTypeRegistry
                           new ImageResource2x(ICONS.iconDCF2x()), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
+   public static final TextFileType INI =
+         new TextFileType("ini", "INI", EditorLanguage.LANG_INI, ".ini",
+                          new ImageResource2x(ICONS.iconDCF2x()), false, false, false, false, false,
+                          false, false, false, false, false, false, false, false);
+   
+   
    public static final TextFileType STAN = new StanFileType();
    
    public static final TextFileType MERMAID = new MermaidFileType();
@@ -377,6 +383,7 @@ public class FileTypeRegistry
       register("*.rds", RDS, new ImageResource2x(icons.iconRdata2x()));
       register("*.Rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.dcf", DCF, new ImageResource2x(icons.iconDCF2x()));
+      register("*.ini", INI, new ImageResource2x(icons.iconDCF2x()));
       register("*.mmd", MERMAID, new ImageResource2x(icons.iconMermaid2x()));
       register("*.gv", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));
       register("*.dot", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));

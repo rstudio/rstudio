@@ -1138,8 +1138,11 @@ void enqueFileEditEvent(const std::string& file)
       }
    }
 
-   // fire event
+   // construct file system item (also tag with mime type)
    json::Object fileJson = module_context::createFileSystemItem(filePath);
+   fileJson["mime_type"] = filePath.mimeContentType();
+   
+   // fire event
    ClientEvent event(client_events::kFileEdit, fileJson);
    module_context::enqueClientEvent(event);
 }

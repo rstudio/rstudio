@@ -466,6 +466,7 @@ MimeType s_mimeTypes[] =
    { "tsv",   "text/tab-separated-values" },
    { "tab",   "text/tab-separated-values" },
    { "dcf",   "text/debian-control-file" },
+   { "ini",   "text/plain" },
    { "txt",   "text/plain" },
    { "mml",   "text/mathml" },
    { "log",   "text/plain" },
