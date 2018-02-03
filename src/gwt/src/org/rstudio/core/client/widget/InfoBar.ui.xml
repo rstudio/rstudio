@@ -52,7 +52,10 @@
          <g:Image ui:field="icon_" styleName="{style.icon}"/>
       </g:west>
       <g:center>
-         <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+         <g:HorizontalPanel>
+         	<g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+         	<g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
+         </g:HorizontalPanel>
       </g:center>
       <g:east size="13">
           <g:Image ui:field="dismiss_"

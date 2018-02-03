@@ -23,10 +23,13 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -282,8 +285,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       }.schedule(100);
    }
    
-   @Override
-   public void showWarningBar(String warning)
+   private void showWarningImpl(final Command command)
    {
       if (warningBar_ == null)
       {
@@ -296,8 +298,20 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             
          });
       }
-      warningBar_.setText(warning);
+      command.execute();
       panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
+   }
+   
+   @Override
+   public void showReadOnlyWarning(final List<String> alternatives)
+   {
+      showWarningImpl(() -> warningBar_.showReadOnlyWarning(alternatives));
+   }
+   
+   @Override
+   public void showWarningBar(final String warning)
+   {
+      showWarningImpl(() -> warningBar_.setText(warning));
    }
 
    @Override

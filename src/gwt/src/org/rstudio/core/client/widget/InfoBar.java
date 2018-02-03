@@ -15,17 +15,29 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class InfoBar extends Composite 
 {
@@ -52,9 +64,9 @@ public class InfoBar extends Composite
       default:
          icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
          break;
-      
       }
      
+      labelRight_ = new HorizontalPanel();
       initWidget(binder.createAndBindUi(this));
       
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
@@ -80,6 +92,32 @@ public class InfoBar extends Composite
    {
       return 19;
    }
+   
+   public void showReadOnlyWarning(List<String> alternatives)
+   {
+      if (alternatives.size() == 0)
+      {
+         label_.setText("This document is read only.");
+      }
+      else
+      {
+         label_.setText("This document is read only. Generated from:");
+         for (String alternative : alternatives)
+         {
+            Label anchor = new Label(alternative);
+            anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
+            anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
+            anchor.addClickHandler((ClickEvent event) -> {
+               Session session = RStudioGinjector.INSTANCE.getSession();
+               FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+               FileSystemItem projDir = session.getSessionInfo().getActiveProjectDir();
+               FileSystemItem targetItem = FileSystemItem.createFile(projDir.completePath(alternative));
+               registry.editFile(targetItem);
+            });
+            labelRight_.add(anchor);
+         }
+      }
+   }
 
    @UiField
    protected DockLayoutPanel container_;
@@ -87,6 +125,8 @@ public class InfoBar extends Composite
    protected Image icon_;
    @UiField
    protected Label label_;
+   @UiField(provided = true)
+   protected HorizontalPanel labelRight_;
    @UiField
    Image dismiss_;
 

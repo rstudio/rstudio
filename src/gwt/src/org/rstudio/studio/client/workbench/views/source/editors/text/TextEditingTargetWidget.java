@@ -32,6 +32,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
@@ -703,7 +704,7 @@ public class TextEditingTargetWidget
    }
    
    
-   public void showWarningBar(String warning)
+   private void showWarningImpl(final Command command)
    {
       if (warningBar_ == null)
       {
@@ -716,8 +717,20 @@ public class TextEditingTargetWidget
             
          });
       }
-      warningBar_.setText(warning);
+      command.execute();
       panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
+   }
+   
+   @Override
+   public void showReadOnlyWarning(final List<String> alternatives)
+   {
+      showWarningImpl(() -> warningBar_.showReadOnlyWarning(alternatives));
+   }
+   
+   @Override
+   public void showWarningBar(final String warning)
+   {
+      showWarningImpl(() -> warningBar_.setText(warning));
    }
 
    public void hideWarningBar()
