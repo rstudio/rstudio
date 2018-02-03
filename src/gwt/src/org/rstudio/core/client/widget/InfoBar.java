@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -107,6 +108,7 @@ public class InfoBar extends Composite
             Label anchor = new Label(alternative);
             anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
             anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
+            anchor.getElement().getStyle().setCursor(Cursor.POINTER);
             anchor.addClickHandler((ClickEvent event) -> {
                Session session = RStudioGinjector.INSTANCE.getSession();
                FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();

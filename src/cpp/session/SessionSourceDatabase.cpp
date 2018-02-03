@@ -269,7 +269,7 @@ bool isIntendedAsReadOnly(const std::string& contents,
          boost::sregex_token_iterator end;
          for (; it != end; ++it)
          {
-            pAlternatives->push_back(*it);
+            pAlternatives->push_back(string_utils::trimWhitespace(*it));
          }
          return true;
       }
