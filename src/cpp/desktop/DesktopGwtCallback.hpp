@@ -96,6 +96,7 @@ public Q_SLOTS:
    void showFolder(QString path);
    void showFile(QString path);
    void showWordDoc(QString path);
+   void showPptPresentation(QString path);
    void showPDF(QString path, int pdfPage);
    void prepareShowWordDoc();
    void prepareShowPptPresentation();
