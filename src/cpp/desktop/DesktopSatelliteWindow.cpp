@@ -37,8 +37,11 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
 
    // satellites don't have a menu, so connect zoom keyboard shortcuts
    // directly
+   QShortcut* zoomActualSizeShortcut = new QShortcut(Qt::CTRL + Qt::Key_0, this);
    QShortcut* zoomInShortcut = new QShortcut(QKeySequence::ZoomIn, this);
    QShortcut* zoomOutShortcut = new QShortcut(QKeySequence::ZoomOut, this);
+   
+   connect(zoomActualSizeShortcut, SIGNAL(activated()), this, SLOT(zoomActualSize()));
    connect(zoomInShortcut, SIGNAL(activated()), this, SLOT(zoomIn()));
    connect(zoomOutShortcut, SIGNAL(activated()), this, SLOT(zoomOut()));
 }

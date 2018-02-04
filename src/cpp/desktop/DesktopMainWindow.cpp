@@ -111,6 +111,7 @@ MainWindow::MainWindow(QUrl url) :
    connect(&menuCallback_, SIGNAL(commandInvoked(QString)),
            this, SLOT(invokeCommand(QString)));
 
+   connect(&menuCallback_, SIGNAL(zoomActualSize()), this, SLOT(zoomActualSize()));
    connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
    connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
 

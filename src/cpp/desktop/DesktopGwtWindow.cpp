@@ -39,6 +39,12 @@ GwtWindow::GwtWindow(bool showToolbar,
       zoomLevels_.push_back(level);
 }
 
+void GwtWindow::zoomActualSize()
+{
+   setZoomLevel(1);
+   webView()->setZoomFactor(1);
+}
+
 void GwtWindow::zoomIn()
 {
    // get next greatest value
@@ -47,7 +53,7 @@ void GwtWindow::zoomIn()
    if (it != zoomLevels_.end())
    {
       setZoomLevel(*it);
-      webView()->reload();
+      webView()->setZoomFactor(*it);
    }
 }
 
@@ -58,8 +64,8 @@ void GwtWindow::zoomOut()
             zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
    if (it != zoomLevels_.begin() && it != zoomLevels_.end())
    {
-      setZoomLevel(*(it-1));
-      webView()->reload();
+      setZoomLevel(*(it - 1));
+      webView()->setZoomFactor(*(it - 1));
    }
 }
 

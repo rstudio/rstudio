@@ -34,6 +34,7 @@ public:
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 
 public Q_SLOTS:
+   void zoomActualSize();
    void zoomIn();
    void zoomOut();
 
