@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/json/Json.hpp>
@@ -686,6 +687,61 @@ std::string makeRandomByteString(std::size_t n)
    for (std::size_t i = 0; i < n; ++i)
       result[i] = (unsigned char) (::rand() % UCHAR_MAX);
    return result;
+}
+
+bool extractCommentHeader(const std::string& contents,
+                          const std::string& reCommentPrefix,
+                          std::string* pHeader)
+{
+   // construct newline-based token iterator
+   boost::regex reNewline("(?:\\r?\\n|$)");
+   boost::sregex_token_iterator it(
+            contents.begin(),
+            contents.end(),
+            reNewline,
+            -1);
+   boost::sregex_token_iterator end;
+   
+   // first, skip blank lines
+   boost::regex reWhitespace("^\\s*$");
+   while (it != end)
+   {
+      if (boost::regex_match(it->begin(), it->end(), reWhitespace))
+      {
+         ++it;
+         continue;
+      }
+      
+      break;
+   }
+   
+   // if we're at the end now, bail
+   if (it == end)
+      return false;
+   
+   // check to see if we landed on our comment prefix and
+   // quit early if we haven't
+   boost::regex rePrefix(reCommentPrefix);
+   if (!boost::regex_search(it->begin(), it->end(), rePrefix))
+      return false;
+   
+   // we have a prefix: start iterating and extracting these
+   for (; it != end; ++it)
+   {
+      boost::smatch match;
+      if (!boost::regex_search(it->begin(), it->end(), match, rePrefix))
+      {
+         // this is no longer a commented line; time to go home
+         break;
+      }
+         
+      // extract the line (sans prefix)
+      std::string line(it->begin() + match.length(), it->end());
+      pHeader->append(line + "\n");
+   }
+   
+   // report success to the user
+   return true;
 }
 
 } // namespace string_utils

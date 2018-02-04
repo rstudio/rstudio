@@ -20,8 +20,10 @@ import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class JsUtil
 {
@@ -225,4 +227,12 @@ public class JsUtil
      }
      return s;
   }-*/;
+   
+   public static List<String> toList(JsArrayString array)
+   {
+      List<String> list = new ArrayList<String>();
+      for (int i = 0, n = array.length(); i < n; i++)
+         list.add(array.get(i));
+      return list;
+   }
 }

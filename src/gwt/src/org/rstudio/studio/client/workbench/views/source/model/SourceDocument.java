@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDoc;
@@ -169,8 +170,8 @@ public class SourceDocument extends JavaScriptObject
       return !!this.read_only;
    }-*/;
    
-   public native final String getReadOnlyAlternative() /*-{
-      return this.read_only_alternative;
+   public native final JsArrayString getReadOnlyAlternatives() /*-{
+      return this.read_only_alternatives;
    }-*/;
    
    public final static String XT_RMARKDOWN = "rmarkdown";
