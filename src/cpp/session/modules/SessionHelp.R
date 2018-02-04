@@ -570,6 +570,7 @@ options(help_type = "html")
 
 .rs.addFunction("showHelpTopic", function(topic, package)
 {
+   package <- sub("^package:", "", package)
    call <- .rs.makeHelpCall(topic, package)
    print(eval(call, envir = parent.frame()))
 })
