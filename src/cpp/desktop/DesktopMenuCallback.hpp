@@ -60,6 +60,7 @@ Q_SIGNALS:
     void manageCommandVisibility(QString commandId, QAction* action);
     void commandInvoked(QString commandId);
 
+    void zoomActualSize();
     void zoomIn();
     void zoomOut();
 

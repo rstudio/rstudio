@@ -883,6 +883,7 @@ public class Application implements ApplicationEventHandlers
       // hide zoom in and zoom out in web mode
       if (!Desktop.isDesktop())
       {
+         commands_.zoomActualSize().remove();
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
       }

@@ -87,7 +87,16 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 
 #endif // Q_OS_MAC
 
-   if (commandId == QString::fromUtf8("zoomIn"))
+   if (commandId == QStringLiteral("zoomActualSize"))
+   {
+      // NOTE: CTRL implies META on macOS
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SIGNAL(zoomActualSize()),
+                                            QKeySequence(Qt::CTRL + Qt::Key_0));
+   }
+   else if (commandId == QStringLiteral("zoomIn"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -95,7 +104,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             SIGNAL(zoomIn()),
                                             QKeySequence::ZoomIn);
    }
-   else if (commandId == QString::fromUtf8("zoomOut"))
+   else if (commandId == QStringLiteral("zoomOut"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -103,6 +112,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             SIGNAL(zoomOut()),
                                             QKeySequence::ZoomOut);
    }
+   
 #ifdef Q_OS_MAC
    // NOTE: even though we seem to be using Meta as a modifier key here, Qt
    // will translate that to CTRL (but only for Ctrl+Tab and Ctrl+Shift+Tab)
