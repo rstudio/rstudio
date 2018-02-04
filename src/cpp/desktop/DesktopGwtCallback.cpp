@@ -557,6 +557,12 @@ void GwtCallback::showWordDoc(QString path)
 #endif
 }
 
+void GwtCallback::showPptPresentation(QString path)
+{
+   // TODO (jmcphers): as with Word, connect more robustly with the application
+   showFile(path);
+}
+
 void GwtCallback::showPDF(QString path, int pdfPage)
 {
    path = resolveAliasedPath(path);
@@ -572,6 +578,11 @@ void GwtCallback::prepareShowWordDoc()
       LOG_ERROR(error);
    }
 #endif
+}
+
+void GwtCallback::prepareShowPptPresentation()
+{
+   // TODO (jmcphers): as with Word, we will close the document if it's currently open on Windows.
 }
 
 QString GwtCallback::getRVersion()

@@ -346,18 +346,18 @@ void handleClientInit(const boost::function<void()>& initFunction,
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
 
-   sessionInfo["rmarkdown_available"] =
-         modules::rmarkdown::rmarkdownPackageAvailable();
-
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
 
-
+   // check rmarkdown package presence and capabilities
+   sessionInfo["rmarkdown_available"] =
+         modules::rmarkdown::rmarkdownPackageAvailable();
    sessionInfo["knit_params_available"] =
          modules::rmarkdown::knitParamsAvailable();
-
    sessionInfo["knit_working_dir_available"] = 
          modules::rmarkdown::knitWorkingDirAvailable();
+   sessionInfo["ppt_available"] = 
+         modules::rmarkdown::pptAvailable();
 
    sessionInfo["clang_available"] = modules::clang::isAvailable();
 

@@ -1,7 +1,7 @@
 /*
  * NewRMarkdownDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,16 +23,19 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -385,6 +388,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             // hide if no notes
             if (StringUtil.isNullOrEmpty(formats.get(i).getNotes()))
                option.setVisible(false);
+            SessionInfo sessionInfo = 
+                  RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+            
+            // hide if not supported yet
+            if (sessionInfo != null &&
+                !sessionInfo.getPptAvailable() &&
+                formats.get(i).getName() == RmdOutputFormat.OUTPUT_PPT_PRESENTATION)
+            {
+               option.setVisible(false);
+            }
 
             templateFormatPanel_.add(option);
          }

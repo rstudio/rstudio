@@ -36,11 +36,6 @@
 	    background-color: #FFFFFF;
 	  }
 	  
-	  .templateListArea table
-	  {
-       border: 1px solid #909090;
-	  }
-	  
 	  .templateListArea table table
 	  {
 	    border: none;

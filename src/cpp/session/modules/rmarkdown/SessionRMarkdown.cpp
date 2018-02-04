@@ -1289,6 +1289,11 @@ bool knitWorkingDirAvailable()
    return module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
 }
 
+bool pptAvailable()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "1.8.10");
+}
+
 bool rmarkdownPackageAvailable()
 {
    if (!haveMarkdownToHTMLOption())
