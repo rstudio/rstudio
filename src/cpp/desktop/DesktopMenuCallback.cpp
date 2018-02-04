@@ -89,6 +89,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 
    if (commandId == QStringLiteral("zoomActualSize"))
    {
+      // NOTE: CTRL implies META on macOS
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
                                             this,
