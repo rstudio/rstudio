@@ -20,6 +20,16 @@
 namespace rstudio {
 namespace desktop {
 
+namespace {
+
+bool isDuplicateZoomRequest(QElapsedTimer* pTimer)
+{
+   qint64 elapsed = pTimer->restart();
+   return elapsed < 10;
+}
+
+} // end anonymous namespace
+
 GwtWindow::GwtWindow(bool showToolbar,
                      bool adjustTitle,
                      QString name,
@@ -37,16 +47,23 @@ GwtWindow::GwtWindow(bool showToolbar,
    
    for (double level : levels)
       zoomLevels_.push_back(level);
+   
+   lastZoomTimer_.start();
 }
 
 void GwtWindow::zoomActualSize()
 {
+   if (isDuplicateZoomRequest(&lastZoomTimer_))
+      return;
    setZoomLevel(1);
    webView()->setZoomFactor(1);
 }
 
 void GwtWindow::zoomIn()
 {
+   if (isDuplicateZoomRequest(&lastZoomTimer_))
+      return;
+   
    // get next greatest value
    std::vector<double>::const_iterator it = std::upper_bound(
             zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
@@ -59,6 +76,9 @@ void GwtWindow::zoomIn()
 
 void GwtWindow::zoomOut()
 {
+   if (isDuplicateZoomRequest(&lastZoomTimer_))
+      return;
+   
    // get next smallest value
    std::vector<double>::const_iterator it = std::lower_bound(
             zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
