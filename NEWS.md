@@ -16,10 +16,11 @@
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Allow renames that change only file case on Windows (#1886)
+* Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
-* Remember scroll position when navigating in Help pane (#1947)
+* Allow changing zoom level without reloading (#2125)
 
 ### Bug Fixes
 
@@ -39,6 +40,7 @@
 * Fix `file.edit` failures with Chinese filenames on Windows (#1868)
 * Fix errors when importing non-ASCII filenames in base Import Dataset (#1910)
 * Fix empty column titles when viewing matrices without column names (#2086)
+* Fix error when pressing F1 on non-function autocomplete results (#2127)
 
 ### RStudio Server Pro
 
