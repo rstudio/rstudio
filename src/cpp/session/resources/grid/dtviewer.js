@@ -3,7 +3,7 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -369,9 +369,6 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
   invokeFilterPopup(ele, function(popup) {
     popup.className += " numericFilterPopup";
-    var min = col.col_min.toString();
-    var max = col.col_max.toString();
-    var val = parseSearchVal(idx);
     if (val.indexOf("_") > 0) {
       var range = val.split("_");
       min = range[0];
@@ -380,17 +377,10 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       min = parseFloat(val);
       max = parseFloat(val);
     }
-    var minVal = document.createElement("div");
-    minVal.textContent = min;
-    minVal.className = "numMin selected";
-    popup.appendChild(minVal);
-    var maxVal = document.createElement("div");
-    maxVal.textContent = max;
-    maxVal.className = "numMax selected";
-    popup.appendChild(maxVal);
-    var slider = document.createElement("div");
-    slider.className = "numSlider";
-    popup.appendChild(slider);
+    var h = document.createElement("div");
+    hist(h, col.col_breaks, col.col_counts);
+    popup.appendChild(h);
+
     var updateView = debounce(function() {
       var searchText = 
         minVal.textContent === min && maxVal.textContent === max ? 
@@ -740,7 +730,8 @@ var createHeader = function(idx, col) {
   interior.appendChild(title);
   th.title = "column " + idx + ": " + col.col_type;
   if (col.col_type === "numeric") {
-    th.title += " with range " + col.col_min + " - " + col.col_max;
+    th.title += " with range " + col.breaks[0] + " - " + 
+                col.breaks[col.breaks.length - 1];
   } else if (col.col_type === "factor") {
     th.title += " with " + col.col_vals.length + " levels";
   }
