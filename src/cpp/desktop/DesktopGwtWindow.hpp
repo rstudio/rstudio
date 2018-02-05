@@ -53,6 +53,7 @@ private:
 
    std::vector<double> zoomLevels_;
    double zoomLevel_;
+   QElapsedTimer lastZoomTimer_;
 };
 
 } // namespace desktop
