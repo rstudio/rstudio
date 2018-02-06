@@ -337,7 +337,8 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          String descriptionStyle = style_.valueCol();
          if (rowValue.isPromise())
          {
-            descriptionStyle += (" " + style_.unevaluatedPromise());
+            descriptionStyle += (" " + style_.unevaluatedPromise() + 
+                                 " " + ThemeStyles.INSTANCE.handCursor());
          }
          else if (isClickable)
          {

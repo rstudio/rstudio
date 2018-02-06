@@ -21,6 +21,7 @@
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
 * Allow changing zoom level without reloading (#2125)
+* Click on promises in the Environment pane now calls `force` on the promise
 
 ### Bug Fixes
 
