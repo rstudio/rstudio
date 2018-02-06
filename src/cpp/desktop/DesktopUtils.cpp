@@ -256,32 +256,19 @@ bool isFixedWidthFont(const QFont& font)
 
 int getDpi()
 {
-#ifdef _WIN32
-   HDC defaultDC = GetDC(nullptr);
-   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
-   ReleaseDC(nullptr, defaultDC);
-   return dpi;
-#else
-   // presume 96 DPI on other Qt platforms (i.e. Linux) for now
-   return 96;
-#endif
+   // TODO: we may need to tweak this to ensure that the DPI
+   // discovered respects the screen a particular instance
+   // that RStudio lives on (e.g. for users with multiple
+   // displays with different DPIs)
+   return (int) qApp->primaryScreen()->logicalDotsPerInch();
 }
 
 double getDpiZoomScaling()
 {
-   double dpiZoomScaling = 1.0;
-   int dpi = getDpi();
-   if (dpi >= 192)
-   {
-      // Corresponds to 200% scaling (introduced in Windows 8.1)
-      dpiZoomScaling = 1.5;
-   }
-   else if (dpi >= 144)
-   {
-      // Corresponds to 150% scaling
-      dpiZoomScaling = 1.2;
-   }
-   return dpiZoomScaling;
+   // TODO: because Qt is already high-DPI aware and automatically
+   // scales in most scenarios, we no longer need to detect and
+   // apply a custom scale -- but more testing is warranted
+   return 1.0;
 }
 
 #ifdef _WIN32
