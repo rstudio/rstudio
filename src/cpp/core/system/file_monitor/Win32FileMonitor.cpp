@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
@@ -488,6 +489,20 @@ Error readDirectoryChanges(FileEventContext* pContext)
    }
 }
 
+bool gitFilter(const FileInfo& fileInfo,
+               const boost::function<bool(const FileInfo&)>& filter)
+{
+   // screen out '.git' folder
+   if (fileInfo.isDirectory() &&
+       boost::algorithm::ends_with(fileInfo.absolutePath(), ".git"))
+   {
+      return false;
+   }
+
+   // delegate to registered filter
+   return filter(fileInfo);
+}
+
 } // anonymous namespace
 
 namespace detail {
@@ -555,7 +570,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    core::system::FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
-   options.filter = filter;
+   options.filter = boost::bind(gitFilter, _1, filter);
    error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {
