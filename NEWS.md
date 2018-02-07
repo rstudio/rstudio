@@ -9,6 +9,7 @@
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
+* New command 'Pull with Rebase' to pull and rebase a branch in a single step
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
