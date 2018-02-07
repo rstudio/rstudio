@@ -140,6 +140,8 @@ public interface GitServerOperations extends VCSServerOperations
 
    void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback);
    
+   void gitPullRebase(ServerRequestCallback<ConsoleProcess> requestCallback);
+   
    void gitSshPublicKey(String privateKeyPath,
                         ServerRequestCallback<String> requestCallback);
     

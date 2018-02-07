@@ -98,6 +98,18 @@ public class GitPresenterCore
          }
       });
    }
+   
+   public void onVcsPullRebase()
+   {
+      server_.gitPullRebase(new SimpleRequestCallback<ConsoleProcess>()
+      {
+         @Override
+         public void onResponseReceived(ConsoleProcess proc)
+         {
+            new ConsoleProgressDialog(proc, server_).showModal();
+         }
+      });
+   }
 
    public void onVcsPush()
    {

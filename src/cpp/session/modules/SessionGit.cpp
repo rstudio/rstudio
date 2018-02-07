@@ -1013,6 +1013,15 @@ public:
       return createConsoleProc(gitArgs() << "pull",
                                "Git Pull", ppCP);
    }
+   
+   core::Error pullRebase(boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      return createConsoleProc(
+               gitArgs() << "pull" << "--rebase",
+               "Git Pull",
+               ppCP);
+   }
+   
 
    core::Error doDiffFile(const FilePath& filePath,
                           const FilePath* pCompareTo,
@@ -1886,6 +1895,22 @@ Error vcsPull(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error vcsPullRebase(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   boost::shared_ptr<ConsoleProcess> pCP;
+   Error error = s_git_.pullRebase(&pCP);
+   if (error)
+      return error;
+
+   ask_pass::setActiveWindow(request.sourceWindow);
+
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
+}
+
 
 Error vcsDiffFile(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
@@ -3313,6 +3338,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_push", vcsPush))
       (bind(registerRpcMethod, "git_push_branch", vcsPushBranch))
       (bind(registerRpcMethod, "git_pull", vcsPull))
+      (bind(registerRpcMethod, "git_pull_rebase", vcsPullRebase))
       (bind(registerRpcMethod, "git_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "git_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "git_history_count", vcsHistoryCount))

@@ -82,6 +82,9 @@ public class GitPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
+      
+      ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
+      pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
@@ -89,6 +92,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
+      toolbar.addLeftWidget(new ToolbarButton(pullMoreMenu, false));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
       toolbar.addLeftSeparator();

@@ -248,6 +248,12 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    {
       gitPresenterCore_.onVcsPull();
    }
+   
+   @Override
+   public void onVcsPullRebase()
+   {
+      gitPresenterCore_.onVcsPullRebase();
+   }
 
    @Override
    public void onVcsPush()
