@@ -94,6 +94,11 @@ public class VCSPresenter implements IsWidget,
    {
       presenter_.onVcsPull();
    }
+   
+   void onVcsPullRebase()
+   {
+      presenter_.onVcsPullRebase();
+   }
   
    void onVcsPush()
    {

@@ -101,6 +101,19 @@ public class SVNCommandHandler
          });
    }
    
+   public void onVcsPullRebase()
+   {
+      server_.svnUpdate(new SimpleRequestCallback<ConsoleProcess>()
+         {
+            @Override
+            public void onResponseReceived(ConsoleProcess response)
+            {
+               new ConsoleProgressDialog(response, server_).showModal();
+            }
+         });
+   }
+   
+   
    public void onVcsCommit()
    {
       pCommitDialog_.get().showModal();

@@ -2403,6 +2403,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_PULL,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
+   
+   public void gitPullRebase(ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GIT_PULL_REBASE,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    @Override
    public void askpassCompleted(String value, boolean remember,
@@ -5433,6 +5439,7 @@ public class RemoteServer implements Server
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PUSH_BRANCH = "git_push_branch";
    private static final String GIT_PULL = "git_pull";
+   private static final String GIT_PULL_REBASE = "git_pull_rebase";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String CREATE_SSH_KEY = "create_ssh_key";
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";

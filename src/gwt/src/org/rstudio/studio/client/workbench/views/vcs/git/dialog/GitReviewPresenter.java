@@ -899,6 +899,12 @@ public class GitReviewPresenter implements ReviewPresenter
    {
       gitPresenterCore_.onVcsPull();
    }
+   
+   @Handler
+   public void onVcsPullRebase()
+   {
+      gitPresenterCore_.onVcsPullRebase();
+   }
 
    @Handler
    public void onVcsPush()

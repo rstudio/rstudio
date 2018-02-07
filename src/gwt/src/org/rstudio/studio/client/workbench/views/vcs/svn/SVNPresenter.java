@@ -157,6 +157,12 @@ public class SVNPresenter extends BaseVcsPresenter
    }
    
    @Override
+   public void onVcsPullRebase()
+   {
+      commandHandler_.onVcsPullRebase();
+   }
+   
+   @Override
    public void onVcsCleanup()
    {
       server_.svnCleanup(new ProcessCallback(

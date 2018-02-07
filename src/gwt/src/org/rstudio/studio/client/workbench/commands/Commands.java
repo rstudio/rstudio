@@ -242,6 +242,7 @@ public abstract class
    public abstract AppCommand vcsOpen();
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsPull();
+   public abstract AppCommand vcsPullRebase();
    public abstract AppCommand vcsPush();
    public abstract AppCommand vcsCleanup();
    public abstract AppCommand vcsAddFiles();
