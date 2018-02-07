@@ -494,7 +494,7 @@ bool gitFilter(const FileInfo& fileInfo,
 {
    // screen out '.git' folder
    if (fileInfo.isDirectory() &&
-       boost::algorithm::ends_with(fileInfo.absolutePath(), ".git"))
+       boost::algorithm::ends_with(fileInfo.absolutePath(), "/.git"))
    {
       return false;
    }
