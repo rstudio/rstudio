@@ -31,7 +31,7 @@ var hist = function (ele, breaks, counts, update)
 
    // selection model; initially everything is selected
    var start = 0;
-   var stop = counts.length - 1;
+   var end = counts.length - 1;
 
    // create elements for each bin
    var n = counts.length;
@@ -68,7 +68,7 @@ var hist = function (ele, breaks, counts, update)
          backs[i].className = (i >= start && i <= end) ?
             "histBack selected" : "histBack";
       }
-      result.value = breaks[start] + " - " + breaks[end + 1];
+      update(breaks[start], breaks[end + 1]);
    };
 
    // given an element, find the bin to which it corresponds, or null if the the bin could not be
@@ -86,20 +86,31 @@ var hist = function (ele, breaks, counts, update)
 
    // given a mouse event, update the selected bins
    var brush = function(evt) {
+      // determine whether a bin was brushed
       var bin = findBin(evt.target);
       if (bin === null) {
          return;
       }
+
+      // did the brush extend either side of the selection?
       if (bin >= start && bin <= end) {
          return;
       }
+
+      // grow selection appropriately
       if (bin < start)
          start = bin;
       else if (bin > end)
          end = bin;
+
+      // redraw
       updateSelection();
    };
 
+   // perform initial redraw
+   updateSelection();
+
+   // set up event listeners
    ele.addEventListener("mousedown", function(evt) {
       var bin = findBin(evt.target);
       if (bin === null) {
