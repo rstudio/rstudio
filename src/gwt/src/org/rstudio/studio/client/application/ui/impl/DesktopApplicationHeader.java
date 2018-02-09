@@ -425,6 +425,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       return false;
    }
    
+   @SuppressWarnings("unused")
    private static boolean isFocusInAceInstance()
    {
       Element focusElem = DomUtils.getActiveElement();

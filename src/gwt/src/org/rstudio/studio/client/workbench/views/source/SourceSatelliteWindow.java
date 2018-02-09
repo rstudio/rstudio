@@ -133,6 +133,6 @@ public class SourceSatelliteWindow extends SatelliteWindow
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;
    private final Provider<SourceWindow> pSourceWindow_;
-   private final Provider<FileMRUList> pFileMRUList_;
-   private final Provider<ProjectMRUList> pProjectMRUList_;
+   @SuppressWarnings("unused") private final Provider<FileMRUList> pFileMRUList_;
+   @SuppressWarnings("unused") private final Provider<ProjectMRUList> pProjectMRUList_;
 }

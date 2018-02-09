@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
-import java.util.Objects;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringSink;

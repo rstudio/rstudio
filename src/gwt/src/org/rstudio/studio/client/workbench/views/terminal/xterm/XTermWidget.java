@@ -19,7 +19,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -36,7 +35,6 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResources;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;

@@ -35,8 +35,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
-import java.util.Objects;
-
 /**
  * Drop-down menu used in terminal pane. Has commands, and a list of 
  * terminal sessions.

@@ -15,7 +15,6 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.BrowseCap;
 

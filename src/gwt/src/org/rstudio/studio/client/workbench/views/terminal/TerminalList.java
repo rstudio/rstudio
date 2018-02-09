@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
