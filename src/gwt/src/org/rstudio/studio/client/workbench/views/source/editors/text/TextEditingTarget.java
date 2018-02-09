@@ -6339,16 +6339,17 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs.useSpacesForTab().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  // Makefile always uses tabs
+                  // Makefile and tsv always uses tabs
                   FileSystemItem file = context.getActiveFile();
                   if ((file != null) && 
                      ("Makefile".equals(file.getName()) ||
                       "Makevars".equals(file.getName()) ||
-                      "Makevars.win".equals(file.getName())))
+                      "Makevars.win".equals(file.getName()) ||
+                      ".tsv".equals(file.getExtension())))
                   {
                      docDisplay.setUseSoftTabs(false);
                   }
-                  else
+                  else 
                   {
                      if (projectConfig == null)
                         docDisplay.setUseSoftTabs(arg);
@@ -6384,7 +6385,18 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs.showInvisibles().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  docDisplay.setShowInvisibles(arg);
+                  // show whitespace characters in '.csv', '.tsv' files
+                  boolean showInvisibles = arg;
+                  FileSystemItem file = context.getActiveFile();
+                  if (file != null)
+                  {
+                     String ext = file.getExtension();
+                     if (".tsv".contentEquals(ext) || ".csv".contentEquals(ext))
+                     {
+                        showInvisibles = true;
+                     }
+                  }
+                  docDisplay.setShowInvisibles(showInvisibles);
                }}));
       releaseOnDismiss.add(prefs.showIndentGuides().bind(
             new CommandWithArg<Boolean>() {
