@@ -233,7 +233,7 @@ os-version-patch () {
 	os-version-part 3
 }
 
-# Helper functions for quickly checking paltform types
+# Helper functions for quickly checking platform types
 is-mac () {
 	[ "$(uname)" = "Darwin" ]
 }
