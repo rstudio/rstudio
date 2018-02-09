@@ -15,17 +15,6 @@ properties([
                 ])
 ])
 
-def resolve_deps(type, arch, variant) {
-  def linux_bin = (arch == 'i386') ? 'linux32' : '' // only required in centos-land.
-  switch ( type ) {
-      case "DEB":
-        sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
-        break
-      case "RPM":
-        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
-  }
-}
-
 def compile_package(type, flavor, variant) {
   // start with major, minor, and patch versions
   def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"

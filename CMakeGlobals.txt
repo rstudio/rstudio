@@ -1,3 +1,5 @@
+# vi: set ft=cmake:
+
 #
 # CMakeGlobals.txt
 #
@@ -11,7 +13,7 @@
 # MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
-#
+
 
 # include guard
 if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
@@ -125,10 +127,21 @@ get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 
 # dependencies
-set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
 if(WIN32)
    set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
+else()
+   # look for system-wide (global) dependencies folder
+   if(EXISTS "/opt/rstudio-tools/dependencies")
+      set(RSTUDIO_DEPENDENCIES_DIR "/opt/rstudio-tools/dependencies")
+   endif()
 endif()
+
+# look for dependencies in the source folder if not installed globally
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
+   set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
+endif()
+
+message("Dep dir is ${RSTUDIO_DEPENDENCIES_DIR}")
 
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
