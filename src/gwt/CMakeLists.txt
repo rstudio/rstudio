@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
 # check for externals
-set(GWT_LIB_DIR "/opt/rstudio-tools/gwt/lib")
+set(GWT_LIB_DIR "/opt/rstudio-tools/dependencies/common/gwt/lib")
 if(NOT EXISTS "${GWT_LIB_DIR}")
    set(GWT_LIB_DIR "lib")
 endif()

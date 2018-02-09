@@ -51,10 +51,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# install GWT libs
-COPY dependencies/common/install-gwt /tmp/
-RUN mkdir -p /opt/rstudio-tools/gwt && \
-    /tmp/install-gwt
+# install common dependencies
+RUN mkdir -p /opt/rstudio-tools/dependencies/common
+COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999

@@ -15,17 +15,6 @@ properties([
                 ])
 ])
 
-def resolve_deps(type, arch, variant) {
-  def linux_bin = (arch == 'i386') ? 'linux32' : '' // only required in centos-land.
-  switch ( type ) {
-      case "DEB":
-        sh "cd dependencies/linux && ./install-dependencies-debian --exclude-qt-sdk && cd ../.."
-        break
-      case "RPM":
-        sh "cd dependencies/linux && ${linux_bin} ./install-dependencies-yum --exclude-qt-sdk && cd ../.."
-  }
-}
-
 def compile_package(type, flavor, variant) {
   // start with major, minor, and patch versions
   def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
@@ -205,9 +194,6 @@ try {
                       container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
                     }
                     container.inside() {
-                        stage('resolve deps'){
-                            resolve_deps(get_type_from_os(current_container.os), current_container.arch, current_container.variant)
-                        }
                         stage('compile package') {
                             compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
