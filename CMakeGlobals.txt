@@ -141,8 +141,6 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
 endif()
 
-message("Dep dir is ${RSTUDIO_DEPENDENCIES_DIR}")
-
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
