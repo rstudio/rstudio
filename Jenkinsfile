@@ -194,9 +194,6 @@ try {
                       container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
                     }
                     container.inside() {
-                        stage('resolve deps'){
-                            resolve_deps(get_type_from_os(current_container.os), current_container.arch, current_container.variant)
-                        }
                         stage('compile package') {
                             compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
