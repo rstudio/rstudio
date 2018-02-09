@@ -606,7 +606,9 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
 {
    // NOTE: we don't use boost::filesystem::relative here as this API
    // also normalizes paths + resolves symlinks, which is undesired in
-   // our usages of this function
+   // our usages of this function. note that our usages of this API
+   // assume this path is a descendant of the parent path; we don't try
+   // to construct e.g. sibling paths using this API
    std::string selfPath = absolutePath();
    std::string scopePath = parentPath.absolutePath();
    
