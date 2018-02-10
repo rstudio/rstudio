@@ -128,7 +128,7 @@ set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 
 # dependencies
 if(WIN32)
-   set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
+   set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")
