@@ -1,7 +1,7 @@
 /*
  * Win32Environment.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,8 @@ void environment(Options* pEnvironment)
    LPWSTR lpEnv = ::GetEnvironmentStringsW();
    if (lpEnv == NULL)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return;
    }
 
@@ -70,7 +71,10 @@ void environment(Options* pEnvironment)
 
    // free environment strings
    if (!::FreeEnvironmentStringsW(lpEnv))
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+   {
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+   }
 }
 
 // Value returned is UTF-8 encoded

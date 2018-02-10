@@ -1,7 +1,7 @@
 /*
  * Win32OutputCapture.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,7 +61,8 @@ void standardStreamCaptureThread(
          {
             // we don't expect errors to ever occur (since the standard
             // streams are never closed) so log any that do and continue
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
          }
       }
    }
@@ -85,11 +86,17 @@ Error redirectToPipe(DWORD stdHandle,
    // create pipe
    HANDLE hWritePipe;
    if (!::CreatePipe(phReadPipe, &hWritePipe, NULL, 0))
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    // reset win32 standard handle
    if (!::SetStdHandle(stdHandle, hWritePipe))
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    // reset c runtime library handle
    int fd = ::_open_osfhandle((intptr_t)hWritePipe, _O_TEXT);

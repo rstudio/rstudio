@@ -1,7 +1,7 @@
 /*
  * NamedPipeAsyncClient.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,7 +81,8 @@ private:
          // handle connection error if necessary)
          if (hPipe == INVALID_HANDLE_VALUE)
          {
-            handleConnectionError(systemError(::GetLastError(),ERROR_LOCATION));
+            auto lastErr = ::GetLastError();
+            handleConnectionError(systemError(lastErr, ERROR_LOCATION));
             return;
          }
 

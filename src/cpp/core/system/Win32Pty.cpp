@@ -1,7 +1,7 @@
 /*
  * Win32Pty.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -433,11 +433,10 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    NULL /*hTemplateFile*/);
       if (*pStdInWrite == INVALID_HANDLE_VALUE)
       {
-         DWORD err = ::GetLastError();
+         auto lastErr = ::GetLastError();
          stopPty();
          *pStdInWrite = NULL;
-         ::SetLastError(err);
-         return systemError(::GetLastError(),
+         return systemError(lastErr,
                             "Failed to connect to pty conin pipe",
                             ERROR_LOCATION);
       }
@@ -454,10 +453,10 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    NULL /*hTemplateFile*/);
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
-         DWORD err = ::GetLastError();
+         auto lastErr = ::GetLastError();
          stopPty();
          *pStdOutRead = NULL;
-         return systemError(err,
+         return systemError(lastErr,
                             "Failed to connect to pty conout pipe",
                             ERROR_LOCATION);
       }
@@ -475,10 +474,10 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                                    NULL /*hTemplateFile*/);
       if (*pStdErrRead == INVALID_HANDLE_VALUE)
       {
-         DWORD err = ::GetLastError();
+         auto lastErr = ::GetLastError();
          stopPty();
          *pStdErrRead = NULL;
-         return systemError(err,
+         return systemError(lastErr,
                             "Failed to connect to pty conerr pipe",
                             ERROR_LOCATION);
       }
@@ -618,17 +617,17 @@ Error WinPty::writeToPty(HANDLE hPipe, const std::string& input)
                                input.length(),
                                &dwWritten,
                                &over);
-   DWORD dwErr = ::GetLastError();
-   if (!bSuccess && dwErr == ERROR_IO_PENDING)
+   auto lastErr = ::GetLastError();
+   if (!bSuccess && lastErr == ERROR_IO_PENDING)
    {
       bSuccess = GetOverlappedResult(hPipe,
                                      &over,
                                      &dwWritten,
                                      TRUE /*wait*/);
-      dwErr = ::GetLastError();
+      lastErr = ::GetLastError();
    }
    if (!bSuccess)
-      return systemError(dwErr, ERROR_LOCATION);
+      return systemError(lastErr, ERROR_LOCATION);
 
    return Success();
 }
@@ -640,10 +639,11 @@ Error WinPty::readFromPty(HANDLE hPipe, std::string* pOutput)
    DWORD dwAvail = 0;
    if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
    {
-      if (::GetLastError() == ERROR_BROKEN_PIPE)
+      auto lastErr = ::GetLastError();
+      if (lastErr == ERROR_BROKEN_PIPE)
          return Success();
       else
-         return systemError(::GetLastError(), ERROR_LOCATION);
+         return systemError(lastErr, ERROR_LOCATION);
    }
 
    // no data available
@@ -656,18 +656,18 @@ Error WinPty::readFromPty(HANDLE hPipe, std::string* pOutput)
    OVERLAPPED over;
    memset(&over, 0, sizeof(over));
    BOOL bSuccess = ::ReadFile(hPipe, &(buffer[0]), dwAvail, NULL, &over);
-   DWORD dwErr = ::GetLastError();
-   if (!bSuccess && dwErr == ERROR_IO_PENDING)
+   auto lastErr = ::GetLastError();
+   if (!bSuccess && lastErr == ERROR_IO_PENDING)
    {
       bSuccess = GetOverlappedResult(hPipe,
                                      &over,
                                      &nBytesRead,
                                      TRUE /*wait*/);
-      dwErr = ::GetLastError();
+      lastErr = ::GetLastError();
    }
 
    if (!bSuccess)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      return systemError(lastErr, ERROR_LOCATION);
 
    // append to output
    pOutput->append(&(buffer[0]), nBytesRead);

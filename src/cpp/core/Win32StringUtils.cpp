@@ -1,7 +1,7 @@
 /*
  * Win32StringUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,8 @@ std::string wideToUtf8(const std::wstring& value)
                                      NULL, 0, NULL, NULL);
    if (chars == 0)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return std::string();
    }
 
@@ -60,7 +61,8 @@ std::wstring utf8ToWide(const std::string& value,
                                      NULL, 0);
    if (chars == 0)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      Error error = systemError(lastErr, ERROR_LOCATION);
       if (!context.empty())
          error.addProperty("context", context);
       LOG_ERROR(error);

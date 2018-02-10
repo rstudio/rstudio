@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -250,7 +250,8 @@ std::string utf8ToSystem(const std::string& str,
    int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], wide.size());
    if (chars < 0)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return str;
    }
 
@@ -287,7 +288,8 @@ std::string systemToUtf8(const std::string& str, int codepage)
    int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), str.length(), &wide[0], wide.size());
    if (chars < 0)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return str;
    }
 
@@ -296,7 +298,8 @@ std::string systemToUtf8(const std::string& str, int codepage)
                                              NULL, NULL);
    if (bytesRequired == 0)
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return str;
    }
    std::vector<char> buf(bytesRequired, 0);

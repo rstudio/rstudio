@@ -1,7 +1,7 @@
 /*
  * SessionNamedPipeHttpConnectionListener.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,7 +91,8 @@ public:
          // check for error
          if (!result)
          {
-            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            auto lastErr = ::GetLastError();
+            Error error = systemError(lastErr, ERROR_LOCATION);
             if (!core::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
@@ -174,7 +175,8 @@ public:
          if (!success || (bytesWritten != bytesToWrite))
          {
             // establish error
-            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            auto lastErr = ::GetLastError();
+            Error error = systemError(lastErr, ERROR_LOCATION);
             error.addProperty("request-uri", request_.uri());
 
             // log the error if it wasn't connection terminated
@@ -195,13 +197,22 @@ public:
       if (hPipe_ != INVALID_HANDLE_VALUE)
       {
          if (!::FlushFileBuffers(hPipe_))
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         {
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         }
 
          if (!::DisconnectNamedPipe(hPipe_))
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         {
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         }
 
          if (!::CloseHandle(hPipe_))
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         {
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         }
 
          hPipe_ = INVALID_HANDLE_VALUE;
      }
@@ -293,7 +304,7 @@ private:
                                               kReadBufferSize,
                                               0,
                                               pSA);
-            DWORD lastError = ::GetLastError(); // capture err before LocalFree
+            auto lastError = ::GetLastError(); // capture err before LocalFree
 
             // free security descriptor if we used one
             if (pSA)
@@ -307,9 +318,12 @@ private:
             }
 
             // attempt to connect
-            BOOL connected = ::ConnectNamedPipe(hPipe, NULL) ?
-                   TRUE : (::GetLastError() == ERROR_PIPE_CONNECTED);
-
+            BOOL connected = ::ConnectNamedPipe(hPipe, NULL);
+            lastError = ::GetLastError();
+            if (!connected)
+            {
+               connected = (lastError == ERROR_PIPE_CONNECTED);
+            }
             if (connected)
             {
                // create connection
@@ -322,7 +336,8 @@ private:
             }
             else
             {
-               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+
+               LOG_ERROR(systemError(lastError, ERROR_LOCATION));
             }
          }
       }
@@ -409,7 +424,8 @@ private:
       }
       else
       {
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         auto lastErr = ::GetLastError();
+         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
          return NULL;
       }
    }
@@ -419,21 +435,33 @@ private:
       // token for current process
       HANDLE hToken = NULL;
       if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
+      }
       core::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
 
       // size of token groups structure (note that we expect the error
       // since we pass NULL for the token information buffer)
       DWORD tgSize = 0;
       BOOL res = ::GetTokenInformation(hToken, TokenGroups, NULL, 0, &tgSize);
-      if (res != FALSE && ::GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      if (res != FALSE)
+      {
+         auto lastErr = ::GetLastError();
+         if (lastErr != ERROR_INSUFFICIENT_BUFFER)
+         {
+            return systemError(lastErr, ERROR_LOCATION);
+         }
+      }
 
       // get the token groups structure
       std::vector<char> tg(tgSize);
       TOKEN_GROUPS* pTG = reinterpret_cast<TOKEN_GROUPS*>(&tg[0]);
       if (!::GetTokenInformation(hToken, TokenGroups, pTG, tgSize, &tgSize))
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
+      }
 
       // find login sid
       SID* pSid = NULL;
@@ -458,7 +486,10 @@ private:
       // convert to a string
       char* pSidString = NULL;
       if (!::ConvertSidToStringSid(pSid, &pSidString))
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
+      }
 
       // format string for caller
       boost::format fmt("D:(A;OICI;GA;;;%1%)");

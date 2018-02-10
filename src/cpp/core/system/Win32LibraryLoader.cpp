@@ -1,7 +1,7 @@
 /*
  * Win32LibraryLoader.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,14 +28,14 @@ namespace {
 std::string getLastErrorMessage()
 {
    LPVOID lpMsgBuf;
-   DWORD dw = ::GetLastError();
+   auto lastErr = ::GetLastError();
 
    DWORD length = ::FormatMessage(
        FORMAT_MESSAGE_ALLOCATE_BUFFER |
        FORMAT_MESSAGE_FROM_SYSTEM |
        FORMAT_MESSAGE_IGNORE_INSERTS,
        NULL,
-       dw,
+       lastErr,
        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
        (LPTSTR) &lpMsgBuf,
        0, NULL );
@@ -61,7 +61,8 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
    *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, 0);
    if (*ppLib == NULL)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      Error error = systemError(lastErr, ERROR_LOCATION);
       error.addProperty("dlerror", libPath + " - " + getLastErrorMessage());
       return error;
    }
@@ -77,7 +78,8 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
    *ppSymbol = (void*)::GetProcAddress((HINSTANCE)pLib, name.c_str());
    if (*ppSymbol == NULL)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      Error error = systemError(lastErr, ERROR_LOCATION);
       error.addProperty("dlerror", name + " - " + getLastErrorMessage());
       return error;
    }
@@ -91,7 +93,8 @@ Error closeLibrary(void* pLib)
 {
    if (!::FreeLibrary((HMODULE)pLib))
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      Error error = systemError(lastErr, ERROR_LOCATION);
       error.addProperty("dlerror", getLastErrorMessage());
       return error;
    }

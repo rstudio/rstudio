@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,7 +86,10 @@ Error initJobObject(bool* detachFromJob)
 
    HANDLE hJob = ::CreateJobObject(NULL, NULL);
    if (!hJob)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
    jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
@@ -98,8 +101,8 @@ Error initJobObject(bool* detachFromJob)
 
    if (::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
    {
-      DWORD error = ::GetLastError();
-      if (error == ERROR_ACCESS_DENIED)
+      auto lastErr = ::GetLastError();
+      if (lastErr == ERROR_ACCESS_DENIED)
       {
          // Use an environment variable to prevent us from somehow
          // getting into an infinite loop of detaching (which would
@@ -113,7 +116,7 @@ Error initJobObject(bool* detachFromJob)
             *detachFromJob = true;
          }
       }
-      return systemError(error, ERROR_LOCATION);
+      return systemError(lastErr, ERROR_LOCATION);
    }
 
    return Success();
@@ -243,7 +246,8 @@ bool isVistaOrLater()
    }
    else
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return false;
    }
 }
@@ -262,7 +266,8 @@ bool isWin7OrLater()
    }
    else
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return false;
    }
 }
@@ -500,7 +505,8 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
                                   NULL);
    if (res == 0)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      Error error = systemError(lastErr, ERROR_LOCATION);
       error.addProperty("path", filePath);
       return error;
    }
@@ -512,7 +518,10 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
                                &(buffer[0]),
                                NULL);
       if (res == 0)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
+      }
       else if (res > buffer.size())
          return systemError(boost::system::windows_error::bad_length,
                             ERROR_LOCATION);
@@ -551,10 +560,16 @@ Error makeFileHidden(const FilePath& path)
 
    DWORD attribs = ::GetFileAttributesW(lpszPath);
    if (attribs == INVALID_FILE_ATTRIBUTES)
-      return systemError(GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    if (!::SetFileAttributesW(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
-      return systemError(GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    return Success();
 }
@@ -721,7 +736,8 @@ public:
    {
       if (!::OpenClipboard(NULL))
       {
-         return systemError(::GetLastError(), ERROR_LOCATION);
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
       }
       else
       {
@@ -737,7 +753,10 @@ public:
          if (opened_)
          {
             if (!::CloseClipboard())
-               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            {
+               auto lastErr = ::GetLastError();
+               LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            }
          }
       }
       catch(...)
@@ -758,7 +777,10 @@ public:
    {
       hMF_ = ::GetEnhMetaFileW(path.absolutePathW().c_str());
       if (hMF_ == NULL)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, ERROR_LOCATION);
+      }
       else
          return Success();
    }
@@ -770,7 +792,10 @@ public:
          if (hMF_ != NULL)
          {
             if (!::DeleteEnhMetaFile(hMF_))
-               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            {
+               auto lastErr = ::GetLastError();
+               LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            }
          }
       }
       catch(...)
@@ -806,11 +831,17 @@ Error copyMetafileToClipboard(const FilePath& path)
 
    // emtpy the clipboard
    if (!::EmptyClipboard())
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    // set the clipboard data
    if (!::SetClipboardData(CF_ENHMETAFILE, enhMetaFile.handle()))
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    // release the handle (because the clipboard now owns it)
    enhMetaFile.release();
@@ -841,7 +872,10 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
 
    DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), NULL, 0);
    if (!sizeRequired)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
 
    std::vector<char> buffer(sizeRequired);
    int result = ::ExpandEnvironmentStrings(value.c_str(),
@@ -849,7 +883,10 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
                                            buffer.capacity());
 
    if (!result)
-      return systemError(GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
    else if (result > buffer.capacity())
       return systemError(ERROR_MORE_DATA, ERROR_LOCATION); // not expected
 
@@ -870,9 +907,15 @@ Error terminateProcess(PidType pid)
 {
    HANDLE hProc = ::OpenProcess(PROCESS_TERMINATE, false, pid);
    if (!hProc)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
    if (!::TerminateProcess(hProc, 1))
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
    return Success();
 }
 
@@ -888,7 +931,8 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
    {
       // err on the side of assuming child processes, so we don't kill
       // a job unintentionally
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return subprocs;
    }
 
@@ -896,7 +940,8 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
    pe32.dwSize = sizeof(pe32);
    if (!Process32First(hSnapShot, &pe32))
    {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       return subprocs;
    }
 
@@ -933,7 +978,10 @@ Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
       *pHandle = NULL;
 
       if (!result)
-         return systemError(::GetLastError(), location);
+      {
+         auto lastErr = ::GetLastError();
+         return systemError(lastErr, location);
+      }
       else
          return Success();
    }
@@ -1032,7 +1080,8 @@ Error getProcesses(std::vector<ProcessInfo> *pOutProcesses)
    HANDLE hSnap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
    if (hSnap == INVALID_HANDLE_VALUE)
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
    }
 
    if (Process32First(hSnap, &processEntry))
@@ -1092,17 +1141,20 @@ Error terminateChildProcesses()
       {
          if (!::TerminateProcess(hChildProc, 1))
          {
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
          }
 
          if (!::CloseHandle(hChildProc))
          {
-            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            auto lastErr = ::GetLastError();
+            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
          }
       }
       else
       {
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            auto lastErr = ::GetLastError();
+         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
       }
    }
 

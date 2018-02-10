@@ -122,6 +122,13 @@ public:
    Success() : Error() {}
 };
 
+// On Windows, don't use ::GetLastError() as the first argument (value).
+//
+// On certain build configurations it is possible the ErrorLocation
+// argument is evaluated before the "value" argument and resets the
+// Win32 last-error to "no error". Always capture the GetLastError value
+// separately and pass that to systemError. Didn't wrap this in a function
+// or macro to avoid obfuscating the location of the call in error output.
 
 Error systemError(int value, const ErrorLocation& location) ; 
 Error systemError(int value,
