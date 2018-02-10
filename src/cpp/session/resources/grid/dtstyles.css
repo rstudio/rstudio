@@ -1,7 +1,7 @@
 /*
  * dtstyles.css
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -272,9 +272,9 @@ th:focus {
     max-width: 300px;
 }
 
-.numSlider {
-    font-size: 9px;
+.numHist {
     width: 150px;
+    height: 150px;
     margin-right: 7px;
     margin-left: 7px;
     margin-top: 4px;
@@ -460,4 +460,13 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
 
 div.dataTables_scroll div.dataTables_scrollHead {
     background: none !important;
+}
+
+.selected .histBar {
+    background-color: #4040FF;
+    padding: 1px;
+}
+
+.histBar {
+    background-color: #90E0FF;
 }

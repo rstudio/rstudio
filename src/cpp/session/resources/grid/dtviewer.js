@@ -111,18 +111,6 @@ var debounce = function(func, wait) {
 	};
 };
 
-// used to determine the step precision for a number--e.g.:
-// "10.4" has a step precision of 0.1
-// "12.44" has a step precision of 0.01
-// "2" has a step precision of 1
-var stepPrecision = function(str) {
-  var idx = str.indexOf(".");
-  if (idx < 0) {
-    return 1;
-  }
-  return Math.pow(10, (idx - str.length) + 1);
-};
-
 // show an error--not recoverable; user must click 'retry' to reload 
 var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
@@ -369,6 +357,9 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
   invokeFilterPopup(ele, function(popup) {
     popup.className += " numericFilterPopup";
+    var min = col.col_breaks[0].toString();
+    var max = col.col_breaks[col.col_breaks.length - 1].toString();
+    var val = parseSearchVal(idx);
     if (val.indexOf("_") > 0) {
       var range = val.split("_");
       min = range[0];
@@ -377,9 +368,6 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       min = parseFloat(val);
       max = parseFloat(val);
     }
-    var h = document.createElement("div");
-    hist(h, col.col_breaks, col.col_counts);
-    popup.appendChild(h);
 
     var updateView = debounce(function() {
       var searchText = 
@@ -391,19 +379,24 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       }
       table.columns(idx).search(searchText).draw();
     }, 200);
-    $(slider).slider({
-      range:  true,
-      min:    col.col_min,
-      max:    col.col_max,
-      step:   Math.min(stepPrecision(col.col_min.toString()), 
-                       stepPrecision(col.col_max.toString())),
-      values: [min, max],
-      slide:  function(event, ui) {
-        minVal.textContent = ui.values[0];
-        maxVal.textContent = ui.values[1];
-        updateView();
-      }
+
+    var minVal = document.createElement("div");
+    minVal.textContent = min;
+    minVal.className = "numMin selected";
+    popup.appendChild(minVal);
+    var maxVal = document.createElement("div");
+    maxVal.textContent = max;
+    maxVal.className = "numMax selected";
+    popup.appendChild(maxVal);
+    var histBrush = document.createElement("div");
+    histBrush.className = "numHist";
+    hist(histBrush, col.col_breaks, col.col_counts, function(start, end) {
+       minVal.textContent = start;
+       minVal.textContent = end;
+       updateView();
     });
+    popup.appendChild(histBrush);
+
   }, onDismiss, false);
   ele.textContent = "[...]";
   return ele;
@@ -730,8 +723,8 @@ var createHeader = function(idx, col) {
   interior.appendChild(title);
   th.title = "column " + idx + ": " + col.col_type;
   if (col.col_type === "numeric") {
-    th.title += " with range " + col.breaks[0] + " - " + 
-                col.breaks[col.breaks.length - 1];
+    th.title += " with range " + col.col_breaks[0] + " - " + 
+                col.col_breaks[col.col_breaks.length - 1];
   } else if (col.col_type === "factor") {
     th.title += " with " + col.col_vals.length + " levels";
   }

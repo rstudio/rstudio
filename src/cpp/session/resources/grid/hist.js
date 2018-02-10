@@ -15,8 +15,8 @@
  *
  */
 
-var hist = function (ele, breaks, counts, update) 
-{
+var hist = function (ele, breaks, counts, update) {
+
    // find the largest count for normalization
    var max = counts[0];
    for(var i = 1; i < counts.length; i++)
