@@ -61,8 +61,7 @@ void standardStreamCaptureThread(
          {
             // we don't expect errors to ever occur (since the standard
             // streams are never closed) so log any that do and continue
-            auto lastErr = ::GetLastError();
-            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
       }
    }
@@ -87,15 +86,13 @@ Error redirectToPipe(DWORD stdHandle,
    HANDLE hWritePipe;
    if (!::CreatePipe(phReadPipe, &hWritePipe, NULL, 0))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // reset win32 standard handle
    if (!::SetStdHandle(stdHandle, hWritePipe))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // reset c runtime library handle

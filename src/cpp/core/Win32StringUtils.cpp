@@ -35,8 +35,7 @@ std::string wideToUtf8(const std::wstring& value)
                                      NULL, 0, NULL, NULL);
    if (chars == 0)
    {
-      auto lastErr = ::GetLastError();
-      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
       return std::string();
    }
 
@@ -61,8 +60,7 @@ std::wstring utf8ToWide(const std::string& value,
                                      NULL, 0);
    if (chars == 0)
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       if (!context.empty())
          error.addProperty("context", context);
       LOG_ERROR(error);

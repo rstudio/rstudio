@@ -245,8 +245,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
                                      NULL);
          if (!bSuccess)
          {
-            auto lastErr = ::GetLastError();
-            return systemError(lastErr, ERROR_LOCATION);
+            return LAST_SYSTEM_ERROR();
          }
       }
    }
@@ -286,8 +285,7 @@ Error ChildProcess::terminate()
    // terminate with exit code 15 (15 is SIGTERM on posix)
    if (!::TerminateProcess(pImpl_->hProcess, 15))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    else
       return Success();
@@ -330,8 +328,7 @@ Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
                                 NULL);
    if (hFile == INVALID_HANDLE_VALUE)
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    if (inheritable)
@@ -340,8 +337,7 @@ Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
                                   HANDLE_FLAG_INHERIT,
                                   HANDLE_FLAG_INHERIT))
       {
-         auto lastErr = ::GetLastError();
-         Error err = systemError(lastErr, ERROR_LOCATION);
+         Error err = LAST_SYSTEM_ERROR();
          ::CloseHandle(hFile);
          return err;
       }
@@ -385,48 +381,42 @@ Error ChildProcess::run()
    HANDLE hStdInRead;
    if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, NULL, 0))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    CloseHandleOnExitScope closeStdIn(&hStdInRead, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdInRead,
                                HANDLE_FLAG_INHERIT,
                                HANDLE_FLAG_INHERIT))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // Standard output pipe
    HANDLE hStdOutWrite;
    if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, NULL, 0))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    CloseHandleOnExitScope closeStdOut(&hStdOutWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdOutWrite,
                                HANDLE_FLAG_INHERIT,
                                HANDLE_FLAG_INHERIT) )
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // Standard error pipe
    HANDLE hStdErrWrite;
    if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, NULL, 0))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    CloseHandleOnExitScope closeStdErr(&hStdErrWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdErrWrite,
                                HANDLE_FLAG_INHERIT,
                                HANDLE_FLAG_INHERIT) )
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // populate startup info
@@ -553,8 +543,7 @@ Error ChildProcess::run()
 
    if (!success)
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
 
    // close thread handle on exit
@@ -589,8 +578,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
    {
       if (result == WAIT_FAILED)
       {
-         auto lastErr = ::GetLastError();
-         return systemError(lastErr, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
       }
       else
       {
@@ -606,8 +594,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
       DWORD dwStatus;
       if (!::GetExitCodeProcess(pImpl_->hProcess, &dwStatus))
       {
-         auto lastErr = ::GetLastError();
-         return systemError(lastErr, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
       }
 
       *pExitStatus = dwStatus;
@@ -763,8 +750,7 @@ void AsyncChildProcess::poll()
          DWORD dwStatus;
          if (!::GetExitCodeProcess(pImpl_->hProcess, &dwStatus))
          {
-            auto lastErr = ::GetLastError();
-            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
          exitStatus = dwStatus;
       }
@@ -775,8 +761,7 @@ void AsyncChildProcess::poll()
          Error error;
          if (result == WAIT_FAILED)
          {
-            auto lastErr = ::GetLastError();
-            error = systemError(lastErr, ERROR_LOCATION);
+            error = LAST_SYSTEM_ERROR();
          }
          else
          {

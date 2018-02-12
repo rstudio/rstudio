@@ -68,8 +68,7 @@ ProgressActivator::ProgressActivator()
 
   if (pImpl_->hWinEventHook == 0)
   {
-     auto lastErr = ::GetLastError();
-     Error error = systemError(lastErr, ERROR_LOCATION);
+     Error error = LAST_SYSTEM_ERROR();
      LOG_ERROR(error);
   }
 }

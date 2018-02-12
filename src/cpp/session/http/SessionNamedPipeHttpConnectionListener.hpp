@@ -91,8 +91,7 @@ public:
          // check for error
          if (!result)
          {
-            auto lastErr = ::GetLastError();
-            Error error = systemError(lastErr, ERROR_LOCATION);
+            Error error = LAST_SYSTEM_ERROR();
             if (!core::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
@@ -175,8 +174,7 @@ public:
          if (!success || (bytesWritten != bytesToWrite))
          {
             // establish error
-            auto lastErr = ::GetLastError();
-            Error error = systemError(lastErr, ERROR_LOCATION);
+            Error error = LAST_SYSTEM_ERROR();
             error.addProperty("request-uri", request_.uri());
 
             // log the error if it wasn't connection terminated
@@ -198,20 +196,17 @@ public:
       {
          if (!::FlushFileBuffers(hPipe_))
          {
-            auto lastErr = ::GetLastError();
-            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
 
          if (!::DisconnectNamedPipe(hPipe_))
          {
-            auto lastErr = ::GetLastError();
-            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
 
          if (!::CloseHandle(hPipe_))
          {
-            auto lastErr = ::GetLastError();
-            LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+            LOG_ERROR(LAST_SYSTEM_ERROR());
          }
 
          hPipe_ = INVALID_HANDLE_VALUE;
@@ -336,7 +331,6 @@ private:
             }
             else
             {
-
                LOG_ERROR(systemError(lastError, ERROR_LOCATION));
             }
          }
@@ -424,8 +418,7 @@ private:
       }
       else
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
          return NULL;
       }
    }
@@ -436,8 +429,7 @@ private:
       HANDLE hToken = NULL;
       if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
       {
-         auto lastErr = ::GetLastError();
-         return systemError(lastErr, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
       }
       core::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
 
@@ -459,8 +451,7 @@ private:
       TOKEN_GROUPS* pTG = reinterpret_cast<TOKEN_GROUPS*>(&tg[0]);
       if (!::GetTokenInformation(hToken, TokenGroups, pTG, tgSize, &tgSize))
       {
-         auto lastErr = ::GetLastError();
-         return systemError(lastErr, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
       }
 
       // find login sid
@@ -487,8 +478,7 @@ private:
       char* pSidString = NULL;
       if (!::ConvertSidToStringSid(pSid, &pSidString))
       {
-         auto lastErr = ::GetLastError();
-         return systemError(lastErr, ERROR_LOCATION);
+         return LAST_SYSTEM_ERROR();
       }
 
       // format string for caller

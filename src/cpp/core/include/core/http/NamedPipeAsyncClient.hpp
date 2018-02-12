@@ -81,8 +81,7 @@ private:
          // handle connection error if necessary)
          if (hPipe == INVALID_HANDLE_VALUE)
          {
-            auto lastErr = ::GetLastError();
-            handleConnectionError(systemError(lastErr, ERROR_LOCATION));
+            handleConnectionError(LAST_SYSTEM_ERROR());
             return;
          }
 

@@ -91,8 +91,7 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
    {
       if (!::CloseHandle(hObject))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, location));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
       }
    }
 }
@@ -103,8 +102,7 @@ void cleanupContext(FileEventContext* pContext)
    {
       if (!::CancelIo(pContext->hDirectory))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
       }
 
       safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
@@ -117,8 +115,7 @@ void cleanupContext(FileEventContext* pContext)
       // make sure timer APC is never called after a cleanupContext
       if (!::CancelWaitableTimer(pContext->hRestartTimer))
       {
-         auto lastErr = ::GetLastError();
-         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         LOG_ERROR(LAST_SYSTEM_ERROR());
       }
 
       safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
@@ -369,8 +366,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    pContext->hRestartTimer = ::CreateWaitableTimer(NULL, true, NULL);
    if (pContext->hRestartTimer == NULL)
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
       return;
    }
@@ -392,8 +388,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
 
    if (!success)
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
    }
 }
@@ -491,8 +486,7 @@ Error readDirectoryChanges(FileEventContext* pContext)
                                &(pContext->overlapped),
                                &FileChangeCompletionRoutine))
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    else
    {
@@ -548,9 +542,7 @@ Handle registerMonitor(const core::FilePath& filePath,
                      NULL);
    if (pContext->hDirectory == INVALID_HANDLE_VALUE)
    {
-      auto lastErr = ::GetLastError();
-      callbacks.onRegistrationError(
-                     systemError(lastErr, ERROR_LOCATION));
+      callbacks.onRegistrationError(LAST_SYSTEM_ERROR());
       return Handle();
    }
 

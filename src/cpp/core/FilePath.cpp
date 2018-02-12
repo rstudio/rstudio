@@ -1076,8 +1076,7 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         auto lastErr = ::GetLastError();
-         Error error = systemError(lastErr, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }
@@ -1129,8 +1128,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         auto lastErr = ::GetLastError();
-         Error error = systemError(lastErr, ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }

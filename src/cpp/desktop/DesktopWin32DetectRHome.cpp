@@ -56,8 +56,7 @@ bool prepareEnvironment(Options &options)
    }
    else
    {
-      auto lastErr = ::GetLastError();
-      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
    }
 
 

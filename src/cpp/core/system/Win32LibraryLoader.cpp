@@ -61,8 +61,7 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
    *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, 0);
    if (*ppLib == NULL)
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("dlerror", libPath + " - " + getLastErrorMessage());
       return error;
    }
@@ -78,8 +77,7 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
    *ppSymbol = (void*)::GetProcAddress((HINSTANCE)pLib, name.c_str());
    if (*ppSymbol == NULL)
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("dlerror", name + " - " + getLastErrorMessage());
       return error;
    }
@@ -93,8 +91,7 @@ Error closeLibrary(void* pLib)
 {
    if (!::FreeLibrary((HMODULE)pLib))
    {
-      auto lastErr = ::GetLastError();
-      Error error = systemError(lastErr, ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       error.addProperty("dlerror", getLastErrorMessage());
       return error;
    }
