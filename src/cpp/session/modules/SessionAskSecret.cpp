@@ -100,6 +100,7 @@ Error askForSecret(const std::string& title,
                    PasswordInput* pInput)
 {
    json::Object payload;
+   payload["title"] = title;
    payload["prompt"] = prompt;
    payload["remember_prompt"] = rememberPrompt;
    payload["window"] = s_askPassWindow;

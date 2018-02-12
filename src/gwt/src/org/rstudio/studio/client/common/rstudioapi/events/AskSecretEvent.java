@@ -29,6 +29,10 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    {
       protected Data() {}
 
+      public native final String getTitle() /*-{
+         return this.title;
+      }-*/;
+
       public native final String getPrompt() /*-{
          return this.prompt;
       }-*/;
@@ -44,9 +48,15 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
 
    public AskSecretEvent(AskSecretEvent.Data data)
    {
+      title_ = data.getTitle();
       prompt_ = data.getPrompt();
       rememberPrompt_ = data.getRememberPrompt();
       window_ = data.getWindow();
+   }
+
+   public String getTitle()
+   {
+      return title_;
    }
 
    public String getPrompt()
@@ -76,6 +86,7 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
       handler.onAskSecret(this);
    }
 
+   private final String title_;
    private final String prompt_;
    private final String rememberPrompt_;
    private final String window_;

@@ -80,7 +80,7 @@ public class AskSecretManager
             asksecretPending_ = true;
             
             globalDisplay.promptForPassword(
-                  "Password",
+                  e.getTitle(),
                   e.getPrompt(),
                   "",
                   e.getRememberPasswordPrompt(),

@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction( "askForSecret", function(title, prompt)
+.rs.addFunction( "askForSecret", function(title = "Secret", prompt = "Secret:")
 {
     .Call("rs_askForSecret", title, prompt)
 })
