@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -401,7 +401,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int ansiConsoleMode = readPref<int>(prefs, "ansi_console_mode", core::text::AnsiColorOn);
    pAnsiConsoleMode_.reset(new int(ansiConsoleMode));
 
-   int terminalWebsockets = readPref<bool>(prefs, "terminal_websockets", true);
+   bool terminalWebsockets = readPref<bool>(prefs, "terminal_websockets", true);
    pTerminalWebsockets_.reset(new bool(terminalWebsockets));
 
    bool terminalAutoclose = readPref<bool>(prefs, "terminal_autoclose", true);

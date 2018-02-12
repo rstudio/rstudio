@@ -1,7 +1,7 @@
 /*
  * SessionAsyncCompletions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,9 +92,9 @@ void fillFormalInfo(const json::Array& formalNamesJson,
       
       const json::Array& formalInfoJson = formalInfoJsonArray[i].get_array();
       
-      int hasDefaultValue = formalInfoJson[0].get_int();
-      int isMissingnessHandled = formalInfoJson[1].get_int();
-      int isUsed = formalInfoJson[2].get_int();
+      bool hasDefaultValue = formalInfoJson[0].get_int() != 0;
+      bool isMissingnessHandled = formalInfoJson[1].get_int() != 0;
+      bool isUsed = formalInfoJson[2].get_int() != 0;
       
       info.setHasDefaultValue(hasDefaultValue);
       info.setMissingnessHandled(isMissingnessHandled);

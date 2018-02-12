@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -121,7 +121,7 @@ public:
    int getMaxOutputLines() const { return maxOutputLines_; }
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
-   int getShowOnOutput() const { return showOnOutput_; }
+   bool getShowOnOutput() const { return showOnOutput_; }
 
    // Buffer output in case client disconnects/reconnects and needs
    // to recover some history.

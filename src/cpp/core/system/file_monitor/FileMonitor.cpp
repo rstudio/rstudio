@@ -1,7 +1,7 @@
 /*
  * FileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -545,7 +545,7 @@ void fileMonitorThreadMain()
       running = true;
       file_monitor::detail::run(boost::bind(checkForInput));   
    }
-   catch(const boost::thread_interrupted& e)
+   catch(const boost::thread_interrupted&)
    {
    }
    CATCH_UNEXPECTED_EXCEPTION
