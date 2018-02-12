@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1076,7 +1076,7 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }
@@ -1128,7 +1128,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }
