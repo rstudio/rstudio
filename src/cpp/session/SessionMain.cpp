@@ -115,6 +115,7 @@
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
+#include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionHTMLPreview.hpp"
@@ -506,6 +507,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rstudioapi::initialize)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
+      (modules::ask_secret::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -57,10 +57,11 @@ SEXP rs_askForSecret(SEXP titleSEXP, SEXP promptSEXP)
 {
    try
    {
+      std::string title = r::sexp::asString(titleSEXP);
       std::string prompt = r::sexp::asString(promptSEXP);
 
       PasswordInput input;
-      Error error = askForSecret(prompt, "", &input);
+      Error error = askForSecret(title, prompt, "", &input);
       if (error)
       {
          LOG_ERROR(error);
@@ -93,9 +94,10 @@ void setActiveWindow(const std::string& window)
    s_askPassWindow = window;
 }
 
-Error askForSecret(const std::string& prompt,
-                     const std::string& rememberPrompt,
-                     PasswordInput* pInput)
+Error askForSecret(const std::string& title,
+                   const std::string& prompt,
+                   const std::string& rememberPrompt,
+                   PasswordInput* pInput)
 {
    json::Object payload;
    payload["prompt"] = prompt;
@@ -157,7 +159,7 @@ Error initialize()
    R_CallMethodDef methodDefAskPass ;
    methodDefAskPass.name = "rs_askForSecret" ;
    methodDefAskPass.fun = (DL_FUNC) rs_askForSecret ;
-   methodDefAskPass.numArgs = 1;
+   methodDefAskPass.numArgs = 2;
    r::routines::addCallMethod(methodDefAskPass);
 
    // complete initialization
