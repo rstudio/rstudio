@@ -103,11 +103,11 @@ Error askForSecret(const std::string& title,
    payload["prompt"] = prompt;
    payload["remember_prompt"] = rememberPrompt;
    payload["window"] = s_askPassWindow;
-   ClientEvent askPassEvent(client_events::kAskPass, payload);
+   ClientEvent askSecretEvent(client_events::kAskSecret, payload);
 
    // wait for method
    core::json::JsonRpcRequest request;
-   if (!s_waitForAskPass(&request, askPassEvent))
+   if (!s_waitForAskPass(&request, askSecretEvent))
    {
       return systemError(boost::system::errc::operation_canceled,
                          ERROR_LOCATION);
@@ -153,7 +153,7 @@ Error initialize()
 
    // register waitForMethod handler
    s_waitForAskPass = module_context::registerWaitForMethod(
-                                                "askpass_completed");
+                                                "asksecret_completed");
 
    // register rs_askForSecret with R
    R_CallMethodDef methodDefAskPass ;

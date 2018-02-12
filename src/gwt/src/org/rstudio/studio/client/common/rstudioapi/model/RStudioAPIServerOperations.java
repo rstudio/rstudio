@@ -14,12 +14,17 @@
  */
 package org.rstudio.studio.client.common.rstudioapi.model;
 
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-public interface RStudioAPIServerOperations
+public interface RStudioAPIServerOperations extends CryptoServerOperations
 {
    void showDialogCompleted(String prompt,
                             boolean ok,
                             ServerRequestCallback<Void> callback);
+
+   void asksecretCompleted(String value,
+                           boolean remember,
+                           ServerRequestCallback<Void> requestCallback);
 }

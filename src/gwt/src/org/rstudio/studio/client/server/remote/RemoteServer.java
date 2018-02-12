@@ -5228,6 +5228,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONNECTION_ADD_PACKAGE, params, callback);
    }
 
+   @Override
+   public void asksecretCompleted(String value,
+                                  boolean remember,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, value == null ? JSONNull.getInstance()
+                                  : new JSONString(value));
+      params.set(1, JSONBoolean.getInstance(remember));
+      sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5642,4 +5654,6 @@ public class RemoteServer implements Server
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
+
+   private static final String ASKSECRET_COMPLETED = "asksecret_completed";
 }
