@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -243,7 +243,7 @@ Error scanRegistryForRTools(HKEY key,
    }
 
    std::vector<std::string> keys = regKey.keyNames();
-   for (int i = 0; i < keys.size(); i++)
+   for (size_t i = 0; i < keys.size(); i++)
    {
       std::string name = keys.at(i);
       core::system::RegistryKey verKey;

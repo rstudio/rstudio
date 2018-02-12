@@ -134,7 +134,7 @@ bool copySingleItem(const FilePath& from, const FilePath& to,
    return true;
 }
 
-bool addItemSize(const FilePath& item, boost::shared_ptr<int> pTotal)
+bool addItemSize(const FilePath& item, boost::shared_ptr<uintmax_t> pTotal)
 {
    if (!item.isDirectory())
       *pTotal = *pTotal + item.size();
@@ -852,7 +852,7 @@ uintmax_t FilePath::sizeRecursive() const
    if (!isDirectory())
       return size();
 
-   boost::shared_ptr<int> pTotal = boost::make_shared<int>(0);
+   boost::shared_ptr<uintmax_t> pTotal = boost::make_shared<uintmax_t>(0);
    Error error = childrenRecursive(boost::bind(addItemSize, _2, pTotal)); 
    if (error)
       LOG_ERROR(error);
