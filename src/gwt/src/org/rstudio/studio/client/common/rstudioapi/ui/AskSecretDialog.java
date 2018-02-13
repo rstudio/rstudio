@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 
 public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 {
@@ -45,6 +46,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    public AskSecretDialog(String title,
                           String prompt,
                           boolean canRemember,
+                          DependencyManager dependencyManager,
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
@@ -78,7 +80,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
             );
             
             HTML questionHtml = new HTML(
-               "<br><b>Would you like to install Keyring?</b><br><br>"
+               "<br>Would you like to install keyring?<br><br>"
             );
             
             verticalPanel.add(infoLabel);
@@ -88,13 +90,36 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                MessageDialog.QUESTION,
                "Keyring",
                verticalPanel);
-            dialog.addButton("Install", (Operation)null, true, false);
+            
+            dialog.addButton("Install", new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  dependencyManager.withKeyring(
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           enableKeyring(true);
+                        }
+                     }
+                  );
+               }
+            }, true, false);
+            
             dialog.addButton("Cancel", (Operation)null, false, true);
             dialog.showModal();
          }
       });
 
 
+      enableKeyring(canRemember);
+   }
+   
+   private void enableKeyring(boolean canRemember)
+   {
       rememberEnabled_.setVisible(false);
       rememberDisabled_.setVisible(false);
 

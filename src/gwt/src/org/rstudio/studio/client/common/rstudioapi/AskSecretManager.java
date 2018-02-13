@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialog;
 import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialogResult;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
@@ -51,7 +52,8 @@ public class AskSecretManager
                            EventBus eventBus,
                            final GlobalDisplay globalDisplay,
                            final Satellite satellite,
-                           final SatelliteManager satelliteManager)
+                           final SatelliteManager satelliteManager,
+                           final DependencyManager dependencyManager)
    {
 
       eventBus.addHandler(AskSecretEvent.TYPE, new AskSecretEvent.Handler()
@@ -93,6 +95,7 @@ public class AskSecretManager
                         e.getTitle(),
                         e.getPrompt(),
                         info.getCanRemember(),
+                        dependencyManager,
                         new ProgressOperationWithInput<AskSecretDialogResult>()
                         {
                            @Override
