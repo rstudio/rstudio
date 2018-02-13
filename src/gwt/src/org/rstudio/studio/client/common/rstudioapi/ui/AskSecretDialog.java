@@ -21,6 +21,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,7 +30,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
 public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
@@ -39,6 +39,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
    public AskSecretDialog(String title,
                           String prompt,
+                          boolean canRemember,
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
@@ -48,6 +49,14 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
      
       label_.setText(prompt);
       textbox_.setFocus(true);
+
+      rememberEnabled_.setVisible(false);
+      rememberDisabled_.setVisible(false);
+
+      if (canRemember)
+        rememberEnabled_.setVisible(true);
+      else
+        rememberDisabled_.setVisible(true);
    }
 
    @Override
@@ -111,4 +120,8 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @UiField Label label_;
    @UiField PasswordTextBox textbox_;
    @UiField CheckBox remember_;
+   @UiField Label install_;
+
+   @UiField HTMLPanel rememberEnabled_;
+   @UiField HTMLPanel rememberDisabled_;
 }

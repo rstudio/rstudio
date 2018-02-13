@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
+import org.rstudio.studio.client.common.rstudioapi.model.AskSecretInfo;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialog;
 import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialogResult;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
@@ -82,55 +84,68 @@ public class AskSecretManager
             
             asksecretPending_ = true;
 
-            AskSecretDialog dialog = new AskSecretDialog(
-               e.getTitle(),
-               e.getPrompt(),
-               new ProgressOperationWithInput<AskSecretDialogResult>()
-               {
+            server.askSecretInfo(
+               new ServerRequestCallback<AskSecretInfo>() {
                   @Override
-                  public void execute(final AskSecretDialogResult result,
-                                      final ProgressIndicator indicator)
+                  public void onResponseReceived(AskSecretInfo info)
                   {
-                     asksecretPending_ = false;
-
-                     RSAEncrypt.encrypt_ServerOnly(
-                           server,
-                           result.getSecret(),
-                           new RSAEncrypt.ResponseCallback()
+                     AskSecretDialog dialog = new AskSecretDialog(
+                        e.getTitle(),
+                        e.getPrompt(),
+                        info.getCanRemember(),
+                        new ProgressOperationWithInput<AskSecretDialogResult>()
+                        {
+                           @Override
+                           public void execute(final AskSecretDialogResult result,
+                                               final ProgressIndicator indicator)
                            {
-                              @Override
-                              public void onSuccess(String encryptedData)
-                              {
-                                 server.asksecretCompleted(
-                                  encryptedData,
-                                  !StringUtil.isNullOrEmpty(e.getRememberPasswordPrompt())
-                                     && result.getRemember(),
-                                  new VoidServerRequestCallback(indicator));
-                                 
-                              }
+                              asksecretPending_ = false;
 
-                              @Override
-                              public void onFailure(ServerError error)
-                              {
-                                 Debug.logError(error);
-                              }
-                           });
+                              RSAEncrypt.encrypt_ServerOnly(
+                                 server,
+                                 result.getSecret(),
+                                 new RSAEncrypt.ResponseCallback()
+                                 {
+                                    @Override
+                                    public void onSuccess(String encryptedData)
+                                    {
+                                       server.askSecretCompleted(
+                                        encryptedData,
+                                        !StringUtil.isNullOrEmpty(e.getRememberPasswordPrompt())
+                                           && result.getRemember(),
+                                        new VoidServerRequestCallback(indicator));
+                                       
+                                    }
+
+                                    @Override
+                                    public void onFailure(ServerError error)
+                                    {
+                                       Debug.logError(error);
+                                    }
+                                 });
+                           }
+                        },
+                        new Operation()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              asksecretPending_ = false;
+                              
+                              server.askSecretCompleted(
+                                                 null, false,
+                                                 new SimpleRequestCallback<Void>());
+                           }
+                        }
+                     );
+                     dialog.showModal();
                   }
-               },
-               new Operation()
-               {
+                  
                   @Override
-                  public void execute()
-                  {
-                     asksecretPending_ = false;
-                     
-                     server.asksecretCompleted(
-                                        null, false,
-                                        new SimpleRequestCallback<Void>());
+                  public void onError(ServerError error) {
+                     Debug.logError(error);
                   }
-               }
-            );
-            dialog.showModal();
+               });
          }
       });
       
@@ -145,7 +160,7 @@ public class AskSecretManager
             {
                asksecretPending_ = false;
                
-               server.asksecretCompleted(null, 
+               server.askSecretCompleted(null, 
                                        false,
                                        new SimpleRequestCallback<Void>());
             }
