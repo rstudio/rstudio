@@ -16,14 +16,18 @@
 package org.rstudio.studio.client.common.rstudioapi.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.StringUtil;
@@ -31,6 +35,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.common.HelpLink;
 
 public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 {
@@ -47,8 +52,48 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      
+      setHelpLink(new HelpLink(
+         "Using Keyring",
+         "using_keyring",
+         false,
+         true)
+      );
+
       label_.setText(prompt);
       textbox_.setFocus(true);
+
+      install_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event) {
+            VerticalPanel verticalPanel = new VerticalPanel();
+            verticalPanel.getElement().setAttribute(
+               "style",
+               "padding-left: 6px; width: 320px;"
+            );
+            
+            Label infoLabel = new Label(
+               "Keyring is an R package that provides access to " +
+               "the operating systems credential store to allow you " +
+               "to remember, securely, passwords and secrets. "
+            );
+            
+            HTML questionHtml = new HTML(
+               "<br><b>Would you like to install Keyring?</b><br><br>"
+            );
+            
+            verticalPanel.add(infoLabel);
+            verticalPanel.add(questionHtml);
+            
+            MessageDialog dialog = new MessageDialog(
+               MessageDialog.QUESTION,
+               "Keyring",
+               verticalPanel);
+            dialog.addButton("Install", (Operation)null, true, false);
+            dialog.addButton("Cancel", (Operation)null, false, true);
+            dialog.showModal();
+         }
+      });
+
 
       rememberEnabled_.setVisible(false);
       rememberDisabled_.setVisible(false);
