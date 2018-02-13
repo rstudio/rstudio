@@ -604,19 +604,11 @@ std::time_t FilePath::lastWriteTime() const
 
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
-   path_t relPath;
-   try
-   {
-      relPath = boost::filesystem::relative(
-               this->pImpl_->path,
-               parentPath.pImpl_->path);
-   }
-   catch(const boost::filesystem::filesystem_error& e)
-   {
-      logError(pImpl_->path, e, ERROR_LOCATION);
-   }
-
-   return BOOST_FS_PATH2STR(relPath);
+   path_t relativePath =
+         pImpl_->path.lexically_normal().lexically_relative(
+            parentPath.pImpl_->path.lexically_normal());
+   
+   return BOOST_FS_PATH2STR(relativePath);
 }
 
 bool FilePath::isWithin(const FilePath& scopePath) const
