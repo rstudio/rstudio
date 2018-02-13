@@ -47,10 +47,6 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    
    void getNewConnectionContext(
             ServerRequestCallback<NewConnectionContext> callback);
-   
-   void installSpark(String sparkVersion,
-                     String hadoopVersion,
-                     ServerRequestCallback<ConsoleProcess> callback);
 
    void launchEmbeddedShinyConnectionUI(String packageName,
                                         String connectionName,

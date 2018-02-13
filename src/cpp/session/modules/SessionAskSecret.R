@@ -13,8 +13,14 @@
 #
 #
 
-.rs.addFunction( "askForSecret", function(title = "Secret", prompt = "Secret:")
+.rs.addFunction("askForSecret", function(title = "Secret", prompt = "Secret:")
 {
     .Call("rs_askForSecret", title, prompt)
 })
 
+.rs.addJsonRpcHandler("asksecret_info", function() {
+
+   list(
+      canRemember = .rs.scalar(FALSE)
+   )
+})
