@@ -27,8 +27,10 @@ RUN apt-get update \
     fakeroot \
     git-core \
     gnupg \
+    libacl1-dev \
     libapparmor1 \
     libbz2-dev \
+    libcap-dev \
     libgl1-mesa-dev \
     libgstreamer-plugins-base0.10-0 \
     libgstreamer0.10-0 \
@@ -40,6 +42,7 @@ RUN apt-get update \
     lsof \
     openjdk-8-jdk \
     pkg-config \
+    rrdtool \
     sudo \
     unzip \
     uuid-dev \

@@ -17,6 +17,8 @@ RUN yum install -y \
     gstreamer-plugins-base-devel \
     java-1.8.0-openjdk  \
     java-1.8.0-openjdk-devel  \
+    libacl-devel \ 
+    libcap-devel \ 
     libffi \
     libuuid-devel \
     lsof \
@@ -27,6 +29,7 @@ RUN yum install -y \
     R \
     rpmdevtools \
     rpmsign \
+    rrdtool \
     sudo \
     wget \
     xml-commons-apis \

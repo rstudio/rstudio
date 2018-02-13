@@ -24,6 +24,8 @@ RUN apt-get install -y \
     gnupg1 \
     gstreamer1.0-plugins-base \
     openjdk-8-jdk  \
+    libacl1-dev \
+    libcap-dev \
     libpam0g-dev \
     libffi-dev \
     uuid-dev \
@@ -31,6 +33,7 @@ RUN apt-get install -y \
     libssl1.0-dev \
     libpango-1.0-0 \
     r-base \
+    rrdtool \
     sudo \
     wget \
     libxml-commons-external-java \
