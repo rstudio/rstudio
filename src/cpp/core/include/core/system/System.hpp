@@ -257,6 +257,7 @@ core::Error handleSignal(SignalType signal, void (*handler)(int));
 core::Error ignoreSignal(SignalType signal);   
 core::Error useDefaultSignalHandler(SignalType signal);
 
+void interruptSelf();
 void sendSignalToSelf(SignalType signal);
 
 // user info

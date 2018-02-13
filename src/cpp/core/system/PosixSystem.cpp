@@ -435,6 +435,11 @@ Error useDefaultSignalHandler(SignalType signal)
    }
 }
 
+void interruptSelf()
+{
+   ::kill(::getpid(), SIGINT);
+}
+
 void sendSignalToSelf(SignalType signal)
 {
    ::kill(::getpid(), signalForType(signal));

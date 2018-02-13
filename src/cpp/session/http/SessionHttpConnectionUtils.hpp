@@ -50,6 +50,8 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection);
 
+bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection);
+
 bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
                   const std::string& secret);
 
