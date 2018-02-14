@@ -212,7 +212,11 @@ public class EditingTargetCodeExecution
                                              boolean onlyUseConsole)
    {
       // adapt to the code language being executed (currently R vs. Python)
-      String language = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      // .Rmd's always execute in R mode (separate machinery routes Python execution)
+      String language = (target_.getTextFileType().isRmd())
+            ? "r"
+            : docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      
       server_.adaptToLanguage(
             StringUtil.notNull(language),
             new ServerRequestCallback<Void>()

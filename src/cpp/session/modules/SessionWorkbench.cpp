@@ -69,10 +69,6 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForEditorContext;
 
-// simple toggle used for handling REPL state (allows us to toggle
-// R <-> Python REPL in the main console as needed)
-std::string s_activeLanguage = "r";
-
 SEXP rs_getEditorContext(SEXP typeSEXP)
 {
    int type = r::sexp::asInteger(typeSEXP);
@@ -705,10 +701,24 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
       return error;
    language = string_utils::toLower(language);
    
-   // detect when the language has changed
-   if (language != s_activeLanguage)
+   // check to see what language is active in main console
+   using namespace r::exec;
+   
+   // check to see what langauge is currently active (but default to r)
+   std::string activeLanguage = "r";
+   
+   // check to see if the reticulate engine is active
+   bool reticulateActive = false;
+   r::exec::RFunction("base:::getOption")
+         .addParam("reticulate.repl")
+         .call(&reticulateActive);
+   if (reticulateActive)
+      activeLanguage = "python";
+   
+   // now, detect if we are transitioning languages
+   if (language != activeLanguage)
    {
-      if (s_activeLanguage == "r")
+      if (activeLanguage == "r")
       {
          if (language == "python")
          {
@@ -721,18 +731,15 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
                   module_context::enqueueConsoleInput("reticulate::python_repl(FALSE)");
             if (error)
                LOG_ERROR(error);
-            else
-               s_activeLanguage = language;
          }
       }
-      else if (s_activeLanguage == "python")
+      else if (activeLanguage == "python")
       {
          if (language == "r")
          {
             // python -> r: deactivate the reticulate REPL
             Error error =
                   module_context::enqueueConsoleInput("quit");
-            s_activeLanguage = "r";
          }
       }
    }
