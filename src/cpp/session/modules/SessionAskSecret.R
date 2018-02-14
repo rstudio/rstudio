@@ -19,7 +19,7 @@
 
 .rs.addFunction("askForSecret", function(name, title = name, prompt = paste(name, ":", sep = ""))
 {
-    .Call(
+   result <- .Call(
       "rs_askForSecret",
       name,
       title,
@@ -27,6 +27,10 @@
       .rs.isPackageInstalled("keyring"),
       .rs.hasSecret(name)
    )
+
+   if (is.null(result)) stop("Ask for secret operation was cancelled.")
+   
+   result
 })
 
 .rs.addFunction("hasSecret", function(name)
