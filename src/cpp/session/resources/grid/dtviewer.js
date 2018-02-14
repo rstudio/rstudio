@@ -369,34 +369,57 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       max = parseFloat(val);
     }
 
-    var updateView = debounce(function() {
-      var searchText = 
-        minVal.textContent === min && maxVal.textContent === max ? 
-          "" :
-          minVal.textContent + "_" + maxVal.textContent;
-      if (searchText.length > 0) {
-        searchText = "numeric|" + searchText;
-      }
-      table.columns(idx).search(searchText).draw();
-    }, 200);
+    var filterFromRange = function(start, end) {
+       return start + " - " + end;
+    };
 
-    var minVal = document.createElement("div");
-    minVal.textContent = min;
-    minVal.className = "numMin selected";
-    popup.appendChild(minVal);
-    var maxVal = document.createElement("div");
-    maxVal.textContent = max;
-    maxVal.className = "numMax selected";
-    popup.appendChild(maxVal);
+    // create textbox to show range selected by histogram
+    var numVal = document.createElement("input");
+    numVal.type = "text";
+    numVal.className = "numValueBox";
+    numVal.style.textAlign = "center";
+    numVal.value = filterFromRange(min, max);
+
+    // update view to show expression
+    var updateView = debounce(function(val) {
+       var searchText = "";
+
+       // discard invalid characters
+       val = val.replace(/[^-0-9 .]/, "");
+
+       // just one number?
+       var digit  = val.match(/^\s*-?\d+\.?\d*\s*$/);
+       if (digit !== null && digit.length > 1) {
+          searchText = digit[1];
+       } else {
+          var matches = val.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
+          if (matches.length > 2) {
+             searchText = matches[1] + "_" + matches[2];
+          }
+       }
+
+       if (searchText.length > 0) {
+         searchText = "numeric|" + searchText;
+       }
+       table.columns(idx).search(searchText).draw();
+    }, 200);
+    numVal.addEventListener("change", function() {
+       updateView(numVal.value);
+    });
+
+    var updateText = function(start, end) {
+       numVal.value = filterFromRange(start, end);
+       updateView(numVal.value);
+    };
+
     var histBrush = document.createElement("div");
     histBrush.className = "numHist";
     hist(histBrush, col.col_breaks, col.col_counts, function(start, end) {
-       minVal.textContent = start;
-       minVal.textContent = end;
-       updateView();
+       updateText(start, end);
     });
     popup.appendChild(histBrush);
 
+    popup.appendChild(numVal);
   }, onDismiss, false);
   ele.textContent = "[...]";
   return ele;

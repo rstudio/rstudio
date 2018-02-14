@@ -125,12 +125,14 @@ table.dataTable {
     position: absolute;
 }
 
-.colFilter {
+.colFilter, .numValueBox {
     border: 1px solid #c0c0c0;
-    border-radius: 1px;
-    margin-top: 4px;
     background-color: #ffffff;
     border-radius: 3px;
+}
+
+.colFilter {
+    margin-top: 4px;
     white-space: nowrap;
     padding-left: 3px;
     padding-right: 3px;
@@ -140,7 +142,8 @@ table.dataTable {
     font-weight: normal;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter {
+.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .numValueBox {
     border-color: rgb(45,60,75);
     background: rgb(108,121,131);
 }
@@ -281,24 +284,6 @@ th:focus {
     margin-bottom: 10px;
     padding: 10px;
     position: relative;
-}
-
-.numMin {
-    width: 50px;
-    padding-left: 4px;
-    text-align: left;
-    display: inline-block;
-    font-size: 11px;
-    overflow: hidden;
-}
-
-.numMax {
-    width: 50px;
-    text-align: right;
-    padding-right: 4px;
-    display: inline-block;
-    font-size: 11px;
-    overflow: hidden;
 }
 
 #rsGridData_info {
@@ -472,3 +457,10 @@ div.dataTables_scroll div.dataTables_scrollHead {
     background-color: #AACBE7;
 }
 
+.numValueBox {
+    margin-top: 10px;
+    border-radius: 2px;
+    margin-left: 5px;
+    margin-right: 5px;
+    width: 100px;
+}
