@@ -21,6 +21,7 @@
 #include <core/Log.hpp>
 #include <core/json/Json.hpp>
 
+#include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
@@ -53,28 +54,36 @@ void onClientInit()
 
 
 // show error message from R
-SEXP rs_askForSecret(SEXP titleSEXP, SEXP promptSEXP)
+SEXP rs_askForSecret(
+   SEXP nameSEXP,
+   SEXP titleSEXP,
+   SEXP promptSEXP,
+   SEXP canRememberSEXP,
+   SEXP hasSecretSEXP)
 {
    try
    {
+      std::string name = r::sexp::asString(nameSEXP);
       std::string title = r::sexp::asString(titleSEXP);
       std::string prompt = r::sexp::asString(promptSEXP);
+      bool canRemember = r::sexp::asLogical(canRememberSEXP);
+      bool hasSecret = r::sexp::asLogical(hasSecretSEXP);
 
-      PasswordInput input;
-      Error error = askForSecret(title, prompt, "", &input);
+      SecretInput input;
+      Error error = askForSecret(name, title, prompt, canRemember, hasSecret, &input);
       if (error)
       {
          LOG_ERROR(error);
          return R_NilValue;
       }
-      else if (input.cancelled || input.password.empty())
+      else if (input.cancelled || input.secret.empty())
       {
          return R_NilValue;
       }
       else
       {
          r::sexp::Protect rProtect;
-         return r::sexp::create(input.password, &rProtect);
+         return r::sexp::create(input.secret, &rProtect);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -94,16 +103,19 @@ void setActiveWindow(const std::string& window)
    s_askPassWindow = window;
 }
 
-Error askForSecret(const std::string& title,
+Error askForSecret(const std::string& name,
+                   const std::string& title,
                    const std::string& prompt,
-                   const std::string& rememberPrompt,
-                   PasswordInput* pInput)
+                   bool canRemember,
+                   bool hasSecret,
+                   SecretInput* pInput)
 {
    json::Object payload;
    payload["title"] = title;
    payload["prompt"] = prompt;
-   payload["remember_prompt"] = rememberPrompt;
    payload["window"] = s_askPassWindow;
+   payload["can_remember"] = canRemember;
+   payload["has_secret"] = hasSecret;
    ClientEvent askSecretEvent(client_events::kAskSecret, payload);
 
    // wait for method
@@ -117,7 +129,8 @@ Error askForSecret(const std::string& title,
    // read params
    json::Value value;
    bool remember = false;
-   Error error = json::readParams(request.params, &value, &remember);
+   bool changed = false;
+   Error error = json::readParams(request.params, &value, &remember, &changed);
    if (error)
       return error;
 
@@ -130,7 +143,26 @@ Error askForSecret(const std::string& title,
 
    // read inputs
    pInput->remember = remember;
-   pInput->password = value.get_value<std::string>();
+   pInput->changed = changed;
+
+   // if secret changed
+   if (pInput->changed)
+   {
+      pInput->secret = value.get_value<std::string>();
+   }
+   else
+   {
+      SEXP lastSecretSEXP;
+      r::sexp::Protect protect;
+      Error error = r::exec::RFunction(".rs.retrieveSecret", name)
+         .call(&lastSecretSEXP, &protect);
+
+      if (error)
+         return error;
+
+      std::string lastSecret = r::sexp::asString(lastSecretSEXP);
+      pInput->secret = lastSecret;
+   }
 
    // decrypt if necessary
 #ifdef RSTUDIO_SERVER
@@ -138,12 +170,29 @@ Error askForSecret(const std::string& title,
    {
       // In server mode, passphrases are encrypted
       error = core::system::crypto::rsaPrivateDecrypt(
-                                             pInput->password,
-                                             &pInput->password);
+                                             pInput->secret,
+                                             &pInput->secret);
       if (error)
          return error;
    }
 #endif
+
+   if (pInput->remember && pInput->changed)
+   {
+      Error error = r::exec::RFunction(".rs.rememberSecret", name, pInput->secret)
+         .call();
+
+      if (error)
+         return error;
+   }
+   else if (!pInput->remember)
+   {
+      Error error = r::exec::RFunction(".rs.forgetSecret", name)
+         .call();
+
+      if (error)
+         return error;
+   }
 
    return Success();
 }
@@ -160,7 +209,7 @@ Error initialize()
    R_CallMethodDef methodDefAskPass ;
    methodDefAskPass.name = "rs_askForSecret" ;
    methodDefAskPass.fun = (DL_FUNC) rs_askForSecret ;
-   methodDefAskPass.numArgs = 2;
+   methodDefAskPass.numArgs = 5;
    r::routines::addCallMethod(methodDefAskPass);
 
    // complete initialization

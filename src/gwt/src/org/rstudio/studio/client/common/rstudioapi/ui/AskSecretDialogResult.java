@@ -17,10 +17,11 @@ package org.rstudio.studio.client.common.rstudioapi.ui;
 
 public class AskSecretDialogResult
 {
-   public AskSecretDialogResult(String secret, boolean remember)
+   public AskSecretDialogResult(String secret, boolean remember, boolean hasChanged)
    {
       secret_ = secret;
       remember_ = remember;
+      hasChanged_ = hasChanged;
    }
 
    public String getSecret()
@@ -33,6 +34,12 @@ public class AskSecretDialogResult
       return remember_;
    }
 
+   public boolean getHasChanged()
+   {
+      return hasChanged_;
+   }
+
    private String secret_;
    private boolean remember_;
+   private boolean hasChanged_;
 }

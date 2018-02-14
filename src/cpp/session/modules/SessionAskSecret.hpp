@@ -33,18 +33,21 @@ namespace ask_secret {
 std::string activeWindow();
 void setActiveWindow(const std::string& windowName);
 
-struct PasswordInput
+struct SecretInput
 {
-   PasswordInput() : cancelled(false), remember(false) {}
+   SecretInput() : cancelled(false), remember(false), changed(true) {}
    bool cancelled;
-   std::string password;
+   std::string secret;
    bool remember;
+   bool changed;
 };
 
-core::Error askForSecret(const std::string& title,
+core::Error askForSecret(const std::string& name,
+                         const std::string& title,
                          const std::string& prompt,
-                         const std::string& rememberPrompt,
-                         PasswordInput* pInput);
+                         bool canRemember,
+                         bool hasSecret,
+                         SecretInput* pInput);
 
 core::Error initialize();
    

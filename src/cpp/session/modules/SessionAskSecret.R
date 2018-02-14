@@ -13,14 +13,64 @@
 #
 #
 
-.rs.addFunction("askForSecret", function(title = "Secret", prompt = "Secret:")
-{
-    .Call("rs_askForSecret", title, prompt)
+.rs.addFunction("getSecretService", function() {
+   "RStudio Keyring Secrets"
 })
 
-.rs.addJsonRpcHandler("asksecret_info", function() {
-
-   list(
-      canRemember = .rs.scalar(FALSE)
+.rs.addFunction("askForSecret", function(name, title = name, prompt = paste(name, ":", sep = ""))
+{
+    .Call(
+      "rs_askForSecret",
+      name,
+      title,
+      prompt,
+      .rs.isPackageInstalled("keyring"),
+      .rs.hasSecret(name)
    )
+})
+
+.rs.addFunction("hasSecret", function(name)
+{
+   if (!.rs.isPackageInstalled("keyring"))
+   {
+      FALSE
+   }
+   else
+   {
+      keyring_list <- get("key_list", envir = asNamespace("keyring"))
+      keys <- keyring_list(.rs.getSecretService())
+      name %in% keys$username
+   }
+})
+
+.rs.addFunction("retrieveSecret", function(name)
+{
+   if (!.rs.isPackageInstalled("keyring") ||
+       !.rs.hasSecret(name))
+   {
+      NULL
+   }
+   else 
+   {
+      keyring_get <- get("key_get", envir = asNamespace("keyring"))
+      keyring_get(.rs.getSecretService(), username = name)
+   }
+})
+
+.rs.addFunction("rememberSecret", function(name, secret)
+{
+   if (.rs.isPackageInstalled("keyring"))
+   {
+      keyring_set <- get("key_set_with_value", envir = asNamespace("keyring"))
+      keyring_set(.rs.getSecretService(), username = name, password = secret)
+   }
+})
+
+.rs.addFunction("forgetSecret", function(name)
+{
+   if (.rs.isPackageInstalled("keyring"))
+   {
+      keyring_remove <- get("key_delete", envir = asNamespace("keyring"))
+      keyring_remove(.rs.getSecretService(), username = name)
+   }
 })

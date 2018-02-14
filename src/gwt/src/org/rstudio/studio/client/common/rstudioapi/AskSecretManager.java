@@ -24,7 +24,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
-import org.rstudio.studio.client.common.rstudioapi.model.AskSecretInfo;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialog;
 import org.rstudio.studio.client.common.rstudioapi.ui.AskSecretDialogResult;
@@ -86,69 +85,58 @@ public class AskSecretManager
             
             asksecretPending_ = true;
 
-            server.askSecretInfo(
-               new ServerRequestCallback<AskSecretInfo>() {
+            AskSecretDialog dialog = new AskSecretDialog(
+               e.getTitle(),
+               e.getPrompt(),
+               e.getCanRemember(),
+               e.getHasSecret(),
+               dependencyManager,
+               new ProgressOperationWithInput<AskSecretDialogResult>()
+               {
                   @Override
-                  public void onResponseReceived(AskSecretInfo info)
+                  public void execute(final AskSecretDialogResult result,
+                                      final ProgressIndicator indicator)
                   {
-                     AskSecretDialog dialog = new AskSecretDialog(
-                        e.getTitle(),
-                        e.getPrompt(),
-                        info.getCanRemember(),
-                        dependencyManager,
-                        new ProgressOperationWithInput<AskSecretDialogResult>()
+                     asksecretPending_ = false;
+
+                     RSAEncrypt.encrypt_ServerOnly(
+                        server,
+                        result.getSecret(),
+                        new RSAEncrypt.ResponseCallback()
                         {
                            @Override
-                           public void execute(final AskSecretDialogResult result,
-                                               final ProgressIndicator indicator)
+                           public void onSuccess(String encryptedData)
                            {
-                              asksecretPending_ = false;
-
-                              RSAEncrypt.encrypt_ServerOnly(
-                                 server,
-                                 result.getSecret(),
-                                 new RSAEncrypt.ResponseCallback()
-                                 {
-                                    @Override
-                                    public void onSuccess(String encryptedData)
-                                    {
-                                       server.askSecretCompleted(
-                                        encryptedData,
-                                        !StringUtil.isNullOrEmpty(e.getRememberPasswordPrompt())
-                                           && result.getRemember(),
-                                        new VoidServerRequestCallback(indicator));
-                                       
-                                    }
-
-                                    @Override
-                                    public void onFailure(ServerError error)
-                                    {
-                                       Debug.logError(error);
-                                    }
-                                 });
-                           }
-                        },
-                        new Operation()
-                        {
-                           @Override
-                           public void execute()
-                           {
-                              asksecretPending_ = false;
-                              
                               server.askSecretCompleted(
-                                                 null, false,
-                                                 new SimpleRequestCallback<Void>());
+                                 encryptedData,
+                                 result.getRemember(),
+                                 result.getHasChanged(),
+                                 new VoidServerRequestCallback(indicator));
+                              
                            }
-                        }
-                     );
-                     dialog.showModal();
+
+                           @Override
+                           public void onFailure(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
                   }
-                  
+               },
+               new Operation()
+               {
                   @Override
-                  public void onError(ServerError error) {
-                     Debug.logError(error);
+                  public void execute()
+                  {
+                     asksecretPending_ = false;
+                     
+                     server.askSecretCompleted(
+                        null, false, false,
+                        new SimpleRequestCallback<Void>());
                   }
-               });
+               }
+            );
+            dialog.showModal();
          }
       });
       
@@ -163,9 +151,11 @@ public class AskSecretManager
             {
                asksecretPending_ = false;
                
-               server.askSecretCompleted(null, 
-                                       false,
-                                       new SimpleRequestCallback<Void>());
+               server.askSecretCompleted(
+                  null, 
+                  false,
+                  false,
+                  new SimpleRequestCallback<Void>());
             }
             
          } 

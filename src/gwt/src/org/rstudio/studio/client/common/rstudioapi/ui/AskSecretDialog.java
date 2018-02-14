@@ -46,6 +46,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    public AskSecretDialog(String title,
                           String prompt,
                           boolean canRemember,
+                          boolean hasSecret,
                           DependencyManager dependencyManager,
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
@@ -138,7 +139,11 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @Override
    protected AskSecretDialogResult collectInput()
    {
-      AskSecretDialogResult result = new AskSecretDialogResult(textbox_.getText(), true);
+      AskSecretDialogResult result = new AskSecretDialogResult(
+        textbox_.getText(),
+        remember_.getValue(),
+        hasChanged_
+      );
 
       return result;
    }
@@ -194,4 +199,6 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
    @UiField HTMLPanel rememberEnabled_;
    @UiField HTMLPanel rememberDisabled_;
+
+   private boolean hasChanged_ = false;
 }

@@ -5219,19 +5219,15 @@ public class RemoteServer implements Server
    @Override
    public void askSecretCompleted(String value,
                                   boolean remember,
+                                  boolean changed,
                                   ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, value == null ? JSONNull.getInstance()
                                   : new JSONString(value));
       params.set(1, JSONBoolean.getInstance(remember));
+      params.set(2, JSONBoolean.getInstance(changed));
       sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
-   }
-
-   @Override
-   public void askSecretInfo(ServerRequestCallback<AskSecretInfo> callback)
-   {
-      sendRequest(RPC_SCOPE, ASKSECRET_INFO, callback);
    }
 
    private String clientId_;
@@ -5650,5 +5646,4 @@ public class RemoteServer implements Server
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
 
    private static final String ASKSECRET_COMPLETED = "asksecret_completed";
-   private static final String ASKSECRET_INFO = "asksecret_info";
 }

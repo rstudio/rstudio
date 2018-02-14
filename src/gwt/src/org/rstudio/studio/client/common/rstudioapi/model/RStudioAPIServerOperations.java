@@ -26,7 +26,6 @@ public interface RStudioAPIServerOperations extends CryptoServerOperations
 
    void askSecretCompleted(String value,
                            boolean remember,
+                           boolean changed,
                            ServerRequestCallback<Void> requestCallback);
-
-   void askSecretInfo(ServerRequestCallback<AskSecretInfo> callback);
 }

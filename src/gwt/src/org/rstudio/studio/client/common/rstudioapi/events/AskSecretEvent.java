@@ -36,13 +36,17 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
       public native final String getPrompt() /*-{
          return this.prompt;
       }-*/;
-
-      public native final String getRememberPrompt() /*-{
-         return this.remember_prompt;
-      }-*/;
       
       public native final String getWindow() /*-{
          return this.window;
+      }-*/;
+
+      public native final boolean getCanRemember() /*-{
+         return this.can_remember;
+      }-*/;
+
+      public native final boolean getHasSecret() /*-{
+         return this.has_secret;
       }-*/;
    }
 
@@ -50,8 +54,9 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    {
       title_ = data.getTitle();
       prompt_ = data.getPrompt();
-      rememberPrompt_ = data.getRememberPrompt();
       window_ = data.getWindow();
+      canRemember_ = data.getCanRemember();
+      hasSecret_ = data.getHasSecret();
    }
 
    public String getTitle()
@@ -63,15 +68,20 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    {
       return prompt_;
    }
-
-   public String getRememberPasswordPrompt()
-   {
-      return rememberPrompt_;
-   }
    
    public String getWindow()
    {
       return window_;
+   }
+
+   public boolean getCanRemember()
+   {
+      return canRemember_;
+   }
+
+   public Boolean getHasSecret()
+   {
+      return hasSecret_;
    }
 
    @Override
@@ -88,8 +98,9 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
 
    private final String title_;
    private final String prompt_;
-   private final String rememberPrompt_;
    private final String window_;
+   private final boolean canRemember_;
+   private final boolean hasSecret_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
