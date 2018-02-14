@@ -69,6 +69,10 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForEditorContext;
 
+// simple toggle used for handling REPL state (allows us to toggle
+// R <-> Python REPL in the main console as needed)
+std::string s_activeLanguage = "r";
+
 SEXP rs_getEditorContext(SEXP typeSEXP)
 {
    int type = r::sexp::asInteger(typeSEXP);
@@ -691,6 +695,51 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error adaptToLanguage(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get the requested language
+   std::string language;
+   Error error = json::readParams(request.params, &language);
+   if (error)
+      return error;
+   language = string_utils::toLower(language);
+   
+   // detect when the language has changed
+   if (language != s_activeLanguage)
+   {
+      if (s_activeLanguage == "r")
+      {
+         if (language == "python")
+         {
+            // r -> python: activate the reticulate REPL
+            
+            // TODO: do we want the user to see the explicit calls that start
+            // and stop the Python REPL? (could be noisy if the user is
+            // switching contexts often)
+            Error error =
+                  module_context::enqueueConsoleInput("reticulate::python_repl(FALSE)");
+            if (error)
+               LOG_ERROR(error);
+            else
+               s_activeLanguage = language;
+         }
+      }
+      else if (s_activeLanguage == "python")
+      {
+         if (language == "r")
+         {
+            // python -> r: deactivate the reticulate REPL
+            Error error =
+                  module_context::enqueueConsoleInput("quit");
+            s_activeLanguage = "r";
+         }
+      }
+   }
+   
+   return Success();
+}
+
 Error executeCode(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
@@ -996,6 +1045,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
+      (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))
       (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }

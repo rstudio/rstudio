@@ -511,12 +511,21 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void adaptToLanguage(String language,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(language));
+      sendRequest(RPC_SCOPE, ADAPT_TO_LANGUAGE, params, requestCallback);
+   }
+   
+   @Override
    public void executeCode(String code,
                            ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0,  new JSONString(code));
-      sendRequest(RPC_SCOPE, "execute_code", params, requestCallback);
+      sendRequest(RPC_SCOPE, EXECUTE_CODE, params, requestCallback);
    }
    
    public void getInitMessages(ServerRequestCallback<String> requestCallback)
@@ -5303,7 +5312,7 @@ public class RemoteServer implements Server
    private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
-   private static final String PING="ping";
+   private static final String PING = "ping";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
@@ -5325,6 +5334,8 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
+   private static final String ADAPT_TO_LANGUAGE = "adapt_to_language";
+   private static final String EXECUTE_CODE = "execute_code";
    private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
          "get_dplyr_join_completions_string";
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";

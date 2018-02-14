@@ -66,6 +66,11 @@ oop.inherits(Mode, TextMode);
 
     this.lineCommentStart = "#";
 
+   this.getLanguageMode = function(position)
+   {
+      return "Python";
+   };
+
     this.getNextLineIndent = function(state, line, tab) {
         var indent = this.$getIndent(line);
 

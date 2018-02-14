@@ -48,6 +48,9 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
 
    (function()
    {
+      this.getLanguageMode = function(position) {
+         return "R";
+      };
 
       this.checkOutdent = function(state, line, input) {
          return this.$outdent.checkOutdent(state, line, input);

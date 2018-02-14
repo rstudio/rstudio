@@ -15,12 +15,16 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -31,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -71,11 +76,15 @@ public class EditingTargetCodeExecution
    }
    
    @Inject
-   void initialize(EventBus events, UIPrefs prefs, Commands commands)
+   void initialize(EventBus events,
+                   UIPrefs prefs,
+                   Commands commands,
+                   SourceServerOperations server)
    {
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
+      server_ = server;
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
@@ -202,15 +211,32 @@ public class EditingTargetCodeExecution
                                              String functionWrapper,
                                              boolean onlyUseConsole)
    {
-      // allow console a chance to execute code if we aren't focused
-      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
-      {
-         events_.fireEvent(new ConsoleExecutePendingInputEvent(
-               commands_.executeCodeWithoutFocus().getId()));
-         return;
-      }
-      
-      executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
+      // adapt to the code language being executed (currently R vs. Python)
+      String language = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      server_.adaptToLanguage(
+            StringUtil.notNull(language),
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  // allow console a chance to execute code if we aren't focused
+                  if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
+                  {
+                     events_.fireEvent(new ConsoleExecutePendingInputEvent(
+                           commands_.executeCodeWithoutFocus().getId()));
+                     return;
+                  }
+
+                  executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
    
    private void executeRange(Range range, String functionWrapper, boolean onlyUseConsole)
@@ -472,5 +498,6 @@ public class EditingTargetCodeExecution
    private EventBus events_;
    private UIPrefs prefs_;
    private Commands commands_;
+   private SourceServerOperations server_;
 }
 

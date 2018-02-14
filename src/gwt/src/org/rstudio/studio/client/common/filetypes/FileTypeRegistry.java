@@ -142,9 +142,8 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false, false, false, false, false);
    
 
-   public static final TextFileType PYTHON = new ScriptFileType(
-     "python", "Python", EditorLanguage.LANG_PYTHON, ".py",new ImageResource2x(ICONS.iconPython2x()),
-     "python", false, true);
+   public static final TextFileType PYTHON =
+         new PythonFileType("python", "Python", EditorLanguage.LANG_PYTHON, ".py", new ImageResource2x(ICONS.iconPython2x()));
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",

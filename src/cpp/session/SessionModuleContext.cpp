@@ -63,6 +63,11 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionClientEvent.hpp>
+#include <session/SessionClientEventService.hpp>
+
+#include <session/http/SessionRequest.hpp>
+
 #include "SessionClientEventQueue.hpp"
 
 #include <session/projects/SessionProjects.hpp>
@@ -83,6 +88,63 @@ namespace session {
 namespace module_context {
       
 namespace {
+
+// simple service for handling console_input rpc requests
+class ConsoleInputService : boost::noncopyable
+{
+public:
+   
+   ConsoleInputService()
+   {
+      core::thread::safeLaunchThread(
+               boost::bind(&ConsoleInputService::run, this),
+               &thread_);
+   }
+   
+   ~ConsoleInputService()
+   {
+      enqueue("!");
+   }
+   
+   void enqueue(const std::string& input)
+   {
+      requests_.enque(input);
+   }
+   
+private:
+   
+   void run()
+   {
+      while (true)
+      {
+         std::string input;
+         while (requests_.deque(&input))
+         {
+            if (input == "!")
+               return;
+            
+            core::http::Response response;
+            Error error = session::http::sendSessionRequest(
+                     "/rpc/console_input",
+                     input,
+                     &response);
+            if (error)
+               LOG_ERROR(error);
+         }
+         
+         requests_.wait();
+      }
+   }
+   
+   boost::thread thread_;
+   core::thread::ThreadsafeQueue<std::string> requests_;
+};
+
+ConsoleInputService& consoleInputService()
+{
+   static ConsoleInputService instance;
+   return instance;
+}
 
 // enqueClientEvent from R
 SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
@@ -1785,6 +1847,27 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    }
 }
 
+Error enqueueConsoleInput(const std::string& consoleInput)
+{
+   // construct our JSON RPC
+   json::Array jsonParams;
+   jsonParams.push_back(consoleInput);
+   jsonParams.push_back("");
+   
+   json::Object jsonRpc;
+   jsonRpc["method"] = "console_input";
+   jsonRpc["params"] = jsonParams;
+   jsonRpc["clientId"] = clientEventService().clientId();
+   
+   // serialize for transmission
+   std::ostringstream oss;
+   json::write(jsonRpc, oss);
+   
+   // and fire it off
+   consoleInputService().enqueue(oss.str());
+   
+   return Success();
+}
 
 // NOTE: we used to call explicitly back into r::session to write output
 // and errors however the fact that these functions are called from
@@ -1881,7 +1964,7 @@ std::string createFileUrl(const core::FilePath& filePath)
     }
     else
     {
-       url = "file_show?path=" + http::util::urlEncode(
+       url = "file_show?path=" + core::http::util::urlEncode(
                                 filePath.absolutePath(), true);
     }
     return url;

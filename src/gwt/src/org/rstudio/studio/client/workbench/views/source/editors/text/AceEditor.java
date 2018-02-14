@@ -3236,9 +3236,18 @@ public class AceEditor implements DocDisplay,
    @Override
    public Range getMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
    {
-      if (!DocumentMode.isSelectionInRMode(this))
-         return null;
-
+      if (DocumentMode.isSelectionInRMode(this))
+      {
+         return rMultiLineExpr(pos, startRowLimit, endRowLimit);
+      }
+      else
+      {
+         return getParagraph(pos, startRowLimit, endRowLimit);
+      }
+   }
+   
+   private Range rMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
+   {
       // create token cursor (will be used to walk tokens as needed)
       TokenCursor c = getSession().getMode().getCodeModel().getTokenCursor();
       
@@ -3443,7 +3452,7 @@ public class AceEditor implements DocDisplay,
       
       return range;
    }
-
+   
    // ---- Annotation related operations
 
    public JsArray<AceAnnotation> getAnnotations()
