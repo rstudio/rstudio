@@ -23,9 +23,15 @@ if(NOT EXISTS "${GWT_LIB_DIR}")
 endif()
 
 # define output dirs
-set(GWT_BIN_DIR "bin")
-set(GWT_WWW_DIR "www")
-set(GWT_EXTRAS_DIR "extras")
+if("${GWT_BIN_DIR}" STREQUAL "")
+   set(GWT_BIN_DIR "bin")
+endif()
+if("${GWT_WWW_DIR}" STREQUAL "")
+   set(GWT_WWW_DIR "www")
+endif()
+if("${GWT_EXTRAS_DIR}" STREQUAL "")
+   set(GWT_EXTRAS_DIR "extras")
+endif()
 
 # invoke ant to build
 add_custom_target(gwt_build ALL)
