@@ -705,6 +705,6 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    )
 })
 
-.rs.addApiFunction("askForSecret", function(title, prompt) {
-   .rs.askForSecret(title, prompt)
+.rs.addApiFunction("askForSecret", function(name, title, prompt) {
+   .rs.askForSecret(name, title, prompt)
 })
