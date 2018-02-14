@@ -45,8 +45,7 @@
 
 .rs.addFunction("retrieveSecret", function(name)
 {
-   if (!.rs.isPackageInstalled("keyring") ||
-       !.rs.hasSecret(name))
+   if (!.rs.isPackageInstalled("keyring") || !.rs.hasSecret(name))
    {
       NULL
    }
@@ -68,7 +67,7 @@
 
 .rs.addFunction("forgetSecret", function(name)
 {
-   if (.rs.isPackageInstalled("keyring"))
+   if (.rs.isPackageInstalled("keyring") && .rs.hasSecret(name))
    {
       keyring_remove <- get("key_delete", envir = asNamespace("keyring"))
       keyring_remove(.rs.getSecretService(), username = name)

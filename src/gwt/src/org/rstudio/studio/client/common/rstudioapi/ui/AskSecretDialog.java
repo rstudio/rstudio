@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.common.rstudioapi.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -61,6 +63,25 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          false,
          true)
       );
+
+      if (hasSecret) {
+        // set some data to represent an existing value
+        textbox_.setText("00000000");
+        hasChanged_ = false;
+        remember_.setValue(true);
+      }
+      else {
+        hasChanged_ = true;
+      }
+      
+      textbox_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            hasChanged_ = true;
+         }
+      });
 
       label_.setText(prompt);
       textbox_.setFocus(true);

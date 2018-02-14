@@ -149,6 +149,19 @@ Error askForSecret(const std::string& name,
    if (pInput->changed)
    {
       pInput->secret = value.get_value<std::string>();
+
+      // decrypt if necessary
+#ifdef RSTUDIO_SERVER
+      if (options().programMode() == kSessionProgramModeServer)
+      {
+         // In server mode, passphrases are encrypted
+         error = core::system::crypto::rsaPrivateDecrypt(
+                                                pInput->secret,
+                                                &pInput->secret);
+         if (error)
+            return error;
+      }
+#endif
    }
    else
    {
@@ -163,19 +176,6 @@ Error askForSecret(const std::string& name,
       std::string lastSecret = r::sexp::asString(lastSecretSEXP);
       pInput->secret = lastSecret;
    }
-
-   // decrypt if necessary
-#ifdef RSTUDIO_SERVER
-   if (options().programMode() == kSessionProgramModeServer)
-   {
-      // In server mode, passphrases are encrypted
-      error = core::system::crypto::rsaPrivateDecrypt(
-                                             pInput->secret,
-                                             &pInput->secret);
-      if (error)
-         return error;
-   }
-#endif
 
    if (pInput->remember && pInput->changed)
    {
@@ -221,7 +221,7 @@ Error initialize()
 }
    
    
-} // namespace content_urls
+} // namespace ask_secret
 } // namespace modules
 } // namespace session
 } // namespace rstudio
