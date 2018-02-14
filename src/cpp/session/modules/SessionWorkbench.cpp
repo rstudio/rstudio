@@ -710,7 +710,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    // check to see if the reticulate engine is active
    bool reticulateActive = false;
    r::exec::RFunction("base:::getOption")
-         .addParam("reticulate.repl")
+         .addParam("reticulate.repl.active")
          .call(&reticulateActive);
    if (reticulateActive)
       activeLanguage = "python";
@@ -728,7 +728,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
             // and stop the Python REPL? (could be noisy if the user is
             // switching contexts often)
             Error error =
-                  module_context::enqueueConsoleInput("reticulate::python_repl(FALSE)");
+                  module_context::enqueueConsoleInput("reticulate::py_repl()");
             if (error)
                LOG_ERROR(error);
          }
