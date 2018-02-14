@@ -66,7 +66,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
       if (hasSecret) {
         // set some data to represent an existing value
-        textbox_.setText("00000000");
+        textbox_.setText(secretPlaceholder_);
         hasChanged_ = false;
         remember_.setValue(true);
       }
@@ -160,6 +160,10 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @Override
    protected AskSecretDialogResult collectInput()
    {
+      if (!hasChanged_ && textbox_.getText() != secretPlaceholder_) {
+        hasChanged_ = true;
+      }
+
       AskSecretDialogResult result = new AskSecretDialogResult(
         textbox_.getText(),
         remember_.getValue(),
@@ -222,4 +226,5 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @UiField HTMLPanel rememberDisabled_;
 
    private boolean hasChanged_ = false;
+   private static String secretPlaceholder_ = "00000000";
 }
