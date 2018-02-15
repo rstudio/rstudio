@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -124,8 +125,19 @@ public class EditingTargetCodeExecution
          else
          {
             // if no selection, follow UI pref to see what to execute
-            selectionRange = getRangeFromBehavior(
-                  prefs_.executionBehavior().getValue());
+            // (Python code is always submitted line-by-line for now as
+            // we need special code to understand Python code structure still)
+            if (DocumentMode.isCursorInPythonMode(docDisplay_))
+            {
+               selectionRange = Range.fromPoints(
+                     Position.create(row, 0),
+                     Position.create(row, docDisplay_.getLength(row)));
+            }
+            else
+            {
+               selectionRange = getRangeFromBehavior(
+                     prefs_.executionBehavior().getValue());
+            }
          }
          
          // if we failed to discover a range, bail
@@ -152,7 +164,18 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         moveCursorAfterExecution(selectionRange, true);
+         if (DocumentMode.isCursorInPythonMode(docDisplay_))
+         {
+            // don't skip empty / blank lines when executing Python line-by-line
+            Position nextPos = Position.create(
+                  docDisplay_.getCursorPosition().getRow() + 1,
+                  0);
+            docDisplay_.setCursorPosition(nextPos);
+         }
+         else
+         {
+            moveCursorAfterExecution(selectionRange, true);
+         }
       }
    }
    
@@ -251,8 +274,6 @@ public class EditingTargetCodeExecution
       
       // trim intelligently
       code = StringUtil.trimBlankLines(code);
-      if (code.length() == 0)
-         code = "\n";
       
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
