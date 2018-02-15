@@ -709,8 +709,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    
    // check to see if the reticulate engine is active
    bool reticulateActive = false;
-   r::exec::RFunction("base:::getOption")
-         .addParam("reticulate.repl.active")
+   RFunction("reticulate:::py_repl_active")
          .call(&reticulateActive);
    if (reticulateActive)
       activeLanguage = "python";

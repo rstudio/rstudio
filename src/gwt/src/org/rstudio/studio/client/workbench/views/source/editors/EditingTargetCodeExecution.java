@@ -272,8 +272,12 @@ public class EditingTargetCodeExecution
      
       setLastExecuted(range.getStart(), range.getEnd());
       
-      // trim intelligently
-      code = StringUtil.trimBlankLines(code);
+      // trim intelligently (don't trim blank lines for Python
+      // since those lines could signal the end of a block)
+      if (!DocumentMode.isSelectionInPythonMode(docDisplay_))
+      {
+         code = StringUtil.trimBlankLines(code);
+      }
       
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
