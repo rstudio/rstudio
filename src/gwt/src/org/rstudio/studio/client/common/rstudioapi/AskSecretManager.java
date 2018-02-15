@@ -119,6 +119,9 @@ public class AskSecretManager
                            public void onFailure(ServerError error)
                            {
                               Debug.logError(error);
+                              server.askSecretCompleted(
+                                 null, false, false,
+                                 new SimpleRequestCallback<Void>());
                            }
                         });
                   }
