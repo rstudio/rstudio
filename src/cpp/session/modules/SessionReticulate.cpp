@@ -15,7 +15,16 @@
 
 #include "SessionReticulate.hpp"
 
+#include <boost/bind.hpp>
+
+#include <core/Error.hpp>
+#include <core/Exec.hpp>
+
 #include <r/RExec.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -29,6 +38,17 @@ bool isReplActive()
    if (error)
       LOG_ERROR(error);
    return active;
+}
+
+Error initialize()
+{
+   using namespace module_context;
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(sourceModuleRFile, "SessionReticulate.R"));
+   
+   return initBlock.execute();
 }
 
 } // end namespace reticulate

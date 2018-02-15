@@ -17,11 +17,21 @@
 #define SESSION_MODULES_RETICULATE_HPP
 
 namespace rstudio {
+namespace core {
+
+class Error;
+
+} // end namespace core
+} // end namespace rstudio
+
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace reticulate {
 
 bool isReplActive();
+
+core::Error initialize();
 
 } // end namespace reticulate
 } // end namespace modules
