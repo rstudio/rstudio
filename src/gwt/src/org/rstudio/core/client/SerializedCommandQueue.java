@@ -74,7 +74,7 @@ public class SerializedCommandQueue
    {
       log("executeNextCommand");
 
-      if (commands_.size() == 0)
+      if (commands_.isEmpty())
       {
          log("done");
          running_ = false;

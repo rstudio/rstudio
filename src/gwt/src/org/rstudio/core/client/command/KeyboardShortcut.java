@@ -282,7 +282,7 @@ public class KeyboardShortcut
       
       public String toString(boolean pretty)
       {
-         if (keyCombinations_.size() == 0)
+         if (keyCombinations_.isEmpty())
             return "";
          
          StringBuilder builder = new StringBuilder();
