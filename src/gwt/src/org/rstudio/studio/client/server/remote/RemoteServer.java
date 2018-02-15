@@ -67,6 +67,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
+import org.rstudio.studio.client.common.rstudioapi.model.AskSecretInfo;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -5160,19 +5161,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
    }
-   
-   public void installSpark(String sparkVersion,
-                            String hadoopVersion,
-                            ServerRequestCallback<ConsoleProcess> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(sparkVersion));
-      params.set(1, new JSONString(hadoopVersion));
-      sendRequest(RPC_SCOPE,
-                  INSTALL_SPARK,
-                  params,
-                  new ConsoleProcessCallbackAdapter(callback));
-   }
 
    @Override
    public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback)
@@ -5226,6 +5214,20 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
       sendRequest(RPC_SCOPE, CONNECTION_ADD_PACKAGE, params, callback);
+   }
+
+   @Override
+   public void askSecretCompleted(String value,
+                                  boolean remember,
+                                  boolean changed,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, value == null ? JSONNull.getInstance()
+                                  : new JSONString(value));
+      params.set(1, JSONBoolean.getInstance(remember));
+      params.set(2, JSONBoolean.getInstance(changed));
+      sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
    }
 
    private String clientId_;
@@ -5642,4 +5644,6 @@ public class RemoteServer implements Server
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
+
+   private static final String ASKSECRET_COMPLETED = "asksecret_completed";
 }

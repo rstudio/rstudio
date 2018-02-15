@@ -114,6 +114,10 @@ public class AskPassManager
                                  public void onFailure(ServerError error)
                                  {
                                     Debug.logError(error);
+
+                                    server.askpassCompleted(
+                                       null, false,
+                                       new SimpleRequestCallback<Void>());
                                  }
                               });
                      }

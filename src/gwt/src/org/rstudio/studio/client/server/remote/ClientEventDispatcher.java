@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
@@ -942,6 +943,11 @@ public class ClientEventDispatcher
          {
             HTMLPreviewParams params = event.getData();
             eventBus_.fireEvent(new ShowPageViewerEvent(params));
+         }
+         else if (type == ClientEvent.AskSecret)
+         {
+            AskSecretEvent.Data data = event.getData();
+            eventBus_.fireEvent(new AskSecretEvent(data));
          }
          else
          {

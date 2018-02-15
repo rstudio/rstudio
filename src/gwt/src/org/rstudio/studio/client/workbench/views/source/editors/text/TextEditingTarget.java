@@ -4020,7 +4020,7 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
-      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
          public void execute()
@@ -4914,7 +4914,7 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
-      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
          public void execute()

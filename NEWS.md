@@ -6,6 +6,11 @@
 * Simple bindings to access R objects from Python chunks and vice versa
 * Show `matplotlib` plots emitted by Python chunks 
 
+### Keyring
+
+* Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
+* Install `keyring` directly from dialog prompt
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)

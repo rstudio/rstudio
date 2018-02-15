@@ -67,7 +67,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
    private final FileTypeRegistry fileTypeRegistry_;
    private String currentDocId_;
    
-   final String profilerDependecyUserAction_ = "Preparing profiler";
+   final String profilerDependecyUserAction_ = "The profiler";
    
    private ProfileOperationResponse response_ = null;
 

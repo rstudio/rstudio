@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.rstudioapi.AskSecretManager;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -110,17 +111,18 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
-                    ChooseFile chooseFile,                    // force gin to create
-                    AskPassManager askPass,                   // force gin to create
-                    PDFViewer pdfViewer,                      // force gin to create
-                    HTMLPreview htmlPreview,                  // force gin to create
-                    ProfilerPresenter prof,                   // force gin to create
-                    ShinyApplication sApp,                    // force gin to create
-                    DependencyManager dm,                     // force gin to create
-                    ApplicationVisibility av,                 // force gin to create
-                    RmdOutput rmdOutput,                      // force gin to create    
-                    ProjectTemplateRegistryProvider provider, // force gin to create
-                    WorkbenchServerOperations serverOperations) // force gin to create
+                    ChooseFile chooseFile,                      // force gin to create
+                    AskPassManager askPass,                     // force gin to create
+                    PDFViewer pdfViewer,                        // force gin to create
+                    HTMLPreview htmlPreview,                    // force gin to create
+                    ProfilerPresenter prof,                     // force gin to create
+                    ShinyApplication sApp,                      // force gin to create
+                    DependencyManager dm,                       // force gin to create
+                    ApplicationVisibility av,                   // force gin to create
+                    RmdOutput rmdOutput,                        // force gin to create    
+                    ProjectTemplateRegistryProvider provider,   // force gin to create
+                    WorkbenchServerOperations serverOperations, // force gin to create
+                    AskSecretManager askSecret)                 // force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;

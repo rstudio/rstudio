@@ -99,6 +99,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAbout.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
+   modules/SessionAskSecret.cpp
    modules/SessionAsyncPackageInformation.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
