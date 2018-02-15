@@ -48,6 +48,7 @@
 #include <session/SessionTerminalShell.hpp>
 
 #include "SessionSpelling.hpp"
+#include "SessionReticulate.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -706,12 +707,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    
    // check to see what langauge is currently active (but default to r)
    std::string activeLanguage = "r";
-   
-   // check to see if the reticulate engine is active
-   bool reticulateActive = false;
-   RFunction("reticulate:::py_repl_active")
-         .call(&reticulateActive);
-   if (reticulateActive)
+   if (reticulate::isReplActive())
       activeLanguage = "python";
    
    // now, detect if we are transitioning languages
