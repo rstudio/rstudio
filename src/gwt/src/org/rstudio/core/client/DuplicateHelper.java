@@ -218,7 +218,7 @@ public class DuplicateHelper
          {
             ArrayList<String> pathElementList = pathElementListList.get(i);
 
-            if (pathElementList.size() == 0)
+            if (pathElementList.isEmpty())
             {
                int trueIndex = indices.get(i);
                String path = FileSystemItem.createFile(fullPaths.get(trueIndex))
