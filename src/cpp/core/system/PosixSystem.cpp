@@ -1700,141 +1700,12 @@ Error launchChildProcess(std::string path,
          ::exit(EXIT_FAILURE);
       }
 
-      // change user here if requested
-      if (!runAsUser.empty())
-      {
-         // restore root
-         Error error = restorePriv();
-         if (error)
-         {
-            LOG_ERROR(error);
-            ::exit(EXIT_FAILURE);
-         }
-
-         // set limits
-         setProcessLimits(config.limits);
-
-         // switch user
-         error = permanentlyDropPriv(runAsUser);
-         if (error)
-         {
-            LOG_ERROR(error);
-            ::exit(EXIT_FAILURE);
-         }
-      }
-
-      // clear the signal mask so the child process can handle whatever
-      // signals it wishes to
-      Error error = core::system::clearSignalMask();
+      Error error = runProcess(path, runAsUser, config, configFilter);
       if (error)
       {
          LOG_ERROR(error);
          ::exit(EXIT_FAILURE);
       }
-
-      // get current user (before closing file handles since
-      // we might be using a PAM module that has open FDs...)
-      user::User user;
-      error = user::currentUser(&user);
-      if (error)
-      {
-         LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
-      }
-
-      // close all open file descriptors other than std streams
-      error = closeNonStdFileDescriptors();
-      if (error)
-      {
-         LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
-      }
-
-      // handle std streams
-      switch(config.stdStreamBehavior)
-      {
-         case StdStreamClose:
-            core::system::closeStdFileDescriptors();
-            break;
-
-         case StdStreamDevNull:
-            core::system::closeStdFileDescriptors();
-            core::system::attachStdFileDescriptorsToDevNull();
-            break;
-
-         case StdStreamInherit:
-         default:
-            // do nothing to inherit the streams
-            break;
-      }
-
-      // setup environment
-      core::system::Options env;
-      copyEnvironmentVar("PATH", &env);
-      copyEnvironmentVar("MANPATH", &env);
-      copyEnvironmentVar("LANG", &env);
-      core::system::setenv(&env, "USER", user.username);
-      core::system::setenv(&env, "LOGNAME", user.username);
-      core::system::setenv(&env, "HOME", user.homeDirectory);
-      copyEnvironmentVar("SHELL", &env);
-
-      // apply config filter if we have one
-      if (configFilter)
-         configFilter(user, &config);
-
-      // add custom environment vars (overriding as necessary)
-      for (core::system::Options::const_iterator it = config.environment.begin();
-           it != config.environment.end();
-           ++it)
-      {
-         core::system::setenv(&env, it->first, it->second);
-      }
-
-      // NOTE: this implemenentation ignores the config.stdInput field (that
-      // was put in for another consumer)
-
-      // format as ProcessArgs expects
-      boost::format fmt("%1%=%2%");
-      std::vector<std::string> envVars;
-      for(core::system::Options::const_iterator it = env.begin();
-           it != env.end();
-           ++it)
-      {
-         envVars.push_back(boost::str(fmt % it->first % it->second));
-      }
-
-      // create environment args  (allocate on heap so memory stays around
-      // after we exec (some systems including OSX seem to require this)
-      core::system::ProcessArgs* pEnvironment = new core::system::ProcessArgs(
-                                                                       envVars);
-
-      // build process args
-      std::vector<std::string> argVector;
-      argVector.push_back(path);
-      for (core::system::Options::const_iterator it = config.args.begin();
-           it != config.args.end();
-           ++it)
-      {
-         argVector.push_back(it->first);
-         if (!it->second.empty())
-            argVector.push_back(it->second);
-      }
-
-      // allocate ProcessArgs on heap so memory stays around after we exec
-      // (some systems including OSX seem to require this)
-      core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(
-                                                                  argVector);
-
-      // execute child
-      ::execve(path.c_str(), pProcessArgs->args(), pEnvironment->args());
-
-      // in the normal case control should never return from execv (it starts
-      // anew at main of the process pointed to by path). therefore, if we get
-      // here then there was an error
-      error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("child-path", path);
-      LOG_ERROR(error) ;
-      ::exit(EXIT_FAILURE) ;
    }
 
    // parent
@@ -1842,6 +1713,132 @@ Error launchChildProcess(std::string path,
       *pProcessId = pid ;
 
    return Success() ;
+}
+
+Error runProcess(const std::string& path,
+                 const std::string& runAsUser,
+                 ProcessConfig& config,
+                 ProcessConfigFilter configFilter)
+{
+   // change user here if requested
+   if (!runAsUser.empty())
+   {
+      // restore root
+      Error error = restorePriv();
+      if (error)
+         return error;
+
+      // set limits
+      setProcessLimits(config.limits);
+
+      // switch user
+      error = permanentlyDropPriv(runAsUser);
+      if (error)
+         return error;
+   }
+
+   // clear the signal mask so the child process can handle whatever
+   // signals it wishes to
+   Error error = core::system::clearSignalMask();
+   if (error)
+      return error;
+
+   // get current user (before closing file handles since
+   // we might be using a PAM module that has open FDs...)
+   user::User user;
+   error = user::currentUser(&user);
+   if (error)
+      return error;
+
+   // close all open file descriptors other than std streams
+   error = closeNonStdFileDescriptors();
+   if (error)
+      return error;
+
+   // handle std streams
+   switch(config.stdStreamBehavior)
+   {
+      case StdStreamClose:
+         core::system::closeStdFileDescriptors();
+         break;
+
+      case StdStreamDevNull:
+         core::system::closeStdFileDescriptors();
+         core::system::attachStdFileDescriptorsToDevNull();
+         break;
+
+      case StdStreamInherit:
+      default:
+         // do nothing to inherit the streams
+         break;
+   }
+
+   // setup environment
+   core::system::Options env;
+   copyEnvironmentVar("PATH", &env);
+   copyEnvironmentVar("MANPATH", &env);
+   copyEnvironmentVar("LANG", &env);
+   core::system::setenv(&env, "USER", user.username);
+   core::system::setenv(&env, "LOGNAME", user.username);
+   core::system::setenv(&env, "HOME", user.homeDirectory);
+   copyEnvironmentVar("SHELL", &env);
+
+   // apply config filter if we have one
+   if (configFilter)
+      configFilter(user, &config);
+
+   // add custom environment vars (overriding as necessary)
+   for (core::system::Options::const_iterator it = config.environment.begin();
+        it != config.environment.end();
+        ++it)
+   {
+      core::system::setenv(&env, it->first, it->second);
+   }
+
+   // NOTE: this implemenentation ignores the config.stdInput field (that
+   // was put in for another consumer)
+
+   // format as ProcessArgs expects
+   boost::format fmt("%1%=%2%");
+   std::vector<std::string> envVars;
+   for(core::system::Options::const_iterator it = env.begin();
+        it != env.end();
+        ++it)
+   {
+      envVars.push_back(boost::str(fmt % it->first % it->second));
+   }
+
+   // create environment args  (allocate on heap so memory stays around
+   // after we exec (some systems including OSX seem to require this)
+   core::system::ProcessArgs* pEnvironment = new core::system::ProcessArgs(
+                                                                    envVars);
+
+   // build process args
+   std::vector<std::string> argVector;
+   argVector.push_back(path);
+   for (core::system::Options::const_iterator it = config.args.begin();
+        it != config.args.end();
+        ++it)
+   {
+      argVector.push_back(it->first);
+      if (!it->second.empty())
+         argVector.push_back(it->second);
+   }
+
+   // allocate ProcessArgs on heap so memory stays around after we exec
+   // (some systems including OSX seem to require this)
+   core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(
+                                                               argVector);
+
+   // execute child
+   ::execve(path.c_str(), pProcessArgs->args(), pEnvironment->args());
+
+   // in the normal case control should never return from execv (it starts
+   // anew at main of the process pointed to by path). therefore, if we get
+   // here then there was an error
+   error = systemError(errno, ERROR_LOCATION);
+   error.addProperty("child-path", path);
+   return error;
 }
 
 // simple cass to encapsulate parent-child

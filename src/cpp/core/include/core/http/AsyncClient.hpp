@@ -67,11 +67,23 @@ typedef boost::function<void(const http::Response&, const std::string&)> ChunkHa
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
 
+class IAsyncClient : public Socket
+{
+public:
+   virtual http::Request& request() = 0;
+   virtual void setConnectionRetryProfile(
+         const http::ConnectionRetryProfile& connectionRetryProfile) = 0;
+   virtual void execute(const ResponseHandler& responseHandler,
+                        const ErrorHandler& errorHandler,
+                        const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
+   virtual void disableHandlers() = 0;
+   virtual void close() = 0;
+};
 
 template <typename SocketService>
 class AsyncClient :
    public boost::enable_shared_from_this<AsyncClient<SocketService> >,
-   public Socket,
+   public IAsyncClient,
    boost::noncopyable
 {
 public:
@@ -89,20 +101,20 @@ public:
    }
 
    // populate the request before calling execute
-   http::Request& request() { return request_; }
+   virtual http::Request& request() { return request_; }
 
    // set (optional) connection retry profile. must do this prior
    // to calling execute
-   void setConnectionRetryProfile(
-           const http::ConnectionRetryProfile& connectionRetryProfile)
+   virtual void setConnectionRetryProfile(
+         const http::ConnectionRetryProfile& connectionRetryProfile)
    {
       connectionRetryContext_.profile = connectionRetryProfile;
    }
 
    // execute the async client
-   void execute(const ResponseHandler& responseHandler,
-                const ErrorHandler& errorHandler,
-                const ChunkHandler& chunkHandler = ChunkHandler())
+   virtual void execute(const ResponseHandler& responseHandler,
+                        const ErrorHandler& errorHandler,
+                        const ChunkHandler& chunkHandler = ChunkHandler())
    {
       // set handlers
       responseHandler_ = responseHandler;
@@ -121,7 +133,7 @@ public:
    // already been deleted. for this case (which does occur in the
    // desktop::NetworkReply class) we provide a method that disables
    // any pending handlers
-   void disableHandlers()
+   virtual void disableHandlers()
    {
       responseHandler_ = ResponseHandler();
       errorHandler_ = ErrorHandler();
@@ -146,7 +158,7 @@ public:
       boost::asio::async_write(socket(), buffers, handler);
    }
 
-   void close()
+   virtual void close()
    {
       Error error = closeSocket(socket().lowest_layer());
       if (error && !core::http::isConnectionTerminatedError(error))

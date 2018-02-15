@@ -167,7 +167,10 @@ SessionManager::SessionManager()
 }
 
 Error SessionManager::launchSession(boost::asio::io_service& ioService,
-      const r_util::SessionContext& context)
+                                    const r_util::SessionContext& context,
+                                    const http::Request& request,
+                                    const http::ResponseHandler& onLaunch,
+                                    const http::ErrorHandler& onError)
 {
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
@@ -212,7 +215,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    }
 
    // launch the session
-   Error error = sessionLaunchFunction_(ioService, profile);
+   Error error = sessionLaunchFunction_(ioService, profile, request, onLaunch, onError);
    if (error)
    {
       removePendingLaunch(context);

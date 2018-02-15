@@ -21,6 +21,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
@@ -346,6 +347,29 @@ std::string httpDate(const boost::posix_time::ptime& datetime)
    return dateStream.str();
 }
 
+bool isValidDate(const std::string& httpDate)
+{
+   std::string dateRegex = std::string() +
+         "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)" +                     // day of week
+         "," +                                                 // comma
+         "\\s" +                                               // space
+         "\\d{2}" +                                            // date of month
+         "\\s" +                                               // space
+         "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)" + // month
+         "\\s" +                                               // space
+         "\\d{4}" +                                            // year
+         "\\s" +                                               // space
+         "\\d{2}" +                                            // hour
+         ":" +                                                 // colon
+         "\\d{2}" +                                            // minute
+         ":" +                                                 // colon
+         "\\d{2}" +                                            // second
+         "\\s" +                                               // space
+         "GMT";
+
+   boost::regex reDate(dateRegex);
+   return regex_utils::textMatches(httpDate, reDate, false, true);
+}
 
 std::string pathAfterPrefix(const Request& request,
                             const std::string& pathPrefix)
@@ -474,6 +498,13 @@ std::string formatMessageAsHttpChunk(const std::string& message)
    std::stringstream sstr;
    sstr << std::hex << message.size() << "\r\n" << message << "\r\n";
    return sstr.str();
+}
+
+bool isIpAddress(const std::string& str)
+{
+   boost::system::error_code err;
+   boost::asio::ip::address::from_string(str, err);
+   return !err;
 }
 
 

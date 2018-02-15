@@ -183,6 +183,13 @@ core::Error launchChildProcess(std::string path,
                                ProcessConfigFilter configFilter,
                                PidType* pProcessId ) ;
 
+// runs a process, replacing the current process's image with that of the target
+// note, this does not create a child process, but replaces the currently running one
+Error runProcess(const std::string& path,
+                 const std::string& runAsUser,
+                 ProcessConfig& config,
+                 ProcessConfigFilter configFilter);
+
 // get this processes' child processes
 Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
 

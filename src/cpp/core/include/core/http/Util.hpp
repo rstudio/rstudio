@@ -150,6 +150,8 @@ boost::posix_time::ptime parseAtomDate(const std::string& date);
 std::string httpDate(const boost::posix_time::ptime& datetime = 
                            boost::posix_time::second_clock::universal_time());
 
+bool isValidDate(const std::string& httpDate);
+
 
 std::string pathAfterPrefix(const Request& request,
                             const std::string& pathPrefix);
@@ -163,6 +165,9 @@ void fileRequestHandler(const std::string& wwwLocalPath,
                         core::http::Response* pResponse);
 
 std::string formatMessageAsHttpChunk(const std::string& message);
+
+// determines if the given string is a well-formed IP address
+bool isIpAddress(const std::string& addr);
 
 } // namespace util
 

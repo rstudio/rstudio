@@ -38,6 +38,11 @@ public:
    {
    }
 
+   boost::asio::ip::tcp::endpoint getLocalEndpoint() const
+   {
+      return localEndpoint_;
+   }
+
 protected:
 
    bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
@@ -50,7 +55,12 @@ private:
    virtual Error initializeAcceptor(
       http::SocketAcceptorService<boost::asio::ip::tcp>* pAcceptor)
    {
-      return http::initTcpIpAcceptor(*pAcceptor, address_, port_);
+      Error error = http::initTcpIpAcceptor(*pAcceptor, address_, port_);
+      if (error)
+         return error;
+
+      localEndpoint_ = pAcceptor->acceptor().local_endpoint();
+      return Success();
    }
 
    virtual bool validateConnection(
@@ -70,6 +80,7 @@ private:
    std::string address_;
    std::string port_;
    std::string secret_;
+   boost::asio::ip::tcp::endpoint localEndpoint_;
 };
 
 } // namespace session

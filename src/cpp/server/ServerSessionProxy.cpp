@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,6 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamAsyncClient.hpp>
-#include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 #include <core/system/PosixSystem.hpp>
@@ -60,6 +59,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerErrorCategory.hpp>
+
 #include <server/ServerSessionManager.hpp>
 
 #include <server/ServerConstants.hpp>
@@ -69,6 +69,25 @@ using namespace rstudio::core ;
 namespace rstudio {
 namespace server {
 namespace session_proxy {
+
+// forward declare overlay methods
+namespace overlay {
+
+bool proxyRequest(int requestType,
+                  const boost::shared_ptr<const http::Request>& pRequest,
+                  const r_util::SessionContext &context,
+                  boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                  const http::ErrorHandler &errorHandler,
+                  const http::ConnectionRetryProfile &connectionRetryProfile);
+
+bool proxyLocalhostRequest(http::Request& request,
+                           const std::string& username,
+                           const std::string& port,
+                           const r_util::SessionContext& context,
+                           boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                           const LocalhostResponseHandler& responseHandler,
+                           const http::ErrorHandler& errorHandler);
+} // namespace overlay
    
 namespace {
 
@@ -102,7 +121,7 @@ Error launchSessionRecovery(
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
       return sessionManager().launchSession(ptrConnection->ioService(), 
-            context);
+            context, request);
    else
       return Success();
 }
@@ -122,6 +141,12 @@ http::ConnectionRetryProfile sessionRetryProfile(
 ProxyFilter s_proxyFilter;
 
 ProxyRequestFilter s_proxyRequestFilter;
+
+void invokeRequestFilter(http::Request* pRequest)
+{
+   if (s_proxyRequestFilter)
+      s_proxyRequestFilter(pRequest);
+}
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -163,51 +188,15 @@ void handleProxyResponse(
    ptrConnection->writeResponse(response);
 }
 
-class LocalhostAsyncClient : public http::TcpIpAsyncClient
-{
-public:
-   LocalhostAsyncClient(boost::asio::io_service& ioService,
-                        const std::string& address,
-                        const std::string& port)
-      : http::TcpIpAsyncClient(ioService, address, port)
-   {
-   }
-
-private:
-   // detect when we've got the whole response and force a response and a
-   // close of the socket (this is because the current version of httpuv
-   // expects a close from the client end of the socket). however, don't
-   // do this for Jetty (as it often doesn't send a Content-Length header)
-   virtual bool stopReadingAndRespond()
-   {
-      std::string server = response_.headerValue("Server");
-      if (boost::algorithm::contains(server, "Jetty"))
-      {
-         return false;
-      }
-      else
-      {
-         return response_.body().length() >= response_.contentLength();
-      }
-   }
-
-   // ensure that we don't close the connection when a websockets
-   // upgrade is taking place
-   virtual bool keepConnectionAlive()
-   {
-      return response_.statusCode() == http::status::SwitchingProtocols;
-   }
-};
-
-
 void rewriteLocalhostAddressHeader(const std::string& headerName,
                                    const http::Request& originalRequest,
                                    const std::string& port,
+                                   const std::string& baseAddress,
                                    http::Response* pResponse)
 {
    // get the address and the proxied address
    std::string address = pResponse->headerValue(headerName);
-   std::string proxiedAddress = "http://localhost:" + port;
+   std::string proxiedAddress = "http://" + baseAddress + ":" + port;
    std::string portPath = "/p/" + port;
 
    // relative address, just prepend port
@@ -271,8 +260,9 @@ void sendSparkUIResponse(
 
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
+      boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
       const std::string& port,
+      const std::string& baseAddress,
       const http::Response& response)
 {
    // check for upgrade to websockets
@@ -310,6 +300,7 @@ void handleLocalhostResponse(
             rewriteLocalhostAddressHeader(kLocation,
                                           ptrConnection->request(),
                                           port,
+                                          baseAddress,
                                           &redirectResponse);
          }
 
@@ -319,6 +310,7 @@ void handleLocalhostResponse(
             rewriteLocalhostAddressHeader(kRefresh,
                                           ptrConnection->request(),
                                           port,
+                                          baseAddress,
                                           &redirectResponse);
          }
 
@@ -491,6 +483,7 @@ void handleRpcError(
 
 void handleEventsError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
       const Error& error)
 {
    // NOTE: events requests don't initiate session launches so
@@ -552,6 +545,7 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
 }
 
 void proxyRequest(
+      int requestType,
       const r_util::SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
@@ -560,6 +554,24 @@ void proxyRequest(
    // apply optional proxy filter
    if (applyProxyFilter(ptrConnection, context))
       return;
+
+   // modify request
+   boost::shared_ptr<http::Request> pRequest(new http::Request());
+   pRequest->assign(ptrConnection->request());
+
+   // add username
+   pRequest->setHeader(kRStudioUserIdentityDisplay, context.username);
+
+   // call request filter if we have one
+   invokeRequestFilter(pRequest.get());
+
+   // see if the request should be handled by the overlay
+   if (overlay::proxyRequest(requestType, pRequest, context, ptrConnection,
+                             errorHandler, connectionRetryProfile))
+   {
+      // request handled by the overlay
+      return;
+   }
 
    // determine path to user stream
    std::string streamFile = r_util::sessionContextFile(context);
@@ -597,24 +609,19 @@ void proxyRequest(
    // create client
    // if the user is available on the system pass in the uid for validation to ensure
    // that we only connect to the socket if it was created by the user
-   boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
-    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, false, validateUid));
+    boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
+                                                     ptrConnection->ioService(),
+                                                     streamPath, false, validateUid));
 
-   // setup retry context
-   if (!connectionRetryProfile.empty())
-      pClient->setConnectionRetryProfile(connectionRetryProfile);
+    // setup retry context
+    if (!connectionRetryProfile.empty())
+       pClient->setConnectionRetryProfile(connectionRetryProfile);
 
-   // assign request
-   pClient->request().assign(ptrConnection->request());
+    // assign request
+    pClient->request().assign(*pRequest);
 
-   // call request filter if we have one
-   if (s_proxyRequestFilter)
-      s_proxyRequestFilter(&(pClient->request()));
-
-   // execute
-   pClient->execute(
-         boost::bind(handleProxyResponse, ptrConnection, context, _1),
-         errorHandler);
+    pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
+                     errorHandler);
 }
 
 // function used to periodically validate that the user is valid (has an
@@ -685,7 +692,8 @@ void proxyContentRequest(
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
-   proxyRequest(context,
+   proxyRequest(RequestType::Content,
+                context,
                 ptrConnection,
                 boost::bind(handleContentError, ptrConnection, context, _1),
                 sessionRetryProfile(ptrConnection, context));
@@ -708,7 +716,8 @@ void proxyRpcRequest(
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
-   proxyRequest(context,
+   proxyRequest(RequestType::Rpc,
+                context,
                 ptrConnection,
                 boost::bind(handleRpcError, ptrConnection, context, _1),
                 sessionRetryProfile(ptrConnection, context));
@@ -727,9 +736,10 @@ void proxyEventsRequest(
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
-   proxyRequest(context,
+   proxyRequest(RequestType::Events,
+                context,
                 ptrConnection,
-                boost::bind(handleEventsError, ptrConnection, _1),
+                boost::bind(handleEventsError, ptrConnection, context, _1),
                 http::ConnectionRetryProfile());
 }
 
@@ -751,8 +761,7 @@ void proxyLocalhostRequest(
    request.assign(ptrConnection->request());
 
    // call request filter if we have one
-   if (s_proxyRequestFilter)
-      s_proxyRequestFilter(&request);
+   invokeRequestFilter(&request);
 
    // extract the port
    boost::regex re("/p/(\\d+)/");
@@ -769,9 +778,6 @@ void proxyLocalhostRequest(
    std::string portPath = match[0];
    std::string uri = replace_first_copy(request.uri(), portPath, "/");
    request.setUri(uri);
-
-   // set the host
-   request.setHost("localhost:" + port);
 
    // remove headers to be a correctly behaving proxy
    request.removeHeader("Keep-Alive");
@@ -793,15 +799,29 @@ void proxyLocalhostRequest(
    if (!boost::algorithm::iequals(request.headerValue("Connection"), "Upgrade"))
       request.setHeader("Connection", "close");
 
+   LocalhostResponseHandler onResponse =
+         boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, _1);
+   http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
+
+   // see if the request should be handled by the overlay
+   if (overlay::proxyLocalhostRequest(request, username, port, context, ptrConnection, onResponse, onError))
+   {
+      // request handled by the overlay
+      return;
+   }
+
+   // set the host
+   request.setHost("localhost:" + port);
+
    // create async tcp/ip client and assign request
-   boost::shared_ptr<LocalhostAsyncClient> pClient(
+   boost::shared_ptr<http::IAsyncClient> pClient(
       new LocalhostAsyncClient(ptrConnection->ioService(), "localhost", port));
    pClient->request().assign(request);
 
    // execute request
    pClient->execute(
-         boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
-         boost::bind(handleLocalhostError, ptrConnection, _1));
+            boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, "localhost", _1),
+            onError);
 }
 
 bool requiresSession(const http::Request& request)

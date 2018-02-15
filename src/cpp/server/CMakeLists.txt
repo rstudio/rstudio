@@ -38,6 +38,7 @@ set(SERVER_SOURCE_FILES
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
    ServerSessionProxy.cpp
+   ServerSessionProxyOverlay.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerCSRFToken.cpp

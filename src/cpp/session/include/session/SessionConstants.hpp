@@ -30,6 +30,8 @@
 #define kRStudioSessionRoute              "RSTUDIO_SESSION_ROUTE"
 #define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
 #define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
+#define kRStudioSigningKey                "RSTUDIO_SIGNING_KEY"
+#define kRStudioMessageSignature          "RSTUDIO_MESSAGE_SIGNATURE"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
@@ -56,6 +58,11 @@
 
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
+
+#define kVerifySignaturesSessionOption    "verify-signatures"
+#define kStandaloneSessionOption          "standalone"
+#define kWwwAddressSessionOption          "www-address"
+#define kWwwPortSessionOption             "www-port"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed
@@ -95,6 +102,12 @@ const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
 const char * const kConsoleInput = "console_input";
 const char * const kRStudioAPIShowDialogMethod = "rstudio_api_show_dialog";
+
+// session exit codes - note max value supported by Linux is 255
+#define SESSION_EXIT_CODE_OFFSET              200
+#define SESSION_EXIT_SCOPE_INVALID_SESSION    SESSION_EXIT_CODE_OFFSET + 1
+#define SESSION_EXIT_SCOPE_INVALID_PROJECT    SESSION_EXIT_CODE_OFFSET + 2
+#define SESSION_EXIT_SCOPE_MISSING_PROJECT    SESSION_EXIT_CODE_OFFSET + 3
 
 #endif // SESSION_CONSTANTS_HPP
 

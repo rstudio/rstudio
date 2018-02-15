@@ -161,15 +161,18 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          value<std::string>(&wwwSymbolMapsPath_)->default_value(
                                                          "www-symbolmaps"),
          "www symbol maps path")
-      ("www-port",
+      (kWwwPortSessionOption,
          value<std::string>(&wwwPort_)->default_value("8787"),
          "port to listen on")
-      ("www-address",
+      (kWwwAddressSessionOption,
          value<std::string>(&wwwAddress_)->default_value("127.0.0.1"),
-         "port to listen on")
-      ("standalone",
+         "address to listen on")
+      (kStandaloneSessionOption,
          value<bool>(&standalone_)->default_value(false),
-         "run standalone");
+         "run standalone")
+      (kVerifySignaturesSessionOption,
+         value<bool>(&verifySignatures_)->default_value(false),
+         "verify signatures on incoming requests");
 
    // session options
    std::string saveActionDefault;
@@ -659,6 +662,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
                               core::system::getenv(kRStudioMinimumUserId), 100);
       core::system::unsetenv(kRStudioMinimumUserId);
    }
+
+   // signing key - used for verifying incoming RPC requests
+   // in standalone mode
+   signingKey_ = core::system::getenv(kRStudioSigningKey);
 
    // return status
    return status;
