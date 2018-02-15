@@ -13,17 +13,35 @@
 #
 #
 
-.rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
+.rs.addFunction("reticulate.replInitialize", function()
 {
-   # disallow execution of 'help()' as it will open an interactive terminal
-   # that RStudio is unable to interact with
-   if (buffer$empty()) {
-      if (trimmed %in% c("help", "help()")) {
-         msg <- "Interactive Python help is not available within RStudio"
-         stop(msg, call. = FALSE)
+   # override help method
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   help <- builtins$help
+   .rs.setVar("reticulate.help", builtins$help)
+   builtins$help <- function(...) {
+      dots <- list(...)
+      if (length(dots) == 0) {
+         message("Error: Interactive Python help not available within RStudio")
+         return()
       }
+      help(...)
    }
-   
 })
 
-options(reticulate.repl.hook = .rs.reticulate.replHook)
+.rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
+{
+   FALSE
+})
+
+
+.rs.addFunction("reticulate.replTeardown", function()
+{
+   # restore old help method
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   builtins$help <- .rs.getVar("reticulate.help")
+})
+
+options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
+options(reticulate.repl.hook       = .rs.reticulate.replHook)
+options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
