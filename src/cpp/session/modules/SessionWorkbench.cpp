@@ -58,7 +58,6 @@ extern "C" SA_TYPE SaveAction;
 #include <core/system/Crypto.hpp>
 #endif
 
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -713,15 +712,25 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    // now, detect if we are transitioning languages
    if (language != activeLanguage)
    {
+      // since it may take some time for the console input to be processed,
+      // we screen out consecutive transition attempts (otherwise we can
+      // get multiple interleaved attempts to launch the REPL with console
+      // input)
+      static boost::signals::connection conn;
+      if (conn.connected())
+         return Success();
+      
+      // establish the connection, and then simply disconnect once we
+      // receive the signal
+      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
+         conn.disconnect();
+      });
+      
       if (activeLanguage == "r")
       {
          if (language == "python")
          {
             // r -> python: activate the reticulate REPL
-            
-            // TODO: do we want the user to see the explicit calls that start
-            // and stop the Python REPL? (could be noisy if the user is
-            // switching contexts often)
             Error error =
                   module_context::enqueueConsoleInput("reticulate::py_repl()");
             if (error)
