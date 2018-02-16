@@ -34,7 +34,7 @@ namespace reticulate {
 bool isReplActive()
 {
    bool active = false;
-   Error error = r::exec::RFunction("reticulate::py_repl_active").call(&active);
+   Error error = r::exec::RFunction("reticulate:::py_repl_active").call(&active);
    if (error)
       LOG_ERROR(error);
    return active;
