@@ -15,7 +15,7 @@
  *
  */
 
-var hist = function (ele, breaks, counts, update) {
+var hist = function (ele, breaks, counts, start, end, update) {
 
    // find the largest count for normalization
    var max = counts[0];
@@ -28,10 +28,6 @@ var hist = function (ele, breaks, counts, update) {
    // arrays of histogram bars and background regions
    var bars = [];
    var backs = [];
-
-   // selection model; initially everything is selected
-   var start = 0;
-   var end = counts.length - 1;
 
    // create elements for each bin
    var n = counts.length;

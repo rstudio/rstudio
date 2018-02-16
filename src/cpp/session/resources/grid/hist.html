@@ -41,12 +41,14 @@
         hist(document.getElementById("h1"),
              [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
              [164, 185, 223, 199, 204, 214, 200, 197, 217, 197],
+             0, 10,
              function(start, end) {
                  document.getElementById("t1").value = start + " - " + end;
              });
         hist(document.getElementById("h2"),
              [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
              [55, 37,  5,  9, 34, 75, 54,  3],
+             0, 10,
              function(start, end) {
                  document.getElementById("t2").value = start + " - " + end;
              });

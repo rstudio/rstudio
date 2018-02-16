@@ -393,7 +393,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
           searchText = digit[1];
        } else {
           var matches = val.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
-          if (matches.length > 2) {
+          if (matches !== null && matches.length > 2) {
              searchText = matches[1] + "_" + matches[2];
           }
        }
@@ -414,9 +414,31 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
 
     var histBrush = document.createElement("div");
     histBrush.className = "numHist";
-    hist(histBrush, col.col_breaks, col.col_counts, function(start, end) {
-       updateText(start, end);
-    });
+
+    // default to selecting everything
+    var binStart = 0;
+    var binEnd = col.col_breaks.length - 2;
+
+    // if min/max provided, update subset
+    for (var i = 0; i < col.col_breaks.length; i++) {
+       // comparison with === doesn't work directly because of Javascript number precision; instead,
+       // subtract the numbers and see if the result is effectively 0
+       if (Math.abs(col.col_breaks[i] - min) === 0) {
+          binStart = i;
+       } else if (Math.abs(col.col_breaks[i] - max) === 0) {
+          binEnd = i - 1;
+       }
+    }
+
+    // create histogram
+    hist(histBrush,      // element to host histogram
+         col.col_breaks, // array of endpoints for bins
+         col.col_counts, // count of data points in each bin
+         binStart,       // index of first selected bin
+         binEnd,         // index of last selected bin
+         function(start, end) {
+            updateText(start, end);
+         });
     popup.appendChild(histBrush);
 
     popup.appendChild(numVal);
