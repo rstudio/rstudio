@@ -92,16 +92,20 @@ var hist = function (ele, breaks, counts, update) {
          return;
       }
 
-      // did the brush extend either side of the selection?
-      if (bin >= start && bin <= end) {
+      // no work to do if we're already at an endpoint
+      if (bin === end || bin === start) {
          return;
       }
 
-      // grow selection appropriately
-      if (bin < start)
-         start = bin;
-      else if (bin > end)
-         end = bin;
+      // move end marker to brushed bin
+      var last = end;
+      end = bin;
+
+      // if we went backwards, swap start and end so that they're still in order
+      if (end < start) {
+         start = end;
+         end = last;
+      }
 
       // redraw
       updateSelection();
