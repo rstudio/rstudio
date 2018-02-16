@@ -389,8 +389,8 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
 
        // just one number?
        var digit  = val.match(/^\s*-?\d+\.?\d*\s*$/);
-       if (digit !== null && digit.length > 1) {
-          searchText = digit[1];
+       if (digit !== null && digit.length > 0) {
+          searchText = digit[0];
        } else {
           var matches = val.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
           if (matches !== null && matches.length > 2) {
@@ -405,6 +405,18 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     }, 200);
     numVal.addEventListener("change", function() {
        updateView(numVal.value);
+    });
+    numVal.addEventListener("click", function(evt) {
+       // prevent clicks into the value box from invoking light dismiss
+       evt.stopPropagation();
+    });
+    numVal.addEventListener("keydown", function(evt) {
+       if (!dismissActivePopup)
+          return;
+       else if (evt.keyCode === 27)
+          dismissActivePopup(false);
+       else if (evt.keyCode === 13)
+          dismissActivePopup(true);
     });
 
     var updateText = function(start, end) {

@@ -453,8 +453,16 @@ div.dataTables_scroll div.dataTables_scrollHead {
     background-color: #7AAADB;
 }
 
+.histBack.selected {
+    background-color: #F5F5F5;
+}
+
 .histBar {
     background-color: #AACBE7;
+}
+
+.histBar, .histBack {
+    cursor: pointer;
 }
 
 .numValueBox {
