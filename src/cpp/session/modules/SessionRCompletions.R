@@ -3345,26 +3345,16 @@ assign(x = ".rs.acCompletionTypes",
    utils:::.completeToken()
    results <- utils:::.retrieveCompletions()
    
-   packages <- NULL
-   type <- .rs.formCompletionVector(attr(results, "type"), .rs.acCompletionTypes$UNKNOWN, length(results))
-   if (type[[1]] %in% c(.rs.acCompletionTypes$UNKNOWN, .rs.acCompletionTypes$FUNCTION)) {
-   packages <- sub('^package:', '', .rs.which(results))
-   
-   # ensure spaces around =
-   results <- sub("=$", " = ", results)
-   
-     choose <- packages == '.GlobalEnv'
-     results <- c(results[choose], results[!choose])
-     packages <- c(packages[choose], packages[!choose])
-     type <- c(type[choose], type[!choose])
-   
-     packages <- sub('^\\.GlobalEnv$', '', packages)
-   }
+   type <- .rs.formCompletionVector(
+      object = attr(results, "type"),
+      default = .rs.acCompletionTypes$UNKNOWN,
+      n = length(results)
+   )
    
    .rs.makeCompletions(
       token = token,
       results = results,
-      packages = packages,
+      packages = NULL,
       type = type
    )
 })
