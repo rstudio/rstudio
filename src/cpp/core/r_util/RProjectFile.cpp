@@ -1,7 +1,7 @@
 /*
  * RProjectFile.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -195,7 +195,7 @@ bool interpretIntValue(const std::string& value, int* pValue)
       *pValue = boost::lexical_cast<int>(value);
       return true;
    }
-   catch(const boost::bad_lexical_cast& e)
+   catch(const boost::bad_lexical_cast&)
    {
       return false;
    }

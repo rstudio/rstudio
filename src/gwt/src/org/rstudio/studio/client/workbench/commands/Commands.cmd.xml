@@ -2030,6 +2030,13 @@ well as menu structures (for main menu and popup menus).
         context="vcs"
         windowMode="review_changes"/>
         
+   <cmd id="vcsPullRebase"
+        menuLabel="_Pull with Rebase"
+        buttonLabel="Pull with Rebase"
+        rebindable="false"
+        context="vcs"
+        windowMode="review_changes"/>
+        
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
         buttonLabel="Push"

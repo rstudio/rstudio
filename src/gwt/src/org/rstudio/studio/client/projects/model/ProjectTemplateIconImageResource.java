@@ -49,7 +49,6 @@ public class ProjectTemplateIconImageResource implements ImageResource
       return 0;
    }
 
-   @SuppressWarnings("deprecation")
    @Override
    public String getURL()
    {

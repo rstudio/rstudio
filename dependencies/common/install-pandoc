@@ -3,7 +3,7 @@
 #
 # install-pandoc
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,12 @@ PANDOC_VERSION="1.19.2.1"
 PANDOC_CITEPROC_VERSION="0.10.4"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
+
+# see if we already have binaries
+if [ -d "${PANDOC_SUBDIR}" ]; then
+    echo "Pandoc ${PANDOC_VERSION} already installed"
+    exit 0
+fi
 
 # enter pandoc subdirectory
 mkdir -p "${PANDOC_SUBDIR}"

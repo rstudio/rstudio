@@ -31,6 +31,8 @@ public abstract class BaseVcsPresenter extends BasePresenter
    public abstract void onVcsShowHistory();
 
    public abstract void onVcsPull();
+   
+   public abstract void onVcsPullRebase();
 
    public abstract void onVcsPush();
    

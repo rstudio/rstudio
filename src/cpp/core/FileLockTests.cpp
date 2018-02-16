@@ -122,7 +122,7 @@ TEST_CASE("File Locking")
       boost::posix_time::seconds timeout = FileLock::getTimeoutInterval();
       FileLock::setTimeoutInterval(boost::posix_time::seconds(600)); // 10 minutes
 
-      for (std::size_t i = 0; i < 1000; ++i)
+      for (std::size_t i = 0; i < 100; ++i)
          s_threads.create_thread(boost::bind(acquireLock, i));
       
       s_threads.join_all();

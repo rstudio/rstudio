@@ -511,7 +511,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    public boolean moveSelectionUp()
    {
-      if (selectedRows_.size() == 0)
+      if (selectedRows_.isEmpty())
          return false;
 
       sortSelectedRows();
@@ -538,7 +538,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    public boolean moveSelectionDown()
    {
-      if (selectedRows_.size() == 0)
+      if (selectedRows_.isEmpty())
          return false;
 
       sortSelectedRows();
@@ -583,7 +583,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    public Rectangle getSelectionRect()
    {
-      if (selectedRows_.size() == 0)
+      if (selectedRows_.isEmpty())
          return null;
 
       sortSelectedRows();

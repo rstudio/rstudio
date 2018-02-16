@@ -1,7 +1,7 @@
 /*
  * RStudioGinModule.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,6 +54,8 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
+import org.rstudio.studio.client.common.vcs.AskPassManager;
+import org.rstudio.studio.client.common.rstudioapi.AskSecretManager;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -61,7 +63,6 @@ import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
-import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -426,6 +427,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChunkSatelliteView.class).to(ChunkSatelliteWindow.class);
       bind(RStudioAPI.class).asEagerSingleton();
       bind(RStudioAPIServerOperations.class).to(RemoteServer.class);
+
+      bind(AskSecretManager.class).in(Singleton.class);
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)

@@ -7,7 +7,7 @@ If you're here to report a bug in RStudio, please take the time to fill out as m
     RStudio Edition : <!-- Desktop or Server -->
     RStudio Version : 
     OS Version      : 
-    R Version       :
+    R Version       : 
 
 ### Steps to reproduce the problem
 

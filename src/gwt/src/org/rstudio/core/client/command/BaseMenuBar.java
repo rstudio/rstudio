@@ -236,7 +236,7 @@ public class BaseMenuBar extends MenuBar
     */
    protected void manageSeparators()
    {
-      if (separators_.size() == 0)
+      if (separators_.isEmpty())
          return;
       List<MenuItem> menuItems = getItems();
       ArrayList<UIObject> allItems =

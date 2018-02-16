@@ -16,14 +16,11 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -50,8 +47,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubproc
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;

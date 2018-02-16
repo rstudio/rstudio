@@ -17,7 +17,6 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 

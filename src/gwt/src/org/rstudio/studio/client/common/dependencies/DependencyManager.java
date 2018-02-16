@@ -675,6 +675,27 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         }
      );
    }
+
+   public void withKeyring(final Command command)
+   {
+     withDependencies(
+        "Preparing Keyring",
+        "Using keyring", 
+        new Dependency[] {
+           Dependency.cranPackage("keyring", "1.0.0", true)
+        }, 
+        true, // update keyring if needed
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
    
    private Dependency[] connectionPackageDependenciesArray(String packageName,
                                                            String packageVersion)

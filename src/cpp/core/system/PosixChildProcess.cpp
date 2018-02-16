@@ -71,7 +71,7 @@ const boost::posix_time::milliseconds kCheckCwdDelay =
 
 // exit code for when a thread-safe spawn fails - chosen to be something "unique" enough to identify
 // since thread-safe forks cannot actually log effectively
-const int kThreadSafeForkErrorExit = 1535;
+const int kThreadSafeForkErrorExit = 153;
 
 int resolveExitStatus(int status)
 {

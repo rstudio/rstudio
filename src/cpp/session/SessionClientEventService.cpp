@@ -1,7 +1,7 @@
 /*
  * SessionClientEventService.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,7 +103,7 @@ void ClientEventService::stop()
          serviceThread_.detach();
       }
    }
-   catch(const boost::thread_interrupted& e)
+   catch(const boost::thread_interrupted&)
    {
       // the main thread is the one who calls stop() and it should 
       // NEVER be interrupted for any reason
@@ -304,7 +304,7 @@ void ClientEventService::run()
                }
            }
          }
-         catch(const boost::thread_interrupted& e)
+         catch(const boost::thread_interrupted&)
          {
             // set flag so we terminate on the next accept loop iteration
             stopServer = true ;

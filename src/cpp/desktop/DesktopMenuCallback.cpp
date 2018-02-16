@@ -90,27 +90,30 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    if (commandId == QStringLiteral("zoomActualSize"))
    {
       // NOTE: CTRL implies META on macOS
-      pAction = menuStack_.top()->addAction(QIcon(),
-                                            label,
-                                            this,
-                                            SIGNAL(zoomActualSize()),
-                                            QKeySequence(Qt::CTRL + Qt::Key_0));
+      pAction = menuStack_.top()->addAction(
+               QIcon(),
+               label,
+               this,
+               SIGNAL(zoomActualSize()),
+               QKeySequence(Qt::CTRL + Qt::Key_0));
    }
    else if (commandId == QStringLiteral("zoomIn"))
    {
-      pAction = menuStack_.top()->addAction(QIcon(),
-                                            label,
-                                            this,
-                                            SIGNAL(zoomIn()),
-                                            QKeySequence::ZoomIn);
+      pAction = menuStack_.top()->addAction(
+               QIcon(),
+               label,
+               this,
+               SIGNAL(zoomIn()),
+               QKeySequence::ZoomIn);
    }
    else if (commandId == QStringLiteral("zoomOut"))
    {
-      pAction = menuStack_.top()->addAction(QIcon(),
-                                            label,
-                                            this,
-                                            SIGNAL(zoomOut()),
-                                            QKeySequence::ZoomOut);
+      pAction = menuStack_.top()->addAction(
+               QIcon(),
+               label,
+               this,
+               SIGNAL(zoomOut()),
+               QKeySequence::ZoomOut);
    }
    
 #ifdef Q_OS_MAC

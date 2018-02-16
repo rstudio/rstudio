@@ -1,7 +1,7 @@
 /*
  * Win32FileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
@@ -89,7 +90,9 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
    if (hObject != NULL)
    {
       if (!::CloseHandle(hObject))
-         LOG_ERROR(systemError(::GetLastError(), location));
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+      }
    }
 }
 
@@ -98,7 +101,9 @@ void cleanupContext(FileEventContext* pContext)
    if (pContext->hDirectory != NULL)
    {
       if (!::CancelIo(pContext->hDirectory))
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+      }
 
       safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
 
@@ -109,7 +114,9 @@ void cleanupContext(FileEventContext* pContext)
    {
       // make sure timer APC is never called after a cleanupContext
       if (!::CancelWaitableTimer(pContext->hRestartTimer))
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+      }
 
       safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
 
@@ -359,7 +366,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    pContext->hRestartTimer = ::CreateWaitableTimer(NULL, true, NULL);
    if (pContext->hRestartTimer == NULL)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
       return;
    }
@@ -381,7 +388,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
 
    if (!success)
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
    }
 }
@@ -479,13 +486,27 @@ Error readDirectoryChanges(FileEventContext* pContext)
                                &(pContext->overlapped),
                                &FileChangeCompletionRoutine))
    {
-      return systemError(::GetLastError(), ERROR_LOCATION);
+      return LAST_SYSTEM_ERROR();
    }
    else
    {
       pContext->readDirChangesPending = true;
       return Success();
    }
+}
+
+bool gitFilter(const FileInfo& fileInfo,
+               const boost::function<bool(const FileInfo&)>& filter)
+{
+   // screen out '.git' folder
+   if (fileInfo.isDirectory() &&
+       boost::algorithm::ends_with(fileInfo.absolutePath(), "/.git"))
+   {
+      return false;
+   }
+
+   // delegate to registered filter
+   return filter(fileInfo);
 }
 
 } // anonymous namespace
@@ -521,8 +542,7 @@ Handle registerMonitor(const core::FilePath& filePath,
                      NULL);
    if (pContext->hDirectory == INVALID_HANDLE_VALUE)
    {
-      callbacks.onRegistrationError(
-                     systemError(::GetLastError(),ERROR_LOCATION));
+      callbacks.onRegistrationError(LAST_SYSTEM_ERROR());
       return Handle();
    }
 
@@ -555,7 +575,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    core::system::FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
-   options.filter = filter;
+   options.filter = boost::bind(gitFilter, _1, filter);
    error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {

@@ -36,25 +36,30 @@ rstudio-server force-suspend-all
 # create openssl softlinks based off SuSE version 
 if test -f /etc/SuSE-release
 then
-  if test -d /usr/lib64 || test -d /lib64
+
+  # discover the version of OpenSSL that we expect to find on this system
+  compare_versions () { test "$(echo "$@" | tr " " "\\n" | sort -V | head -n 1)" != "$1"; }
+  version_number=$(grep "VERSION" /etc/SuSE-release | sed 's/[^0-9,.]*//g')
+  if compare_versions "$version_number" "11"
   then
-    architecture_dir='lib64'
+    sslversion=1.0.0
   else
-    architecture_dir='lib'
+    sslversion=0.9.8
   fi
 
-  compare_versions() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
-  version_number=$(cat /etc/SuSE-release | grep "VERSION" | sed 's/[^0-9,.]*//g')
+  # look for these libraries in the common places
+  for dir in /usr/lib64 /lib64 /usr/lib /lib
+  do
+    if test -f $dir/libssl.so.$sslversion -a -f $dir/libcrypto.so.$sslversion
+    then
+      for file in libssl.so libcrypto.so
+      do
+        ln -s -f $dir/$file.$sslversion "${CMAKE_INSTALL_PREFIX}"/bin/$file.10
+      done
+      break
+    fi
+  done
 
-  # verify if release version number is greater than 11
-  if compare_versions $version_number 11
-  then
-    ln -s -f /$architecture_dir/libssl.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.10
-    ln -s -f /$architecture_dir/libcrypto.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.10
-  else
-    ln -s -f /usr/$architecture_dir/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.10
-    ln -s -f /usr/$architecture_dir/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.10
-  fi
 fi
 
 # determine which init system is in use

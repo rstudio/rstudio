@@ -1,7 +1,7 @@
 /*
- * ConnectionsServerOperations.java
+ * RStudioAPIServerOperations.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,18 @@
  */
 package org.rstudio.studio.client.common.rstudioapi.model;
 
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-public interface RStudioAPIServerOperations
+public interface RStudioAPIServerOperations extends CryptoServerOperations
 {
    void showDialogCompleted(String prompt,
                             boolean ok,
                             ServerRequestCallback<Void> callback);
+
+   void askSecretCompleted(String value,
+                           boolean remember,
+                           boolean changed,
+                           ServerRequestCallback<Void> requestCallback);
 }

@@ -1,7 +1,7 @@
 /*
  * Error.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -113,7 +113,7 @@ private:
 };
 
 // 
-// No error subclass created for syntactic conveneince:
+// No error subclass created for syntactic convenience:
 //   return Success();
 //
 class Success : public Error
@@ -122,6 +122,15 @@ public:
    Success() : Error() {}
 };
 
+#ifdef _WIN32
+
+// Use this macro instead of systemError(::GetLastError(), ERROR_LOCATION) otherwise
+// the ERROR_LOCATION macro may evaluate first and reset the Win32 error code to
+// zero (no error), causing the wrong value to be passed to systemError. This is currently
+// the case on debug builds using MSVC.
+#define LAST_SYSTEM_ERROR() []() {auto lastErr = ::GetLastError(); return systemError(lastErr, ERROR_LOCATION);}()
+
+#endif // _WIN32
 
 Error systemError(int value, const ErrorLocation& location) ; 
 Error systemError(int value,

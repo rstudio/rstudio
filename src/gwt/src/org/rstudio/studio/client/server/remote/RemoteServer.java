@@ -37,7 +37,6 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
@@ -2401,6 +2400,12 @@ public class RemoteServer implements Server
    public void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_PULL,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+   
+   public void gitPullRebase(ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GIT_PULL_REBASE,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -5155,19 +5160,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
    }
-   
-   public void installSpark(String sparkVersion,
-                            String hadoopVersion,
-                            ServerRequestCallback<ConsoleProcess> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(sparkVersion));
-      params.set(1, new JSONString(hadoopVersion));
-      sendRequest(RPC_SCOPE,
-                  INSTALL_SPARK,
-                  params,
-                  new ConsoleProcessCallbackAdapter(callback));
-   }
 
    @Override
    public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback)
@@ -5221,6 +5213,20 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
       sendRequest(RPC_SCOPE, CONNECTION_ADD_PACKAGE, params, callback);
+   }
+
+   @Override
+   public void askSecretCompleted(String value,
+                                  boolean remember,
+                                  boolean changed,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, value == null ? JSONNull.getInstance()
+                                  : new JSONString(value));
+      params.set(1, JSONBoolean.getInstance(remember));
+      params.set(2, JSONBoolean.getInstance(changed));
+      sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
    }
 
    private String clientId_;
@@ -5433,6 +5439,7 @@ public class RemoteServer implements Server
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PUSH_BRANCH = "git_push_branch";
    private static final String GIT_PULL = "git_pull";
+   private static final String GIT_PULL_REBASE = "git_pull_rebase";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String CREATE_SSH_KEY = "create_ssh_key";
    private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
@@ -5636,4 +5643,6 @@ public class RemoteServer implements Server
    private static final String STOP_SHINY_APP = "stop_shiny_app";
 
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
+
+   private static final String ASKSECRET_COMPLETED = "asksecret_completed";
 }

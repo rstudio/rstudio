@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,7 @@ bool copySingleItem(const FilePath& from, const FilePath& to,
    return true;
 }
 
-bool addItemSize(const FilePath& item, boost::shared_ptr<int> pTotal)
+bool addItemSize(const FilePath& item, boost::shared_ptr<uintmax_t> pTotal)
 {
    if (!item.isDirectory())
       *pTotal = *pTotal + item.size();
@@ -604,19 +604,11 @@ std::time_t FilePath::lastWriteTime() const
 
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
-   path_t relPath;
-   try
-   {
-      relPath = boost::filesystem::relative(
-               this->pImpl_->path,
-               parentPath.pImpl_->path);
-   }
-   catch(const boost::filesystem::filesystem_error& e)
-   {
-      logError(pImpl_->path, e, ERROR_LOCATION);
-   }
-
-   return BOOST_FS_PATH2STR(relPath);
+   path_t relativePath =
+         pImpl_->path.lexically_normal().lexically_relative(
+            parentPath.pImpl_->path.lexically_normal());
+   
+   return BOOST_FS_PATH2STR(relativePath);
 }
 
 bool FilePath::isWithin(const FilePath& scopePath) const
@@ -852,7 +844,7 @@ uintmax_t FilePath::sizeRecursive() const
    if (!isDirectory())
       return size();
 
-   boost::shared_ptr<int> pTotal = boost::make_shared<int>(0);
+   boost::shared_ptr<uintmax_t> pTotal = boost::make_shared<uintmax_t>(0);
    Error error = childrenRecursive(boost::bind(addItemSize, _2, pTotal)); 
    if (error)
       LOG_ERROR(error);
@@ -1076,7 +1068,7 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }
@@ -1128,7 +1120,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
       {
-         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         Error error = LAST_SYSTEM_ERROR();
          error.addProperty("path", absolutePath());
          return error;
       }

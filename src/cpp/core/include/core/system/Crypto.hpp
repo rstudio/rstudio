@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -34,8 +35,11 @@ core::Error HMAC_SHA2(const std::string& data,
 
 core::Error HMAC_SHA2(const std::string& data,
                       const std::vector<unsigned char>& key,
-                      std::vector<unsigned char>* pHMAC);   
-   
+                      std::vector<unsigned char>* pHMAC);
+
+core::Error sha256(const std::string& message,
+                   std::string* pHash);
+
 core::Error base64Encode(const std::vector<unsigned char>& data, 
                          std::string* pEncoded);   
    
@@ -47,6 +51,17 @@ core::Error base64Decode(const std::string& data,
                          std::vector<unsigned char>* pDecoded);
 
 core::Error rsaInit();
+
+core::Error rsaSign(const std::string& message,
+                    const std::string& pemPrivateKey,
+                    std::string* pOutSignature);
+
+core::Error rsaVerify(const std::string& message,
+                      const std::string& signature,
+                      const std::string& pemPublicKey);
+
+core::Error generateRsaKeyFiles(const FilePath& publicKeyPath,
+                                const FilePath& privateKeyPath);
 
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 

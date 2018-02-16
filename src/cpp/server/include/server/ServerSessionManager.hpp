@@ -23,6 +23,8 @@
 #include <boost/signals.hpp>
 #include <boost/asio/io_service.hpp>
 
+#include <core/http/AsyncClient.hpp>
+#include <core/http/Request.hpp>
 #include <core/Thread.hpp>
 
 #include <core/system/PosixSystem.hpp>
@@ -59,13 +61,19 @@ private:
 public:
    // launching
    core::Error launchSession(boost::asio::io_service& ioService,
-                             const core::r_util::SessionContext& context);
+                             const core::r_util::SessionContext& context,
+                             const core::http::Request& request,
+                             const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
+                             const core::http::ErrorHandler& onError = core::http::ErrorHandler());
    void removePendingLaunch(const core::r_util::SessionContext& context);
 
    // set a custom session launcher
    typedef boost::function<core::Error(
                            boost::asio::io_service&,
-                           const core::r_util::SessionLaunchProfile&)>
+                           const core::r_util::SessionLaunchProfile&,
+                           const core::http::Request&,
+                           const core::http::ResponseHandler& onLaunch,
+                           const core::http::ErrorHandler& onError)>
                                                   SessionLaunchFunction;
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 

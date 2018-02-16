@@ -18,7 +18,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.user.client.Command;
 

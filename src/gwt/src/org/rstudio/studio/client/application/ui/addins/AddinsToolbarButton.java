@@ -236,9 +236,11 @@ public class AddinsToolbarButton extends ToolbarButton
       {
          RAddin addin = addins.get(key);
          
-         String name = addin.getName();
-         if (name.toLowerCase().indexOf(query) == -1)
+         if (addin.getName().toLowerCase().indexOf(query) == -1 &&
+             addin.getPackage().toLowerCase().indexOf(query) == -1)
+         {
             continue;
+         }
          
          String[] splat = key.split("::");
          String pkg = splat[0];

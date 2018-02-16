@@ -417,9 +417,9 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   public void viewObject(String objectName)
+   public void viewObject(String action, String objectName)
    {
-      executeFunctionForObject("View", objectName);
+      executeFunctionForObject(action, objectName);
    }
    
    @Override

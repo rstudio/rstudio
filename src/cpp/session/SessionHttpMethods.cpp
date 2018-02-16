@@ -22,6 +22,7 @@
 #include "SessionUriHandlers.hpp"
 #include "SessionDirs.hpp"
 #include "SessionRpc.hpp"
+#include "http/SessionTcpIpHttpConnectionListener.hpp"
 
 #include "session-config.h"
 
@@ -33,6 +34,8 @@
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+
+#include <core/system/Crypto.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -158,7 +161,22 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
 Error startHttpConnectionListener()
 {
    initializeHttpConnectionListener();
-   return httpConnectionListener().start();
+   Error error = httpConnectionListener().start();
+   if (error)
+      return error;
+
+   if (options().standalone())
+   {
+      // log the endpoint to which we have bound to so other services can discover us
+      TcpIpHttpConnectionListener& listener =
+            static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
+
+      boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
+      std::cout << "Listener bound to address " << endpoint.address().to_string()
+                << " port " << endpoint.port() << std::endl;
+   }
+
+   return Success();
 }
 
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
@@ -296,6 +314,97 @@ bool registeredWaitForMethod(const std::string& method,
                         pRequest);
 }
 
+bool verifyRequestSignature(const core::http::Request& request)
+{
+   // only verify signatures if we are in standalone mode and
+   // we are explicitly configured to verify signatures
+   if (!options().verifySignatures() || !options().standalone())
+      return true;
+
+   // get signature from request
+   std::string signature = request.headerValue(kRStudioMessageSignature);
+   if (signature.empty())
+   {
+       LOG_ERROR_MESSAGE("No signature specified on request for session " +
+                         options().sessionContext().scope.id());
+       return false;
+   }
+
+   // base-64 decode the signature included on the request
+   // it is encoded to allow transmission of the binary payload over HTTP
+   std::vector<unsigned char> decoded;
+   Error error = core::system::crypto::base64Decode(signature, &decoded);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // construct a string representation of the decoded data
+   std::string decodedSignature(decoded.begin(), decoded.end());
+
+   // get date from signature - used in signature calculation
+   // to prevent replay attacks
+   std::string date = request.headerValue("Date");
+   if (date.empty())
+   {
+       LOG_ERROR_MESSAGE("No date specified on request for session " +
+                         options().sessionContext().scope.id());
+       return false;
+   }
+
+   // ensure that the date is actually valid - ensures attacker doesn't supply a phoney date that
+   // wraps to the desired value or somehow exploits the system
+   if (!core::http::util::isValidDate(date))
+   {
+      LOG_ERROR_MESSAGE("Invalid date specified on request for session " +
+                        options().sessionContext().scope.id());
+      return false;
+   }
+
+   // ensure that the request is not stale - if it is, fail out as it could be a replay attack
+   boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+   boost::posix_time::time_duration timeDelta = now - http::util::parseHttpDate(date);
+   if (abs(timeDelta.total_seconds()) > 60)
+   {
+      LOG_ERROR_MESSAGE("Received stale message with date " + date +
+                        " for session " + options().sessionContext().scope.id());
+      return false;
+   }
+
+   // get username from request
+   std::string username = request.headerValue(kRStudioUserIdentityDisplay);
+   if (username.empty())
+   {
+      LOG_ERROR_MESSAGE("No username specified on request for session " +
+                        options().sessionContext().scope.id());
+      return false;
+   }
+
+   // ensure the user matches the session process owner
+   std::string runningUser = core::system::username();
+   if (username != runningUser)
+   {
+      LOG_ERROR_MESSAGE("Request from invalid user " + username +
+                        " for session " + options().sessionContext().scope.id() +
+                        " owned by user " + runningUser);
+      return false;
+   }
+
+   // calculate expected signature
+   std::string payload = username + "\n" + date + "\n" + request.body();
+
+   // ensure specified signature is valid
+   error = core::system::crypto::rsaVerify(payload, decodedSignature, options().signingKey());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   return true;
+}
+
 } // anonymous namespace
 
 namespace module_context
@@ -411,6 +520,15 @@ bool waitForMethod(const std::string& method,
 
       if (ptrConnection)
       {
+         // ensure request signature is valid
+         if (!verifyRequestSignature(ptrConnection->request()))
+         {
+            core::http::Response response;
+            response.setError(http::status::Unauthorized, "Invalid message signature");
+            ptrConnection->sendResponse(response);
+            continue;
+         }
+
          // check for client_init
          if ( isMethod(ptrConnection, kClientInit) )
          {

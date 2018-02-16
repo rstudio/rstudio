@@ -525,6 +525,16 @@ public:
       return firstProjectTemplatePath_;
    }
 
+   const std::string& signingKey() const
+   {
+      return signingKey_;
+   }
+
+   bool verifySignatures() const
+   {
+      return verifySignatures_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -586,6 +596,8 @@ private:
    bool defaultCliColorForce_;
    bool quitChildProcessesOnExit_;
    std::string firstProjectTemplatePath_;
+   std::string signingKey_;
+   bool verifySignatures_;
 
    // r
    std::string coreRSourcePath_;

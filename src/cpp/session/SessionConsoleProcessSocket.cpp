@@ -14,6 +14,9 @@
  */
 
 #include <session/SessionConsoleProcessSocket.hpp>
+#include <session/SessionHttpConnectionListener.hpp>
+
+#include "http/SessionTcpIpHttpConnectionListener.hpp"
 
 #include <boost/make_shared.hpp>
 
@@ -91,20 +94,33 @@ Error ConsoleProcessSocket::ensureServerRunning()
       {
          try
          {
-            // TODO (gary) can we just try ipv6 without sniffing, then do
-            // ipv4 if ipv6 fails?
-#if !defined(_WIN32) && !defined(__APPLE__)
-            if (core::FilePath("/proc/net/if_inet6").exists())
+            if (session::options().standalone())
             {
-               // listen will fail without ipv6 support on the machine so we
-               // only use it for machines with a ipv6 stack
-               pwsServer_->listen(port);
+               // if we are in standalone mode, try to bind to the same address
+               // that the server bound to
+               TcpIpHttpConnectionListener& listener =
+                     static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
+
+               boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
+               pwsServer_->listen(endpoint.address(), port);
             }
             else
-#endif
             {
-               // no ipv6 support, fall back to ipv4
-               pwsServer_->listen(boost::asio::ip::tcp::v4(), port);
+               // TODO (gary) can we just try ipv6 without sniffing, then do
+               // ipv4 if ipv6 fails?
+#if !defined(_WIN32) && !defined(__APPLE__)
+               if (core::FilePath("/proc/net/if_inet6").exists())
+               {
+                  // listen will fail without ipv6 support on the machine so we
+                  // only use it for machines with a ipv6 stack
+                  pwsServer_->listen(boost::asio::ip::tcp::v6(), port);
+               }
+               else
+#endif
+               {
+                  // no ipv6 support, fall back to ipv4
+                  pwsServer_->listen(boost::asio::ip::tcp::v4(), port);
+               }
             }
 
             pwsServer_->start_accept();

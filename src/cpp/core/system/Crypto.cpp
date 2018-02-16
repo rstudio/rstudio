@@ -32,11 +32,14 @@
 #include <openssl/rsa.h>
 
 #include <algorithm>
+#include <stdio.h>
 
 #include <boost/utility.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+
+#include <memory>
 
 // openssl calls on lion are are all marked as deprecated
 #ifdef __clang__
@@ -155,6 +158,27 @@ Error HMAC_SHA2(const std::string& data,
    {
       return lastCryptoError(ERROR_LOCATION);
    }
+}
+
+Error sha256(const std::string& message,
+             std::string* pHash)
+{
+   SHA256_CTX shaCtx = {0};
+   int ret = SHA256_Init(&shaCtx);
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   ret = SHA256_Update(&shaCtx, message.c_str(), message.size());
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   unsigned char hash[SHA256_DIGEST_LENGTH];
+   ret = SHA256_Final(hash, &shaCtx);
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   *pHash = std::string((const char*)hash, SHA256_DIGEST_LENGTH);
+   return Success();
 }
 
 Error base64Encode(const std::vector<unsigned char>& data, 
@@ -339,6 +363,132 @@ Error random(uint32_t numBytes,
    {
       return lastCryptoError(ERROR_LOCATION);
    }
+
+   return Success();
+}
+
+Error rsaSign(const std::string& message,
+              const std::string& pemPrivateKey,
+              std::string* pOutSignature)
+{
+   // create a sha256 hash of the message first which is what we will sign
+   // this prevents attackers from being able to back into creating a valid message
+   std::string hash;
+   Error error = sha256(message, &hash);
+   if (error)
+      return error;
+
+   // convert the key into an RSA structure
+   std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(BIO_new_mem_buf(const_cast<char*>(pemPrivateKey.c_str()),
+                                                      pemPrivateKey.size()),
+                                                      BIO_free);
+   if (!pKeyBuff)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSAPrivateKey(pKeyBuff.get(), NULL, NULL, NULL),
+                                                  RSA_free);
+   if (!pRsa)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+
+   // sign the message hash
+   std::unique_ptr<unsigned char, decltype(&free)> pSignature((unsigned char*)malloc(RSA_size(pRsa.get())),
+                                                              free);
+   if (!pSignature)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   unsigned int sigLen = 0;
+   int ret = RSA_sign(NID_sha256, (const unsigned char*)hash.c_str(),
+                      hash.size(), pSignature.get(), &sigLen, pRsa.get());
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   // store signature in output param
+   *pOutSignature = std::string((const char*)pSignature.get(), sigLen);
+
+   return Success();
+}
+
+Error rsaVerify(const std::string& message,
+                const std::string& signature,
+                const std::string& pemPublicKey)
+{
+   // create a sha256 hash of the message first which is what we will verify
+   // this prevents attackers from being able to back into creating a valid message
+   std::string hash;
+   Error error = sha256(message, &hash);
+   if (error)
+      return error;
+
+   // convert the key into an RSA structure
+   std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(
+            BIO_new_mem_buf(const_cast<char*>(pemPublicKey.c_str()), pemPublicKey.size()),
+            BIO_free);
+   if (!pKeyBuff)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSA_PUBKEY(pKeyBuff.get(), NULL, NULL, NULL),
+                                                  RSA_free);
+   if (!pRsa)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   // verify the message hash
+   int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), hash.size(),
+                       (const unsigned char*)signature.c_str(), signature.size(), pRsa.get());
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   return Success();
+}
+
+Error generateRsaKeyFiles(const FilePath& publicKeyPath,
+                          const FilePath& privateKeyPath)
+{
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
+   if (!pRsa)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
+   if (!pBigNum)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.absolutePath().c_str(), "w"),
+                                                     BIO_free);
+   if (!pBioPub)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.absolutePath().c_str(), "w"),
+                                                     BIO_free);
+   if (!pBioPem)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   int ret = BN_set_word(pBigNum.get(), RSA_F4);
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), NULL);
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   // Convert RSA to PKEY
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_PKEY_new(), EVP_PKEY_free);
+   if (!pKey)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   ret = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get());
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   // Write public key in PEM format
+   ret = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
+
+   // Write private key in PEM format
+   ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), NULL, NULL, 0, NULL, NULL);
+   if (ret != 1)
+      return lastCryptoError(ERROR_LOCATION);
 
    return Success();
 }

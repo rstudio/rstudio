@@ -19,6 +19,7 @@
 #include <string>
 
 #include <core/http/AsyncConnection.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -34,10 +35,60 @@ namespace rstudio {
 namespace server {
 namespace session_proxy {
 
+class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
+{
+public:
+   LocalhostAsyncClient(boost::asio::io_service& ioService,
+                        const std::string& address,
+                        const std::string& port)
+      : core::http::TcpIpAsyncClient(ioService, address, port)
+   {
+   }
+
+private:
+   // detect when we've got the whole response and force a response and a
+   // close of the socket (this is because the current version of httpuv
+   // expects a close from the client end of the socket). however, don't
+   // do this for Jetty (as it often doesn't send a Content-Length header)
+   virtual bool stopReadingAndRespond()
+   {
+      std::string server = response_.headerValue("Server");
+      if (boost::algorithm::contains(server, "Jetty"))
+      {
+         return false;
+      }
+      else
+      {
+         return response_.body().length() >= response_.contentLength();
+      }
+   }
+
+   // ensure that we don't close the connection when a websockets
+   // upgrade is taking place
+   virtual bool keepConnectionAlive()
+   {
+      return response_.statusCode() == core::http::status::SwitchingProtocols;
+   }
+};
+
+struct RequestType
+{
+   enum
+   {
+      Rpc,
+      Content,
+      Events
+   };
+};
+
+typedef boost::function<void (const core::http::Response&,
+                              const std::string& baseAddress,
+                              boost::shared_ptr<core::http::IAsyncClient>)> LocalhostResponseHandler;
+
 core::Error initialize();
 
 core::Error runVerifyInstallationSession();
-   
+
 void proxyContentRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;

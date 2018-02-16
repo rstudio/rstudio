@@ -182,6 +182,7 @@ extern const int kRequestOpenProject;
 extern const int kOpenFileDialog;
 extern const int kRemoveTerminal;
 extern const int kShowPageViewerEvent;
+extern const int kAskSecret;
 }
    
 class ClientEvent

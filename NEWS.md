@@ -6,9 +6,15 @@
 * Simple bindings to access R objects from Python chunks and vice versa
 * Show `matplotlib` plots emitted by Python chunks 
 
+### Keyring
+
+* Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
+* Install `keyring` directly from dialog prompt
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
+* New command 'Pull with Rebase' to pull and rebase a branch in a single step
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
@@ -21,6 +27,7 @@
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
 * Allow changing zoom level without reloading (#2125)
+* Click on promises in the Environment pane now calls `force` on the promise
 
 ### Bug Fixes
 

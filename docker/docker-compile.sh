@@ -36,6 +36,10 @@ VARIANT=$4
 # abort on error
 set -e
 
+# set destination folder
+PKG_DIR=$(pwd)/package
+mkdir -p "$PKG_DIR"
+
 # move to the repo root (script's grandparent directory)
 cd "$(dirname ${BASH_SOURCE[0]})/.."
 REPO=$(basename $(pwd))
@@ -55,11 +59,13 @@ fi
 # check to see if there's already a built image
 IMAGEID=`docker images $REPO:$IMAGE --format "{{.ID}}"`
 if [ -z "$IMAGEID" ]; then
-    echo "No image found for $REPO:$IMAGE. Building..."
-    docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" .
+    echo "No image found for $REPO:$IMAGE."
 else
-    echo "Found image $IMAGEID for $REPO:$IMAGE"
+    echo "Found image $IMAGEID for $REPO:$IMAGE."
 fi
+
+# rebuild the image if necessary
+docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" .
 
 # infer the package extension from the image name
 if [ "${IMAGE:0:6}" = "centos" ]; then
@@ -97,6 +103,28 @@ elif hash sysctl 2>/dev/null; then
     ENV="$ENV MAKEFLAKGS=-j$(sysctl -n hw.ncpu)"
 fi
 
+# remove previous image if it exists
+CONTAINER_ID="build-$REPO-$IMAGE"
+echo "Cleaning up container $CONTAINER_ID if it exists..."
+docker rm "$CONTAINER_ID" || true
+
 # run compile step
-docker run --rm -v $(pwd):/src $REPO:$IMAGE bash -c "cd /src/dependencies/linux && ./install-dependencies-$INSTALLER --exclude-qt-sdk && cd /src/package/linux && $ENV ./make-$FLAVOR-package $PACKAGE clean $VARIANT"
+docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean $VARIANT && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,}"
+
+# extract logs to get filename (should be on the last line)
+PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
+
+if [ "${PKG_FILENAME:0:6}" = "build-" ]; then
+  docker cp "$CONTAINER_ID:/package/$PKG_FILENAME" "$PKG_DIR"
+  echo "Packages produced"
+  echo "-----------------"
+  echo $PKG_FILENAME
+else
+  echo "No package found."
+fi
+
+# stop the container
+docker stop "$CONTAINER_ID"
+echo "Container image saved in $CONTAINER_ID."
+
 

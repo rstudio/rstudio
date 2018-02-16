@@ -19,7 +19,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 public interface EnvironmentObjectsObserver
 {
-   void viewObject(String objectName);
+   void viewObject(String action, String objectName);
    void setObjectExpanded(String objectName);
    void setObjectCollapsed(String objectName);
    void setPersistedScrollPosition(int scrollPosition);

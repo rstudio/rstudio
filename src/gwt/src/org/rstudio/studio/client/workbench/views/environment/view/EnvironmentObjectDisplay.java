@@ -89,10 +89,12 @@ public abstract class EnvironmentObjectDisplay
          {
             boolean isClickable =
                   host_.enableClickableObjects() &&
-                  object.getCategory() != RObjectEntry.Categories.Value;
+                  (object.isPromise() ||
+                   object.getCategory() != RObjectEntry.Categories.Value);
             
             if (isClickable)
-               observer_.viewObject(object.rObject.getName());
+               observer_.viewObject(object.isPromise() ?
+                  "force" : "View", object.rObject.getName());
          }
       });
    }

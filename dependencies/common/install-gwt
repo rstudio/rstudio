@@ -3,7 +3,7 @@
 #
 # install-gwt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -27,22 +27,24 @@ download()
 {
   if [ "$PLATFORM" == "Darwin" ]
   then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+    curl -L "https://s3.amazonaws.com/rstudio-buildtools/$1" > "$1"
   else
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
+    wget "https://s3.amazonaws.com/rstudio-buildtools/$1" -O "$1"
   fi
 }
 
 # target directory for gwt; if there's an opt folder then use that, otherwise,
 # presume we're using the install dir
-GWT_DIR="/opt/rstudio-tools/gwt"
-if ! [ -d "$GWT_DIR" ]; then
+OPT_DEPENDENCIES="/opt/rstudio-tools/dependencies/common"
+if [ -d "$OPT_DEPENDENCIES" ]; then
+   GWT_DIR="$OPT_DEPENDENCIES/gwt"
+else
    GWT_DIR=$INSTALL_DIR/../../src/gwt
 fi
 
 # lib dir
 LIB_DIR=$GWT_DIR/lib
-mkdir -p $LIB_DIR
+mkdir -p "$LIB_DIR"
 
 # gin
 GIN_VER=2.1.2
