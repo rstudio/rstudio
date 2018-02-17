@@ -55,16 +55,30 @@ QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
 bool showYesNoDialog(QMessageBox::Icon icon,
                      QWidget *parent,
                      const QString &title,
-                     const QString& text);
+                     const QString& text,
+                     const QString& informativeText,
+                     bool yesDefault);
 
 void showMessageBox(QMessageBox::Icon icon,
                     QWidget *parent,
                     const QString &title,
-                    const QString& text);
+                    const QString& text,
+                    const QString& informativeText);
 
-void showWarning(QWidget *parent, const QString &title, const QString& text);
+void showError(QWidget *parent,
+               const QString &title,
+               const QString& text,
+               const QString& informativeText);
 
-void showInfo(QWidget* parent, const QString& title, const QString& text);
+void showWarning(QWidget *parent,
+                 const QString &title,
+                 const QString& text,
+                 const QString& informativeText);
+
+void showInfo(QWidget* parent,
+              const QString& title,
+              const QString& text,
+              const QString& informativeText);
 
 void showFileError(const QString& action,
                    const QString& file,

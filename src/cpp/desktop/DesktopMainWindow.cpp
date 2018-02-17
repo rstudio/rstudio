@@ -154,7 +154,8 @@ void MainWindow::launchSession(bool reload)
       showMessageBox(QMessageBox::Critical,
                      this,
                      QString::fromUtf8("RStudio"),
-                     QString::fromUtf8("The R session failed to start."));
+                     QString::fromUtf8("The R session failed to start."),
+                     QString());
 
       quit();
    }
@@ -268,7 +269,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       pEvent->accept();
       return;
    }
-   
+
    pEvent->ignore();
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),

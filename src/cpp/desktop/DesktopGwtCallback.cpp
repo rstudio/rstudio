@@ -15,20 +15,16 @@
 
 #include "DesktopGwtCallback.hpp"
 
-#include <algorithm>
-
 #ifdef _WIN32
 #include <shlobj.h>
 #endif
 
 #include <boost/foreach.hpp>
 
-#include <QClipboard>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
-#include <QJsonObject>
 
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
@@ -1170,7 +1166,8 @@ void GwtCallback::openTerminal(QString terminalPath,
          nullptr,
          QString::fromUtf8("Terminal Not Found"),
          QString::fromUtf8(
-                  "Unable to find a compatible terminal program to launch"));
+                  "Unable to find a compatible terminal program to launch"),
+         QString());
    }
 
 #endif
@@ -1230,7 +1227,7 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 
 void GwtCallback::showLicenseDialog()
 {
-   activation().showLicenseDialog();
+   activation().showLicenseDialog(false /*showQuitButton*/);
 }
 
 QString GwtCallback::getInitMessages()

@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,18 +14,11 @@
  */
 
 #include "DesktopWebView.hpp"
-#include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QTemporaryFile>
 #include <QStyleFactory>
 #include <QMenu>
 
-#include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-#include "DesktopDownloadHelper.hpp"
-#include "DesktopOptions.hpp"
-#include "DesktopWebPage.hpp"
-#include "DesktopUtils.hpp"
 
 #ifdef _WIN32
 #include <windows.h>

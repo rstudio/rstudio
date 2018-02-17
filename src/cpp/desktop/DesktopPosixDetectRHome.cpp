@@ -1,7 +1,7 @@
 /*
  * DesktopPosixDetectRHome.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,22 +15,15 @@
 
 #include "DesktopDetectRHome.hpp"
 
-#include <vector>
-
 #include <boost/algorithm/string/trim.hpp>
 
-#include <QtCore>
 #include <QMessageBox>
 
-#include <core/Error.hpp>
-#include <core/Log.hpp>
-#include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/r_util/REnvironment.hpp>
 
 #include "DesktopUtils.hpp"
-#include "DesktopOptions.hpp"
 
 using namespace rstudio::core;
 
@@ -44,7 +37,7 @@ void showRNotFoundError(const std::string& msg)
    showMessageBox(QMessageBox::Critical,
                   nullptr,
                   QString::fromUtf8("R Not Found"),
-                  QString::fromUtf8(msg.c_str()));
+                  QString::fromUtf8(msg.c_str()), QString());
 }
 
 } // anonymous namespace

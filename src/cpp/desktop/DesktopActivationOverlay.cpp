@@ -20,6 +20,10 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
+namespace {
+
+} // anonymous namespace
+
 DesktopActivation& activation()
 {
    static DesktopActivation singleton;
@@ -50,13 +54,17 @@ void DesktopActivation::getInitialLicense(const QStringList& arguments,
    emit launchFirstSession();
 }
 
-void DesktopActivation::showLicenseDialog(QWidget* pParent)
+void DesktopActivation::setMainWindow(QWidget* pWidget)
+{
+}
+
+void DesktopActivation::showLicenseDialog(bool showQuitButton)
 {
 }
 
 void DesktopActivation::emitLicenseLostSignal()
 {
-   emit licenseLost(QString::fromUtf8(currentLicenseStateMessage().c_str()));
+   emit licenseLost(QString::fromStdString(currentLicenseStateMessage()));
 }
 
 void DesktopActivation::emitLaunchFirstSession()
@@ -67,6 +75,16 @@ void DesktopActivation::emitLaunchFirstSession()
 void DesktopActivation::emitLaunchError(QString message)
 {
    emit launchError(message);
+}
+
+void DesktopActivation::emitLaunchError()
+{
+   emitLaunchError(QString());
+}
+
+void DesktopActivation::emitDetectLicense()
+{
+   emit detectLicense();
 }
 
 } // namespace desktop

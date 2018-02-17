@@ -17,7 +17,6 @@
 #define DESKTOP_ACTIVATION_HPP
 
 #include <QObject>
-#include <QProcess>
 
 #include <core/FilePath.hpp>
 
@@ -51,17 +50,33 @@ public:
    // Description of license state
    std::string licenseStatus();
 
-   void showLicenseDialog(QWidget* pParent = nullptr);
+   // Set main window, so we can supply it as default parent of message boxes
+   void setMainWindow(QWidget* pWidget);
+
+   void showLicenseDialog(bool showQuitButton);
 
 Q_SIGNALS:
    void licenseLost(QString licenseMessage);
    void launchFirstSession();
    void launchError(QString message);
+   void detectLicense();
 
 public:
+
+   // license has been lost while using the program
    void emitLicenseLostSignal();
+
+   // start a session after validating initial license
    void emitLaunchFirstSession();
+
+   // show a messagebox then exit the program
    void emitLaunchError(QString message);
+
+   // exit the program
+   void emitLaunchError();
+
+   // detect (or re-detect) license status
+   void emitDetectLicense();
 };
 
 } // namespace desktop

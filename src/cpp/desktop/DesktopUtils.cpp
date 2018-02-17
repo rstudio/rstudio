@@ -15,23 +15,11 @@
 
 #include "DesktopUtils.hpp"
 
-#include <QPointer>
-#include <QProcess>
 #include <QPushButton>
 #include <QTimer>
-#include <QEventLoop>
 #include <QDesktopServices>
 
-#include <boost/atomic.hpp>
-#include <boost/foreach.hpp>
-#include <boost/thread.hpp>
-#include <boost/ref.hpp>
-
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/system/Process.hpp>
-#include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopOptions.hpp"
@@ -175,25 +163,29 @@ QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
 #endif
 }
 
-
 bool showYesNoDialog(QMessageBox::Icon icon,
                      QWidget *parent,
                      const QString &title,
-                     const QString& text)
+                     const QString& text,
+                     const QString& informativeText,
+                     bool yesDefault)
 {
    // basic message box attributes
-   QMessageBox messageBox(safeMessageBoxIcon(icon),
-                          title,
-                          text,
-                          QMessageBox::NoButton,
-                          parent);
+   QMessageBox messageBox(parent);
+   messageBox.setIcon(safeMessageBoxIcon(icon));
+   messageBox.setWindowTitle(title);
+   messageBox.setText(text);
+   if (informativeText.length() > 0)
+      messageBox.setInformativeText(informativeText);
    messageBox.setWindowModality(Qt::WindowModal);
 
    // initialize buttons
-   QPushButton* pYes = new QPushButton(QString::fromUtf8("Yes"));
-   messageBox.addButton(pYes, QMessageBox::YesRole);
-   messageBox.addButton(new QPushButton(QString::fromUtf8("No")), QMessageBox::NoRole);
-   messageBox.setDefaultButton(pYes);
+   QPushButton* pYes = messageBox.addButton(QMessageBox::Yes);
+   QPushButton* pNo = messageBox.addButton(QMessageBox::No);
+   if (yesDefault)
+      messageBox.setDefaultButton(pYes);
+   else
+      messageBox.setDefaultButton(pNo);
 
    // show the dialog modally
    messageBox.exec();
@@ -205,27 +197,42 @@ bool showYesNoDialog(QMessageBox::Icon icon,
 void showMessageBox(QMessageBox::Icon icon,
                     QWidget *parent,
                     const QString &title,
-                    const QString& text)
+                    const QString& text,
+                    const QString& informativeText)
 {
-   // basic message box attributes
-   QMessageBox messageBox(safeMessageBoxIcon(icon),
-                          title,
-                          text,
-                          QMessageBox::NoButton,
-                          parent);
+   QMessageBox messageBox(parent);
+   messageBox.setIcon(safeMessageBoxIcon(icon));
+   messageBox.setWindowTitle(title);
+   messageBox.setText(text);
+   if (informativeText.length() > 0)
+      messageBox.setInformativeText(informativeText);
    messageBox.setWindowModality(Qt::WindowModal);
    messageBox.addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
    messageBox.exec();
 }
 
-void showWarning(QWidget *parent, const QString &title, const QString& text)
+void showError(QWidget *parent,
+               const QString &title,
+               const QString& text,
+               const QString& informativeText)
 {
-   showMessageBox(QMessageBox::Warning, parent, title, text);
+   showMessageBox(QMessageBox::Critical, parent, title, text, informativeText);
 }
 
-void showInfo(QWidget* parent, const QString& title, const QString& text)
+void showWarning(QWidget *parent,
+                 const QString &title,
+                 const QString& text,
+                 const QString& informativeText)
 {
-   showMessageBox(QMessageBox::Information, parent, title, text);
+   showMessageBox(QMessageBox::Warning, parent, title, text, informativeText);
+}
+
+void showInfo(QWidget* parent,
+              const QString& title,
+              const QString& text,
+              const QString& informativeText)
+{
+   showMessageBox(QMessageBox::Information, parent, title, text, informativeText);
 }
 
 void showFileError(const QString& action,
@@ -238,7 +245,8 @@ void showFileError(const QString& action,
    showMessageBox(QMessageBox::Critical,
                   nullptr,
                   QString::fromUtf8("File Error"),
-                  msg);
+                  msg,
+                  QString());
 }
 
 bool isFixedWidthFont(const QFont& font)
