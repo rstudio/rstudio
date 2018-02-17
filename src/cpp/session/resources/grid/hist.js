@@ -59,12 +59,16 @@ var hist = function (ele, breaks, counts, start, end, update) {
    }
 
    // update selection based on start/end points
-   var updateSelection = function() {
+   var updateSelection = function(fireEvent) {
+      // apply the correct class to each node based on whether it is contained within the selection
       for (var i = 0; i < backs.length; i++) {
          backs[i].className = (i >= start && i <= end) ?
             "histBack selected" : "histBack";
       }
-      update(breaks[start], breaks[end + 1]);
+      // if requested, let the caller know that the selection has changed
+      if (fireEvent) {
+         update(breaks[start], breaks[end + 1]);
+      }
    };
 
    // given an element, find the bin to which it corresponds, or null if the the bin could not be
@@ -103,12 +107,12 @@ var hist = function (ele, breaks, counts, start, end, update) {
          end = last;
       }
 
-      // redraw
-      updateSelection();
+      // redraw and fire update
+      updateSelection(true);
    };
 
-   // perform initial redraw
-   updateSelection();
+   // perform initial redraw, but don't fire an update event
+   updateSelection(false);
 
    // set up event listeners
    ele.addEventListener("mousedown", function(evt) {
@@ -118,7 +122,7 @@ var hist = function (ele, breaks, counts, start, end, update) {
       }
       start = bin;
       end = bin;
-      updateSelection();
+      updateSelection(true);
       ele.addEventListener("mousemove", brush);
    });
 

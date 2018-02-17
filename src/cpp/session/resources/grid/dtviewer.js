@@ -370,6 +370,8 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     }
 
     var filterFromRange = function(start, end) {
+       if (Math.abs(start - end) === 0)
+         return "" + start;
        return start + " - " + end;
     };
 
@@ -394,12 +396,19 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
        } else {
           var matches = val.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
           if (matches !== null && matches.length > 2) {
-             searchText = matches[1] + "_" + matches[2];
+             // we found a properly formatted query; check to make sure it actually reduces the data
+             // set before applying
+             if (Math.abs(parseFloat(matches[1]) - min) !== 0 ||
+                 Math.abs(parseFloat(matches[2]) - max) !== 0)
+             {
+                searchText = matches[1] + "_" + matches[2];
+             }
           }
        }
 
        if (searchText.length > 0) {
-         searchText = "numeric|" + searchText;
+          // we found a query! apply it.
+          searchText = "numeric|" + searchText;
        }
        table.columns(idx).search(searchText).draw();
     }, 200);
@@ -411,6 +420,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
        evt.stopPropagation();
     });
     numVal.addEventListener("keydown", function(evt) {
+       // dismiss when user finishes typing in the value box
        if (!dismissActivePopup)
           return;
        else if (evt.keyCode === 27)

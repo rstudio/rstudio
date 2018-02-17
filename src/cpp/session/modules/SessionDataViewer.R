@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -172,7 +172,7 @@
    if (is.data.frame(x))
    {
       info <- .row_names_info(x, type = 0L)
-      if (is.integer(info) && is.na(info[[1]]))
+      if (is.integer(info) && length(info) > 0 && is.na(info[[1]]))
       {
          # the second element indicates the number of rows, and is negative if they're 
          # automatic
