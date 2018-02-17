@@ -256,6 +256,15 @@ public class Application implements ApplicationEventHandlers
       });
    }
    
+   @Handler
+   void onShowLicenseDialog()
+   {
+      if (pEdition_.get() != null)
+      {
+         pEdition_.get().showLicense();
+      }
+   }
+   
    public void onUnauthorized(UnauthorizedEvent event)
    {
       navigateToSignIn();
@@ -902,6 +911,12 @@ public class Application implements ApplicationEventHandlers
       {
          if (!pEdition_.get().proLicense())
             commands_.rstudioSupport().remove();
+         
+         // only show License menu command in Desktop Pro
+         if (!pEdition_.get().proLicense() || !Desktop.isDesktop())
+         {
+            commands_.showLicenseDialog().remove();
+         }
       }
       
       // toolbar (must be after call to showWorkbenchView because

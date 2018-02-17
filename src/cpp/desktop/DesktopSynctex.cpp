@@ -1,7 +1,7 @@
 /*
  * DesktopSynctex.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,10 @@
 
 #include "DesktopSynctex.hpp"
 
-#include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/Error.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
-#include <core/system/Process.hpp>
-
-#include "DesktopUtils.hpp"
 
 // per-platform synctex implemetnations
 #if defined(Q_OS_MAC)

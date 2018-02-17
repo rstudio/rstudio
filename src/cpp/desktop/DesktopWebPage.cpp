@@ -15,27 +15,17 @@
 
 #include "DesktopWebPage.hpp"
 
-#include <mutex>
-
 #include <boost/algorithm/string.hpp>
 
-#include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
 #include <core/Thread.hpp>
 
-#include <QWidget>
-#include <QWebEnginePage>
 #include <QWebEngineSettings>
-
-#include <QtDebug>
 
 #include "DesktopWindowTracker.hpp"
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopWebProfile.hpp"
-#include "DesktopUtils.hpp"
 
 using namespace rstudio::core;
 

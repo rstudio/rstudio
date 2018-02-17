@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,6 @@
 #include <core/Log.hpp>
 
 #include <core/system/FileScanner.hpp>
-#include <core/Error.hpp>
-#include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -36,7 +33,6 @@
 #include "DesktopApplicationLaunch.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopDetectRHome.hpp"
-#include "DesktopOptions.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 #include "DesktopProgressActivator.hpp"

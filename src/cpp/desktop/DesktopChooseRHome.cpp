@@ -1,7 +1,7 @@
 /*
  * DesktopChooseRHome.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -123,7 +123,7 @@ void ChooseRHome::chooseOther()
             this,
             QString::fromUtf8("Invalid R Directory"),
             QString::fromUtf8("This directory does not appear to contain a "
-            "valid R installation.\n\nPlease try again."));
+            "valid R installation.\n\nPlease try again."), QString());
       return;
    }
    else if (versions.size() > 1)
@@ -163,7 +163,8 @@ void ChooseRHome::chooseOther()
             this,
             QString::fromUtf8("Invalid R Directory"),
             QString::fromUtf8("This directory does not appear to contain a "
-                              "valid R installation.\n\nPlease try again."));
+                              "valid R installation.\n\nPlease try again."),
+            QString());
       return;
    case rstudio::desktop::ValidateBadArchitecture:
       showWarning(
@@ -171,7 +172,8 @@ void ChooseRHome::chooseOther()
             QString::fromUtf8("Incompatible R Build"),
             QString::fromUtf8("The version of R you've selected was built "
                               "for a different CPU architecture and cannot "
-                              "be used with this version of RStudio."));
+                              "be used with this version of RStudio."),
+            QString());
       return;
    case rstudio::desktop::ValidateVersionTooOld:
    default:
@@ -180,7 +182,8 @@ void ChooseRHome::chooseOther()
             QString::fromUtf8("Incompatible R Build"),
             QString::fromUtf8("The version of R you've selected is not "
                               "compatible with RStudio. Please install a "
-                              "newer version of R."));
+                              "newer version of R."),
+            QString());
       return;
    }
 
@@ -217,8 +220,8 @@ void ChooseRHome::done(int r)
                      QString::fromUtf8("No compatible %1 version was found. If you "
                                        "have a compatible version of %1 installed, "
                                        "please choose it manually."
-                                       ).arg(name)
-                     );
+                                       ).arg(name),
+                     QString());
                ui->radioCustom->setChecked(true);
                return;
             }
@@ -231,7 +234,9 @@ void ChooseRHome::done(int r)
                      QString::fromUtf8("R does not appear to be installed. Please "
                                        "install R before using RStudio.\n\n"
                                        "You can download R from the official R Project "
-                                       "website. Would you like to go there now?")))
+                                       "website. Would you like to go there now?"),
+                     QString(),
+                     true /*yesDefault*/))
                {
                   rstudio::desktop::openUrl(QUrl(QString::fromUtf8("https://www.rstudio.org/links/r-project")));
                }

@@ -23,17 +23,12 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
-#include <core/system/System.hpp>
 #include <core/r_util/RUserData.hpp>
 
-#include <QProcess>
 #include <QPushButton>
-#include <QtNetwork/QTcpSocket>
 
-#include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
-#include "DesktopGwtCallback.hpp"
 #include "DesktopActivationOverlay.hpp"
 
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
@@ -166,6 +161,7 @@ Error SessionLauncher::launchFirstSession()
    {
       finalPlatformInitialize(pMainWindow_);
       pMainWindow_->show();
+      desktop::activation().setMainWindow(pMainWindow_);
       pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
    }
@@ -207,7 +203,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
                         QString::fromUtf8("RStudio"),
-                        launchFailedErrorMessage());
+                        launchFailedErrorMessage(), QString());
       }
    }
 
@@ -231,7 +227,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
                         QString::fromUtf8("RStudio"),
-                        QString::fromUtf8(message.c_str()));
+                        QString::fromUtf8(message.c_str()), QString());
          closeAllSatellites();
          pMainWindow_->quit();
          return;
@@ -251,7 +247,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
                         QString::fromUtf8("RStudio"),
-                        launchFailedErrorMessage());
+                        launchFailedErrorMessage(), QString());
 
          pMainWindow_->quit();
       }
@@ -341,12 +337,14 @@ Error SessionLauncher::launchSession(const QStringList& argList,
 
 void SessionLauncher::onLaunchError(QString message)
 {
-  QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
-      QString::fromUtf8("RStudio"),
-      message);
-  errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
-      QMessageBox::AcceptRole);
-  errorMsg.exec();
+   qApp->setQuitOnLastWindowClosed(true);
+   if (!message.isEmpty())
+   {
+      QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
+                           tr("RStudio"), message);
+      errorMsg.addButton(QMessageBox::Close);
+      errorMsg.exec();
+   }
   qApp->exit(EXIT_FAILURE);
 }
 

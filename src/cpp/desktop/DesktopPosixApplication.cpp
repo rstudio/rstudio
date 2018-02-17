@@ -1,7 +1,7 @@
 /*
  * DesktopPosixApplication.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,8 @@
 
 #include "DesktopPosixApplication.hpp"
 
-#include <vector>
-
 #include <core/FilePath.hpp>
 
-#include <QProcess>
 #include <QFileOpenEvent>
 
 #include "DesktopOptions.hpp"

@@ -1,7 +1,7 @@
 /*
  * AboutDialogContents.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,14 +59,14 @@ public class AboutDialogContents extends Composite
       
       if (editionInfo.proLicense() && Desktop.isDesktop())
       {
-         // TODO: since this runs asynchronously this might be problematic
+         noticeBox.setVisibleLines(10);
+         licenseBox.setVisibleLines(2);
+         licenseLabel.setVisible(true);
+         licenseBox.setVisible(true);
+         licenseBox.setText("Loading...");
+         
          Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
          {
-            int licenseLines = StringUtil.newlineCount(licenseStatus);
-            noticeBox.setVisibleLines(10);
-            licenseBox.setVisibleLines(Math.min(12, licenseLines + 1));
-            licenseLabel.setVisible(true);
-            licenseBox.setVisible(true);
             licenseBox.setText(licenseStatus);
          });
       }

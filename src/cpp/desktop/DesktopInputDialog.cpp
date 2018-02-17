@@ -1,7 +1,7 @@
 /*
  * DesktopInputDialog.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -112,7 +112,8 @@ void InputDialog::done(int r)
       {
          rstudio::desktop::showWarning(this,
                      QString::fromUtf8("Error"),
-                     QString::fromUtf8("You must enter a value."));
+                     QString::fromUtf8("You must enter a value."),
+                     QString());
          return;
        }
    }

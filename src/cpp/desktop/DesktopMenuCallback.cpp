@@ -18,10 +18,6 @@
 #include <QApplication>
 #include <QWindow>
 
-#ifdef Q_OS_MAC
-#include <ApplicationServices/ApplicationServices.h>
-#endif
-
 namespace rstudio {
 namespace desktop {
 

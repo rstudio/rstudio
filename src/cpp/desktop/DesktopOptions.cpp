@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-#include <core/Error.hpp>
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
