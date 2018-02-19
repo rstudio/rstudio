@@ -109,7 +109,7 @@ public class AppNameTextbox extends Composite
          if (validTitle_)
             name_ = app;
          else
-            error_.setText("The title must contain 3 - 64 alphanumeric " + 
+            error_.setText("The title must contain 4 - 64 alphanumeric " + 
                            "characters.");
          return;
       }
