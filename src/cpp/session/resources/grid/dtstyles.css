@@ -472,3 +472,16 @@ div.dataTables_scroll div.dataTables_scrollHead {
     margin-right: 5px;
     width: 100px;
 }
+
+.rstudio-themes-flat.editor_dark .histBack.selected {
+    background-color: #6B7882;
+}
+
+.rstudio-themes-flat.editor_dark .histBar {
+    background-color: #5989B9;
+}
+
+.rstudio-themes-flat.editor_dark .selected .histBar {
+    background-color: #79A9D9;
+}
+
