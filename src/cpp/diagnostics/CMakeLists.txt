@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -65,4 +65,15 @@ target_link_libraries(diagnostics
 )
 if(NOT RSTUDIO_SESSION_WIN64)
    install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
+endif()
+
+# if doing a package build on MacOS, reroute the OpenSSL libraries to our bundled copies
+if(APPLE AND RSTUDIO_PACKAGE_BUILD)
+   find_package(OpenSSL REQUIRED QUIET)
+   foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+      get_filename_component(LIB_DIR ${lib} PATH)
+      execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+      add_custom_command (TARGET diagnostics POST_BUILD
+         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/diagnostics)
+   endforeach()
 endif()
