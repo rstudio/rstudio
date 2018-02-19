@@ -441,15 +441,21 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     var binStart = 0;
     var binEnd = col.col_breaks.length - 2;
 
-    // if min/max provided, update subset
+    // find the bins that best fit the current min/max values
     for (var i = 0; i < col.col_breaks.length; i++) {
-       // comparison with === doesn't work directly because of Javascript number precision; instead,
-       // subtract the numbers and see if the result is effectively 0
-       if (Math.abs(col.col_breaks[i] - min) === 0) {
+       if (Math.abs(col.col_breaks[i] - min) < Math.abs(col.col_breaks[binStart] - min)) {
           binStart = i;
-       } else if (Math.abs(col.col_breaks[i] - max) === 0) {
+       } 
+       if (i === 0)
+          continue;
+       if (Math.abs(col.col_breaks[i] - max) < Math.abs(col.col_breaks[binEnd] - max)) {
           binEnd = i - 1;
-       }
+       } 
+    }
+
+    // select just one bin in the single bin case
+    if (binEnd < binStart) {
+       binStart = binEnd;
     }
 
     // create histogram
