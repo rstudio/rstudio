@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <tlhelp32.h>
+#include <VersionHelpers.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -235,38 +236,12 @@ bool isCurrentProcessWin64()
 
 bool isVistaOrLater()
 {
-   OSVERSIONINFOA osVersion;
-   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
-   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-
-   if (::GetVersionExA(&osVersion))
-   {
-      return osVersion.dwMajorVersion >= 6;
-   }
-   else
-   {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return false;
-   }
+   return IsWindowsVistaOrGreater();
 }
 
 bool isWin7OrLater()
 {
-   OSVERSIONINFOA osVersion;
-   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
-   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-
-   if (::GetVersionExA(&osVersion))
-   {
-      // 6.0 Vista, 6.1 Win7, 6.2 Win8, 6.3 Win8.1, >6 is Win10+
-      return osVersion.dwMajorVersion > 6 ||
-             osVersion.dwMajorVersion == 6 && osVersion.dwMinorVersion > 0;
-   }
-   else
-   {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return false;
-   }
+   return IsWindows7OrGreater();
 }
 
 std::string username()
