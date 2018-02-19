@@ -215,26 +215,42 @@ options(connectionObserver = list(
    NULL
 })
 
-.rs.addFunction("connectionReadSnippets", function() {
+.rs.addFunction("connectionFilesPath", function(include, exclude) {
    snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
-   snippetsFiles <- list()
 
    if (!is.null(getOption("connections-path")) && !dir.exists(snippetsPath)) {
       warning(
          "Path '", snippetsPath, "' does not exist. ",
          "Configure the connections-path option appropriately.")
    }
+
+   snippetsPath
+})
+
+.rs.addFunction("connectionFiles", function(include, exclude) {
+   snippetsPath <- .rs.connectionFilesPath()
+   snippetsFiles <- list()
    
    if (!is.null(snippetsPath)) {
       snippetsFiles <- list.files(snippetsPath)
    }
 
-   snippets <- lapply(snippetsFiles, function(file) {
+   files <- lapply(snippetsFiles, function(file) {
       fullPath <- file.path(snippetsPath, file)
-      paste(readLines(fullPath), collapse = "\n")
    })
 
-   names(snippets) <- tools::file_path_sans_ext(snippetsFiles)
+   names(files) <- gsub(include, "", snippetsFiles)
+
+   files <- files[grepl(include, files)]
+   files[!grepl(exclude, files)]
+})
+
+.rs.addFunction("connectionReadSnippets", function() {
+   snippetsPaths <- .rs.connectionFiles(".R$", ".app.R$")
+
+   snippets <- lapply(snippetsPaths, function(fullPath) {
+      paste(readLines(fullPath), collapse = "\n")
+   })
 
    lapply(names(snippets), function(snippetName) {
       tryCatch({
@@ -248,6 +264,48 @@ options(connectionObserver = list(
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
             iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+            licensed = .rs.scalar(FALSE),
+            source = .rs.scalar("Snippet")
+         )
+      }, error = function(e) {
+         warning(e$message)
+         NULL
+      })
+   })
+})
+
+.rs.addFunction("connectionShinyApp", function(appName) {
+   filesPath <- .rs.connectionFilesPath()
+   appPath <- normalizePath(file.path(filesPath, paste(appName, ".app.R", sep = "")))
+
+   source(appPath, local = new.env())$value
+})
+
+.rs.addFunction("connectionReadApps", function() {
+   appsPaths <- .rs.connectionFiles(".app.R$", "^$")
+
+   apps <- lapply(appsPaths, function(fullPath) {
+      paste(readLines(fullPath), collapse = "\n")
+   })
+
+   lapply(names(apps), function(appName) {
+      tryCatch({
+         list(
+            package = .rs.scalar(NULL),
+            version = .rs.scalar(NULL),
+            name = .rs.scalar(appName),
+            type = .rs.scalar("Shiny"),
+            newConnection = .rs.scalar(
+               paste(
+                  ".rs.connectionShinyApp(\"",
+                  appName,
+                  "\")",
+                  sep = ""
+               )
+            ),
+            snippet = .rs.scalar(NULL),
+            help = .rs.scalar(NULL),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", appName)),
             licensed = .rs.scalar(FALSE),
             source = .rs.scalar("Snippet")
          )
@@ -462,6 +520,7 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    connectionList <- c(
       list(),
+      .rs.connectionReadApps(),      # add apps to connections list
       .rs.connectionReadSnippets(),  # add snippets to connections list
       .rs.connectionReadDSN(),       # add ODBC DSNs to connections list
       .rs.connectionReadPackages(),  # add packages to connections list
