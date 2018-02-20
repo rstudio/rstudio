@@ -45,7 +45,7 @@ public:
 private:
    SocketProxy(boost::shared_ptr<core::http::Socket> ptrClient,
                boost::shared_ptr<core::http::Socket> ptrServer)
-      : ptrClient_(ptrClient), ptrServer_(ptrServer), closed_(false)
+      : ptrClient_(ptrClient), ptrServer_(ptrServer)
    {
    }
 
@@ -71,7 +71,6 @@ private:
    boost::array<char, 8192> clientBuffer_;
    boost::array<char, 8192> serverBuffer_;
    boost::mutex socketMutex_;
-   bool closed_;
 };
 
 } // namespace http
