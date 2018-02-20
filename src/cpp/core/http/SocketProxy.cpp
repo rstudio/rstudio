@@ -126,7 +126,11 @@ void SocketProxy::handleClientWrite(const boost::system::error_code& e,
    }
    else
    {
-      handleError(e, ERROR_LOCATION);
+      LOCK_MUTEX(socketMutex_)
+      {
+         handleError(e, ERROR_LOCATION);
+      }
+      END_LOCK_MUTEX
    }
 }
 
@@ -139,7 +143,11 @@ void SocketProxy::handleServerWrite(const boost::system::error_code& e,
    }
    else
    {
-      handleError(e, ERROR_LOCATION);
+      LOCK_MUTEX(socketMutex_)
+      {
+         handleError(e, ERROR_LOCATION);
+      }
+      END_LOCK_MUTEX
    }
 }
 
@@ -182,8 +190,16 @@ void SocketProxy::handleError(const boost::system::error_code& e,
 
 void SocketProxy::close()
 {
-   ptrClient_->close();
-   ptrServer_->close();
+   // ensure we only close the connections once
+   // closing sockets more than once is considered misuses by boost
+   // and can (and has) lead to segfaults
+   if (!closed_)
+   {
+      ptrClient_->close();
+      ptrServer_->close();
+
+      closed_ = true;
+   }
 }
 
 } // namespace http
