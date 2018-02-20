@@ -27,6 +27,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/Thread.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -58,7 +59,8 @@ public:
         socket_(ioService),
         handler_(handler),
         requestFilter_(requestFilter),
-        responseFilter_(responseFilter)
+        responseFilter_(responseFilter),
+        closed_(false)
         
    {
    }
@@ -157,9 +159,20 @@ public:
 
    virtual void close()
    {
-      Error error = closeSocket(socket_);
-      if (error && !core::http::isConnectionTerminatedError(error))
-         LOG_ERROR(error);
+      // ensure the socket is only closed once - boost considers
+      // multiple closes an error, and this can lead to a segfault
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!closed_)
+         {
+            Error error = closeSocket(socket_);
+            if (error && !core::http::isConnectionTerminatedError(error))
+               LOG_ERROR(error);
+
+            closed_ = true;
+         }
+      }
+      END_LOCK_MUTEX;
    }
    
 private:
@@ -308,8 +321,10 @@ private:
    std::string originalUri_;
    http::Request request_;
    http::Response response_;
+
+   boost::mutex socketMutex_;
+   bool closed_ = false;
 };
-   
 
 } // namespace http
 } // namespace core
