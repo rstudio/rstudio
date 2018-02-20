@@ -33,6 +33,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
+#include <core/Thread.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -73,7 +74,8 @@ public:
                bool logToStderr = false)
       : ioService_(ioService),
         connectionRetryContext_(ioService),
-        logToStderr_(logToStderr)
+        logToStderr_(logToStderr),
+        closed_(false)
    {
    }
 
@@ -138,9 +140,20 @@ public:
 
    void close()
    {
-      Error error = closeSocket(socket().lowest_layer());
-      if (error && !core::http::isConnectionTerminatedError(error))
-         logError(error);
+      // ensure the socket is only closed once - boost considers
+      // multiple closes an error, and this can lead to a segfault
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!closed_)
+         {
+            Error error = closeSocket(socket().lowest_layer());
+            if (error && !core::http::isConnectionTerminatedError(error))
+               logError(error);
+
+            closed_ = true;
+         }
+      }
+      END_LOCK_MUTEX
    }
 
 protected:
@@ -501,6 +514,9 @@ private:
    ErrorHandler errorHandler_;
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
+
+   boost::mutex socketMutex_;
+   bool closed_;
 };
    
 
