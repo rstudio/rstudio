@@ -3,7 +3,7 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,18 +109,6 @@ var debounce = function(func, wait) {
 		clearTimeout(timeout);
 		timeout = setTimeout(later, wait);
 	};
-};
-
-// used to determine the step precision for a number--e.g.:
-// "10.4" has a step precision of 0.1
-// "12.44" has a step precision of 0.01
-// "2" has a step precision of 1
-var stepPrecision = function(str) {
-  var idx = str.indexOf(".");
-  if (idx < 0) {
-    return 1;
-  }
-  return Math.pow(10, (idx - str.length) + 1);
 };
 
 // show an error--not recoverable; user must click 'retry' to reload 
@@ -369,8 +357,8 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
   invokeFilterPopup(ele, function(popup) {
     popup.className += " numericFilterPopup";
-    var min = col.col_min.toString();
-    var max = col.col_max.toString();
+    var min = col.col_breaks[0].toString();
+    var max = col.col_breaks[col.col_breaks.length - 1].toString();
     var val = parseSearchVal(idx);
     if (val.indexOf("_") > 0) {
       var range = val.split("_");
@@ -380,40 +368,108 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       min = parseFloat(val);
       max = parseFloat(val);
     }
-    var minVal = document.createElement("div");
-    minVal.textContent = min;
-    minVal.className = "numMin selected";
-    popup.appendChild(minVal);
-    var maxVal = document.createElement("div");
-    maxVal.textContent = max;
-    maxVal.className = "numMax selected";
-    popup.appendChild(maxVal);
-    var slider = document.createElement("div");
-    slider.className = "numSlider";
-    popup.appendChild(slider);
-    var updateView = debounce(function() {
-      var searchText = 
-        minVal.textContent === min && maxVal.textContent === max ? 
-          "" :
-          minVal.textContent + "_" + maxVal.textContent;
-      if (searchText.length > 0) {
-        searchText = "numeric|" + searchText;
-      }
-      table.columns(idx).search(searchText).draw();
+
+    var filterFromRange = function(start, end) {
+       if (Math.abs(start - end) === 0)
+         return "" + start;
+       return start + " - " + end;
+    };
+
+    // create textbox to show range selected by histogram
+    var numVal = document.createElement("input");
+    numVal.type = "text";
+    numVal.className = "numValueBox";
+    numVal.style.textAlign = "center";
+    numVal.value = filterFromRange(min, max);
+
+    // update view to show expression
+    var updateView = debounce(function(val) {
+       var searchText = "";
+
+       // discard invalid characters
+       val = val.replace(/[^-0-9 .]/, "");
+
+       // just one number?
+       var digit  = val.match(/^\s*-?\d+\.?\d*\s*$/);
+       if (digit !== null && digit.length > 0) {
+          searchText = digit[0];
+       } else {
+          var matches = val.match(/^\s*(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)\s*/);
+          if (matches !== null && matches.length > 2) {
+             // we found a properly formatted query; check to make sure it actually reduces the data
+             // set before applying
+             if (Math.abs(parseFloat(matches[1]) - min) !== 0 ||
+                 Math.abs(parseFloat(matches[2]) - max) !== 0)
+             {
+                searchText = matches[1] + "_" + matches[2];
+             }
+          }
+       }
+
+       if (searchText.length > 0) {
+          // we found a query! apply it.
+          searchText = "numeric|" + searchText;
+       }
+       table.columns(idx).search(searchText).draw();
     }, 200);
-    $(slider).slider({
-      range:  true,
-      min:    col.col_min,
-      max:    col.col_max,
-      step:   Math.min(stepPrecision(col.col_min.toString()), 
-                       stepPrecision(col.col_max.toString())),
-      values: [min, max],
-      slide:  function(event, ui) {
-        minVal.textContent = ui.values[0];
-        maxVal.textContent = ui.values[1];
-        updateView();
-      }
+    numVal.addEventListener("change", function() {
+       updateView(numVal.value);
     });
+    numVal.addEventListener("click", function(evt) {
+       // prevent clicks into the value box from invoking light dismiss
+       evt.stopPropagation();
+    });
+    numVal.addEventListener("keydown", function(evt) {
+       // dismiss when user finishes typing in the value box
+       if (!dismissActivePopup)
+          return;
+       else if (evt.keyCode === 27)
+          dismissActivePopup(false);
+       else if (evt.keyCode === 13)
+          dismissActivePopup(true);
+    });
+
+    var updateText = function(start, end) {
+       numVal.value = filterFromRange(start, end);
+       updateView(numVal.value);
+    };
+
+    var histBrush = document.createElement("div");
+    histBrush.className = "numHist";
+
+    // default to selecting everything
+    var binStart = 0;
+    var binEnd = col.col_breaks.length - 2;
+
+    // find the bins that best fit the current min/max values
+    for (var i = 0; i < col.col_breaks.length; i++) {
+       if (Math.abs(col.col_breaks[i] - min) < Math.abs(col.col_breaks[binStart] - min)) {
+          binStart = i;
+       } 
+       if (i === 0)
+          continue;
+       if (Math.abs(col.col_breaks[i] - max) < Math.abs(col.col_breaks[binEnd] - max)) {
+          binEnd = i - 1;
+       } 
+    }
+
+    // select just one bin in the single bin case
+    if (binEnd < binStart) {
+       binStart = binEnd;
+    }
+
+    // create histogram
+    hist(histBrush,      // element to host histogram
+         col.col_breaks, // array of endpoints for bins
+         col.col_counts, // count of data points in each bin
+         binStart,       // index of first selected bin
+         binEnd,         // index of last selected bin
+         function(start, end) {
+            updateText(start, end);
+         });
+    popup.appendChild(histBrush);
+
+    popup.appendChild(numVal);
   }, onDismiss, false);
   ele.textContent = "[...]";
   return ele;
@@ -740,7 +796,8 @@ var createHeader = function(idx, col) {
   interior.appendChild(title);
   th.title = "column " + idx + ": " + col.col_type;
   if (col.col_type === "numeric") {
-    th.title += " with range " + col.col_min + " - " + col.col_max;
+    th.title += " with range " + col.col_breaks[0] + " - " + 
+                col.col_breaks[col.col_breaks.length - 1];
   } else if (col.col_type === "factor") {
     th.title += " with " + col.col_vals.length + " levels";
   }

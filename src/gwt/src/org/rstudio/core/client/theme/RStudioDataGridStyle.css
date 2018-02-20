@@ -1,5 +1,6 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external histBar;
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
@@ -225,3 +226,11 @@
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }
+
+/**
+ * Styles for brushing histograms
+ */
+.histBar {
+  background-color: THEME_ALTERNATE_BACKGROUND;
+}
+

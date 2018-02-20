@@ -1,7 +1,7 @@
 /*
  * dtstyles.css
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -125,12 +125,14 @@ table.dataTable {
     position: absolute;
 }
 
-.colFilter {
+.colFilter, .numValueBox {
     border: 1px solid #c0c0c0;
-    border-radius: 1px;
-    margin-top: 4px;
     background-color: #ffffff;
     border-radius: 3px;
+}
+
+.colFilter {
+    margin-top: 4px;
     white-space: nowrap;
     padding-left: 3px;
     padding-right: 3px;
@@ -140,7 +142,8 @@ table.dataTable {
     font-weight: normal;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter {
+.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter,
+.rstudio-themes-flat.rstudio-themes-dark-grey .numValueBox {
     border-color: rgb(45,60,75);
     background: rgb(108,121,131);
 }
@@ -272,31 +275,15 @@ th:focus {
     max-width: 300px;
 }
 
-.numSlider {
-    font-size: 9px;
-    width: 150px;
+.numHist {
+    width: 80px;
+    height: 80px;
     margin-right: 7px;
     margin-left: 7px;
     margin-top: 4px;
     margin-bottom: 10px;
-}
-
-.numMin {
-    width: 75px;
-    padding-left: 4px;
-    text-align: left;
-    display: inline-block;
-    font-size: 11px;
-    overflow: hidden;
-}
-
-.numMax {
-    width: 75px;
-    text-align: right;
-    padding-right: 4px;
-    display: inline-block;
-    font-size: 11px;
-    overflow: hidden;
+    padding: 10px;
+    position: relative;
 }
 
 #rsGridData_info {
@@ -461,3 +448,40 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
 div.dataTables_scroll div.dataTables_scrollHead {
     background: none !important;
 }
+
+.selected .histBar {
+    background-color: #7AAADB;
+}
+
+.histBack.selected {
+    background-color: #F5F5F5;
+}
+
+.histBar {
+    background-color: #AACBE7;
+}
+
+.histBar, .histBack {
+    cursor: pointer;
+}
+
+.numValueBox {
+    margin-top: 10px;
+    border-radius: 2px;
+    margin-left: 5px;
+    margin-right: 5px;
+    width: 100px;
+}
+
+.rstudio-themes-flat.editor_dark .histBack.selected {
+    background-color: #6B7882;
+}
+
+.rstudio-themes-flat.editor_dark .histBar {
+    background-color: #5989B9;
+}
+
+.rstudio-themes-flat.editor_dark .selected .histBar {
+    background-color: #79A9D9;
+}
+

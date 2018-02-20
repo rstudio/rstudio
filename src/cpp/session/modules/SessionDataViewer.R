@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -86,8 +86,8 @@
                   as.character(idx)
     col_type <- "unknown"
     col_type_r <- "unknown"
-    col_min <- 0
-    col_max <- 0
+    col_breaks <- c()
+    col_counts <- c()
     col_vals <- ""
     col_search_type <- ""
 
@@ -127,28 +127,17 @@
         # implicitly remove those values); if that leaves us with nothing,
         # treat this column as untyped since we can do no meaningful filtering
         # on it
-        minmax_vals <- x[[idx]][is.finite(x[[idx]])]
-        if (length(minmax_vals) > 1)
+        hist_vals <- x[[idx]][is.finite(x[[idx]])]
+        if (length(hist_vals) > 1)
         {
-          col_min <- round(min(minmax_vals), 5)
-          col_max <- round(max(minmax_vals), 5)
+          # create histogram for brushing
+          h <- hist(hist_vals, plot = FALSE)
+          col_breaks <- h$breaks
+          col_counts <- h$counts
 
-          # if the base value is 16 digits or larger, it's going to get 
-          # serialized in such a way that we can't parse it (either with a
-          # trailing "." or with a e+xx exponent), so disable filtering
-          col_min_c <- as.character(trunc(col_min))
-          col_max_c <- as.character(trunc(col_max))
-          if (nchar(col_min_c) >= 16 || grepl("e", col_min_c, fixed = TRUE) ||
-              nchar(col_max_c) >= 16 || grepl("e", col_max_c, fixed = TRUE))
-          {
-            col_min <- 0
-            col_max <- 0
-          }
-          else if (col_min < col_max) 
-          {
-            col_type <- "numeric"
-            col_search_type <- "numeric"
-          }
+          # record column type
+          col_type <- "numeric"
+          col_search_type <- "numeric"
         }
       }
       else if (is.character(val))
@@ -165,8 +154,8 @@
     list(
       col_name        = .rs.scalar(col_name),
       col_type        = .rs.scalar(col_type),
-      col_min         = .rs.scalar(col_min),
-      col_max         = .rs.scalar(col_max),
+      col_breaks      = col_breaks,
+      col_counts      = col_counts,
       col_search_type = .rs.scalar(col_search_type),
       col_label       = .rs.scalar(col_label),
       col_vals        = col_vals,
@@ -183,7 +172,7 @@
    if (is.data.frame(x))
    {
       info <- .row_names_info(x, type = 0L)
-      if (is.integer(info) && is.na(info[[1]]))
+      if (is.integer(info) && length(info) > 0 && is.na(info[[1]]))
       {
          # the second element indicates the number of rows, and is negative if they're 
          # automatic
