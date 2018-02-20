@@ -34,6 +34,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
+#include <core/Thread.hpp>
 
 #include <core/http/ChunkParser.hpp>
 #include <core/http/Request.hpp>
@@ -92,7 +93,8 @@ public:
       : ioService_(ioService),
         connectionRetryContext_(ioService),
         logToStderr_(logToStderr),
-        chunkedEncoding_(false)
+        chunkedEncoding_(false),
+        closed_(false)
    {
    }
 
@@ -160,9 +162,20 @@ public:
 
    virtual void close()
    {
-      Error error = closeSocket(socket().lowest_layer());
-      if (error && !core::http::isConnectionTerminatedError(error))
-         logError(error);
+      // ensure the socket is only closed once - boost considers
+      // multiple closes an error, and this can lead to a segfault
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!closed_)
+         {
+            Error error = closeSocket(socket().lowest_layer());
+            if (error && !core::http::isConnectionTerminatedError(error))
+               logError(error);
+
+            closed_ = true;
+         }
+      }
+      END_LOCK_MUTEX
    }
 
 protected:
@@ -602,6 +615,9 @@ private:
    boost::shared_ptr<ChunkParser> chunkParser_;
    ChunkHandler chunkHandler_;
    bool chunkedEncoding_;
+
+   boost::mutex socketMutex_;
+   bool closed_;
 };
    
 
