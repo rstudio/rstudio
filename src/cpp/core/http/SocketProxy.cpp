@@ -191,7 +191,7 @@ void SocketProxy::handleError(const boost::system::error_code& e,
 void SocketProxy::close()
 {
    // ensure we only close the connections once
-   // closing sockets more than once is considered misuses by boost
+   // closing sockets more than once is considered misuse by boost
    // and can (and has) lead to segfaults
    if (!closed_)
    {
