@@ -291,7 +291,7 @@ options(connectionObserver = list(
    lapply(names(apps), function(appName) {
       tryCatch({
          list(
-            package = .rs.scalar(NULL),
+            package = .rs.scalar(""),
             version = .rs.scalar(NULL),
             name = .rs.scalar(appName),
             type = .rs.scalar("Shiny"),
