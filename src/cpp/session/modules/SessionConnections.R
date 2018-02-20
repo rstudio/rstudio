@@ -1,7 +1,7 @@
 #
 # SessionConnections.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -258,6 +258,57 @@ options(connectionObserver = list(
    })
 })
 
+.rs.addFunction("connectionReadInstallers", function() {
+   installersPath <- getOption("connections-path", "/etc/rstudio/connections/")
+   installerFiles <- list()
+
+   if (!is.null(getOption("connections-path")) && !dir.exists(installersPath)) {
+      warning(
+         "Path '", snippetsPath, "' does not exist. ",
+         "Configure the connections-path option appropriately.")
+   }
+   
+   if (!is.null(installersPath)) {
+      installerFiles <- list.files(installersPath)
+      installerFiles <- Filter(
+         function(file) {
+            grepl("\\.dcf$", file)
+         },
+         installerFiles)
+   }
+
+   installers <- lapply(installerFiles, function(file) {
+      fullPath <- file.path(installersPath, file)
+      read.dcf(fullPath)
+   })
+
+   names(installers) <- tools::file_path_sans_ext(installerFiles)
+
+   lapply(names(installers), function(installerName) {
+      tryCatch({
+         installer <- installers[[installerName]]
+
+         list(
+            package = .rs.scalar(NULL),
+            version = .rs.scalar(NULL),
+            name = .rs.scalar(installerName),
+            type = .rs.scalar("Install"),
+            subtype = .rs.scalar("Odbc"),
+            help = .rs.scalar(NULL),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", installerName)),
+            licensed = .rs.scalar(FALSE),
+            source = .rs.scalar("Snippet"),
+            # odbc installer dcf fields
+            odbcDownload = .rs.scalar(installer[,"Download"]),
+            odbcFileName = .rs.scalar(installer[,"Filename"])
+         )
+      }, error = function(e) {
+         warning(e$message)
+         NULL
+      })
+   })
+})
+
 .rs.addFunction("connectionSupportedPackages", function() {
    list(
       list(
@@ -462,10 +513,11 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    connectionList <- c(
       list(),
-      .rs.connectionReadSnippets(),  # add snippets to connections list
-      .rs.connectionReadDSN(),       # add ODBC DSNs to connections list
-      .rs.connectionReadPackages(),  # add packages to connections list
-      .rs.connectionReadOdbc()       # add ODBC drivers to connections list
+      .rs.connectionReadSnippets(),   # add snippets to connections list
+      .rs.connectionReadDSN(),        # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),   # add packages to connections list
+      .rs.connectionReadInstallers(), # add installers to connections list
+      .rs.connectionReadOdbc()        # add ODBC drivers to connections list
    )
    
    connectionList <- Filter(function(e) !is.null(e), connectionList)
@@ -481,6 +533,7 @@ options(connectionObserver = list(
          version = .rs.scalar(supportedPackage$version),
          name = .rs.scalar(supportedPackage$name),
          type = .rs.scalar("Install"),
+         subtype = .rs.scalar("Package"),
          newConnection = .rs.scalar(NULL),
          snippet = .rs.scalar(NULL),
          help = .rs.scalar(NULL),
