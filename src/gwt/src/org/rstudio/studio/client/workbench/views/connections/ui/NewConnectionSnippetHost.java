@@ -98,7 +98,8 @@ public class NewConnectionSnippetHost extends Composite
       snippetParts_ = parseSnippet(info.getSnippet());
       updateCodePanel();
       
-      operation.execute();
+      if (operation != null)
+         operation.execute();
    }
 
    private ArrayList<NewConnectionSnippetParts> parseSnippet(String input) {
@@ -481,6 +482,17 @@ public class NewConnectionSnippetHost extends Composite
    public static void ensureStylesInjected() 
    {
       RES.styles().ensureInjected();
+   }
+
+   public void setIntermediateResult(ConnectionOptions result) 
+   {
+      if (result != null) {
+         String intermediate = result.getIntermediateSnippet();
+         if (!StringUtil.isNullOrEmpty(intermediate)) {
+            info_.setSnippet(intermediate);
+            initialize(null, info_);
+         }
+      }
    }
    
    private ConnectionCodePanel codePanel_;

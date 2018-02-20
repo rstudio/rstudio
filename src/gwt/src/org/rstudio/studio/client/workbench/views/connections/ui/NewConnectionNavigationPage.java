@@ -87,8 +87,11 @@ public class NewConnectionNavigationPage
             else if (connectionInfo.getType() == "Snippet") {
                pages.add(new NewConnectionSnippetPage(connectionInfo, subTitle));
             }
-            else if (connectionInfo.getType() == "Install") {
+            else if (connectionInfo.getType() == "Install" && connectionInfo.getSubtype() == "Package") {
                pages.add(new NewConnectionInstallPackagePage(connectionInfo));
+            }
+            else if (connectionInfo.getType() == "Install" && connectionInfo.getSubtype() == "Odbc") {
+               pages.add(new NewConnectionInstallOdbcPage(connectionInfo, subTitle));
             }
          }
       }

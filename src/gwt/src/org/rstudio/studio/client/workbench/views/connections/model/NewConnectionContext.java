@@ -52,12 +52,20 @@ public class NewConnectionContext extends JavaScriptObject
          return this["type"];
       }-*/;
 
+      public final native String getSubtype() /*-{
+         return this["subtype"];
+      }-*/;
+
       public final native String getHelp() /*-{
          return this["help"];
       }-*/;
 
       public final native String getSnippet() /*-{
          return this["snippet"];
+      }-*/;
+
+      public final native void setSnippet(String snippet) /*-{
+         this["snippet"] = snippet;
       }-*/;
 
       public final native String iconData() /*-{

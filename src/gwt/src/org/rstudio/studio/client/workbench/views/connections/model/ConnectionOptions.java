@@ -24,6 +24,9 @@ public class ConnectionOptions extends JavaScriptObject
    
    public final native String getConnectCode() /*-{ return this.connect_code; }-*/;
    public final native String getConnectVia() /*-{ return this.connect_via; }-*/;
+
+   public final native void setIntermediateSnippet(String snippet) /*-{ this.intermediateSnippet = snippet; }-*/;
+   public final native String getIntermediateSnippet() /*-{ return this.intermediateSnippet; }-*/;
    
    public static String CONNECT_R_CONSOLE = "connect-r-console";
    public static String CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
