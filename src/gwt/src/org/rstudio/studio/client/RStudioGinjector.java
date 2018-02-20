@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePa
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallPackagePage;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionPreInstallOdbcHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
@@ -240,6 +241,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AddinsToolbarButton button);
    void injectMembers(AboutDialog aboutDialog);
    void injectMembers(NewConnectionInstallOdbcHost newConnectionInstallOdbcHost);
+   void injectMembers(NewConnectionPreInstallOdbcHost NewConnectionPreInstallOdbcHost);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -91,7 +91,7 @@ public class NewConnectionNavigationPage
                pages.add(new NewConnectionInstallPackagePage(connectionInfo));
             }
             else if (connectionInfo.getType() == "Install" && connectionInfo.getSubtype() == "Odbc") {
-               pages.add(new NewConnectionInstallOdbcPage(connectionInfo, subTitle));
+               pages.add(new NewConnectionPreInstallOdbcPage(connectionInfo, subTitle));
             }
          }
       }

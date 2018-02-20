@@ -1,5 +1,5 @@
 /*
- * NewConnectionInstallOdbcPage.java
+ * NewConnectionPreInstallOdbcPage.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -31,10 +31,10 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSni
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Widget;
 
-public class NewConnectionInstallOdbcPage 
+public class NewConnectionPreInstallOdbcPage 
    extends WizardIntermediatePage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionInstallOdbcPage(final NewConnectionInfo info, String subTitle)
+   public NewConnectionPreInstallOdbcPage(final NewConnectionInfo info, String subTitle)
    {
       super(
          info.getName(),
@@ -53,7 +53,7 @@ public class NewConnectionInstallOdbcPage
             16
          ),
          null,
-         new NewConnectionSnippetPage(info, subTitle)
+         new NewConnectionInstallOdbcPage(info, subTitle)
       );
       
       info_ = info;
@@ -72,18 +72,13 @@ public class NewConnectionInstallOdbcPage
    @Override
    public void onDeactivate(Operation operation)
    {
-      if (options_ != null) {
-         options_.setIntermediateSnippet("");
-         setIntermediateResult(options_);
-      }
-
       contents_.onDeactivate(operation);
    }
    
    @Override
    protected Widget createWidget()
    {
-      contents_ = new NewConnectionInstallOdbcHost();
+      contents_ = new NewConnectionPreInstallOdbcHost();
 
       return contents_;
    }
@@ -122,7 +117,7 @@ public class NewConnectionInstallOdbcPage
       return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
    }
    
-   private NewConnectionInstallOdbcHost contents_;
+   private NewConnectionPreInstallOdbcHost contents_;
    private NewConnectionInfo info_;
    private ConnectionOptions options_;
 }
