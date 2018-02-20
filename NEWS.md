@@ -14,7 +14,6 @@
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
-* New command 'Pull with Rebase' to pull and rebase a branch in a single step
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
@@ -27,7 +26,9 @@
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
 * Allow changing zoom level without reloading (#2125)
+* New command 'Pull with Rebase' to pull and rebase a branch in a single step (#2151)
 * Click on promises in the Environment pane now calls `force` on the promise
+* Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
 
 ### Bug Fixes
 
@@ -46,8 +47,10 @@
 * Fix duplicate prompts in each window when using RStudio API `showPrompt` (#1706)
 * Fix `file.edit` failures with Chinese filenames on Windows (#1868)
 * Fix errors when importing non-ASCII filenames in base Import Dataset (#1910)
+* Fix `rserver` crash that can occur when proxying websockets to Shiny apps (#2061)
 * Fix empty column titles when viewing matrices without column names (#2086)
 * Fix error when pressing F1 on non-function autocomplete results (#2127)
+* Fix hang when autocompleting filenames in large directories (#2236)
 
 ### RStudio Server Pro
 
