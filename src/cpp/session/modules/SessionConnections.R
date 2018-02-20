@@ -215,26 +215,42 @@ options(connectionObserver = list(
    NULL
 })
 
-.rs.addFunction("connectionReadSnippets", function() {
+.rs.addFunction("connectionFilesPath", function(include, exclude) {
    snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
-   snippetsFiles <- list()
 
    if (!is.null(getOption("connections-path")) && !dir.exists(snippetsPath)) {
       warning(
          "Path '", snippetsPath, "' does not exist. ",
          "Configure the connections-path option appropriately.")
    }
+
+   snippetsPath
+})
+
+.rs.addFunction("connectionFiles", function(include, exclude) {
+   snippetsPath <- .rs.connectionFilesPath()
+   snippetsFiles <- list()
    
    if (!is.null(snippetsPath)) {
       snippetsFiles <- list.files(snippetsPath)
    }
 
-   snippets <- lapply(snippetsFiles, function(file) {
+   files <- lapply(snippetsFiles, function(file) {
       fullPath <- file.path(snippetsPath, file)
-      paste(readLines(fullPath), collapse = "\n")
    })
 
-   names(snippets) <- tools::file_path_sans_ext(snippetsFiles)
+   names(files) <- gsub(include, "", snippetsFiles)
+
+   files <- files[grepl(include, files)]
+   files
+})
+
+.rs.addFunction("connectionReadSnippets", function() {
+   snippetsPaths <- .rs.connectionFiles(".R$")
+
+   snippets <- lapply(snippetsPaths, function(fullPath) {
+      paste(readLines(fullPath), collapse = "\n")
+   })
 
    lapply(names(snippets), function(snippetName) {
       tryCatch({
@@ -259,30 +275,11 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionReadInstallers", function() {
-   installersPath <- getOption("connections-path", "/etc/rstudio/connections/")
-   installerFiles <- list()
+   installerPaths <- .rs.connectionFiles(".dcf")
 
-   if (!is.null(getOption("connections-path")) && !dir.exists(installersPath)) {
-      warning(
-         "Path '", snippetsPath, "' does not exist. ",
-         "Configure the connections-path option appropriately.")
-   }
-   
-   if (!is.null(installersPath)) {
-      installerFiles <- list.files(installersPath)
-      installerFiles <- Filter(
-         function(file) {
-            grepl("\\.dcf$", file)
-         },
-         installerFiles)
-   }
-
-   installers <- lapply(installerFiles, function(file) {
-      fullPath <- file.path(installersPath, file)
+   installers <- lapply(installerPaths, function(fullPath) {
       read.dcf(fullPath)
    })
-
-   names(installers) <- tools::file_path_sans_ext(installerFiles)
 
    lapply(names(installers), function(installerName) {
       tryCatch({
