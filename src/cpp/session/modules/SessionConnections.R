@@ -281,9 +281,15 @@ options(connectionObserver = list(
       read.dcf(fullPath)
    })
 
+   valueOrEmpty <- function(name, data) {
+      cols <- colnames(data)
+      ifelse(name %in% cols, data[,name], "")
+   }
+
    lapply(names(installers), function(installerName) {
       tryCatch({
          installer <- installers[[installerName]]
+         cols <- colnames(installer)
 
          list(
             package = .rs.scalar(NULL),
@@ -298,10 +304,10 @@ options(connectionObserver = list(
             snippet = .rs.scalar(""),
             # odbc installer dcf fields
             odbcVersion = .rs.scalar(installer[,"Version"]),
-            odbcLicense = .rs.scalar(installer[,"License"]),
+            odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(installer[,"File"]),
-            odbcWarning = .rs.scalar(installer[,"Warning"])
+            odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer))
          )
       }, error = function(e) {
          warning(e$message)
