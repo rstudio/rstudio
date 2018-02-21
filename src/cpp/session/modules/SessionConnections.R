@@ -297,8 +297,11 @@ options(connectionObserver = list(
             source = .rs.scalar("Snippet"),
             snippet = .rs.scalar(""),
             # odbc installer dcf fields
+            odbcVersion = .rs.scalar(installer[,"Version"]),
+            odbcLicense = .rs.scalar(installer[,"License"]),
             odbcDownload = .rs.scalar(installer[,"Download"]),
-            odbcFileName = .rs.scalar(installer[,"Filename"])
+            odbcFile = .rs.scalar(installer[,"File"]),
+            odbcWarning = .rs.scalar(installer[,"Warning"])
          )
       }, error = function(e) {
          warning(e$message)
