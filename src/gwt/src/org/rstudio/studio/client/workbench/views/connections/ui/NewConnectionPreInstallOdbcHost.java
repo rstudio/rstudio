@@ -45,6 +45,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -88,6 +89,9 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+
+      license_.setText("Lorem ipsum");
+      driverLabel_.setText("The <driver> driver is currently not installed. ");
  
       initWidget(createWidget());
    }
@@ -117,4 +121,10 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    private NewConnectionInfo info_;
 
    private Widget mainWidget_;
+
+   @UiField
+   TextArea license_;
+
+   @UiField
+   Label driverLabel_;
 }

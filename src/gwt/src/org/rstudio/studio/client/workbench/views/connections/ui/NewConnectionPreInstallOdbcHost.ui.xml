@@ -5,30 +5,41 @@
    <ui:style>
       .panel {
       }
+      .license {
+         width: 490px;
+         resize: none;
+      }
+      .table {
+         width: 490px;
+      }
+      .table tr {
+         min-height: 35px;
+      }
+      .driverLabel {
+         display: inline-block;
+      }
+      .row {
+         padding-top: 10px;
+         padding-bottom: 2px;
+      }
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
-      <table>
-        <tr>
-            <td colspan="2">
-              This driver is not installed. Download and Install?
-            </td>
-         </tr>
-         <tr>
-            <td>
-               Installation Path:
-            </td>
-            <td>
-            </td>
-         </tr>
-         <tr>
-            <td>
-               License:
-            </td>
-            <td>
-            </td>
-         </tr>
-      </table>
+      <div class="{style.row}">
+         <g:Label ui:field="driverLabel_" styleName="{style.driverLabel}" />
+         <b>Download and Install?</b>
+      </div>
+
+      <div class="{style.row}">
+        Installation Path:
+      </div>
+
+      <div class="{style.row}">
+        License:
+      </div>
+
+      <g:TextArea ui:field="license_" styleName="{style.license}"
+                  visibleLines="7" readOnly="true"></g:TextArea>
    </g:HTMLPanel>
 
 </ui:UiBinder>
