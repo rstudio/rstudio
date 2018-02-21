@@ -44,6 +44,7 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -59,6 +60,9 @@ import com.google.inject.Inject;
 
 public class NewConnectionPreInstallOdbcHost extends Composite
 {
+   interface Binder extends UiBinder<Widget, NewConnectionPreInstallOdbcHost>
+   {}
+
    @Inject
    private void initialize(ConnectionsServerOperations server)
    {
@@ -82,15 +86,15 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    public NewConnectionPreInstallOdbcHost()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+
+      mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
  
       initWidget(createWidget());
    }
    
    private Widget createWidget()
    {
-      VerticalPanel container = new VerticalPanel();
-     
-      return container;
+      return mainWidget_;
    }
 
    private void initialize(final Operation operation, final NewConnectionInfo info)
@@ -109,18 +113,8 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    {
    }
 
-   public interface Resources extends ClientBundle
-   {
-      @Source("NewConnectionPreInstallOdbcHost.css")
-      Styles styles();
-   }
-   
-   public static Resources RES = GWT.create(Resources.class);
-   public static void ensureStylesInjected() 
-   {
-      RES.styles().ensureInjected();
-   }
-
    private ConnectionsServerOperations server_;
    private NewConnectionInfo info_;
+
+   private Widget mainWidget_;
 }

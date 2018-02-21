@@ -75,8 +75,6 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionPreInstallOdbcHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
@@ -361,8 +359,6 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetHost.ensureStylesInjected();
       NewConnectionSnippetDialog.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
-      NewConnectionInstallOdbcHost.ensureStylesInjected();
-      NewConnectionPreInstallOdbcHost.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
