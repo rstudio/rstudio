@@ -57,6 +57,7 @@ public class NewConnectionPreInstallOdbcPage
       );
       
       info_ = info;
+      contents_.initializeInfo(info_);
    }
 
    @Override

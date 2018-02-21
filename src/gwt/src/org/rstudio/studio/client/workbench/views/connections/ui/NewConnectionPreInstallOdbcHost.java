@@ -70,15 +70,6 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       server_ = server;
    }
 
-   public void onBeforeActivate(Operation operation, NewConnectionInfo info)
-   {
-      initialize(operation, info);
-   }
-   
-   public void onActivate(ProgressIndicator indicator)
-   {
-   }
-
    public void onDeactivate(Operation operation)
    {
       operation.execute();
@@ -89,9 +80,6 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-
-      license_.setText(info_.getOdbcLicense());
-      driverLabel_.setText("The <driver> driver is currently not installed. ");
  
       initWidget(createWidget());
    }
@@ -101,11 +89,10 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       return mainWidget_;
    }
 
-   private void initialize(final Operation operation, final NewConnectionInfo info)
+   public void initializeInfo(NewConnectionInfo info)
    {
-      info_ = info;
-
-      operation.execute();
+      license_.setText(info.getOdbcLicense());
+      driverLabel_.setText("The " + info.getName() + " driver is currently not installed. ");
    }
 
    public ConnectionOptions collectInput()
@@ -118,7 +105,6 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    }
 
    private ConnectionsServerOperations server_;
-   private NewConnectionInfo info_;
 
    private Widget mainWidget_;
 
