@@ -305,7 +305,7 @@ private:
    http::Response response_;
 
    boost::mutex socketMutex_;
-   bool closed_ = false;
+   bool closed_;
 };
 
 } // namespace http
