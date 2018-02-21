@@ -90,7 +90,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
-      license_.setText("Lorem ipsum");
+      license_.setText(info_.getOdbcLicense());
       driverLabel_.setText("The <driver> driver is currently not installed. ");
  
       initWidget(createWidget());

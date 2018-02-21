@@ -76,27 +76,23 @@ public class NewConnectionContext extends JavaScriptObject
          return this["licensed"];
       }-*/;
 
-      public final native boolean getLicensed() /*-{
-         return this["licensed"];
-      }-*/;
-
-      public final native boolean getOdbcVersion() /*-{
+      public final native String getOdbcVersion() /*-{
          return this["odbcVersion"];
       }-*/;
 
-      public final native boolean getOdbcLicense() /*-{
+      public final native String getOdbcLicense() /*-{
          return this["odbcLicense"];
       }-*/;
 
-      public final native boolean getOdbcDownload() /*-{
+      public final native String getOdbcDownload() /*-{
          return this["odbcDownload"];
       }-*/;
 
-      public final native boolean getOdbcFile() /*-{
+      public final native String getOdbcFile() /*-{
          return this["odbcFile"];
       }-*/;
 
-      public final native boolean getOdbcWarning() /*-{
+      public final native String getOdbcWarning() /*-{
          return this["odbcWarning"];
       }-*/;
    }
