@@ -13,7 +13,7 @@
          padding: 4px;
       }
       .licenseLabel {
-         padding-top: 60px;
+         padding-top: 40px;
          padding-bottom: 2px;
       }
       .table {
@@ -28,6 +28,9 @@
       .row {
          padding-top: 10px;
       }
+      .installPath {
+         width: 496px;
+      }
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
@@ -36,8 +39,10 @@
          <b>Download and Install?</b>
       </div>
 
-      <div class="{style.row}">
+      <div class="{style.row} {style.installPath}">
         Installation Path:
+        <widget:DirectoryChooserTextBox ui:field="dirChooser_"
+                                        />
       </div>
 
       <div class="{style.licenseLabel}">

@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -113,4 +114,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    @UiField
    Label driverLabel_;
+
+   @UiField
+   DirectoryChooserTextBox dirChooser_;
 }
