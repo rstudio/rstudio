@@ -511,11 +511,11 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    connectionList <- c(
       list(),
-      .rs.connectionReadSnippets(),   # add snippets to connections list
-      .rs.connectionReadDSN(),        # add ODBC DSNs to connections list
-      .rs.connectionReadPackages(),   # add packages to connections list
-      .rs.connectionReadInstallers(), # add installers to connections list
-      .rs.connectionReadOdbc()        # add ODBC drivers to connections list
+      .rs.connectionReadSnippets(),  # add snippets to connections list
+      .rs.connectionReadDSN(),       # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),  # add packages to connections list
+      .rs.connectionReadOdbc(),      # add ODBC drivers to connections list
+      .rs.connectionReadInstallers() # add installers to connections list
    )
    
    connectionList <- Filter(function(e) !is.null(e), connectionList)
@@ -523,6 +523,18 @@ options(connectionObserver = list(
    supportedNotInstsalled <- Filter(function(e) {
       !.rs.isPackageVersionInstalled(e$package, e$version)
    }, .rs.connectionSupportedPackages())
+
+   # remove duplicate names, in order
+   connectionNames <- list()
+   for (i in seq_along(connectionList)) {
+      entryName <- connectionList[[i]]$name
+      if (!is.null(connectionNames[[entryName]])) {
+         connectionList[[i]] <- NULL
+      }
+      connectionNames[[entryName]] <- TRUE
+   }
+
+   connectionList <- Filter(function(e) !is.null(e), connectionList)
 
    connectionList <- c(connectionList, lapply(supportedNotInstsalled, function(supportedPackage) {
       iconData <- .Call("rs_connectionIcon", supportedPackage$name)
