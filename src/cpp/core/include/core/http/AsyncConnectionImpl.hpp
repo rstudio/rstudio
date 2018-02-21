@@ -238,9 +238,7 @@ private:
                LOG_ERROR(error);
             
             // close the socket
-            error = closeSocket(socket_);
-            if (error)
-               LOG_ERROR(error);
+            close();
             
             //
             // no more async operations are initiated here so the shared_ptr to 
@@ -270,7 +268,7 @@ private:
                &request_);
    }
 
-   void handleWrite(const boost::system::error_code& e, bool close)
+   void handleWrite(const boost::system::error_code& e, bool closeSocket)
    {
       try
       {
@@ -283,11 +281,9 @@ private:
          }
          
          // close the socket
-         if (close)
+         if (closeSocket)
          {
-            Error error = closeSocket(socket_);
-            if (error)
-               LOG_ERROR(error);
+            close();
          }
 
          //
