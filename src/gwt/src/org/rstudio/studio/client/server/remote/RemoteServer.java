@@ -5229,6 +5229,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
    }
 
+   @Override
+   public void installOdbcDriver(String name,
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "install_odbc_driver",
+                  name,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
