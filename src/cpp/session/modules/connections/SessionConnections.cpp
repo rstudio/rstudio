@@ -592,6 +592,60 @@ bool isSuspendable()
    return activeConnections().empty();
 }
 
+Error installOdbcDriver(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // get parameters
+   std::string driverName;
+   Error error = json::readParams(request.params, &driverName);
+   if (error)
+      return error;
+
+   // build install command
+   std::string cmd("for(i in 1:100) { Sys.sleep(0.1) & message(i)} ");
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            "Installing Odbc Driver", console_process::InteractionNever);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            pCPI);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
 Error initialize()
 {
    // register methods
@@ -636,7 +690,8 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
             handleConnectionsResourceRequest))
-      (bind(sourceModuleRFile, "SessionConnections.R"));
+      (bind(sourceModuleRFile, "SessionConnections.R"))
+      (bind(registerRpcMethod, "install_odbc_driver", installOdbcDriver));
 
    return initBlock.execute();
 }
