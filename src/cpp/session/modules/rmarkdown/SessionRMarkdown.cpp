@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -361,8 +361,9 @@ private:
          renderOptions += ", params = readRDS('" + paramsFile + "')";
       }
 
-      // use the stated working directory if specified
-      if (!workingDir.empty())
+      // use the stated working directory if specified and we're using the default render function
+      // (other render functions may not accept knit_root_dir)
+      if (!workingDir.empty() && renderFunc == kStandardRenderFunc)
       {
          renderOptions += ", knit_root_dir = '" + 
                           string_utils::utf8ToSystem(workingDir) + "'";
