@@ -88,20 +88,6 @@ public class NewConnectionInstallOdbcHost extends Composite
       server_ = server;
       globalDisplay_ = globalDisplay;
    }
-
-   public void onBeforeActivate(Operation operation, NewConnectionInfo info)
-   {
-      initialize(operation, info);
-   }
-   
-   public void onActivate(ProgressIndicator indicator)
-   {
-   }
-
-   public void onDeactivate(Operation operation)
-   {
-      operation.execute();
-   }
    
    public NewConnectionInstallOdbcHost()
    {
@@ -112,6 +98,25 @@ public class NewConnectionInstallOdbcHost extends Composite
       initWidget(createWidget());
 
       consoleProgressWidget_.setReadOnly(true);
+   }
+
+   public void onDeactivate(Operation operation)
+   {
+      consoleProgressWidget_.clearOutput();
+      if (consoleProcess_ != null)
+         consoleProcess_.reap(new VoidServerRequestCallback() {
+            @Override
+            public void onSuccess()
+            {
+               operation.execute();
+            }
+            
+            @Override
+            public void onFailure()
+            {
+               operation.execute();
+            }
+         });
    }
    
    private Widget createWidget()
@@ -171,14 +176,7 @@ public class NewConnectionInstallOdbcHost extends Composite
       });
    }
 
-   @Override
-   protected void onDetach()
-   {
-      if (consoleProcess_ != null)
-         consoleProcess_.reap(new VoidServerRequestCallback());
-   }
-
-   private void install()
+   private void installOdbcDriver()
    {
       server_.installOdbcDriver(
          info_.getName(), 
@@ -209,13 +207,10 @@ public class NewConnectionInstallOdbcHost extends Composite
          });
    }
 
-   private void initialize(final Operation operation, final NewConnectionInfo info)
+   public void initializeInfo(NewConnectionInfo info)
    {
       info_ = info;
-
-      install();
-
-      operation.execute();
+      installOdbcDriver();
    }
 
    public ConnectionOptions collectInput()
@@ -232,6 +227,9 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    @UiField
    ConsoleProgressWidget consoleProgressWidget_;
+
+   @UiField
+   Label label_;
 
    private NewConnectionInfo info_;
 

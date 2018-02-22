@@ -67,6 +67,7 @@ public class NewConnectionInstallOdbcPage
    @Override
    public void onActivate(ProgressIndicator indicator)
    {
+      contents_.initializeInfo(info_);
    }
 
    @Override

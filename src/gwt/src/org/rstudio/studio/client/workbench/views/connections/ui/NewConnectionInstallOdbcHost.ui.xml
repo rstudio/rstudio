@@ -5,11 +5,21 @@
    <ui:style>
       .panel {
       }
+      .label {
+      }
+      .console {
+        width: 500px;
+        height: 220px;
+        background: #FFF;
+        border: solid 1px #9d9d9d;
+        margin-top: 8px;
+      }
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
-      Installing...
-      <vcs:ConsoleProgressWidget ui:field="consoleProgressWidget_"/>
+      <g:Label ui:field="label_" styleName="{style.label}" text="Installing..."/>
+      <vcs:ConsoleProgressWidget ui:field="consoleProgressWidget_"
+                                 styleName="{style.console}"/>
    </g:HTMLPanel>
 
 </ui:UiBinder>
