@@ -95,6 +95,10 @@ public class NewConnectionContext extends JavaScriptObject
       public final native String getOdbcWarning() /*-{
          return this["odbcWarning"];
       }-*/;
+
+      public final native String getOdbcInstallPath() /*-{
+         return this["odbcInstallPath"];
+      }-*/;
    }
 
    public final native int getConnectionsLength() /*-{

@@ -560,6 +560,13 @@ SEXP rs_embeddedViewer(SEXP urlSEXP)
    return R_NilValue;
 }
 
+SEXP rs_connectionOdbcInstallPath()
+{
+   r::sexp::Protect rProtect;
+   std::string path = module_context::userScratchPath().absolutePath();
+   return r::sexp::create(path, &rProtect);
+}
+
 bool connectionsEnabled()
 {
    return true;
@@ -596,6 +603,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
    RS_REGISTER_CALL_METHOD(rs_connectionAddPackage, 2);
    RS_REGISTER_CALL_METHOD(rs_embeddedViewer, 1);
+   RS_REGISTER_CALL_METHOD(rs_connectionOdbcInstallPath, 0);
 
    // initialize environment
    initEnvironment();

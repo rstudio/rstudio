@@ -274,6 +274,16 @@ options(connectionObserver = list(
    })
 })
 
+.rs.addFunction("connectionOdbcInstallPath", function()
+{
+   normalizePath(
+      file.path(
+         .Call("rs_connectionOdbcInstallPath"),
+         "odbc"),
+      mustWork = FALSE
+   )
+})
+
 .rs.addFunction("connectionReadInstallers", function() {
    installerPaths <- .rs.connectionFiles(".dcf")
 
@@ -291,6 +301,8 @@ options(connectionObserver = list(
          installer <- installers[[installerName]]
          cols <- colnames(installer)
 
+         installLocation <- "/Library/RStudio/Driver"
+
          list(
             package = .rs.scalar(NULL),
             version = .rs.scalar(NULL),
@@ -307,7 +319,8 @@ options(connectionObserver = list(
             odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(installer[,"File"]),
-            odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer))
+            odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
+            odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath())
          )
       }, error = function(e) {
          warning(e$message)

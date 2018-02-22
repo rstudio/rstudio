@@ -92,6 +92,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    public void initializeInfo(NewConnectionInfo info)
    {
+      dirChooser_.setText(info.getOdbcInstallPath());
       license_.setText(info.getOdbcLicense());
       driverLabel_.setText("The " + info.getName() + " driver is currently not installed. ");
    }
