@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -31,31 +32,41 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -64,6 +75,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class NewConnectionInstallOdbcHost extends Composite
+                                          implements ConsoleOutputEvent.Handler, 
+                                                     ProcessExitEvent.Handler
 {
    interface Binder extends UiBinder<Widget, NewConnectionInstallOdbcHost>
    {}
@@ -97,11 +110,72 @@ public class NewConnectionInstallOdbcHost extends Composite
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
  
       initWidget(createWidget());
+
+      consoleProgressWidget_.setReadOnly(true);
    }
    
    private Widget createWidget()
    {
       return mainWidget_;
+   }
+
+   public void writeOutput(String output)
+   {
+      consoleProgressWidget_.consoleWriteOutput(output);
+   }
+
+   @Override
+   public void onConsoleOutput(ConsoleOutputEvent event)
+   {
+      writeOutput(event.getOutput());
+   }
+
+   @Override
+   public void onProcessExit(ProcessExitEvent event)
+   {    
+      unregisterHandlers();
+      
+      if (consoleProcess_ != null)
+         consoleProcess_.reap(new VoidServerRequestCallback());
+   }
+
+   protected void addHandlerRegistration(HandlerRegistration reg)
+   {
+      registrations_.add(reg);
+   }
+   
+   protected void unregisterHandlers()
+   {
+      registrations_.removeHandler();
+   }
+
+   public void attachToProcess(final ConsoleProcess consoleProcess)
+   {
+      consoleProcess_ = consoleProcess;
+      
+      addHandlerRegistration(consoleProcess.addConsoleOutputHandler(this));
+      addHandlerRegistration(consoleProcess.addProcessExitHandler(this));
+
+      consoleProcess.start(new SimpleRequestCallback<Void>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage(
+               "Installation failed",
+               error.getUserMessage());
+            
+            unregisterHandlers();
+         }
+      });
+   }
+
+   @Override
+   protected void onDetach()
+   {
+      if (consoleProcess_ != null)
+         consoleProcess_.reap(new VoidServerRequestCallback());
    }
 
    private void install()
@@ -113,6 +187,7 @@ public class NewConnectionInstallOdbcHost extends Composite
             @Override
             public void onResponseReceived(ConsoleProcess proc)
             {
+               attachToProcess(proc);
                proc.addProcessExitHandler(
                   new ProcessExitEvent.Handler()
                   {
@@ -138,6 +213,8 @@ public class NewConnectionInstallOdbcHost extends Composite
    {
       info_ = info;
 
+      install();
+
       operation.execute();
    }
 
@@ -153,7 +230,14 @@ public class NewConnectionInstallOdbcHost extends Composite
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
 
+   @UiField
+   ConsoleProgressWidget consoleProgressWidget_;
+
    private NewConnectionInfo info_;
 
    private Widget mainWidget_;
+
+   private HandlerRegistrations registrations_ = new HandlerRegistrations();
+
+   private ConsoleProcess consoleProcess_;
 }
