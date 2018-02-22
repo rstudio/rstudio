@@ -174,6 +174,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       return SlideLabel.show(message, false, true, RootLayoutPanel.get());
    }
 
+   public void showLicenseWarningBar(boolean severe, String message)
+   {
+      view_.get().showLicenseWarning(severe, message);
+   }
+   
    public void showWarningBar(boolean severe, String message)
    {
       view_.get().showWarning(severe, message);

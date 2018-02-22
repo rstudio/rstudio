@@ -191,7 +191,7 @@ public class Workbench implements BusyHandler,
       checkForInitMessages();
       
       if (Desktop.isDesktop() && 
-          session_.getSessionInfo().getVcsName() == VCSConstants.GIT_ID)
+          StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
       {
          pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
    
@@ -475,7 +475,7 @@ public class Workbench implements BusyHandler,
          {
             if (!StringUtil.isNullOrEmpty(message))
             {
-               globalDisplay_.showWarningBar(false, message);
+               globalDisplay_.showLicenseWarningBar(false, message);
             }
          });
       }
