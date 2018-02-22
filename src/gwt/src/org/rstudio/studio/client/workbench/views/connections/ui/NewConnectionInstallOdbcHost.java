@@ -178,6 +178,8 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    private void installOdbcDriver()
    {
+      label_.setText("The" + info_.getName() + " driver is being installed...");
+
       server_.installOdbcDriver(
          info_.getName(), 
          new ServerRequestCallback<ConsoleProcess>() {
@@ -192,6 +194,7 @@ public class NewConnectionInstallOdbcHost extends Composite
                      @Override
                      public void onProcessExit(ProcessExitEvent event)
                      {
+                        label_.setText("The" + info_.getName() + " driver is now installed!");
                      }
                   }); 
             } 

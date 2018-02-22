@@ -17,7 +17,7 @@
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
-      <g:Label ui:field="label_" styleName="{style.label}" text="Installing..."/>
+      <g:Label ui:field="label_" styleName="{style.label}" text=""/>
       <vcs:ConsoleProgressWidget ui:field="consoleProgressWidget_"
                                  styleName="{style.console}"/>
    </g:HTMLPanel>
