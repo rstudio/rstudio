@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -29,7 +30,11 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
@@ -64,9 +69,11 @@ public class NewConnectionInstallOdbcHost extends Composite
    {}
    
    @Inject
-   private void initialize(ConnectionsServerOperations server)
+   private void initialize(ConnectionsServerOperations server,
+                           GlobalDisplay globalDisplay)
    {
       server_ = server;
+      globalDisplay_ = globalDisplay;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -97,6 +104,36 @@ public class NewConnectionInstallOdbcHost extends Composite
       return mainWidget_;
    }
 
+   private void install()
+   {
+      server_.installOdbcDriver(
+         info_.getName(), 
+         new ServerRequestCallback<ConsoleProcess>() {
+   
+            @Override
+            public void onResponseReceived(ConsoleProcess proc)
+            {
+               proc.addProcessExitHandler(
+                  new ProcessExitEvent.Handler()
+                  {
+                     @Override
+                     public void onProcessExit(ProcessExitEvent event)
+                     {
+                     }
+                  }); 
+            } 
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+               globalDisplay_.showErrorMessage(
+                  "Installation failed",
+                  error.getUserMessage());
+            }
+         });
+   }
+
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
       info_ = info;
@@ -114,6 +151,8 @@ public class NewConnectionInstallOdbcHost extends Composite
    }
    
    private ConnectionsServerOperations server_;
+   private GlobalDisplay globalDisplay_;
+
    private NewConnectionInfo info_;
 
    private Widget mainWidget_;
