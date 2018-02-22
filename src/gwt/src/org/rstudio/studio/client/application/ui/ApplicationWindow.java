@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,9 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -147,18 +146,12 @@ public class ApplicationWindow extends Composite
                                            Style.Unit.PX);
    }
 
-   public void showWarning(boolean severe, String message)
+   private void showWarning(boolean severe, String message, boolean showLicenseButton)
    {
       if (warningBar_ == null)
       {
          warningBar_ = new WarningBar();
-         warningBar_.addCloseHandler(new CloseHandler<WarningBar>()
-         {
-            public void onClose(CloseEvent<WarningBar> warningBarCloseEvent)
-            {
-               hideWarning();
-            }
-         });
+         warningBar_.addCloseHandler(warningBarCloseEvent -> hideWarning());
          applicationPanel_.add(warningBar_);
          applicationPanel_.setWidgetBottomHeight(warningBar_,
                                                  COMPONENT_SPACING,
@@ -177,6 +170,17 @@ public class ApplicationWindow extends Composite
       }
       warningBar_.setSeverity(severe);
       warningBar_.setText(message);
+      warningBar_.showLicenseButton(showLicenseButton);
+   }
+   
+   public void showLicenseWarning(boolean severe, String message)
+   {
+      showWarning(severe, message, true);
+      
+   }
+   public void showWarning(boolean severe, String message)
+   {
+      showWarning(severe, message, false);
    }
 
    private void updateHeaderTopBottom()

@@ -155,6 +155,7 @@ public abstract class GlobalDisplay extends MessageDisplay
     */
    public abstract Command showProgress(String message);
 
+   public abstract void showLicenseWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message);
    public abstract void hideWarningBar();
 

@@ -15,6 +15,7 @@
                      height="17"
                      styleName="{res.styles.warningIcon}"/>
             <span ui:field="label_" class="{res.styles.label}"/>
+            <g:Button ui:field="moreButton_"/>
          </td>
          <td class="{res.styles.center}" align="right">
             <g:Image ui:field="dismiss_"

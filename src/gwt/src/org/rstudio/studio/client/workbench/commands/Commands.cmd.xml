@@ -2740,8 +2740,8 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="showLicenseDialog"
-        label="License..."
-        menuLabel="License"
+        label="Manage License..."
+        menuLabel="Manage License"
         rebindable="false"
         windowMode="main"/>
 

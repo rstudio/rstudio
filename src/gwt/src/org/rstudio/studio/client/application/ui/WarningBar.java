@@ -1,7 +1,7 @@
 /*
  * WarningBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -31,9 +29,11 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.application.Desktop;
 
 public class WarningBar extends Composite
       implements HasCloseHandlers<WarningBar>
@@ -73,18 +73,20 @@ public class WarningBar extends Composite
    {
       initWidget(binder.createAndBindUi(this));
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-      dismiss_.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            CloseEvent.fire(WarningBar.this, WarningBar.this);
-         }
-      });
+      dismiss_.addClickHandler(event -> CloseEvent.fire(WarningBar.this, WarningBar.this));
+      moreButton_.setVisible(false);
+      moreButton_.setText("Manage License...");
+      moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
    }
 
    public void setText(String value)
    {
       label_.setInnerText(value);
+   }
+   
+   public void showLicenseButton(boolean show)
+   {
+      moreButton_.setVisible(show);
    }
 
    public void setSeverity(boolean severe)
@@ -113,6 +115,8 @@ public class WarningBar extends Composite
 
    @UiField
    SpanElement label_;
+   @UiField
+   Button moreButton_;
    @UiField
    Image dismiss_;
 
