@@ -59,6 +59,7 @@ bool prepareEnvironment(Options& options)
       if (error)
          LOG_ERROR(error);
       rLdScriptPath = executablePath.parent().complete("r-ldpath");
+   }
 #else
    // determine rLdPaths script location
    FilePath supportingFilePath = options.supportingFilePath();
