@@ -602,7 +602,7 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
       return error;
 
    // build install command
-   std::string cmd("for(i in 1:100) { Sys.sleep(0.1) & message(i)} ");
+   std::string cmd("for(i in 1:50) { Sys.sleep(0.1) & message(i)} ");
 
    // R binary
    FilePath rProgramPath;
