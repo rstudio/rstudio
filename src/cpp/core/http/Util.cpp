@@ -88,9 +88,8 @@ void parseFields(const std::string& fields,
 
       if ( fieldDecode != FieldDecodeNone )
       {
-         bool queryString = (fieldDecode == FieldDecodeQueryString);
-         name = util::urlDecode(name, queryString);
-         value = util::urlDecode(value, queryString) ;
+         name = util::urlDecode(name);
+         value = util::urlDecode(value) ;
       }
 
       if ( !name.empty() )
@@ -250,7 +249,7 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
    return encodedURL;
 }
    
-std::string urlDecode(const std::string& in, bool fromQueryString)
+std::string urlDecode(const std::string& in)
 {
    std::string out;
    out.reserve(in.size());
@@ -279,7 +278,7 @@ std::string urlDecode(const std::string& in, bool fromQueryString)
          return out;
       }
     }
-    else if (fromQueryString && (in[i] == '+'))
+    else if (in[i] == '+')
     {
       out += ' ';
     }

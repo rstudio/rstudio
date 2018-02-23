@@ -139,7 +139,7 @@ void buildQueryString(const Fields& fields, std::string* pQueryString);
 void parseQueryString(const std::string& queryString, Fields* pFields);
    
 std::string urlEncode(const std::string& in, bool queryStringSpaces = false);
-std::string urlDecode(const std::string& in, bool fromQueryString = false);
+std::string urlDecode(const std::string& in);
    
    
 boost::posix_time::ptime parseHttpDate(const std::string& date);
