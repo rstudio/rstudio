@@ -25,14 +25,26 @@ var SweaveHighlightRules = function() {
     // regexps are ordered -> the first match is used
 
     this.$rules = new TexHighlightRules().getRules();
+
     this.$rules["start"].unshift({
         token: "comment.codebegin",
         regex: "^\\s*\\<\\<.*\\>\\>=.*$",
         next: "r-start"
     });
+
     this.$rules["start"].unshift({
         token: "comment",
         regex: "^\\s*@(?:\\s.*)?$"
+    });
+
+    this.$rules["start"].unshift({
+        token : "string", // single line
+        regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
+    });
+
+    this.$rules["start"].unshift({
+        token : "string", // single line
+        regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
     });
 
     var rRules = new RHighlightRules().getRules();
