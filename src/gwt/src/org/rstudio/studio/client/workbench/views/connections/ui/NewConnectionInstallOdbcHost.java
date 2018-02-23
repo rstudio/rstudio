@@ -104,19 +104,7 @@ public class NewConnectionInstallOdbcHost extends Composite
    {
       nextPageEnabledOperation_.execute(true);
       if (consoleProcess_ != null)
-         consoleProcess_.interrupt(new VoidServerRequestCallback() {
-            @Override
-            public void onSuccess()
-            {
-               operation.execute();
-            }
-            
-            @Override
-            public void onFailure()
-            {
-               operation.execute();
-            }
-         });
+         terminateOdbcInstall(operation);
    }
    
    private Widget createWidget()
@@ -139,9 +127,43 @@ public class NewConnectionInstallOdbcHost extends Composite
    public void onProcessExit(ProcessExitEvent event)
    {    
       unregisterHandlers();
-      
-      if (consoleProcess_ != null)
-         consoleProcess_.interrupt(new VoidServerRequestCallback());
+      terminateOdbcInstall(null);
+   }
+
+   private void reapOdbcInstall(final  Operation operation) {
+      if (consoleProcess_ != null) {
+         consoleProcess_.reap(new VoidServerRequestCallback() {
+            @Override
+            public void onSuccess()
+            {
+               if (operation != null) operation.execute();
+            }
+            
+            @Override
+            public void onFailure()
+            {
+               if (operation != null) operation.execute();
+            }
+         });
+      }
+   }
+
+   private void terminateOdbcInstall(final Operation operation) {
+      if (consoleProcess_ != null) {
+         consoleProcess_.interrupt(new VoidServerRequestCallback() {
+            @Override
+            public void onSuccess()
+            {
+               reapOdbcInstall(operation);
+            }
+            
+            @Override
+            public void onFailure()
+            {
+               reapOdbcInstall(operation);
+            }
+         });
+      }
    }
 
    protected void addHandlerRegistration(HandlerRegistration reg)
@@ -179,8 +201,7 @@ public class NewConnectionInstallOdbcHost extends Composite
    private void installOdbcDriver()
    {
       label_.setText("The " + info_.getName() + " driver is being installed...");
-      nextPageEnabledOperation_.execute(false);
-
+      
       server_.installOdbcDriver(
          info_.getName(), 
          new ServerRequestCallback<ConsoleProcess>() {
@@ -196,11 +217,12 @@ public class NewConnectionInstallOdbcHost extends Composite
                      public void onProcessExit(ProcessExitEvent event)
                      {
                         if (event.getExitCode() != 0) {
-                           label_.setText("The installation for the " + info_.getName() + " driver failed with status " + event.getExitCode() + ".");
+                           label_.setText("Installation for the " + info_.getName() + " driver failed with status " + event.getExitCode() + ".");
                         }
                         else {
                            label_.setText("The " + info_.getName() + " driver is now installed!" + event.getExitCode());
                            nextPageEnabledOperation_.execute(true);
+                           driverInstalled_ = true;
                         }
                      }
                   }); 
@@ -220,6 +242,9 @@ public class NewConnectionInstallOdbcHost extends Composite
    public void initializeInfo(NewConnectionInfo info)
    {
       info_ = info;
+
+      if (!driverInstalled_)
+         nextPageEnabledOperation_.execute(false);
       
       if (!installationAttempted_) {
          installationAttempted_ = true;
@@ -261,4 +286,6 @@ public class NewConnectionInstallOdbcHost extends Composite
    private OperationWithInput<Boolean> nextPageEnabledOperation_;
 
    private Boolean installationAttempted_ = false;
+
+   private Boolean driverInstalled_ = false;
 }
