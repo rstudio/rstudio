@@ -80,6 +80,11 @@ public class NewConnectionInstallOdbcPage
 
       contents_.onDeactivate(operation);
    }
+
+   @Override
+   public void onWizardClosing() {
+      contents_.interruptOdbcInstall();
+   }
    
    @Override
    protected Widget createWidget()

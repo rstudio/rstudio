@@ -103,8 +103,12 @@ public class NewConnectionInstallOdbcHost extends Composite
    public void onDeactivate(Operation operation)
    {
       nextPageEnabledOperation_.execute(true);
-      if (consoleProcess_ != null)
-         terminateOdbcInstall(operation);
+      operation.execute();
+   }
+
+   public void interruptOdbcInstall()
+   {
+      terminateOdbcInstall(null);
    }
    
    private Widget createWidget()
@@ -220,7 +224,7 @@ public class NewConnectionInstallOdbcHost extends Composite
                            label_.setText("Installation for the " + info_.getName() + " driver failed with status " + event.getExitCode() + ".");
                         }
                         else {
-                           label_.setText("The " + info_.getName() + " driver is now installed!" + event.getExitCode());
+                           label_.setText("The " + info_.getName() + " driver is now installed!");
                            nextPageEnabledOperation_.execute(true);
                            driverInstalled_ = true;
                         }
