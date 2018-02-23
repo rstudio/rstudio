@@ -2547,18 +2547,20 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
       
-      aliases <- tryCatch(
-         aliases[[pkg]],
-         error = function(e) character()
-      )
+      # filter the aliases list to just this package
+      aliases <- aliases[names(aliases) %in% pkg]
    }
    
-   aliases <- unlist(aliases)
-   results <- .rs.selectFuzzyMatches(aliases, token)
+   filtered <- lapply(aliases, function(alias) {
+      .rs.selectFuzzyMatches(alias, token)
+   })
+   
+   listed <- .rs.namedVectorAsList(filtered)
    
    completions <- .rs.makeCompletions(
       token = token,
-      results = results,
+      results = listed$values,
+      packages = listed$names,
       quote = quote,
       type = .rs.acCompletionTypes$HELP,
       overrideInsertParens = TRUE
