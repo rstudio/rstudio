@@ -46,6 +46,8 @@ http::Cookie createSecureCookie(const std::string& name,
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name);
 
+std::string readSecureCookie(const std::string& signedCookieValue);
+
 core::Error hashWithSecureKey(const std::string& value, std::string* pHMAC);
 
 void set(const std::string& name,

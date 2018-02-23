@@ -130,6 +130,11 @@ std::string readSecureCookie(const core::http::Request& request,
    if (signedCookieValue.empty())
       return std::string();
 
+   return readSecureCookie(signedCookieValue);
+}
+
+std::string readSecureCookie(const std::string& signedCookieValue)
+{
    // split it into its parts (url decode them as well)
    std::string value, expires, hmac;
    using namespace boost;

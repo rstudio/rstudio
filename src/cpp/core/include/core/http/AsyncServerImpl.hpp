@@ -246,11 +246,14 @@ private:
 
    void acceptNextConnection()
    {
-      // create a new connection 
-      ptrNextConnection_.reset(new AsyncConnectionImpl<ProtocolType>(
-                                                                 
+      ptrNextConnection_.reset(
+               new AsyncConnectionImpl<typename ProtocolType::socket> (
+
          // controlling io_service
          acceptorService_.ioService(),
+
+         // optional ssl context - only used for SSL connections
+         sslContext_,
 
          // connection handler
          boost::bind(&AsyncServerImpl<ProtocolType>::handleConnection,
@@ -264,23 +267,22 @@ private:
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
                      this, _1, _2)
       ));
-      
+
       // wait for next connection
       acceptorService_.asyncAccept(
-         ptrNextConnection_->socket(), 
+         ptrNextConnection_->socket(),
          boost::bind(&AsyncServerImpl<ProtocolType>::handleAccept,
                      this,
                      boost::asio::placeholders::error)
       );
    }
    
-   void handleAccept(const boost::system::error_code& ec) 
+   void handleAccept(const boost::system::error_code& ec)
    {
       try
       {
          if (!ec) 
          {
-            // start connection
             ptrNextConnection_->startReading();
          }
          else
@@ -318,7 +320,7 @@ private:
    }
    
    void handleConnection(
-         boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > pConnection,
+         boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > pConnection,
          http::Request* pRequest)
    {
       try
@@ -460,6 +462,12 @@ protected:
    {
       return acceptorService_;
    }
+
+   void setSslContext(boost::shared_ptr<boost::asio::ssl::context> context)
+   {
+      // sets ssl context, enabling the usage of ssl for incoming connections
+      sslContext_ = context;
+   }
    
 private:
 
@@ -511,7 +519,8 @@ private:
    bool abortOnResourceError_;
    std::string serverName_;
    std::string baseUri_;
-   boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > ptrNextConnection_;
+   boost::shared_ptr<boost::asio::ssl::context> sslContext_;
+   boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
    AsyncUriHandlers uriHandlers_ ;
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
