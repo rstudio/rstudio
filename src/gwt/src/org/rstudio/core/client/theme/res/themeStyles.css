@@ -2155,8 +2155,12 @@ body.ubuntu_mono .searchBox {
 .rstudio-themes-flat .gwt-TabLayoutPanel {
 }
 
+.logoAnchor {
+   top: 12px;
+}
+
 .rstudio-themes-flat .logoAnchor {
-   top: 2px !important;
+   top: 10px;
 }
 
 .rstudio-themes-flat .dialogTabPanel {

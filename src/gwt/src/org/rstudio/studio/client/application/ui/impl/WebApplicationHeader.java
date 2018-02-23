@@ -112,7 +112,6 @@ public class WebApplicationHeader extends Composite
       logoAnchor_ = new Anchor();
       Style style = logoAnchor_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
-      style.setTop(5, Unit.PX);
       style.setLeft(18, Unit.PX);
       style.setTextDecoration(TextDecoration.NONE);
       style.setOutlineWidth(0, Unit.PX);
