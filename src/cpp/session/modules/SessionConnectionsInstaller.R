@@ -113,18 +113,74 @@ odbc_bundle_check_prereqs <- function() {
   prereqs()
 }
 
-odbc_bundle_odbcini_path <- function() {
+odbc_bundle_odbcinst_path <- function() {
   config <- system2("odbcinst", "-j", stdout = TRUE)
   odbcini_entry <- config[grepl("odbcinst.ini", config)]
   gsub("^[^/\\\\]*", "", odbcini_entry)
 }
 
-odbc_bundle_register <- function() {
+odbc_bundle_read_ini <- function() {
   
 }
 
-odbc_bundle_install <- function(url, placeholder, install_path) {
-  install_path <- normalizePath(install_path, mustWork = FALSE)
+odbc_bundle_write_ini <- function() {
+  
+}
+
+odbc_bundle_check_prereqs_linux <- function(name, driver_path) {
+  # Find odbcinst.ini file
+  odbcinst_path <- odbc_bundle_odbcinst_path()
+  
+  # Read odbcinst.ini
+  odbcinst <- odbc_bundle_read_ini(odbcinst_path)
+  
+  
+}
+
+odbc_bundle_check_prereqs_windows <- function(name, driver_path) {
+  
+}
+
+odbc_bundle_find_driver <- function(name, install_path) {
+  os_extensions <- list(
+    osx = "dylib",
+    windows = "dll",
+    linux = "so"
+  )
+  
+  os_extension <- os_extensions[[odbc_bundle_os_name()]]
+  driver_name <- gsub(" ", "", name)
+  
+  driver_pattern <- paste(
+    driver_name,
+    "[^/\\\\]+",
+    os_extension
+  )
+  
+  all_files <- dir(install_path, recursive = TRUE)
+  driver_path <- all_files[grepl(driver_pattern, all_files, ignore.case = TRUE)]
+  
+  if (!identical(length(driver_path), 1L))
+    stop("Failed to find odbc driver inside driver bundle.")
+  
+  driver_path
+}
+
+odbc_bundle_register <- function(name, driver_path) {
+  os_registrations <- list(
+    osx = odbc_bundle_check_prereqs_linux,
+    windows = odbc_bundle_check_prereqs_windows,
+    linux = odbc_bundle_check_prereqs_linux
+  )
+  
+  os_registration <- os_registration[[odbc_bundle_os_name()]]
+  
+  message("Registering Driver...")
+  os_registration(name, driver_path) 
+}
+
+odbc_bundle_install <- function(name, url, placeholder, install_path) {
+  install_path <- normalizePath(file.path(install_path, name), mustWork = FALSE)
   
   # Check prerequisites
   odbc_bundle_check_prereqs()
@@ -132,12 +188,16 @@ odbc_bundle_install <- function(url, placeholder, install_path) {
   # Download and extract
   odbc_bundle_extract(url, placeholder, install_path)
   
-  # Register
-  odbc_bundle_register()
+  # Find driver
+  driver_path <- odbc_bundle_find_driver(install_path)
+  
+  # Register driver
+  odbc_bundle_register(name, driver_path)
 }
 
 odbc_bundle_install(
+  name = "Oracle",
   url = "http://odbc-drivers-path/",
   placeholder = "oracle-(os)-x(bitness).tar.gz",
-  install_path = "~/RStudio-Drivers/oracle"
+  install_path = "~/RStudio-Drivers/"
 )
