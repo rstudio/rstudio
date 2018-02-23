@@ -70,6 +70,10 @@ public class NewConnectionInfo extends JavaScriptObject
       return this["licensed"];
    }-*/;
 
+   public final native String getError() /*-{
+      return this["error"];
+   }-*/;
+
    public final native String getOdbcVersion() /*-{
       return this["odbcVersion"];
    }-*/;

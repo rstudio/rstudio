@@ -590,9 +590,14 @@ options(connectionObserver = list(
    }, .rs.connectionReadOdbc())
 
    if (length(connectionContext) != 1)
-      stop("The ", name, " driver is not registered.")
-
-   connectionContext
+      list(
+         error = .rs.scalar(
+            paste("The", name, "driver is not registered.")
+         )
+      )
+   else {
+      connectionContext
+   }
 })
 
 .rs.addFunction("embeddedViewer", function(url)

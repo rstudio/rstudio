@@ -230,9 +230,18 @@ public class NewConnectionInstallOdbcHost extends Composite
                                  @Override
                                  public void onResponseReceived(NewConnectionInfo proc)
                                  {
-                                    label_.setText("The " + info_.getName() + " driver is now installed!");
-                                    nextPageEnabledOperation_.execute(true);
-                                    driverInstalled_ = true;
+                                    if (!StringUtil.isNullOrEmpty(proc.getError())) {
+                                       globalDisplay_.showErrorMessage(
+                                          "Installation failed",
+                                          proc.getError());
+
+                                       label_.setText(proc.getError());
+                                    }
+                                    else {
+                                       label_.setText("The " + info_.getName() + " driver is now installed!");
+                                       nextPageEnabledOperation_.execute(true);
+                                       driverInstalled_ = true;
+                                    }
                                  }
 
                                  @Override
@@ -241,7 +250,7 @@ public class NewConnectionInstallOdbcHost extends Composite
                                     Debug.logError(error);
                                     globalDisplay_.showErrorMessage(
                                        "Installation failed",
-                                       error.getUserMessage());
+                                       error.getMessage());
                                  }
                               }
                            );
