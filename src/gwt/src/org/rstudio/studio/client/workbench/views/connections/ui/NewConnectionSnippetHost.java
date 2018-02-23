@@ -32,7 +32,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.connections.res.NewConnectionSnippetHostResources;
 
 import com.google.gwt.core.client.GWT;

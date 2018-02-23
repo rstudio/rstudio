@@ -530,35 +530,12 @@ options(connectionObserver = list(
    }
 })
 
-.rs.addJsonRpcHandler("get_new_connection_context", function() {
-   connectionList <- c(
-      list(),
-      .rs.connectionReadSnippets(),  # add snippets to connections list
-      .rs.connectionReadDSN(),       # add ODBC DSNs to connections list
-      .rs.connectionReadPackages(),  # add packages to connections list
-      .rs.connectionReadOdbc(),      # add ODBC drivers to connections list
-      .rs.connectionReadInstallers() # add installers to connections list
-   )
-   
-   connectionList <- Filter(function(e) !is.null(e), connectionList)
-
+.rs.addFunction("connectionReadPackageInstallers", function() {
    supportedNotInstsalled <- Filter(function(e) {
       !.rs.isPackageVersionInstalled(e$package, e$version)
    }, .rs.connectionSupportedPackages())
 
-   # remove duplicate names, in order
-   connectionNames <- list()
-   for (i in seq_along(connectionList)) {
-      entryName <- connectionList[[i]]$name
-      if (!is.null(connectionNames[[entryName]])) {
-         connectionList[[i]] <- NULL
-      }
-      connectionNames[[entryName]] <- TRUE
-   }
-
-   connectionList <- Filter(function(e) !is.null(e), connectionList)
-
-   connectionList <- c(connectionList, lapply(supportedNotInstsalled, function(supportedPackage) {
+   lapply(supportedNotInstsalled, function(supportedPackage) {
       iconData <- .Call("rs_connectionIcon", supportedPackage$name)
       list(
          package = .rs.scalar(supportedPackage$package),
@@ -572,13 +549,50 @@ options(connectionObserver = list(
          iconData = .rs.scalar(iconData),
          licensed = .rs.scalar(FALSE)
       )
-   }))
+   })
+})
+
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
+   connectionList <- c(
+      list(),
+      .rs.connectionReadSnippets(),         # add snippets to connections list
+      .rs.connectionReadDSN(),              # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),         # add packages to connections list
+      .rs.connectionReadOdbc(),             # add ODBC drivers to connections list
+      .rs.connectionReadInstallers(),       # add installers to connections list
+      .rs.connectionReadPackageInstallers() # add package installers to connection list
+   )
+   
+   connectionList <- Filter(function(e) !is.null(e), connectionList)
+
+   # remove duplicate names, in order
+   connectionNames <- list()
+   for (i in seq_along(connectionList)) {
+      entryName <- connectionList[[i]]$name
+      if (!is.null(connectionNames[[entryName]])) {
+         connectionList[[i]] <- NULL
+      }
+      connectionNames[[entryName]] <- TRUE
+   }
+
+   connectionList <- Filter(function(e) !is.null(e), connectionList)
 
    context <- list(
       connectionsList = unname(connectionList)
    )
 
    context
+})
+
+.rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name) {
+   connectionContext <- Filter(function(e) {
+      identical(e$name, name)
+   }, .rs.connectionReadOdbc())
+
+   if (length(connectionContext) != 1)
+      stop("The ", name, " driver is not registered.")
+
+   connectionContext
 })
 
 .rs.addFunction("embeddedViewer", function(url)

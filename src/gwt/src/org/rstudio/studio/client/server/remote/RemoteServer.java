@@ -158,6 +158,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObj
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -5158,7 +5159,7 @@ public class RemoteServer implements Server
    public void getNewConnectionContext(
          ServerRequestCallback<NewConnectionContext> callback)
    {
-      sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
+      sendRequest(RPC_SCOPE, GET_NEW_CONNECTION_CONTEXT, callback);
    }
 
    @Override
@@ -5234,9 +5235,18 @@ public class RemoteServer implements Server
                                  ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  "install_odbc_driver",
+                  INSTALL_ODBC_DRIVER,
                   name,
                   new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   public void getOdbcConnectionContext(String name,
+                                        ServerRequestCallback<NewConnectionInfo> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_NEW_ODBC_CONNECTION_CONTEXT,
+                  name,
+                  callback);
    }
 
    private String clientId_;
@@ -5642,7 +5652,7 @@ public class RemoteServer implements Server
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_OBJECT = "connection_preview_object";
    private static final String CONNECTION_TEST = "connection_test";
-   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
+   private static final String GET_NEW_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 
    private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
@@ -5655,4 +5665,6 @@ public class RemoteServer implements Server
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
 
    private static final String ASKSECRET_COMPLETED = "asksecret_completed";
+   private static final String INSTALL_ODBC_DRIVER = "install_odbc_driver";
+   private static final String GET_NEW_ODBC_CONNECTION_CONTEXT = "get_new_odbc_connection_context";
 }

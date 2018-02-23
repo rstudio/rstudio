@@ -42,7 +42,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -224,9 +224,27 @@ public class NewConnectionInstallOdbcHost extends Composite
                            label_.setText("Installation for the " + info_.getName() + " driver failed with status " + event.getExitCode() + ".");
                         }
                         else {
-                           label_.setText("The " + info_.getName() + " driver is now installed!");
-                           nextPageEnabledOperation_.execute(true);
-                           driverInstalled_ = true;
+                           server_.getOdbcConnectionContext(
+                              info_.getName(), 
+                              new ServerRequestCallback<NewConnectionInfo>() {
+                                 @Override
+                                 public void onResponseReceived(NewConnectionInfo proc)
+                                 {
+                                    label_.setText("The " + info_.getName() + " driver is now installed!");
+                                    nextPageEnabledOperation_.execute(true);
+                                    driverInstalled_ = true;
+                                 }
+
+                                 @Override
+                                 public void onError(ServerError error)
+                                 {
+                                    Debug.logError(error);
+                                    globalDisplay_.showErrorMessage(
+                                       "Installation failed",
+                                       error.getUserMessage());
+                                 }
+                              }
+                           );
                         }
                      }
                   }); 

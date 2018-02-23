@@ -60,4 +60,7 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
 
    void installOdbcDriver(String name,
                           ServerRequestCallback<ConsoleProcess> requestCallback);
+
+   void getOdbcConnectionContext(String name,
+                                 ServerRequestCallback<NewConnectionInfo> callback);
 }
