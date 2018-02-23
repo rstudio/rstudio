@@ -119,25 +119,67 @@ odbc_bundle_odbcinst_path <- function() {
   gsub("^[^/\\\\]*", "", odbcini_entry)
 }
 
-odbc_bundle_read_ini <- function() {
+odbc_bundle_read_ini <- function(odbcinst_path) {
+  lines <- readLines(odbcinst_path)
+  data <- list()
   
+  current_driver <- NULL
+  
+  for (line in lines) {
+    # Is header?
+    if (grepl(" *\\[[^]]+\\] *", line)) {
+      current_driver <- gsub("^ *\\[|\\] *", "", line)
+      data[[current_driver]] <- ""
+    }
+    else if (!grepl("^ *$", line)) {
+      if (identical(data[[current_driver]], ""))
+        data[[current_driver]] <- line
+      else
+        data[[current_driver]] <- c(
+          data[[current_driver]],
+          line
+        )
+    }
+  }
+  
+  data
 }
 
-odbc_bundle_write_ini <- function() {
+odbc_bundle_write_ini <- function(odbcinst_path, data) {
+  lines <- c()
+  for (name in names(data)) {
+    lines <- c(
+      lines, 
+      paste("[", name, "]", sep = "")
+    )
+    
+    lines <- c(
+      lines,
+      unlist(data[[name]]),
+      ""
+    )
+  }
   
+  writeLines(lines, odbcinst_path)
 }
 
-odbc_bundle_check_prereqs_linux <- function(name, driver_path) {
+odbc_bundle_register_linux <- function(name, driver_path) {
   # Find odbcinst.ini file
   odbcinst_path <- odbc_bundle_odbcinst_path()
   
   # Read odbcinst.ini
   odbcinst <- odbc_bundle_read_ini(odbcinst_path)
   
+  # Set odbcinst.ini entries
+  odbcinst[[name]] <- list(
+    paste("Driver", "=", driver_path)
+  )
   
+  # Write odbcinst.ini
+  odbc_bundle_write_ini(odbcinst_path, odbcinst)
 }
 
-odbc_bundle_check_prereqs_windows <- function(name, driver_path) {
+odbc_bundle_register_windows <- function(name, driver_path) {
   
 }
 
@@ -153,11 +195,12 @@ odbc_bundle_find_driver <- function(name, install_path) {
   
   driver_pattern <- paste(
     driver_name,
-    "[^/\\\\]+",
-    os_extension
+    "[^/\\\\]+\\.",
+    os_extension,
+    sep = ""
   )
   
-  all_files <- dir(install_path, recursive = TRUE)
+  all_files <- dir(install_path, recursive = TRUE, full.names = TRUE)
   driver_path <- all_files[grepl(driver_pattern, all_files, ignore.case = TRUE)]
   
   if (!identical(length(driver_path), 1L))
@@ -168,12 +211,12 @@ odbc_bundle_find_driver <- function(name, install_path) {
 
 odbc_bundle_register <- function(name, driver_path) {
   os_registrations <- list(
-    osx = odbc_bundle_check_prereqs_linux,
-    windows = odbc_bundle_check_prereqs_windows,
-    linux = odbc_bundle_check_prereqs_linux
+    osx = odbc_bundle_register_linux,
+    windows = odbc_bundle_register_windows,
+    linux = odbc_bundle_register_linux
   )
   
-  os_registration <- os_registration[[odbc_bundle_os_name()]]
+  os_registration <- os_registrations[[odbc_bundle_os_name()]]
   
   message("Registering Driver...")
   os_registration(name, driver_path) 
@@ -189,7 +232,7 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
   odbc_bundle_extract(url, placeholder, install_path)
   
   # Find driver
-  driver_path <- odbc_bundle_find_driver(install_path)
+  driver_path <- odbc_bundle_find_driver(name, install_path)
   
   # Register driver
   odbc_bundle_register(name, driver_path)
