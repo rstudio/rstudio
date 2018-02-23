@@ -601,8 +601,16 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // build install command
-   std::string cmd("for(i in 1:50) { Sys.sleep(0.1) & message(i)} ");
+   // find connection installer module
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   std::string scriptPath = core::string_utils::utf8ToSystem(
+      modulesPath.complete("SessionConnectionsInstaller.R").absolutePath());
+
+   // build the command
+   std::string cmd;
+   cmd.append("source('");
+   cmd.append(string_utils::jsLiteralEscape(scriptPath));
+   cmd.append("');");
 
    // R binary
    FilePath rProgramPath;
