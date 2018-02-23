@@ -50,12 +50,22 @@ bool prepareEnvironment(Options& options)
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
 
+#ifdef Q_OS_MAC
+   FilePath rLdScriptPath = options.scriptsPath().complete("session/r-ldpath");
+   if (!rLdScriptPath.exists())
+   {
+      FilePath executablePath;
+      Error error = core::system::executablePath(NULL, &executablePath);
+      if (error)
+         LOG_ERROR(error);
+      rLdScriptPath = executablePath.parent().complete("r-ldpath");
+#else
    // determine rLdPaths script location
    FilePath supportingFilePath = options.supportingFilePath();
    FilePath rLdScriptPath = supportingFilePath.complete("bin/r-ldpath");
    if (!rLdScriptPath.exists())
       rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
-
+#endif
    // attempt to detect R environment
    std::string rScriptPath, rVersion, errMsg;
    r_util::EnvironmentVars rEnvVars;
