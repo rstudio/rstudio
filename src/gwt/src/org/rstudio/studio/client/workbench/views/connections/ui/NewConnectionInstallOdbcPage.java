@@ -122,6 +122,12 @@ public class NewConnectionInstallOdbcPage
    {
       return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
    }
+
+   @Override
+   protected void setNextPageEnabled(OperationWithInput<Boolean> operation)
+   {
+      contents_.setNextPageEnabled(operation);
+   }
    
    private NewConnectionInstallOdbcHost contents_;
    private NewConnectionInfo info_;

@@ -178,7 +178,9 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    private void installOdbcDriver()
    {
-      label_.setText("The" + info_.getName() + " driver is being installed...");
+      label_.setText("The " + info_.getName() + " driver is being installed...");
+
+      nextPageEnabledOperation_.execute(false);
 
       server_.installOdbcDriver(
          info_.getName(), 
@@ -194,7 +196,8 @@ public class NewConnectionInstallOdbcHost extends Composite
                      @Override
                      public void onProcessExit(ProcessExitEvent event)
                      {
-                        label_.setText("The" + info_.getName() + " driver is now installed!");
+                        label_.setText("The " + info_.getName() + " driver is now installed!");
+                        nextPageEnabledOperation_.execute(true);
                      }
                   }); 
             } 
@@ -224,6 +227,11 @@ public class NewConnectionInstallOdbcHost extends Composite
    public interface Styles extends CssResource
    {
    }
+
+   public void setNextPageEnabled(OperationWithInput<Boolean> operation)
+   {
+      nextPageEnabledOperation_ = operation;
+   }
    
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
@@ -241,4 +249,6 @@ public class NewConnectionInstallOdbcHost extends Composite
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
 
    private ConsoleProcess consoleProcess_;
+
+   private OperationWithInput<Boolean> nextPageEnabledOperation_;
 }

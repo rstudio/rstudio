@@ -171,6 +171,10 @@ public abstract class WizardPage<I,T> extends Composite
    {
       return true;
    }
+
+   protected void setNextPageEnabled(OperationWithInput<Boolean> operation)
+   {
+   }
    
    private final String title_;
    private final String subTitle_;

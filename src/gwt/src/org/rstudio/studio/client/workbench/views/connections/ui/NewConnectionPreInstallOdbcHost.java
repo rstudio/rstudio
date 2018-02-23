@@ -118,4 +118,6 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    @UiField
    DirectoryChooserTextBox dirChooser_;
+
+   OperationWithInput<Boolean> nextPageEnabledOperation_;
 }
