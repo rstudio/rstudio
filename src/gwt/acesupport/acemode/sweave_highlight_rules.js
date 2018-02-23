@@ -39,12 +39,12 @@ var SweaveHighlightRules = function() {
 
     this.$rules["start"].unshift({
         token : "string", // single line
-        regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
+        regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
     });
 
     this.$rules["start"].unshift({
         token : "string", // single line
-        regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
+        regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
     });
 
     var rRules = new RHighlightRules().getRules();
