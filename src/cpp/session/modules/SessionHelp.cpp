@@ -550,7 +550,7 @@ SEXP callHandler(const std::string& path,
                  r::sexp::Protect* pProtect)
 {
    // uri decode the path
-   std::string decodedPath = http::util::urlDecode(path, false);
+   std::string decodedPath = http::util::urlDecode(path);
 
    // construct "try(httpd(url, query, body, headers), silent=TRUE)"
 

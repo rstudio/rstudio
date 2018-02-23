@@ -481,11 +481,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    std::string orderdir = http::util::fieldValue<std::string>(fields, 
          "order[0][dir]", "asc");
    std::string search = http::util::urlDecode(
-         http::util::fieldValue<std::string>(fields, "search[value]", ""), 
-         true);
+         http::util::fieldValue<std::string>(fields, "search[value]", ""));
    std::string cacheKey = http::util::urlDecode(
-         http::util::fieldValue<std::string>(fields, "cache_key", ""), 
-         true);
+         http::util::fieldValue<std::string>(fields, "cache_key", ""));
 
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
@@ -499,7 +497,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       std::string filterVal = http::util::urlDecode( 
             http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]" 
-                  "[search][value]", ""), true);
+                  "[search][value]", ""));
       if (!filterVal.empty()) 
       {
          hasFilter = true;
@@ -696,12 +694,11 @@ Error getGridData(const http::Request& request,
       http::Fields fields;
       http::util::parseForm(request.body(), &fields);
       std::string envName = http::util::urlDecode(
-            http::util::fieldValue<std::string>(fields, "env", ""), true);
+            http::util::fieldValue<std::string>(fields, "env", ""));
       std::string objName = http::util::urlDecode(
-            http::util::fieldValue<std::string>(fields, "obj", ""), true);
+            http::util::fieldValue<std::string>(fields, "obj", ""));
       std::string cacheKey = http::util::urlDecode(
-            http::util::fieldValue<std::string>(fields, "cache_key", ""), 
-            true);
+            http::util::fieldValue<std::string>(fields, "cache_key", ""));
       std::string show = http::util::fieldValue<std::string>(
             fields, "show", "data");
       if (objName.empty() && cacheKey.empty()) 
