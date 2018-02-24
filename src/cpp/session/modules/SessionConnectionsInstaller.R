@@ -49,15 +49,8 @@ odbc_bundle_download <- function(url, placeholder, bundle_temp) {
   bundle_file_temp
 }
 
-odbc_bundle_extract <- function(url, placeholder, install_path) {
-  bundle_temp <- tempfile()
-  on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
-  
-  bundle_file_temp <- odbc_bundle_download(url, placeholder,  bundle_temp)
-  
+odbc_bundle_extract <- function(bundle_file_temp, install_path) {
   untar(bundle_file_temp, exdir = install_path)
-  
-  install_path
 }
 
 odbc_bundle_check_prereqs_unixodbc <- function() {
@@ -109,7 +102,6 @@ odbc_bundle_check_prereqs <- function() {
   )
   
   prereqs <- os_prereqs[[odbc_bundle_os_name()]]
-  message("Checking Prerequisites...")
   prereqs()
 }
 
@@ -218,23 +210,34 @@ odbc_bundle_register <- function(name, driver_path) {
   
   os_registration <- os_registrations[[odbc_bundle_os_name()]]
   
-  message("Registering Driver...")
   os_registration(name, driver_path) 
 }
 
 odbc_bundle_install <- function(name, url, placeholder, install_path) {
-  install_path <- normalizePath(file.path(install_path, name), mustWork = FALSE)
+  install_path <- file.path(
+    normalizePath(install_path, mustWork = FALSE),
+    tolower(name)
+  )
+  
+  bundle_temp <- tempfile()
+  on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
   
   # Check prerequisites
+  message("Checking Prerequisites...")
   odbc_bundle_check_prereqs()
   
-  # Download and extract
-  odbc_bundle_extract(url, placeholder, install_path)
+  message("Downloading Driver...")
+  bundle_file_temp <- odbc_bundle_download(url, placeholder,  bundle_temp)
+  
+  message("Extracting Driver...")
+  odbc_bundle_extract(bundle_file_temp, install_path)
   
   # Find driver
+  message("Inspecting Driver...")
   driver_path <- odbc_bundle_find_driver(name, install_path)
   
   # Register driver
+  message("Registering Driver...")
   odbc_bundle_register(name, driver_path)
 }
 
