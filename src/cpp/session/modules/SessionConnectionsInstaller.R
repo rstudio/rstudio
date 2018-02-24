@@ -222,7 +222,6 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
   bundle_temp <- tempfile()
   on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
   
-  # Check prerequisites
   message("Checking Prerequisites...")
   odbc_bundle_check_prereqs()
   
@@ -232,11 +231,9 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
   message("Extracting Driver...")
   odbc_bundle_extract(bundle_file_temp, install_path)
   
-  # Find driver
   message("Inspecting Driver...")
   driver_path <- odbc_bundle_find_driver(name, install_path)
   
-  # Register driver
   message("Registering Driver...")
   odbc_bundle_register(name, driver_path)
 }
