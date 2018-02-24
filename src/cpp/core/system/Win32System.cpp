@@ -254,6 +254,68 @@ unsigned int effectiveUserId()
    return 0; // no concept of this on Win32
 }
 
+bool effectiveUserIsRoot()
+{
+   // on Windows, treat built-in administrator account, or elevation to it, to be the
+   // equivalent of Posix "root"
+
+   HANDLE hProcessToken = NULL;
+   if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hProcessToken))
+   {
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      return false;
+   }
+   core::system::CloseHandleOnExitScope processTokenScope(&hProcessToken, ERROR_LOCATION);
+
+   bool isAdmin = false;
+   DWORD bytesUsed = 0;
+   TOKEN_ELEVATION_TYPE tokenElevationType;
+   if (!::GetTokenInformation(hProcessToken, TokenElevationType, &tokenElevationType,
+                              sizeof(tokenElevationType), &bytesUsed))
+   {
+      auto lastErr = ::GetLastError();
+      LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+      return false;
+   }
+
+   if (tokenElevationType == TokenElevationTypeLimited)
+   {
+      HANDLE hUnfiltered;
+      if (!::GetTokenInformation(hProcessToken, TokenLinkedToken, &hUnfiltered, sizeof(HANDLE), &bytesUsed))
+      {
+         auto lastErr = ::GetLastError();
+         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         return false;
+      }
+      core::system::CloseHandleOnExitScope unfilteredHandle(&hUnfiltered, ERROR_LOCATION);
+
+      BYTE adminSID[SECURITY_MAX_SID_SIZE];
+      DWORD sidSize = sizeof(adminSID);
+
+      if (!::CreateWellKnownSid(WinBuiltinAdministratorsSid, 0, &adminSID, &sidSize))
+      {
+         auto lastErr = ::GetLastError();
+         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         return false;
+      }
+
+      BOOL isMember = FALSE;
+      if (::CheckTokenMembership(hUnfiltered, &adminSID, &isMember))
+      {
+         auto lastErr = ::GetLastError();
+         LOG_ERROR(systemError(lastErr, ERROR_LOCATION));
+         return false;
+      }
+      isAdmin = (isMember != FALSE);
+   }
+   else
+   {
+      isAdmin = ::IsUserAnAdmin();
+   }
+   return isAdmin;
+}
+
 // home path strategies
 namespace {
 
@@ -415,7 +477,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
 
    if (hr != S_OK)
    {
-      LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                         safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -423,12 +485,43 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    return FilePath(std::wstring(path));
 }
 
+FilePath systemSettingsPath(const std::string& appName, bool create)
+{
+   int nFolder = CSIDL_COMMON_APPDATA;
+   if (create)
+      nFolder |= CSIDL_FLAG_CREATE;
+
+   wchar_t path[MAX_PATH + 1];
+   HRESULT hr = ::SHGetFolderPathW(NULL, nFolder, NULL, SHGFP_TYPE_CURRENT, path);
+   if (hr != S_OK)
+   {
+      LOG_ERROR_MESSAGE("Unable to retrieve per machine configuration path. HRESULT:  " +
+                        safe_convert::numberToString(hr));
+      return FilePath();
+   }
+
+   FilePath settingsPath = FilePath(std::wstring(path));
+   FilePath completePath = settingsPath.complete(appName);
+
+   if (create)
+   {
+      std::wstring appNameWide = core::string_utils::utf8ToWide(appName);
+      hr = ::SHGetFolderPathAndSubDirW(NULL, CSIDL_COMMON_APPDATA|CSIDL_FLAG_CREATE, NULL,
+                                       SHGFP_TYPE_CURRENT, appNameWide.c_str(), path);
+      if (hr != S_OK)
+      {
+         LOG_ERROR_MESSAGE("Cannot create folder under per machine configuration path. HRESULT:  " +
+                           safe_convert::numberToString(hr));
+         return FilePath();
+      }
+   }
+   return completePath;
+}
+
 bool currentUserIsPrivilleged(unsigned int minimumUserId)
 {
    return false;
 }
-
-
 
 Error captureCommand(const std::string& command, std::string* pOutput)
 {

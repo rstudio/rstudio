@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -215,7 +215,6 @@ core::Error userBelongsToGroup(const user::User& user,
 
 // query priv state
 bool realUserIsRoot();
-bool effectiveUserIsRoot();
 
 // privilege management (not thread safe, call from main thread at app startup
 // or just after fork() prior to exec() for new processes)

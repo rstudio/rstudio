@@ -1,7 +1,7 @@
 /*
  * System.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -165,7 +165,10 @@ private:
 // set $HOME to $USERPROFILE
 void setHomeToUserProfile(core::system::Options* pChildEnv);
 
-#endif
+// Folder for per-machine configuration data
+FilePath systemSettingsPath(const std::string& appName, bool create);
+
+#endif // WIN32
 
 void initHook();
 // initialization (not thread safe, call from main thread at app startup)  
@@ -239,6 +242,7 @@ FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName);
 unsigned int effectiveUserId();
+bool effectiveUserIsRoot();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);
 
 // log
