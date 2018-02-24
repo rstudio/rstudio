@@ -77,6 +77,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -2887,6 +2888,12 @@ public class TextEditingTarget implements
       saveNewFile(docUpdateSentinel_.getPath(),
                   null,
                   postSaveCommand());
+   }
+   
+   @Handler
+   void onRenameSourceDoc()
+   {
+      events_.fireEvent(new RenameSourceFileEvent(docUpdateSentinel_.getPath()));
    }
 
    @Handler

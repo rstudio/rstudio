@@ -1,7 +1,7 @@
 /*
  * Files.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
+import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -62,10 +63,10 @@ public class Files
       extends BasePresenter
       implements FileChangeHandler, 
                  OpenFileInBrowserHandler,
-                 DirectoryNavigateHandler
+                 DirectoryNavigateHandler,
+                 RenameSourceFileEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
-
  
    public interface Display extends WorkbenchView
    {   
@@ -163,6 +164,7 @@ public class Files
 
       
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
+      eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
 
       initSession();
    }
@@ -496,58 +498,9 @@ public class Files
       if (!validateNotRestrictedFolder(selectedFiles, "renamed"))
          return ;
       
-      // prompt for new file name then execute the rename
+      // perform the rename
       final FileSystemItem file = selectedFiles.get(0);
-      globalDisplay_.promptForText("Rename File",
-                                   "Please enter the new file name:",
-                                   file.getName(),
-                                   0,
-                                   file.getStem().length(),
-                                   null,
-                                   new ProgressOperationWithInput<String>() {
-
-                                      public void execute(String input,
-                             final ProgressIndicator progress)
-         {
-            progress.onProgress("Renaming file...");
-
-            String path = file.getParentPath().completePath(input);
-            final FileSystemItem target =
-               file.isDirectory() ?
-                  FileSystemItem.createDir(path) :
-                  FileSystemItem.create(path, false, file.getLength(), file.getLastModifiedNative());
-              
-            // clear selection
-            view_.selectNone();
-            
-            // pre-emptively rename in the UI then fallback to refreshing
-            // the view if there is an error
-            view_.renameFile(file, target);
-            
-            // execute on the server
-            server_.renameFile(file, 
-                               target, 
-                               new VoidServerRequestCallback(progress) {
-                                 @Override
-                                 protected void onSuccess()
-                                 {
-                                    // if we were successful, let editor know
-                                    if (!file.isDirectory())
-                                    {
-                                       eventBus_.fireEvent(
-                                             new SourcePathChangedEvent(
-                                                   file.getPath(), 
-                                                   target.getPath()));
-                                    }
-                                 }
-                                 @Override
-                                 protected void onFailure()
-                                 {
-                                    onRefreshFiles();
-                                 }
-                              });        
-         }                                
-      }); 
+      renameFile(file);
    }
    
    @Handler
@@ -636,7 +589,6 @@ public class Files
    public void onOpenFileInBrowser(OpenFileInBrowserEvent event)
    {
       showFileInBrowser(event.getFile());
-     
    }
    
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
@@ -646,6 +598,12 @@ public class Files
          view_.bringToFront();
    }
   
+   @Override
+   public void onRenameSourceFile(RenameSourceFileEvent event)
+   {
+      renameFile(FileSystemItem.createFile(event.getPath()));
+   }
+
    private void navigateToDirectory(FileSystemItem directoryEntry)
    {
       hasNavigatedToDirectory_ = true;
@@ -653,7 +611,6 @@ public class Files
       view_.listDirectory(currentPath_, currentPathFilesDS_);
       session_.persistClientState();
    }
-   
 
    private void navigateToFile(final FileSystemItem file)
    {
@@ -728,6 +685,73 @@ public class Files
       }
    }
    
+   private void renameFile(FileSystemItem file)
+   {
+      // guard for reentrancy
+      if (renaming_)
+         return;
+      renaming_ = true;
+
+      // prompt for new file name then execute the rename
+      globalDisplay_.promptForText("Rename File",
+                                   "Please enter the new file name:",
+                                   file.getName(),
+                                   0,
+                                   file.getStem().length(),
+                                   null,
+                                   new ProgressOperationWithInput<String>() {
+        public void execute(String input,
+                            final ProgressIndicator progress)
+        {
+            // no longer waiting fo user to rename
+            renaming_ = false;
+            
+            progress.onProgress("Renaming file...");
+
+            String path = file.getParentPath().completePath(input);
+            final FileSystemItem target =
+               file.isDirectory() ?
+                  FileSystemItem.createDir(path) :
+                  FileSystemItem.create(path, false, file.getLength(), file.getLastModifiedNative());
+              
+            // clear selection
+            view_.selectNone();
+            
+            // pre-emptively rename in the UI then fallback to refreshing
+            // the view if there is an error
+            view_.renameFile(file, target);
+            
+            // execute on the server
+            server_.renameFile(file, 
+                               target, 
+                               new VoidServerRequestCallback(progress) {
+                                 @Override
+                                 protected void onSuccess()
+                                 {
+                                    // if we were successful, let editor know
+                                    if (!file.isDirectory())
+                                    {
+                                       eventBus_.fireEvent(
+                                             new SourcePathChangedEvent(
+                                                   file.getPath(), 
+                                                   target.getPath()));
+                                    }
+                                 }
+                                 @Override
+                                 protected void onFailure()
+                                 {
+                                    onRefreshFiles();
+                                 }
+                              });        
+         }                                
+      }, 
+      () -> 
+      {
+         // clear rename flag when operation is canceled
+         renaming_ = false;
+      }); 
+   };
+   
    // data source for listing files on the current path which can 
    // be passed to the files view
    ServerDataSource<DirectoryListing> currentPathFilesDS_ = 
@@ -760,4 +784,5 @@ public class Files
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
    private DataImportPresenter dataImportPresenter_;
+   private boolean renaming_ = false;
 }
