@@ -45,6 +45,14 @@ if(MSVC)
   # in Visual Studio 2017 (we're currently using VS 2015).
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4800")
 
+  # disable C4091 warning: 'keyword' : ignored on left of 'type' when no variable is declared
+  # generates a lot of warning noise in files from clang
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4091")
+
+  # disable C4068 warning: unknown pragma
+  # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
+
   # ensure that we're using linker flags compatible with
   # the version of Boost that will be linked in
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
