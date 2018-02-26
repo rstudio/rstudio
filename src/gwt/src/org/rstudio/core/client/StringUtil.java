@@ -120,7 +120,7 @@ public class StringUtil
          divisor *= 1024;
       }
 
-      return FORMAT.format((double)size / divisor) + " " + LABELS[i];
+      return FORMAT.format((double)size / divisor) + ' ' + LABELS[i];
    }
    
    // Perform an integer division and return the result. GWT's division operator
@@ -190,7 +190,7 @@ public class StringUtil
    public static String toRSymbolName(String name)
    {
       if (!RegexUtil.isSyntacticRIdentifier(name) || isRKeyword(name))
-         return "`" + name + "`";
+         return '`' + name + '`';
       else
          return name;
    }
@@ -268,7 +268,7 @@ public class StringUtil
                item.getParentPath().getParentPath() != null)
          {
             path = ".../" + 
-            item.getParentPath().getName() + "/" +
+            item.getParentPath().getName() + '/' +
             item.getName(); 
          }
       }
@@ -483,12 +483,12 @@ public class StringUtil
       if (!(url.startsWith("http://") || url.startsWith("https://")))
       {
          String thisUrl = Window.Location.getProtocol() + "//" +
-                          Window.Location.getHost() + "/";
+                          Window.Location.getHost() + '/';
          if (Window.Location.getPath().length() > 0 &&
              !Window.Location.getPath().equals("/"))
             thisUrl += Window.Location.getPath();
          if (!thisUrl.endsWith("/"))
-            thisUrl += "/";
+            thisUrl += '/';
          if (url.startsWith("/"))
             url = url.substring(1);
          url = thisUrl + url;

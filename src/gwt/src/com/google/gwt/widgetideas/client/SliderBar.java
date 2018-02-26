@@ -919,7 +919,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   private void highlight() {
     String styleName = getStylePrimaryName();
-    DOM.setElementProperty(getElement(), "className", styleName + " "
+    DOM.setElementProperty(getElement(), "className", styleName + ' '
         + styleName + "-focused");
   }
 

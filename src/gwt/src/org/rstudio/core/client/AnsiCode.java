@@ -105,7 +105,7 @@ public class AnsiCode
    public static final int FONT_NINE = 19;
    public static final String FONT_NINE_STYLE = "xtermFont9";
    
-   public static final String DEFAULTCOLORS = CSI + RESET + ";" + RESET + SGR;
+   public static final String DEFAULTCOLORS = CSI + RESET + ';' + RESET + SGR;
    
    public static class AnsiClazzes
    {
