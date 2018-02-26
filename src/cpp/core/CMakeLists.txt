@@ -286,7 +286,7 @@ else()
       RpcRT4
       ShLwApi
       AdvAPI32
-      ${OPENSSL_CRYPTO_LIBRARY}
+      ${OPENSSL_LIBRARIES}
    )
 
    # source files
