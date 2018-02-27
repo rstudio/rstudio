@@ -55,6 +55,15 @@ public abstract class MessageDisplay
                                       String okButtonCaption,
                                       ProgressOperationWithInput<String> operation);
 
+   public abstract void promptForText(String title,
+                                      String label,
+                                      String initialValue,
+                                      int selectionStart,
+                                      int selectionLength,
+                                      String okButtonCaption,
+                                      ProgressOperationWithInput<String> operation,
+                                      Operation cancelOperation);
+
    public void promptForPassword(
          String title,
          String label,

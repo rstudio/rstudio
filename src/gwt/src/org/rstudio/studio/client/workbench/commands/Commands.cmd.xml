@@ -124,6 +124,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
+         <cmd refid="renameSourceDoc"/>
          <cmd refid="saveSourceDocWithEncoding"/>
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
@@ -892,6 +893,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Save"
         buttonLabel=""
         desc="Save current document"/>
+
+   <cmd id="renameSourceDoc"
+        label="Rename Current Document"
+        menuLabel="_Rename"
+        buttonLabel=""
+        desc="Rename current document"/>
         
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."

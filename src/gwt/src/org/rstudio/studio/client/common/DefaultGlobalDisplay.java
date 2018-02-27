@@ -108,6 +108,29 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    }
 
    @Override
+   public void promptForText(String title,
+                             String label,
+                             String initialValue,
+                             int selectionOffset,
+                             int selectionLength,
+                             String okButtonCaption,
+                             ProgressOperationWithInput<String> operation,
+                             Operation cancelOperation)
+   {
+      ((TextInput)GWT.create(TextInput.class)).promptForText(
+            title,
+            label,
+            initialValue,
+            false,
+            false,
+            selectionOffset,
+            selectionLength,
+            okButtonCaption,
+            operation,
+            cancelOperation);
+   }
+
+   @Override
    public void promptForTextWithOption(
                                  String title,
                                  String label,
