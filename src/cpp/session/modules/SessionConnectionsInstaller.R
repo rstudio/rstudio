@@ -108,8 +108,8 @@ odbc_bundle_registry_add <- function(path, key, value) {
       stdout = FALSE
    )
    
-   if (identical(ret, 0))
-      stop("Failes to add entry ", key, " to windows registry")
+   if (!identical(ret, 0L))
+      stop("Failed to add entry ", key, " to windows registry, please rerun as an administrator.")
    
    ret
 }
@@ -120,12 +120,13 @@ odbc_bundle_registry_delete <- function(path) {
       args = list(
          "DELETE",
          shQuote(path),
+         "/f"
       ),
       stdout = FALSE
    )
    
-   if (identical(ret, 0))
-      stop("Failes to add entry ", key, " to windows registry")
+   if (!identical(ret, 0L))
+      stop("Failed to remote entry ", path, " from the windows registry")
 
    ret
 }
@@ -133,12 +134,12 @@ odbc_bundle_registry_delete <- function(path) {
 odbc_bundle_check_prereqs_windows <- function() {
    odbc_bundle_registry_add(
       file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC Install Test", fsep = "\\"),
-      "ODBC Install Test"
+      "ODBC Install Test",
       "Test"
    )
 
    odbc_bundle_registry_delete(
-      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "Test", fsep = "\\")
+      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC Install Test", fsep = "\\")
    )
 }
 
