@@ -171,8 +171,38 @@ odbc_bundle_register_linux <- function(name, driver_path) {
   odbc_bundle_write_ini(odbcinst_path, odbcinst)
 }
 
-odbc_bundle_register_windows <- function(name, driver_path) {
+odbc_bundle_registry_add <- function(path, key, value) {
+  ret <- system2(
+    "REG",
+    args = list(
+      "ADD",
+      shQuote(path),
+      "/v",
+      shQuote(key),
+      "/t",
+      "REG_SZ",
+      "/d",
+      shQuote(value),
+      "/f"
+    )
+  )
   
+  if (identical(ret, 0))
+    stop("Failes to add entry ", key, " to windows registry")
+}
+
+odbc_bundle_register_windows <- function(name, driver_path) {
+   odbc_bundle_registry_add(
+      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", sep = "\\"),
+      name,
+      "installed"
+   )
+
+   odbc_bundle_registry_add(
+      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", name, sep = "\\")
+      "Driver",
+      driver_path
+   )
 }
 
 odbc_bundle_find_driver <- function(name, install_path) {
