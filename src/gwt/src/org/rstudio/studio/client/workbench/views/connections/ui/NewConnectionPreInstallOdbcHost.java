@@ -99,7 +99,13 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    public ConnectionOptions collectInput()
    {
-      return ConnectionOptions.create();
+      options_.setIntermediateInstallPath(dirChooser_.getText());
+      return options_;
+   }
+
+   public void setIntermediateResult(ConnectionOptions result) 
+   {
+      options_ = result;
    }
    
    public interface Styles extends CssResource
@@ -119,5 +125,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    @UiField
    DirectoryChooserTextBox dirChooser_;
 
-   OperationWithInput<Boolean> nextPageEnabledOperation_;
+   private OperationWithInput<Boolean> nextPageEnabledOperation_;
+
+   private ConnectionOptions options_;
 }

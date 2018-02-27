@@ -5232,11 +5232,13 @@ public class RemoteServer implements Server
 
    @Override
    public void installOdbcDriver(String name,
+                                 String installationPath,
                                  ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   INSTALL_ODBC_DRIVER,
                   name,
+                  installationPath,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 

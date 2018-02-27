@@ -337,6 +337,9 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
    
    bundle_temp <- tempfile()
    on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
+
+   message("Installation path: ", install_path)
+   message("Installing ", name, "...")
    
    message("Checking prerequisites...")
    odbc_bundle_check_prereqs()

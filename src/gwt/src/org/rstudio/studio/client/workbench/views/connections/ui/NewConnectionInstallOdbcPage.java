@@ -116,10 +116,15 @@ public class NewConnectionInstallOdbcPage
          final ProgressIndicator indicator, 
          final OperationWithInput<ConnectionOptions> onResult) 
    {
-      options_ = ConnectionOptions.create("", "");
-      options_.setIntermediateSnippet("library()");
-      setIntermediateResult(options_);
+      options_ = contents_.collectInput();
       onResult.execute(options_);
+   }
+
+   @Override
+   public void setIntermediateResult(ConnectionOptions result) 
+   {
+      contents_.setIntermediateResult(result);
+      options_ = result;
    }
 
    @Override

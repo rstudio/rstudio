@@ -685,3 +685,22 @@ options(connectionObserver = list(
    extensionPath <- system.file("rstudio/connections.dcf", package = package)
    invisible(.Call("rs_connectionAddPackage", package, extensionPath))
 })
+
+.rs.addFunction("connectionInstallerCommand", function(driverName, installationPath) {
+   connectionContext <- Filter(function(e) {
+      identical(e$name, driverName)
+   }, .rs.connectionReadOdbc())
+
+   placeholder <- connectionContext$odbcFile
+   driverUrl <- connectionContext$odbcDownload
+
+   paste(
+      "odbc_bundle_install(",
+      paste("   name = \"", driverName, "\",", sep = ""),
+      paste("   url = \"", driverUrl, "\",", sep = ""),
+      paste("   placeholder = \"", placeholder, "\",", sep = ""),
+      paste("   install_path = \", installationPath, \"", sep = ""),
+      ")",
+      sep = "\n"
+   )
+})

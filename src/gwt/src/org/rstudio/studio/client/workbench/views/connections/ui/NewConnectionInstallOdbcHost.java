@@ -208,6 +208,7 @@ public class NewConnectionInstallOdbcHost extends Composite
       
       server_.installOdbcDriver(
          info_.getName(), 
+         options_.getIntermediateInstallPath(),
          new ServerRequestCallback<ConsoleProcess>() {
    
             @Override
@@ -241,6 +242,8 @@ public class NewConnectionInstallOdbcHost extends Composite
                                        label_.setText("The " + info_.getName() + " driver is now installed!");
                                        nextPageEnabledOperation_.execute(true);
                                        driverInstalled_ = true;
+
+                                       options_.setIntermediateSnippet(proc.getSnippet());
                                     }
                                  }
 
@@ -285,7 +288,12 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    public ConnectionOptions collectInput()
    {
-      return ConnectionOptions.create();
+      return options_;
+   }
+
+   public void setIntermediateResult(ConnectionOptions result) 
+   {
+      options_ = result;
    }
    
    public interface Styles extends CssResource
@@ -319,4 +327,6 @@ public class NewConnectionInstallOdbcHost extends Composite
    private Boolean installationAttempted_ = false;
 
    private Boolean driverInstalled_ = false;
+
+   private ConnectionOptions options_;
 }

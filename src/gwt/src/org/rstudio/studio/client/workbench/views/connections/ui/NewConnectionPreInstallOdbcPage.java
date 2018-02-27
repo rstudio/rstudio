@@ -107,7 +107,7 @@ public class NewConnectionPreInstallOdbcPage
          final OperationWithInput<ConnectionOptions> onResult) 
    {
       options_ = ConnectionOptions.create("", "");
-      options_.setIntermediateSnippet("library()");
+      options_.setIntermediateSnippet("");
       setIntermediateResult(options_);
       onResult.execute(options_);
    }

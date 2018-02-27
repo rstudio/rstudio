@@ -597,7 +597,8 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
 {
    // get parameters
    std::string driverName;
-   Error error = json::readParams(request.params, &driverName);
+   std::string installPath;
+   Error error = json::readParams(request.params, &driverName, &installPath);
    if (error)
       return error;
 
@@ -606,11 +607,29 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    std::string scriptPath = core::string_utils::utf8ToSystem(
       modulesPath.complete("SessionConnectionsInstaller.R").absolutePath());
 
-   // build the command
+   // source the command
    std::string cmd;
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("');");
+   cmd.append("");
+
+   // build installation command
+   r::sexp::Protect rProtect;
+   SEXP commandSEXP = R_NilValue;
+   r::exec::RFunction func(".rs.connectionInstallerCommand");
+   func.addParam(driverName);
+   func.addParam(installPath);
+   error = func.call(&commandSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   std::string command = r::sexp::asString(commandSEXP);
+
+   // append installation command
+   cmd.append(command);
 
    // R binary
    FilePath rProgramPath;

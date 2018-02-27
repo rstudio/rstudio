@@ -27,6 +27,9 @@ public class ConnectionOptions extends JavaScriptObject
 
    public final native void setIntermediateSnippet(String snippet) /*-{ this.intermediateSnippet = snippet; }-*/;
    public final native String getIntermediateSnippet() /*-{ return this.intermediateSnippet; }-*/;
+
+   public final native void setIntermediateInstallPath(String path) /*-{ this.intermediateInstallPath = path; }-*/;
+   public final native String getIntermediateInstallPath() /*-{ return this.intermediateInstallPath; }-*/;
    
    public static String CONNECT_R_CONSOLE = "connect-r-console";
    public static String CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
