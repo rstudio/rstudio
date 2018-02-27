@@ -193,13 +193,13 @@ odbc_bundle_registry_add <- function(path, key, value) {
 
 odbc_bundle_register_windows <- function(name, driver_path) {
    odbc_bundle_registry_add(
-      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", sep = "\\"),
+      file.path("HKEY_CURRENT_USER", "SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
       name,
       "installed"
    )
-
+  
    odbc_bundle_registry_add(
-      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", name, sep = "\\")
+      file.path("HKEY_CURRENT_USER", "SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
       "Driver",
       driver_path
    )
