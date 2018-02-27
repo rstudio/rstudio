@@ -90,44 +90,71 @@ odbc_bundle_check_prereqs_linux <- function() {
       stop("unixODBC is not installed, please install from www.unixodbc.org")
 }
 
-odbc_bundle_registry_add <- function(path, key, value) {
-   validate_entry <- function() {
+odbc_bundle_registry_add <- function(entries) {
+   validate_entry <- function(entry) {
       tryCatch({
-         verify <- readRegistry(path, "HLM")
-         identical(verify[[key]], value)
+         verify <- readRegistry(entry$path, "HLM")
+         identical(verify[[entry$key]], entry$value)
       }, error = function(e) {
          FALSE
       })
    }
 
-   if (validate_entry())
+   odbc_file_escape <- function(value) {
+    gsub("\\\\", "\\\\\\\\", value)
+   }
+
+   if (all(sapply(entries, function(e) validate_entry(e))))
       return()
 
-   full_path <- file.path("HKEY_LOCAL_MACHINE", path, fsep = "\\")
-   system2(
-      "REG",
-      args = list(
-         "ADD",
-         shQuote(full_path),
-         "/v",
-         shQuote(key),
-         "/t",
-         "REG_SZ",
-         "/d",
-         shQuote(value),
-         "/f"
-      )
-   )
+   all_added <- TRUE
+   for (entry in entries) {
+     full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+     system2(
+        "REG",
+        args = list(
+           "ADD",
+           shQuote(full_path),
+           "/v",
+           shQuote(entry$key),
+           "/t",
+           "REG_SZ",
+           "/d",
+           shQuote(entry$value),
+           "/f"
+        )
+     )
 
-   if (!validate_entry()) {
-      message("Could not add registry key from R, retrying using registry file.")
+     if (!validate_entry(entry)) {
+      all_added <- FALSE
+      break
+     }
+   }
+
+   if (!all_added) {
+      message("Could not add registry keys from R, retrying using registry prompt.")
       add_reg <- tempfile(fileext = ".reg")
+
+      line_entries <- sapply(entries, function(entry) {
+        full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+         c(
+            paste("[", full_path, "]", sep = ""),
+            paste(
+              "\"",
+              entry$key,
+              "\"=\"",
+              odbc_file_escape(entry$value),
+              "\"",
+              sep = ""
+            ),
+            ""
+         )
+      })
 
       lines <- c(
          "REGEDIT4",
          "",
-         paste("[", full_path, "]", sep = ""),
-         paste("\"", key, "\"=\"", value, "\"", sep = "")
+         line_entries
       )
 
       writeLines(lines, add_reg)
@@ -138,14 +165,18 @@ odbc_bundle_registry_add <- function(path, key, value) {
          add_reg
       )
 
+      all_entries_valid <- function() {
+        all(sapply(entries, function(e) validate_entry(e)))
+      }
+
       registry_start <- Sys.time()
       registry_wait <- 300
-      while (!validate_entry() && Sys.time() < registry_start + registry_wait) {
+      while (!all_entries_valid() && Sys.time() < registry_start + registry_wait) {
          Sys.sleep(1)
       }
 
-      if (!validate_entry()) {
-         stop("Failed to add registry key using registry file.")
+      if (!all_entries_valid()) {
+         stop("Failed to add all registry keys using registry file.")
       }
    }
 }
@@ -244,17 +275,20 @@ odbc_bundle_register_linux <- function(name, driver_path) {
 }
 
 odbc_bundle_register_windows <- function(name, driver_path) {
-    odbc_bundle_registry_add(
-         file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
-         name,
-         "installed"
-    )
-   
-    odbc_bundle_registry_add(
-         file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
-         "Driver",
-         driver_path
-    )
+   odbc_bundle_registry_add(
+      list(
+        list(
+           path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
+           key = name,
+           value = "installed"
+        ),
+        list(
+           path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+           key = "Driver",
+           value = driver_path
+        )
+      )
+   )
 }
 
 odbc_bundle_find_driver <- function(name, install_path) {
@@ -280,7 +314,7 @@ odbc_bundle_find_driver <- function(name, install_path) {
    if (!identical(length(driver_path), 1L))
       stop("Failed to find odbc driver inside driver bundle.")
    
-   driver_path
+   normalizePath(driver_path)
 }
 
 odbc_bundle_register <- function(name, driver_path) {
@@ -304,25 +338,23 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
    bundle_temp <- tempfile()
    on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
    
-   message("Checking Prerequisites...")
+   message("Checking prerequisites...")
    odbc_bundle_check_prereqs()
    
-   message("Downloading Driver...")
+   message("Downloading driver...")
    bundle_file_temp <- odbc_bundle_download(url, placeholder,   bundle_temp)
    
-   message("Extracting Driver...")
+   message("Extracting driver...")
    odbc_bundle_extract(bundle_file_temp, install_path)
    
-   message("Inspecting Driver...")
+   message("Inspecting driver...")
    driver_path <- odbc_bundle_find_driver(name, install_path)
    
-   message("Registering Driver...")
+   message("Registering driver...")
    odbc_bundle_register(name, driver_path)
-}
 
-odbc_bundle_install(
-   name = "Oracle",
-   url = "http://odbc-drivers-path/",
-   placeholder = "oracle-(os)-x(bitness).tar.gz",
-   install_path = "~/RStudio-Drivers/"
-)
+   message("")
+   message("Installation complete!")
+
+   invisible(NULL)
+}
