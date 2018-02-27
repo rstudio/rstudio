@@ -55,8 +55,8 @@ public class RegexUtil
    private static final String constructSyntacticRIdentifierRegex()
    {
       return
-            "[" + letter() + ".]" +
-            "[" + wordCharacter() + "._]*";
+            '[' + letter() + ".]" +
+            '[' + wordCharacter() + "._]*";
    }
    
    private static String WORD_CHARACTER = null;

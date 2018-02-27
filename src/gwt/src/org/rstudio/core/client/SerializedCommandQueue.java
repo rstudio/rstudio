@@ -96,7 +96,7 @@ public class SerializedCommandQueue
    {
       if (log_)
       {
-         Debug.log(hashCode() + " " + label + " size=" + commands_.size());
+         Debug.log(hashCode() + ' ' + label + " size=" + commands_.size());
       }
    }
 

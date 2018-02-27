@@ -33,10 +33,10 @@ public class URIUtils
       
       // add the query param
       if (!base.contains("?"))
-         base = base + "?";
+         base = base + '?';
       else
-         base = base + "&";
-      base = base + name + "=" + URL.encodeQueryString(value);
+         base = base + '&';
+      base = base + name + '=' + URL.encodeQueryString(value);
      
       // add the anchor back on
       return base + anchor;

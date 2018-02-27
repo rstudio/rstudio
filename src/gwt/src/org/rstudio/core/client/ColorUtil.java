@@ -167,7 +167,7 @@ public class ColorUtil
       
       public String asHex()
       {
-         return "#" +
+         return '#' +
             toTwoDigitHex(red_) +
             toTwoDigitHex(green_) +
             toTwoDigitHex(blue_);
@@ -176,9 +176,9 @@ public class ColorUtil
       public String asRgb()
       {
          if (alpha_ == 1)
-            return "rgb(" + red_ + ", " + green_ + ", " + blue_ + ")";
+            return "rgb(" + red_ + ", " + green_ + ", " + blue_ + ')';
          else
-            return "rgba(" + red_ + ", " + green_ + ", " + blue_ + ", " + alpha_ + ")";
+            return "rgba(" + red_ + ", " + green_ + ", " + blue_ + ", " + alpha_ + ')';
       }
       
       public boolean isDark()
@@ -219,16 +219,16 @@ public class ColorUtil
       
       private static final Pattern RE_RGB = Pattern.create(
             "^\\s*rgb\\(" +
-            RGB_ENTRY_CAPTURE_PATTERN + "," + // red
-            RGB_ENTRY_CAPTURE_PATTERN + "," + // green
+            RGB_ENTRY_CAPTURE_PATTERN + ',' + // red
+            RGB_ENTRY_CAPTURE_PATTERN + ',' + // green
             RGB_ENTRY_CAPTURE_PATTERN +       // blue
             "\\)\\s*$", "");
       
       private static final Pattern RE_RGBA = Pattern.create(
             "^\\s*rgba\\(" +
-            RGB_ENTRY_CAPTURE_PATTERN + "," + // red
-            RGB_ENTRY_CAPTURE_PATTERN + "," + // green
-            RGB_ENTRY_CAPTURE_PATTERN + "," + // blue
+            RGB_ENTRY_CAPTURE_PATTERN + ',' + // red
+            RGB_ENTRY_CAPTURE_PATTERN + ',' + // green
+            RGB_ENTRY_CAPTURE_PATTERN + ',' + // blue
             RGB_ENTRY_CAPTURE_PATTERN +       // alpha
             "\\)\\s*$", "");
             

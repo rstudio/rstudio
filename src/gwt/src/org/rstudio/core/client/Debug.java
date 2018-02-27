@@ -142,7 +142,7 @@ public class Debug
       int i = 0;
       for (Object arg : args)
       {
-         format = format.replaceFirst(Pattern.escape("{" + (i++) + "}"),
+         format = format.replaceFirst(Pattern.escape('{' + (i++) + '}'),
                                       arg == null ? "NULL" : arg.toString());
       }
       devlog(format);

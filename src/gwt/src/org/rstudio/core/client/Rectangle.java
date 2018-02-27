@@ -64,7 +64,7 @@ public class Rectangle
    public String toString()
    {
       return "Rectangle(x=" + x + ",y=" + y +
-             ",w=" + width + ",h=" + height + ")";
+             ",w=" + width + ",h=" + height + ')';
    }
 
    public int getLeft()
