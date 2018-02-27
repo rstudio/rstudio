@@ -86,17 +86,29 @@ odbc_bundle_check_prereqs_osx <- function() {
 }
 
 odbc_bundle_check_prereqs_linux <- function() {
-    if (!odbc_bundle_check_prereqs_unixodbc())
-         stop("unixODBC is not installed, please install from www.unixodbc.org")
+   if (!odbc_bundle_check_prereqs_unixodbc())
+      stop("unixODBC is not installed, please install from www.unixodbc.org")
 }
 
-
 odbc_bundle_registry_add <- function(path, key, value) {
-   ret <- system2(
+   validate_entry <- function() {
+      tryCatch({
+         verify <- readRegistry(path, "HLM")
+         identical(verify[[key]], value)
+      }, error = function(e) {
+         FALSE
+      })
+   }
+
+   if (validate_entry())
+      return()
+
+   full_path <- file.path("HKEY_LOCAL_MACHINE", path, fsep = "\\")
+   system2(
       "REG",
       args = list(
          "ADD",
-         shQuote(path),
+         shQuote(full_path),
          "/v",
          shQuote(key),
          "/t",
@@ -104,43 +116,54 @@ odbc_bundle_registry_add <- function(path, key, value) {
          "/d",
          shQuote(value),
          "/f"
-      ),
-      stdout = FALSE
+      )
    )
-   
-   if (!identical(ret, 0L))
-      stop("Failed to add entry ", key, " to windows registry, please rerun as an administrator.")
-   
-   ret
+
+   if (!validate_entry()) {
+      message("Could not add registry key from R, retrying using registry file.")
+      add_reg <- tempfile(fileext = ".reg")
+
+      lines <- c(
+         "REGEDIT4",
+         "",
+         paste("[", full_path, "]", sep = ""),
+         paste("\"", key, "\"=\"", value, "\"", sep = "")
+      )
+
+      writeLines(lines, add_reg)
+
+      message("Waiting for ", add_reg, " to be registered.")
+      system2(
+         "explorer",
+         add_reg
+      )
+
+      registry_start <- Sys.time()
+      registry_wait <- 300
+      while (!validate_entry() && Sys.time() < registry_start + registry_wait) {
+         Sys.sleep(1)
+      }
+
+      if (!validate_entry()) {
+         stop("Failed to add registry key using registry file.")
+      }
+   }
 }
 
 odbc_bundle_registry_delete <- function(path) {
-   ret <- system2(
+   system2(
       "REG",
       args = list(
          "DELETE",
          shQuote(path),
          "/f"
-      ),
-      stdout = FALSE
+      )
    )
    
-   if (!identical(ret, 0L))
-      stop("Failed to remote entry ", path, " from the windows registry")
-
-   ret
+   identical(ret, 0L)
 }
 
 odbc_bundle_check_prereqs_windows <- function() {
-   odbc_bundle_registry_add(
-      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC Install Test", fsep = "\\"),
-      "ODBC Install Test",
-      "Test"
-   )
-
-   odbc_bundle_registry_delete(
-      file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC Install Test", fsep = "\\")
-   )
 }
 
 odbc_bundle_check_prereqs <- function() {
@@ -222,13 +245,13 @@ odbc_bundle_register_linux <- function(name, driver_path) {
 
 odbc_bundle_register_windows <- function(name, driver_path) {
     odbc_bundle_registry_add(
-         file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
+         file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
          name,
          "installed"
     )
    
     odbc_bundle_registry_add(
-         file.path("HKEY_LOCAL_MACHINE", "SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+         file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
          "Driver",
          driver_path
     )
