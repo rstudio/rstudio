@@ -28,6 +28,7 @@
 * Allow changing zoom level without reloading (#2125)
 * New command 'Pull with Rebase' to pull and rebase a branch in a single step (#2151)
 * Click on promises in the Environment pane now calls `force` on the promise
+* Add Rename command to File menu for quick rename of current file (#2199)
 * Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
 
 ### Bug Fixes
