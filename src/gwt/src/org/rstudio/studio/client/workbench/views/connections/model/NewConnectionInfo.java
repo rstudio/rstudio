@@ -74,6 +74,10 @@ public class NewConnectionInfo extends JavaScriptObject
       return this["error"];
    }-*/;
 
+   public final native boolean getHasInstaller() /*-{
+      return this["hasInstaller"];
+   }-*/;
+
    public final native String getOdbcVersion() /*-{
       return this["odbcVersion"];
    }-*/;

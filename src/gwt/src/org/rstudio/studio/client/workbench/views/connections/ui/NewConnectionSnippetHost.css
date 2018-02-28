@@ -93,3 +93,11 @@
    margin-left: 10px;
    padding-top: 5px;
 }
+
+.uninstallButton {
+   margin-left: auto;
+   margin-top: 4px;
+   margin-right: 2px;
+   height: 20px;
+   cursor: pointer;
+}

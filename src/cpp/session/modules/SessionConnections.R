@@ -242,7 +242,14 @@ options(connectionObserver = list(
    names(files) <- gsub(include, "", snippetsFiles)
 
    files <- files[grepl(include, files)]
-   files
+   sapply(files, normalizePath)
+})
+
+.rs.addFunction("connectionHasInstaller", function(name) {
+   installerName <- paste(name, "dcf", sep = ".")
+   connectionFiles <- as.character(.rs.connectionFiles(".dcf"))
+   
+   any(basename(connectionFiles) == installerName)
 })
 
 .rs.addFunction("connectionReadSnippets", function() {
@@ -265,7 +272,8 @@ options(connectionObserver = list(
             help = .rs.scalar(NULL),
             iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
             licensed = .rs.scalar(FALSE),
-            source = .rs.scalar("Snippet")
+            source = .rs.scalar("Snippet"),
+            hasInstaller = .rs.scalar(FALSE)
          )
       }, error = function(e) {
          warning(e$message)
@@ -320,7 +328,8 @@ options(connectionObserver = list(
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(installer[,"File"]),
             odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
-            odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath())
+            odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
+            hasInstaller = .rs.scalar(TRUE)
          )
       }, error = function(e) {
          warning(e$message)
@@ -409,7 +418,8 @@ options(connectionObserver = list(
                help = .rs.scalar(NULL),
                iconData = .rs.scalar(iconData),
                licensed = .rs.scalar(identical(file.exists(licenseFile), TRUE)),
-               source = .rs.scalar("ODBC")
+               source = .rs.scalar("ODBC"),
+               hasInstaller = .rs.scalar(.rs.connectionHasInstaller(driver))
             )
          }, error = function(e) {
             warning(e$message)
@@ -469,7 +479,8 @@ options(connectionObserver = list(
             help = .rs.scalar(con$help),
             iconData = .rs.scalar(iconData),
             licensed = .rs.scalar(FALSE),
-            source = .rs.scalar("Package")
+            source = .rs.scalar("Package"),
+            hasInstaller = .rs.scalar(FALSE)
          )
       }, error = function(e) {
          warning(e$message)
@@ -520,7 +531,8 @@ options(connectionObserver = list(
                help = .rs.scalar(NULL),
                iconData = .rs.scalar(iconData),
                licensed = .rs.scalar(FALSE),
-               source = .rs.scalar("DSN")
+               source = .rs.scalar("DSN"),
+               hasInstaller = .rs.scalar(FALSE)
             )
          }, error = function(e) {
             warning(e$message)
@@ -547,7 +559,8 @@ options(connectionObserver = list(
          snippet = .rs.scalar(NULL),
          help = .rs.scalar(NULL),
          iconData = .rs.scalar(iconData),
-         licensed = .rs.scalar(FALSE)
+         licensed = .rs.scalar(FALSE),
+         hasInstaller = .rs.scalar(FALSE)
       )
    })
 })

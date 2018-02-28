@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -50,7 +51,9 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -327,6 +330,12 @@ public class NewConnectionSnippetHost extends Composite
          }
       });
 
+      PushButton uninstallButton = makeUninstallButton();
+
+      if (info.getHasInstaller()) {
+         buttonsPanel.add(uninstallButton);
+      }
+
       buttonsPanel.add(testButton);
 
       if (showAdvancedButton) {
@@ -433,6 +442,24 @@ public class NewConnectionSnippetHost extends Composite
       return container;
    }
 
+   private PushButton makeUninstallButton()
+   {
+      PushButton button = new PushButton(new Image(new ImageResource2x(
+         newConnectionSnippetHostResources_.trashImage(),
+         newConnectionSnippetHostResources_.trashImage2x())), new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            
+         }
+      });
+      
+      button.setStyleName(RES.styles().uninstallButton());
+
+      return button;
+   }
+
    public ConnectionOptions collectInput()
    {
       // collect the result
@@ -470,6 +497,8 @@ public class NewConnectionSnippetHost extends Composite
       String buttonsPanel();
       
       String dialogMessagePanel();
+
+      String uninstallButton();
    }
 
    public interface Resources extends ClientBundle
