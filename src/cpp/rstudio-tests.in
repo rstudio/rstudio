@@ -8,7 +8,23 @@ checkUnitTestFailure() {
    fi
 }
 
-## Any arguments passed in are considered arguments to valgrind
+TEST_SCOPE=
+if [ "$1" == "--scope" ]; then 
+   # Remember test scope
+   TEST_SCOPE="$2"
+
+   # Remove the option and argument we just read
+   shift 2
+
+else if [ "$1" == "--help" ]; then 
+   printf "Runs RStudio unit tests. Available flags: \n\n"
+   printf "--help   Show this help\n"
+   printf "--scope  Run only tests with the given scope (core, rsession, or r)\n\n"
+   printf "Any other options are passed to Valgrind."
+   exit 0;
+fi
+
+## Any remaining arguments passed in are considered arguments to valgrind
 if [ "$#" -eq 0 ]; then
 	VALGRIND=
 else
@@ -26,14 +42,15 @@ else
     RSTUDIO_SESSION_BIN="rsession"
 fi
 
+# Run core tests
+if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
+    echo Running 'core' tests...
+    $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN -s
+    checkUnitTestFailure
+fi
 
-echo Running 'core' tests...
-$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN -s
-checkUnitTestFailure
-
-echo Running 'rsession' tests...
-if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf ]
-then
+# Setup for rsession tests
+if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf ]; then
    SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
 else
    # set R environment variables needed by rsession tests
@@ -42,11 +59,25 @@ else
 
    SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf
 fi
+
+
+if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
+    echo Running 'rsession' tests...
+
+    $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
+       --run-tests \
+       --config-file=$SESSION_CONF_FILE
+    checkUnitTestFailure
+fi
    
-$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
-   --run-tests \
-   --config-file=$SESSION_CONF_FILE
-checkUnitTestFailure
+if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
+    echo Running 'r' tests...
+
+    ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
+       --run-script "print('Hello, world!')" \
+       --config-file=$SESSION_CONF_FILE
+    checkUnitTestFailure
+fi
 
 # return an error exit code if any unit tests failed
 if [ "$UNIT_TEST_FAILURE" = true ] ; then

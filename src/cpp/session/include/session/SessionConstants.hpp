@@ -55,6 +55,7 @@
 #define kVerifyInstallationSessionOption  "verify-installation"
 
 #define kRunTestsSessionOption            "run-tests"
+#define kRunScriptSessionOption           "run-script"
 
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
