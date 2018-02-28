@@ -597,12 +597,12 @@ options(connectionObserver = list(
    for (i in seq_along(connectionList)) {
       entryName <- connectionList[[i]]$name
       if (!is.null(connectionNames[[entryName]])) {
-         connectionList[[i]] <- NULL
+         connectionList[[i]]$remove <- TRUE
       }
       connectionNames[[entryName]] <- TRUE
    }
-
-   connectionList <- Filter(function(e) !is.null(e), connectionList)
+   
+   connectionList <- Filter(function(e) !identical(e$remove, TRUE), connectionList)
 
    context <- list(
       connectionsList = unname(connectionList)
