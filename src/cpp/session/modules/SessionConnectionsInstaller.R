@@ -277,16 +277,16 @@ odbc_bundle_register_linux <- function(name, driver_path) {
 odbc_bundle_register_windows <- function(name, driver_path) {
    odbc_bundle_registry_add(
       list(
-        list(
-           path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
-           key = name,
-           value = "installed"
-        ),
-        list(
-           path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
-           key = "Driver",
-           value = driver_path
-        )
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
+            key = name,
+            value = "installed"
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Driver",
+            value = driver_path
+         )
       )
    )
 }
@@ -301,13 +301,13 @@ odbc_bundle_find_driver <- function(name, install_path, library_pattern) {
    os_extension <- os_extensions[[odbc_bundle_os_name()]]
    driver_name <- gsub(" ", "", name)
    
-   if (is.null(driver_pattern)) {
-     library_pattern <- paste(
-        driver_name,
-        "[^/\\\\]+\\.",
-        os_extension,
-        sep = ""
-     )
+   if (is.null(library_pattern)) {
+      library_pattern <- paste(
+         driver_name,
+         "[^/\\\\]+\\.",
+         os_extension,
+         sep = ""
+      )
    }
    
    all_files <- dir(install_path, recursive = TRUE, full.names = TRUE)
