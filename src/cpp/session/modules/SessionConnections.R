@@ -739,12 +739,12 @@ options(connectionObserver = list(
 
    paste(
       "odbc_bundle_install(",
-      paste("   name = \"", driverName, "\",", sep = ""),
-      paste("   url = \"", driverUrl, "\",", sep = ""),
-      paste("   placeholder = \"", placeholder, "\",", sep = ""),
-      paste("   install_path = \"", installationPath, "\",", sep = ""),
-      paste("   library_name = \"", libraryName, "\"", sep = ""),
+      "name = \"", driverName, "\", ",
+      "url = \"", driverUrl, "\", ",
+      "placeholder = \"", placeholder, "\", ",
+      "install_path = \"", installationPath, "\", ",
+      "library_name = \"", libraryName, "\"",
       ")",
-      sep = "\n"
+      sep = ""
    )
 })

@@ -323,25 +323,25 @@ odbc_bundle_install <- function(name, url, placeholder, install_path, library_na
    on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
 
    message("Installation path: ", install_path)
-   message("Installing ", name, "...")
+   message("Installing ", name)
    
-   message("Checking prerequisites...")
+   message("Checking prerequisites")
    odbc_bundle_check_prereqs()
    
-   message("Downloading driver...")
+   message("Downloading driver")
    bundle_file_temp <- odbc_bundle_download(url, placeholder, bundle_temp)
    
-   message("Extracting driver...")
+   message("Extracting driver")
    odbc_bundle_extract(bundle_file_temp, install_path)
    
-   message("Inspecting driver...")
+   message("Inspecting driver")
    driver_path <- odbc_bundle_find_driver(name, install_path, library_name)
    
-   message("Registering driver...")
+   message("Registering driver")
    odbc_bundle_register(name, driver_path)
 
    message("")
-   message("Installation complete!")
+   message("Installation complete")
 
    invisible(NULL)
 }
