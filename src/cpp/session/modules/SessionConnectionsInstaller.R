@@ -15,15 +15,15 @@
 
 odbc_bundle_os_name <- function() {
    os_mapping <- list (
-      Linux = "linux",
-      Windows = "windows",
-      Darwin = "osx"
+      linux = "linux",
+      windows = "windows",
+      darwin = "osx"
    )
    
-   if (!Sys.info()["sysname"] %in% names(os_mapping))
-      stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported")
+   if (!tolower(Sys.info()["sysname"]) %in% names(os_mapping))
+      stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported.")
    
-   os_mapping[[Sys.info()[["sysname"]]]]
+   os_mapping[[tolower(Sys.info()[["sysname"]])]]
 }
 
 odbc_bundle_name <- function(placeholder) {
@@ -345,7 +345,7 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
    odbc_bundle_check_prereqs()
    
    message("Downloading driver...")
-   bundle_file_temp <- odbc_bundle_download(url, placeholder,   bundle_temp)
+   bundle_file_temp <- odbc_bundle_download(url, placeholder, bundle_temp)
    
    message("Extracting driver...")
    odbc_bundle_extract(bundle_file_temp, install_path)

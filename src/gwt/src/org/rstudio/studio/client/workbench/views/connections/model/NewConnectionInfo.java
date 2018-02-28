@@ -86,14 +86,6 @@ public class NewConnectionInfo extends JavaScriptObject
       return this["odbcLicense"];
    }-*/;
 
-   public final native String getOdbcDownload() /*-{
-      return this["odbcDownload"];
-   }-*/;
-
-   public final native String getOdbcFile() /*-{
-      return this["odbcFile"];
-   }-*/;
-
    public final native String getOdbcWarning() /*-{
       return this["odbcWarning"];
    }-*/;

@@ -215,7 +215,7 @@ options(connectionObserver = list(
    NULL
 })
 
-.rs.addFunction("connectionFilesPath", function(include, exclude) {
+.rs.addFunction("connectionFilesPath", function() {
    snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
 
    if (!is.null(getOption("connections-path")) && !dir.exists(snippetsPath)) {
@@ -227,19 +227,28 @@ options(connectionObserver = list(
    snippetsPath
 })
 
-.rs.addFunction("connectionFiles", function(include, exclude) {
-   snippetsPath <- .rs.connectionFilesPath()
-   snippetsFiles <- list()
+.rs.addFunction("connectionOdbcInstallerPath", function() {
+   normalizePath(
+      file.path(
+         .Call("rs_connectionOdbcInstallPath"),
+         "odbc",
+         "installers"),
+      mustWork = FALSE
+   )
+})
+
+.rs.addFunction("connectionFiles", function(include, defaultPath) {
+   connectionFiles <- list()
    
-   if (!is.null(snippetsPath)) {
-      snippetsFiles <- list.files(snippetsPath)
+   if (!is.null(defaultPath)) {
+      connectionFiles <- list.files(defaultPath)
    }
 
-   files <- lapply(snippetsFiles, function(file) {
-      fullPath <- file.path(snippetsPath, file)
+   files <- lapply(connectionFiles, function(file) {
+      fullPath <- file.path(defaultPath, file)
    })
 
-   names(files) <- gsub(include, "", snippetsFiles)
+   names(files) <- gsub(include, "", connectionFiles)
 
    files <- files[grepl(include, files)]
    sapply(files, normalizePath)
@@ -247,13 +256,13 @@ options(connectionObserver = list(
 
 .rs.addFunction("connectionHasInstaller", function(name) {
    installerName <- paste(name, "dcf", sep = ".")
-   connectionFiles <- as.character(.rs.connectionFiles(".dcf"))
+   connectionFiles <- as.character(.rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath()))
    
    any(basename(connectionFiles) == installerName)
 })
 
 .rs.addFunction("connectionReadSnippets", function() {
-   snippetsPaths <- .rs.connectionFiles(".R$")
+   snippetsPaths <- .rs.connectionFiles(".R$", .rs.connectionFilesPath())
 
    snippets <- lapply(snippetsPaths, function(fullPath) {
       paste(readLines(fullPath), collapse = "\n")
@@ -287,13 +296,14 @@ options(connectionObserver = list(
    normalizePath(
       file.path(
          .Call("rs_connectionOdbcInstallPath"),
-         "odbc"),
+         "odbc",
+         "drivers"),
       mustWork = FALSE
    )
 })
 
 .rs.addFunction("connectionReadInstallers", function() {
-   installerPaths <- .rs.connectionFiles(".dcf")
+   installerPaths <- .rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath())
 
    installers <- lapply(installerPaths, function(fullPath) {
       read.dcf(fullPath)
@@ -326,7 +336,10 @@ options(connectionObserver = list(
             odbcVersion = .rs.scalar(installer[,"Version"]),
             odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
             odbcDownload = .rs.scalar(installer[,"Download"]),
-            odbcFile = .rs.scalar(installer[,"File"]),
+            odbcFile = if ("File" %in% colnames(installer)) .rs.scalar(installer[,"File"]) else NULL,
+            odbcLinux = if ("Linux" %in% colnames(installer)) .rs.scalar(installer[,"Linux"]) else NULL,
+            odbcMac = if ("Mac" %in% colnames(installer)) .rs.scalar(installer[,"Mac"]) else NULL,
+            odbcWindows = if ("Windows" %in% colnames(installer)) .rs.scalar(installer[,"Windows"]) else NULL,
             odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
             odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
             hasInstaller = .rs.scalar(TRUE)
@@ -704,7 +717,22 @@ options(connectionObserver = list(
       identical(e$name, driverName)
    }, .rs.connectionReadOdbc())
 
-   placeholder <- connectionContext$odbcFile
+   if (is.null(connectionContext$odbcFile)) {
+      os_mapping <- list (
+         linux = "odbcLinux",
+         windows = "odbcMac",
+         darwin = "odbcWindows"
+      )
+      
+      if (!tolower(Sys.info()["sysname"]) %in% names(os_mapping))
+         stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported.")
+      
+      os_type <- os_mapping[[tolower(Sys.info()[["sysname"]])]]
+      placeholder <-  connectionContext[[os_mapping]]
+   } else {
+      placeholder <-  connectionContext$odbcFile
+   }
+
    driverUrl <- connectionContext$odbcDownload
 
    paste(
