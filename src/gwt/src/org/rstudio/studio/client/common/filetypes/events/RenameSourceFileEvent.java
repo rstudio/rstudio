@@ -32,6 +32,10 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
       path_ = path;
    }
    
+   public RenameSourceFileEvent()
+   {
+   }
+   
    public String getPath()
    {
       return path_;
@@ -51,5 +55,5 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private final String path_;
+   private String path_;
 }
