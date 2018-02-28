@@ -13,7 +13,7 @@
 #
 #
 
-odbc_bundle_os_name <- function() {
+.rs.addFunction("odbcBundleOsName", function() {
    os_mapping <- list (
       linux = "linux",
       windows = "windows",
@@ -24,20 +24,20 @@ odbc_bundle_os_name <- function() {
       stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported.")
    
    os_mapping[[tolower(Sys.info()[["sysname"]])]]
-}
+})
 
-odbc_bundle_name <- function(placeholder) {
-   os_name <- odbc_bundle_os_name()
+.rs.addFunction("odbcBundleName", function(placeholder) {
+   os_name <- .rs.odbcBundleOsName()
    bitness <- if (grepl("64", Sys.info()["machine"])) "64" else "32"
    
    bundle_name <- gsub("\\(os\\)", os_name, placeholder)
    bundle_name <- gsub("\\(bitness\\)", bitness, bundle_name)
    
    bundle_name
-}
+})
 
-odbc_bundle_download <- function(url, placeholder, bundle_temp) {
-   bundle_name <- odbc_bundle_name(placeholder)
+.rs.addFunction("odbcBundleDownload", function(url, placeholder, bundle_temp) {
+   bundle_name <- .rs.odbcBundleName(placeholder)
    bundle_url <- paste(url, bundle_name, sep = "")
    
    if (exists(bundle_temp)) unlink(bundle_temp, recursive = TRUE)
@@ -47,23 +47,23 @@ odbc_bundle_download <- function(url, placeholder, bundle_temp) {
    download.file(bundle_url, bundle_file_temp)
    
    bundle_file_temp
-}
+})
 
-odbc_bundle_extract <- function(bundle_file_temp, install_path) {
+.rs.addFunction("odbcBundleExtract", function(bundle_file_temp, install_path) {
    untar(bundle_file_temp, exdir = install_path)
-}
+})
 
-odbc_bundle_check_prereqs_unixodbc <- function() {
+.rs.addFunction("odbcBundleCheckPrereqsUnixodbc", function() {
    identical(system2("odbcinst", stdout = FALSE), 1L)
-}
+})
 
-odbc_bundle_check_prereqs_brew <- function() {
+.rs.addFunction("odbcBundleCheckPrereqsBrew", function() {
    identical(system2("brew", stdout = FALSE), 1L)
-}
+})
 
-odbc_bundle_check_prereqs_osx <- function() {
-   if (!odbc_bundle_check_prereqs_unixodbc()) {
-      if (!odbc_bundle_check_prereqs_brew()) {
+.rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
+   if (!.rs.odbcBundleCheckPrereqsUnixodbc()) {
+      if (!.rs.odbcBundleCheckPrereqsBrew()) {
          message("Installing Brew...")
          system2(
             "/usr/bin/ruby",
@@ -81,16 +81,16 @@ odbc_bundle_check_prereqs_osx <- function() {
       )
    }
    
-   if (!odbc_bundle_check_prereqs_unixodbc())
+   if (!.rs.odbcBundleCheckPrereqsUnixodbc())
       stop("Failed to install unixODBC, please install from www.unixodbc.org")
-}
+})
 
-odbc_bundle_check_prereqs_linux <- function() {
-   if (!odbc_bundle_check_prereqs_unixodbc())
+.rs.addFunction("odbcBundleCheckPrereqsLinux", function() {
+   if (!.rs.odbcBundleCheckPrereqsUnixodbc())
       stop("unixODBC is not installed, please install from www.unixodbc.org")
-}
+})
 
-odbc_bundle_registry_add <- function(entries) {
+.rs.addFunction("odbcBundleRegistryAdd", function(entries) {
    validate_entry <- function(entry) {
       tryCatch({
          verify <- readRegistry(entry$path, "HLM")
@@ -100,7 +100,7 @@ odbc_bundle_registry_add <- function(entries) {
       })
    }
 
-   odbc_file_escape <- function(value) {
+   odbcFileEscape <- function(value) {
     gsub("\\\\", "\\\\\\\\", value)
    }
 
@@ -143,7 +143,7 @@ odbc_bundle_registry_add <- function(entries) {
               "\"",
               entry$key,
               "\"=\"",
-              odbc_file_escape(entry$value),
+              odbcFileEscape(entry$value),
               "\"",
               sep = ""
             ),
@@ -179,9 +179,9 @@ odbc_bundle_registry_add <- function(entries) {
          stop("Failed to add all registry keys using registry file.")
       }
    }
-}
+})
 
-odbc_bundle_registry_delete <- function(path) {
+.rs.addFunction("odbcBundleRegistryDelete", function(path) {
    system2(
       "REG",
       args = list(
@@ -192,29 +192,29 @@ odbc_bundle_registry_delete <- function(path) {
    )
    
    identical(ret, 0L)
-}
+})
 
-odbc_bundle_check_prereqs_windows <- function() {
-}
+.rs.addFunction("odbcBundleCheckPrereqsWindows", function() {
+})
 
-odbc_bundle_check_prereqs <- function() {
+.rs.addFunction("odbcBundleCheckPrereqs", function() {
    os_prereqs <- list(
-      osx = odbc_bundle_check_prereqs_osx,
-      windows = odbc_bundle_check_prereqs_windows,
-      linux = odbc_bundle_check_prereqs_linux
+      osx = .rs.odbcBundleCheckPrereqsOsx,
+      windows = .rs.odbcBundleCheckPrereqsWindows,
+      linux = .rs.odbcBundleCheckPrereqsLinux
    )
    
-   prereqs <- os_prereqs[[odbc_bundle_os_name()]]
+   prereqs <- os_prereqs[[.rs.odbcBundleOsName()]]
    prereqs()
-}
+})
 
-odbc_bundle_odbcinst_path <- function() {
+.rs.addFunction("odbcBundleOdbcinstPath", function() {
    config <- system2("odbcinst", "-j", stdout = TRUE)
    odbcini_entry <- config[grepl("odbcinst.ini", config)]
    gsub("^[^/\\\\]*", "", odbcini_entry)
-}
+})
 
-odbc_bundle_read_ini <- function(odbcinst_path) {
+.rs.addFunction("odbcBundleReadIni", function(odbcinst_path) {
    lines <- readLines(odbcinst_path)
    data <- list()
    
@@ -238,9 +238,9 @@ odbc_bundle_read_ini <- function(odbcinst_path) {
    }
    
    data
-}
+})
 
-odbc_bundle_write_ini <- function(odbcinst_path, data) {
+.rs.addFunction("odbcBundleWriteIni", function(odbcinst_path, data) {
    lines <- c()
    for (name in names(data)) {
       lines <- c(
@@ -256,14 +256,14 @@ odbc_bundle_write_ini <- function(odbcinst_path, data) {
    }
    
    writeLines(lines, odbcinst_path)
-}
+})
 
-odbc_bundle_register_linux <- function(name, driver_path) {
+.rs.addFunction("odbcBundleRegisterLinux", function(name, driver_path) {
    # Find odbcinst.ini file
-   odbcinst_path <- odbc_bundle_odbcinst_path()
+   odbcinst_path <- .rs.odbcBundleOdbcinstPath()
    
    # Read odbcinst.ini
-   odbcinst <- odbc_bundle_read_ini(odbcinst_path)
+   odbcinst <- .rs.odbcBundleReadIni(odbcinst_path)
    
    # Set odbcinst.ini entries
    odbcinst[[name]] <- list(
@@ -271,11 +271,11 @@ odbc_bundle_register_linux <- function(name, driver_path) {
    )
    
    # Write odbcinst.ini
-   odbc_bundle_write_ini(odbcinst_path, odbcinst)
-}
+   .rs.odbcBundleWriteIni(odbcinst_path, odbcinst)
+})
 
-odbc_bundle_register_windows <- function(name, driver_path) {
-   odbc_bundle_registry_add(
+.rs.addFunction("odbcBundleRegisterWindows", function(name, driver_path) {
+   .rs.odbcBundleRegistryAdd(
       list(
          list(
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
@@ -289,16 +289,16 @@ odbc_bundle_register_windows <- function(name, driver_path) {
          )
       )
    )
-}
+})
 
-odbc_bundle_find_driver <- function(name, install_path, library_pattern) { 
+.rs.addFunction("odbcBundleFindDriver", function(name, install_path, library_pattern) { 
    os_extensions <- list(
       osx = "\\.dylib$",
       windows = "\\.dll$",
       linux = "\\.so$"
    )
    
-   os_extension <- os_extensions[[odbc_bundle_os_name()]]
+   os_extension <- os_extensions[[.rs.odbcBundleOsName()]]
    driver_name <- gsub(" ", "", name)
    
    if (is.null(library_pattern)) {
@@ -317,21 +317,21 @@ odbc_bundle_find_driver <- function(name, install_path, library_pattern) {
       stop("Failed to find ", library, " inside driver bundle.")
    
    normalizePath(driver_path)
-}
+})
 
-odbc_bundle_register <- function(name, driver_path) {
+.rs.addFunction("odbcBundleRegister", function(name, driver_path) {
    os_registrations <- list(
-      osx = odbc_bundle_register_linux,
-      windows = odbc_bundle_register_windows,
-      linux = odbc_bundle_register_linux
+      osx = .rs.odbcBundleRegisterLinux,
+      windows = .rs.odbcBundleRegisterWindows,
+      linux = .rs.odbcBundleRegisterLinux
    )
    
-   os_registration <- os_registrations[[odbc_bundle_os_name()]]
+   os_registration <- os_registrations[[.rs.odbcBundleOsName()]]
    
    os_registration(name, driver_path) 
-}
+})
 
-odbc_bundle_install <- function(name, url, placeholder, install_path, library_pattern) {
+.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern) {
    install_path <- file.path(
       normalizePath(install_path, mustWork = FALSE),
       tolower(name)
@@ -344,22 +344,22 @@ odbc_bundle_install <- function(name, url, placeholder, install_path, library_pa
    message("Installing ", name)
    
    message("Checking prerequisites")
-   odbc_bundle_check_prereqs()
+   .rs.odbcBundleCheckPrereqs()
    
    message("Downloading driver")
-   bundle_file_temp <- odbc_bundle_download(url, placeholder, bundle_temp)
+   bundle_file_temp <- .rs.odbcBundleDownload(url, placeholder, bundle_temp)
    
    message("Extracting driver")
-   odbc_bundle_extract(bundle_file_temp, install_path)
+   .rs.odbcBundleExtract(bundle_file_temp, install_path)
    
    message("Inspecting driver")
-   driver_path <- odbc_bundle_find_driver(name, install_path, library_pattern)
+   driver_path <- .rs.odbcBundleFindDriver(name, install_path, library_pattern)
    
    message("Registering driver")
-   odbc_bundle_register(name, driver_path)
+   .rs.odbcBundleRegister(name, driver_path)
 
    message("")
    message("Installation complete")
 
    invisible(NULL)
-}
+})

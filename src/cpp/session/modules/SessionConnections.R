@@ -720,7 +720,7 @@ options(connectionObserver = list(
    libraryPattern <- connectionContext$odbcLibrary
 
    paste(
-      "odbc_bundle_install(",
+      ".rs.odbcBundleInstall(",
       "name = \"", driverName, "\", ",
       "url = \"", driverUrl, "\", ",
       "placeholder = \"", placeholder, "\", ",
