@@ -30,6 +30,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -64,9 +65,11 @@ import com.google.inject.Inject;
 public class NewConnectionSnippetHost extends Composite
 {
    @Inject
-   private void initialize(ConnectionsServerOperations server)
+   private void initialize(ConnectionsServerOperations server,
+                           GlobalDisplay globalDisplay)
    {
       server_ = server;
+      globalDisplay_ = globalDisplay;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -450,8 +453,27 @@ public class NewConnectionSnippetHost extends Composite
       {
          @Override
          public void onClick(ClickEvent arg0)
-         {
-            
+         {  
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION,
+               "Uninstall " + info_.getName(), 
+               "Do you want to uninstall " + info_.getName() + "?",
+                  false,
+                  new Operation() 
+                  {
+                     @Override
+                     public void execute()
+                     {
+                     }
+                  },
+                  new Operation() 
+                  {
+                     @Override
+                     public void execute()
+                     {
+                     }
+                  },
+                  true);
          }
       });
       
@@ -537,4 +559,5 @@ public class NewConnectionSnippetHost extends Composite
    static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]*))?(:([^}]+))?\\}";
    
    private ConnectionsServerOperations server_;
+   private GlobalDisplay globalDisplay_;
 }
