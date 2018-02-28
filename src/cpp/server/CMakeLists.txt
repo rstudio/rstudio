@@ -109,6 +109,36 @@ endif()
 # include directories and libraries
 set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
+# handle El Capitan moving OpenSSL away
+if(APPLE)
+   if(${MACOSX_VERSION} VERSION_GREATER "10.10"
+         AND EXISTS "/usr/local/opt/openssl")
+
+      set(SERVER_SYSTEM_LIBRARIES
+         ${SERVER_SYSTEM_LIBRARIES}
+         -L/usr/local/opt/openssl/lib -lssl -lcrypto)
+
+      set(CORE_INCLUDE_DIRS
+         ${CORE_INCLUDE_DIRS}
+         /usr/local/opt/openssl/include)
+
+      if(NOT DEFINED OPENSSL_ROOT_DIR)
+         set(OPENSSL_ROOT_DIR
+            /usr/local/opt/openssl)
+      endif()
+   endif()
+
+   find_package(OpenSSL REQUIRED QUIET)
+   set(SERVER_SYSTEM_LIBRARIES
+      ${SERVER_SYSTEM_LIBRARIES}
+      ${OPENSSL_LIBRARIES}
+   )
+   set(CORE_INCLUDE_DIRS
+      ${CORE_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIRS}
+   )
+endif()
+
 # set include directories
 include_directories(
    include
