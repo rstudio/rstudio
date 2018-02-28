@@ -602,6 +602,11 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // find the tools module
+   FilePath rPath = session::options().coreRSourcePath();
+   std::string toolsPath = core::string_utils::utf8ToSystem(
+      rPath.childPath("Tools.R").absolutePath());
+
    // find connection installer module
    FilePath modulesPath = session::options().modulesRSourcePath();
    std::string scriptPath = core::string_utils::utf8ToSystem(
@@ -609,6 +614,9 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
 
    // source the command
    std::string cmd;
+   cmd.append("source('");
+   cmd.append(string_utils::jsLiteralEscape(toolsPath));
+   cmd.append("');");
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("');");
