@@ -57,6 +57,8 @@ public class NewConnectionPreInstallOdbcPage
       );
       
       info_ = info;
+      options_ = ConnectionOptions.create("", "");
+      contents_.setIntermediateResult(options_);
       contents_.initializeInfo(info_);
    }
 
@@ -75,6 +77,12 @@ public class NewConnectionPreInstallOdbcPage
    {
       contents_.onDeactivate(operation);
    }
+
+   @Override
+   protected ConnectionOptions collectInput()
+   {
+      return contents_.collectInput();
+   }
    
    @Override
    protected Widget createWidget()
@@ -90,12 +98,6 @@ public class NewConnectionPreInstallOdbcPage
    }
 
    @Override
-   protected ConnectionOptions collectInput()
-   {
-      return contents_.collectInput();
-   }
-
-   @Override
    protected boolean validate(ConnectionOptions input)
    {
       return true;
@@ -106,9 +108,7 @@ public class NewConnectionPreInstallOdbcPage
          final ProgressIndicator indicator, 
          final OperationWithInput<ConnectionOptions> onResult) 
    {
-      options_ = ConnectionOptions.create("", "");
-      options_.setIntermediateSnippet("");
-      setIntermediateResult(options_);
+      options_ = contents_.collectInput();
       onResult.execute(options_);
    }
 

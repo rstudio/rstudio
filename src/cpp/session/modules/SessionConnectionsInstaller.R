@@ -291,28 +291,12 @@ odbc_bundle_register_windows <- function(name, driver_path) {
    )
 }
 
-odbc_bundle_find_driver <- function(name, install_path) {
-   os_extensions <- list(
-      osx = "dylib",
-      windows = "dll",
-      linux = "so"
-   )
-   
-   os_extension <- os_extensions[[odbc_bundle_os_name()]]
-   driver_name <- gsub(" ", "", name)
-   
-   driver_pattern <- paste(
-      driver_name,
-      "[^/\\\\]+\\.",
-      os_extension,
-      sep = ""
-   )
-   
+odbc_bundle_find_driver <- function(name, install_path, library_name) {   
    all_files <- dir(install_path, recursive = TRUE, full.names = TRUE)
-   driver_path <- all_files[grepl(driver_pattern, all_files, ignore.case = TRUE)]
+   driver_path <- Filter(function(e) identical(tolower(basename(e)), tolower(library_name)), all_files)
    
    if (!identical(length(driver_path), 1L))
-      stop("Failed to find odbc driver inside driver bundle.")
+      stop("Failed to find ", library, " inside driver bundle.")
    
    normalizePath(driver_path)
 }
@@ -329,7 +313,7 @@ odbc_bundle_register <- function(name, driver_path) {
    os_registration(name, driver_path) 
 }
 
-odbc_bundle_install <- function(name, url, placeholder, install_path) {
+odbc_bundle_install <- function(name, url, placeholder, install_path, library_name) {
    install_path <- file.path(
       normalizePath(install_path, mustWork = FALSE),
       tolower(name)
@@ -351,7 +335,7 @@ odbc_bundle_install <- function(name, url, placeholder, install_path) {
    odbc_bundle_extract(bundle_file_temp, install_path)
    
    message("Inspecting driver...")
-   driver_path <- odbc_bundle_find_driver(name, install_path)
+   driver_path <- odbc_bundle_find_driver(name, install_path, library_name)
    
    message("Registering driver...")
    odbc_bundle_register(name, driver_path)
