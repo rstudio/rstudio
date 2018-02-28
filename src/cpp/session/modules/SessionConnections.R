@@ -336,11 +336,8 @@ options(connectionObserver = list(
             odbcVersion = .rs.scalar(installer[,"Version"]),
             odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
             odbcDownload = .rs.scalar(installer[,"Download"]),
-            odbcFile = if ("File" %in% colnames(installer)) .rs.scalar(installer[,"File"]) else NULL,
-            odbcLinux = if ("File.Linux" %in% colnames(installer)) .rs.scalar(installer[,"File.Linux"]) else NULL,
-            odbcMac = if ("File.Mac" %in% colnames(installer)) .rs.scalar(installer[,"File.Mac"]) else NULL,
-            odbcWindows = if ("File.Windows" %in% colnames(installer)) .rs.scalar(installer[,"File.Windows"]) else NULL,
-            odbcLibrary = .rs.scalar(installer[,"Library"]),
+            odbcFile = valueOrEmpty("File", installer),
+            odbcLibrary = valueOrEmpty("Library", installer),
             odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
             odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
             hasInstaller = .rs.scalar(TRUE)
@@ -718,24 +715,9 @@ options(connectionObserver = list(
       identical(as.character(e$name), driverName)
    }, .rs.connectionReadInstallers())[[1]]
 
-   if (is.null(connectionContext$odbcFile)) {
-      os_mapping <- list (
-         linux = "odbcLinux",
-         windows = "odbcWindows",
-         darwin = "odbcMac"
-      )
-      
-      if (!tolower(Sys.info()["sysname"]) %in% names(os_mapping))
-         stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported.")
-      
-      os_type <- os_mapping[[tolower(Sys.info()[["sysname"]])]]
-      placeholder <-  connectionContext[[os_type]]
-   } else {
-      placeholder <-  connectionContext$odbcFile
-   }
-
+   placeholder <-  connectionContext$odbcFile
    driverUrl <- connectionContext$odbcDownload
-   libraryName <- connectionContext$odbcLibrary
+   libraryPattern <- connectionContext$odbcLibrary
 
    paste(
       "odbc_bundle_install(",
@@ -743,8 +725,12 @@ options(connectionObserver = list(
       "url = \"", driverUrl, "\", ",
       "placeholder = \"", placeholder, "\", ",
       "install_path = \"", installationPath, "\", ",
-      "library_name = \"", libraryName, "\"",
+      "library_pattern = \"", libraryPattern, "\"",
       ")",
       sep = ""
    )
+})
+
+.rs.addJsonRpcHandler("connectionUninstallOdbcDriver", function(driverName) {
+   
 })
