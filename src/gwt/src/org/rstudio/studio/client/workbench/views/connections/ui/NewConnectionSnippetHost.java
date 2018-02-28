@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -32,6 +33,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -456,14 +459,32 @@ public class NewConnectionSnippetHost extends Composite
          {  
             globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
-               "Uninstall " + info_.getName(), 
-               "Do you want to uninstall " + info_.getName() + "?",
+               "Uninstall " + info_.getName() + " Driver", 
+               "Uninstall the " + info_.getName() + " driver by removing files and registration entries?",
                   false,
                   new Operation() 
                   {
                      @Override
                      public void execute()
                      {
+                        server_.uninstallOdbcDriver(
+                        info_.getName(), 
+                        new ServerRequestCallback<Void>() {
+
+                           @Override
+                           public void onResponseReceived(Void v)
+                           {
+                           } 
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              globalDisplay_.showErrorMessage(
+                                 "Installation failed",
+                                 error.getUserMessage());
+                           }
+                        });
                      }
                   },
                   new Operation() 

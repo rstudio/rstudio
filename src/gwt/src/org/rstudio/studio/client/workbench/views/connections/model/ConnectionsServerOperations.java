@@ -64,4 +64,7 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
 
    void getOdbcConnectionContext(String name,
                                  ServerRequestCallback<NewConnectionInfo> callback);
+
+   void uninstallOdbcDriver(String name,
+                            ServerRequestCallback<Void> callback);
 }

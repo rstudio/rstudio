@@ -5251,6 +5251,16 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void uninstallOdbcDriver(String name,
+                                   ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  UNINSTALL_ODBC_DRIVER,
+                  name,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5669,4 +5679,5 @@ public class RemoteServer implements Server
    private static final String ASKSECRET_COMPLETED = "asksecret_completed";
    private static final String INSTALL_ODBC_DRIVER = "install_odbc_driver";
    private static final String GET_NEW_ODBC_CONNECTION_CONTEXT = "get_new_odbc_connection_context";
+   private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
 }
