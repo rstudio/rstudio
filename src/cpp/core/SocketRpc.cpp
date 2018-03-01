@@ -17,6 +17,7 @@
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/LocalStreamBlockingClient.hpp>
+#include <core/http/TcpIpBlockingClient.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/SocketRpc.hpp>
 #include <core/system/Environment.hpp>
@@ -29,6 +30,75 @@ namespace {
 
 std::string s_sessionSharedSecret;
 
+void constructRequest(const std::string& endpoint,
+                      const json::Object& payload,
+                      http::Request* pRequest)
+{
+   // serialize the payload
+   std::ostringstream oss;
+   core::json::write(payload, oss);
+
+   // form the request
+   pRequest->setMethod("POST");
+   pRequest->setUri(endpoint);
+   pRequest->setHeader("Connection", "close");
+   pRequest->setHeader(kServerRpcSecretHeader, s_sessionSharedSecret);
+   pRequest->setBody(oss.str());
+}
+
+Error handleResponse(const std::string& endpoint,
+                     const http::Response& response,
+                     json::Value* pResult)
+{
+   if (response.statusCode() != core::http::status::Ok)
+   {
+      LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint + " " +
+                          safe_convert::numberToString(response.statusCode()) +
+                          " " + response.statusMessage() + "\n" +
+                          response.body());
+      return Error(json::errc::ExecutionError, ERROR_LOCATION);
+   }
+   else if (response.body().empty())
+   {
+      // empty value from server doesn't imply failure, just that there's
+      // nothing for us to read
+      *pResult = json::Value();
+      return Success();
+   }
+   else if (!json::parse(response.body(), pResult))
+   {
+      LOG_WARNING_MESSAGE("Received unparseable result from rserver RPC:\n" +
+            endpoint + "\n" +
+            response.body());
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+Error sendRequest(const FilePath& socketPath,
+                  const std::string& endpoint,
+                  const http::Request& request,
+                  json::Value* pResult)
+{
+   core::http::Response response;
+   core::http::sendRequest(socketPath, request, &response);
+
+   return handleResponse(endpoint, response, pResult);
+}
+
+Error sendRequest(const std::string& tcpAddress,
+                  const std::string& port,
+                  const std::string& endpoint,
+                  const http::Request& request,
+                  json::Value* pResult)
+{
+   core::http::Response response;
+   core::http::sendRequest(tcpAddress, port, request, &response);
+
+   return handleResponse(endpoint, response, pResult);
+}
+
 } // anonymous namespace
 
 
@@ -37,45 +107,25 @@ Error invokeRpc(const FilePath& socketPath,
                 const json::Object& request,
                 json::Value *pResult)
 {
-   // serialize the payload
-   std::ostringstream oss;
-   core::json::write(request, oss);
+   http::Request req;
+   constructRequest(endpoint, request, &req);
 
-   // form the request 
-   core::http::Request req;
-   req.setMethod("POST");
-   req.setUri(endpoint);
-   req.setHeader("Connection", "close");
-   req.setHeader(kServerRpcSecretHeader, s_sessionSharedSecret);
-   req.setBody(oss.str());
+   return sendRequest(socketPath, endpoint, req, pResult);
+}
 
-   core::http::Response resp;
-   core::http::sendRequest(socketPath, req, &resp);
+Error invokeRpc(const std::string& tcpAddress,
+                const std::string& port,
+                const std::string& endpoint,
+                const json::Object& request,
+                json::Value *pResult)
+{
+   http::Request req;
+   constructRequest(endpoint, request, &req);
 
-   if (resp.statusCode() != core::http::status::Ok)
-   {
-      LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint + " " +
-                          safe_convert::numberToString(resp.statusCode()) +
-                          " " + resp.statusMessage() + "\n" +
-                          resp.body());
-      return Error(json::errc::ExecutionError, ERROR_LOCATION);
-   }
-   else if (resp.body().empty())
-   {
-      // empty value from server doesn't imply failure, just that there's
-      // nothing for us to read
-      *pResult = json::Value();
-      return Success();
-   }
-   else if (!json::parse(resp.body(), pResult))
-   {
-      LOG_WARNING_MESSAGE("Received unparseable result from rserver RPC:\n" +
-            endpoint + "\n" +
-            resp.body());
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-   }
+   // add additional Host header (needed for tcp connections)
+   req.setHost(tcpAddress);
 
-   return Success();
+   return sendRequest(tcpAddress, port, endpoint, req, pResult);
 }
 
 Error initialize()

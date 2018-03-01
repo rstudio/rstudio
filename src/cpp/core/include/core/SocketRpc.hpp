@@ -38,6 +38,12 @@ core::Error invokeRpc(const FilePath& socketPath,
                       const core::json::Object& request,
                       core::json::Value *pResult);
 
+Error invokeRpc(const std::string& tcpAddress,
+                const std::string& port,
+                const std::string& endpoint,
+                const json::Object& request,
+                json::Value *pResult);
+
 } // namespace socket_rpc
 } // namespace core
 } // namespace rstudio
