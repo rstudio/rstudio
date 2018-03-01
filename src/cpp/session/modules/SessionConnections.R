@@ -610,7 +610,7 @@ options(connectionObserver = list(
 
 .rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name) {
    connectionContext <- Filter(function(e) {
-      identical(e$name, name)
+      identical(as.character(e$name), name)
    }, .rs.connectionReadOdbc())
 
    if (length(connectionContext) != 1)
