@@ -14,11 +14,13 @@
  */
 
 #include <core/http/LocalStreamAsyncServer.hpp>
+#include <core/http/TcpIpAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/json/Json.hpp>
 #include <core/SecureKeyFile.hpp>
 #include <core/SocketRpc.hpp>
 
+#include <server/ServerObject.hpp>
 #include <server/ServerOptionsOverlay.hpp>
 #include <server/ServerSessionManager.hpp>
 
@@ -37,7 +39,7 @@ namespace session_rpc {
 namespace {
 
 std::string s_sessionSharedSecret;
-boost::shared_ptr<http::LocalStreamAsyncServer> s_pSessionRpcServer;
+boost::shared_ptr<http::AsyncServer> s_pSessionRpcServer;
 
 void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
 {
@@ -109,22 +111,33 @@ Error initialize()
    if (getServerBoolOption(kServerProjectSharing) &&
        !getServerPathOption(kSharedStoragePath).empty())
    {
-      // create the async server instance
-      s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
-               "Session RPCs",
-               std::string(),
-               core::system::EveryoneReadWriteMode);
+      if (getServerBoolOption(kSpawnerSessionsEnabled))
+      {
+         // if we're using spawner sessions, we need to handle RPCs
+         // from within the regular http server since sessions will be
+         // on different machines
+         s_pSessionRpcServer = server::server();
+      }
+      else
+      {
+         // create the async server instance
+         s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
+                  "Session RPCs",
+                  std::string(),
+                  core::system::EveryoneReadWriteMode);
+
+         // initialize with path to our socket
+         Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
+                  FilePath(kServerRpcSocketPath));
+         if (error)
+            return error;
+      }
 
       s_pSessionRpcServer->setScheduledCommandInterval(
-               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));
-
-      // initialize with path to our scoket
-      Error error = s_pSessionRpcServer->init(FilePath(kServerRpcSocketPath));
-      if (error)
-         return error;
+               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));   
 
       // create the shared secret (if necessary)
-      error = key_file::readSecureKeyFile("session-rpc-key",
+      Error error = key_file::readSecureKeyFile("session-rpc-key",
                                           &s_sessionSharedSecret);
       if (error)
          return error;
