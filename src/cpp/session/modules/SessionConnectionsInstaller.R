@@ -377,7 +377,7 @@
    os_extensions <- list(
       osx = "dylib$",
       windows = "dll$",
-      linux = ".so$"
+      linux = "so$"
    )
    
    os_extension <- os_extensions[[.rs.odbcBundleOsName()]]
@@ -415,7 +415,7 @@
 
 .rs.addFunction("odbcBundleValidate", function(bundle_file, md5) {
    if (!is.null(md5) && nchar(md5) > 0) {
-      valid_md5s <- strsplit(as.character(md5), ",")[[1]]
+      valid_md5s <- strsplit(as.character(md5), "[ \n,]+")[[1]]
       bundle_md5 <- tools::md5sum(bundle_file)
       if (!bundle_md5 %in% valid_md5s) {
          stop("Failed to validate bundle with signature ", md5, " but got ", bundle_md5, " instead.")
