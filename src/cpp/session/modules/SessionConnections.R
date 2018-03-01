@@ -743,7 +743,17 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionUnregisterWindowsDriver", function(driverName) {
-   
+   .rs.odbcBundleRegistryRemove(
+      list(
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", "ODBC Drivers", fsep = "\\"),
+            key = driverName
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", driverName, fsep = "\\")
+         )
+      )
+   )
 })
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {

@@ -136,16 +136,16 @@
       add_reg <- tempfile(fileext = ".reg")
 
       line_entries <- sapply(entries, function(entry) {
-        full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+         full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
          c(
             paste("[", full_path, "]", sep = ""),
             paste(
-              "\"",
-              entry$key,
-              "\"=\"",
-              odbcFileEscape(entry$value),
-              "\"",
-              sep = ""
+               "\"",
+               entry$key,
+               "\"=\"",
+               odbcFileEscape(entry$value),
+               "\"",
+               sep = ""
             ),
             ""
          )
@@ -184,8 +184,11 @@
 .rs.addFunction("odbcBundleRegistryRemove", function(entries) {
    validate_entry <- function(entry) {
       tryCatch({
-         readRegistry(entry$path, "HLM")
-         FALSE
+         reg_entry <- readRegistry(entry$path, "HLM")
+         if (!is.null(entry$key))
+            is.null(reg_entry[[entry$key]])
+         else
+            FALSE
       }, error = function(e) {
          TRUE
       })
@@ -194,49 +197,68 @@
    if (all(sapply(entries, function(e) validate_entry(e))))
       return()
 
-   all_added <- TRUE
    for (entry in entries) {
-     full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
-     system2(
-        "REG",
-        args = list(
-           "REMOVE",
-           shQuote(full_path),
-           "/v",
-           shQuote(entry$key),
-           "/f"
-        )
-     )
+      full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
 
-     if (!validate_entry(entry)) {
-      all_added <- FALSE
-      break
-     }
-   }
-
-   if (!all_added) {
-      message("Could not add registry keys from R, retrying using registry prompt.")
-      add_reg <- tempfile(fileext = ".reg")
-
-      line_entries <- sapply(entries, function(entry) {
-        full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
-         c(
-            paste("-[", full_path, "]", sep = ""),
+      if (!is.null(entry$key)) {
+         reg_args <- list(
+            "DELETE",
+            shQuote(full_path),
+            "/v",
+            shQuote(entry$key),
+            "/f"
          )
-      })
+      }
+      else {
+         reg_args <- list(
+            "DELETE",
+            shQuote(full_path),
+            "/f"
+         )
+      }
 
-      lines <- c(
-         "REGEDIT4",
-         "",
-         line_entries
-      )
-
-      writeLines(lines, add_reg)
       system2(
-         "explorer",
-         add_reg
+         "REG",
+         args = reg_args
       )
    }
+
+   if (all(sapply(entries, function(e) validate_entry(e))))
+      return()
+
+   add_reg <- tempfile(fileext = ".reg")
+
+   line_entries <- sapply(entries, function(entry) {
+      full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+
+      if (is.null(entry$key)) {
+         paste("[-", full_path, "]", sep = "")
+      }
+      else {
+         c(
+            paste("[", full_path, "]", sep = ""),
+            paste(
+               "\"",
+               entry$key,
+               "\"=-",
+               sep = ""
+            ),
+            ""
+         )
+      }
+   })
+
+   lines <- c(
+      "REGEDIT4",
+      "",
+      unlist(line_entries)
+   )
+
+   writeLines(lines, add_reg)
+   system2(
+      "explorer",
+      add_reg
+   )
 })
 
 .rs.addFunction("odbcBundleRegistryDelete", function(path) {
@@ -353,9 +375,9 @@
 
 .rs.addFunction("odbcBundleFindDriver", function(name, install_path, library_pattern) { 
    os_extensions <- list(
-      osx = "\\.dylib$",
-      windows = "\\.dll$",
-      linux = "\\.so$"
+      osx = "dylib$",
+      windows = "dll$",
+      linux = ".so$"
    )
    
    os_extension <- os_extensions[[.rs.odbcBundleOsName()]]
@@ -391,7 +413,7 @@
    os_registration(name, driver_path) 
 })
 
-.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern) {
+.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern = NULL) {
    install_path <- file.path(
       normalizePath(install_path, mustWork = FALSE),
       tolower(name)
