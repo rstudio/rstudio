@@ -620,7 +620,7 @@ options(connectionObserver = list(
          )
       )
    else {
-      connectionContext
+      connectionContext[[1]]
    }
 })
 
@@ -747,36 +747,41 @@ options(connectionObserver = list(
 })
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {
+   tryCatch({
+      defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), driverName)
+      defaultInstallExists <- dir.exists(defaultInstallPath)
 
-   defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), driverName)
-   defaultInstallExists <- dir.exists(defaultInstallPath)
+      # delete the driver
+      if (defaultInstallExists) {
+         unlink(defaultInstallPath, recursive = TRUE)
+      }
 
-   # delete the driver
-   if (defaultInstallExists) {
-      unlink(defaultInstallPath, recursive = TRUE)
-   }
+      # unregister driver
+      if (identical(tolower(Sys.info()["sysname"]), "windows")) {
+         .rs.connectionUnregisterWindowsDriver(driverName)
+      }
+      else {
+         .rs.connectionUnregisterOdbcinstDriver(driverName)
+      }
 
-   # unregister driver
-   if (identical(tolower(Sys.info()["sysname"]), "windows")) {
-      .rs.connectionUnregisterWindowsDriver(driverName)
-   }
-   else {
-      .rs.connectionUnregisterOdbcinstDriver(driverName)
-   }
-
-   # if driver was not installed in default location
-   if (!defaultInstallExists) {
-      list(
-         error = .rs.scalar(
-            paste(
-               "The", driverName, "driver was not found in the default installation path,",
-               "if appropriate, please manually remove this driver."
+      # if driver was not installed in default location
+      if (!defaultInstallExists) {
+         list(
+            message = .rs.scalar(
+               paste(
+                  "The", driverName, "driver was not found in the default installation path;",
+                  "if appropriate, please manually remove this driver."
+               )
             )
          )
-      )
-   }
-   else {
+      }
+      else {
+         list(
+         )
+      }
+   }, error = function(e) {
       list(
+         error = .rs.scalar(e$message)
       )
-   }
+   })
 })

@@ -26,6 +26,10 @@ public class ConnectionUninstallResult extends JavaScriptObject
    {
    }
 
+   public final native String getMessage() /*-{
+      return this["message"];
+   }-*/;
+
    public final native String getError() /*-{
       return this["error"];
    }-*/;

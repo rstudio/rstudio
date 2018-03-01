@@ -481,6 +481,14 @@ public class NewConnectionSnippetHost extends Composite
                                     result.getError()
                                  );
                               }
+                              else if (!StringUtil.isNullOrEmpty(result.getMessage())) {
+                                 globalDisplay_.showMessage(
+                                    MessageDialog.INFO,
+                                    "Uninstallation complete",
+                                    result.getMessage()
+                                 );
+                                 uninstallButton_.setVisible(false);
+                              }
                               else
                               {
                                  globalDisplay_.showMessage(
