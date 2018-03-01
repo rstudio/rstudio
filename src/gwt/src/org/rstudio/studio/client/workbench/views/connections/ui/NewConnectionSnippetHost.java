@@ -337,10 +337,10 @@ public class NewConnectionSnippetHost extends Composite
          }
       });
 
-      PushButton uninstallButton = makeUninstallButton();
+      uninstallButton_ = makeUninstallButton();
 
       if (info.getHasInstaller()) {
-         buttonsPanel.add(uninstallButton);
+         buttonsPanel.add(uninstallButton_);
       }
 
       buttonsPanel.add(testButton);
@@ -481,6 +481,15 @@ public class NewConnectionSnippetHost extends Composite
                                     result.getError()
                                  );
                               }
+                              else
+                              {
+                                 globalDisplay_.showMessage(
+                                       MessageDialog.INFO,
+                                       "Uninstallation complete",
+                                       "Driver " + info_.getName() + " was successfully uninstalled."
+                                    );
+                                 uninstallButton_.setVisible(false);
+                              }
                            } 
 
                            @Override
@@ -588,4 +597,5 @@ public class NewConnectionSnippetHost extends Composite
    
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
+   private PushButton uninstallButton_;
 }
