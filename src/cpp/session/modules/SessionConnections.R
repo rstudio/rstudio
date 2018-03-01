@@ -732,13 +732,29 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionUnregisterOdbcinstDriver", function(driverName) {
+   odbcinstPath <- .rs.odbcBundleOdbcinstPath()
+   odbcinstData <- .rs.odbcBundleReadIni(odbcinstPath)
 
+   if (driverName %in% names(odbcinstData)) {
+      odbcinstData[[driverName]] <- NULL
+
+      .rs.odbcBundleWriteIni(odbcinstPath, odbcinstData)
+   }
 })
 
 .rs.addFunction("connectionUnregisterWindowsDriver", function(driverName) {
+   
 })
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {
+
+   defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), driverName)
+   defaultInstallExists <- dir.exists(defaultInstallPath)
+
+   # delete the driver
+   if (defaultInstallExists) {
+      unlink(defaultInstallPath, recursive = TRUE)
+   }
 
    # unregister driver
    if (identical(tolower(Sys.info()["sysname"]), "windows")) {
@@ -748,13 +764,8 @@ options(connectionObserver = list(
       .rs.connectionUnregisterOdbcinstDriver(driverName)
    }
 
-   defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), driverName)
-
-   # delete the driver if it was installed in default location
-   if (dir.exists(defaultInstallPath)) {
-      unlink(defaultInstallPath, recursive = TRUE)
-   }
-   else {
+   # if driver was not installed in default location
+   if (!defaultInstallExists) {
       stop(
          "The ", driverName, " driver was not found in the default installation path, ",
          "if appropriate, please manually remove this driver."

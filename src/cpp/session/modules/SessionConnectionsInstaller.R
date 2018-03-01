@@ -181,6 +181,64 @@
    }
 })
 
+.rs.addFunction("odbcBundleRegistryRemove", function(entries) {
+   validate_entry <- function(entry) {
+      tryCatch({
+         readRegistry(entry$path, "HLM")
+         FALSE
+      }, error = function(e) {
+         TRUE
+      })
+   }
+
+   if (all(sapply(entries, function(e) validate_entry(e))))
+      return()
+
+   all_added <- TRUE
+   for (entry in entries) {
+     full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+     system2(
+        "REG",
+        args = list(
+           "REMOVE",
+           shQuote(full_path),
+           "/v",
+           shQuote(entry$key),
+           "/f"
+        )
+     )
+
+     if (!validate_entry(entry)) {
+      all_added <- FALSE
+      break
+     }
+   }
+
+   if (!all_added) {
+      message("Could not add registry keys from R, retrying using registry prompt.")
+      add_reg <- tempfile(fileext = ".reg")
+
+      line_entries <- sapply(entries, function(entry) {
+        full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+         c(
+            paste("-[", full_path, "]", sep = ""),
+         )
+      })
+
+      lines <- c(
+         "REGEDIT4",
+         "",
+         line_entries
+      )
+
+      writeLines(lines, add_reg)
+      system2(
+         "explorer",
+         add_reg
+      )
+   }
+})
+
 .rs.addFunction("odbcBundleRegistryDelete", function(path) {
    system2(
       "REG",

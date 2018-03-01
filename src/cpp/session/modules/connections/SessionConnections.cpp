@@ -725,6 +725,7 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
             handleConnectionsResourceRequest))
+      (bind(sourceModuleRFile, "SessionConnectionsInstaller.R"))
       (bind(sourceModuleRFile, "SessionConnections.R"))
       (bind(registerRpcMethod, "install_odbc_driver", installOdbcDriver));
 
