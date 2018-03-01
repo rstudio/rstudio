@@ -54,6 +54,9 @@ core::FilePath tempFile(const std::string& prefix,
 
 core::FilePath tempDir();
 
+core::FilePath logPath();
+
+core::FilePath rSourcePath();
      
 // suppress output in scope
 class SuppressOutputInScope
