@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 checkUnitTestFailure() {
    RET_CODE=$?
@@ -10,18 +10,23 @@ checkUnitTestFailure() {
 
 TEST_SCOPE=
 if [ "$1" == "--scope" ]; then 
+   if [ "$#" == 1 ]; then 
+      printf "Specify scope (core, session, or r).\n"
+      exit 1
+   fi
+
    # Remember test scope
    TEST_SCOPE="$2"
 
    # Remove the option and argument we just read
    shift 2
 
-else if [ "$1" == "--help" ]; then 
+elif [ "$1" == "--help" ]; then 
    printf "Runs RStudio unit tests. Available flags: \n\n"
    printf "--help   Show this help\n"
    printf "--scope  Run only tests with the given scope (core, rsession, or r)\n\n"
    printf "Any other options are passed to Valgrind."
-   exit 0;
+   exit 0
 fi
 
 ## Any remaining arguments passed in are considered arguments to valgrind
@@ -74,13 +79,13 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     echo Running 'r' tests...
 
     ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
-       --run-script "print('Hello, world!')" \
+       --run-script "print(153)" \
        --config-file=$SESSION_CONF_FILE
     checkUnitTestFailure
 fi
 
 # return an error exit code if any unit tests failed
-if [ "$UNIT_TEST_FAILURE" = true ] ; then
+if [ "$UNIT_TEST_FAILURE" = true ]; then
     exit 1
 fi
 
