@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -712,26 +713,42 @@ public class AceEditor implements DocDisplay,
       {
          if (fileType_.getEditorLanguage().useRCompletion())
          {
-            completionManager = new RCompletionManager(
-                  this,
-                  this,
-                  new CompletionPopupPanel(),
-                  server_,
-                  new Filter(),
-                  rContext_,
-                  fileType_.canExecuteChunks() ? rnwContext_ : null,
-                  this,
-                  false);
-
-            // if this is cpp then we use our own completion manager
-            // that can optionally delegate to the R completion manager
-            if (fileType_.isC() || fileType_.isRmd())
+            if (fileType_.isPython())
             {
-               completionManager = new CppCompletionManager(
-                                                     this,
-                                                     new Filter(),
-                                                     cppContext_,
-                                                     completionManager);
+               completionManager = new PythonCompletionManager(
+                     this,
+                     this,
+                     new CompletionPopupPanel(),
+                     server_,
+                     new Filter(),
+                     rContext_,
+                     fileType_.canExecuteChunks() ? rnwContext_ : null,
+                     this,
+                     false);
+            }
+            else
+            {
+               completionManager = new RCompletionManager(
+                     this,
+                     this,
+                     new CompletionPopupPanel(),
+                     server_,
+                     new Filter(),
+                     rContext_,
+                     fileType_.canExecuteChunks() ? rnwContext_ : null,
+                        this,
+                        false);
+
+               // if this is cpp then we use our own completion manager
+               // that can optionally delegate to the R completion manager
+               if (fileType_.isC() || fileType_.isRmd())
+               {
+                  completionManager = new CppCompletionManager(
+                        this,
+                        new Filter(),
+                        cppContext_,
+                        completionManager);
+               }
             }
          }
          else

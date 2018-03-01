@@ -77,5 +77,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          ServerRequestCallback<JsObject> callback);
    
    void executeUserCommand(String name, ServerRequestCallback<Void> callback);
-         
+   
+   void pythonGetCompletions(
+         String line,
+         ServerRequestCallback<Completions> requestCallback);
 }

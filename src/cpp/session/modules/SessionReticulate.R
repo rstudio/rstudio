@@ -13,6 +13,27 @@
 #
 #
 
+.rs.addJsonRpcHandler("python_get_completions", function(line)
+{
+   if (!requireNamespace("reticulate", quietly = TRUE))
+      return(.rs.emptyCompletions())
+   
+   completions <- tryCatch(
+      reticulate:::py_completer(line),
+      error = identity
+   )
+   
+   if (inherits(completions, "error"))
+      return(.rs.emptyCompletions())
+   
+   .rs.makeCompletions(
+      token     = attr(completions, "token"),
+      results   = as.character(completions),
+      type      = attr(completions, "types"),
+      quote     = FALSE
+   )
+})
+
 .rs.addFunction("reticulate.replInitialize", function()
 {
    # override help method
