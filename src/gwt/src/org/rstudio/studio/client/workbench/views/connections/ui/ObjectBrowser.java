@@ -1,7 +1,7 @@
 /*
  * ObjectBrowser.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,10 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
@@ -27,6 +29,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
@@ -34,6 +37,7 @@ import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
 import com.google.gwt.user.cellview.client.TreeNode;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -141,7 +145,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
          });
 
       // create new widget
-      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES, Integer.MAX_VALUE);
+      objects_ = new CellTree(objectsModel_, null, RES, MESSAGES, 512);
       
       // create the top level list of objects
       objects_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
@@ -153,7 +157,6 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objectsWrapper_.add(objects_);
       
       scrollPanel_.setWidget(objectsWrapper_);
-      
       // cache connection
       connection_ = connection;
    }
@@ -161,6 +164,48 @@ public class ObjectBrowser extends Composite implements RequiresResize
    @Override
    public void onResize()
    {
+   }
+   
+   @Override
+   public void onAttach()
+   {
+      // this works around an issue in CellTree; it has a "Show more" link which
+      // displays when there are more than defaultNodeSize items, but clicking
+      // on it causes the hosting scroll panel to jump to the top. unfortunately
+      // neither this link nor its activation is visible, so listen for clicks
+      // on the link in the capture phase and scroll the user to the bottom when
+      // expansion is complete.
+      registration_ = Event.addNativePreviewHandler(event ->
+      {
+         // look only for click events
+         if (event.getTypeInt() != Event.ONMOUSEDOWN)
+            return;
+
+         // look only for those that are targeted at the Show More button
+         Element target = Element.as(event.getNativeEvent().getEventTarget());
+         if (!StringUtil.equals(target.getTagName().toLowerCase(), "a"))
+            return;
+         if (!target.getInnerText().equals("Show more"))
+            return;
+         
+         // if we got here, the user has clicked Show More, so scroll to the
+         // bottom when they're done
+         final Value<HandlerRegistration> registration = 
+               new Value<HandlerRegistration>(null);
+         registration.setValue(scrollPanel_.addScrollHandler(e -> 
+         {
+            scrollPanel_.scrollToBottom();
+            registration.getValue().removeHandler();
+         }));
+      });
+      super.onAttach();
+   }
+   
+   @Override
+   public void onDetach()
+   {
+      registration_.removeHandler();
+      super.onDetach();
    }
    
    public interface Resources extends CellTree.Resources {
@@ -261,4 +306,5 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
+   private HandlerRegistration registration_;
 }
