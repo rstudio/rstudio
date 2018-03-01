@@ -766,9 +766,17 @@ options(connectionObserver = list(
 
    # if driver was not installed in default location
    if (!defaultInstallExists) {
-      stop(
-         "The ", driverName, " driver was not found in the default installation path, ",
-         "if appropriate, please manually remove this driver."
+      list(
+         error = .rs.scalar(
+            paste(
+               "The", driverName, "driver was not found in the default installation path,",
+               "if appropriate, please manually remove this driver."
+            )
+         )
+      )
+   }
+   else {
+      list(
       )
    }
 })

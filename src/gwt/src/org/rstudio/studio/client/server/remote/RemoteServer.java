@@ -155,6 +155,7 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -5253,7 +5254,7 @@ public class RemoteServer implements Server
 
    @Override
    public void uninstallOdbcDriver(String name,
-                                   ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<ConnectionUninstallResult> callback)
    {
       sendRequest(RPC_SCOPE,
                   UNINSTALL_ODBC_DRIVER,

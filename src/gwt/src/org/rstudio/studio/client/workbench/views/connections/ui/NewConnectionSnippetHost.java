@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.connections.res.NewConnectionSnippetHostResources;
@@ -469,11 +470,17 @@ public class NewConnectionSnippetHost extends Composite
                      {
                         server_.uninstallOdbcDriver(
                         info_.getName(), 
-                        new ServerRequestCallback<Void>() {
+                        new ServerRequestCallback<ConnectionUninstallResult>() {
 
                            @Override
-                           public void onResponseReceived(Void v)
+                           public void onResponseReceived(ConnectionUninstallResult result)
                            {
+                              if (!StringUtil.isNullOrEmpty(result.getError())) {
+                                 globalDisplay_.showErrorMessage(
+                                    "Uninstallation failed",
+                                    result.getError()
+                                 );
+                              }
                            } 
 
                            @Override
@@ -481,7 +488,7 @@ public class NewConnectionSnippetHost extends Composite
                            {
                               Debug.logError(error);
                               globalDisplay_.showErrorMessage(
-                                 "Installation failed",
+                                 "Uninstallation failed",
                                  error.getUserMessage());
                            }
                         });

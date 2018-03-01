@@ -313,6 +313,8 @@
       )
    }
    
+   if (is.null(lines)) lines <- c("")
+
    writeLines(lines, odbcinst_path)
 })
 
