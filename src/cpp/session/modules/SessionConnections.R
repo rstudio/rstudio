@@ -555,6 +555,7 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionReadPackageInstallers", function() {
+
    supportedNotInstsalled <- Filter(function(e) {
       !.rs.isPackageVersionInstalled(e$package, e$version)
    }, .rs.connectionSupportedPackages())
@@ -797,4 +798,32 @@ options(connectionObserver = list(
          error = .rs.scalar(e$message)
       )
    })
+})
+
+.rs.addJsonRpcHandler("update_odbc_installers", function() {
+   connectionsWarning <- NULL
+
+   # once per session, attempt to download driver updates
+   if (!is.null(getOption("connections-installer"))) {
+      installerUrl <- getOption("connections-installer")
+      installerHostName <- gsub("https?://|/[^:].", "", installerUrl)
+
+      warning <- tryCatch({
+         installersFile <- file.path(tempdir(), basename(installerUrl))
+         download.file(installerUrl, installersFile)
+
+         untar(installersFile, exdir = .rs.connectionOdbcInstallerPath())
+      }, error = function(e) {
+         paste(
+            "Could not check for driver updates from ",
+            installerHostName,
+            ", drivers might be outdated or missing.",
+            sep = ""
+         )
+      })
+   }
+
+   list(
+      warning = connectionsWarning
+   )
 })
