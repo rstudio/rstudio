@@ -95,6 +95,15 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       dirChooser_.setText(info.getOdbcInstallPath());
       license_.setText(info.getOdbcLicense());
       driverLabel_.setText("The " + info.getName() + " driver is currently not installed. ");
+
+      if (!StringUtil.isNullOrEmpty(info.getOdbcWarning()))
+      {
+         warningLabel_.setText(info.getOdbcWarning());
+      }
+      else
+      {
+         warningLabel_.setVisible(false);
+      }
    }
 
    public ConnectionOptions collectInput()
@@ -124,6 +133,9 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    @UiField
    DirectoryChooserTextBox dirChooser_;
+
+   @UiField
+   Label warningLabel_;
 
    private OperationWithInput<Boolean> nextPageEnabledOperation_;
 

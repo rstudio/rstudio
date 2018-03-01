@@ -2,6 +2,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
+   <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
+
    <ui:style>
       .panel {
       }
@@ -12,9 +14,9 @@
          color: #444;
          padding: 4px;
       }
-      .licenseLabel {
-         padding-top: 40px;
-         padding-bottom: 2px;
+      .licenseArea {
+         position: absolute;
+         bottom: 10px;
       }
       .table {
          width: 490px;
@@ -22,8 +24,9 @@
       .table tr {
          min-height: 35px;
       }
-      .driverLabel {
+      .label {
          display: inline-block;
+         vertical-align: top;
       }
       .row {
          padding-top: 10px;
@@ -31,11 +34,28 @@
       .installPath {
          width: 496px;
       }
+      .warningIcon {
+         width: 14px;
+         height: 14px;
+      }
+      .warning {
+         border: solid 1px #dcdcdc;
+         background: #fff;
+         padding-top: 3px;
+         padding-left: 4px;
+         margin-right: 2px;
+      }
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
+      <div class="{style.warning}">
+        <g:Image resource='{res.warningSmall2x}'
+                 styleName='{style.warningIcon}'/>
+        <g:Label ui:field="warningLabel_" styleName="{style.label}" />
+      </div>
+
       <div class="{style.row}">
-         <g:Label ui:field="driverLabel_" styleName="{style.driverLabel}" />
+         <g:Label ui:field="driverLabel_" styleName="{style.label}" />
          <b>Download and Install?</b>
       </div>
 
@@ -45,12 +65,11 @@
                                         />
       </div>
 
-      <div class="{style.licenseLabel}">
+      <div class="{style.licenseArea}">
         License:
+        <g:TextArea ui:field="license_" styleName="{style.license}"
+            visibleLines="7" readOnly="true"></g:TextArea>
       </div>
-
-      <g:TextArea ui:field="license_" styleName="{style.license}"
-                  visibleLines="7" readOnly="true"></g:TextArea>
    </g:HTMLPanel>
 
 </ui:UiBinder>
