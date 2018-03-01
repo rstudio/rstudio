@@ -20,10 +20,16 @@ namespace rstudio {
 namespace r {
 namespace session {
 
-void setStdCallbacks(RCallbacks* pCallbacks);
+struct RCallbacks;
+struct InternalCallbacks;
+
+// callback management
+void setRCallbacks(const RCallbacks& callbacks);
+RCallbacks& rCallbacks();
 InternalCallbacks* stdInternalCallbacks();
 
-int RReadConsole (const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist);
+// individual callbacks from R
+int RReadConsole(const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist);
 void RShowMessage(const char* msg);
 void RWriteConsoleEx (const char *buf, int buflen, int otype);
 int REditFile(const char* file);

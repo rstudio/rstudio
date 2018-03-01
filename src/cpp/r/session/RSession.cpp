@@ -48,9 +48,11 @@
 
 #include "RClientMetrics.hpp"
 #include "REmbedded.hpp"
+#include "RInit.hpp"
 #include "RQuit.hpp"
 #include "RRestartContext.hpp"
 #include "RStdCallbacks.hpp"
+#include "RSuspend.hpp"
 
 #include "graphics/RGraphicsDevDesc.hpp"
 #include "graphics/RGraphicsUtils.hpp"
@@ -92,25 +94,12 @@ namespace {
 // options
 ROptions s_options;
 
-// callbacks
-RCallbacks s_callbacks;
-   
-// client-state paths
-FilePath s_clientStatePath;
-FilePath s_projectClientStatePath;
-   
-// session state path
-FilePath s_suspendedSessionPath ; 
-   
 // function for deferred deserialization actions. this encapsulates parts of 
 // the initialization process that are potentially highly latent. this allows
 // clients to bring their UI up and then receive an event indicating that the
 // latent deserialization actions are taking place
 boost::function<void()> s_deferredDeserializationAction;
    
-// are in the middle of servicing a suspend request?
-bool s_suspended = false;
-
 // script to run, if any
 std::string s_runScript;
 
@@ -136,25 +125,6 @@ std::string createAliasedPath(const FilePath& filePath)
    return FilePath::createAliasedPath(filePath, s_options.userHomePath);
 }
    
-class SerializationCallbackScope : boost::noncopyable
-{
-public:
-   SerializationCallbackScope(int action,
-                              const FilePath& targetPath = FilePath())
-   {
-      s_callbacks.serialization(action, targetPath);
-   }
-   
-   ~SerializationCallbackScope()
-   {
-      try {
-         s_callbacks.serialization(kSerializationActionCompleted,
-                                   FilePath());
-      } catch(...) {}
-   }
-};
-   
-
 void reportDeferredDeserializationError(const Error& error)
 {
    // log error
@@ -171,52 +141,11 @@ void completeDeferredSessionInit(bool newSession)
    restartContext().removeSessionState();
 
    // call external hook
-   if (s_callbacks.deferredInit)
-      s_callbacks.deferredInit(newSession);
-}
-
-void saveClientState(ClientStateCommitType commitType)
-{
-   using namespace r::session;
-
-   // save client state (note we don't explicitly restore this
-   // in restoreWorkingState, rather it is restored during
-   // initialize() so that the client always has access to it when
-   // for client_init)
-   r::session::clientState().commit(commitType,
-                                    s_clientStatePath,
-                                    s_projectClientStatePath);
+   if (rCallbacks().deferredInit)
+      rCallbacks().deferredInit(newSession);
 }
 
 
- 
-bool saveSessionState(const RSuspendOptions& options,
-                      const FilePath& suspendedSessionPath,
-                      bool disableSaveCompression)
-{
-   // notify client of serialization status
-   SerializationCallbackScope cb(kSerializationActionSuspendSession);
-   
-   // suppress interrupts which occur during saving
-   r::exec::IgnoreInterruptsScope ignoreInterrupts;
-   
-   // save 
-   if (options.saveMinimal)
-   {
-      // save minimal
-      return r::session::state::saveMinimal(suspendedSessionPath,
-                                            options.saveWorkspace);
-
-   }
-   else
-   {
-      return r::session::state::save(suspendedSessionPath,
-                                     s_options.serverMode,
-                                     options.excludePackages,
-                                     disableSaveCompression);
-   }
-}
-   
 void deferredRestoreSuspendedSession(
                      const boost::function<Error()>& deferredRestoreAction)
 {
@@ -428,7 +357,7 @@ SEXP rs_showFile(SEXP titleSEXP, SEXP fileSEXP, SEXP delSEXP)
                              "File " + file + " does not exist.");
       }
 
-      s_callbacks.showFile(r::sexp::asString(titleSEXP),
+      rCallbacks().showFile(r::sexp::asString(titleSEXP),
                            filePath,
                            r::sexp::asLogical(delSEXP));
    }
@@ -470,7 +399,7 @@ SEXP rs_browseURL(SEXP urlSEXP)
 #endif
 
          // fire browseFile
-         s_callbacks.browseFile(filePath);
+         rCallbacks().browseFile(filePath);
       }
       // urls with no protocol are assumed to be file references
       else if (URL.find("://") == std::string::npos)
@@ -478,11 +407,11 @@ SEXP rs_browseURL(SEXP urlSEXP)
          std::string file = r::util::expandFileName(URL);
          FilePath filePath = utils::safeCurrentPath().complete(
                                                    r::util::fixPath(file));
-         s_callbacks.browseFile(filePath);
+         rCallbacks().browseFile(filePath);
       }
       else
       {
-         s_callbacks.browseURL(URL) ;
+         rCallbacks().browseURL(URL) ;
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -503,7 +432,7 @@ SEXP rs_loadHistory(SEXP sFile)
    if (error)
       LOG_ERROR(error);
    else
-      s_callbacks.consoleHistoryReset();
+      rCallbacks().consoleHistoryReset();
    return R_NilValue;
 }
 
@@ -586,8 +515,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 {   
    // copy options and callbacks
    s_options = options;
-   s_callbacks = callbacks;
-   setStdCallbacks(&s_callbacks);
+   setStdCallbacks(callbacks);
    
    // set to default "C" numeric locale as-per R embedding docs
    setlocale(LC_NUMERIC, "C") ;
@@ -612,10 +540,6 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    int engineVersion = s_options.rCompatibleGraphicsEngineVersion;
    graphics::setCompatibleEngineVersion(engineVersion);
 
-   // set client state paths
-   s_clientStatePath = s_options.userScratchPath.complete("client-state");
-   s_projectClientStatePath = s_options.scopedScratchPath.complete("pcs");
-   
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
      
@@ -623,13 +547,17 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
    FilePath sessionScratch = s_options.sessionScratchPath;
-   s_suspendedSessionPath = sessionScratch.complete("suspended-session-data");
+
+   // set suspend paths
+   setSuspendPaths(sessionScratch.complete("suspended-session-data"), // session data
+      s_options.userScratchPath.complete("client-state"),             // client state
+      s_options.scopedScratchPath.complete("pcs"));                   // project client state
 
    // one time migration of global suspend to default project suspend
-   if (!s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
+   if (!suspendedSessionPath().exists() && oldSuspendedSessionPath.exists())
    {
      // try to move it first
-     Error error = oldSuspendedSessionPath.move(s_suspendedSessionPath);
+     Error error = oldSuspendedSessionPath.move(suspendedSessionPath());
      if (error)
      {
         // log the move error
@@ -637,7 +565,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
         // try to copy it as a failsafe (eliminates cross-volume issues)
         error = file_utils::copyDirectory(oldSuspendedSessionPath,
-                                                s_suspendedSessionPath);
+                                                suspendedSessionPath());
         if (error)
            LOG_ERROR(error);
 
@@ -713,14 +641,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       // alternatively, if we are resuming a session and the option is set to possibly run the .Rprofile
       // we will only run it if the DisableExecuteProfile project setting is not set (or we are not in a project)
       // finally, if this is a packrat project, we always run the Rprofile as it is required for correct operation
-      loadInitFile = (!options.disableRProfileOnStart && (!s_suspendedSessionPath.exists() || options.rProfileOnResume))
+      loadInitFile = (!options.disableRProfileOnStart && (!suspendedSessionPath().exists() || options.rProfileOnResume))
                      || options.packratEnabled
-                     || r::session::state::packratModeEnabled(s_suspendedSessionPath);
+                     || r::session::state::packratModeEnabled(suspendedSessionPath());
    }
 
    // quiet for resume cases
    bool quiet = restartContext().hasSessionState() ||
-                s_suspendedSessionPath.exists();
+                suspendedSessionPath().exists();
 
    r::session::Callbacks cb;
    cb.showMessage = RShowMessage;
@@ -809,80 +737,6 @@ bool isSuspendable(const std::string& currentPrompt)
       return true;
 }
    
-
-bool suspend(const RSuspendOptions& options,
-             const FilePath& suspendedSessionPath,
-             bool disableSaveCompression,
-             bool force)
-{
-   // validate that force == true if disableSaveCompression is specified
-   // this is because save compression is disabled and the previous options
-   // are not restored, so it is only suitable to use this when we know
-   // the process is going to go away completely
-   if (disableSaveCompression)
-      BOOST_ASSERT(force == true);
-
-   // commit all client state
-   saveClientState(ClientStateCommitAll);
-
-   // if we are saving minimal then clear the graphics device
-   if (options.saveMinimal)
-   {
-      r::session::graphics::display().clear();
-   }
-
-   // save the session state. errors are handled internally and reported
-   // directly to the end user and written to the server log.
-   bool suspend = saveSessionState(options,
-                                   suspendedSessionPath,
-                                   disableSaveCompression);
-      
-   // if we failed to save the data and are being forced then warn user
-   if (!suspend && force)
-   {
-      reportAndLogWarning("Forcing suspend of process in spite of all session "
-                          "data not being fully saved.");
-      suspend = true;
-   }
-   
-   // only continue with exiting the process if we actually succeed in saving
-   if(suspend)
-   {      
-      // set suspended flag so cleanup code can act accordingly
-      s_suspended = true;
-      
-      // call suspend hook
-      s_callbacks.suspended(options);
-   
-      // clean up but don't save workspace or runLast because we have
-      // been suspended
-      RCleanUp(SA_NOSAVE, options.status, FALSE);
-      
-      // keep compiler happy (this line will never execute)
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
-bool suspend(bool force, int status)
-{
-   return suspend(RSuspendOptions(status),
-                  s_suspendedSessionPath,
-                  false,
-                  force);
-}
-
-void suspendForRestart(const RSuspendOptions& options)
-{
-   suspend(options,
-           RestartContext::createSessionStatePath(s_options.scopedScratchPath,
-                                                  s_options.sessionPort),
-           true,  // disable save compression
-           true);  // force suspend
-}
 
 // set save action
 const int kSaveActionNoSave = 0;

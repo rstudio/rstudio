@@ -32,6 +32,8 @@
 #include "RStdCallbacks.hpp"
 #include "RQuit.hpp"
 
+#include <Rembedded.h>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -109,7 +111,7 @@ bool consoleInputHook(const std::string& prompt,
     boost::smatch match;
     if (regex_utils::match(input, match, re))
    {
-      if (!s_pCallbacks->handleUnsavedChanges())
+      if (!s_callbacks.handleUnsavedChanges())
       {
          REprintf("User cancelled quit operation\n");
          return false;
@@ -205,7 +207,7 @@ int RReadConsole (const char *pmt,
       // get the next input
       bool addToHistory = (hist == 1);
       RConsoleInput consoleInput("");
-      if (s_pCallbacks->consoleRead(promptString, addToHistory, &consoleInput) )
+      if (s_callbacks.consoleRead(promptString, addToHistory, &consoleInput) )
       {
          // add prompt to console actions (we do this after consoleRead
          // completes so that we don't send both a console prompt event
@@ -294,7 +296,7 @@ void RShowMessage(const char* msg)
 {
    try 
    {
-      s_pCallbacks->showMessage(msg) ;
+      s_callbacks.showMessage(msg) ;
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
@@ -315,7 +317,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
          consoleActions().add(type, output);
          
          // write
-         s_pCallbacks->consoleWrite(output, otype) ;
+         s_callbacks.consoleWrite(output, otype) ;
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -326,7 +328,7 @@ int REditFile(const char* file)
 {
    try 
    {
-      return s_pCallbacks->editFile(r::util::fixPath(file));
+      return s_callbacks.editFile(r::util::fixPath(file));
    }
    CATCH_UNEXPECTED_EXCEPTION
    
@@ -338,7 +340,7 @@ void RBusy(int which)
 {
    try
    {
-      s_pCallbacks->busy(which == 1) ;
+      s_callbacks.busy(which == 1) ;
    }
    CATCH_UNEXPECTED_EXCEPTION 
 }
@@ -348,7 +350,7 @@ int RChooseFile (int newFile, char *buf, int len)
 {
    try 
    {
-      FilePath filePath = s_pCallbacks->chooseFile(newFile == TRUE);
+      FilePath filePath = s_callbacks.chooseFile(newFile == TRUE);
       if (!filePath.empty())
       {
          // get absolute path
@@ -399,7 +401,7 @@ int RShowFiles (int nfile,
                title = wtitle;
          
             // show file
-            s_pCallbacks->showFile(title, filePath, del);
+            s_callbacks.showFile(title, filePath, del);
          }
          else
          {
@@ -427,7 +429,7 @@ void Rloadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
       doHistoryFileOperation(args, boost::bind(&ConsoleHistory::loadFromFile,
                                                &consoleHistory(), _1, true));
       
-      s_pCallbacks->consoleHistoryReset();
+      s_callbacks.consoleHistoryReset();
    }
    catch(r::exec::RErrorException& e)
    {
@@ -474,7 +476,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 // NOTE: Win32 doesn't receive this callback
 void RSuicide(const char* s)
 {
-   s_pCallbacks->suicide(s);
+   s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
 }
 
@@ -568,12 +570,12 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          r::session::graphics::display().clear();
                 
          // notify client that the session has been quit
-         s_pCallbacks->quit();
+         s_callbacks.quit();
       }
 
       // allow client to cleanup
       bool terminatedNormally = saveact != SA_SUICIDE;
-      s_pCallbacks->cleanup(terminatedNormally);
+      s_callbacks.cleanup(terminatedNormally);
       
       // call internal cleanup (never .runLast because we do it above)
       // NOTE: may want to replace RCleanUp entirely so that the client

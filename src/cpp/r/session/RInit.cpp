@@ -13,6 +13,14 @@
  *
  */
 
+#include <r/RExec.hpp>
+#include <r/RSourceManager.hpp>
+#include <r/session/RConsoleHistory.hpp>
+#include <r/session/RSession.hpp>
+
+#include "RInit.hpp"
+#include "RSuspend.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -21,10 +29,10 @@ namespace session {
 
 namespace {
 
-// is this R 3.0 or greator
+// is this R 3.0 or greater
 bool s_isR3 = false;
 
-// is this R 3.3 or greator
+// is this R 3.3 or greater
 bool s_isR3_3 = false;
 
 }
@@ -60,13 +68,13 @@ Error initialize()
    r::session::consoleHistory().setCapacityFromRHistsize();
 
    // install R tools
-   FilePath toolsFilePath = s_options.rSourcePath.complete("Tools.R");
+   FilePath toolsFilePath = utils::rSourcePath().complete("Tools.R");
    Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
       return error ;
 
    // install RStudio API
-   FilePath apiFilePath = s_options.rSourcePath.complete("Api.R");
+   FilePath apiFilePath = utils::rSourcePath().complete("Api.R");
    error = r::sourceManager().sourceTools(apiFilePath);
    if (error)
       return error;
@@ -75,7 +83,7 @@ Error initialize()
    // and temp directory for desktop mode (so that we can support multiple
    // concurrent processes using the same project)
    FilePath graphicsPath;
-   if (s_options.serverMode)
+   if (utils::isServerMod())
    {
       std::string path = kGraphicsPath;
       if (utils::isR3())
@@ -114,11 +122,11 @@ Error initialize()
       // note we were resumed
       wasResumed = true;
    }
-   else if (s_suspendedSessionPath.exists())
+   else if (suspendedSessionPath().exists())
    {  
       // restore session
       std::string errorMessages ;
-      restoreSession(s_suspendedSessionPath, &errorMessages);
+      restoreSession(suspendedSessionPath(), &errorMessages);
       
       // show any error messages
       if (!errorMessages.empty())
@@ -175,7 +183,7 @@ Error initialize()
       return error;
 
    // set global R options
-   FilePath optionsFilePath = s_options.rSourcePath.complete("Options.R");
+   FilePath optionsFilePath = utils::rSourcePath().complete("Options.R");
    error = r::sourceManager().sourceLocal(optionsFilePath);
    if (error)
       return error;
@@ -184,7 +192,7 @@ Error initialize()
    if (s_options.serverMode)
    {
 #ifndef __APPLE__
-      FilePath serverOptionsFilePath =  s_options.rSourcePath.complete(
+      FilePath serverOptionsFilePath =  utils::rSourcePath().complete(
                                                          "ServerOptions.R");
       return r::sourceManager().sourceLocal(serverOptionsFilePath);
 #else
