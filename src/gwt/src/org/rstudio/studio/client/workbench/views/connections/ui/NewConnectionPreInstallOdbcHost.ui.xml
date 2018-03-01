@@ -13,6 +13,7 @@
          font-size: 12px;
          color: #444;
          padding: 4px;
+         margin-top: 2px;
       }
       .licenseArea {
          position: absolute;
@@ -48,11 +49,11 @@
    </ui:style>
 
    <g:HTMLPanel stylePrimaryName="{style.panel}">
-      <div class="{style.warning}">
+      <g:HTMLPanel ui:field="warningPanel_" styleName="{style.warning}">
         <g:Image resource='{res.warningSmall2x}'
                  styleName='{style.warningIcon}'/>
         <g:Label ui:field="warningLabel_" styleName="{style.label}" />
-      </div>
+      </g:HTMLPanel>
 
       <div class="{style.row}">
          <g:Label ui:field="driverLabel_" styleName="{style.label}" />

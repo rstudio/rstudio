@@ -50,6 +50,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -102,7 +103,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
       }
       else
       {
-         warningLabel_.setVisible(false);
+         warningPanel_.setVisible(false);
       }
    }
 
@@ -136,6 +137,9 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
    @UiField
    Label warningLabel_;
+
+   @UiField
+   HTMLPanel warningPanel_;
 
    private OperationWithInput<Boolean> nextPageEnabledOperation_;
 
