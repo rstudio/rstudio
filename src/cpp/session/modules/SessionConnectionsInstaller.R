@@ -413,7 +413,17 @@
    os_registration(name, driver_path) 
 })
 
-.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern = NULL) {
+.rs.addFunction("odbcBundleValidate", function(bundle_file, md5) {
+   if (!is.null(md5) && nchar(md5) > 0) {
+      valid_md5s <- strsplit(as.character(md5), ",")[[1]]
+      bundle_md5 <- tools::md5sum(bundle_file)
+      if (!bundle_md5 %in% valid_md5s) {
+         stop("Failed to validate bundle with signature ", md5, " but got ", bundle_md5, " instead.")
+      }
+   }
+})
+
+.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern = NULL, md5 = NULL) {
    install_path <- file.path(
       normalizePath(install_path, mustWork = FALSE),
       tolower(name)
@@ -430,6 +440,9 @@
    
    message("Downloading driver")
    bundle_file_temp <- .rs.odbcBundleDownload(url, placeholder, bundle_temp)
+
+   message("Validating driver")
+   .rs.odbcBundleValidate(bundle_file_temp, md5)
    
    message("Extracting driver")
    .rs.odbcBundleExtract(bundle_file_temp, install_path)

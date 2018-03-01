@@ -336,10 +336,11 @@ options(connectionObserver = list(
             odbcVersion = .rs.scalar(installer[,"Version"]),
             odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
             odbcDownload = .rs.scalar(installer[,"Download"]),
-            odbcFile = valueOrEmpty("File", installer),
-            odbcLibrary = valueOrEmpty("Library", installer),
+            odbcFile = .rs.scalar(valueOrEmpty("File", installer)),
+            odbcLibrary = .rs.scalar(valueOrEmpty("Library", installer)),
             odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
             odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
+            odbcMD5 = .rs.scalar(valueOrEmpty("MD5", installer)),
             hasInstaller = .rs.scalar(TRUE)
          )
       }, error = function(e) {
@@ -718,6 +719,7 @@ options(connectionObserver = list(
    placeholder <-  connectionContext$odbcFile
    driverUrl <- connectionContext$odbcDownload
    libraryPattern <- connectionContext$odbcLibrary
+   targetMD5 <- connectionContext$odbcMD5
 
    paste(
       ".rs.odbcBundleInstall(",
@@ -725,7 +727,8 @@ options(connectionObserver = list(
       "url = \"", driverUrl, "\", ",
       "placeholder = \"", placeholder, "\", ",
       "install_path = \"", installationPath, "\", ",
-      "library_pattern = \"", libraryPattern, "\"",
+      "library_pattern = \"", libraryPattern, "\", ",
+      "md5 = \"", targetMD5, "\"",
       ")",
       sep = ""
    )
