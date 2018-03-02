@@ -156,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormat
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUpdateResult;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -5262,6 +5263,14 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void updateOdbcInstallers(ServerRequestCallback<ConnectionUpdateResult> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  UPDATE_ODBC_INSTALLERS,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5681,4 +5690,5 @@ public class RemoteServer implements Server
    private static final String INSTALL_ODBC_DRIVER = "install_odbc_driver";
    private static final String GET_NEW_ODBC_CONNECTION_CONTEXT = "get_new_odbc_connection_context";
    private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
+   private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
 }

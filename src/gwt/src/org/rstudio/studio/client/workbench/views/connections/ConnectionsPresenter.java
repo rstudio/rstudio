@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
@@ -39,6 +40,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -60,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ViewConnecti
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUpdateResult;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
@@ -271,41 +274,69 @@ public class ConnectionsPresenter extends BasePresenter
    {
       // if r session bussy, fail
       if (commands_.interruptR().isEnabled()) {
-        showError(
-          "The R session is currently busy. Wait for completion or " +
-          "interrupt the current session and retry.");
-        return;
+         showError(
+            "The R session is currently busy. Wait for completion or " +
+            "interrupt the current session and retry.");
+         return;
       }
 
-      // get the context
-      server_.getNewConnectionContext(
-         new DelayedProgressRequestCallback<NewConnectionContext>(
-                                                   "New Connection...") {
-   
-            @Override
-            protected void onSuccess(final NewConnectionContext context)
-            {
-                // show dialog
-               NewConnectionWizard newConnectionWizard = new NewConnectionWizard(
-                 context,
-                 new ProgressOperationWithInput<ConnectionOptions>() {
-                    @Override
-                    public void execute(ConnectionOptions result,
-                                        ProgressIndicator indicator)
-                    {
-                       indicator.onCompleted();
+      // check for updates
+      if (!installersUpdated_) {
+         installersUpdated_ = true;
+         server_.updateOdbcInstallers(
+            new DelayedProgressRequestCallback<ConnectionUpdateResult>(
+               "Checking for Updates...") {
 
-                       eventBus_.fireEvent(new PerformConnectionEvent(
-                          result.getConnectVia(),
-                          result.getConnectCode())
-                       );
-                    }
-                 }
-               );
-               
-               newConnectionWizard.showModal();
+               @Override
+               public void onSuccess(ConnectionUpdateResult result)
+               {
+                  installersWarnings_ = result.getWarning();
+                  showWizard();
+               } 
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
             }
-         });      
+         );  
+      }
+      else {
+        showWizard();
+      }
+   }
+
+   private void showWizard()
+   {
+       server_.getNewConnectionContext(
+          new DelayedProgressRequestCallback<NewConnectionContext>("Preparing Connections...") {
+   
+             @Override
+             protected void onSuccess(final NewConnectionContext context)
+             {
+                // show dialog
+                NewConnectionWizard newConnectionWizard = new NewConnectionWizard(
+                   context,
+                   new ProgressOperationWithInput<ConnectionOptions>() {
+                      @Override
+                      public void execute(ConnectionOptions result,
+                                        ProgressIndicator indicator)
+                      {
+                         indicator.onCompleted();
+
+                         eventBus_.fireEvent(new PerformConnectionEvent(
+                            result.getConnectVia(),
+                            result.getConnectCode())
+                         );
+                      }
+                   }
+                );
+               
+                newConnectionWizard.showModal();
+             }
+          }
+       );  
    }
    
    @Override
@@ -579,4 +610,6 @@ public class ConnectionsPresenter extends BasePresenter
    private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
    private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
+   private static boolean installersUpdated_ = false;
+   private static String installersWarnings_ = null;
 }
