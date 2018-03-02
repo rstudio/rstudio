@@ -19,6 +19,7 @@
 #include <core/json/Json.hpp>
 #include <core/SecureKeyFile.hpp>
 #include <core/SocketRpc.hpp>
+#include <core/system/Crypto.hpp>
 
 #include <server/ServerObject.hpp>
 #include <server/ServerOptionsOverlay.hpp>
@@ -54,22 +55,122 @@ void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
       std::make_pair<std::string>(kRStudioDisableProjectSharing, "1"));
 }
 
-void secretValidatingHandler(
+void writeInvalidRequest(boost::shared_ptr<core::http::AsyncConnection> pConnection)
+{
+   http::Response& response = pConnection->response();
+   response.setStatusCode(core::http::status::BadRequest);
+   response.setStatusMessage("Invalid request.");
+   pConnection->writeResponse();
+}
+
+// used when clients are sending RPC via TCP
+// ensures message signature is valid to ensure that the RPC sender
+// is trusted while keeping the secret hidden
+bool validateMessageSignature(boost::shared_ptr<core::http::AsyncConnection> pConnection)
+{
+   const http::Request& request = pConnection->request();
+
+   // get the message signature from the header and fail out if it's not there
+   std::string messageSignature = request.headerValue(kRstudioMessageSignature);
+   if (messageSignature.empty())
+   {
+      LOG_WARNING_MESSAGE("Session attempted to invoke server RPC without a message signature");
+      return false;
+   }
+
+   // get the date header and ensure that this request is not too old for us to accept
+   // dates are to be specified in the official HTTP format (ex: Wed, 21 Oct 2015 07:28:00 GMT)
+   std::string date = request.headerValue("Date");
+   if (date.empty())
+   {
+      LOG_WARNING_MESSAGE("Signed RPC message did not specify a date. "
+                          "A valid date must be present on all RPC requests");
+      return false;
+   }
+
+   // verify the date is in the correct format
+   // if not, we will fail out to ensure that an attacker can not supply
+   // invalid dates that can exploit the integrity of the system
+   if (!http::util::isValidDate(date))
+   {
+      LOG_WARNING_MESSAGE("Proxy request specified an invalid date: " + date +
+                          ". Only HTTP Dates are supported (see HTTP spec for more details)");
+      return false;
+   }
+
+   boost::posix_time::ptime requestTime = http::util::parseHttpDate(date);
+
+   // check to ensure the request date is not more than 60 seconds apart from now
+   // 60 seconds provides good security while still allowing for a bit of clock skew
+   boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+   boost::posix_time::time_duration timeDelta = now - requestTime;
+   if (abs(timeDelta.total_seconds()) > 60)
+   {
+      LOG_WARNING_MESSAGE("Proxy request specified a date that was more than 60 seconds "
+                          "different from now. Please ensure the proxy clock is synchronized "
+                          "with the local clock.");
+      return false;
+   }
+
+   // compute hmac for the message
+   std::string payload = date +
+                         "\n" +
+                         request.body();
+   std::vector<unsigned char> hmac;
+   Error error = core::system::crypto::HMAC_SHA2(payload, s_sessionSharedSecret, &hmac);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // base 64 encode it
+   std::string signature;
+   error = core::system::crypto::base64Encode(hmac, &signature);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // ensure that the calculated signature matches that on the message
+   if (messageSignature != signature)
+   {
+      LOG_WARNING_MESSAGE("Proxy auth calculated signature does not match supplied signature");
+      return false;
+   }
+
+   return true;
+}
+
+void validationHandler(
       const core::http::AsyncUriHandlerFunction& handler,
       boost::shared_ptr<core::http::AsyncConnection> pConnection)
 {
    // validate that the secret matches what we expect
-   core::http::Response* pResponse = &(pConnection->response());
    std::string secret =
          pConnection->request().headerValue(kServerRpcSecretHeader);
-   if (secret != s_sessionSharedSecret)
+
+   // if there is no secret, check for a message signature instead
+   if (secret.empty())
    {
-      LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
-                          "secret " + secret);
-      pResponse->setStatusCode(core::http::status::BadRequest);
-      pResponse->setStatusMessage("Invalid request.");
-      pConnection->writeResponse();
-      return;
+      if (!validateMessageSignature(pConnection))
+      {
+         LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with no secret or signature");
+         writeInvalidRequest(pConnection);
+         return;
+      }
+   }
+   else
+   {
+      // used for traditional unix socket mode
+      if (secret != s_sessionSharedSecret)
+      {
+         LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
+                             "secret " + secret);
+         writeInvalidRequest(pConnection);
+         return;
+      }
    }
 
    // invoke the wrapped async URI handler
@@ -84,7 +185,7 @@ void addHandler(const std::string &prefix,
    if (s_pSessionRpcServer)
    {
       s_pSessionRpcServer->addHandler(
-               prefix, boost::bind(secretValidatingHandler, handler, _1));
+               prefix, boost::bind(validationHandler, handler, _1));
    }
 }
 
@@ -154,6 +255,6 @@ Error initialize()
    return Success();
 }
 
-} // namespace acls
+} // namespace session_rpc
 } // namespace server
 } // namespace rstudio
