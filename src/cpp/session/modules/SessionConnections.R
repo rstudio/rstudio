@@ -262,15 +262,14 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionInstallerInfo", function(name) {
+   installerName <- paste(name, "dcf", sep = ".")
+   installerFile <- as.character(.rs.connectionFiles(installerName, .rs.connectionOdbcInstallerPath()))
 
-   if (!.rs.connectionHasInstaller(name)) {
-      list()
-   }
-   else {
-      installerName <- paste(name, "dcf", sep = ".")
-      installerFile <- as.character(.rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath()))
-   }
-   
+   fileContents <- read.dcf(installerFile)
+   list(
+      name = fileContents[,"Name"][[1]],
+      version = if ("Version" %in% colnames(fileContents)) fileContents[,"Version"][[1]] else NULL
+   )
 })
 
 .rs.addFunction("connectionReadSnippets", function() {
@@ -433,6 +432,20 @@ options(connectionObserver = list(
             if (nchar(iconData) == 0)
                iconData <- .Call("rs_connectionIcon", "ODBC")
 
+            hasInstaller <- .rs.connectionHasInstaller(driver)
+            warningMessage <- NULL
+
+            if (hasInstaller) {
+               installerVersion <- .rs.connectionInstallerInfo(driver)$version
+
+               currentVersion <- drivers[drivers$attribute == "Version" & drivers$name == driver, ]
+               if (nrow(currentVersion) == 1) {
+                  if (compareVersion(installerVersion, currentVersion$value) > 0) {
+                     warningMessage <- "New driver version is available, consider uninstalling and reinstalling driver."
+                  }
+               }
+            }
+
             list(
                package = .rs.scalar(NULL),
                version = .rs.scalar(NULL),
@@ -443,7 +456,8 @@ options(connectionObserver = list(
                iconData = .rs.scalar(iconData),
                licensed = .rs.scalar(identical(file.exists(licenseFile), TRUE)),
                source = .rs.scalar("ODBC"),
-               hasInstaller = .rs.scalar(.rs.connectionHasInstaller(driver))
+               hasInstaller = .rs.scalar(hasInstaller),
+               warning = .rs.scalar(warningMessage)
             )
          }, error = function(e) {
             warning(e$message)
