@@ -340,7 +340,7 @@
    writeLines(lines, odbcinstPath)
 })
 
-.rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath) {
+.rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath, version) {
    # Find odbcinst.ini file
    odbcinstPath <- .rs.odbcBundleOdbcinstPath()
    
@@ -349,14 +349,15 @@
    
    # Set odbcinst.ini entries
    odbcinst[[name]] <- list(
-      paste("Driver", "=", driverPath)
+      paste("Driver", "=", driverPath),
+      paste("Version", "=", version)
    )
    
    # Write odbcinst.ini
    .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
 })
 
-.rs.addFunction("odbcBundleRegisterWindows", function(name, driverPath) {
+.rs.addFunction("odbcBundleRegisterWindows", function(name, driverPath, version) {
    .rs.odbcBundleRegistryAdd(
       list(
          list(
@@ -368,6 +369,11 @@
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Driver",
             value = driverPath
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Version",
+            value = version
          )
       )
    )
@@ -401,7 +407,7 @@
    normalizePath(driverPath)
 })
 
-.rs.addFunction("odbcBundleRegister", function(name, driverPath) {
+.rs.addFunction("odbcBundleRegister", function(name, driverPath, version) {
    osRegistrations <- list(
       osx = .rs.odbcBundleRegisterLinux,
       windows = .rs.odbcBundleRegisterWindows,
@@ -410,7 +416,7 @@
    
    osRegistration <- osRegistrations[[.rs.odbcBundleOsName()]]
    
-   osRegistration(name, driverPath) 
+   osRegistration(name, driverPath, version) 
 })
 
 .rs.addFunction("odbcBundleValidate", function(bundleFile, md5) {
@@ -423,7 +429,15 @@
    }
 })
 
-.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, installPath, libraryPattern = NULL, md5 = NULL) {
+.rs.addFunction("odbcBundleInstall", function(
+   name,
+   url,
+   placeholder,
+   installPath,
+   libraryPattern = NULL,
+   md5 = NULL,
+   version = "") {
+
    installPath <- file.path(
       normalizePath(installPath, mustWork = FALSE),
       tolower(name)
@@ -432,26 +446,28 @@
    bundleTemp <- tempfile()
    on.exit(unlink(bundleTemp, recursive = TRUE), add = TRUE)
 
-   message("Installation path: ", installPath)
-   message("Installing ", name)
-   
+   message("Installing")
+   message("  Driver: ", name)
+   message("  Version: ", version)
+   message("  Path: ", installPath)
+
    message("Checking prerequisites")
    .rs.odbcBundleCheckPrereqs()
    
-   message("Downloading driver")
+   message("Downloading bundle")
    bundleFileTemp <- .rs.odbcBundleDownload(url, placeholder, bundleTemp)
 
-   message("Validating driver")
+   message("Validating bundle")
    .rs.odbcBundleValidate(bundleFileTemp, md5)
    
-   message("Extracting driver")
+   message("Extracting bundle")
    .rs.odbcBundleExtract(bundleFileTemp, installPath)
    
    message("Inspecting driver")
    driverPath <- .rs.odbcBundleFindDriver(name, installPath, libraryPattern)
    
    message("Registering driver")
-   .rs.odbcBundleRegister(name, driverPath)
+   .rs.odbcBundleRegister(name, driverPath, version)
 
    message("")
    message("Installation complete")

@@ -261,6 +261,18 @@ options(connectionObserver = list(
    any(basename(connectionFiles) == installerName)
 })
 
+.rs.addFunction("connectionInstallerInfo", function(name) {
+
+   if (!.rs.connectionHasInstaller(name)) {
+      list()
+   }
+   else {
+      installerName <- paste(name, "dcf", sep = ".")
+      installerFile <- as.character(.rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath()))
+   }
+   
+})
+
 .rs.addFunction("connectionReadSnippets", function() {
    snippetsPaths <- .rs.connectionFiles(".R$", .rs.connectionFilesPath())
 
@@ -333,7 +345,7 @@ options(connectionObserver = list(
             source = .rs.scalar("Snippet"),
             snippet = .rs.scalar(""),
             # odbc installer dcf fields
-            odbcVersion = .rs.scalar(installer[,"Version"]),
+            odbcVersion = .rs.scalar(valueOrEmpty("Version", installer)),
             odbcLicense = .rs.scalar(gsub("\n", " ", valueOrEmpty("License", installer))),
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(valueOrEmpty("File", installer)),
@@ -721,6 +733,7 @@ options(connectionObserver = list(
    driverUrl <- connectionContext$odbcDownload
    libraryPattern <- connectionContext$odbcLibrary
    targetMD5 <- connectionContext$odbcMD5
+   driverVersion <- connectionContext$odbcVersion
 
    paste(
       ".rs.odbcBundleInstall(",
@@ -729,7 +742,8 @@ options(connectionObserver = list(
       "placeholder = \"", placeholder, "\", ",
       "installPath = \"", installationPath, "\", ",
       "libraryPattern = \"", libraryPattern, "\", ",
-      "md5 = \"", targetMD5, "\"",
+      "md5 = \"", targetMD5, "\", ",
+      "version = \"", driverVersion, "\"",
       ")",
       sep = ""
    )
