@@ -329,7 +329,7 @@ options(connectionObserver = list(
             subtype = .rs.scalar("Odbc"),
             help = .rs.scalar(NULL),
             iconData = .rs.scalar(.Call("rs_connectionIcon", installerName)),
-            licensed = .rs.scalar(FALSE),
+            licensed = .rs.scalar("Licensed" %in% colnames(installer)),
             source = .rs.scalar("Snippet"),
             snippet = .rs.scalar(""),
             # odbc installer dcf fields
