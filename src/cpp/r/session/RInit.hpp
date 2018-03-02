@@ -18,6 +18,7 @@
 namespace rstudio {
 namespace core {
 	class Error;
+	class FilePath;
 } 
 }
 
@@ -27,6 +28,13 @@ namespace session {
 
 core::Error initialize();
 
+void reportHistoryAccessError(const std::string& context,
+                              const core::FilePath& historyFilePath,
+                              const core::Error& error);
+
+core::FilePath rHistoryFilePath();
+
+   
 } // namespace session
 } // namespace r
 } // namespace rstudio

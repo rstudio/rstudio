@@ -36,13 +36,13 @@
 #include <r/RUtil.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/ROptions.hpp>
-#include <r/RSourceManager.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RInterface.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/RSourceManager.hpp>
 #include <r/session/RSessionState.hpp>
-#include <r/session/RConsoleHistory.hpp>
 #include <r/session/RClientState.hpp>
+#include <r/session/RConsoleHistory.hpp>
 #include <r/session/RDiscovery.hpp>
 
 #include "RClientMetrics.hpp"
@@ -62,16 +62,6 @@
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
-
-extern "C" {
-
-#ifndef _WIN32
-SA_TYPE SaveAction;
-#else
-__declspec(dllimport) SA_TYPE SaveAction;
-#endif
-
-}
 
 #define CTXT_BROWSER 16
 
@@ -93,40 +83,6 @@ ROptions s_options;
 // script to run, if any
 std::string s_runScript;
 
-FilePath rSaveGlobalEnvironmentFilePath()
-{
-   FilePath rEnvironmentDir = s_options.rEnvironmentDir();
-   return rEnvironmentDir.complete(".RData");
-}
-
-Error saveDefaultGlobalEnvironment()
-{
-   // path to save to
-   FilePath globalEnvPath = rSaveGlobalEnvironmentFilePath();
-
-   // notify client of serialization status
-   SerializationCallbackScope cb(kSerializationActionSaveDefaultWorkspace,
-                                 globalEnvPath);
-
-   // suppress interrupts which occur during saving
-   r::exec::IgnoreInterruptsScope ignoreInterrupts;
-         
-   // save global environment
-   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
-   Error error = r::exec::executeSafely(
-                    boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
-   
-   if (error)
-   {
-      return error;
-   }
-   else
-   {
-      return Success();
-   }
-}
-
-
 } // anonymous namespace
   
 
@@ -135,13 +91,6 @@ const int kSerializationActionLoadDefaultWorkspace = 2;
 const int kSerializationActionSuspendSession = 3;
 const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
-
-bool isInjectedBrowserCommand(const std::string& cmd)
-{
-   return browserContextActive() &&
-          (cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f");
-}
-
 
 SEXP rs_editFile(SEXP fileSEXP)
 {
@@ -259,58 +208,6 @@ SEXP rs_saveHistory(SEXP sFile)
    consoleHistory().saveToFile(FilePath(file));
    return R_NilValue;
 }
-
-class JumpToTopException
-{
-};
-
-SA_TYPE saveAsk()
-{
-   try
-   {
-      // end user prompt
-      std::string wsPath = FilePath::createAliasedPath(
-            rSaveGlobalEnvironmentFilePath(), utils::userHomePath());
-      std::string prompt = "Save workspace image to " + wsPath + "? [y/n";
-      // The Rf_jump_to_top_level doesn't work (freezes the process) with
-      // 64-bit mingw due to the way it does stack unwinding. Since this is
-      // a farily obscure gesture (quit from command line then cancel the quit)
-      // we just eliminate the possiblity of it on windows
-#ifndef _WIN32
-      prompt += "/c";
-#endif
-      prompt += "]: ";
-
-      // input buffer
-      std::vector<CONSOLE_BUFFER_CHAR> inputBuffer(512, 0);
-
-      while(true)
-      {
-         // read input
-         RReadConsole(prompt.c_str(), &(inputBuffer[0]), inputBuffer.size(), 0);
-         std::string input(1, inputBuffer[0]);
-         boost::algorithm::to_lower(input);
-
-         // look for yes, no, or cancel
-         if (input == "y")
-            return SA_SAVE;
-         else if (input == "n")
-            return SA_NOSAVE;
-#ifndef _WIN32
-         else if (input == "c")
-            throw JumpToTopException();
-#endif
-      }
-   }
-   catch(JumpToTopException)
-   {
-      Rf_jump_to_toplevel();
-   }
-
-   // keep compiler happy
-   return SA_SAVE;
-}
-
 
 namespace {
 
@@ -546,29 +443,6 @@ bool isSuspendable(const std::string& currentPrompt)
 }
    
 
-// set save action
-const int kSaveActionNoSave = 0;
-const int kSaveActionSave = 1;
-const int kSaveActionAsk = -1;
-
-void setSaveAction(int saveAction)
-{
-   switch(saveAction)
-   {
-   case kSaveActionNoSave:
-      SaveAction = SA_NOSAVE;
-      break;
-   case kSaveActionSave:
-      SaveAction = SA_SAVE;
-      break;
-   case kSaveActionAsk:
-   default:
-      SaveAction = SA_SAVEASK;
-      break;
-   }
-
-}
-
 bool browserContextActive()
 {
    return Rf_countContexts(CTXT_BROWSER, 1) > 0;
@@ -615,6 +489,11 @@ FilePath sessionScratchPath()
    return s_options.sessionScratchPath;
 }
 
+FilePath scopedScratchPath()
+{
+   return s_options.scopedScratchPath;
+}
+
 FilePath safeCurrentPath()
 {
    return FilePath::safeCurrentPath(userHomePath());
@@ -625,9 +504,19 @@ FilePath rHistoryDir()
    return s_options.rHistoryDir();
 }
 
+FilePath rEnvironmentDir()
+{
+   return s_options.rEnvironmentDir();
+}
+
 FilePath startupEnvironmentFilePath()
 {
    return s_options.startupEnvironmentFilePath;
+}
+
+FilePath rSourcePath()
+{
+   return s_options.rSourcePath;
 }
 
 bool restoreWorkspace()
@@ -648,6 +537,11 @@ std::string rCRANRepos()
 bool useInternet2()
 {
    return s_options.useInternet2;
+}
+
+bool alwaysSaveHistory()
+{
+   return s_options.alwaysSaveHistory();
 }
 
 FilePath tempFile(const std::string& prefix, const std::string& extension)

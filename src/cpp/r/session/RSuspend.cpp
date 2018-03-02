@@ -46,19 +46,6 @@ FilePath s_projectClientStatePath;
 // are in the middle of servicing a suspend request?
 bool s_suspended = false;
 
-void saveClientState(ClientStateCommitType commitType)
-{
-   using namespace r::session;
-
-   // save client state (note we don't explicitly restore this
-   // in restoreWorkingState, rather it is restored during
-   // initialize() so that the client always has access to it when
-   // for client_init)
-   r::session::clientState().commit(commitType,
-                                    s_clientStatePath,
-                                    s_projectClientStatePath);
-}
-
 bool saveSessionState(const RSuspendOptions& options,
                       const FilePath& suspendedSessionPath,
                       bool disableSaveCompression)
@@ -178,7 +165,7 @@ void suspendForRestart(const RSuspendOptions& options)
 }
 
 SerializationCallbackScope::SerializationCallbackScope(int action,
-                           const FilePath& targetPath = FilePath())
+                           const FilePath& targetPath)
 {
    rCallbacks().serialization(action, targetPath);
 }
@@ -191,6 +178,23 @@ SerializationCallbackScope::~SerializationCallbackScope()
    } catch(...) {}
 }
 
+bool suspended()
+{
+   return s_suspended;
+}
+
+void saveClientState(ClientStateCommitType commitType)
+{
+   using namespace r::session;
+
+   // save client state (note we don't explicitly restore this
+   // in restoreWorkingState, rather it is restored during
+   // initialize() so that the client always has access to it when
+   // for client_init)
+   r::session::clientState().commit(commitType,
+                                    s_clientStatePath,
+                                    s_projectClientStatePath);
+}
 
 namespace utils
 {
@@ -203,6 +207,11 @@ core::FilePath clientStatePath()
 core::FilePath projectClientStatePath()
 {
    return s_projectClientStatePath;
+}
+
+core::FilePath suspendedSessionPath()
+{
+   return s_suspendedSessionPath;
 }
 
 } // namespace utils

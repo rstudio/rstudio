@@ -56,11 +56,6 @@ bool s_isR3_3 = false;
 // latent deserialization actions are taking place
 boost::function<void()> s_deferredDeserializationAction;
    
-void setImageDirty(bool imageDirty)
-{
-   R_DirtyImage = imageDirty ? 1 : 0;
-}
-
 void reportDeferredDeserializationError(const Error& error)
 {
    // log error
@@ -71,45 +66,9 @@ void reportDeferredDeserializationError(const Error& error)
    REprintf((errMsg + "\n").c_str());
 }
 
-FilePath rHistoryFilePath()
-{
-   std::string histFile = core::system::getenv("R_HISTFILE");
-   boost::algorithm::trim(histFile);
-   if (histFile.empty())
-      histFile = ".Rhistory";
-
-   return utils::rHistoryDir().complete(histFile);
-}
-
 std::string createAliasedPath(const FilePath& filePath)
 {
    return FilePath::createAliasedPath(filePath, utils::userHomePath());
-}
-   
-void reportHistoryAccessError(const std::string& context,
-                              const FilePath& historyFilePath,
-                              const Error& error)
-{
-   // always log
-   LOG_ERROR(error);
-
-   // default summary
-   std::string summary = error.summary();
-
-   // if the file exists and we still got no such file or directory
-   // then it is almost always permission denied. this seems to happen
-   // somewhat frequently on linux systems where the user was root for
-   // an operation and ended up writing a .Rhistory
-   if (historyFilePath.exists() &&
-       (error.code() == boost::system::errc::no_such_file_or_directory))
-   {
-      summary = "permission denied (is the .Rhistory file owned by root?)";
-   }
-
-   // notify the user
-   std::string path = createAliasedPath(historyFilePath);
-   std::string errmsg = context + " " + path + ": " + summary;
-   REprintf(("Error attempting to " + errmsg + "\n").c_str());
 }
    
 Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
@@ -413,6 +372,47 @@ void ensureDeserialized()
    }
 }
    
+FilePath rHistoryFilePath()
+{
+   std::string histFile = core::system::getenv("R_HISTFILE");
+   boost::algorithm::trim(histFile);
+   if (histFile.empty())
+      histFile = ".Rhistory";
+
+   return utils::rHistoryDir().complete(histFile);
+}
+
+void reportHistoryAccessError(const std::string& context,
+                              const FilePath& historyFilePath,
+                              const Error& error)
+{
+   // always log
+   LOG_ERROR(error);
+
+   // default summary
+   std::string summary = error.summary();
+
+   // if the file exists and we still got no such file or directory
+   // then it is almost always permission denied. this seems to happen
+   // somewhat frequently on linux systems where the user was root for
+   // an operation and ended up writing a .Rhistory
+   if (historyFilePath.exists() &&
+       (error.code() == boost::system::errc::no_such_file_or_directory))
+   {
+      summary = "permission denied (is the .Rhistory file owned by root?)";
+   }
+
+   // notify the user
+   std::string path = createAliasedPath(historyFilePath);
+   std::string errmsg = context + " " + path + ": " + summary;
+   REprintf(("Error attempting to " + errmsg + "\n").c_str());
+}
+   
+void setImageDirty(bool imageDirty)
+{
+   R_DirtyImage = imageDirty ? 1 : 0;
+}
+
 namespace utils {
 
 bool isR3()

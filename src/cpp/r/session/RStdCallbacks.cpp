@@ -22,9 +22,11 @@
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
-#include <r/session/RSession.hpp>
+#include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
+#include <r/session/RSession.hpp>
+#include <r/session/RSessionState.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
@@ -33,8 +35,24 @@
 #include "REmbedded.hpp"
 #include "RStdCallbacks.hpp"
 #include "RQuit.hpp"
+#include "RSuspend.hpp"
+
+#include "graphics/RGraphicsDevDesc.hpp"
+#include "graphics/RGraphicsUtils.hpp"
+#include "graphics/RGraphicsDevice.hpp"
+#include "graphics/RGraphicsPlotManager.hpp"
 
 #include <Rembedded.h>
+
+extern "C" {
+
+#ifndef _WIN32
+SA_TYPE SaveAction;
+#else
+__declspec(dllimport) SA_TYPE SaveAction;
+#endif
+
+}
 
 using namespace rstudio::core;
 
@@ -56,8 +74,62 @@ InternalCallbacks s_internalCallbacks;
 // temporarily suppress output
 bool s_suppressOutput = false;
 
-// server mode
-bool s_serverMode = false;
+class JumpToTopException
+{
+};
+
+FilePath rSaveGlobalEnvironmentFilePath()
+{
+   FilePath rEnvironmentDir = utils::rEnvironmentDir();
+   return rEnvironmentDir.complete(".RData");
+}
+
+SA_TYPE saveAsk()
+{
+   try
+   {
+      // end user prompt
+      std::string wsPath = FilePath::createAliasedPath(
+            rSaveGlobalEnvironmentFilePath(), utils::userHomePath());
+      std::string prompt = "Save workspace image to " + wsPath + "? [y/n";
+      // The Rf_jump_to_top_level doesn't work (freezes the process) with
+      // 64-bit mingw due to the way it does stack unwinding. Since this is
+      // a farily obscure gesture (quit from command line then cancel the quit)
+      // we just eliminate the possiblity of it on windows
+#ifndef _WIN32
+      prompt += "/c";
+#endif
+      prompt += "]: ";
+
+      // input buffer
+      std::vector<CONSOLE_BUFFER_CHAR> inputBuffer(512, 0);
+
+      while(true)
+      {
+         // read input
+         RReadConsole(prompt.c_str(), &(inputBuffer[0]), inputBuffer.size(), 0);
+         std::string input(1, inputBuffer[0]);
+         boost::algorithm::to_lower(input);
+
+         // look for yes, no, or cancel
+         if (input == "y")
+            return SA_SAVE;
+         else if (input == "n")
+            return SA_NOSAVE;
+#ifndef _WIN32
+         else if (input == "c")
+            throw JumpToTopException();
+#endif
+      }
+   }
+   catch(JumpToTopException)
+   {
+      Rf_jump_to_toplevel();
+   }
+
+   // keep compiler happy
+   return SA_SAVE;
+}
 
 void doHistoryFileOperation(SEXP args, 
                             boost::function<Error(const FilePath&)> fileOp)
@@ -140,23 +212,56 @@ bool consoleInputHook(const std::string& prompt,
    }
 }
 
-bool imageIsDirty()
-{
-   return R_DirtyImage != 0;
-}
-
 bool isInjectedBrowserCommand(const std::string& cmd)
 {
    return browserContextActive() &&
           (cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f");
 }
 
+Error saveDefaultGlobalEnvironment()
+{
+   // path to save to
+   FilePath globalEnvPath = rSaveGlobalEnvironmentFilePath();
+
+   // notify client of serialization status
+   SerializationCallbackScope cb(kSerializationActionSaveDefaultWorkspace,
+                                 globalEnvPath);
+
+   // suppress interrupts which occur during saving
+   r::exec::IgnoreInterruptsScope ignoreInterrupts;
+         
+   // save global environment
+   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+   Error error = r::exec::executeSafely(
+                    boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
+   
+   if (error)
+   {
+      return error;
+   }
+   else
+   {
+      return Success();
+   }
+}
+
+
 
 } // anonymous namespace
+
+bool imageIsDirty()
+{
+   return R_DirtyImage != 0;
+}
 
 void setRCallbacks(const RCallbacks& callbacks)
 {
    s_callbacks = callbacks;
+}
+
+RCallbacks& rCallbacks()
+{
+   return s_callbacks;
 }
 
 InternalCallbacks* stdInternalCallbacks()
@@ -515,19 +620,19 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
    {
       // set to default if requested
       if (saveact == SA_DEFAULT)
-         saveact = SaveAction ;
+         saveact = SaveAction;
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
       {
-         if (imageIsDirty() || !s_options.alwaysSaveHistory())
+         if (imageIsDirty() || !utils::alwaysSaveHistory())
             saveact = saveAsk(); // can Rf_jump_to_toplevel()
          else
             saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
       }
 
       // if the session was quit by the user then run our termination code
-      bool sessionQuitByUser = (saveact != SA_SUICIDE) && !s_suspended ;
+      bool sessionQuitByUser = (saveact != SA_SUICIDE) && !suspended();
       if (sessionQuitByUser)
       {
          // run last if requested (can throw error)
@@ -535,7 +640,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             R_dot_Last();
          
          // save history if we either always save history or saveact == SA_SAVE
-         if (s_options.alwaysSaveHistory() || saveact == SA_SAVE)
+         if (utils::alwaysSaveHistory() || saveact == SA_SAVE)
          {
             FilePath historyPath = rHistoryFilePath();
             Error error = consoleHistory().saveToFile(historyPath);
@@ -566,7 +671,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          // data loss when the previous session is read rather than the
          // contents of .RData. therefore, we refuse to quit if we can't
          // successfully destroy the suspended session
-         if (!r::session::state::destroy(s_suspendedSessionPath))
+         if (!r::session::state::destroy(utils::suspendedSessionPath()))
          {
             // this will cause us to jump back to the REPL loop
             r::exec::error("Unable to quit (session cleanup failure)\n");
@@ -593,6 +698,29 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       s_internalCallbacks.cleanUp(saveact, status, FALSE);
    }
    CATCH_UNEXPECTED_EXCEPTION 
+}
+
+// set save action
+const int kSaveActionNoSave = 0;
+const int kSaveActionSave = 1;
+const int kSaveActionAsk = -1;
+
+void setSaveAction(int saveAction)
+{
+   switch(saveAction)
+   {
+   case kSaveActionNoSave:
+      SaveAction = SA_NOSAVE;
+      break;
+   case kSaveActionSave:
+      SaveAction = SA_SAVE;
+      break;
+   case kSaveActionAsk:
+   default:
+      SaveAction = SA_SAVEASK;
+      break;
+   }
+
 }
 
 namespace utils {
