@@ -20,9 +20,11 @@
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
+#include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
+#include <r/session/RConsoleHistory.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
@@ -46,7 +48,7 @@ namespace {
 bool s_initialized = false;
 
 // main callbacks; pointer to statically allocated memory
-RCallbacks* s_pCallbacks;
+RCallbacks s_callbacks;
 
 // internal callbacks for delegation
 InternalCallbacks s_internalCallbacks;
@@ -143,11 +145,18 @@ bool imageIsDirty()
    return R_DirtyImage != 0;
 }
 
+bool isInjectedBrowserCommand(const std::string& cmd)
+{
+   return browserContextActive() &&
+          (cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f");
+}
+
+
 } // anonymous namespace
 
-void setStdCallbacks(RCallbacks* pCallbacks)
+void setRCallbacks(const RCallbacks& callbacks)
 {
-   s_pCallbacks = pCallbacks;
+   s_callbacks = callbacks;
 }
 
 InternalCallbacks* stdInternalCallbacks()

@@ -68,6 +68,10 @@ core::FilePath projectClientStatePath();
 
 core::FilePath startupEnvironmentFilePath();
 
+std::string sessionPort();
+
+std::string rCRANRepos();
+
 bool restoreWorkspace();
 
 // suppress output in scope

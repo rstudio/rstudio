@@ -99,57 +99,6 @@ FilePath rSaveGlobalEnvironmentFilePath()
    return rEnvironmentDir.complete(".RData");
 }
 
-std::string createAliasedPath(const FilePath& filePath)
-{
-   return FilePath::createAliasedPath(filePath, s_options.userHomePath);
-}
-   
-void reportDeferredDeserializationError(const Error& error)
-{
-   // log error
-   LOG_ERROR(error);
-
-   // report to user
-   std::string errMsg = r::endUserErrorMessage(error);
-   REprintf((errMsg + "\n").c_str());
-}
-
-void completeDeferredSessionInit(bool newSession)
-{
-   // always cleanup any restart context here
-   restartContext().removeSessionState();
-
-   // call external hook
-   if (rCallbacks().deferredInit)
-      rCallbacks().deferredInit(newSession);
-}
-
-
-void deferredRestoreSuspendedSession(
-                     const boost::function<Error()>& deferredRestoreAction)
-{
-   // notify client of serialization status
-   SerializationCallbackScope cb(kSerializationActionResumeSession);
-   
-   // suppress interrupts which occur during restore
-   r::exec::IgnoreInterruptsScope ignoreInterrupts;
- 
-   // suppress output which occurs during restore (packages can sometimes
-   // print messages to the console indicating they have conflicts -- the
-   // has already seen these messages and doesn't expect them now so 
-   // we suppress them
-   utils::SuppressOutputInScope suppressOutput;
-   
-   // restore action
-   Error error = deferredRestoreAction();
-   if (error)
-      reportDeferredDeserializationError(error);
-
-   // complete deferred init
-   completeDeferredSessionInit(false);
-
-}
-
 Error saveDefaultGlobalEnvironment()
 {
    // path to save to
@@ -320,7 +269,8 @@ SA_TYPE saveAsk()
    try
    {
       // end user prompt
-      std::string wsPath = createAliasedPath(rSaveGlobalEnvironmentFilePath());
+      std::string wsPath = FilePath::createAliasedPath(
+            rSaveGlobalEnvironmentFilePath(), utils::userHomePath());
       std::string prompt = "Save workspace image to " + wsPath + "? [y/n";
       // The Rf_jump_to_top_level doesn't work (freezes the process) with
       // 64-bit mingw due to the way it does stack unwinding. Since this is
@@ -383,7 +333,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 {   
    // copy options and callbacks
    s_options = options;
-   setStdCallbacks(callbacks);
+   setRCallbacks(callbacks);
    
    // set to default "C" numeric locale as-per R embedding docs
    setlocale(LC_NUMERIC, "C") ;
@@ -619,11 +569,6 @@ void setSaveAction(int saveAction)
 
 }
 
-void setImageDirty(bool imageDirty)
-{
-   R_DirtyImage = imageDirty ? 1 : 0;
-}
-
 bool browserContextActive()
 {
    return Rf_countContexts(CTXT_BROWSER, 1) > 0;
@@ -677,7 +622,7 @@ FilePath safeCurrentPath()
 
 FilePath rHistoryDir()
 {
-   return s_options.rHistoryDir;
+   return s_options.rHistoryDir();
 }
 
 FilePath startupEnvironmentFilePath()
@@ -688,6 +633,21 @@ FilePath startupEnvironmentFilePath()
 bool restoreWorkspace()
 {
    return s_options.restoreWorkspace;
+}
+
+std::string sessionPort()
+{
+   return s_options.sessionPort;
+}
+
+std::string rCRANRepos()
+{
+   return s_options.rCRANRepos;
+}
+
+bool useInternet2()
+{
+   return s_options.useInternet2;
 }
 
 FilePath tempFile(const std::string& prefix, const std::string& extension)

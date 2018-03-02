@@ -171,8 +171,8 @@ bool suspend(bool force, int status)
 void suspendForRestart(const RSuspendOptions& options)
 {
    suspend(options,
-           RestartContext::createSessionStatePath(s_options.scopedScratchPath,
-                                                  s_options.sessionPort),
+           RestartContext::createSessionStatePath(utils::scopedScratchPath(),
+                                                  utils::sessionPort()),
            true,  // disable save compression
            true);  // force suspend
 }

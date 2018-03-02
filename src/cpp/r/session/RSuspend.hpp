@@ -24,7 +24,9 @@ namespace session {
 
 struct RSuspendOptions;
 
-void setSuspendedSessionPath(const core::FilePath& path);
+void setSuspendPaths(const core::FilePath& sessionPath, 
+      const core::FilePath& clientStatePath, 
+      const core::FilePath& projectClientStatePath);
 core::FilePath suspendedSessionPath();
 bool suspend(const RSuspendOptions& options,
              const core::FilePath& suspendedSessionPath,

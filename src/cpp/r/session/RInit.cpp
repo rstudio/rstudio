@@ -13,6 +13,10 @@
  *
  */
 
+#include <boost/bind.hpp>
+
+#include <core/system/Environment.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSourceManager.hpp>
@@ -26,6 +30,8 @@
 #include "RSuspend.hpp"
 #include "RStdCallbacks.hpp"
 #include "RRestartContext.hpp"
+
+#include "graphics/RGraphicsDevice.hpp"
 
 // constants for graphics scratch subdirectory
 #define kGraphicsPath "graphics"
@@ -55,6 +61,16 @@ void setImageDirty(bool imageDirty)
    R_DirtyImage = imageDirty ? 1 : 0;
 }
 
+void reportDeferredDeserializationError(const Error& error)
+{
+   // log error
+   LOG_ERROR(error);
+
+   // report to user
+   std::string errMsg = r::endUserErrorMessage(error);
+   REprintf((errMsg + "\n").c_str());
+}
+
 FilePath rHistoryFilePath()
 {
    std::string histFile = core::system::getenv("R_HISTFILE");
@@ -65,6 +81,11 @@ FilePath rHistoryFilePath()
    return utils::rHistoryDir().complete(histFile);
 }
 
+std::string createAliasedPath(const FilePath& filePath)
+{
+   return FilePath::createAliasedPath(filePath, utils::userHomePath());
+}
+   
 void reportHistoryAccessError(const std::string& context,
                               const FilePath& historyFilePath,
                               const Error& error)
@@ -96,6 +117,41 @@ Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage
    r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
    fn.addParam(path);
    return fn.call(pErrMessage);
+}
+
+void completeDeferredSessionInit(bool newSession)
+{
+   // always cleanup any restart context here
+   restartContext().removeSessionState();
+
+   // call external hook
+   if (rCallbacks().deferredInit)
+      rCallbacks().deferredInit(newSession);
+}
+
+
+void deferredRestoreSuspendedSession(
+                     const boost::function<Error()>& deferredRestoreAction)
+{
+   // notify client of serialization status
+   SerializationCallbackScope cb(kSerializationActionResumeSession);
+   
+   // suppress interrupts which occur during restore
+   r::exec::IgnoreInterruptsScope ignoreInterrupts;
+ 
+   // suppress output which occurs during restore (packages can sometimes
+   // print messages to the console indicating they have conflicts -- the
+   // has already seen these messages and doesn't expect them now so 
+   // we suppress them
+   utils::SuppressOutputInScope suppressOutput;
+   
+   // restore action
+   Error error = deferredRestoreAction();
+   if (error)
+      reportDeferredDeserializationError(error);
+
+   // complete deferred init
+   completeDeferredSessionInit(false);
 }
 
 void deferredRestoreNewSession()
@@ -306,10 +362,10 @@ Error initialize()
    r::routines::registerAll();
    
    // set default repository if requested
-   if (!s_options.rCRANRepos.empty())
+   if (!utils::rCRANRepos().empty())
    {
       error = r::exec::RFunction(".rs.setCRANReposAtStartup",
-                                 s_options.rCRANRepos).call();
+                                 utils::rCRANRepos()).call();
       if (error)
          return error;
    }
@@ -320,7 +376,7 @@ Error initialize()
       return error;
 
    // complete embedded r initialization
-   error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
+   error = r::session::completeEmbeddedRInitialization(utils::useInternet2());
    if (error)
       return error;
 
