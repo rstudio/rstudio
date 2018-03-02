@@ -267,7 +267,7 @@ options(connectionObserver = list(
 
    fileContents <- read.dcf(installerFile)
    list(
-      name = fileContents[,"Name"][[1]],
+      name = if ("Name" %in% colnames(fileContents)) fileContents[,"Name"][[1]] else NULL,
       version = if ("Version" %in% colnames(fileContents)) fileContents[,"Version"][[1]] else NULL
    )
 })
