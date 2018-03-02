@@ -38,8 +38,10 @@
 
 .rs.addFunction("reticulate.replInitialize", function()
 {
-   # override help method
    builtins <- reticulate::import_builtins(convert = FALSE)
+   
+   # override help method (Python's interactive help does
+   # not play well with RStudio)
    help <- builtins$help
    .rs.setVar("reticulate.help", builtins$help)
    builtins$help <- function(...) {
@@ -406,7 +408,6 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    pieces <- strsplit(token, ".", fixed = TRUE)[[1]]
    if (grepl("[.]$", token))
       pieces <- c(pieces, "")
-   module <- pieces[[1]]
    
    # no '.' implies we're completing top-level modules
    if (length(pieces) == 1) {
@@ -414,23 +415,18 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(.rs.python.completions(token, completions))
    }
    
-   # we're completing a sub-module. first, find the sub module path,
-   # and then attempt to construct the path to the sub module we're
-   # looking inside
-   imp <- reticulate::import("imp", convert = FALSE)
-   info <- tryCatch(imp$find_module(module), error = identity)
-   if (inherits(info, "error"))
-      return(.rs.python.emptyCompletions())
+   # we're completing a sub-module. try to import that module, and
+   # then list things we can import from that module. note that importing
+   # a module does imply running a load of Python code but other Python
+   # front-ends (e.g. IPython) do this as well.
+   module <- paste(head(pieces, n = -1), collapse = ".")
+   imported <- tryCatch(reticulate::import(module), error = identity)
+   if (inherits(imported, "error"))
+      return(.rs.emptyCompletions())
+   exports <- sort(unique(names(imported)))
    
-   # construct sub-module path
-   path <- reticulate::py_to_r(info[[1]])
-   for (component in pieces[-c(1, length(pieces))])
-      path <- file.path(path, component)
-   
-   # list modules in this path
    postfix <- pieces[length(pieces)]
-   modules <- .rs.python.listModules(path)
-   completions <- .rs.python.completions(postfix, modules)
+   completions <- .rs.python.completions(postfix, exports)
    
    # now, bring back full prefix for completions
    if (length(completions)) {
@@ -441,8 +437,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    # add in metadata
    attr(completions, "token") <- token
    attr(completions, "type") <- 21
-   completions
    
+   completions
 })
 
 .rs.addFunction("python.getCompletionsImportsFrom", function(module, token)
@@ -518,12 +514,15 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 {
    dots <- gregexpr(".", token, fixed = TRUE)[[1]]
    if (identical(c(dots), -1L)) {
-      # no dots; just try to complete objects from the main module
-      main     <- reticulate::import_main(convert = TRUE)
-      builtins <- reticulate::import_builtins(convert = TRUE)
-      keyword  <- reticulate::import("keyword", convert = TRUE)
       
+      # provide completions for main, builtins, keywords
+      main     <- reticulate::import_main(convert = FALSE)
+      builtins <- reticulate::import_builtins(convert = FALSE)
+      keyword  <- reticulate::import("keyword", convert = FALSE)
+      
+      # figure out object types for main, builtins
       candidates <- c(names(main), names(builtins), keyword$kwlist)
+      
       return(.rs.python.completions(token, candidates))
    }
    
@@ -543,16 +542,6 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(candidates, "error"))
       return(.rs.python.emptyCompletions())
    
-   # R readline completion, and older versions of RStudio,
-   # require us to keep the '.'s (newer versions of RStudio will
-   # trim the '.' and display the completions more neatly)
-   rhs <- paste(lhs, rhs, sep = ".")
-   candidates <- paste(lhs, candidates, sep = ".")
-   
-   # similar motivation requires us to trim quotations, if we're trying
-   # to e.g. complete methods on a string literal
-   rhs <- gsub(".*['\"]", "", rhs)
-   candidates <- gsub(".*['\"]", "", candidates)
    .rs.python.completions(rhs, candidates)
 })
 
@@ -563,7 +552,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       "^[[:space:]]*",      # leading whitespace
       "(?:from|import)",    # from or import
       "[[:space:]]+",       # separating spaces
-      "([[:alnum:]._]+)$",  # module name
+      "([[:alnum:]._]*)$",  # module name
       sep = ""
    )
    
@@ -592,12 +581,15 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       module <- matches[[2]]
       imports <- matches[[3]]
       
-      # figure out the text following the last comma
-      pieces <- strsplit(imports, ",[[:space:]]*")[[1]]
-      if (grepl(",$", imports))
-         pieces <- c(pieces, "")
+      # figure out the text following the last comma (if any)
+      token <- ""
+      if (nzchar(imports)) {
+         pieces <- strsplit(imports, ",[[:space:]]*")[[1]]
+         if (grepl(",[[:space:]]*$", imports))
+            pieces <- c(pieces, "")
+         token <- pieces[[length(pieces)]]
+      }
       
-      token <- pieces[[length(pieces)]]
       return(.rs.python.getCompletionsImportsFrom(module, token))
       
    }
@@ -675,7 +667,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          # skip matching brackets
          if (cursor$bwdToMatchingBracket()) {
             if (!cursor$moveToPreviousToken())
-               return(.rs.python.getCompletionsNone())
+               return(.rs.python.emptyCompletions())
             next
          }
          
@@ -728,10 +720,19 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       if (cursor$tokenType() %in% c("string", "identifier") ||
           cursor$tokenValue() %in% ".")
       {
+         lastType <- cursor$tokenType()
+         
          # if we can't move to the previous token, we must be at the
          # start of the token stream, so just consume from here
          if (!cursor$moveToPreviousToken())
             break
+         
+         # if we moved on to a token of the same type, move back and break
+         if (lastType == cursor$tokenType()) {
+            cursor$moveToNextToken()
+            break
+         }
+         
          next
       }
       
@@ -748,26 +749,13 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    .rs.python.getCompletionsMain(text)
 })
 
-.rs.addFunction("python.listModules", function(path = NULL)
+.rs.addFunction("python.listModules", function()
 {
-   # construct key from provided path
-   key <- if (is.null(path)) "<top-level>" else path
-   
-   # use cached modules if available
-   if (!is.null(.rs.python.moduleCache[[key]]))
-      return(.rs.python.moduleCache[[key]])
-   
-   sys      <- reticulate::import("sys", convert = TRUE)
    pkgutil  <- reticulate::import("pkgutil", convert = FALSE)
    builtins <- reticulate::import_builtins(convert = FALSE)
    
-   # attempt to list top-level modules. NOTE: iter_modules() expects its
-   # input as an array, except when NULL (None)
-   if (!is.null(path))
-      path <- as.list(path)
-   
    modules <- tryCatch(
-      builtins$list(pkgutil$iter_modules(path)),
+      builtins$list(pkgutil$iter_modules()),
       error = identity
    )
    
@@ -777,17 +765,5 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    # convert to R object and extract module names
    modules <- reticulate::py_to_r(modules)
    names <- vapply(modules, `[[`, 2, FUN.VALUE = character(1))
-   
-   # if we're completing top-level modules, include builtin modules
-   if (is.null(path))
-      names <- c(names, as.character(sys$builtin_module_names))
-   
-   # sort and uniquify
-   all <- sort(unique(names))
-   
-   # cache for quick lookup
-   .rs.python.moduleCache[[key]] <- all
-   
-   all
-   
+   sort(unique(names))
 })
