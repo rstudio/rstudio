@@ -24,6 +24,7 @@ import java.util.HashMap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -103,7 +104,31 @@ public class NewConnectionSnippetHost extends Composite
       info_ = info;
       
       parametersPanel_.clear();
-      parametersPanel_.add(createParameterizedUI(info));
+      
+      int maxRows = 4;
+      
+      if (!StringUtil.isNullOrEmpty(info.getWarning())) {
+         maxRows--;
+         
+         HorizontalPanel warningPanel = new HorizontalPanel();
+         
+         warningPanel.addStyleName(RES.styles().warningPanel());
+         Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
+         warningImage.addStyleName(RES.styles().warningImage());
+         warningPanel.add(warningImage);
+         
+         Label label = new Label();
+         label.setText(info.getWarning());
+         label.addStyleName(RES.styles().warningLabel());
+         warningPanel.add(label);
+         warningPanel.setCellWidth(label, "100%");
+
+         parametersPanel_.add(warningPanel);
+         parametersPanel_.setCellHeight(warningPanel,"25px");
+         parametersPanel_.setCellWidth(warningPanel,"100%");
+      }
+      
+      parametersPanel_.add(createParameterizedUI(info, maxRows));
 
       snippetParts_ = parseSnippet(info.getSnippet());
       updateCodePanel();
@@ -149,8 +174,6 @@ public class NewConnectionSnippetHost extends Composite
 
       return parts;
    }
-   
-   private static int maxRows_ = 4;
 
    private void showSuccess()
    {
@@ -200,11 +223,11 @@ public class NewConnectionSnippetHost extends Composite
       dlg.showModal();
    }
    
-   private Grid createParameterizedUI(final NewConnectionInfo info)
+   private Grid createParameterizedUI(final NewConnectionInfo info, int maxRows)
    {
       final ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
       int visibleRows = snippetParts.size();
-      int visibleParams = Math.min(visibleRows, maxRows_);
+      int visibleParams = Math.min(visibleRows, maxRows);
       
       // If we have a field that shares the first row, usually port:
       boolean hasSecondaryHeaderField = false;
@@ -214,8 +237,8 @@ public class NewConnectionSnippetHost extends Composite
          hasSecondaryHeaderField = true;
       }
 
-      boolean showAdvancedButton = visibleRows > maxRows_;
-      visibleRows = Math.min(visibleRows, maxRows_);
+      boolean showAdvancedButton = visibleRows > maxRows;
+      visibleRows = Math.min(visibleRows, maxRows);
 
       visibleParams = Math.min(visibleParams, snippetParts.size());
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
@@ -344,10 +367,8 @@ public class NewConnectionSnippetHost extends Composite
          buttonsPanel.setCellWidth(uninstallButton_, "100%");
       }
 
-      buttonsPanel.add(testButton);
-
       if (showAdvancedButton) {
-         ThemedButton optionsButton = new ThemedButton("Advanced Options...", new ClickHandler() {
+         ThemedButton optionsButton = new ThemedButton("Options...", new ClickHandler() {
             public void onClick(ClickEvent event) {
                new NewConnectionSnippetDialog(
                   new OperationWithInput<HashMap<String, String>>() {
@@ -368,6 +389,8 @@ public class NewConnectionSnippetHost extends Composite
 
          buttonsPanel.add(optionsButton);
       }
+      
+      buttonsPanel.add(testButton);
 
       connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
 
@@ -452,7 +475,7 @@ public class NewConnectionSnippetHost extends Composite
    private ThemedButton makeUninstallButton()
    {
       // newConnectionSnippetHostResources_.trashImage()
-      ThemedButton button = new ThemedButton("Uninstall Driver", new ClickHandler()
+      ThemedButton button = new ThemedButton("Uninstall...", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent arg0)
@@ -565,6 +588,10 @@ public class NewConnectionSnippetHost extends Composite
       String dialogMessagePanel();
 
       String uninstallButton();
+      
+      String warningPanel();
+      String warningImage();
+      String warningLabel();
    }
 
    public interface Resources extends ClientBundle

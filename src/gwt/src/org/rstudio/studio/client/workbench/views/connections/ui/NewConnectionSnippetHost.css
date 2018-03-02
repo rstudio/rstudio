@@ -99,3 +99,21 @@
    float: left;
    margin-left: 0px;
 }
+
+.warningPanel {
+   width: 494px;
+   background: #ffffff;
+   padding-left: 8px;
+   padding-top: 3px;
+   border: solid 1px #dcdcdc;
+}
+
+.warningLabel {
+   display: inline-block;
+   vertical-align: top;
+   padding-left: 5px;
+}
+
+.warningImage {
+
+}

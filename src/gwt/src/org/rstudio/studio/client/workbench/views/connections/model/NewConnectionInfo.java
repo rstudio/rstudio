@@ -93,4 +93,8 @@ public class NewConnectionInfo extends JavaScriptObject
    public final native String getOdbcInstallPath() /*-{
       return this["odbcInstallPath"];
    }-*/;
+
+   public final native String getWarning() /*-{
+      return this["warning"];
+   }-*/;
 }
