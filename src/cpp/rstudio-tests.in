@@ -79,7 +79,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     echo Running 'r' tests...
 
     ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
-        --run-script "print(153)" \
+        --run-script "testthat::test_dir('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat')" \
         --config-file=$SESSION_CONF_FILE
     checkUnitTestFailure
 fi

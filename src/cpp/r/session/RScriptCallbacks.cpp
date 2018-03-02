@@ -16,7 +16,10 @@
 #include <core/Error.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <r/RExec.hpp>
+
 #include "REmbedded.hpp"
+#include "RInit.hpp"
 #include "RScriptCallbacks.hpp"
 #include "RStdCallbacks.hpp"
 
@@ -56,6 +59,14 @@ int RReadScript (const char *pmt,
    {
       return 0;
    }
+
+   // attempt to initialize
+   Error initError;
+   Error error = r::exec::executeSafely<Error>(initialize, &initError);
+   if (error)
+      LOG_ERROR(error);
+   if (initError)
+      LOG_ERROR(initError);
 
    // ensure input fits in buffer; we need two extra bytes -- one for the terminating newline and
    // one for the terminating null
