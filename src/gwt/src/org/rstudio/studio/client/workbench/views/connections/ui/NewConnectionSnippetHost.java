@@ -278,7 +278,7 @@ public class NewConnectionSnippetHost extends Composite
 
          if (visibleRows == 1) {
             TextArea textarea = new TextArea();
-            textarea.setVisibleLines(7);
+            textarea.setVisibleLines(maxRows + 2);
             textarea.addStyleName(RES.styles().textarea());
             textarea.setText(snippetParts.get(idxParams).getValue());
             connGrid.setWidget(idxRow, 1, textarea);
