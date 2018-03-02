@@ -47,6 +47,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String filePath,
          String documentId,
          String line,
+         boolean isConsole,
          ServerRequestCallback<Completions> completions);
    
    void getDplyrJoinCompletions(

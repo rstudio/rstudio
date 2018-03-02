@@ -1294,6 +1294,7 @@ public class RCompletionManager implements CompletionManager
             filePath,
             docId,
             line,
+            isConsole_,
             implicit,
             context_);
 
@@ -2003,7 +2004,7 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         String completionToken = getCurrentCompletionToken();
+         String completionToken = token_;
          
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
@@ -2194,54 +2195,6 @@ public class RCompletionManager implements CompletionManager
          }
       };
       helpRequest_.schedule(milliseconds);
-   }
-   
-   String getCurrentCompletionToken()
-   {
-      AceEditor editor = (AceEditor) docDisplay_;
-      if (editor == null)
-         return "";
-      
-      // TODO: Better handling of completions within markdown mode, e.g.
-      // `r foo`
-      if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
-         return token_;
-      
-      Position cursorPos = editor.getCursorPosition();
-      Token currentToken = editor.getSession().getTokenAt(cursorPos);
-      if (currentToken == null)
-         return "";
-      
-      // If the user has inserted some spaces, the cursor might now lie
-      // on a 'text' token. In that case, find the previous token and
-      // use that for completion.
-      String suffix = "";
-      if (currentToken.getValue().trim().isEmpty())
-      {
-         suffix = currentToken.getValue();
-         TokenIterator it = editor.createTokenIterator();
-         it.moveToPosition(cursorPos);
-         Token token = it.stepBackward();
-         if (token != null)
-         {
-            // don't allow spaces after roxygen keywords
-            boolean isRoxygen =
-                  token.hasType("keyword") &&
-                  token.hasType("virtual-comment");
-            if (!isRoxygen)
-               currentToken = token;
-         }
-      }
-      
-      // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "text", "punctuation"))
-         return "";
-      
-      String tokenValue = currentToken.getValue();
-      
-      String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
-      
-      return subsetted + suffix;
    }
    
    private boolean isDisabled()

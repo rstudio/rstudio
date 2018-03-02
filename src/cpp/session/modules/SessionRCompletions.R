@@ -864,7 +864,8 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("emptyCompletions", function(excludeOtherCompletions = FALSE,
                                              overrideInsertParens = FALSE,
-                                             orderStartsWithAlnumFirst = TRUE)
+                                             orderStartsWithAlnumFirst = TRUE,
+                                             language = "R")
 {
    .rs.makeCompletions(
       token = "",
@@ -875,7 +876,8 @@ assign(x = ".rs.acCompletionTypes",
       fguess = "",
       excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
       overrideInsertParens = .rs.scalar(overrideInsertParens),
-      orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst)
+      orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst),
+      language = .rs.scalar(language)
    )
 })
 
@@ -924,10 +926,14 @@ assign(x = ".rs.acCompletionTypes",
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE,
                                             cacheable = TRUE,
-                                            helpHandler = NULL)
+                                            helpHandler = NULL,
+                                            language = "R")
 {
    if (is.null(results))
       results <- character()
+   
+   if (is.null(token))
+      token <- ""
    
    # Ensure other 'vector' completions are of the same length as 'results'
    n        <- length(results)
@@ -972,7 +978,8 @@ assign(x = ".rs.acCompletionTypes",
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
         cacheable = .rs.scalar(cacheable),
-        helpHandler = .rs.scalar(helpHandler))
+        helpHandler = .rs.scalar(helpHandler),
+        language = .rs.scalar(language))
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -1808,7 +1815,8 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgsFromObject,
                                                   filePath,
                                                   documentId,
-                                                  line)
+                                                  line,
+                                                  isConsole)
 {
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
@@ -1820,6 +1828,11 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
+   # If the R console is requesting completions, but the Python REPL is
+   # active, then delegate to that machinery.
+   if (isConsole && .rs.reticulate.replIsActive())
+      return(.rs.rpc.python_get_completions(line))
    
    # Inject 'params' into the global env to provide for completions in
    # parameterized R Markdown documents

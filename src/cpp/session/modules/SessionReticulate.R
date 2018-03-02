@@ -26,13 +26,14 @@
    )
    
    if (inherits(completions, "error"))
-      return(.rs.emptyCompletions())
+      return(.rs.emptyCompletions(language = "Python"))
    
    .rs.makeCompletions(
       token     = attr(completions, "token"),
       results   = as.character(completions),
       type      = attr(completions, "types"),
-      quote     = FALSE
+      quote     = FALSE,
+      language  = "Python"
    )
 })
 
@@ -65,6 +66,21 @@
    # restore old help method
    builtins <- reticulate::import_builtins(convert = FALSE)
    builtins$help <- .rs.getVar("reticulate.help")
+})
+
+.rs.addFunction("reticulate.replIsActive", function()
+{
+   if (.rs.isBrowserActive())
+      return(FALSE)
+   
+   if (!"reticulate" %in% loadedNamespaces())
+      return(FALSE)
+   
+   active <- tryCatch(reticulate:::py_repl_active(), error = identity)
+   if (inherits(active, "error"))
+      return(FALSE)
+   
+   active
 })
 
 options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
@@ -501,7 +517,20 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 .rs.addFunction("python.getCompletionsArguments", function(object, token)
 {
    inspect <- reticulate::import("inspect", convert = TRUE)
-   arguments <- inspect$getargspec(object)$args
+   
+   # if this is a class object (has an __init__ method), then
+   # get methods from that
+   init <- reticulate::py_get_attr(object, "__init__", silent = TRUE)
+   if (!inherits(init, "python.builtin.NoneType")) {
+      arguments <- tryCatch(inspect$getargspec(init)$args, error = identity)
+      if (inherits(arguments, "error"))
+         return(.rs.python.emptyCompletions())
+      arguments <- setdiff(arguments, "self")
+   } else {
+      arguments <- tryCatch(inspect$getargspec(object)$args, error = identity)
+      if (inherits(arguments, "error"))
+         return(.rs.python.emptyCompletions())
+   }
    
    # paste on an '=' for completions (Python users seem to prefer no
    # spaces between the argument name and value)

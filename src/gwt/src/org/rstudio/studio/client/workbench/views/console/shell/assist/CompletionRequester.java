@@ -336,6 +336,7 @@ public class CompletionRequester
          final String filePath,
          final String documentId,
          final String line,
+         final boolean isConsole,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -358,6 +359,7 @@ public class CompletionRequester
             filePath,
             documentId,
             line,
+            isConsole,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -406,7 +408,13 @@ public class CompletionRequester
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
             if (isTopLevelCompletionRequest())
-               addSnippetCompletions(token, newComp);
+            {
+               // disable snippets if Python REPL is active for now
+               if (isConsole && !response.getLanguage().equals("R"))
+               {
+                  addSnippetCompletions(token, newComp);
+               }
+            }
             
             // Remove duplicates
             newComp = resolveDuplicates(newComp);
@@ -637,6 +645,7 @@ public class CompletionRequester
          final String filePath,
          final String documentId,
          final String line,
+         final boolean isConsole,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -660,6 +669,7 @@ public class CompletionRequester
                filePath,
                documentId,
                line,
+               isConsole,
                requestCallback);
       }
    }
@@ -694,6 +704,7 @@ public class CompletionRequester
                   false,
                   false,
                   true,
+                  null,
                   null);
             
             // Unlike other completion types, Sweave completions are not

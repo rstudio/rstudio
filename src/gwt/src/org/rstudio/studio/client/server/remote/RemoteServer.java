@@ -943,6 +943,7 @@ public class RemoteServer implements Server
          String filePath,
          String documentId,
          String line,
+         boolean isConsole,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -958,6 +959,7 @@ public class RemoteServer implements Server
       params.set(9, new JSONString(filePath));
       params.set(10, new JSONString(documentId));
       params.set(11, new JSONString(line));
+      params.set(12, JSONBoolean.getInstance(isConsole));
       
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,
