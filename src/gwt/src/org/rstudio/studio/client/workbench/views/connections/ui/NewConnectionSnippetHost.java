@@ -341,6 +341,7 @@ public class NewConnectionSnippetHost extends Composite
 
       if (info.getHasInstaller()) {
          buttonsPanel.add(uninstallButton_);
+         buttonsPanel.setCellWidth(uninstallButton_, "100%");
       }
 
       buttonsPanel.add(testButton);
@@ -371,11 +372,10 @@ public class NewConnectionSnippetHost extends Composite
       connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
 
 
-      connGrid.getCellFormatter().getElement(visibleRows, 0).setAttribute("colspan", "4");
-      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
-      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
-      connGrid.getCellFormatter().getElement(visibleRows, 1).removeFromParent();
-      connGrid.setWidget(visibleRows, 0, buttonsPanel);
+      connGrid.getCellFormatter().getElement(visibleRows, 1).setAttribute("colspan", "3");
+      connGrid.getCellFormatter().getElement(visibleRows, 2).removeFromParent();
+      connGrid.getCellFormatter().getElement(visibleRows, 2).removeFromParent();
+      connGrid.setWidget(visibleRows, 1, buttonsPanel);
 
       return connGrid;
    }
@@ -449,11 +449,10 @@ public class NewConnectionSnippetHost extends Composite
       return container;
    }
 
-   private PushButton makeUninstallButton()
+   private ThemedButton makeUninstallButton()
    {
-      PushButton button = new PushButton(new Image(new ImageResource2x(
-         newConnectionSnippetHostResources_.trashImage(),
-         newConnectionSnippetHostResources_.trashImage2x())), new ClickHandler()
+      // newConnectionSnippetHostResources_.trashImage()
+      ThemedButton button = new ThemedButton("Uninstall Driver", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent arg0)
@@ -522,7 +521,7 @@ public class NewConnectionSnippetHost extends Composite
          }
       });
       
-      button.setStyleName(RES.styles().uninstallButton());
+      button.addStyleName(RES.styles().uninstallButton());
 
       return button;
    }
@@ -605,5 +604,5 @@ public class NewConnectionSnippetHost extends Composite
    
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
-   private PushButton uninstallButton_;
+   private ThemedButton uninstallButton_;
 }

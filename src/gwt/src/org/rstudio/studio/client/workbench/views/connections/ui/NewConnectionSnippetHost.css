@@ -86,6 +86,7 @@
 
 .buttonsPanel {
    float: right;
+   width: 100%;
 }
 
 .dialogMessagePanel {
@@ -95,9 +96,6 @@
 }
 
 .uninstallButton {
-   margin-left: auto;
-   margin-top: 4px;
-   margin-right: 2px;
-   height: 20px;
-   cursor: pointer;
+   float: left;
+   margin-left: 0px;
 }
