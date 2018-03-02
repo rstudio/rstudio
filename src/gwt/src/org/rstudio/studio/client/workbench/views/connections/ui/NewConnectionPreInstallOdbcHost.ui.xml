@@ -45,6 +45,8 @@
          padding-top: 3px;
          padding-left: 4px;
          margin-right: 2px;
+         height: 17px;
+         overflow: hidden;
       }
    </ui:style>
 
@@ -52,7 +54,7 @@
       <g:HTMLPanel ui:field="warningPanel_" styleName="{style.warning}">
         <g:Image resource='{res.warningSmall2x}'
                  styleName='{style.warningIcon}'/>
-        <g:Label ui:field="warningLabel_" styleName="{style.label}" />
+        <g:HTMLPanel ui:field="warningLabel_" styleName="{style.label}" />
       </g:HTMLPanel>
 
       <div class="{style.row}">

@@ -30,6 +30,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.common.rstudioapi.DialogHtmlSanitizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -44,6 +45,7 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -99,7 +101,9 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
       if (!StringUtil.isNullOrEmpty(info.getOdbcWarning()))
       {
-         warningLabel_.setText(info.getOdbcWarning());
+         SafeHtml safeMsg = DialogHtmlSanitizer.sanitizeHtml(info.getOdbcWarning());
+         HTMLPanel formattedPanel = new HTMLPanel(safeMsg);
+         warningLabel_.add(formattedPanel);
       }
       else
       {
@@ -136,7 +140,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    DirectoryChooserTextBox dirChooser_;
 
    @UiField
-   Label warningLabel_;
+   HTMLPanel warningLabel_;
 
    @UiField
    HTMLPanel warningPanel_;
