@@ -191,6 +191,22 @@ SerializationCallbackScope::~SerializationCallbackScope()
    } catch(...) {}
 }
 
+
+namespace utils
+{
+
+core::FilePath clientStatePath()
+{
+   return s_clientStatePath;
+}
+
+core::FilePath projectClientStatePath()
+{
+   return s_projectClientStatePath;
+}
+
+} // namespace utils
+
 } // namespace session
 } // namespace r
 } // namespace rstudio

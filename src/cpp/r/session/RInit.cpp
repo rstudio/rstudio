@@ -14,12 +14,21 @@
  */
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 #include <r/RSourceManager.hpp>
+#include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
+#include <r/session/RSessionState.hpp>
 
+#include "REmbedded.hpp"
 #include "RInit.hpp"
 #include "RSuspend.hpp"
+#include "RStdCallbacks.hpp"
+#include "RRestartContext.hpp"
+
+// constants for graphics scratch subdirectory
+#define kGraphicsPath "graphics"
 
 using namespace rstudio::core;
 
@@ -35,6 +44,139 @@ bool s_isR3 = false;
 // is this R 3.3 or greater
 bool s_isR3_3 = false;
 
+// function for deferred deserialization actions. this encapsulates parts of 
+// the initialization process that are potentially highly latent. this allows
+// clients to bring their UI up and then receive an event indicating that the
+// latent deserialization actions are taking place
+boost::function<void()> s_deferredDeserializationAction;
+   
+void setImageDirty(bool imageDirty)
+{
+   R_DirtyImage = imageDirty ? 1 : 0;
+}
+
+FilePath rHistoryFilePath()
+{
+   std::string histFile = core::system::getenv("R_HISTFILE");
+   boost::algorithm::trim(histFile);
+   if (histFile.empty())
+      histFile = ".Rhistory";
+
+   return utils::rHistoryDir().complete(histFile);
+}
+
+void reportHistoryAccessError(const std::string& context,
+                              const FilePath& historyFilePath,
+                              const Error& error)
+{
+   // always log
+   LOG_ERROR(error);
+
+   // default summary
+   std::string summary = error.summary();
+
+   // if the file exists and we still got no such file or directory
+   // then it is almost always permission denied. this seems to happen
+   // somewhat frequently on linux systems where the user was root for
+   // an operation and ended up writing a .Rhistory
+   if (historyFilePath.exists() &&
+       (error.code() == boost::system::errc::no_such_file_or_directory))
+   {
+      summary = "permission denied (is the .Rhistory file owned by root?)";
+   }
+
+   // notify the user
+   std::string path = createAliasedPath(historyFilePath);
+   std::string errmsg = context + " " + path + ": " + summary;
+   REprintf(("Error attempting to " + errmsg + "\n").c_str());
+}
+   
+Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
+{
+   r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
+   fn.addParam(path);
+   return fn.call(pErrMessage);
+}
+
+void deferredRestoreNewSession()
+{
+   // restore the default global environment if there is one
+   FilePath globalEnvPath = utils::startupEnvironmentFilePath();
+   if (utils::restoreWorkspace() && globalEnvPath.exists())
+   {
+      // notify client of serialization status
+      SerializationCallbackScope cb(kSerializationActionLoadDefaultWorkspace,
+                                    globalEnvPath);
+
+      // ignore interrupts which occur during restoring of the global env
+      // the restoration will run to completion in any case and then the
+      // next thing the user does will be "interrupted" -- clearly not
+      // what they intended
+      r::exec::IgnoreInterruptsScope ignoreInterrupts;
+
+      std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+      std::string aliasedPath = createAliasedPath(globalEnvPath);
+      
+      std::string errMessage;
+      Error error = restoreGlobalEnvFromFile(path, &errMessage);
+      if (error)
+      {
+         ::REprintf(
+                  "WARNING: Failed to restore workspace from '%s' "
+                  "(an internal error occurred)\n",
+                  aliasedPath.c_str());
+         LOG_ERROR(error);
+      }
+      else if (!errMessage.empty())
+      {
+         std::stringstream ss;
+         ss << "WARNING: Failed to restore workspace from "
+            << "'" << aliasedPath << "'" << std::endl
+            << "Reason: " << errMessage << std::endl;
+         std::string message = ss.str();
+         ::REprintf(message.c_str());
+         LOG_ERROR_MESSAGE(message);
+      }
+      else
+      {
+         Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
+      }
+   }
+
+   // mark image clean (we need to do this due to our delayed handling
+   // of workspace restoration)
+   setImageDirty(false);
+
+   // complete deferred init
+   completeDeferredSessionInit(true);
+}
+
+} // anonymous namespace
+
+void restoreSession(const FilePath& suspendedSessionPath,
+                    std::string* pErrorMessages)
+{
+   // don't show output during deserialization (packages loaded
+   // during deserialization sometimes print messages)
+   utils::SuppressOutputInScope suppressOutput;
+
+   // deserialize session. if any part of this fails then the errors
+   // will be logged and error messages will be returned in the passed
+   // errorMessages buffer (this mechanism is used because we generally
+   // suppress output during restore but we need a way for the error
+   // messages to make their way back to the user)
+   boost::function<Error()> deferredRestoreAction;
+   r::session::state::restore(suspendedSessionPath,
+                              utils::isServerMode(),
+                              &deferredRestoreAction,
+                              pErrorMessages);
+
+   if (deferredRestoreAction)
+   {
+      s_deferredDeserializationAction = boost::bind(
+                                          deferredRestoreSuspendedSession,
+                                          deferredRestoreAction);
+   }
 }
 
 // one-time per session initialization
@@ -83,12 +225,12 @@ Error initialize()
    // and temp directory for desktop mode (so that we can support multiple
    // concurrent processes using the same project)
    FilePath graphicsPath;
-   if (utils::isServerMod())
+   if (utils::isServerMode())
    {
       std::string path = kGraphicsPath;
       if (utils::isR3())
          path += "-r3";
-      graphicsPath = s_options.sessionScratchPath.complete(path);
+      graphicsPath = utils::sessionScratchPath().complete(path);
    }
    else
    {
@@ -97,13 +239,13 @@ Error initialize()
    }
 
    error = graphics::device::initialize(graphicsPath,
-                                        s_callbacks.locator);
+                                        rCallbacks().locator);
    if (error) 
       return error;
    
    // restore client state
-   session::clientState().restore(s_clientStatePath,
-                                  s_projectClientStatePath);
+   session::clientState().restore(utils::clientStatePath(),
+                                  utils::projectClientStatePath());
       
    // restore suspended session if we have one
    bool wasResumed = false;
@@ -150,13 +292,13 @@ Error initialize()
    
    // initialize client
    RInitInfo rInitInfo(wasResumed);
-   error = s_callbacks.init(rInitInfo);
+   error = rCallbacks().init(rInitInfo);
    if (error)
       return error;
 
    // call resume hook if we were resumed
    if (wasResumed)
-      s_callbacks.resumed();
+      rCallbacks().resumed();
    
    // now that all initialization code has had a chance to run we 
    // can register all external routines which were added to r::routines
@@ -189,7 +331,7 @@ Error initialize()
       return error;
 
    // server specific R options options
-   if (s_options.serverMode)
+   if (utils::isServerMode())
    {
 #ifndef __APPLE__
       FilePath serverOptionsFilePath =  utils::rSourcePath().complete(
@@ -205,6 +347,16 @@ Error initialize()
    }
 }
 
+void ensureDeserialized()
+{
+   if (s_deferredDeserializationAction)
+   {
+      // do the deferred action
+      s_deferredDeserializationAction();
+      s_deferredDeserializationAction.clear();
+   }
+}
+   
 namespace utils {
 
 bool isR3()

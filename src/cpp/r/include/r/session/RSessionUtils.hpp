@@ -57,7 +57,19 @@ core::FilePath tempDir();
 core::FilePath logPath();
 
 core::FilePath rSourcePath();
-     
+
+core::FilePath rHistoryDir();
+
+core::FilePath sessionScratchPath();
+
+core::FilePath clientStatePath();
+
+core::FilePath projectClientStatePath();
+
+core::FilePath startupEnvironmentFilePath();
+
+bool restoreWorkspace();
+
 // suppress output in scope
 class SuppressOutputInScope
 {

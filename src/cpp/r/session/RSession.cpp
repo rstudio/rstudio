@@ -43,7 +43,6 @@
 #include <r/session/RSessionState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RClientState.hpp>
-#include <r/session/RGraphics.hpp>
 #include <r/session/RDiscovery.hpp>
 
 #include "RClientMetrics.hpp"
@@ -80,9 +79,6 @@ __declspec(dllimport) SA_TYPE SaveAction;
 #undef TRUE
 #undef FALSE
 
-// constants for graphics scratch subdirectory
-#define kGraphicsPath "graphics"
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -94,26 +90,9 @@ namespace {
 // options
 ROptions s_options;
 
-// function for deferred deserialization actions. this encapsulates parts of 
-// the initialization process that are potentially highly latent. this allows
-// clients to bring their UI up and then receive an event indicating that the
-// latent deserialization actions are taking place
-boost::function<void()> s_deferredDeserializationAction;
-   
 // script to run, if any
 std::string s_runScript;
 
-FilePath rHistoryFilePath()
-{
-   std::string histFile = core::system::getenv("R_HISTFILE");
-   boost::algorithm::trim(histFile);
-   if (histFile.empty())
-      histFile = ".Rhistory";
-
-   return s_options.rHistoryDir().complete(histFile);
-}
-
-   
 FilePath rSaveGlobalEnvironmentFilePath()
 {
    FilePath rEnvironmentDir = s_options.rEnvironmentDir();
@@ -198,91 +177,6 @@ Error saveDefaultGlobalEnvironment()
    }
 }
 
-Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
-{
-   r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
-   fn.addParam(path);
-   return fn.call(pErrMessage);
-}
-   
-void deferredRestoreNewSession()
-{
-   // restore the default global environment if there is one
-   FilePath globalEnvPath = s_options.startupEnvironmentFilePath;
-   if (s_options.restoreWorkspace && globalEnvPath.exists())
-   {
-      // notify client of serialization status
-      SerializationCallbackScope cb(kSerializationActionLoadDefaultWorkspace,
-                                    globalEnvPath);
-
-      // ignore interrupts which occur during restoring of the global env
-      // the restoration will run to completion in any case and then the
-      // next thing the user does will be "interrupted" -- clearly not
-      // what they intended
-      r::exec::IgnoreInterruptsScope ignoreInterrupts;
-
-      std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
-      std::string aliasedPath = createAliasedPath(globalEnvPath);
-      
-      std::string errMessage;
-      Error error = restoreGlobalEnvFromFile(path, &errMessage);
-      if (error)
-      {
-         ::REprintf(
-                  "WARNING: Failed to restore workspace from '%s' "
-                  "(an internal error occurred)\n",
-                  aliasedPath.c_str());
-         LOG_ERROR(error);
-      }
-      else if (!errMessage.empty())
-      {
-         std::stringstream ss;
-         ss << "WARNING: Failed to restore workspace from "
-            << "'" << aliasedPath << "'" << std::endl
-            << "Reason: " << errMessage << std::endl;
-         std::string message = ss.str();
-         ::REprintf(message.c_str());
-         LOG_ERROR_MESSAGE(message);
-      }
-      else
-      {
-         Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
-      }
-   }
-
-   // mark image clean (we need to do this due to our delayed handling
-   // of workspace restoration)
-   setImageDirty(false);
-
-   // complete deferred init
-   completeDeferredSessionInit(true);
-}
-
-void reportHistoryAccessError(const std::string& context,
-                              const FilePath& historyFilePath,
-                              const Error& error)
-{
-   // always log
-   LOG_ERROR(error);
-
-   // default summary
-   std::string summary = error.summary();
-
-   // if the file exists and we still got no such file or directory
-   // then it is almost always permission denied. this seems to happen
-   // somewhat frequently on linux systems where the user was root for
-   // an operation and ended up writing a .Rhistory
-   if (historyFilePath.exists() &&
-       (error.code() == boost::system::errc::no_such_file_or_directory))
-   {
-      summary = "permission denied (is the .Rhistory file owned by root?)";
-   }
-
-   // notify the user
-   std::string path = createAliasedPath(historyFilePath);
-   std::string errmsg = context + " " + path + ": " + summary;
-   REprintf(("Error attempting to " + errmsg + "\n").c_str());
-}
 
 } // anonymous namespace
   
@@ -292,32 +186,6 @@ const int kSerializationActionLoadDefaultWorkspace = 2;
 const int kSerializationActionSuspendSession = 3;
 const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
-
-void restoreSession(const FilePath& suspendedSessionPath,
-                    std::string* pErrorMessages)
-{
-   // don't show output during deserialization (packages loaded
-   // during deserialization sometimes print messages)
-   utils::SuppressOutputInScope suppressOutput;
-
-   // deserialize session. if any part of this fails then the errors
-   // will be logged and error messages will be returned in the passed
-   // errorMessages buffer (this mechanism is used because we generally
-   // suppress output during restore but we need a way for the error
-   // messages to make their way back to the user)
-   boost::function<Error()> deferredRestoreAction;
-   r::session::state::restore(suspendedSessionPath,
-                              s_options.serverMode,
-                              &deferredRestoreAction,
-                              pErrorMessages);
-
-   if (deferredRestoreAction)
-   {
-      s_deferredDeserializationAction = boost::bind(
-                                          deferredRestoreSuspendedSession,
-                                          deferredRestoreAction);
-   }
-}
 
 bool isInjectedBrowserCommand(const std::string& cmd)
 {
@@ -675,16 +543,6 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    return Success() ;
 }
 
-void ensureDeserialized()
-{
-   if (s_deferredDeserializationAction)
-   {
-      // do the deferred action
-      s_deferredDeserializationAction();
-      s_deferredDeserializationAction.clear();
-   }
-}
-   
 namespace {
 
 void doSetClientMetrics(const RClientMetrics& metrics)
@@ -807,9 +665,29 @@ FilePath logPath()
    return s_options.logPath;
 }
 
+FilePath sessionScratchPath()
+{
+   return s_options.sessionScratchPath;
+}
+
 FilePath safeCurrentPath()
 {
    return FilePath::safeCurrentPath(userHomePath());
+}
+
+FilePath rHistoryDir()
+{
+   return s_options.rHistoryDir;
+}
+
+FilePath startupEnvironmentFilePath()
+{
+   return s_options.startupEnvironmentFilePath;
+}
+
+bool restoreWorkspace()
+{
+   return s_options.restoreWorkspace;
 }
 
 FilePath tempFile(const std::string& prefix, const std::string& extension)
