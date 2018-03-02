@@ -40,6 +40,7 @@ set (R_SOURCE_FILES
    session/RInit.cpp
    session/RQuit.cpp
    session/RRestartContext.cpp
+   session/RScriptCallbacks.cpp
    session/RSearchPath.cpp
    session/RSessionState.cpp
    session/RSession.cpp

@@ -84,6 +84,16 @@ FilePath rSaveGlobalEnvironmentFilePath()
    return rEnvironmentDir.complete(".RData");
 }
 
+void rSuicideError(const Error& error)
+{
+   // provide error message if the error was unexpected
+   std::string msg;
+   if (!error.expected())
+      msg = core::log::errorAsLogEntry(error);
+
+   rSuicide(msg);
+}
+
 SA_TYPE saveAsk()
 {
    try
@@ -148,31 +158,6 @@ void doHistoryFileOperation(SEXP args,
       throw r::exec::RErrorException(error.code().message());
 }
    
-void rSuicide(const std::string& msg)
-{
-   // log abort message if we are in desktop mode
-   if (!utils::isServerMode())
-   {
-      FilePath abendLogPath = utils::logPath().complete(
-                                                 "rsession_abort_msg.log");
-      Error error = core::writeStringToFile(abendLogPath, msg);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   R_Suicide(msg.c_str());
-}
-
-void rSuicide(const Error& error)
-{
-   // provide error message if the error was unexpected
-   std::string msg;
-   if (!error.expected())
-      msg = core::log::errorAsLogEntry(error);
-
-   rSuicide(msg);
-}
-
 bool consoleInputHook(const std::string& prompt,
                       const std::string& input)
 {
@@ -304,7 +289,7 @@ int RReadConsole (const char *pmt,
             // terminate the session (use suicide so that no special
             // termination code runs -- i.e. call to setAbnormalEnd(false)
             // or call to client::quitSession)
-            rSuicide(error);
+            rSuicideError(error);
          }
          
          // reset the prompt to whatever the default is after we've
@@ -592,6 +577,21 @@ void RSuicide(const char* s)
 {
    s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
+}
+
+void rSuicide(const std::string& msg)
+{
+   // log abort message if we are in desktop mode
+   if (!utils::isServerMode())
+   {
+      FilePath abendLogPath = utils::logPath().complete(
+                                                 "rsession_abort_msg.log");
+      Error error = core::writeStringToFile(abendLogPath, msg);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   R_Suicide(msg.c_str());
 }
 
 // NOTE: Win32 doesn't receive this function. As a result we only use

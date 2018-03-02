@@ -51,6 +51,7 @@
 #include "RQuit.hpp"
 #include "RRestartContext.hpp"
 #include "RStdCallbacks.hpp"
+#include "RScriptCallbacks.hpp"
 #include "RSuspend.hpp"
 
 #include "graphics/RGraphicsDevDesc.hpp"
@@ -79,9 +80,6 @@ namespace {
 
 // options
 ROptions s_options;
-
-// script to run, if any
-std::string s_runScript;
 
 } // anonymous namespace
   
@@ -366,9 +364,21 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
                 suspendedSessionPath().exists();
 
    r::session::Callbacks cb;
+   if (options.runScript.empty())
+   {
+      // normal session: read/write from browser
+      cb.readConsole = RReadConsole;
+      cb.writeConsoleEx = RWriteConsoleEx;
+   }
+   else
+   {
+      // headless script execution: read/write from script and output to stdout
+      setRunScript(options.runScript);
+      cb.readConsole = RReadScript;
+      cb.writeConsoleEx = RWriteStdout;
+   }
+
    cb.showMessage = RShowMessage;
-   cb.readConsole = RReadConsole;
-   cb.writeConsoleEx = RWriteConsoleEx;
    cb.editFile = REditFile;
    cb.busy = RBusy;
    cb.chooseFile = RChooseFile;

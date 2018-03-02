@@ -47,6 +47,9 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env);
 void RSuicide(const char* s);
 void RCleanUp(SA_TYPE saveact, int status, int runLast);
 
+// exported utilities
+void rSuicide(const std::string& msg);
+
 } // namespace session
 } // namespace r
 } // namespace rstudio
