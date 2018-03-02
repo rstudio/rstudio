@@ -38,7 +38,7 @@
 
 .rs.addFunction("odbcBundleDownload", function(url, placeholder, bundleTemp) {
    bundleName <- .rs.odbcBundleName(placeholder)
-   bundleUrl <- paste(url, bundleName, sep = "")
+   bundleUrl <- file.path(url, bundleName)
    
    if (exists(bundleTemp)) unlink(bundleTemp, recursive = TRUE)
    dir.create(bundleTemp, recursive = TRUE)

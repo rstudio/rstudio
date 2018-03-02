@@ -340,7 +340,7 @@ options(connectionObserver = list(
             odbcLibrary = .rs.scalar(valueOrEmpty("Library", installer)),
             odbcWarning = .rs.scalar(valueOrEmpty("Warning", installer)),
             odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
-            odbcMD5 = .rs.scalar(valueOrEmpty("MD5", installer)),
+            odbcMD5 = .rs.scalar(gsub("\n", " ", valueOrEmpty("MD5", installer))),
             hasInstaller = .rs.scalar(TRUE)
          )
       }, error = function(e) {
@@ -727,8 +727,8 @@ options(connectionObserver = list(
       "name = \"", driverName, "\", ",
       "url = \"", driverUrl, "\", ",
       "placeholder = \"", placeholder, "\", ",
-      "install_path = \"", installationPath, "\", ",
-      "library_pattern = \"", libraryPattern, "\", ",
+      "installPath = \"", installationPath, "\", ",
+      "libraryPattern = \"", libraryPattern, "\", ",
       "md5 = \"", targetMD5, "\"",
       ")",
       sep = ""
