@@ -1224,9 +1224,8 @@ public class StringUtil
                score += indentCount;
          }
          
-         // record if this is the highest scoring indent (penalize small indents
-         // a bit)
-         if (score - potentialIndent >= detectedIndentScore)
+         // record if this is the highest scoring indent
+         if (score >= detectedIndentScore)
          {
             detectedIndentSize = potentialIndent;
             detectedIndentScore = score;
