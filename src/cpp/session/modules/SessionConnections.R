@@ -334,7 +334,7 @@ options(connectionObserver = list(
             snippet = .rs.scalar(""),
             # odbc installer dcf fields
             odbcVersion = .rs.scalar(installer[,"Version"]),
-            odbcLicense = .rs.scalar(valueOrEmpty("License", installer)),
+            odbcLicense = .rs.scalar(gsub("\n", " ", valueOrEmpty("License", installer))),
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(valueOrEmpty("File", installer)),
             odbcLibrary = .rs.scalar(valueOrEmpty("Library", installer)),
