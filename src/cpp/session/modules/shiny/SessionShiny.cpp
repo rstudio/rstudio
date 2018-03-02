@@ -129,10 +129,26 @@ std::string getLastFunction(const std::string& fileContents)
 {
    std::string function;
 
-   // discard all the comments in the file
-   std::string contents = 
-      boost::regex_replace(fileContents, boost::regex("#[^\n]*\n"), "");
-
+   // discard all the comments in the file. we used to use boost::regex here
+   // but it can barf on some user input
+   std::string contents = fileContents;
+   auto position = 0;
+   while (true)
+   {
+      auto commentIndex = contents.find('#', position);
+      if (commentIndex == std::string::npos)
+         break;
+      
+      auto newlineIndex = contents.find('\n', commentIndex);
+      if (newlineIndex == std::string::npos)
+         newlineIndex = contents.size();
+      
+      position = commentIndex;
+      contents.erase(
+               contents.begin() + commentIndex,
+               contents.begin() + newlineIndex);
+   }
+   
    // if there aren't enough characters to form a valid function call, bail
    // out early
    if (contents.size() < 3) 
