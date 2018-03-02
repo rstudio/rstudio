@@ -18,9 +18,10 @@
 
 #include <core/json/Json.hpp>
 
-#define kServerRpcSocketPath "/tmp/rstudio-rserver/session-server-rpc.socket"
-#define kServerRpcSecretHeader "X-RS-Session-Server-RPC-Secret"
-#define kServerRpcSecretEnvVar "RS_SESSION_SERVER_RPC_SECRET"
+#define kServerRpcSocketPath          "/tmp/rstudio-rserver/session-server-rpc.socket"
+#define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
+#define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
+#define kRstudioMessageSignature      "RSTUDIO_MESSAGE_SIGNATURE"
 
 namespace rstudio {
 namespace core {

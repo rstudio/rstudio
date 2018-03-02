@@ -1,7 +1,7 @@
 /*
  * SocketRpc.cpp
  *
- * Copyright (C) 2017 by RStudio, Inc.
+ * Copyright (C) 2017-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/SocketRpc.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/Environment.hpp>
 
 namespace rstudio {
@@ -42,8 +43,32 @@ void constructRequest(const std::string& endpoint,
    pRequest->setMethod("POST");
    pRequest->setUri(endpoint);
    pRequest->setHeader("Connection", "close");
-   pRequest->setHeader(kServerRpcSecretHeader, s_sessionSharedSecret);
    pRequest->setBody(oss.str());
+}
+
+Error signRequest(http::Request& request)
+{
+   std::string date = http::util::httpDate();
+
+   // compute hmac for the request
+   std::string payload =  date +
+                          "\n" +
+                          request.body();
+   std::vector<unsigned char> hmac;
+   Error error = core::system::crypto::HMAC_SHA2(payload, s_sessionSharedSecret, &hmac);
+   if (error)
+      return error;
+
+   // base 64 encode it
+   std::string signature;
+   error = core::system::crypto::base64Encode(hmac, &signature);
+   if (error)
+      return error;
+
+   // stamp the signature on the request
+   request.setHeader(kRstudioMessageSignature, signature);
+
+   return Success();
 }
 
 Error handleResponse(const std::string& endpoint,
@@ -110,6 +135,10 @@ Error invokeRpc(const FilePath& socketPath,
    http::Request req;
    constructRequest(endpoint, request, &req);
 
+   // stamp rpc secret key on header
+   // only used with unix sockets
+   req.setHeader(kServerRpcSecretHeader, s_sessionSharedSecret);
+
    return sendRequest(socketPath, endpoint, req, pResult);
 }
 
@@ -121,6 +150,13 @@ Error invokeRpc(const std::string& tcpAddress,
 {
    http::Request req;
    constructRequest(endpoint, request, &req);
+
+   // sign request with secret key
+   // we do this instead of sending the secret key in the header
+   // since we are connecting over an untrusted TCP connection
+   Error error = signRequest(req);
+   if (error)
+      return error;
 
    // add additional Host header (needed for tcp connections)
    req.setHost(tcpAddress);
