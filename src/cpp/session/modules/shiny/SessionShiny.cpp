@@ -88,7 +88,7 @@ bool isShinyAppDir(const FilePath& filePath)
 std::string onDetectShinySourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (!pDoc->path().empty())
+   if (!pDoc->path().empty() && pDoc->canContainRCode())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
       ShinyFileType type = getShinyFileType(filePath, pDoc->contents());
@@ -405,7 +405,7 @@ ShinyFileType shinyTypeFromExtendedType(const std::string& extendedType)
 }
 
 ShinyFileType getShinyFileType(const FilePath& filePath,
-                     const std::string& contents)
+                               const std::string& contents)
 {
    static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
    
