@@ -806,7 +806,7 @@ options(connectionObserver = list(
    # once per session, attempt to download driver updates
    if (!is.null(getOption("connections-installer"))) {
       installerUrl <- getOption("connections-installer")
-      installerHostName <- gsub("https?://|/[^:].", "", installerUrl)
+      installerHostName <- gsub("https?://|/[^:].+$", "", installerUrl)
 
       connectionsWarning <- tryCatch({
          installersFile <- file.path(tempdir(), basename(installerUrl))
