@@ -133,6 +133,7 @@ public class NewConnectionNavigationPage
             label.setText(warning);
             label.addStyleName(RES.styles().wizardPageWarningLabel());
             warningPanel.add(label);
+            warningPanel.setCellWidth(label, "100%");
 
             rootPanel.add(warningPanel);
             rootPanel.setCellHeight(warningPanel,"25px");

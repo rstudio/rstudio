@@ -817,9 +817,8 @@ options(connectionObserver = list(
          NULL
       }, error = function(e) {
          paste(
-            "Could not check for driver updates from ",
+            "Could not retrieve driver updates from ",
             installerHostName,
-            ", drivers might be outdated or missing.",
             sep = ""
          )
       })
