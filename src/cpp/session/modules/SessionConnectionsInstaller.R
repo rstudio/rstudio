@@ -383,7 +383,7 @@
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
    driverName <- gsub(" ", "", name)
    
-   if (is.null(libraryPattern)) {
+   if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
          driverName,
          "[^/\\\\]+\\.",

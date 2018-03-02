@@ -229,21 +229,21 @@ public class NewConnectionInstallOdbcHost extends Composite
                               info_.getName(), 
                               new ServerRequestCallback<NewConnectionInfo>() {
                                  @Override
-                                 public void onResponseReceived(NewConnectionInfo proc)
+                                 public void onResponseReceived(NewConnectionInfo info)
                                  {
-                                    if (!StringUtil.isNullOrEmpty(proc.getError())) {
+                                    if (!StringUtil.isNullOrEmpty(info.getError())) {
                                        globalDisplay_.showErrorMessage(
                                           "Installation failed",
-                                          proc.getError());
+                                          info.getError());
 
-                                       label_.setText(proc.getError());
+                                       label_.setText(info.getError());
                                     }
                                     else {
                                        label_.setText("The " + info_.getName() + " driver is now installed!");
                                        nextPageEnabledOperation_.execute(true);
                                        driverInstalled_ = true;
 
-                                       options_.setIntermediateSnippet(proc.getSnippet());
+                                       options_.setIntermediateSnippet(info.getSnippet());
                                     }
                                  }
 
