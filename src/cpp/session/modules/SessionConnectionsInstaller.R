@@ -14,43 +14,43 @@
 #
 
 .rs.addFunction("odbcBundleOsName", function() {
-   os_mapping <- list (
+   osMapping <- list (
       linux = "linux",
       windows = "windows",
       darwin = "osx"
    )
    
-   if (!tolower(Sys.info()["sysname"]) %in% names(os_mapping))
+   if (!tolower(Sys.info()["sysname"]) %in% names(osMapping))
       stop("Operating system \"", Sys.info()["sysname"], "\" is unsupported.")
    
-   os_mapping[[tolower(Sys.info()[["sysname"]])]]
+   osMapping[[tolower(Sys.info()[["sysname"]])]]
 })
 
 .rs.addFunction("odbcBundleName", function(placeholder) {
-   os_name <- .rs.odbcBundleOsName()
+   osName <- .rs.odbcBundleOsName()
    bitness <- if (grepl("64", Sys.info()["machine"])) "64" else "32"
    
-   bundle_name <- gsub("\\(os\\)", os_name, placeholder)
-   bundle_name <- gsub("\\(bitness\\)", bitness, bundle_name)
+   bundleName <- gsub("\\(os\\)", osName, placeholder)
+   bundleName <- gsub("\\(bitness\\)", bitness, bundleName)
    
-   bundle_name
+   bundleName
 })
 
-.rs.addFunction("odbcBundleDownload", function(url, placeholder, bundle_temp) {
-   bundle_name <- .rs.odbcBundleName(placeholder)
-   bundle_url <- paste(url, bundle_name, sep = "")
+.rs.addFunction("odbcBundleDownload", function(url, placeholder, bundleTemp) {
+   bundleName <- .rs.odbcBundleName(placeholder)
+   bundleUrl <- paste(url, bundleName, sep = "")
    
-   if (exists(bundle_temp)) unlink(bundle_temp, recursive = TRUE)
-   dir.create(bundle_temp, recursive = TRUE)
+   if (exists(bundleTemp)) unlink(bundleTemp, recursive = TRUE)
+   dir.create(bundleTemp, recursive = TRUE)
    
-   bundle_file_temp <- file.path(bundle_temp, bundle_name)
-   download.file(bundle_url, bundle_file_temp)
+   bundleFileTemp <- file.path(bundleTemp, bundleName)
+   download.file(bundleUrl, bundleFileTemp)
    
-   bundle_file_temp
+   bundleFileTemp
 })
 
-.rs.addFunction("odbcBundleExtract", function(bundle_file_temp, install_path) {
-   untar(bundle_file_temp, exdir = install_path)
+.rs.addFunction("odbcBundleExtract", function(bundleFileTemp, installPath) {
+   untar(bundleFileTemp, exdir = installPath)
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsUnixodbc", function() {
@@ -91,7 +91,7 @@
 })
 
 .rs.addFunction("odbcBundleRegistryAdd", function(entries) {
-   validate_entry <- function(entry) {
+   validateEntry <- function(entry) {
       tryCatch({
          verify <- readRegistry(entry$path, "HLM")
          identical(verify[[entry$key]], entry$value)
@@ -104,17 +104,17 @@
     gsub("\\\\", "\\\\\\\\", value)
    }
 
-   if (all(sapply(entries, function(e) validate_entry(e))))
+   if (all(sapply(entries, function(e) validateEntry(e))))
       return()
 
-   all_added <- TRUE
+   allAdded <- TRUE
    for (entry in entries) {
-     full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+     fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
      system2(
         "REG",
         args = list(
            "ADD",
-           shQuote(full_path),
+           shQuote(fullPath),
            "/v",
            shQuote(entry$key),
            "/t",
@@ -125,20 +125,20 @@
         )
      )
 
-     if (!validate_entry(entry)) {
-      all_added <- FALSE
+     if (!validateEntry(entry)) {
+      allAdded <- FALSE
       break
      }
    }
 
-   if (!all_added) {
+   if (!allAdded) {
       message("Could not add registry keys from R, retrying using registry prompt.")
-      add_reg <- tempfile(fileext = ".reg")
+      addReg <- tempfile(fileext = ".reg")
 
-      line_entries <- sapply(entries, function(entry) {
-         full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+      lineEntries <- sapply(entries, function(entry) {
+         fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
          c(
-            paste("[", full_path, "]", sep = ""),
+            paste("[", fullPath, "]", sep = ""),
             paste(
                "\"",
                entry$key,
@@ -154,39 +154,39 @@
       lines <- c(
          "REGEDIT4",
          "",
-         line_entries
+         lineEntries
       )
 
-      writeLines(lines, add_reg)
+      writeLines(lines, addReg)
 
-      message("Waiting for ", add_reg, " to be registered.")
+      message("Waiting for ", addReg, " to be registered.")
       system2(
          "explorer",
-         add_reg
+         addReg
       )
 
-      all_entries_valid <- function() {
-        all(sapply(entries, function(e) validate_entry(e)))
+      allEntriesValid <- function() {
+        all(sapply(entries, function(e) validateEntry(e)))
       }
 
-      registry_start <- Sys.time()
-      registry_wait <- 300
-      while (!all_entries_valid() && Sys.time() < registry_start + registry_wait) {
+      registryStart <- Sys.time()
+      registryWait <- 300
+      while (!allEntriesValid() && Sys.time() < registryStart + registryWait) {
          Sys.sleep(1)
       }
 
-      if (!all_entries_valid()) {
+      if (!allEntriesValid()) {
          stop("Failed to add all registry keys using registry file.")
       }
    }
 })
 
 .rs.addFunction("odbcBundleRegistryRemove", function(entries) {
-   validate_entry <- function(entry) {
+   validateEntry <- function(entry) {
       tryCatch({
-         reg_entry <- readRegistry(entry$path, "HLM")
+         regEntry <- readRegistry(entry$path, "HLM")
          if (!is.null(entry$key))
-            is.null(reg_entry[[entry$key]])
+            is.null(regEntry[[entry$key]])
          else
             FALSE
       }, error = function(e) {
@@ -194,49 +194,49 @@
       })
    }
 
-   if (all(sapply(entries, function(e) validate_entry(e))))
+   if (all(sapply(entries, function(e) validateEntry(e))))
       return()
 
    for (entry in entries) {
-      full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+      fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
 
       if (!is.null(entry$key)) {
-         reg_args <- list(
+         regArgs <- list(
             "DELETE",
-            shQuote(full_path),
+            shQuote(fullPath),
             "/v",
             shQuote(entry$key),
             "/f"
          )
       }
       else {
-         reg_args <- list(
+         regArgs <- list(
             "DELETE",
-            shQuote(full_path),
+            shQuote(fullPath),
             "/f"
          )
       }
 
       system2(
          "REG",
-         args = reg_args
+         args = regArgs
       )
    }
 
-   if (all(sapply(entries, function(e) validate_entry(e))))
+   if (all(sapply(entries, function(e) validateEntry(e))))
       return()
 
-   add_reg <- tempfile(fileext = ".reg")
+   addReg <- tempfile(fileext = ".reg")
 
-   line_entries <- sapply(entries, function(entry) {
-      full_path <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
+   lineEntries <- sapply(entries, function(entry) {
+      fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
 
       if (is.null(entry$key)) {
-         paste("[-", full_path, "]", sep = "")
+         paste("[-", fullPath, "]", sep = "")
       }
       else {
          c(
-            paste("[", full_path, "]", sep = ""),
+            paste("[", fullPath, "]", sep = ""),
             paste(
                "\"",
                entry$key,
@@ -251,13 +251,13 @@
    lines <- c(
       "REGEDIT4",
       "",
-      unlist(line_entries)
+      unlist(lineEntries)
    )
 
-   writeLines(lines, add_reg)
+   writeLines(lines, addReg)
    system2(
       "explorer",
-      add_reg
+      addReg
    )
 })
 
@@ -278,40 +278,40 @@
 })
 
 .rs.addFunction("odbcBundleCheckPrereqs", function() {
-   os_prereqs <- list(
+   osPrereqs <- list(
       osx = .rs.odbcBundleCheckPrereqsOsx,
       windows = .rs.odbcBundleCheckPrereqsWindows,
       linux = .rs.odbcBundleCheckPrereqsLinux
    )
    
-   prereqs <- os_prereqs[[.rs.odbcBundleOsName()]]
+   prereqs <- osPrereqs[[.rs.odbcBundleOsName()]]
    prereqs()
 })
 
 .rs.addFunction("odbcBundleOdbcinstPath", function() {
    config <- system2("odbcinst", "-j", stdout = TRUE)
-   odbcini_entry <- config[grepl("odbcinst.ini", config)]
-   gsub("^[^/\\\\]*", "", odbcini_entry)
+   odbciniEntry <- config[grepl("odbcinst.ini", config)]
+   gsub("^[^/\\\\]*", "", odbciniEntry)
 })
 
-.rs.addFunction("odbcBundleReadIni", function(odbcinst_path) {
-   lines <- readLines(odbcinst_path)
+.rs.addFunction("odbcBundleReadIni", function(odbcinstPath) {
+   lines <- readLines(odbcinstPath)
    data <- list()
    
-   current_driver <- NULL
+   currentDriver <- NULL
    
    for (line in lines) {
       # Is header?
       if (grepl(" *\\[[^]]+\\] *", line)) {
-         current_driver <- gsub("^ *\\[|\\] *", "", line)
-         data[[current_driver]] <- ""
+         currentDriver <- gsub("^ *\\[|\\] *", "", line)
+         data[[currentDriver]] <- ""
       }
       else if (!grepl("^ *$", line)) {
-         if (identical(data[[current_driver]], ""))
-            data[[current_driver]] <- line
+         if (identical(data[[currentDriver]], ""))
+            data[[currentDriver]] <- line
          else
-            data[[current_driver]] <- c(
-               data[[current_driver]],
+            data[[currentDriver]] <- c(
+               data[[currentDriver]],
                line
             )
       }
@@ -320,7 +320,7 @@
    data
 })
 
-.rs.addFunction("odbcBundleWriteIni", function(odbcinst_path, data) {
+.rs.addFunction("odbcBundleWriteIni", function(odbcinstPath, data) {
    lines <- c()
    for (name in names(data)) {
       lines <- c(
@@ -337,26 +337,26 @@
    
    if (is.null(lines)) lines <- c("")
 
-   writeLines(lines, odbcinst_path)
+   writeLines(lines, odbcinstPath)
 })
 
-.rs.addFunction("odbcBundleRegisterLinux", function(name, driver_path) {
+.rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath) {
    # Find odbcinst.ini file
-   odbcinst_path <- .rs.odbcBundleOdbcinstPath()
+   odbcinstPath <- .rs.odbcBundleOdbcinstPath()
    
    # Read odbcinst.ini
-   odbcinst <- .rs.odbcBundleReadIni(odbcinst_path)
+   odbcinst <- .rs.odbcBundleReadIni(odbcinstPath)
    
    # Set odbcinst.ini entries
    odbcinst[[name]] <- list(
-      paste("Driver", "=", driver_path)
+      paste("Driver", "=", driverPath)
    )
    
    # Write odbcinst.ini
-   .rs.odbcBundleWriteIni(odbcinst_path, odbcinst)
+   .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
 })
 
-.rs.addFunction("odbcBundleRegisterWindows", function(name, driver_path) {
+.rs.addFunction("odbcBundleRegisterWindows", function(name, driverPath) {
    .rs.odbcBundleRegistryAdd(
       list(
          list(
@@ -367,91 +367,91 @@
          list(
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Driver",
-            value = driver_path
+            value = driverPath
          )
       )
    )
 })
 
-.rs.addFunction("odbcBundleFindDriver", function(name, install_path, library_pattern) { 
-   os_extensions <- list(
+.rs.addFunction("odbcBundleFindDriver", function(name, installPath, libraryPattern) { 
+   osExtensions <- list(
       osx = "dylib$",
       windows = "dll$",
       linux = "so$"
    )
    
-   os_extension <- os_extensions[[.rs.odbcBundleOsName()]]
-   driver_name <- gsub(" ", "", name)
+   osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
+   driverName <- gsub(" ", "", name)
    
-   if (is.null(library_pattern)) {
-      library_pattern <- paste(
-         driver_name,
+   if (is.null(libraryPattern)) {
+      libraryPattern <- paste(
+         driverName,
          "[^/\\\\]+\\.",
-         os_extension,
+         osExtension,
          sep = ""
       )
    }
    
-   all_files <- dir(install_path, recursive = TRUE, full.names = TRUE)
-   driver_path <- all_files[grepl(library_pattern, all_files, ignore.case = TRUE)]
+   allFiles <- dir(installPath, recursive = TRUE, full.names = TRUE)
+   driverPath <- allFiles[grepl(libraryPattern, allFiles, ignore.case = TRUE)]
 
-   if (!identical(length(driver_path), 1L))
+   if (!identical(length(driverPath), 1L))
       stop("Failed to find ", library, " inside driver bundle.")
    
-   normalizePath(driver_path)
+   normalizePath(driverPath)
 })
 
-.rs.addFunction("odbcBundleRegister", function(name, driver_path) {
-   os_registrations <- list(
+.rs.addFunction("odbcBundleRegister", function(name, driverPath) {
+   osRegistrations <- list(
       osx = .rs.odbcBundleRegisterLinux,
       windows = .rs.odbcBundleRegisterWindows,
       linux = .rs.odbcBundleRegisterLinux
    )
    
-   os_registration <- os_registrations[[.rs.odbcBundleOsName()]]
+   osRegistration <- osRegistrations[[.rs.odbcBundleOsName()]]
    
-   os_registration(name, driver_path) 
+   osRegistration(name, driverPath) 
 })
 
-.rs.addFunction("odbcBundleValidate", function(bundle_file, md5) {
+.rs.addFunction("odbcBundleValidate", function(bundleFile, md5) {
    if (!is.null(md5) && nchar(md5) > 0) {
-      valid_md5s <- strsplit(as.character(md5), "[ \n,]+")[[1]]
-      bundle_md5 <- tools::md5sum(bundle_file)
-      if (!bundle_md5 %in% valid_md5s) {
-         stop("Failed to validate bundle with signature ", md5, " but got ", bundle_md5, " instead.")
+      validMd5s <- strsplit(as.character(md5), "[ \n,]+")[[1]]
+      bundleMd5 <- tools::md5sum(bundleFile)
+      if (!bundleMd5 %in% validMd5s) {
+         stop("Failed to validate bundle with signature ", md5, " but got ", bundleMd5, " instead.")
       }
    }
 })
 
-.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, install_path, library_pattern = NULL, md5 = NULL) {
-   install_path <- file.path(
-      normalizePath(install_path, mustWork = FALSE),
+.rs.addFunction("odbcBundleInstall", function(name, url, placeholder, installPath, libraryPattern = NULL, md5 = NULL) {
+   installPath <- file.path(
+      normalizePath(installPath, mustWork = FALSE),
       tolower(name)
    )
    
-   bundle_temp <- tempfile()
-   on.exit(unlink(bundle_temp, recursive = TRUE), add = TRUE)
+   bundleTemp <- tempfile()
+   on.exit(unlink(bundleTemp, recursive = TRUE), add = TRUE)
 
-   message("Installation path: ", install_path)
+   message("Installation path: ", installPath)
    message("Installing ", name)
    
    message("Checking prerequisites")
    .rs.odbcBundleCheckPrereqs()
    
    message("Downloading driver")
-   bundle_file_temp <- .rs.odbcBundleDownload(url, placeholder, bundle_temp)
+   bundleFileTemp <- .rs.odbcBundleDownload(url, placeholder, bundleTemp)
 
    message("Validating driver")
-   .rs.odbcBundleValidate(bundle_file_temp, md5)
+   .rs.odbcBundleValidate(bundleFileTemp, md5)
    
    message("Extracting driver")
-   .rs.odbcBundleExtract(bundle_file_temp, install_path)
+   .rs.odbcBundleExtract(bundleFileTemp, installPath)
    
    message("Inspecting driver")
-   driver_path <- .rs.odbcBundleFindDriver(name, install_path, library_pattern)
+   driverPath <- .rs.odbcBundleFindDriver(name, installPath, libraryPattern)
    
    message("Registering driver")
-   .rs.odbcBundleRegister(name, driver_path)
+   .rs.odbcBundleRegister(name, driverPath)
 
    message("")
    message("Installation complete")
