@@ -980,3 +980,8 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    # return original
    original
 })
+
+.rs.addFunction("isDesktop", function() {
+  sysName <- Sys.info()[['sysname']]
+  identical(sysName, "Windows") || identical(sysName, "Darwin") || capabilities("X11")
+})
