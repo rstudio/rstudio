@@ -290,7 +290,7 @@ public class ConnectionsPresenter extends BasePresenter
                @Override
                public void onSuccess(ConnectionUpdateResult result)
                {
-                  installersWarnings_ = result.getWarning();
+                  installersWarning_ = result.getWarning();
                   showWizard();
                } 
 
@@ -321,7 +321,7 @@ public class ConnectionsPresenter extends BasePresenter
                    new ProgressOperationWithInput<ConnectionOptions>() {
                       @Override
                       public void execute(ConnectionOptions result,
-                                        ProgressIndicator indicator)
+                                          ProgressIndicator indicator)
                       {
                          indicator.onCompleted();
 
@@ -330,7 +330,8 @@ public class ConnectionsPresenter extends BasePresenter
                             result.getConnectCode())
                          );
                       }
-                   }
+                   },
+                   installersWarning_
                 );
                
                 newConnectionWizard.showModal();
@@ -611,5 +612,5 @@ public class ConnectionsPresenter extends BasePresenter
    private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
    private static boolean installersUpdated_ = false;
-   private static String installersWarnings_ = null;
+   private static String installersWarning_ = null;
 }

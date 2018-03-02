@@ -8,3 +8,20 @@
    margin-left: 10px;
    margin-top: 10px;
 }
+
+.wizardPageWarningPanel {
+   background: #FFFBEC;
+   padding: 3px;
+   padding-left: 8px;
+   padding-top: 4px;
+}
+
+.wizardPageWarningLabel {
+   display: inline-block;
+   vertical-align: top;
+   padding-left: 5px;
+}
+
+.wizardPageWarningImage {
+
+}

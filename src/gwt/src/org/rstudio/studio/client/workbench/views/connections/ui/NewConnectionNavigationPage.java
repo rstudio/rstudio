@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -36,6 +38,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -48,7 +52,8 @@ public class NewConnectionNavigationPage
    public NewConnectionNavigationPage(String title,
                                       String subTitle,
                                       ImageResource icon,
-                                      NewConnectionContext context)
+                                      NewConnectionContext context,
+                                      String warning)
    {
       super(title, 
             subTitle,
@@ -61,7 +66,7 @@ public class NewConnectionNavigationPage
                @Override
                public Widget createMainWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
                {
-                  return createWidget(pages);
+                  return createWidget(pages, warning);
                }
             });
    }
@@ -99,19 +104,40 @@ public class NewConnectionNavigationPage
       return pages;
    }
 
-   private static Widget createWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
+   private static Widget createWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
+                                      String warning)
    {
-      return new Selector(pages);
+      return new Selector(pages, warning);
    }
 
    private static class Selector
          extends Composite
          implements HasWizardPageSelectionHandler<NewConnectionContext, ConnectionOptions>
    {
-      public Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
+      public Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
+                      String warning)
       {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
          
+         VerticalPanel rootPanel = new VerticalPanel();
+
+         if (!StringUtil.isNullOrEmpty(warning)) {
+            HorizontalPanel warningPanel = new HorizontalPanel();
+            
+            warningPanel.addStyleName(RES.styles().wizardPageWarningPanel());
+            Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
+            warningImage.addStyleName(RES.styles().wizardPageWarningImage());
+            warningPanel.add(warningImage);
+            
+            Label label = new Label();
+            label.setText(warning);
+            label.addStyleName(RES.styles().wizardPageWarningLabel());
+            warningPanel.add(label);
+
+            rootPanel.add(warningPanel);
+            rootPanel.setCellHeight(warningPanel,"25px");
+         }
+
          ScrollPanel scrollPanel = new ScrollPanel();
          scrollPanel.setSize("100%", "100%");
          scrollPanel.addStyleName(RES.styles().wizardPageSelector());
@@ -135,7 +161,9 @@ public class NewConnectionNavigationPage
          }
 
          scrollPanel.add(verticalPanel);
-         initWidget(scrollPanel);
+         rootPanel.add(scrollPanel);
+
+         initWidget(rootPanel);
       }
       
       @Override
@@ -189,6 +217,9 @@ public class NewConnectionNavigationPage
    {
       String wizardPageSelector();
       String wizardPageConnectionSelectorItemLeftIcon();
+      String wizardPageWarningPanel();
+      String wizardPageWarningImage();
+      String wizardPageWarningLabel();
    }
    
    public interface Resources extends ClientBundle
