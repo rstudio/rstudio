@@ -808,11 +808,13 @@ options(connectionObserver = list(
       installerUrl <- getOption("connections-installer")
       installerHostName <- gsub("https?://|/[^:].", "", installerUrl)
 
-      warning <- tryCatch({
+      connectionsWarning <- tryCatch({
          installersFile <- file.path(tempdir(), basename(installerUrl))
          download.file(installerUrl, installersFile)
 
          untar(installersFile, exdir = .rs.connectionOdbcInstallerPath())
+
+         NULL
       }, error = function(e) {
          paste(
             "Could not check for driver updates from ",
