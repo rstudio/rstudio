@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
@@ -276,4 +277,5 @@ public interface RStudioGinjector extends Ginjector
    ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
    AceThemes getAceThemes();
    AddinsCommandManager getAddinsCommandManager();
+   DependencyManager getDependencyManager();
 }

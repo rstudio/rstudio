@@ -697,6 +697,27 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      );
    }
    
+   public void withOdbc(final Command command, final String name)
+   {
+     withDependencies(
+        "Preparing " + name,
+        "Using " + name, 
+        new Dependency[] {
+           Dependency.cranPackage("odbc", "1.1.5", true)
+        }, 
+        true, // update keyring if needed
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+
    private Dependency[] connectionPackageDependenciesArray(String packageName,
                                                            String packageVersion)
    {

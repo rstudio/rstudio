@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -36,6 +37,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -155,7 +157,24 @@ public class NewConnectionNavigationPage
                @Override
                public void onClick(ClickEvent event)
                {
-                  onSelected_.execute(page);
+                  if (page instanceof NewConnectionPreInstallOdbcPage)
+                  {
+                     RStudioGinjector.INSTANCE.getDependencyManager().withOdbc(
+                        new Command()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              onSelected_.execute(page);
+                           }
+                        },
+                        page.getTitle()
+                     );
+                  }
+                  else
+                  {
+                     onSelected_.execute(page);
+                  }
                }
             });
             verticalPanel.add(item);
