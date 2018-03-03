@@ -1,5 +1,5 @@
 /*
- * RStdCallbacks.hpp
+ * RScriptCallbacks.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
