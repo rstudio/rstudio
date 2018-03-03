@@ -441,7 +441,7 @@ options(connectionObserver = list(
                currentVersion <- drivers[drivers$attribute == "Version" & drivers$name == driver, ]
                if (nrow(currentVersion) == 1) {
                   if (compareVersion(installerVersion, currentVersion$value) > 0) {
-                     warningMessage <- "A new driver version is available, consider uninstalling and reinstalling driver."
+                     warningMessage <- "A new driver version is available, to upgrade, uninstall and then reinstall."
                   }
                }
             }
