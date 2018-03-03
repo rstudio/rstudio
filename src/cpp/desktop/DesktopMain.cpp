@@ -37,6 +37,7 @@
 #include "DesktopSessionLauncher.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
+#include "DesktopActivationOverlay.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -403,6 +404,7 @@ int main(int argc, char* argv[])
 
       int result = pApp->exec();
 
+      desktop::activation().releaseLicense();
       options.cleanUpScratchTempDir();
 
       return result;

@@ -62,6 +62,10 @@ void DesktopActivation::showLicenseDialog(bool showQuitButton)
 {
 }
 
+void DesktopActivation::releaseLicense()
+{
+}
+
 void DesktopActivation::emitLicenseLostSignal()
 {
    emit licenseLost(QString::fromStdString(currentLicenseStateMessage()));

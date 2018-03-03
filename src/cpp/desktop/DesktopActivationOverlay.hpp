@@ -55,6 +55,8 @@ public:
 
    void showLicenseDialog(bool showQuitButton);
 
+   void releaseLicense();
+
 Q_SIGNALS:
    void licenseLost(QString licenseMessage);
    void launchFirstSession();
