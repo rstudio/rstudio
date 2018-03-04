@@ -529,9 +529,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
          install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
                  DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
 
-         # 64-bit MSVC runtime
-         include(InstallRequiredSystemLibraries)
-         install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION "${RSTUDIO_INSTALL_BIN}/x64" COMPONENT Libraries)
       endif()
    endif()
 
@@ -560,6 +557,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    endif()
 
+endif()
+
+# install 64-bit MSVC runtime for session win64
+if(RSTUDIO_SESSION_WIN64)
+   include(InstallRequiredSystemLibraries)
+   install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
 # add overlay if it exists
