@@ -574,14 +574,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
 
-# if doing a package build on MacOS, reroute the OpenSSL libraries to our
-# bundled copies
-if(APPLE AND RSTUDIO_PACKAGE_BUILD)
-   find_package(OpenSSL REQUIRED QUIET)
-   foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-      get_filename_component(LIB_DIR ${lib} PATH)
-      execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
-      add_custom_command (TARGET rsession POST_BUILD
-         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
-   endforeach()
+if(APPLE)
+
+   # if doing a package build on MacOS, reroute the OpenSSL libraries to our
+   # bundled copies
+   if (RSTUDIO_PACKAGE_BUILD)
+      find_package(OpenSSL REQUIRED QUIET)
+      foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+         get_filename_component(LIB_DIR ${lib} PATH)
+         execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+         add_custom_command (TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+      endforeach()
+   endif()
+
+   # also rewrite where rsession looks for libR.dylib
+   # (so we don't accidentally load the wrong version of R at launch)
+   get_filename_component(LIBR_HOME_REALPATH "${LIBR_HOME}" REALPATH)
+   add_custom_command(TARGET rsession POST_BUILD
+      COMMAND install_name_tool -change "${LIBR_HOME_REALPATH}/lib/libR.dylib" "@executable_path/libR.dylib" "${CMAKE_CURRENT_BINARY_DIR}/rsession")
+
 endif()
