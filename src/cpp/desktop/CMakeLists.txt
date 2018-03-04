@@ -480,7 +480,7 @@ if(RSTUDIO_BUNDLE_QT)
 
       # MSVC runtime
       include(InstallRequiredSystemLibraries)
-      install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ${RSTUDIO_INSTALL_BIN} COMPONENT Libraries)
+      install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ${RSTUDIO_INSTALL_BIN})
    elseif(APPLE)
       # fixup bundle on osx
       set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
