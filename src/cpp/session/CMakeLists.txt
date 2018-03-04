@@ -529,6 +529,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
          install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
                  DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
 
+         # 64-bit MSVC runtime
+         include(InstallRequiredSystemLibraries)
+         install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION "${RSTUDIO_INSTALL_BIN}/x64" COMPONENT Libraries)
       endif()
    endif()
 
@@ -558,16 +561,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    endif()
 
 endif()
-
-# # install 64-bit gcc runtime for session win64
-# # not needed with static build / link of gcc
-# if(RSTUDIO_SESSION_WIN64)
-#    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
-#    install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
-#                     ${GCC_PATH}/libstdc++-6.dll
-#                     ${GCC_PATH}/libwinpthread-1.dll
-#            DESTINATION ${RSTUDIO_INSTALL_BIN})
-# endif()
 
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
