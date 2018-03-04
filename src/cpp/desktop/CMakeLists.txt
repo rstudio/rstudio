@@ -21,7 +21,7 @@ if(CMAKE_VERSION VERSION_GREATER "3.0.0")
    cmake_policy(SET CMP0043 NEW)
 endif()
 
-set(QT_VERSION_SUBDIR "5.10.0")
+set(QT_VERSION_SUBDIR "5.10.1")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -41,7 +41,7 @@ if(NOT WIN32)
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_CANDIDATE 5.10.0)
+      foreach(QT_CANDIDATE 5.10.1)
 
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
@@ -67,7 +67,7 @@ if(NOT WIN32)
       endforeach()
    endif()
 else()
-   set(QT_VERSION "5.10.0")
+   set(QT_VERSION "5.10.1")
    if(NOT QT_QMAKE_EXECUTABLE)
 
       set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")

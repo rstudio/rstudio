@@ -25,16 +25,16 @@ Controller.prototype.TargetDirectoryPageCallback = function()
 Controller.prototype.ComponentSelectionPageCallback = function() {
     var widget = gui.currentPageWidget();
     widget.deselectAll();
-    widget.selectComponent("qt.qt5.5100.win32_msvc2015");
-    widget.selectComponent("qt.qt5.5100.win64_msvc2015_64");
-    widget.selectComponent("qt.qt5.5100.qtwebengine");
-    widget.selectComponent("qt.qt5.5100.qtwebengine.win32_msvc2015");
-    widget.selectComponent("qt.qt5.5100.qtwebengine.win64_msvc2015_64");
-    widget.deselectComponent("qt.qt5.5100.src");
-    widget.deselectComponent("qt.qt5.5100.doc");
-    widget.deselectComponent("qt.qt5.5100.examples");
-    widget.deselectComponent("qt.qt5.5100.doc.qtwebengine");
-    widget.deselectComponent("qt.qt5.5100.examples.qtwebengine");
+    widget.selectComponent("qt.qt5.5101.win32_msvc2015");
+    widget.selectComponent("qt.qt5.5101.win64_msvc2015_64");
+    widget.selectComponent("qt.qt5.5101.qtwebengine");
+    widget.selectComponent("qt.qt5.5101.qtwebengine.win32_msvc2015");
+    widget.selectComponent("qt.qt5.5101.qtwebengine.win64_msvc2015_64");
+    widget.deselectComponent("qt.qt5.5101.src");
+    widget.deselectComponent("qt.qt5.5101.doc");
+    widget.deselectComponent("qt.qt5.5101.examples");
+    widget.deselectComponent("qt.qt5.5101.doc.qtwebengine");
+    widget.deselectComponent("qt.qt5.5101.examples.qtwebengine");
     widget.deselectComponent("qt.tools.qtcreator");
     gui.clickButton(buttons.NextButton);
 }
