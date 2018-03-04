@@ -476,7 +476,11 @@ if(RSTUDIO_BUNDLE_QT)
       if (NOT WINDEPLOYQT_COMMAND)
          message(FATAL_ERROR "Did not find windeployqt under ${QT_BIN_DIR}.")
       endif()
-      install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_COMMAND}\" \"\${CMAKE_INSTALL_PREFIX}\\\\bin\\\\rstudio.exe\" -verbose 0)")
+      install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_COMMAND}\" \"\${CMAKE_INSTALL_PREFIX}\\\\bin\\\\rstudio.exe\" --no-compiler-runtime --verbose 0)")
+
+      # MSVC runtime
+      include(InstallRequiredSystemLibraries)
+      install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ${RSTUDIO_INSTALL_BIN})
    elseif(APPLE)
       # fixup bundle on osx
       set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
