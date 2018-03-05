@@ -46,31 +46,6 @@ void constructRequest(const std::string& endpoint,
    pRequest->setBody(oss.str());
 }
 
-Error signRequest(http::Request& request)
-{
-   std::string date = http::util::httpDate();
-
-   // compute hmac for the request
-   std::string payload =  date +
-                          "\n" +
-                          request.body();
-   std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA2(payload, s_sessionSharedSecret, &hmac);
-   if (error)
-      return error;
-
-   // base 64 encode it
-   std::string signature;
-   error = core::system::crypto::base64Encode(hmac, &signature);
-   if (error)
-      return error;
-
-   // stamp the signature on the request
-   request.setHeader(kRstudioMessageSignature, signature);
-
-   return Success();
-}
-
 Error handleResponse(const std::string& endpoint,
                      const http::Response& response,
                      json::Value* pResult)
@@ -151,12 +126,10 @@ Error invokeRpc(const std::string& tcpAddress,
    http::Request req;
    constructRequest(endpoint, request, &req);
 
-   // sign request with secret key
-   // we do this instead of sending the secret key in the header
-   // since we are connecting over an untrusted TCP connection
-   Error error = signRequest(req);
-   if (error)
-      return error;
+   // stamp auth cookie on the request
+   // this lets the server know the RPC is coming from a trusted source,
+   // and on behalf of which user
+   req.setHeader(kRstudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
 
    // add additional Host header (needed for tcp connections)
    req.setHost(tcpAddress);

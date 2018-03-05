@@ -21,7 +21,9 @@
 #define kServerRpcSocketPath          "/tmp/rstudio-rserver/session-server-rpc.socket"
 #define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
-#define kRstudioMessageSignature      "RSTUDIO_MESSAGE_SIGNATURE"
+#define kRstudioRpcCookieHeader       "X-RS-Session-Server-RPC-Cookie"
+#define kRstudioRpcCookieEnvVar       "RS_SESSION_RPC_COOKIE"
+#define kRstudioMessageSignature      "X-RS-Message-Signature"
 
 namespace rstudio {
 namespace core {
