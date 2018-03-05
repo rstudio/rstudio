@@ -14,12 +14,16 @@
  */
 
 #include <core/http/LocalStreamAsyncServer.hpp>
+#include <core/http/Cookie.hpp>
+#include <core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/json/Json.hpp>
 #include <core/SecureKeyFile.hpp>
 #include <core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
+
+#include <core/system/PosixUser.hpp>
 
 #include <server/ServerObject.hpp>
 #include <server/ServerOptionsOverlay.hpp>
@@ -44,9 +48,8 @@ boost::shared_ptr<http::AsyncServer> s_pSessionRpcServer;
 
 void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
 {
-   // give the session the shared secret
    pProfile->config.environment.push_back(
-         std::make_pair(kServerRpcSecretEnvVar, s_sessionSharedSecret));
+            std::make_pair(kServerRpcSecretEnvVar, s_sessionSharedSecret));
 }
 
 void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
@@ -64,89 +67,36 @@ void writeInvalidRequest(boost::shared_ptr<core::http::AsyncConnection> pConnect
 }
 
 // used when clients are sending RPC via TCP
-// ensures message signature is valid to ensure that the RPC sender
-// is trusted while keeping the secret hidden
-bool validateMessageSignature(boost::shared_ptr<core::http::AsyncConnection> pConnection)
+// ensures messages are sent from a trusted (logged in) user
+bool validateSecureCookie(boost::shared_ptr<core::http::AsyncConnection> pConnection,
+                          std::string* pUser)
 {
    const http::Request& request = pConnection->request();
 
-   // get the message signature from the header and fail out if it's not there
-   std::string messageSignature = request.headerValue(kRstudioMessageSignature);
-   if (messageSignature.empty())
+   std::string cookieValue = request.cookieValueFromHeader(kRstudioRpcCookieHeader);
+   if (cookieValue.empty())
    {
-      LOG_WARNING_MESSAGE("Session attempted to invoke server RPC without a message signature");
+      LOG_WARNING_MESSAGE("No auth cookie supplied for server RPC call");
       return false;
    }
 
-   // get the date header and ensure that this request is not too old for us to accept
-   // dates are to be specified in the official HTTP format (ex: Wed, 21 Oct 2015 07:28:00 GMT)
-   std::string date = request.headerValue("Date");
-   if (date.empty())
+   std::string user = core::http::secure_cookie::readSecureCookie(cookieValue);
+   if (user.empty())
    {
-      LOG_WARNING_MESSAGE("Signed RPC message did not specify a date. "
-                          "A valid date must be present on all RPC requests");
+      LOG_WARNING_MESSAGE("Invalid auth cookie supplied for server RPC call");
       return false;
    }
 
-   // verify the date is in the correct format
-   // if not, we will fail out to ensure that an attacker can not supply
-   // invalid dates that can exploit the integrity of the system
-   if (!http::util::isValidDate(date))
-   {
-      LOG_WARNING_MESSAGE("Proxy request specified an invalid date: " + date +
-                          ". Only HTTP Dates are supported (see HTTP spec for more details)");
-      return false;
-   }
-
-   boost::posix_time::ptime requestTime = http::util::parseHttpDate(date);
-
-   // check to ensure the request date is not more than 60 seconds apart from now
-   // 60 seconds provides good security while still allowing for a bit of clock skew
-   boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
-   boost::posix_time::time_duration timeDelta = now - requestTime;
-   if (abs(timeDelta.total_seconds()) > 60)
-   {
-      LOG_WARNING_MESSAGE("Proxy request specified a date that was more than 60 seconds "
-                          "different from now. Please ensure the proxy clock is synchronized "
-                          "with the local clock.");
-      return false;
-   }
-
-   // compute hmac for the message
-   std::string payload = date +
-                         "\n" +
-                         request.body();
-   std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA2(payload, s_sessionSharedSecret, &hmac);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // base 64 encode it
-   std::string signature;
-   error = core::system::crypto::base64Encode(hmac, &signature);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // ensure that the calculated signature matches that on the message
-   if (messageSignature != signature)
-   {
-      LOG_WARNING_MESSAGE("Proxy auth calculated signature does not match supplied signature");
-      return false;
-   }
-
+   *pUser = user;
    return true;
 }
 
 void validationHandler(
-      const core::http::AsyncUriHandlerFunction& handler,
+      const auth::SecureAsyncUriHandlerFunction& handler,
       boost::shared_ptr<core::http::AsyncConnection> pConnection)
 {
+   std::string username;
+
    // validate that the secret matches what we expect
    std::string secret =
          pConnection->request().headerValue(kServerRpcSecretHeader);
@@ -154,9 +104,8 @@ void validationHandler(
    // if there is no secret, check for a message signature instead
    if (secret.empty())
    {
-      if (!validateMessageSignature(pConnection))
+      if (!validateSecureCookie(pConnection, &username))
       {
-         LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with no secret or signature");
          writeInvalidRequest(pConnection);
          return;
       }
@@ -171,16 +120,33 @@ void validationHandler(
          writeInvalidRequest(pConnection);
          return;
       }
+
+      // get user on the other end of the socket (if available)
+      int uid = pConnection->request().remoteUid();
+      if (uid != -1)
+      {
+         core::system::user::User user;
+         Error error = core::system::user::userFromId(uid, &user);
+         if (error)
+         {
+            LOG_WARNING_MESSAGE("Couldn't determine user for Server RPC request");
+            LOG_ERROR(error);
+            writeInvalidRequest(pConnection);
+            return;
+         }
+
+         username = user.username;
+      }
    }
 
    // invoke the wrapped async URI handler
-   handler(pConnection);
+   handler(username, pConnection);
 }
 
 } // anonymous namespace
 
 void addHandler(const std::string &prefix,
-                const core::http::AsyncUriHandlerFunction &handler)
+                const auth::SecureAsyncUriHandlerFunction &handler)
 {
    if (s_pSessionRpcServer)
    {

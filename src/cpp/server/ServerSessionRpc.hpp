@@ -19,6 +19,8 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/PeriodicCommand.hpp>
 
+#include <server/auth/ServerSecureUriHandler.hpp>
+
 #define kSessionRpcCmdPeriodMs 50
 
 namespace rstudio {
@@ -34,7 +36,7 @@ namespace session_rpc {
 core::Error initialize();
 core::Error startup();
 void addHandler(const std::string& prefix,
-                const core::http::AsyncUriHandlerFunction& handler);
+                const auth::SecureAsyncUriHandlerFunction& handler);
 void addPeriodicCommand(boost::shared_ptr<core::PeriodicCommand> pCmd);
 
 } // namespace acls
