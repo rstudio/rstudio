@@ -54,7 +54,36 @@ core::FilePath tempFile(const std::string& prefix,
 
 core::FilePath tempDir();
 
-     
+core::FilePath logPath();
+
+core::FilePath rSourcePath();
+
+core::FilePath rHistoryDir();
+
+core::FilePath rEnvironmentDir();
+
+core::FilePath sessionScratchPath();
+
+core::FilePath scopedScratchPath();
+
+core::FilePath clientStatePath();
+
+core::FilePath projectClientStatePath();
+
+core::FilePath startupEnvironmentFilePath();
+
+core::FilePath suspendedSessionPath();
+
+std::string sessionPort();
+
+std::string rCRANRepos();
+
+bool restoreWorkspace();
+
+bool useInternet2();
+
+bool alwaysSaveHistory();
+
 // suppress output in scope
 class SuppressOutputInScope
 {

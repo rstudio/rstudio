@@ -116,6 +116,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
           value<bool>(&runTests_)->default_value(false)->implicit_value(true),
           "run unit tests");
 
+   // run an R script
+   options_description runScript("script");
+   runScript.add_options()
+     (kRunScriptSessionOption,
+      value<std::string>(&runScript_)->default_value(""),
+      "run an R script");
+
    // verify installation flag
    options_description verify("verify");
    verify.add_options()
@@ -411,6 +418,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    optionsDesc.commandLine.add(verify);
    optionsDesc.commandLine.add(runTests);
+   optionsDesc.commandLine.add(runScript);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
    optionsDesc.commandLine.add(agreement);

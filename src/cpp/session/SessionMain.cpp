@@ -1826,6 +1826,7 @@ int main (int argc, char * const argv[])
                                   userSettings().rProfileOnResume();
       rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
+      rOptions.runScript = options.runScript();
       
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

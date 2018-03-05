@@ -82,6 +82,7 @@ struct ROptions
    core::FilePath rSourcePath;
    std::string rLibsUser;
    std::string rCRANRepos;
+   std::string runScript;
    bool useInternet2;
    int rCompatibleGraphicsEngineVersion;
    bool serverMode;

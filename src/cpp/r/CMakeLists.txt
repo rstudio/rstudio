@@ -37,10 +37,15 @@ set (R_SOURCE_FILES
    session/RConsoleActions.cpp
    session/RConsoleHistory.cpp
    session/RDiscovery.cpp
+   session/RInit.cpp
+   session/RQuit.cpp
    session/RRestartContext.cpp
+   session/RScriptCallbacks.cpp
    session/RSearchPath.cpp
    session/RSessionState.cpp
    session/RSession.cpp
+   session/RStdCallbacks.cpp
+   session/RSuspend.cpp
    session/graphics/RGraphicsDevice.cpp
    session/graphics/RGraphicsErrorCategory.cpp
    session/graphics/RGraphicsPlot.cpp

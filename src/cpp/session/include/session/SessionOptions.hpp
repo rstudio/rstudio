@@ -65,6 +65,11 @@ public:
    {
       return runTests_;
    }
+
+   std::string runScript() const
+   {
+      return runScript_;
+   }
    
    bool verifyInstallation() const
    {
@@ -552,6 +557,7 @@ private:
 private:
    // tests
    bool runTests_;
+   std::string runScript_;
    
    // verify
    bool verifyInstallation_;
