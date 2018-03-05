@@ -505,12 +505,15 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 
 .rs.addFunction("python.getCompletionsKeys", function(object, token)
 {
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   
    method <- reticulate::py_get_attr(object, "keys", silent = TRUE)
    if (!inherits(method, "python.builtin.object"))
       return(.rs.python.emptyCompletions())
    
    keys <- reticulate::py_to_r(method)
-   candidates <- reticulate::py_to_r(keys())
+   candidates <- as.character(builtins$list(reticulate::py_to_r(keys())))
+   
    .rs.python.completions(token, candidates)
 })
 
@@ -550,7 +553,11 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       keyword  <- reticulate::import("keyword", convert = FALSE)
       
       # figure out object types for main, builtins
-      candidates <- c(names(main), names(builtins), keyword$kwlist)
+      candidates <- c(
+         names(main),
+         names(builtins),
+         as.character(reticulate::py_to_r(keyword$kwlist))
+      )
       
       return(.rs.python.completions(token, candidates))
    }
@@ -778,6 +785,12 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    .rs.python.getCompletionsMain(text)
 })
 
+.rs.addFunction("python.isPython3", function()
+{
+   config <- reticulate::py_config()
+   grepl("^3", config$version)
+})
+
 .rs.addFunction("python.listModules", function()
 {
    pkgutil  <- reticulate::import("pkgutil", convert = FALSE)
@@ -793,6 +806,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    
    # convert to R object and extract module names
    modules <- reticulate::py_to_r(modules)
-   names <- vapply(modules, `[[`, 2, FUN.VALUE = character(1))
+   key <- if (.rs.python.isPython3()) "name" else 2L
+   names <- vapply(modules, `[[`, key, FUN.VALUE = character(1))
    sort(unique(names))
 })
