@@ -82,7 +82,10 @@ Error sendRequest(const FilePath& socketPath,
                   json::Value* pResult)
 {
    core::http::Response response;
-   core::http::sendRequest(socketPath, request, &response);
+
+   Error error = core::http::sendRequest(socketPath, request, &response);
+   if (error)
+      return error;
 
    return handleResponse(endpoint, response, pResult);
 }
@@ -94,7 +97,10 @@ Error sendRequest(const std::string& tcpAddress,
                   json::Value* pResult)
 {
    core::http::Response response;
-   core::http::sendRequest(tcpAddress, port, request, &response);
+
+   Error error = core::http::sendRequest(tcpAddress, port, request, &response);
+   if (error)
+      return error;
 
    return handleResponse(endpoint, response, pResult);
 }
