@@ -47,6 +47,7 @@
          margin-right: 2px;
          height: 17px;
          overflow: hidden;
+         width: 494px;
       }
    </ui:style>
 
