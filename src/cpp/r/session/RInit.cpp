@@ -408,11 +408,6 @@ void reportHistoryAccessError(const std::string& context,
    REprintf(("Error attempting to " + errmsg + "\n").c_str());
 }
    
-void setImageDirty(bool imageDirty)
-{
-   R_DirtyImage = imageDirty ? 1 : 0;
-}
-
 namespace utils {
 
 bool isR3()

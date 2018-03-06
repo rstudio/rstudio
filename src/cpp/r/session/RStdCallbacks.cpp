@@ -239,6 +239,11 @@ bool imageIsDirty()
    return R_DirtyImage != 0;
 }
 
+void setImageDirty(bool imageDirty)
+{
+   R_DirtyImage = imageDirty ? 1 : 0;
+}
+
 void setRCallbacks(const RCallbacks& callbacks)
 {
    s_callbacks = callbacks;
