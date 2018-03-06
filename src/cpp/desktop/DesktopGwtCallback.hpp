@@ -101,6 +101,7 @@ public Q_SLOTS:
    void prepareShowWordDoc();
    void prepareShowPptPresentation();
 
+   // R version selection currently Win32 only
    QString getRVersion();
    QString chooseRVersion();
 
