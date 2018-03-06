@@ -234,41 +234,13 @@ public class EditingTargetCodeExecution
                                              String functionWrapper,
                                              boolean onlyUseConsole)
    {
-      // adapt to the code language being executed (currently R vs. Python)
-      // .Rmd's always execute in R mode (separate machinery routes Python execution)
-      String language = (target_.getTextFileType().isRmd())
-            ? "r"
-            : docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      
-      server_.adaptToLanguage(
-            StringUtil.notNull(language),
-            new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void response)
-               {
-                  // allow console a chance to execute code if we aren't focused
-                  if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
-                  {
-                     events_.fireEvent(new ConsoleExecutePendingInputEvent(
-                           commands_.executeCodeWithoutFocus().getId()));
-                     return;
-                  }
-
-                  executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
+      executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
    }
    
    private void executeRange(Range range, String functionWrapper, boolean onlyUseConsole)
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
+      String language = "R";
      
       setLastExecuted(range.getStart(), range.getEnd());
       
@@ -277,6 +249,10 @@ public class EditingTargetCodeExecution
       if (!DocumentMode.isSelectionInPythonMode(docDisplay_))
       {
          code = StringUtil.trimBlankLines(code);
+      }
+      else
+      {
+         language = "Python";
       }
       
       // strip roxygen off the beginning of lines
@@ -305,9 +281,12 @@ public class EditingTargetCodeExecution
       
       // send to console
       events_.fireEvent(new SendToConsoleEvent(
-                                  code, 
-                                  true, 
-                                  prefs_.focusConsoleAfterExec().getValue()));
+                                  code,
+                                  language,
+                                  true,
+                                  true,
+                                  prefs_.focusConsoleAfterExec().getValue(),
+                                  false));
    }
    
    public void executeBehavior(String executionBehavior)

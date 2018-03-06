@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -368,7 +369,27 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
-   {  
+   {
+      server_.adaptToLanguage(
+            event.getLanguage(),
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  sendToConsoleImpl(event);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   private void sendToConsoleImpl(final SendToConsoleEvent event)
+   {
       final InputEditorDisplay display = view_.getInputEditorDisplay();
       
       // get anything already at the console
