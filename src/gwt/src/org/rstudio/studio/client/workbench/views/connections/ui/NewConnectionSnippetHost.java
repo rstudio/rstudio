@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Random;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -410,6 +411,15 @@ public class NewConnectionSnippetHost extends Composite
    private void updateCodePanel()
    {
       String input = info_.getSnippet();
+
+      // replace random fields
+      String previousInput = "";
+      Random random = new Random();
+      while (previousInput != input) {
+         previousInput = input;
+         input = input.replaceFirst(patternRandNumber_, Integer.toString(random.nextInt(10000)));
+      }
+
       RegExp regExp = RegExp.compile(pattern_, "g");
       
       StringBuilder builder = new StringBuilder();     
@@ -632,6 +642,7 @@ public class NewConnectionSnippetHost extends Composite
    HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
 
    static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]*))?(:([^}]+))?\\}";
+   static final String patternRandNumber_ = "\\$\\{#\\}";
    
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
