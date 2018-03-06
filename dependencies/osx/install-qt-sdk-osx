@@ -19,7 +19,7 @@
 # was created by installing Qt via an interactive installer, and
 # manually removing components not needed by RStudio.
 
-QT_VERSION=5.10.0
+QT_VERSION=5.10.1
 QT_SDK_BINARY=QtSDK-${QT_VERSION}-mac.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 
