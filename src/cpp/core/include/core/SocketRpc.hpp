@@ -47,6 +47,8 @@ Error invokeRpc(const std::string& tcpAddress,
                 const json::Object& request,
                 json::Value *pResult);
 
+const std::string& secret();
+
 } // namespace socket_rpc
 } // namespace core
 } // namespace rstudio

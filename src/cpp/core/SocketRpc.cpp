@@ -107,7 +107,6 @@ Error sendRequest(const std::string& tcpAddress,
 
 } // anonymous namespace
 
-
 Error invokeRpc(const FilePath& socketPath,
                 const std::string& endpoint,
                 const json::Object& request,
@@ -157,6 +156,11 @@ Error initializeSecret(const std::string& rpcSecret)
    s_sessionSharedSecret = rpcSecret;
 
    return Success();
+}
+
+const std::string& secret()
+{
+   return s_sessionSharedSecret;
 }
 
 } // namespace socket_rpc
