@@ -55,6 +55,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -65,6 +66,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.inject.Inject;
 
 public class NewConnectionSnippetHost extends Composite
@@ -364,6 +366,7 @@ public class NewConnectionSnippetHost extends Composite
 
       if (info.getHasInstaller()) {
          buttonsPanel.add(uninstallButton_);
+         buttonsPanel.setCellHorizontalAlignment(uninstallButton_, HasAlignment.ALIGN_RIGHT);
          buttonsPanel.setCellWidth(uninstallButton_, "100%");
       }
 
@@ -391,6 +394,7 @@ public class NewConnectionSnippetHost extends Composite
       }
       
       buttonsPanel.add(testButton);
+      buttonsPanel.setCellHorizontalAlignment(testButton, HasAlignment.ALIGN_RIGHT);
 
       connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
 
