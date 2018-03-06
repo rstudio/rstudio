@@ -35,6 +35,12 @@
    }
 })
 
+.rs.addFunction("odbcIsWow", function() {
+   identical(tolower(Sys.info()["sysname"])[[1]], "windows") &&
+      identical(.rs.odbcOsBitness(), "32") &&
+      nchar(Sys.getenv("ProgramW6432")) > 0
+})
+
 .rs.addFunction("odbcBundleName", function(placeholder) {
    osName <- .rs.odbcBundleOsName()
    bitness <- .rs.odbcOsBitness()
@@ -144,8 +150,8 @@
    }
 
    if (!allAdded) {
-      if (TRUE) {
-         stop("Failed to install x86 driver in x64 machine, please retry running as administrator.")
+      if (.rs.odbcIsWow()) {
+         stop("Failed to install x86 driver in x64 machine, retry running as administrator.")
       }
 
       message("Could not add registry keys from R, retrying using registry prompt.")
