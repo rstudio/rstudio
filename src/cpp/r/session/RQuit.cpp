@@ -14,10 +14,17 @@
  */
 
 #define R_INTERNAL_FUNCTIONS
+
+#include <boost/bind.hpp>
+
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
 
+#include <r/session/RSession.hpp>
+
+#include "REmbedded.hpp"
 #include "RQuit.hpp"
+#include "RStdCallbacks.hpp"
 
 using namespace rstudio::core;
 
