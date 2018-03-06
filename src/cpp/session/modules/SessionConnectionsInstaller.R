@@ -27,10 +27,7 @@
 })
 
 .rs.addFunction("odbcOsBitness", function() {
-   if (identical(tolower(Sys.info()["sysname"][[1]]), "windows")) {
-      if (nchar(Sys.getenv("ProgramW6432")) > 0) "64" else "32"
-   }
-   else if (grepl("64", Sys.info()["machine"])) {
+   if (grepl("64", Sys.info()["machine"])) {
       "64"
    }
    else {
@@ -119,6 +116,8 @@
    if (all(sapply(entries, function(e) validateEntry(e))))
       return()
 
+   bitness <- .rs.odbcOsBitness()
+
    allAdded <- TRUE
    for (entry in entries) {
      fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
@@ -133,7 +132,8 @@
            "REG_SZ",
            "/d",
            shQuote(entry$value),
-           "/f"
+           "/f",
+           paste("/reg:", bitness, sep = "")
         )
      )
 
@@ -144,6 +144,10 @@
    }
 
    if (!allAdded) {
+      if (TRUE) {
+         stop("Failed to install x86 driver in x64 machine, please retry running as administrator.")
+      }
+
       message("Could not add registry keys from R, retrying using registry prompt.")
       addReg <- tempfile(fileext = ".reg")
 
@@ -209,6 +213,8 @@
    if (all(sapply(entries, function(e) validateEntry(e))))
       return()
 
+   bitness <- .rs.odbcOsBitness()
+
    for (entry in entries) {
       fullPath <- file.path("HKEY_LOCAL_MACHINE", entry$path, fsep = "\\")
 
@@ -218,14 +224,16 @@
             shQuote(fullPath),
             "/v",
             shQuote(entry$key),
-            "/f"
+            "/f",
+            paste("/reg:", bitness, sep = "")
          )
       }
       else {
          regArgs <- list(
             "DELETE",
             shQuote(fullPath),
-            "/f"
+            "/f",
+            paste("/reg:", bitness, sep = "")
          )
       }
 
