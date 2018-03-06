@@ -22,7 +22,9 @@
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
 
+#include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RJson.hpp>
 #include <r/RJsonRpc.hpp>
@@ -101,9 +103,10 @@ void endHandleRpcRequestIndirect(
    module_context::enqueClientEvent(evt);
 }
 
-void saveJsonResponse(const core::Error&, core::json::JsonRpcResponse *pSrc,
-                      core::json::JsonRpcResponse *pDest)
+void saveJsonResponse(const core::Error& error, core::json::JsonRpcResponse *pSrc,
+                      core::Error *pError,      core::json::JsonRpcResponse *pDest)
 {
+   *pError = error;
    *pDest = *pSrc;
 }
 
@@ -116,6 +119,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    if (it == s_pJsonRpcMethods->end())
    {
       // specified method doesn't exist
+      r::exec::error("Requested RPC method " + method + " does not exist.");
       return R_NilValue;    
    }
 
@@ -125,6 +129,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    if (!reg.first)
    {
       // this indicates an async RPC, which isn't currently handled
+      r::exec::error("Requested RPC method " + method + " is asynchronous.");
       return R_NilValue;
    }
 
@@ -148,14 +153,39 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
 
    // invoke handler and record response
    core::json::JsonRpcResponse response;
+   core::Error rpcError = Success();
    handlerFunction(request,
-                   boost::bind(saveJsonResponse, _1, _2, &response));
+                   boost::bind(saveJsonResponse, _1, _2, &rpcError, &response));
+
+   // raise an R error if the RPC fails
+   if (rpcError)
+   {
+      r::exec::error(log::errorAsLogEntry(rpcError));
+   }
 
    // convert JSON response back to R
    SEXP result = R_NilValue;
    r::sexp::Protect protect;
    result = r::sexp::create(response.result(), &protect);
-   
+
+   // raise an R error if the RPC returns an error
+   if (response.error().type() == json::ObjectType)
+   {
+      // formulate verbose error string
+      json::Object &err = response.error().get_obj();
+      std::string message = err["message"].get_str();
+      if (err.find("error") != err.end())
+         message += ", Error " + err["error"].get_str();
+      if (err.find("category") != err.end())
+         message += ", Category " + err["category"].get_str();
+      if (err.find("code") != err.end())
+         message += ", Code " + err["code"].get_str();
+      if (err.find("location") != err.end())
+         message += " at " + err["location"].get_str();
+
+      r::exec::error(message);
+   }
+
    return result;
 }
 

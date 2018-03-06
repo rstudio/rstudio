@@ -22,9 +22,11 @@ test_that("environment object listings are correct", {
    assign("obj3", list(1, 2, 3), envir = globalenv())
 
    # list the global environment
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
    contents <- .rs.invokeRpc("list_environment")
 
    # verify contents
+   expect_equal(length(contents), 3)
    obj1 <- contents[[1]]
    expect_equal(obj1[["name"]], "obj1")
    expect_equal(obj1[["value"]], "1")
@@ -34,4 +36,18 @@ test_that("environment object listings are correct", {
    obj3 <- contents[[3]]
    expect_equal(obj3[["name"]], "obj3")
    expect_equal(obj3[["length"]], 3)
+})
+
+test_that("flag must be specified when removing objects", {
+   expect_error(.rs.invokeRpc("remove_all_objects"))
+})
+
+test_that("all objects are removed when requested", {
+   contents <- .rs.invokeRpc("list_environment")
+   expect_true(length(contents) > 0)
+
+   .rs.invokeRpc("remove_all_objects", TRUE)
+
+   contents <- .rs.invokeRpc("list_environment")
+   expect_equal(length(contents), 0)
 })

@@ -1115,6 +1115,11 @@ public:
    {
       return response_[kRpcResult];
    }
+
+   json::Value& error()
+   {
+      return response_[kRpcError];
+   }
    
    void setError(const core::Error& error);
 
