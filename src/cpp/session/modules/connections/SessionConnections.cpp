@@ -615,10 +615,10 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    // source the command
    std::string cmd;
    cmd.append("source('");
-   cmd.append(string_utils::jsLiteralEscape(toolsPath));
+   cmd.append(string_utils::singleQuotedStrEscape(toolsPath));
    cmd.append("');");
    cmd.append("source('");
-   cmd.append(string_utils::jsLiteralEscape(scriptPath));
+   cmd.append(string_utils::singleQuotedStrEscape(scriptPath));
    cmd.append("');");
    cmd.append("");
 

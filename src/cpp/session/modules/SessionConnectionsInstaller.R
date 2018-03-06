@@ -79,13 +79,10 @@
 .rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
    if (!.rs.odbcBundleCheckPrereqsUnixodbc()) {
       if (!.rs.odbcBundleCheckPrereqsBrew()) {
-         message("Installing Brew...")
-         system2(
-            "/usr/bin/ruby",
-            args = list(
-               "-e",
-               "\"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
-            )
+         stop(
+            "Brew is required to install unixODBC. ",
+            "Install Brew by running: ",
+            "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
          )
       }
       
@@ -192,9 +189,10 @@
       }
 
       registryStart <- Sys.time()
-      registryWait <- 300
+      registryWait <- 30
       while (!allEntriesValid() && Sys.time() < registryStart + registryWait) {
          Sys.sleep(1)
+         cat(".")
       }
 
       if (!allEntriesValid()) {

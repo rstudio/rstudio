@@ -982,6 +982,5 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 .rs.addFunction("isDesktop", function() {
-  sysName <- Sys.info()[['sysname']]
-  identical(sysName, "Windows") || identical(sysName, "Darwin") || capabilities("X11")
+   identical(.Call("rs_rstudioProgramMode"), "desktop")
 })

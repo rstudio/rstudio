@@ -256,7 +256,7 @@ options(connectionObserver = list(
 
 .rs.addFunction("connectionHasInstaller", function(name) {
    installerName <- paste(name, "dcf", sep = ".")
-   connectionFiles <- as.character(.rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath()))
+   connectionFiles <- as.character(.rs.connectionFiles("\\.dcf$", .rs.connectionOdbcInstallerPath()))
    
    any(basename(connectionFiles) == installerName)
 })
@@ -273,7 +273,7 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionReadSnippets", function() {
-   snippetsPaths <- .rs.connectionFiles(".R$", .rs.connectionFilesPath())
+   snippetsPaths <- .rs.connectionFiles("\\.R$", .rs.connectionFilesPath())
 
    snippets <- lapply(snippetsPaths, function(fullPath) {
       paste(readLines(fullPath), collapse = "\n")
@@ -314,7 +314,7 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionReadInstallers", function() {
-   installerPaths <- .rs.connectionFiles(".dcf", .rs.connectionOdbcInstallerPath())
+   installerPaths <- .rs.connectionFiles("\\.dcf$", .rs.connectionOdbcInstallerPath())
 
    installers <- lapply(installerPaths, function(fullPath) {
       read.dcf(fullPath)
@@ -329,8 +329,6 @@ options(connectionObserver = list(
       tryCatch({
          installer <- installers[[installerName]]
          cols <- colnames(installer)
-
-         installLocation <- "/Library/RStudio/Driver"
 
          list(
             package = .rs.scalar(NULL),
@@ -748,6 +746,10 @@ options(connectionObserver = list(
    libraryPattern <- connectionContext$odbcLibrary
    targetMD5 <- connectionContext$odbcMD5
    driverVersion <- connectionContext$odbcVersion
+
+   if (any(grepl("'", c(driverName, driverUrl, placeholder, installationPath, libraryPattern, targetMD5, driverVersion)))) {
+      stop("Single quote can't be used in installer definitions.")
+   }
 
    paste(
       ".rs.odbcBundleInstall(",

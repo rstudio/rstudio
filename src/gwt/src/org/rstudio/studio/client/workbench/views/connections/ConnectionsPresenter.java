@@ -298,6 +298,7 @@ public class ConnectionsPresenter extends BasePresenter
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  globalDisplay_.showErrorMessage("Failed to check for updates", error.getMessage());
                }
             }
          );  
