@@ -50,6 +50,9 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast);
 // exported utilities
 void rSuicide(const std::string& msg);
 
+bool imageIsDirty();
+void setImageDirty(bool imageDirty);
+
 } // namespace session
 } // namespace r
 } // namespace rstudio
