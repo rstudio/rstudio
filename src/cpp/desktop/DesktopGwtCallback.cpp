@@ -607,15 +607,6 @@ QString GwtCallback::chooseRVersion()
 #endif
 }
 
-bool GwtCallback::canChooseRVersion()
-{
-#ifdef Q_OS_WIN32
-   return true;
-#else
-   return false;
-#endif
-}
-
 double GwtCallback::devicePixelRatio()
 {
    return desktop::devicePixelRatio(pMainWindow_);

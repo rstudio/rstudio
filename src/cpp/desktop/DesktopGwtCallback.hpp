@@ -103,7 +103,6 @@ public Q_SLOTS:
 
    QString getRVersion();
    QString chooseRVersion();
-   bool canChooseRVersion();
 
    double devicePixelRatio();
 

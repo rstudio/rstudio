@@ -127,7 +127,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
-   
+
+   void getRVersion(CommandWithArg<String> callback);
+   void chooseRVersion(CommandWithArg<String> callback);
+
    void getDisplayDpi(CommandWithArg<String> callback);
 
    void cleanClipboard();
