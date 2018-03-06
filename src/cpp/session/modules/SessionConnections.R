@@ -799,7 +799,7 @@ options(connectionObserver = list(
       }
 
       # unregister driver
-      if (identical(tolower(Sys.info()["sysname"]), "windows")) {
+      if (identical(tolower(Sys.info()["sysname"][[1]]), "windows")) {
          .rs.connectionUnregisterWindowsDriver(driverName)
       }
       else {
