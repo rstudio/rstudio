@@ -751,13 +751,13 @@ options(connectionObserver = list(
 
    paste(
       ".rs.odbcBundleInstall(",
-      "name = \"", driverName, "\", ",
-      "url = \"", driverUrl, "\", ",
-      "placeholder = \"", placeholder, "\", ",
-      "installPath = \"", installationPath, "\", ",
-      "libraryPattern = \"", libraryPattern, "\", ",
-      "md5 = \"", targetMD5, "\", ",
-      "version = \"", driverVersion, "\"",
+      "name = '", driverName, "', ",
+      "url = '", driverUrl, "', ",
+      "placeholder = '", placeholder, "', ",
+      "installPath = '", normalizePath(installationPath, winslash = "/"), "', ",
+      "libraryPattern = '", libraryPattern, "', ",
+      "md5 = '", targetMD5, "', ",
+      "version = '", driverVersion, "'",
       ")",
       sep = ""
    )
