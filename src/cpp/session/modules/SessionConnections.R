@@ -840,7 +840,7 @@ options(connectionObserver = list(
 
       connectionsWarning <- tryCatch({
          installersFile <- file.path(tempdir(), basename(installerUrl))
-         download.file(installerUrl, installersFile)
+         download.file(installerUrl, installersFile, quiet = TRUE)
 
          untar(installersFile, exdir = .rs.connectionOdbcInstallerPath())
 
