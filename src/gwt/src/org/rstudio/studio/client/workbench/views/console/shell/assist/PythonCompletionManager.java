@@ -157,6 +157,7 @@ public class PythonCompletionManager implements CompletionManager
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
+      completionCache_ = new CompletionCache();
       
       handlers_.add(input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -502,6 +503,7 @@ public class PythonCompletionManager implements CompletionManager
                   {
                      // flush cache as old completions no longer relevant
                      requester_.flushCache();
+                     completionCache_.flush();
                      end = selection.getStart().movePosition(1, true);
                   }
 
@@ -587,6 +589,7 @@ public class PythonCompletionManager implements CompletionManager
          // If insertion of this character completes an available suggestion,
          // and is not a prefix match of any other suggestion, then implicitly
          // apply that.
+         // TODO
          QualifiedName selectedItem = popup_.getSelectedValue();
          
          if (c == ' ')
@@ -716,7 +719,10 @@ public class PythonCompletionManager implements CompletionManager
       }
       
       if (flushCache)
-         requester_.flushCache() ;
+      {
+         requester_.flushCache();
+         completionCache_.flush();
+      }
    }
    
    private boolean isLineInComment(String line)
@@ -742,11 +748,10 @@ public class PythonCompletionManager implements CompletionManager
       if (selection == null)
          return false;
       
-      int cursorCol = selection.getStart().getPosition();
-      String firstLine = input_.getText().substring(0, cursorCol);
+      String line = docDisplay_.getCurrentLineUpToCursor();
       
       // don't auto-complete within comments
-      if (isLineInComment(firstLine))
+      if (isLineInComment(line))
          return false;
       
       // don't autocomplete if the cursor lies within the text of a
@@ -770,18 +775,20 @@ public class PythonCompletionManager implements CompletionManager
       {
          if (nativeEvent_ != null &&
                nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB)
-            if (firstLine.matches("^\\s*$"))
+            if (line.matches("^\\s*$"))
                return false;
       }
       
       context_ = new CompletionRequestContext(
+            line,
             invalidation_.getInvalidationToken(),
             selection,
             canAutoInsert);
       
-      String line = docDisplay_.getCurrentLineUpToCursor();
-      server_.pythonGetCompletions(line, context_);
+      if (completionCache_.satisfyRequest(line, context_))
+         return true;
       
+      server_.pythonGetCompletions(line, context_);
       return true;
    }
    
@@ -792,12 +799,14 @@ public class PythonCompletionManager implements CompletionManager
    private final class CompletionRequestContext
          extends ServerRequestCallback<Completions>
    {
-      public CompletionRequestContext(Invalidation.Token token,
+      public CompletionRequestContext(String line,
+                                      Invalidation.Token token,
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
       {
-         invalidationToken_ = token ;
-         selection_ = selection ;
+         line_ = line;
+         invalidationToken_ = token;
+         selection_ = selection;
          canAutoAccept_ = canAutoAccept;
       }
       
@@ -827,6 +836,9 @@ public class PythonCompletionManager implements CompletionManager
       {
          if (invalidationToken_.isInvalid())
             return;
+         
+         // cache completions
+         completionCache_.store(line_, completions);
          
          // translate to array of qualified names
          int n = completions.getCompletions().length();
@@ -924,6 +936,7 @@ public class PythonCompletionManager implements CompletionManager
             return;
          
          requester_.flushCache();
+         completionCache_.flush();
          helpStrategy_.clearCache();
          
          if (value == null)
@@ -1042,6 +1055,7 @@ public class PythonCompletionManager implements CompletionManager
       }
       
       private final Invalidation.Token invalidationToken_ ;
+      private final String line_;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private boolean suggestOnAccept_;
@@ -1100,11 +1114,13 @@ public class PythonCompletionManager implements CompletionManager
    private UIPrefs uiPrefs_;
 
    private final CodeToolsServerOperations server_;
-   private final InputEditorDisplay input_ ;
+   private final InputEditorDisplay input_;
    private final NavigableSourceEditor navigableSourceEditor_;
-   private final CompletionPopupDisplay popup_ ;
-   private final CompletionRequester requester_ ;
-   private final InitCompletionFilter initFilter_ ;
+   private final CompletionPopupDisplay popup_;
+   private final CompletionRequester requester_;
+   private final InitCompletionFilter initFilter_;
+   private final CompletionCache completionCache_;
+   
    // Prevents completion popup from being dismissed when you merely
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;
