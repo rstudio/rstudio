@@ -25,4 +25,10 @@ public interface NewConnectionSnippetHostResources extends ClientBundle
    
    @Source("connectionSettings.png")
    ImageResource configImage();
+
+   @Source("connectionUninstall.png")
+   ImageResource trashImage();
+
+   @Source("connectionUninstall_2x.png")
+   ImageResource trashImage2x();
 }

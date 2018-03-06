@@ -48,13 +48,14 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    }
 
    public NewConnectionWizard(NewConnectionContext context,
-                              ProgressOperationWithInput<ConnectionOptions> operation)
+                              ProgressOperationWithInput<ConnectionOptions> operation,
+                              String warning)
    {
       super(
          "New Connection",
          "OK",
          context,
-         createFirstPage(context),
+         createFirstPage(context, warning),
          operation
       );
 
@@ -98,9 +99,9 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>
-      createFirstPage(NewConnectionContext input)
+      createFirstPage(NewConnectionContext input, String warning)
    {
-      return new NewConnectionNavigationPage("New Connection", "OK", null, input);
+      return new NewConnectionNavigationPage("New Connection", "OK", null, input, warning);
    }
 
    public interface Styles extends CssResource

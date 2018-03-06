@@ -1,7 +1,7 @@
 /*
- * NewConnectionContext.java
+ * ConnectionUpdateResult.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,26 +20,13 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class NewConnectionContext extends JavaScriptObject
+public class ConnectionUpdateResult extends JavaScriptObject
 {
-   protected NewConnectionContext()
+   protected ConnectionUpdateResult()
    {
    }
 
-   public final native int getConnectionsLength() /*-{
-      return this.connectionsList.length;
+   public final native String getWarning() /*-{
+      return this["warning"];
    }-*/;
-   
-   public final native NewConnectionInfo getConnectionsItem(int index) /*-{
-      return this.connectionsList[index];
-   }-*/;
-
-   public final ArrayList<NewConnectionInfo> getConnectionsList()
-   {
-      ArrayList<NewConnectionInfo> result = new ArrayList<NewConnectionInfo>(getConnectionsLength());
-      for (int i = 0; i < getConnectionsLength(); i++)
-         result.add(getConnectionsItem(i));
-
-      return result;
-   }
 }

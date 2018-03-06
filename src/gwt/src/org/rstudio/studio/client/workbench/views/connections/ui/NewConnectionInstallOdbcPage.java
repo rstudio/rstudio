@@ -1,7 +1,7 @@
 /*
- * NewConnectionSnippetPage.java
+ * NewConnectionInstallOdbcPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,25 +18,28 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.WizardIntermediatePage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetPage;
 
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Widget;
 
-public class NewConnectionSnippetPage 
-   extends WizardPage<NewConnectionContext, ConnectionOptions>
+public class NewConnectionInstallOdbcPage 
+   extends WizardIntermediatePage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionSnippetPage(final NewConnectionInfo info, String subTitle)
+   public NewConnectionInstallOdbcPage(final NewConnectionInfo info, String subTitle)
    {
       super(
          info.getName(),
          subTitle,
-         info.getName() + " Connection",
+         info.getName() + " Installation",
          StringUtil.isNullOrEmpty(info.iconData()) ? null : new ImageResourceUrl(
             new SafeUri()
             {
@@ -49,7 +52,9 @@ public class NewConnectionSnippetPage
             16,
             16
          ),
-         null);
+         null,
+         new NewConnectionSnippetPage(info, subTitle)
+      );
       
       info_ = info;
    }
@@ -58,28 +63,33 @@ public class NewConnectionSnippetPage
    public void focus()
    {
    }
-
-   @Override
-   public void onBeforeActivate(Operation operation, ModalDialogBase wizard)
-   {
-      contents_.onBeforeActivate(operation, info_);
-   }
    
    @Override
    public void onActivate(ProgressIndicator indicator)
    {
+      contents_.initializeInfo(info_);
    }
 
    @Override
    public void onDeactivate(Operation operation)
    {
+      if (options_ != null) {
+         options_.setIntermediateSnippet("");
+         setIntermediateResult(options_);
+      }
+
       contents_.onDeactivate(operation);
+   }
+
+   @Override
+   public void onWizardClosing() {
+      contents_.interruptOdbcInstall();
    }
    
    @Override
    protected Widget createWidget()
    {
-      contents_ = new NewConnectionSnippetHost();
+      contents_ = new NewConnectionInstallOdbcHost();
 
       return contents_;
    }
@@ -90,22 +100,31 @@ public class NewConnectionSnippetPage
    }
 
    @Override
-   public HelpLink getHelpLink()
-   {
-      if (StringUtil.isNullOrEmpty(info_.getHelp()))
-         return null;
-
-      return new HelpLink(
-         "Using " + info_.getName(),
-         info_.getHelp(),
-         false,
-         false);
-   }
-
-   @Override
    protected ConnectionOptions collectInput()
    {
       return contents_.collectInput();
+   }
+
+   @Override
+   protected boolean validate(ConnectionOptions input)
+   {
+      return true;
+   }
+
+   @Override
+   public void collectIntermediateInput(
+         final ProgressIndicator indicator, 
+         final OperationWithInput<ConnectionOptions> onResult) 
+   {
+      options_ = contents_.collectInput();
+      onResult.execute(options_);
+   }
+
+   @Override
+   public void setIntermediateResult(ConnectionOptions result) 
+   {
+      contents_.setIntermediateResult(result);
+      options_ = result;
    }
 
    @Override
@@ -115,11 +134,12 @@ public class NewConnectionSnippetPage
    }
 
    @Override
-   public void setIntermediateResult(ConnectionOptions result) 
+   protected void setNextPageEnabled(OperationWithInput<Boolean> operation)
    {
-      contents_.setIntermediateResult(result);
+      contents_.setNextPageEnabled(operation);
    }
    
-   private NewConnectionSnippetHost contents_;
+   private NewConnectionInstallOdbcHost contents_;
    private NewConnectionInfo info_;
+   private ConnectionOptions options_;
 }

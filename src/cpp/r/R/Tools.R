@@ -980,3 +980,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    # return original
    original
 })
+
+.rs.addFunction("isDesktop", function() {
+   identical(.Call("rs_rstudioProgramMode"), "desktop")
+})

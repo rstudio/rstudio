@@ -25,6 +25,11 @@ import com.google.gwt.user.client.ui.Focusable;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
+   public DirectoryChooserTextBox()
+   {
+      this("", "", null);
+   }
+
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel, 
                                   Focusable focusAfter)

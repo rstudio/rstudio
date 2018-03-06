@@ -34,7 +34,7 @@ import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;

@@ -1,7 +1,7 @@
 /*
  * Wizard.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -406,6 +406,12 @@ public class Wizard<I,T> extends ModalDialog<T>
                      {
                         // set active page
                         activePage_ = page;
+
+                        page.setNextPageEnabled(new OperationWithInput<Boolean>() {
+                           public void execute(Boolean enabled) {
+                              setNextButtonEnabled(enabled);
+                           }
+                        });
                         
                         // update header
                         subCaptionLabel_.setVisible(false);
@@ -534,6 +540,11 @@ public class Wizard<I,T> extends ModalDialog<T>
       boolean isIntermediate = page instanceof WizardIntermediatePage<?,?>;
       nextButton_.setVisible(isIntermediate);
       setDefaultOverrideButton(isIntermediate ? nextButton_ : null);
+   }
+
+   private void setNextButtonEnabled(Boolean enabled)
+   {
+      nextButton_.setEnabled(enabled);
    }
    
    private void cleanupPage(WizardPage<I,T> page)

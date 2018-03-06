@@ -1,7 +1,7 @@
 /*
- * NewConnectionContext.java
+ * ConnectionUninstallResult.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,26 +20,17 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class NewConnectionContext extends JavaScriptObject
+public class ConnectionUninstallResult extends JavaScriptObject
 {
-   protected NewConnectionContext()
+   protected ConnectionUninstallResult()
    {
    }
 
-   public final native int getConnectionsLength() /*-{
-      return this.connectionsList.length;
-   }-*/;
-   
-   public final native NewConnectionInfo getConnectionsItem(int index) /*-{
-      return this.connectionsList[index];
+   public final native String getMessage() /*-{
+      return this["message"];
    }-*/;
 
-   public final ArrayList<NewConnectionInfo> getConnectionsList()
-   {
-      ArrayList<NewConnectionInfo> result = new ArrayList<NewConnectionInfo>(getConnectionsLength());
-      for (int i = 0; i < getConnectionsLength(); i++)
-         result.add(getConnectionsItem(i));
-
-      return result;
-   }
+   public final native String getError() /*-{
+      return this["error"];
+   }-*/;
 }

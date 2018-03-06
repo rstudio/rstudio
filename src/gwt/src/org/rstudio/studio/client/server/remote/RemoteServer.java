@@ -155,9 +155,12 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUpdateResult;
 import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -5158,7 +5161,7 @@ public class RemoteServer implements Server
    public void getNewConnectionContext(
          ServerRequestCallback<NewConnectionContext> callback)
    {
-      sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
+      sendRequest(RPC_SCOPE, GET_NEW_CONNECTION_CONTEXT, callback);
    }
 
    @Override
@@ -5227,6 +5230,45 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(remember));
       params.set(2, JSONBoolean.getInstance(changed));
       sendRequest(RPC_SCOPE, ASKSECRET_COMPLETED, params, true, requestCallback);
+   }
+
+   @Override
+   public void installOdbcDriver(String name,
+                                 String installationPath,
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  INSTALL_ODBC_DRIVER,
+                  name,
+                  installationPath,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   public void getOdbcConnectionContext(String name,
+                                        ServerRequestCallback<NewConnectionInfo> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_NEW_ODBC_CONNECTION_CONTEXT,
+                  name,
+                  callback);
+   }
+
+   @Override
+   public void uninstallOdbcDriver(String name,
+                                   ServerRequestCallback<ConnectionUninstallResult> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  UNINSTALL_ODBC_DRIVER,
+                  name,
+                  callback);
+   }
+
+   @Override
+   public void updateOdbcInstallers(ServerRequestCallback<ConnectionUpdateResult> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  UPDATE_ODBC_INSTALLERS,
+                  callback);
    }
 
    private String clientId_;
@@ -5632,7 +5674,7 @@ public class RemoteServer implements Server
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_OBJECT = "connection_preview_object";
    private static final String CONNECTION_TEST = "connection_test";
-   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
+   private static final String GET_NEW_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 
    private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
@@ -5645,4 +5687,8 @@ public class RemoteServer implements Server
    private static final String CONNECTION_ADD_PACKAGE = "connection_add_package";
 
    private static final String ASKSECRET_COMPLETED = "asksecret_completed";
+   private static final String INSTALL_ODBC_DRIVER = "install_odbc_driver";
+   private static final String GET_NEW_ODBC_CONNECTION_CONTEXT = "get_new_odbc_connection_context";
+   private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
+   private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
 }

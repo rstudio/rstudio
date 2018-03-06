@@ -17,15 +17,18 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -34,8 +37,11 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -48,7 +54,8 @@ public class NewConnectionNavigationPage
    public NewConnectionNavigationPage(String title,
                                       String subTitle,
                                       ImageResource icon,
-                                      NewConnectionContext context)
+                                      NewConnectionContext context,
+                                      String warning)
    {
       super(title, 
             subTitle,
@@ -61,7 +68,7 @@ public class NewConnectionNavigationPage
                @Override
                public Widget createMainWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
                {
-                  return createWidget(pages);
+                  return createWidget(pages, warning);
                }
             });
    }
@@ -87,8 +94,11 @@ public class NewConnectionNavigationPage
             else if (connectionInfo.getType() == "Snippet") {
                pages.add(new NewConnectionSnippetPage(connectionInfo, subTitle));
             }
-            else if (connectionInfo.getType() == "Install") {
+            else if (connectionInfo.getType() == "Install" && connectionInfo.getSubtype() == "Package") {
                pages.add(new NewConnectionInstallPackagePage(connectionInfo));
+            }
+            else if (connectionInfo.getType() == "Install" && connectionInfo.getSubtype() == "Odbc") {
+               pages.add(new NewConnectionPreInstallOdbcPage(connectionInfo, subTitle));
             }
          }
       }
@@ -96,19 +106,41 @@ public class NewConnectionNavigationPage
       return pages;
    }
 
-   private static Widget createWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
+   private static Widget createWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
+                                      String warning)
    {
-      return new Selector(pages);
+      return new Selector(pages, warning);
    }
 
    private static class Selector
          extends Composite
          implements HasWizardPageSelectionHandler<NewConnectionContext, ConnectionOptions>
    {
-      public Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
+      public Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
+                      String warning)
       {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
          
+         VerticalPanel rootPanel = new VerticalPanel();
+
+         if (!StringUtil.isNullOrEmpty(warning)) {
+            HorizontalPanel warningPanel = new HorizontalPanel();
+            
+            warningPanel.addStyleName(RES.styles().wizardPageWarningPanel());
+            Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
+            warningImage.addStyleName(RES.styles().wizardPageWarningImage());
+            warningPanel.add(warningImage);
+            
+            Label label = new Label();
+            label.setText(warning);
+            label.addStyleName(RES.styles().wizardPageWarningLabel());
+            warningPanel.add(label);
+            warningPanel.setCellWidth(label, "100%");
+
+            rootPanel.add(warningPanel);
+            rootPanel.setCellHeight(warningPanel,"25px");
+         }
+
          ScrollPanel scrollPanel = new ScrollPanel();
          scrollPanel.setSize("100%", "100%");
          scrollPanel.addStyleName(RES.styles().wizardPageSelector());
@@ -125,14 +157,33 @@ public class NewConnectionNavigationPage
                @Override
                public void onClick(ClickEvent event)
                {
-                  onSelected_.execute(page);
+                  if (page instanceof NewConnectionPreInstallOdbcPage)
+                  {
+                     RStudioGinjector.INSTANCE.getDependencyManager().withOdbc(
+                        new Command()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              onSelected_.execute(page);
+                           }
+                        },
+                        page.getTitle()
+                     );
+                  }
+                  else
+                  {
+                     onSelected_.execute(page);
+                  }
                }
             });
             verticalPanel.add(item);
          }
 
          scrollPanel.add(verticalPanel);
-         initWidget(scrollPanel);
+         rootPanel.add(scrollPanel);
+
+         initWidget(rootPanel);
       }
       
       @Override
@@ -186,6 +237,9 @@ public class NewConnectionNavigationPage
    {
       String wizardPageSelector();
       String wizardPageConnectionSelectorItemLeftIcon();
+      String wizardPageWarningPanel();
+      String wizardPageWarningImage();
+      String wizardPageWarningLabel();
    }
    
    public interface Resources extends ClientBundle

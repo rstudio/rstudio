@@ -1,0 +1,25 @@
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:vcs="urn:import:org.rstudio.studio.client.workbench.views.vcs.common">
+
+   <ui:style>
+      .panel {
+      }
+      .label {
+      }
+      .console {
+        width: 500px;
+        height: 220px;
+        background: #FFF;
+        border: solid 1px #9d9d9d;
+        margin-top: 8px;
+      }
+   </ui:style>
+
+   <g:HTMLPanel stylePrimaryName="{style.panel}">
+      <g:Label ui:field="label_" styleName="{style.label}" text=""/>
+      <vcs:ConsoleProgressWidget ui:field="consoleProgressWidget_"
+                                 styleName="{style.console}"/>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

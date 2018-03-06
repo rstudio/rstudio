@@ -22,7 +22,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
@@ -87,7 +88,9 @@ import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallPackagePage;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionPreInstallOdbcHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
@@ -238,6 +241,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceBackgroundHighlighter highlighter);
    void injectMembers(AddinsToolbarButton button);
    void injectMembers(AboutDialog aboutDialog);
+   void injectMembers(NewConnectionInstallOdbcHost newConnectionInstallOdbcHost);
+   void injectMembers(NewConnectionPreInstallOdbcHost NewConnectionPreInstallOdbcHost);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -272,4 +277,5 @@ public interface RStudioGinjector extends Ginjector
    ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
    AceThemes getAceThemes();
    AddinsCommandManager getAddinsCommandManager();
+   DependencyManager getDependencyManager();
 }

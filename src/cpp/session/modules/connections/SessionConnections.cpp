@@ -560,6 +560,13 @@ SEXP rs_embeddedViewer(SEXP urlSEXP)
    return R_NilValue;
 }
 
+SEXP rs_connectionOdbcInstallPath()
+{
+   r::sexp::Protect rProtect;
+   std::string path = module_context::userScratchPath().absolutePath();
+   return r::sexp::create(path, &rProtect);
+}
+
 bool connectionsEnabled()
 {
    return true;
@@ -585,6 +592,95 @@ bool isSuspendable()
    return activeConnections().empty();
 }
 
+Error installOdbcDriver(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // get parameters
+   std::string driverName;
+   std::string installPath;
+   Error error = json::readParams(request.params, &driverName, &installPath);
+   if (error)
+      return error;
+
+   // find the tools module
+   FilePath rPath = session::options().coreRSourcePath();
+   std::string toolsPath = core::string_utils::utf8ToSystem(
+      rPath.childPath("Tools.R").absolutePath());
+
+   // find connection installer module
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   std::string scriptPath = core::string_utils::utf8ToSystem(
+      modulesPath.complete("SessionConnectionsInstaller.R").absolutePath());
+
+   // source the command
+   std::string cmd;
+   cmd.append("source('");
+   cmd.append(string_utils::singleQuotedStrEscape(toolsPath));
+   cmd.append("');");
+   cmd.append("source('");
+   cmd.append(string_utils::singleQuotedStrEscape(scriptPath));
+   cmd.append("');");
+   cmd.append("");
+
+   // build installation command
+   r::sexp::Protect rProtect;
+   SEXP commandSEXP = R_NilValue;
+   r::exec::RFunction func(".rs.connectionInstallerCommand");
+   func.addParam(driverName);
+   func.addParam(installPath);
+   error = func.call(&commandSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   std::string command = r::sexp::asString(commandSEXP);
+
+   // append installation command
+   cmd.append(command);
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            "Installing Odbc Driver", console_process::InteractionNever);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            pCPI);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
 Error initialize()
 {
    // register methods
@@ -596,6 +692,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionIcon, 1);
    RS_REGISTER_CALL_METHOD(rs_connectionAddPackage, 2);
    RS_REGISTER_CALL_METHOD(rs_embeddedViewer, 1);
+   RS_REGISTER_CALL_METHOD(rs_connectionOdbcInstallPath, 0);
 
    // initialize environment
    initEnvironment();
@@ -628,7 +725,9 @@ Error initialize()
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_object", connectionPreviewObject))
       (bind(module_context::registerUriHandler, "/" kConnectionsPath, 
             handleConnectionsResourceRequest))
-      (bind(sourceModuleRFile, "SessionConnections.R"));
+      (bind(sourceModuleRFile, "SessionConnectionsInstaller.R"))
+      (bind(sourceModuleRFile, "SessionConnections.R"))
+      (bind(registerRpcMethod, "install_odbc_driver", installOdbcDriver));
 
    return initBlock.execute();
 }
