@@ -8,7 +8,8 @@ RUN iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.or
 
 # install some deps via chocolatey
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
-  choco install -y jdk8 ant windows-sdk-7.1
+  choco install -y jdk8 ant windows-sdk-7.1 ;\
+  choco install -y 7zip
 
 # install aws cli
 # awscli bug where cp65001 is not understood by internal python.
@@ -40,12 +41,10 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuild
   Remove-Item c:\visualcppbuildtools_full.exe
 
 # install qt (note that we are using the current directory's context)
-COPY windows/qt-noninteractive-install.qs c:\qt-noninteractive-install.qs
-RUN $ErrorActionPreference = 'Stop'; \
-  $ProgressPreference = 'SilentlyContinue' ;\
-  Invoke-WebRequest http://download.qt.io/archive/qt/5.10/5.10.1/qt-opensource-windows-x86-5.10.1.exe -OutFile c:\qt.exe ;\
-  Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install.qs' ;\
-  Remove-Item c:\qt.exe -Force
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.10.1-msvc2015.7z -OutFile c:\QtSDK-5.10.1-msvc2015.7z ;\
+  7z x c:\QtSDK-5.10.1-msvc2015.7z ;\
+  Move-Item -path Qt5.10.1 -destination c:\Qt5.10.1 ;\
+  Remove-Item c:\QtSDK-5.10.1-msvc2015.7z -Force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
