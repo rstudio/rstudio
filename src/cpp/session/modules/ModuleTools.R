@@ -18,6 +18,12 @@
    .Call("rs_enqueClientEvent", type, data)
 })
 
+.rs.addFunction("invokeRpc", function(method, ...) 
+{
+   # callback to session to invoke RPC
+   .Call("rs_invokeRpc", method, c(...))
+})
+
 .rs.addFunction("showErrorMessage", function(title, message)
 {
    .Call("rs_showErrorMessage", title, message)

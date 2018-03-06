@@ -133,22 +133,22 @@ struct JsonRpcRequest
 {
    JsonRpcRequest() : version(0), isBackgroundConnection(false) {}
    
-   std::string method ;
-   json::Array params ;
-   json::Object kwparams ;
+   std::string method;
+   json::Array params;
+   json::Object kwparams;
    std::string sourceWindow;
-   std::string clientId ;
+   std::string clientId;
    double version;
    std::string clientVersion;
-   bool isBackgroundConnection ;
+   bool isBackgroundConnection;
 
    bool empty() const { return method.empty(); }
    
    void clear() 
    {
-      method.clear() ;
-      params.clear() ;
-      kwparams.clear() ;
+      method.clear();
+      params.clear();
+      kwparams.clear();
    }
 };
 
