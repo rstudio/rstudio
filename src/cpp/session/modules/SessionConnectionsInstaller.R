@@ -26,9 +26,21 @@
    osMapping[[tolower(Sys.info()[["sysname"]])]]
 })
 
+.rs.addFunction("odbcOsBitness", function() {
+   if (identical(tolower(Sys.info()["sysname"][[1]]), "windows")) {
+      if (nchar(Sys.getenv("ProgramW6432")) > 0) "64" else "32"
+   }
+   else if (grepl("64", Sys.info()["machine"])) {
+      "64"
+   }
+   else {
+      "32"
+   }
+})
+
 .rs.addFunction("odbcBundleName", function(placeholder) {
    osName <- .rs.odbcBundleOsName()
-   bitness <- if (grepl("64", Sys.info()["machine"])) "64" else "32"
+   bitness <- .rs.odbcOsBitness()
    
    bundleName <- gsub("\\(os\\)", osName, placeholder)
    bundleName <- gsub("\\(bitness\\)", bitness, bundleName)
@@ -93,7 +105,7 @@
 .rs.addFunction("odbcBundleRegistryAdd", function(entries) {
    validateEntry <- function(entry) {
       tryCatch({
-         verify <- readRegistry(entry$path, "HLM")
+         verify <- readRegistry(entry$path, "HLM", view = .rs.odbcOsBitness())
          identical(verify[[entry$key]], entry$value)
       }, error = function(e) {
          FALSE
@@ -184,7 +196,7 @@
 .rs.addFunction("odbcBundleRegistryRemove", function(entries) {
    validateEntry <- function(entry) {
       tryCatch({
-         regEntry <- readRegistry(entry$path, "HLM")
+         regEntry <- readRegistry(entry$path, "HLM", view = .rs.odbcOsBitness())
          if (!is.null(entry$key))
             is.null(regEntry[[entry$key]])
          else
