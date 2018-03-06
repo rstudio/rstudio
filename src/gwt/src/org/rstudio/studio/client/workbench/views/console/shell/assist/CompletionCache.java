@@ -37,18 +37,18 @@ public class CompletionCache
       cache_ = new SafeMap<String, Completions>();
    }
    
-   public boolean satisfyRequest(String token,
+   public boolean satisfyRequest(String line,
                                  ServerRequestCallback<Completions> requestCallback)
    {
-      if (StringUtil.isNullOrEmpty(token))
+      if (StringUtil.isNullOrEmpty(line))
          return false;
       
-      for (int i = 0, n = token.length(); i < n; i++)
+      for (int i = 0, n = line.length(); i < n; i++)
       {
-         String subToken = token.substring(0, n - i);
-         if (cache_.containsKey(subToken))
+         String substring = line.substring(0, n - i);
+         if (cache_.containsKey(substring))
          {
-            Completions completions = narrow(token, cache_.get(subToken));
+            Completions completions = narrow(line, substring, cache_.get(substring));
             requestCallback.onResponseReceived(completions);
             return true;
          }
@@ -67,8 +67,15 @@ public class CompletionCache
       cache_.clear();
    }
    
-   private Completions narrow(String token, Completions original)
+   private Completions narrow(String line,
+                              String substring,
+                              Completions original)
    {
+      // Construct the new completion token by taking the original
+      // completion token, and adding the delta between the new line and
+      // the original completion line used.
+      String token = original.getToken() + line.substring(substring.length());
+      
       // Extract the vector elements of the completion string
       JsArrayString completions = original.getCompletions();
       JsArrayString packages    = original.getPackages();
@@ -83,7 +90,7 @@ public class CompletionCache
       
       for (int i = 0, n = completions.length(); i < n; i++)
       {
-         boolean isSubsequence = StringUtil.isSubsequence(completions.get(i), token);
+         boolean isSubsequence = StringUtil.isSubsequence(completions.get(i), token, true);
          if (isSubsequence)
          {
             completionsNarrow.push(completions.get(i));

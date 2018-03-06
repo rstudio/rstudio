@@ -82,7 +82,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
@@ -2219,6 +2218,7 @@ public class RCompletionManager implements CompletionManager
    private final CompletionPopupDisplay popup_ ;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;
+   
    // Prevents completion popup from being dismissed when you merely
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;

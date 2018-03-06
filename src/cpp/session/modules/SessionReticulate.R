@@ -29,11 +29,13 @@
       return(.rs.emptyCompletions(language = "Python"))
    
    .rs.makeCompletions(
-      token     = attr(completions, "token"),
-      results   = as.character(completions),
-      type      = attr(completions, "types"),
-      quote     = FALSE,
-      language  = "Python"
+      token       = attr(completions, "token"),
+      results     = as.character(completions),
+      type        = attr(completions, "types"),
+      packages    = attr(completions, "source"),
+      quote       = FALSE,
+      helpHandler = "reticulate:::help_handler",
+      language    = "Python"
    )
 })
 
@@ -404,11 +406,19 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    )
 })
 
-.rs.addFunction("python.completions", function(token, candidates)
+.rs.addFunction("python.completions", function(token,
+                                               candidates,
+                                               source = NULL,
+                                               type = NULL)
 {
    pattern <- paste("^\\Q", token, "\\E", sep = "")
    completions <- sort(grep(pattern, candidates, perl = TRUE, value = TRUE))
+   
    attr(completions, "token") <- token
+   attr(completions, "source") <- source
+   attr(completions, "type") <- type
+   attr(completions, "helpHandler") <- "reticulate:::help_handler"
+   
    completions
 })
 
@@ -503,9 +513,13 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    completions
 })
 
-.rs.addFunction("python.getCompletionsKeys", function(object, token)
+.rs.addFunction("python.getCompletionsKeys", function(source, token)
 {
    builtins <- reticulate::import_builtins(convert = TRUE)
+   
+   object <- tryCatch(reticulate::py_eval(source, convert = FALSE), error = identity)
+   if (inherits(object, "error"))
+      return(.rs.python.emptyCompletions())
    
    method <- reticulate::py_get_attr(object, "keys", silent = TRUE)
    if (!inherits(method, "python.builtin.object"))
@@ -515,11 +529,16 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    candidates <- as.character(builtins$list(reticulate::py_to_r(keys())))
    
    .rs.python.completions(token, candidates)
+   
 })
 
-.rs.addFunction("python.getCompletionsArguments", function(object, token)
+.rs.addFunction("python.getCompletionsArguments", function(source, token)
 {
    inspect <- reticulate::import("inspect", convert = TRUE)
+   
+   object <- tryCatch(reticulate::py_eval(source, convert = FALSE), error = identity)
+   if (inherits(object, "error"))
+      return(.rs.python.emptyCompletions())
    
    if (inspect$isclass(object)) {
       # for class objects, use the arguments of the __init__ method
@@ -536,9 +555,13 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    
    # paste on an '=' for completions (Python users seem to prefer no
    # spaces between the argument name and value)
-   completions <- paste(arguments, "=", sep = "")
+   .rs.python.completions(
+      token = token,
+      candidates = paste(arguments, "=", sep = ""),
+      source = source,
+      type = .rs.acCompletionTypes$ARGUMENT
+   )
    
-   .rs.python.completions(token, completions)
 })
 
 .rs.addFunction("python.getCompletionsMain", function(token)
@@ -552,13 +575,22 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       keyword  <- reticulate::import("keyword", convert = FALSE)
       
       # figure out object types for main, builtins
-      candidates <- c(
-         names(main),
-         names(builtins),
-         as.character(reticulate::py_to_r(keyword$kwlist))
+      kwlist <- as.character(reticulate::py_to_r(keyword$kwlist))
+      candidates <- c(names(main), names(builtins), kwlist)
+      
+      source <- c(
+         rep("reticulate:::import_main(convert = FALSE)", length(names(main))),
+         rep("reticulate:::import_builtins(convert = FALSE)", length(names(builtins))),
+         rep("", length(kwlist))
       )
       
-      return(.rs.python.completions(token, candidates))
+      completions <- .rs.python.completions(
+         token = token,
+         candidates = candidates,
+         source = source
+      )
+      
+      return(completions)
    }
    
    # we had dots; try to evaluate the left-hand side of the dots
@@ -577,7 +609,11 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(candidates, "error"))
       return(.rs.python.emptyCompletions())
    
-   .rs.python.completions(rhs, candidates)
+   completions <- .rs.python.completions(rhs, candidates)
+   
+   attr(completions, "source") <- lhs
+   
+   completions
 })
 
 .rs.addFunction("python.getCompletions", function(line)
@@ -674,12 +710,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          if (!is.null(lparen))
             return(.rs.python.emptyCompletions())
          
-         # attempt to evaluate left-hand side
-         evaluated <- tryCatch(reticulate::py_eval(lhs, convert = FALSE), error = identity)
-         if (inherits(evaluated, "error"))
-            return(.rs.python.emptyCompletions())
-         
-         return(.rs.python.getCompletionsKeys(evaluated, rhs))
+         return(.rs.python.getCompletionsKeys(lhs, rhs))
          
       }
       
@@ -720,16 +751,11 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
             # extract the associated text
             start <- startToken$offset
             end   <- endToken$offset + nchar(endToken$value) - 1
-            text <- substring(line, start, end)
+            source <- substring(line, start, end)
             
-            # attempt to evaluate it
-            object <- tryCatch(reticulate::py_eval(text, convert = FALSE), error = identity)
-            if (inherits(object, "error"))
-               break
-            
-            # success! get argument completions
+            # get argument completions
             rhs <- if (token$type %in% "identifier") token$value else ""
-            return(.rs.python.getCompletionsArguments(object, rhs))
+            return(.rs.python.getCompletionsArguments(source, rhs))
          }
          
          if (!cursor$moveToPreviousToken())
@@ -780,8 +806,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       
    }
    
-   text <- substring(line, cursor$tokenOffset())
-   .rs.python.getCompletionsMain(text)
+   source <- substring(line, cursor$tokenOffset())
+   .rs.python.getCompletionsMain(source)
 })
 
 .rs.addFunction("python.isPython3", function()

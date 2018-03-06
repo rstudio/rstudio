@@ -812,12 +812,17 @@ public class PythonCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         // TODO
+         if (selectedItem.type == RCompletionType.SNIPPET)
+            popup_.displaySnippetHelp(snippets_.getSnippetContents(selectedItem.name));
+         else
+            helpStrategy_.showHelp(selectedItem, popup_);
       }
       
       public void showHelpTopic()
       {
-         // TODO
+         QualifiedName selectedItem = popup_.getSelectedValue();
+         if (selectedItem.type != RCompletionType.SNIPPET)
+            helpStrategy_.showHelpTopic(selectedItem);
       }
 
       @Override
@@ -838,7 +843,8 @@ public class PythonCompletionManager implements CompletionManager
             return;
          
          // cache completions
-         completionCache_.store(line_, completions);
+         if (completions.isCacheable())
+            completionCache_.store(line_, completions);
          
          // translate to array of qualified names
          int n = completions.getCompletions().length();
