@@ -41,8 +41,9 @@ core::Error invokeRpc(const FilePath& socketPath,
                       const core::json::Object& request,
                       core::json::Value *pResult);
 
-Error invokeRpc(const std::string& tcpAddress,
+Error invokeRpc(const std::string& address,
                 const std::string& port,
+                bool ssl,
                 const std::string& endpoint,
                 const json::Object& request,
                 json::Value *pResult);

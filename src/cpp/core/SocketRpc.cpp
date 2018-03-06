@@ -18,6 +18,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/http/LocalStreamBlockingClient.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
+#include <core/http/TcpIpBlockingClientSsl.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
@@ -90,15 +91,21 @@ Error sendRequest(const FilePath& socketPath,
    return handleResponse(endpoint, response, pResult);
 }
 
-Error sendRequest(const std::string& tcpAddress,
+Error sendRequest(const std::string& address,
                   const std::string& port,
+                  bool ssl,
                   const std::string& endpoint,
                   const http::Request& request,
                   json::Value* pResult)
 {
    core::http::Response response;
 
-   Error error = core::http::sendRequest(tcpAddress, port, request, &response);
+   Error error;
+   if (ssl)
+      error = core::http::sendSslRequest(address, port, true, request, &response);
+   else
+      error = core::http::sendRequest(address, port, request, &response);
+
    if (error)
       return error;
 
@@ -122,8 +129,9 @@ Error invokeRpc(const FilePath& socketPath,
    return sendRequest(socketPath, endpoint, req, pResult);
 }
 
-Error invokeRpc(const std::string& tcpAddress,
+Error invokeRpc(const std::string& address,
                 const std::string& port,
+                bool ssl,
                 const std::string& endpoint,
                 const json::Object& request,
                 json::Value *pResult)
@@ -137,9 +145,9 @@ Error invokeRpc(const std::string& tcpAddress,
    req.setHeader(kRstudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
 
    // add additional Host header (needed for tcp connections)
-   req.setHost(tcpAddress);
+   req.setHost(address);
 
-   return sendRequest(tcpAddress, port, endpoint, req, pResult);
+   return sendRequest(address, port, ssl, endpoint, req, pResult);
 }
 
 Error initialize()
