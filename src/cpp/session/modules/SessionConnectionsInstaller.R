@@ -417,6 +417,12 @@
          sep = ""
       )
    }
+
+   # apply dynamic patterns
+   osName <- .rs.odbcBundleOsName()
+   bitness <- .rs.odbcOsBitness()
+   libraryPattern <- gsub("\\(os\\)", osName, libraryPattern)
+   libraryPattern <- gsub("\\(bitness\\)", bitness, libraryPattern)
    
    allFiles <- dir(installPath, recursive = TRUE, full.names = TRUE)
    driverPath <- allFiles[grepl(libraryPattern, allFiles, ignore.case = TRUE)]
