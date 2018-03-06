@@ -703,7 +703,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing " + name,
         "Using " + name, 
         new Dependency[] {
-           Dependency.cranPackage("odbc", "1.1.5", true)
+           Dependency.cranPackage("odbc", "1.1.5")
         }, 
         true, // update keyring if needed
         new CommandWithArg<Boolean>()
