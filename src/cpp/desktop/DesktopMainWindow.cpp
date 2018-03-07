@@ -29,6 +29,7 @@
 #include "DesktopSlotBinders.hpp"
 #include "DesktopSessionLauncher.hpp"
 #include "DockTileView.hpp"
+#include "DesktopActivationOverlay.hpp"
 
 using namespace rstudio::core;
 
@@ -129,7 +130,7 @@ MainWindow::MainWindow(QUrl url) :
 
    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
-   setWindowTitle(QString::fromUtf8("RStudio"));
+   setWindowTitle(desktop::activation().editionName());
 
 #ifdef Q_OS_MAC
    auto* pDefaultMenu = new QMenuBar(this);
@@ -153,7 +154,7 @@ void MainWindow::launchSession(bool reload)
 
       showMessageBox(QMessageBox::Critical,
                      this,
-                     QString::fromUtf8("RStudio"),
+                     desktop::activation().editionName(),
                      QString::fromUtf8("The R session failed to start."),
                      QString());
 
@@ -195,12 +196,12 @@ void MainWindow::onWorkbenchInitialized()
 
       if (projectDir.length() > 0)
       {
-         setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+         setWindowTitle(tr("%1 - %2").arg(projectDir).arg(desktop::activation().editionName()));
          DockTileView::setLabel(projectDir);
       }
       else
       {
-         setWindowTitle(QString::fromUtf8("RStudio"));
+         setWindowTitle(desktop::activation().editionName());
          DockTileView::setLabel(QString());
       }
 
