@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -303,7 +303,7 @@ SourceDocument::SourceDocument(const std::string& type)
    created_ = date_time::millisecondsSinceEpoch();
    sourceOnSave_ = false;
    relativeOrder_ = 0;
-   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
+   lastContentUpdate_ = static_cast<std::time_t>(date_time::millisecondsSinceEpoch());
 }
    
 
@@ -334,7 +334,7 @@ void SourceDocument::setContents(const std::string& contents)
 {
    contents_ = contents;
    hash_ = hash::crc32Hash(contents_);
-   lastContentUpdate_ = date_time::millisecondsSinceEpoch();
+   lastContentUpdate_ = static_cast<std::time_t>(date_time::millisecondsSinceEpoch());
 }
 
 // set contents from file
