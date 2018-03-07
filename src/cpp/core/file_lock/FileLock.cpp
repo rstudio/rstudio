@@ -1,7 +1,7 @@
 /*
  * FileLock.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -133,11 +133,11 @@ void FileLock::initialize(const Settings& settings)
 
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
-   FileLock::s_timeoutInterval = boost::posix_time::seconds(timeoutInterval);
+   FileLock::s_timeoutInterval = boost::posix_time::seconds(static_cast<long>(timeoutInterval));
    
    // refresh rate
    double refreshRate = getFieldPositive(settings, "refresh-rate", kDefaultRefreshRate);
-   FileLock::s_refreshRate = boost::posix_time::seconds(refreshRate);
+   FileLock::s_refreshRate = boost::posix_time::seconds(static_cast<long>(refreshRate));
    
    // logging
    bool loggingEnabled = settings.getBool("enable-logging", false);
@@ -212,8 +212,8 @@ void FileLock::log(const std::string& message)
 
 // default values for static members
 FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
-boost::posix_time::seconds FileLock::s_timeoutInterval(kDefaultTimeoutInterval);
-boost::posix_time::seconds FileLock::s_refreshRate(kDefaultRefreshRate);
+boost::posix_time::seconds FileLock::s_timeoutInterval(static_cast<long>(kDefaultTimeoutInterval));
+boost::posix_time::seconds FileLock::s_refreshRate(static_cast<long>(kDefaultRefreshRate));
 bool FileLock::s_loggingEnabled(false);
 bool FileLock::s_isLoadBalanced(false);
 FilePath FileLock::s_logFile;

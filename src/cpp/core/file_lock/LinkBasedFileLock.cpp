@@ -166,7 +166,7 @@ bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
          return true;
    }
    
-   double seconds = s_timeoutInterval.total_seconds();
+   double seconds = static_cast<double>(s_timeoutInterval.total_seconds());
    double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
    return diff >= seconds;
 }
