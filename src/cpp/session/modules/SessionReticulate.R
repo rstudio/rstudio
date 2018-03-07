@@ -526,7 +526,10 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(.rs.python.emptyCompletions())
    
    keys <- reticulate::py_to_r(method)
-   candidates <- as.character(builtins$list(reticulate::py_to_r(keys())))
+   candidates <- if (.rs.python.isPython3())
+      as.character(builtins$list(reticulate::py_to_r(keys())))
+   else
+      reticulate::py_to_r(keys())
    
    .rs.python.completions(token, candidates)
    
@@ -540,18 +543,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
-   if (inspect$isclass(object)) {
-      # for class objects, use the arguments of the __init__ method
-      init <- reticulate::py_get_attr(object, "__init__", silent = TRUE)
-      arguments <- tryCatch(inspect$getargspec(init)$args, error = identity)
-      if (inherits(arguments, "error"))
-         return(.rs.python.emptyCompletions())
-   } else {
-      # assume that this is a callable, and ask for the arg spec
-      arguments <- tryCatch(inspect$getargspec(object)$args, error = identity)
-      if (inherits(arguments, "error"))
-         return(.rs.python.emptyCompletions())
-   }
+   arguments <- .rs.python.getFunctionArguments(object)
    
    # paste on an '=' for completions (Python users seem to prefer no
    # spaces between the argument name and value)
@@ -562,6 +554,56 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       type = .rs.acCompletionTypes$ARGUMENT
    )
    
+})
+
+.rs.addFunction("python.getFunctionArguments", function(object)
+{
+   inspect <- reticulate::import("inspect", convert = TRUE)
+   
+   # for class objects, we'll look up arguments on the associated
+   # __init__ method instead
+   lookup <- object
+   if (inspect$isclass(object)) {
+      lookup <- .rs.tryCatch(reticulate::py_get_attr(object, "__init__"))
+      if (inherits(lookup, "error"))
+         return(.rs.python.emptyCompletions())
+   }
+   
+   # try using inspect module to get arguments
+   arguments <- .rs.tryCatch(inspect$getargspec(lookup)$args)
+   if (!inherits(arguments, "error"))
+      return(arguments)
+   
+   # if this is a function from numpy, try parsing the signature
+   # from the associated docstring
+   arguments <- .rs.tryCatch(.rs.python.getNumpyFunctionArguments(object))
+   if (!inherits(arguments, "error"))
+      return(arguments)
+   
+   # failed to find anything
+   return(character())
+   
+})
+
+.rs.addFunction("python.getNumpyFunctionArguments", function(object)
+{
+   # extract the docstring
+   docs <- reticulate::py_get_attr(object, "__doc__")
+   if (inherits(docs, "python.builtin.object"))
+      docs <- reticulate::py_to_r(docs)
+   
+   pieces <- strsplit(docs, "\n", fixed = TRUE)[[1]]
+   first <- pieces[[1]]
+   
+   # try munging so that it 'looks' like an R function definition,
+   # and then parse it that way. this will obviously fail for certain
+   # kinds of Python default arguments but this seems to catch the
+   # most common cases for now
+   munged <- paste(gsub("[^(]*[(]", "function (", first), "{}")
+   parsed <- parse(text = munged)[[1]]
+   
+   # extract the formal names
+   names(parsed[[2]])
 })
 
 .rs.addFunction("python.getCompletionsMain", function(token)
