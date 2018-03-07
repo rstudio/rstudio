@@ -21,7 +21,8 @@
 .rs.addFunction("invokeRpc", function(method, ...) 
 {
    # callback to session to invoke RPC
-   .Call("rs_invokeRpc", method, c(...))
+   args <- list(...)
+   .Call("rs_invokeRpc", method, .rs.scalarListFromList(args))
 })
 
 .rs.addFunction("showErrorMessage", function(title, message)
