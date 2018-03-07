@@ -57,6 +57,9 @@ public:
 
    void releaseLicense();
 
+   // Name of product edition, for use in UI
+   QString editionName() const;
+
 Q_SIGNALS:
    void licenseLost(QString licenseMessage);
    void launchFirstSession();

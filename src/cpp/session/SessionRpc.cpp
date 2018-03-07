@@ -1,7 +1,7 @@
 /*
  * SessionRpc.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,22 @@
  *
  */
 
+#include <string>
+
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/Exec.hpp>
+#include <core/Log.hpp>
+
+#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
+#include <r/RJson.hpp>
+#include <r/RJsonRpc.hpp>
+#include <r/RRoutines.hpp>
 
 using namespace rstudio::core;
 
@@ -91,6 +101,92 @@ void endHandleRpcRequestIndirect(
    value["response"] = jsonRpcResponse.getRawResponse();
    ClientEvent evt(client_events::kAsyncCompletion, value);
    module_context::enqueClientEvent(evt);
+}
+
+void saveJsonResponse(const core::Error& error, core::json::JsonRpcResponse *pSrc,
+                      core::Error *pError,      core::json::JsonRpcResponse *pDest)
+{
+   *pError = error;
+   *pDest = *pSrc;
+}
+
+// invoke an HTTP RPC directly from R.
+SEXP rs_invokeRpc(SEXP name, SEXP args)
+{
+   // find name of RPC to invoke
+   std::string method = r::sexp::safeAsString(name, "");
+   auto it = s_pJsonRpcMethods->find(method);
+   if (it == s_pJsonRpcMethods->end())
+   {
+      // specified method doesn't exist
+      r::exec::error("Requested RPC method " + method + " does not exist.");
+      return R_NilValue;    
+   }
+
+   std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
+   json::JsonRpcAsyncFunction handlerFunction = reg.second;
+
+   if (!reg.first)
+   {
+      // this indicates an async RPC, which isn't currently handled
+      r::exec::error("Requested RPC method " + method + " is asynchronous.");
+      return R_NilValue;
+   }
+
+   // assemble a request
+   core::json::JsonRpcRequest request;
+   request.method = method;
+
+   // form argument list; convert from R to JSON
+   core::json::Value rpcArgs;
+   Error error = r::json::jsonValueFromObject(args, &rpcArgs);
+   if (rpcArgs.type() == json::ObjectType)
+   {
+      // named pair parameters
+      request.kwparams = rpcArgs.get_obj();
+   }
+   else if (rpcArgs.type() == json::ArrayType)
+   {
+      // object parameters
+      request.params = rpcArgs.get_array();
+   }
+
+   // invoke handler and record response
+   core::json::JsonRpcResponse response;
+   core::Error rpcError = Success();
+   handlerFunction(request,
+                   boost::bind(saveJsonResponse, _1, _2, &rpcError, &response));
+
+   // raise an R error if the RPC fails
+   if (rpcError)
+   {
+      r::exec::error(log::errorAsLogEntry(rpcError));
+   }
+
+   // convert JSON response back to R
+   SEXP result = R_NilValue;
+   r::sexp::Protect protect;
+   result = r::sexp::create(response.result(), &protect);
+
+   // raise an R error if the RPC returns an error
+   if (response.error().type() == json::ObjectType)
+   {
+      // formulate verbose error string
+      json::Object &err = response.error().get_obj();
+      std::string message = err["message"].get_str();
+      if (err.find("error") != err.end())
+         message += ", Error " + err["error"].get_str();
+      if (err.find("category") != err.end())
+         message += ", Category " + err["category"].get_str();
+      if (err.find("code") != err.end())
+         message += ", Code " + err["code"].get_str();
+      if (err.find("location") != err.end())
+         message += " at " + err["location"].get_str();
+
+      r::exec::error(message);
+   }
+
+   return result;
 }
 
 } // anonymous namespace
@@ -187,7 +283,12 @@ Error initialize()
    // this map pegging the processor at 100%; avoid this by allowing
    // the OS to clean up memory itself after the process is gone)
    s_pJsonRpcMethods = new core::json::JsonRpcAsyncMethods;
-   
+
+   r::routines::registerCallMethod(
+            "rs_invokeRpc",
+            (DL_FUNC) rs_invokeRpc,
+            2);
+
    return Success();
 }
 

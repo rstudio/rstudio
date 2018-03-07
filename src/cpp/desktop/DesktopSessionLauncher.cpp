@@ -202,7 +202,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       {
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
-                        QString::fromUtf8("RStudio"),
+                        desktop::activation().editionName(),
                         launchFailedErrorMessage(), QString());
       }
    }
@@ -226,7 +226,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          message += licenseMessage;
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
-                        QString::fromUtf8("RStudio"),
+                        desktop::activation().editionName(),
                         QString::fromUtf8(message.c_str()), QString());
          closeAllSatellites();
          pMainWindow_->quit();
@@ -246,7 +246,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 
          showMessageBox(QMessageBox::Critical,
                         pMainWindow_,
-                        QString::fromUtf8("RStudio"),
+                        desktop::activation().editionName(),
                         launchFailedErrorMessage(), QString());
 
          pMainWindow_->quit();
@@ -341,7 +341,7 @@ void SessionLauncher::onLaunchError(QString message)
    if (!message.isEmpty())
    {
       QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
-                           tr("RStudio"), message);
+                           desktop::activation().editionName(), message);
       errorMsg.addButton(QMessageBox::Close);
       errorMsg.exec();
    }
