@@ -42,8 +42,7 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuild
 
 # install qt (note that we are using the current directory's context)
 RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.10.1-msvc2015.7z -OutFile c:\QtSDK-5.10.1-msvc2015.7z ;\
-  7z x c:\QtSDK-5.10.1-msvc2015.7z ;\
-  Move-Item -path Qt5.10.1 -destination c:\Qt5.10.1 ;\
+  7z x c:\QtSDK-5.10.1-msvc2015.7z -oc:\ ;\
   Remove-Item c:\QtSDK-5.10.1-msvc2015.7z -Force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
