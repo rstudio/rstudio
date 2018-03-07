@@ -137,10 +137,10 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-          [os: 'precise',  arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
+          [os: 'trusty',   arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'trusty',   arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'debian9',  arch: 'x86_64', flavor: 'server', variant: 'stretch']
         ]
