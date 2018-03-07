@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -59,37 +65,39 @@ public class GeneralPreferencesPane extends PreferencesPane
       session_ = session;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
-
-      // TODO: Wrap this up into a proper asynchronous routine?
-//      if (Desktop.isDesktop())
-//      {
-//         if (Desktop.getFrame().canChooseRVersion())
-//         {
-//            rVersion_ = new TextBoxWithButton(
-//                  "R version:",
-//                  "Change...",
-//                  new ClickHandler()
-//                  {
-//                     public void onClick(ClickEvent event)
-//                     {
-//                        String ver = Desktop.getFrame().chooseRVersion();
-//                        if (!StringUtil.isNullOrEmpty(ver))
-//                        {
-//                           rVersion_.setText(ver);
-//
-//                           globalDisplay.showMessage(MessageDialog.INFO,
-//                                 "Change R Version",
-//                                 "You need to quit and re-open RStudio " +
-//                                 "in order for this change to take effect.");
-//                        }
-//                     }
-//                  });
-//            rVersion_.setWidth("100%");
-//            rVersion_.setText(Desktop.getFrame().getRVersion());
-//            spaced(rVersion_);
-//            add(rVersion_);
-//         }
-//      }
+      
+      if (BrowseCap.isWindowsDesktop())
+      {
+         rVersion_ = new TextBoxWithButton(
+               "R version:",
+               "Change...",
+               new ClickHandler()
+               {
+                  @Override
+                  public void onClick(ClickEvent event)
+                  {
+                     Desktop.getFrame().chooseRVersion(ver ->
+                     {
+                        if (!StringUtil.isNullOrEmpty(ver))
+                        {
+                           rVersion_.setText(ver);
+                     
+                           globalDisplay.showMessage(MessageDialog.INFO,
+                                 "Change R Version",
+                                 "You need to quit and re-open RStudio " +
+                                       "in order for this change to take effect.");
+                        }
+                     });
+                  }
+               });
+         rVersion_.setWidth("100%");
+         rVersion_.setText("Loading...");
+         Desktop.getFrame().getRVersion(version -> {
+            rVersion_.setText(version);
+         });
+         spaced(rVersion_);
+         add(rVersion_);
+      }
       if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
