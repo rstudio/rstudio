@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -382,8 +382,8 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             SourceMarker marker(
                 sourceMarkerTypeFromString(type),
                 FilePath(path),
-                safe_convert::numberTo<double, int>(line, 1),
-                safe_convert::numberTo<double, int>(column, 1),
+                safe_convert::numberTo<int>(line, 1),
+                safe_convert::numberTo<int>(column, 1),
                 core::html_utils::HTML(message, messageHTML),
                 true);
 

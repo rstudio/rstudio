@@ -1,7 +1,7 @@
 /*
  * DateTime.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ double millisecondsSinceEpoch(const boost::posix_time::ptime& time)
    
    ptime time_t_epoch(date(1970,1,1));
    time_duration diff = time - time_t_epoch;
-   return static_cast<double>(diff.total_milliseconds());
+   return diff.total_milliseconds();
 }
    
 double millisecondsSinceEpoch(std::time_t time)
@@ -65,7 +65,7 @@ boost::posix_time::ptime timeFromSecondsSinceEpoch(double sec)
    using namespace boost::posix_time;
 
    ptime time_t_epoch(date(1970,1,1));
-   return time_t_epoch + seconds(static_cast<long>(sec));
+   return time_t_epoch + seconds(sec);
 }
 
 boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms)
@@ -96,7 +96,7 @@ std::string format(const boost::posix_time::ptime& datetime,
 std::string millisecondsSinceEpochAsString(double ms)
 {
    boost::posix_time::ptime time =
-                   date_time::timeFromMillisecondsSinceEpoch(static_cast<int64_t>(ms));
+                   date_time::timeFromMillisecondsSinceEpoch(ms);
 
    return date_time::format(time, "%d %b %Y %H:%M:%S");
 }

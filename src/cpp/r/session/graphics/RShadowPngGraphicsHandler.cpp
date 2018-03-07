@@ -1,7 +1,7 @@
 /*
  * RShadowPngGraphicsHandler.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,9 +109,9 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // determine width, height, and res
-      int width = static_cast<int>(pDC->width * pDC->devicePixelRatio);
-      int height = static_cast<int>(pDC->height * pDC->devicePixelRatio);
-      int res = static_cast<int>(96.0 * pDC->devicePixelRatio);
+      int width = pDC->width * pDC->devicePixelRatio;
+      int height = pDC->height * pDC->devicePixelRatio;
+      int res = 96 * pDC->devicePixelRatio;
 
       // create PNG device (completely bail on error)
       boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");

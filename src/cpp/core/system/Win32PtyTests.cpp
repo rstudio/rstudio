@@ -237,7 +237,7 @@ TEST_CASE("Win32PtyTests")
       err = pty.setSize(line1.length() * 4, kRows);
       CHECK(!err);
 
-      for (size_t i = 0; i < line1.length(); i++)
+      for (int i = 0; i < line1.length(); i++)
       {
          std::string typeThis;
          typeThis.push_back(line1[i]);

@@ -1,7 +1,7 @@
 /*
  * DefinitionIndex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -505,7 +505,7 @@ void loadDefinitionIndex()
          LOG_ERROR(error);
          continue;
       }
-      definitions.fileLastWrite = numberTo<double, std::time_t>(fileLastWrite, 0);
+      definitions.fileLastWrite = numberTo<std::time_t>(fileLastWrite, 0);
 
       // if the file doesn't exist then bail
       if (!FilePath::exists(definitions.file))
@@ -539,7 +539,7 @@ void saveDefinitionIndex()
       const CppDefinitions& definitions = defs.second;
       json::Object definitionsJson;
       definitionsJson["file"] = definitions.file;
-      definitionsJson["file_last_write"] = numberTo<std::time_t, double>(
+      definitionsJson["file_last_write"] = numberTo<double>(
                                                definitions.fileLastWrite, 0);
       json::Array defsArrayJson;
       std::transform(definitions.definitions.begin(),

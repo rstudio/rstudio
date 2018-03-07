@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManager.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -308,9 +308,9 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    int res = 96;
 
    // adjust for device pixel ratio
-   width = static_cast<int>(width * pixelRatio);
-   height = static_cast<int>(height * pixelRatio);
-   res = static_cast<int>(res * pixelRatio);
+   width = width * pixelRatio;
+   height = height * pixelRatio;
+   res = res * pixelRatio;
 
    // optional format specific extra params
    std::string extraParams;

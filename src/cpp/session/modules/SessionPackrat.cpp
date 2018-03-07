@@ -1,7 +1,7 @@
 /*
  * SessionPackrat.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -767,10 +767,8 @@ void onPackratAction(const std::string& project,
    }
 
    if (running && (s_runningPackratAction != PACKRAT_ACTION_NONE))
-   {
       PACKRAT_TRACE("warning: '" << action << "' executed while action " << 
                     s_runningPackratAction << " was already running");
-   }
 
    PACKRAT_TRACE("packrat action '" << action << "' " <<
                  (running ? "started" : "finished"));
