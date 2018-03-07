@@ -537,8 +537,6 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 
 .rs.addFunction("python.getCompletionsArguments", function(source, token)
 {
-   inspect <- reticulate::import("inspect", convert = TRUE)
-   
    object <- tryCatch(reticulate::py_eval(source, convert = FALSE), error = identity)
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
