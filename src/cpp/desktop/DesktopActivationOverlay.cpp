@@ -66,6 +66,11 @@ void DesktopActivation::releaseLicense()
 {
 }
 
+QString DesktopActivation::editionName() const
+{
+   return QString(tr("RStudio"));
+}
+
 void DesktopActivation::emitLicenseLostSignal()
 {
    emit licenseLost(QString::fromStdString(currentLicenseStateMessage()));
