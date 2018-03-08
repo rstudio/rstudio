@@ -1,7 +1,7 @@
 /*
  * ProjectPopupMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.projects.ProjectMRUList;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -60,13 +61,15 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    void initialize(ProjectMRUList mruList,
                    ProjectsServerOperations server,
                    EventBus events,
-                   Session session)
+                   Session session,
+                   ProductEditionInfo editionInfo)
    {
       server_ = server;
       events_ = events;
       mruList_ = mruList;
       allowSharedProjects_ = 
             session.getSessionInfo().getAllowOpenSharedProjects();
+      editionInfo_ = editionInfo;
    }
    
    public ToolbarButton getToolbarButton()
@@ -89,7 +92,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
           
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
-               Document.get().setTitle("RStudio - " + buttonText);
+               Document.get().setTitle(editionInfo_.editionName() + " - " + buttonText);
          }
         
           if (activeProjectFile_ == null)
@@ -284,4 +287,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private EventBus events_;
    private ProjectsServerOperations server_;
    private boolean allowSharedProjects_ = false;
+   private ProductEditionInfo editionInfo_;
 }
