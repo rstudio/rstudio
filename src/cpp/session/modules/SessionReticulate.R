@@ -681,9 +681,12 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(candidates, "error"))
       return(.rs.python.emptyCompletions())
    
-   completions <- .rs.python.completions(rhs, candidates)
-   
-   attr(completions, "source") <- lhs
+   completions <- .rs.python.completions(
+      token      = rhs,
+      candidates = candidates,
+      source     = lhs,
+      type       = .rs.python.inferObjectTypes(object, candidates)
+   )
    
    completions
 })
@@ -916,7 +919,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          .rs.acCompletionTypes$ENVIRONMENT
       else if (inherits(item, "python.builtin.builtin_function_or_method") ||
                inherits(item, "python.builtin.function") ||
-               inherits(item, "python.builtin.instancemethod"))
+               inherits(item, "python.builtin.instancemethod") ||
+               inherits(item, "python.builtin.type"))
          .rs.acCompletionTypes$FUNCTION
       else if (inherits(item, "pandas.core.frame.DataFrame"))
          .rs.acCompletionTypes$DATAFRAME
