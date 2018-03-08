@@ -342,7 +342,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.jumpTo());
       dynamicCommands_.add(commands.jumpToMatching());
       dynamicCommands_.add(commands.goToHelp());
-      dynamicCommands_.add(commands.goToFunctionDefinition());
+      dynamicCommands_.add(commands.goToDefinition());
       dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
       dynamicCommands_.add(commands.debugDumpContents());
       dynamicCommands_.add(commands.debugImportDump());
@@ -386,7 +386,7 @@ public class Source implements InsertSourceHandler,
 
       // fake shortcuts for commands which we handle at a lower level
       commands.goToHelp().setShortcut(new KeyboardShortcut(112));
-      commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
+      commands.goToDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));
       

@@ -205,7 +205,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <cmd refid="goToHelp"/>
-         <cmd refid="goToFunctionDefinition"/>
+         <cmd refid="goToDefinition"/>
          <cmd refid="findUsages"/>
          <separator/>
          <cmd refid="extractFunction"/>
@@ -1584,7 +1584,7 @@ well as menu structures (for main menu and popup menus).
         desc="Go to help for the currently selected function"
         context="help"/>
         
-   <cmd id ="goToFunctionDefinition"
+   <cmd id ="goToDefinition"
         menuLabel="_Go To Function Definition"
         desc="Go to to the definition of the currently selected function"
         context="help"/>

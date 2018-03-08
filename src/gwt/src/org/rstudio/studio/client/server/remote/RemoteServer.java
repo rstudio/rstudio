@@ -977,6 +977,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PYTHON_GET_COMPLETIONS, params, requestCallback);
    }
    
+   public void pythonGoToDefinition(String line,
+                                    int column,
+                                    ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .add(column)
+            .get();
+      
+      sendRequest(RPC_SCOPE, PYTHON_GO_TO_DEFINITION, params, requestCallback);
+   }
+   
    public void getHelpAtCursor(String line, int cursorPos,
                                ServerRequestCallback<Void> requestCallback)
    {
@@ -5593,6 +5605,7 @@ public class RemoteServer implements Server
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
    
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
+   private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";

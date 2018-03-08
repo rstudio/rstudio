@@ -592,7 +592,7 @@ public class TextEditingTarget implements
             }
             else
             {
-               docDisplay_.goToFunctionDefinition();
+               docDisplay_.goToDefinition();
             }
          }
       });
@@ -4851,9 +4851,9 @@ public class TextEditingTarget implements
    } 
 
    @Handler
-   void onGoToFunctionDefinition()
+   void onGoToDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToDefinition();
    } 
    
    @Handler

@@ -306,7 +306,7 @@ public class RCompletionManager implements CompletionManager
             new SimpleRequestCallback<Void>("Help"));
    }
    
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {   
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
@@ -520,7 +520,7 @@ public class RCompletionManager implements CompletionManager
          else if (keycode == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToFunctionDefinition();
+            goToDefinition();
             return true;
          }
       }
@@ -599,7 +599,7 @@ public class RCompletionManager implements CompletionManager
                }
                else if (keycode == 113) // F2
                {
-                  goToFunctionDefinition();
+                  goToDefinition();
                   return true;
                }
             }

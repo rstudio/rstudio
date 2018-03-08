@@ -32,7 +32,7 @@ public class NullCompletionManager implements CompletionManager
    {
    }
    
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {
    }
    

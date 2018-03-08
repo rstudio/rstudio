@@ -82,4 +82,9 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void pythonGetCompletions(
          String line,
          ServerRequestCallback<Completions> requestCallback);
+   
+   void pythonGoToDefinition(
+         String line,
+         int column,
+         ServerRequestCallback<Boolean> requestCallback);
 }

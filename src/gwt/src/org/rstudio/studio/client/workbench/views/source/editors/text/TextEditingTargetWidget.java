@@ -518,7 +518,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.codeCompletion().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.goToHelp().createMenuItem(false));
-         menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
+         menu.addItem(commands_.goToDefinition().createMenuItem(false));
          menu.addItem(commands_.findUsages().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));

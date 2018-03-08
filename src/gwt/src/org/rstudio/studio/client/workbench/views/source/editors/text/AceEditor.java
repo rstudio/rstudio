@@ -1143,9 +1143,9 @@ public class AceEditor implements DocDisplay,
       completionManager_.goToHelp();
    }
 
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {
-      completionManager_.goToFunctionDefinition();
+      completionManager_.goToDefinition();
    }
 
    class PrintIFrame extends DynamicIFrame

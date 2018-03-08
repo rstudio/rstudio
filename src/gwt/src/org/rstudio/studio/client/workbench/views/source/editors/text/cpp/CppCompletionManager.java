@@ -148,12 +148,12 @@ public class CppCompletionManager implements CompletionManager
 
    // find the definition of the function at the current cursor location
    @Override
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {  
       // delegate to R mode if necessary
       if (DocumentMode.isCursorInRMode(docDisplay_))
       {
-         rCompletionManager_.goToFunctionDefinition();
+         rCompletionManager_.goToDefinition();
       }
       else
       {
@@ -221,7 +221,7 @@ public class CppCompletionManager implements CompletionManager
          else if (event.getKeyCode() == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToFunctionDefinition();
+            goToDefinition();
             return true;
          }
          else

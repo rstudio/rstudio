@@ -277,9 +277,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
    } 
    
    @Handler
-   void onGoToFunctionDefinition()
+   void onGoToDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToDefinition();
    } 
 
    @Handler
@@ -438,7 +438,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.findPrevious());
       commands.add(commands_.findFromSelection());
       commands.add(commands_.goToHelp());
-      commands.add(commands_.goToFunctionDefinition());
+      commands.add(commands_.goToDefinition());
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());

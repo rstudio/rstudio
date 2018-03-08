@@ -312,9 +312,25 @@ public class PythonCompletionManager implements CompletionManager
       // TODO
    }
    
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {
-      // TODO
+      server_.pythonGoToDefinition(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean response)
+               {
+                  // TODO: respond appropriately on error?
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -374,7 +390,7 @@ public class PythonCompletionManager implements CompletionManager
          else if (keycode == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToFunctionDefinition();
+            goToDefinition();
             return true;
          }
       }
@@ -453,7 +469,7 @@ public class PythonCompletionManager implements CompletionManager
                }
                else if (keycode == 113) // F2
                {
-                  goToFunctionDefinition();
+                  goToDefinition();
                   return true;
                }
             }

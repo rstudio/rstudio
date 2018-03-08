@@ -39,6 +39,55 @@
    )
 })
 
+.rs.addJsonRpcHandler("python_go_to_definition", function(line,
+                                                          offset)
+{
+   inspect <- reticulate::import("inspect", convert = TRUE)
+   
+   # tokenize the line
+   tokens <- .rs.python.tokenize(line)
+   
+   # find the current token
+   n <- length(tokens); index <- n
+   while (index >= 1) {
+      if (tokens[[index]]$offset <= offset)
+         break
+      index <- index - 1
+   }
+   
+   # find the start of the expression
+   cursor <- .rs.python.tokenCursor(tokens)
+   cursor$moveToOffset(index)
+   if (!cursor$moveToStartOfEvaluation())
+      return(FALSE)
+   
+   # extract the text used for lookup of current object
+   startOffset <- cursor$tokenOffset()
+   endOffset <- tokens[[index]]$offset + nchar(tokens[[index]]$value) - 1L
+   text <- substring(line, startOffset, endOffset)
+   
+   # try extracting this object
+   object <- .rs.tryCatch(reticulate::py_eval(text, convert = FALSE))
+   if (inherits(object, "error"))
+      return(FALSE)
+   
+   # check to see if 'inspect' can find the object sources
+   info <- .rs.tryCatch(
+      list(
+         source = inspect$getsourcefile(object),
+         line = inspect$findsource(object)[[2]]
+      )
+   )
+   
+   if (!inherits(info, "error")) {
+      .rs.api.navigateToFile(info$source, info$line + 1L, 1L)
+      return(TRUE)
+   }
+   
+   return(FALSE)
+   
+})
+
 .rs.addFunction("reticulate.replInitialize", function()
 {
    builtins <- reticulate::import_builtins(convert = FALSE)
