@@ -77,7 +77,7 @@ void Response::setCacheForeverHeaders(bool publicAccessiblity)
    setHeader("Expires", http::util::httpDate(expireTime));
    
    // set Cache-Control header
-   int durationSeconds = yearDuration.total_seconds();
+   auto durationSeconds = yearDuration.total_seconds();
    std::string accessibility = publicAccessiblity ? "public" : "private";
    std::string cacheControl(accessibility + ", max-age=" + 
                             safe_convert::numberToString(durationSeconds));
