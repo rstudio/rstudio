@@ -147,6 +147,10 @@
    {
      asNamespace(substring(namespaceName, nchar("namespace:") + 1))
    }
+   else if (identical(namespaceName, ".GlobalEnv"))
+   {
+      .GlobalEnv
+   }
    else
    {
      asNamespace(namespaceName)
