@@ -39,5 +39,10 @@ bool Options::allowOverlay() const
    return true;
 }
 
+bool Options::supportsDriversLicensing() const
+{
+   return !allowOverlay();
+}
+
 } // namespace session
 } // namespace rstudio
