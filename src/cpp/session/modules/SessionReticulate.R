@@ -914,11 +914,11 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       item <- reticulate::py_get_attr(object, name)
       if (inherits(item, "python.builtin.module"))
          .rs.acCompletionTypes$ENVIRONMENT
-      else if (inherits(object, "python.builtin.builtin_function_or_method") ||
-               inherits(object, "python.builtin.function") ||
-               inherits(object, "python.builtin.instancemethod"))
+      else if (inherits(item, "python.builtin.builtin_function_or_method") ||
+               inherits(item, "python.builtin.function") ||
+               inherits(item, "python.builtin.instancemethod"))
          .rs.acCompletionTypes$FUNCTION
-      else if (inherits(object, "pandas.core.frame.DataFrame"))
+      else if (inherits(item, "pandas.core.frame.DataFrame"))
          .rs.acCompletionTypes$DATAFRAME
       else
          .rs.acCompletionTypes$UNKNOWN
