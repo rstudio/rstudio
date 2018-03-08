@@ -515,6 +515,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
+   # strip off a 'package:' prefix if necessary
+   if (is.character(from) && nzchar(from))
+      from <- sub("^package:", "", from)
+   
    if (type == .rs.acCompletionTypes$FUNCTION)
       .rs.showHelpTopicFunction(what, from)
    else if (type == .rs.acCompletionTypes$ARGUMENT)
@@ -527,9 +531,6 @@ options(help_type = "html")
 
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
 {
-   # Package may actually be a name from the search path, so strip that off.
-   package <- sub("^package:", "", package, perl = TRUE)
-   
    if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
@@ -570,18 +571,17 @@ options(help_type = "html")
 
 .rs.addFunction("showHelpTopic", function(topic, package)
 {
-   package <- sub("^package:", "", package)
    call <- .rs.makeHelpCall(topic, package)
    print(eval(call, envir = parent.frame()))
 })
 
 .rs.addJsonRpcHandler("search", function(query)
 {
-   exactMatch = help(query, help_type="html")
+   exactMatch = help(query, help_type = "html")
    if (length(exactMatch) == 1)
    {
       print(exactMatch)
-      return ()
+      return()
    }
    else
    {
