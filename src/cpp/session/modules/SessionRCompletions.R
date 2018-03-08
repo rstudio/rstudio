@@ -1575,16 +1575,32 @@ assign(x = ".rs.acCompletionTypes",
    packages <- packages[order]
    
    type <- vapply(seq_along(results), function(i) {
+      
       if (packages[[i]] == "keywords")
-         .rs.acCompletionTypes$KEYWORD
-      else if (packages[[i]] == "")
-         ## Don't try to evaluate these as we don't want to force promises in debug contexts
-         .rs.acCompletionTypes$UNKNOWN
-      else
-         tryCatch(
-            .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]]))),
-            error = function(e) .rs.acCompletionTypes$UNKNOWN
-         )
+         return(.rs.acCompletionTypes$KEYWORD)
+      
+      if (packages[[i]] == "")
+         return(.rs.acCompletionTypes$UNKNOWN)
+      
+      object <- tryCatch(
+         get(results[[i]], packages[[i]]),
+         error = identity
+      )
+      
+      if (inherits(object, "error"))
+         return(.rs.acCompletionTypes$UNKNOWN)
+      
+      type <- .rs.getCompletionType(object)
+      
+      # fix up source package for S4 generics
+      if (type %in% .rs.acCompletionTypes$S4_GENERIC) {
+         package <- attr(object, "package", exact = TRUE)
+         if (is.character(package) && nzchar(package))
+            packages[[i]] <<- package
+      }
+      
+      return(type)
+      
    }, FUN.VALUE = numeric(1), USE.NAMES = FALSE)
    
    .rs.makeCompletions(token = token,
