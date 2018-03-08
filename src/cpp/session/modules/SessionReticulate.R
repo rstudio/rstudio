@@ -71,6 +71,11 @@
    if (inherits(object, "error"))
       return(FALSE)
    
+   # TODO: use object explorer to view modules? or navigate
+   # to their module path? or something similar?
+   if (inherits(object, "python.builtin.module"))
+      return(FALSE)
+   
    # check to see if 'inspect' can find the object sources
    info <- .rs.tryCatch(
       list(
