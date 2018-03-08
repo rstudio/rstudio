@@ -409,14 +409,28 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 .rs.addFunction("python.completions", function(token,
                                                candidates,
                                                source = NULL,
-                                               type = NULL)
+                                               type = NULL,
+                                               reorder = TRUE)
 {
+   # figure out the completions to keep
    pattern <- paste("^\\Q", token, "\\E", sep = "")
-   completions <- sort(grep(pattern, candidates, perl = TRUE, value = TRUE))
+   indices <- grep(pattern, candidates, perl = TRUE)
+   if (reorder)
+      indices <- indices[order(candidates[indices])]
+   
+   # extract our completions
+   completions <- candidates[indices]
+   
+   # re-order source and type if they were provided
+   if (!is.null(source))
+      source <- source[indices]
+   
+   if (!is.null(type))
+      type <- type[indices]
    
    attr(completions, "token") <- token
    attr(completions, "source") <- source
-   attr(completions, "type") <- type
+   attr(completions, "types") <- type
    attr(completions, "helpHandler") <- "reticulate:::help_handler"
    
    completions
@@ -549,7 +563,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       token = token,
       candidates = paste(arguments, "=", sep = ""),
       source = source,
-      type = .rs.acCompletionTypes$ARGUMENT
+      type = .rs.acCompletionTypes$ARGUMENT,
+      reorder = FALSE
    )
    
 })
@@ -560,23 +575,32 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    
    # for class objects, we'll look up arguments on the associated
    # __init__ method instead
-   lookup <- object
    if (inspect$isclass(object)) {
-      lookup <- .rs.tryCatch(reticulate::py_get_attr(object, "__init__"))
-      if (inherits(lookup, "error"))
+      
+      init <- .rs.tryCatch(reticulate::py_get_attr(object, "__init__"))
+      if (inherits(init, "error"))
          return(.rs.python.emptyCompletions())
+      
+      arguments <- .rs.tryCatch(inspect$getargspec(init)$args)
+      if (inherits(arguments, "error"))
+         return(.rs.python.emptyCompletions())
+      
+      return(setdiff(arguments, "self"))
    }
    
-   # try using inspect module to get arguments
-   arguments <- .rs.tryCatch(inspect$getargspec(lookup)$args)
-   if (!inherits(arguments, "error"))
-      return(arguments)
+   # try a set of methods for extracting these arguments
+   methods <- list(
+      function() inspect$getargspec(object)$args,
+      function() .rs.python.getNumpyFunctionArguments(object)
+   )
    
-   # if this is a function from numpy, try parsing the signature
-   # from the associated docstring
-   arguments <- .rs.tryCatch(.rs.python.getNumpyFunctionArguments(object))
-   if (!inherits(arguments, "error"))
-      return(arguments)
+   for (method in methods) {
+      arguments <- .rs.tryCatch(method())
+      if (!inherits(arguments, "error"))
+         return(arguments)
+   }
+   
+   character()
    
    # failed to find anything
    return(character())
@@ -624,10 +648,18 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          rep("", length(kwlist))
       )
       
+      # figure out object types
+      type <- c(
+         .rs.python.inferObjectTypes(main, names(main)),
+         .rs.python.inferObjectTypes(builtins, names(builtins)),
+         rep(.rs.acCompletionTypes$KEYWORD, length(kwlist))
+      )
+      
       completions <- .rs.python.completions(
          token = token,
          candidates = candidates,
-         source = source
+         source = source,
+         type = type
       )
       
       return(completions)
@@ -874,4 +906,21 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    key <- if (.rs.python.isPython3()) "name" else 2L
    names <- vapply(modules, `[[`, key, FUN.VALUE = character(1))
    sort(unique(names))
+})
+
+.rs.addFunction("python.inferObjectTypes", function(object, names)
+{
+   vapply(names, function(name) {
+      item <- reticulate::py_get_attr(object, name)
+      if (inherits(item, "python.builtin.module"))
+         .rs.acCompletionTypes$ENVIRONMENT
+      else if (inherits(object, "python.builtin.builtin_function_or_method") ||
+               inherits(object, "python.builtin.function") ||
+               inherits(object, "python.builtin.instancemethod"))
+         .rs.acCompletionTypes$FUNCTION
+      else if (inherits(object, "pandas.core.frame.DataFrame"))
+         .rs.acCompletionTypes$DATAFRAME
+      else
+         .rs.acCompletionTypes$UNKNOWN
+   }, numeric(1))
 })
