@@ -885,7 +885,17 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromODBC().remove();
          commands_.importDatasetFromMongo().remove();
       }
-      
+   
+      // If no project, ensure we show the product-edition title; if there is a project
+      // open this was already done
+      if (!Desktop.isDesktop() &&
+            session_.getSessionInfo().getActiveProjectFile() == null && 
+            pEdition_.get() != null)
+      {
+         // set title so tab has product edition name
+         Document.get().setTitle(pEdition_.get().editionName());
+      }
+       
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       

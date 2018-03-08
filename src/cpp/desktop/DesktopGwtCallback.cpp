@@ -222,7 +222,7 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    QFileDialog::FileMode mode = (canChooseDirectories)
          ? QFileDialog::AnyFile
          : QFileDialog::ExistingFile;
-   
+
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
 
@@ -478,7 +478,7 @@ QString GwtCallback::getGlobalMouseSelection()
 QJsonObject GwtCallback::getCursorPosition()
 {
    QPoint cursorPosition = QCursor::pos();
-   
+
    return QJsonObject {
       { QStringLiteral("x"), cursorPosition.x() },
       { QStringLiteral("y"), cursorPosition.y() }
@@ -1326,7 +1326,7 @@ void GwtCallback::setBusy(bool)
 
 void GwtCallback::setWindowTitle(QString title)
 {
-   pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - RStudio"));
+   pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - ") + desktop::activation().editionName());
 }
 
 #ifdef Q_OS_WIN
