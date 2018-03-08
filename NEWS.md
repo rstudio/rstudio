@@ -26,3 +26,9 @@
 - Fix password entry in Subversion and other shell dialogs (#1810)
 - Ensure R Markdown files are saved before publish (#1821)
 - Reconnect terminal when disconnected via proxy timeout (#1844)
+- Closing Shiny apps can crash RStudio Server (#2061)
+- Setting non-default Knit Directory breaks R Markdown websites (#2158)
+- Can't scroll through database objects if there are more than 25 (#2211)
+- Pressing F1 on help autocompletions raises an error (#2261)
+- Server Pro: Can't log in to load-balanced servers when password contains a space (Pro #338)
+
