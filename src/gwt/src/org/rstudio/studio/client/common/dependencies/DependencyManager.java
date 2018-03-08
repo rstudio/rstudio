@@ -56,6 +56,27 @@ import com.google.inject.Singleton;
 public class DependencyManager implements InstallShinyEvent.Handler,
                                           PackageStateChangedHandler
 {
+   class DependencyBuilder
+   {
+      public DependencyBuilder()
+      {
+         dependencies_ = new ArrayList<Dependency>();
+      }
+      
+      public DependencyBuilder add(Dependency dependency)
+      {
+         dependencies_.add(dependency);
+         return this;
+      }
+      
+      public List<Dependency> get()
+      {
+         return dependencies_;
+      }
+      
+      private final List<Dependency> dependencies_;
+   }
+   
    class DependencyRequest
    {
       DependencyRequest(
@@ -354,6 +375,28 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       withShiny(event.getUserAction(), 
                 new Command() { public void execute() {}});
+   }
+   
+   public void withReticulate(final String progressCaption,
+                              final String userPrompt,
+                              final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            new Dependency[] {
+                  // TODO: add reticulate 1.6 once on CRAN
+            },
+            true,
+            new CommandWithArg<Boolean>()
+            {
+               @Override
+               public void execute(Boolean succeeded)
+               {
+                  if (succeeded)
+                     command.execute();
+               }
+            });
    }
    
    @Override

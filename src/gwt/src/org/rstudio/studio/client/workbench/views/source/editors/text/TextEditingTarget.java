@@ -4934,6 +4934,13 @@ public class TextEditingTarget implements
    private void sourceActiveDocument(final boolean echo)
    {
       docDisplay_.focus();
+      
+      // If this is a Python file, use reticulate.
+      if (fileType_.isPython())
+      {
+         sourcePython();
+         return;
+      }
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
@@ -5052,6 +5059,19 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void sourcePython()
+   {
+      saveThenExecute(null, () -> {
+         dependencyManager_.withReticulate(
+               "Executing Python",
+               "Sourcing Python scripts",
+               () -> {
+                  String command = "reticulate::source_python('" + getPath() + "')";
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
+               });
+      });
    }
    
    private void runScript()

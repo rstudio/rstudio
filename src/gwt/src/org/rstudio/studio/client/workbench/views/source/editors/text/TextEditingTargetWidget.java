@@ -630,7 +630,7 @@ public class TextEditingTargetWidget
       else
       {
          shinyLaunchButton_.setVisible(false);
-         setSourceButtonFromScriptState(isScript, 
+         setSourceButtonFromScriptState(fileType, 
                                         canPreviewFromR,
                                         fileType.getPreviewButtonText());
       }
@@ -1099,13 +1099,20 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(previewCommandText_);
    }
    
-   private void setSourceButtonFromScriptState(boolean isScript, 
+   private void setSourceButtonFromScriptState(TextFileType fileType,
                                                boolean canPreviewFromR,
                                                String previewButtonText)
    {
       sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
-      if (isScript)
+      if (fileType.isPython())
+      {
+         sourceCommandText_ = "Source Script";
+         sourceCommandDesc = "Save changes and source the current script";
+         sourceButton_.setLeftImage(
+                           commands_.debugContinue().getImageResource());
+      }
+      else if (fileType.isScript())
       {
          sourceCommandText_ = "Run Script";
          sourceCommandDesc = "Save changes and run the current script";
