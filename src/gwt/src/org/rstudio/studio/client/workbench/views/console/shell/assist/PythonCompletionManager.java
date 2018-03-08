@@ -1070,10 +1070,7 @@ public class PythonCompletionManager implements CompletionManager
          if (needToMoveCursorInsideParens)
             editor.moveCursorLeft();
          
-         if (RCompletionType.isFunctionType(qualifiedName.type))
-            sigTipManager_.displayToolTip(qualifiedName.name, 
-                                          qualifiedName.source,
-                                          qualifiedName.helpHandler);
+         // TODO: Show signature tooltip for Python completions?
       }
       
       private final Invalidation.Token invalidationToken_ ;
