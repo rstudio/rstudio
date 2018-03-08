@@ -27,8 +27,11 @@ RUN apt-get update && \
     fakeroot \
     git-core \
     gnupg \
+    libattr1-dev \
+    libacl1-dev \
     libapparmor1 \
     libbz2-dev \
+    libcap-dev \
     libfuse2 \
     libgtk-3-0 \
     libgl1-mesa-dev \
