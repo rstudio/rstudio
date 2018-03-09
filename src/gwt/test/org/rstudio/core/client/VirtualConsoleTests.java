@@ -1,7 +1,7 @@
 /*
  * VirtualConsoleTests.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("jello", cr);
    }
    
-   public void testNewlineCarrigeReturn()
+   public void testNewlineCarriageReturn()
    {
       String cr = VirtualConsole.consolify("L1\nL2\rL3");
       Assert.assertEquals("L1\nL3", cr);
@@ -732,5 +732,27 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("hello world\b\b\b\b\b");
       Assert.assertEquals("<span>hello world</span>", ele.getInnerHTML());
       Assert.assertEquals("hello world", vc.toString());
+   }
+   
+   public void testSingleSupportedANSICodes()
+   {
+      // https://github.com/rstudio/rstudio/issues/2248
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(AnsiCode.CSI + "?25lBuilding sites \342\200\246 " +
+                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+      Assert.assertEquals("<span>Building sites \342\200\246 </span>", ele.getInnerHTML());
+      Assert.assertEquals("Building sites \342\200\246 ", vc.toString());       
+   }
+   
+   public void testMultipleUnknownANSICodes()
+   {
+      // https://github.com/rstudio/rstudio/issues/2248
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("We are " + AnsiCode.CSI + "?25lbuilding sites \342\200\246" +
+                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+      Assert.assertEquals("<span>We are building sites \342\200\246</span>", ele.getInnerHTML());
+      Assert.assertEquals("We are building sites \342\200\246", vc.toString());       
    }
 }

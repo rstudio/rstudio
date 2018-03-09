@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -182,7 +182,7 @@ public class VirtualConsole
    {
       Entry <Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
-      if (!forceNewRange && range.clazz == clazz)
+      if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
          // just append to the existing output stream
          range.appendRight(text, 0);
@@ -240,7 +240,7 @@ public class VirtualConsole
          ClassRange overlap = entry.getValue();
          int l = entry.getKey();
          int r = l + overlap.length;
-         boolean matches = range.clazz == overlap.clazz;
+         boolean matches = StringUtil.equals(range.clazz, overlap.clazz);
          if (start >= l && start < r && end >= r) 
          {
             // overlapping on the left side of the new range
@@ -476,38 +476,75 @@ public class VirtualConsole
                break;
             case '\033':
             case '\233':
-               Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
-               if (ansiMatch == null || AnsiCode.partialSequence(ansiMatch.getValue()))
+               
+               // VirtualConsole only supports ANSI SGR codes (colors, font, etc).
+               // We want to identify and act on these codes, while discarding the codes
+               // we don't support. Tricky part is we might get codes split across
+               // submit calls.
+               
+               // match complete SGR codes
+               Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
+               if (sgrMatch == null)
                {
-                  // Might have an ANSI code that was split across submit calls;
-                  // save remainder of string to see if we can recognize it
-                  // when more arrives
-                  partialAnsiCode_ = data.substring(pos);
-                  return;
-               }
-               if (ansi_ == null)
-                  ansi_ = new AnsiCode();
-               ansiCodeStyles_ = ansi_.processCode(ansiMatch.getValue());
-               if (ansiColorMode == ANSI_COLOR_STRIP)
-               {
-                  currentClazz = clazz;
-               }
-               else
-               {
-                  if (clazz != null)
+                  if (StringUtil.equals(data.substring(tail), "["))
                   {
-                     currentClazz = clazz;
-                     if (ansiCodeStyles_.inlineClazzes != null)
-                     {
-                        currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
-                     }
+                     // only have "[" at end, could be any ANSI code, so save remainder
+                     // of string to see if we can recognize it when more arrives
+                     partialAnsiCode_ = data.substring(pos);
+                     return;
+                  }
+                  
+                  // potentially an incomplete SGR code
+                  Match partialMatch = AnsiCode.SGR_PARTIAL_ESCAPE_PATTERN.match(data, pos);
+                  if (partialMatch != null)
+                  {
+                     // Might have an SGR ANSI code that was split across submit calls;
+                     // save remainder of string to see if we can recognize it
+                     // when more arrives
+                     partialAnsiCode_ = data.substring(pos);
+                     return;
+                  }
+                  
+                  // how about an unsupported ANSI code?
+                  Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
+                  if (ansiMatch != null)
+                  {
+                     // discard it
+                     tail = pos + ansiMatch.getValue().length();
                   }
                   else
                   {
-                     currentClazz = ansiCodeStyles_.inlineClazzes;
+                     // nothing useful we can do, just throw away the ESC
+                     tail++;
                   }
                }
-               tail = pos + ansiMatch.getValue().length();
+               else
+               {
+                  // process the SGR code
+                  if (ansi_ == null)
+                     ansi_ = new AnsiCode();
+                  ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
+                  if (ansiColorMode == ANSI_COLOR_STRIP)
+                  {
+                     currentClazz = clazz;
+                  }
+                  else
+                  {
+                     if (clazz != null)
+                     {
+                        currentClazz = clazz;
+                        if (ansiCodeStyles_.inlineClazzes != null)
+                        {
+                           currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
+                        }
+                     }
+                     else
+                     {
+                        currentClazz = ansiCodeStyles_.inlineClazzes;
+                     }
+                  }
+                  tail = pos + sgrMatch.getValue().length();
+               }
                break;
             default:
                assert false : "Unknown control char, please check regex";
