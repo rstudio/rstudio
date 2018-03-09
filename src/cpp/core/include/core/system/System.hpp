@@ -65,6 +65,14 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 #ifndef _WIN32
 Error closeAllFileDescriptors();
 Error closeNonStdFileDescriptors();
+
+namespace signal_safe {
+
+// thread and signal-safe version of closeNonStdFileDescriptors()
+void closeNonStdFileDescriptors();
+
+} // namespace signal_safe
+
 void closeStdFileDescriptors();
 void attachStdFileDescriptorsToDevNull();
 void setStandardStreamsToDevNull();

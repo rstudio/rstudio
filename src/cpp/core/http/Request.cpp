@@ -134,6 +134,19 @@ std::string Request::cookieValue(const std::string& name) const
    return util::fieldValue(cookies_, name);
 }
 
+std::string Request::cookieValueFromHeader(const std::string& headerName) const
+{
+   std::string value = headerValue(headerName);
+
+   Fields cookie;
+   util::parseFields(value, ";, ", "= ", &cookie, util::FieldDecodeNone) ;
+
+   if (cookie.size() > 0)
+      return cookie.at(0).second;
+   else
+      return std::string();
+}
+
 std::string Request::formFieldValue(const std::string& name) const 
 {
    ensureFormFieldsParsed();

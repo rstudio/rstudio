@@ -35,6 +35,7 @@
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#include <core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <core/text/TemplateFilter.hpp>
@@ -322,7 +323,7 @@ bool verifyRequestSignature(const core::http::Request& request)
       return true;
 
    // get signature from request
-   std::string signature = request.headerValue(kRStudioMessageSignature);
+   std::string signature = request.headerValue(kRstudioMessageSignature);
    if (signature.empty())
    {
        LOG_ERROR_MESSAGE("No signature specified on request for session " +

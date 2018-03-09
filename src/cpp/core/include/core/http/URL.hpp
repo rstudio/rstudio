@@ -64,15 +64,21 @@ public:
    std::string host() const { return std::string(host_.c_str()); }
    std::string path() const { return std::string(path_.c_str()); }
    std::string hostname() const { return host_.substr(0, host_.find(':')); }
+
    int port() const
+   {
+      return safe_convert::stringTo(portStr(), 80);
+   }
+
+   std::string portStr() const
    {
       size_t idx = host_.find(':');
       if (idx != std::string::npos)
       {
          std::string port = host_.substr(idx + 1);
-         return safe_convert::stringTo(port, 80);
+         return port;
       }
-      return 80;
+      return (protocol_ == "http") ? "80" : "443";
    }
    
    void split(std::string* pBaseURL, std::string* pQueryParams) const;

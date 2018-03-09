@@ -710,10 +710,15 @@ Error ChildProcess::run()
          if (result == -1)
             ::_exit(kThreadSafeForkErrorExit);
 
-         result = ::dup2(options_.redirectStdErrToStdOut ? fdOutput[WRITE] : fdError[WRITE],
-                             STDERR_FILENO);
+         result = ::dup2(options_.redirectStdErrToStdOut ? fdOutput[WRITE] : fdError[WRITE], STDERR_FILENO);
          if (result == -1)
             ::_exit(kThreadSafeForkErrorExit);
+
+         // close inherited file descriptors - this prevents
+         // the child from clobbering the parent's FDs
+         // and actually prevents potential missed child exits caused by
+         // clobbering of FDs affecting epoll calls
+         signal_safe::closeNonStdFileDescriptors();
       }
 
       if (options_.environment)

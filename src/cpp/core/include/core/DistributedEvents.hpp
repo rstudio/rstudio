@@ -107,10 +107,19 @@ typedef boost::function<void (const DistributedEvent&)> DistributedEventSyncHand
 
 namespace distributed_events {
 
-// emit (broadcast) a distributed event
+// emit (broadcast) a distributed event to local server socket
 Error emitDistributedEvent(const std::string& targetType,
                            const std::string& target,
                            const DistributedEvent& distEvt);
+
+// emit a distributed event to a specific server address via TCP
+Error emitDistributedEvent(const std::string& targetType,
+                           const std::string& target,
+                           const DistributedEvent& distEvt,
+                           const std::string& tcpAddress,
+                           const std::string& port,
+                           bool ssl,
+                           const std::string& baseUri = std::string());
 
 // receives a distributed session event from the server and broadcasts it
 // asynchronous mode

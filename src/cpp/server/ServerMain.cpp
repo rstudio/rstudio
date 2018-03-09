@@ -137,7 +137,7 @@ auth::SecureAsyncUriHandlerFunction secureAsyncFileHandler()
 }
 
 // http server
-boost::scoped_ptr<http::AsyncServer> s_pHttpServer;
+boost::shared_ptr<http::AsyncServer> s_pHttpServer;
 
 Error httpServerInit()
 {
@@ -359,6 +359,11 @@ void setResponseFilter(const core::http::ResponseFilter& filter)
 
 
 } // namespace uri_handlers
+
+boost::shared_ptr<http::AsyncServer> server()
+{
+   return s_pHttpServer;
+}
 
 namespace scheduler {
 
