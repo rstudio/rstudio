@@ -260,6 +260,8 @@ oop.inherits(Mode, MarkdownMode);
         + unicode.packages.Pc + "._]|\\s])+", "g"
     );
 
+    this.allowAutoInsert = this.smartAllowAutoInsert;
+
     this.$id = "mode/rmarkdown";
 
 }).call(Mode.prototype);
