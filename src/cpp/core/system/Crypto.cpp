@@ -1,7 +1,7 @@
 /*
  * Crypto.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,7 +144,7 @@ Error HMAC_SHA2(const std::string& data,
    pHMAC->resize(EVP_MAX_MD_SIZE);
    unsigned char* pResult = ::HMAC(EVP_sha256(),
                                    &(key[0]),
-                                   key.size(),
+                                   static_cast<int>(key.size()),
                                    &(dataVector[0]),
                                    dataVector.size(),
                                    &(pHMAC->operator[](0)),
@@ -184,7 +184,7 @@ Error sha256(const std::string& message,
 Error base64Encode(const std::vector<unsigned char>& data, 
                    std::string* pEncoded)
 {
-   return base64Encode(&(data[0]), data.size(), pEncoded);
+   return base64Encode(&(data[0]), static_cast<int>(data.size()), pEncoded);
 }
    
 Error base64Encode(const unsigned char* pData, 
@@ -227,7 +227,7 @@ Error base64Encode(const unsigned char* pData,
 
    // read the memory stream
    std::vector<char> buffer(len *2); // plenty more than len * 1.37 + padding
-   int bytesRead = ::BIO_read(pMem, &(buffer[0]), buffer.capacity());
+   int bytesRead = ::BIO_read(pMem, &(buffer[0]), static_cast<int>(buffer.capacity()));
    if (bytesRead < 0 && ::ERR_get_error() != 0)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -255,7 +255,7 @@ Error base64Decode(const std::string& data,
    BIOFreeAllScope freeB64Scope(pB64);
    
    // allocate buffer 
-   BIO* pMem = BIO_new_mem_buf((void*)data.data(), data.length());
+   BIO* pMem = BIO_new_mem_buf((void*)data.data(), static_cast<int>(data.length()));
    if (pMem == NULL)
       return lastCryptoError(ERROR_LOCATION);
    
@@ -267,7 +267,7 @@ Error base64Decode(const std::string& data,
    pDecoded->resize(data.length());
    int bytesRead = ::BIO_read(pB64, 
                               &(pDecoded->operator[](0)), 
-                              pDecoded->size());
+                              static_cast<int>(pDecoded->size()));
    if (bytesRead < 0)
       return lastCryptoError(ERROR_LOCATION);
    
@@ -294,7 +294,7 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kEncrypt);
 
    // perform the encryption
-   if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], data.size()))
+   if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
@@ -331,7 +331,7 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kDecrypt);
 
    // perform the decryption
-   if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], data.size()))
+   if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
@@ -380,7 +380,7 @@ Error rsaSign(const std::string& message,
 
    // convert the key into an RSA structure
    std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(BIO_new_mem_buf(const_cast<char*>(pemPrivateKey.c_str()),
-                                                      pemPrivateKey.size()),
+                                                      static_cast<int>(pemPrivateKey.size())),
                                                       BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -400,7 +400,7 @@ Error rsaSign(const std::string& message,
 
    unsigned int sigLen = 0;
    int ret = RSA_sign(NID_sha256, (const unsigned char*)hash.c_str(),
-                      hash.size(), pSignature.get(), &sigLen, pRsa.get());
+                      static_cast<unsigned int>(hash.size()), pSignature.get(), &sigLen, pRsa.get());
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -423,7 +423,8 @@ Error rsaVerify(const std::string& message,
 
    // convert the key into an RSA structure
    std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(
-            BIO_new_mem_buf(const_cast<char*>(pemPublicKey.c_str()), pemPublicKey.size()),
+            BIO_new_mem_buf(const_cast<char*>(pemPublicKey.c_str()),
+            static_cast<int>(pemPublicKey.size())),
             BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -434,8 +435,8 @@ Error rsaVerify(const std::string& message,
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
    // verify the message hash
-   int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), hash.size(),
-                       (const unsigned char*)signature.c_str(), signature.size(), pRsa.get());
+   int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), static_cast<unsigned int>(hash.size()),
+                       (const unsigned char*)signature.c_str(), static_cast<unsigned int>(signature.size()), pRsa.get());
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -568,7 +569,7 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
 
    int size = RSA_size(s_pRSA);
    std::vector<unsigned char> plainTextBytes(size);
-   int bytesRead = RSA_private_decrypt(cipherTextBytes.size(),
+   int bytesRead = RSA_private_decrypt(static_cast<int>(cipherTextBytes.size()),
                                        &cipherTextBytes[0],
                                        &plainTextBytes[0],
                                        s_pRSA,

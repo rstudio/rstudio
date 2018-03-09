@@ -1,7 +1,7 @@
 /*
  * FileUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,7 +89,7 @@ std::string readFile(const FilePath& filePath)
    {
       stream.seekg(0, std::ios::end);
       std::streamsize size = stream.tellg();
-      content.resize(size);
+      content.resize(static_cast<size_t>(size));
       stream.seekg(0, std::ios::beg);
       stream.read(&content[0], size);
       stream.close();
