@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
          // get filename from command line arguments
          if (pApp->arguments().size() > 1)
          {
-            QString arg = pApp->arguments().last();
+            QString arg = pApp->arguments().at(1);
             if (arg != QString::fromUtf8(kRunDiagnosticsOption))
                filename = verifyAndNormalizeFilename(arg);
          }
