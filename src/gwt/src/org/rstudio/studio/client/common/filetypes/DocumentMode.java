@@ -19,6 +19,38 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class DocumentMode
 {
+   public enum Mode
+   {
+      R,
+      PYTHON,
+      C_CPP,
+      MARKDOWN,
+      TEX,
+      UNKNOWN
+   }
+   
+   public static Mode getModeForPosition(DocDisplay docDisplay,
+                                         Position position)
+   {
+      if (isPositionInRMode(docDisplay, position))
+         return Mode.R;
+      else if (isPositionInPythonMode(docDisplay, position))
+         return Mode.PYTHON;
+      else if (isPositionInCppMode(docDisplay, position))
+         return Mode.C_CPP;
+      else if (isPositionInMarkdownMode(docDisplay, position))
+         return Mode.MARKDOWN;
+      else if (isPositionInTexMode(docDisplay, position))
+         return Mode.TEX;
+      else
+         return Mode.UNKNOWN;
+   }
+   
+   public static Mode getModeForCursorPosition(DocDisplay docDisplay)
+   {
+      return getModeForPosition(docDisplay, docDisplay.getCursorPosition());
+   }
+   
    private static boolean isPositionInMode(DocDisplay docDisplay,
                                            Position position,
                                            String modeString)

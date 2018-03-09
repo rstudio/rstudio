@@ -48,23 +48,20 @@ import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
 {
+   @Override
    public void onPaste(PasteEvent event)
    {
       hideCompletionPopup();
-      if (rCompletionManager_ != null)
-         rCompletionManager_.onPaste(event);
    }
    
    public CppCompletionManager(DocDisplay docDisplay,
                                InitCompletionFilter initFilter,
-                               CppCompletionContext completionContext,
-                               CompletionManager rCompletionManager)
+                               CppCompletionContext completionContext)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       completionContext_ = completionContext;
-      rCompletionManager_ = rCompletionManager;
       snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
       handlers_ = new HandlerRegistrations();
       
@@ -92,16 +89,7 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public void close()
    {
-      // delegate to R mode if necessary
-      if (DocumentMode.isCursorInRMode(docDisplay_) ||
-            DocumentMode.isCursorInMarkdownMode(docDisplay_))
-      {
-         rCompletionManager_.close();
-      }
-      else
-      {
-         terminateCompletionRequest();
-      }
+      terminateCompletionRequest();
    }
    
    @Override
@@ -109,21 +97,13 @@ public class CppCompletionManager implements CompletionManager
    {
       handlers_.removeHandler();
       snippets_.detach();
-      rCompletionManager_.detach();
    }
    
    // perform completion at the current cursor location
    @Override
    public void codeCompletion()
    {
-      // delegate to R mode if necessary
-      if (DocumentMode.isCursorInRMode(docDisplay_) ||
-            DocumentMode.isCursorInMarkdownMode(docDisplay_))
-      {
-         rCompletionManager_.codeCompletion();
-      }
-      // check whether it's okay to do a completion
-      else if (shouldComplete(null))
+      if (shouldComplete(null))
       {
          suggestCompletions(true); 
       }
@@ -133,55 +113,39 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public void goToHelp()
    {
-      // delegate to R mode if necessary
-      if (DocumentMode.isCursorInRMode(docDisplay_))
-      {
-         rCompletionManager_.goToHelp();
-      }
-      else
-      {
-         // no implementation here yet since we don't have access
-         // to C/C++ help (we could implement this via using libclang
-         // to parse doxygen though)   
-      }
+      // no implementation here yet since we don't have access
+      // to C/C++ help (we could implement this via using libclang
+      // to parse doxygen though)   
    }
 
    // find the definition of the function at the current cursor location
    @Override
    public void goToDefinition()
    {  
-      // delegate to R mode if necessary
-      if (DocumentMode.isCursorInRMode(docDisplay_))
-      {
-         rCompletionManager_.goToDefinition();
-      }
-      else
-      {
-         completionContext_.cppCompletionOperation(new CppCompletionOperation(){
+      completionContext_.cppCompletionOperation(new CppCompletionOperation(){
 
-            @Override
-            public void execute(String docPath, int line, int column)
-            {
-               server_.goToCppDefinition(
-                     docPath, 
-                     line, 
-                     column, 
-                     new CppCompletionServerRequestCallback<CppSourceLocation>(
-                                                     "Finding definition...") {
-                        @Override
-                        public void onSuccess(CppSourceLocation loc)
+         @Override
+         public void execute(String docPath, int line, int column)
+         {
+            server_.goToCppDefinition(
+                  docPath, 
+                  line, 
+                  column, 
+                  new CppCompletionServerRequestCallback<CppSourceLocation>(
+                        "Finding definition...") {
+                     @Override
+                     public void onSuccess(CppSourceLocation loc)
+                     {
+                        if (loc != null)
                         {
-                           if (loc != null)
-                           {
-                              fileTypeRegistry_.editFile(loc.getFile(), 
-                                                         loc.getPosition());  
-                           }
+                           fileTypeRegistry_.editFile(loc.getFile(), 
+                                 loc.getPosition());  
                         }
-                     });
-            }
-            
-         });
-      }
+                     }
+                  });
+         }
+
+      });
    }
   
    // return false to indicate key not handled
@@ -189,11 +153,6 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       suggestionTimer_.cancel();
-      
-      // delegate to R mode if appropriate
-      if (DocumentMode.isCursorInRMode(docDisplay_) ||
-            DocumentMode.isCursorInMarkdownMode(docDisplay_))
-         return rCompletionManager_.previewKeyDown(event);
       
       // if there is no completion request active then 
       // check for a key-combo that triggers completion or 
@@ -295,25 +254,16 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       suggestionTimer_.cancel();
-      
-      // delegate to R mode if necessary
-      if (DocumentMode.isCursorInRMode(docDisplay_) || 
-            DocumentMode.isCursorInMarkdownMode(docDisplay_))
+
+      // don't do implicit completions if the user has set completion to manual
+      // (but always do them if the completion popup is visible)
+      if (uiPrefs_.codeComplete().getValue() != UIPrefsAccessor.COMPLETION_MANUAL ||
+            isCompletionPopupVisible())
       {
-         return rCompletionManager_.previewKeyPress(c);
+         deferredSuggestCompletions(false, true);
       }
-      else
-      {
-         // don't do implicit completions if the user has set completion to manual
-         // (but always do them if the completion popup is visible)
-         if (uiPrefs_.codeComplete().getValue() != UIPrefsAccessor.COMPLETION_MANUAL ||
-             isCompletionPopupVisible())
-         {
-            deferredSuggestCompletions(false, true);
-         }
-         
-         return false;
-      }
+
+      return false;
    }
    
    private void deferredSuggestCompletions(final boolean explicit, 
@@ -502,7 +452,6 @@ public class CppCompletionManager implements CompletionManager
    private CppCompletionRequest request_;
    private SuggestionTimer suggestionTimer_;
    private final InitCompletionFilter initFilter_ ;
-   private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
    private final SnippetHelper snippets_;
    

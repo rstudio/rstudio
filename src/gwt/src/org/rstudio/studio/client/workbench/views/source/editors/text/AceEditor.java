@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -67,6 +68,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -78,6 +80,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.DelegatingCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
@@ -707,55 +710,52 @@ public class AceEditor implements DocDisplay,
    {
       if (fileType_ == null)
          return;
-
+      
       CompletionManager completionManager;
-      if (!suppressCompletion)
+      
+      if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
-         if (fileType_.getEditorLanguage().useRCompletion())
+         completionManager = new DelegatingCompletionManager(this)
          {
-            if (fileType_.isPython())
+            @Override
+            protected void initialize(Map<Mode, CompletionManager> managers)
             {
-               completionManager = new PythonCompletionManager(
-                     this,
-                     this,
+               // R completion manager
+               managers.put(DocumentMode.Mode.R, new RCompletionManager(
+                     AceEditor.this,
+                     AceEditor.this,
                      new CompletionPopupPanel(),
                      server_,
                      new Filter(),
                      rContext_,
                      fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     this,
-                     false);
-            }
-            else
-            {
-               completionManager = new RCompletionManager(
-                     this,
-                     this,
+                     AceEditor.this,
+                     false));
+               
+               // Python completion manager
+               managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
+                     AceEditor.this,
+                     AceEditor.this,
                      new CompletionPopupPanel(),
                      server_,
                      new Filter(),
                      rContext_,
                      fileType_.canExecuteChunks() ? rnwContext_ : null,
-                        this,
-                        false);
-
-               // if this is cpp then we use our own completion manager
-               // that can optionally delegate to the R completion manager
-               if (fileType_.isC() || fileType_.isRmd())
-               {
-                  completionManager = new CppCompletionManager(
-                        this,
-                        new Filter(),
-                        cppContext_,
-                        completionManager);
-               }
+                     AceEditor.this,
+                     false));
+               
+               // C++ completion manager
+               managers.put(DocumentMode.Mode.C_CPP, new CppCompletionManager(
+                     AceEditor.this,
+                     new Filter(),
+                     cppContext_));
             }
-         }
-         else
-            completionManager = new NullCompletionManager();
+         };
       }
       else
+      {
          completionManager = new NullCompletionManager();
+      }
 
       updateLanguage(completionManager);
    }
