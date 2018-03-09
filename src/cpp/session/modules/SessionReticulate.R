@@ -20,11 +20,7 @@
    if (!requireNamespace("reticulate", quietly = TRUE))
       return(.rs.emptyCompletions())
    
-   completions <- tryCatch(
-      .rs.python.getCompletions(line),
-      error = identity
-   )
-   
+   completions <- .rs.tryCatch(.rs.python.getCompletions(line))
    if (inherits(completions, "error"))
       return(.rs.emptyCompletions(language = "Python"))
    
@@ -968,13 +964,19 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 .rs.addFunction("python.inferObjectTypes", function(object, names)
 {
    vapply(names, function(name) {
-      item <- reticulate::py_get_attr(object, name)
+      
+      # attempt to grab attribute (note that this can fail if
+      # the object as implemented a custom __getattr__ or similar)
+      item <- .rs.tryCatch(reticulate::py_get_attr(object, name))
+      if (inherits(item, "error"))
+         return(.rs.acCompletionTypes$UNKNOWN)
+      
+      # try to infer the completion type
       if (inherits(item, "python.builtin.module"))
          .rs.acCompletionTypes$ENVIRONMENT
       else if (inherits(item, "python.builtin.builtin_function_or_method") ||
                inherits(item, "python.builtin.function") ||
-               inherits(item, "python.builtin.instancemethod") ||
-               inherits(item, "python.builtin.type"))
+               inherits(item, "python.builtin.instancemethod"))
          .rs.acCompletionTypes$FUNCTION
       else if (inherits(item, "pandas.core.frame.DataFrame"))
          .rs.acCompletionTypes$DATAFRAME
