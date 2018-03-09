@@ -2051,6 +2051,11 @@ public class TextEditingTarget implements
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
    }
    
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+      // TODO: ensure 'reticulate' installed
+   }
 
    public void focus()
    {

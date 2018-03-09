@@ -1221,6 +1221,20 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewPythonDoc()
+   {
+      newDoc(FileTypeRegistry.PYTHON, new ResultCallback<EditingTarget, ServerError>()
+      {
+         @Override
+         public void onSuccess(EditingTarget target)
+         {
+            target.verifyPythonPrerequisites();
+         }
+      });
+   }
+   
+   
+   @Handler
    public void onNewSweaveDoc()
    {
       // set concordance value if we need to

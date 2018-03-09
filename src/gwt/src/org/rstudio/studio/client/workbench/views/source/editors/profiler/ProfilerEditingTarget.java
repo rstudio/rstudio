@@ -208,6 +208,11 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void verifyCppPrerequisites()
    {
    }
+   
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+   }
 
    @Override
    public Position search(String regex)

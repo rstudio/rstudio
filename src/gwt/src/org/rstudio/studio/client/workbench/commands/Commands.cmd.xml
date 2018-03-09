@@ -47,6 +47,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
+            <cmd refid="newPythonDoc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
@@ -836,6 +837,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="newCppDoc"
         menuLabel="_C++ File"
         desc="Create a new C++ file"
+        rebindable="false"/>
+        
+   <cmd id="newPythonDoc"
+        menuLabel="_Python File"
+        desc="Create a new Python file"
         rebindable="false"/>
         
    <cmd id="rcppHelp"

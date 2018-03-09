@@ -468,6 +468,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void verifyPythonPrerequisites()
+   {
+   }
+   
+   @Override
    public void focus()
    {
       docDisplay_.focus();
