@@ -476,10 +476,10 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    completions <- candidates[indices]
    
    # re-order source and type if they were provided
-   if (!is.null(source))
+   if (!is.null(source) && length(source) == length(candidates))
       source <- source[indices]
    
-   if (!is.null(type))
+   if (!is.null(type) && length(type) == length(candidates))
       type <- type[indices]
    
    attr(completions, "token") <- token
