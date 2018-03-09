@@ -1178,6 +1178,7 @@ public class StringUtil
       int end = Math.min(lines.length() - 1, 1000);
       
       // detect tab counts separately
+      int indentedLineCount = 0;
       int tabIndentCount = 0;
       
       for (int i = 0, n = end; i < n; i++)
@@ -1202,7 +1203,13 @@ public class StringUtil
             indentMap.put(indentSize, 0);
          int count = indentMap.get(indentSize);
          indentMap.put(indentSize, count + 1);
+         indentedLineCount++;
       }
+      
+      // if we only saw a few lines were indented, assume we don't
+      // have enough information to provide a guess
+      if (indentedLineCount < 5)
+         return -1;
       
       // now, we want to try and detect what indentation pattern is most common.
       // for example, in a document with two-space indent, we should see indents
