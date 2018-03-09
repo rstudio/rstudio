@@ -1,7 +1,7 @@
 /*
  * SourceIndex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -247,7 +247,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          index_,
                          filename.c_str(),
                          argsArray.args(),
-                         argsArray.argCount(),
+                         static_cast<int>(argsArray.argCount()),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
                          options);

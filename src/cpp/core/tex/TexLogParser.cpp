@@ -1,7 +1,7 @@
 /*
  * TexLogParser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -353,7 +353,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
         it++)
    {
       const std::string& line = *it;
-      int logLineNum = (it - lines.begin()) + 1;
+      auto logLineNum = (it - lines.begin()) + 1;
 
       // We slurp overfull/underfull messages with no further processing
       // (i.e. not manipulating the file stack)
@@ -383,8 +383,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         calculateWrappedLine(linesUnwrapped,
-                                                              logLineNum),
+                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
+                                                                               logLineNum)),
                                          LogEntry::Box,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -430,8 +430,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         calculateWrappedLine(linesUnwrapped,
-                                                              logLineNum),
+                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
+                                                                               logLineNum)),
                                          LogEntry::Error,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -470,8 +470,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         calculateWrappedLine(linesUnwrapped,
-                                                              logLineNum),
+                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
+                                                                               logLineNum)),
                                          LogEntry::Warning,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -495,8 +495,8 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          {
             int lineNum = safe_convert::stringTo<int>(cStyleErrorMatch[2], -1);
             pLogEntries->push_back(LogEntry(logFilePath,
-                                            calculateWrappedLine(linesUnwrapped,
-                                                                 logLineNum),
+                                            static_cast<int>(calculateWrappedLine(linesUnwrapped,
+                                                                                  logLineNum)),
                                             LogEntry::Error,
                                             cstyleFile,
                                             lineNum,
@@ -529,7 +529,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          pLogEntries->push_back(
                LogEntry(
                      logFilePath,
-                     (it - lines.begin()) + 1,
+                     static_cast<int>((it - lines.begin()) + 1),
                      LogEntry::Error,
                      texFilePath(match[3], logFilePath.parent()),
                      boost::lexical_cast<int>(match[2]),

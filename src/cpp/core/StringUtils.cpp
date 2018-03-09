@@ -121,7 +121,7 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
       if (index == std::string::npos)
          continue;
       
-      result.push_back(index);
+      result.push_back(static_cast<int>(index));
       prevMatchIndex = index;
    }
    
@@ -135,12 +135,12 @@ bool subsequenceIndices(std::string const& sequence,
    pIndices->clear();
    pIndices->reserve(query.length());
    
-   int query_n = query.length();
+   int query_n = static_cast<int>(query.length());
    int prevMatchIndex = -1;
    
    for (int i = 0; i < query_n; i++)
    {
-      int index = sequence.find(query[i], prevMatchIndex + 1);
+      int index = static_cast<int>(sequence.find(query[i], prevMatchIndex + 1));
       if (index == -1)
          return false;
       
@@ -247,7 +247,7 @@ std::string utf8ToSystem(const std::string& str,
 
 #ifdef _WIN32
    std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], wide.size());
+   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], static_cast<int>(wide.size()));
    if (chars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -284,7 +284,8 @@ std::string systemToUtf8(const std::string& str, int codepage)
 
 #ifdef _WIN32
    std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), str.length(), &wide[0], wide.size());
+   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), static_cast<int>(str.length()),
+                                     &wide[0], static_cast<int>(wide.size()));
    if (chars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -292,8 +293,8 @@ std::string systemToUtf8(const std::string& str, int codepage)
    }
 
    int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
-                                             NULL, 0,
-                                             NULL, NULL);
+                                             nullptr, 0,
+                                             nullptr, nullptr);
    if (bytesRequired == 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -301,8 +302,8 @@ std::string systemToUtf8(const std::string& str, int codepage)
    }
    std::vector<char> buf(bytesRequired, 0);
    int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
-                                            &(buf[0]), buf.size(),
-                                            NULL, NULL);
+                                            &(buf[0]), static_cast<int>(buf.size()),
+                                            nullptr, nullptr);
    return std::string(buf.begin(), buf.end());
 #else
    return str;
@@ -575,7 +576,7 @@ void stripQuotes(std::string* pStr)
    if (pStr->length() > 0 && (pStr->at(0) == '\'' || pStr->at(0) == '"'))
       *pStr = pStr->substr(1);
 
-   int len = pStr->length();
+   auto len = pStr->length();
 
    if (len > 0 && (pStr->at(len-1) == '\'' || pStr->at(len-1) == '"'))
       *pStr = pStr->substr(0, len -1);

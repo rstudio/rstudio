@@ -1,7 +1,7 @@
 /*
  * Request.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -173,7 +173,7 @@ std::string Request::queryParamValue(const std::string& name) const
 void Request::setBody(const std::string& body)
 {
    body_ = body;
-   setContentLength(body_.length());
+   setContentLength(static_cast<int>(body_.length()));
 }
    
 void Request::debugPrintUri(const std::string& caption) const

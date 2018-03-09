@@ -102,7 +102,7 @@ Error ConsoleProcessSocket::ensureServerRunning()
                      static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
 
                boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
-               pwsServer_->listen(endpoint.address(), port);
+               pwsServer_->listen(endpoint.address(), static_cast<uint16_t>(port));
             }
             else
             {
@@ -119,7 +119,7 @@ Error ConsoleProcessSocket::ensureServerRunning()
 #endif
                {
                   // no ipv6 support, fall back to ipv4
-                  pwsServer_->listen(boost::asio::ip::tcp::v4(), port);
+                  pwsServer_->listen(boost::asio::ip::tcp::v4(), static_cast<uint16_t>(port));
                }
             }
 

@@ -1,7 +1,7 @@
 /*
  * FileSerializer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -193,7 +193,7 @@ Error readStringFromFile(const FilePath& filePath,
                // compute the portion of the line to be read; if this is the
                // start or end of the region to be read, use the character
                // offsets supplied
-               int lineLength = line.length();
+               int lineLength = static_cast<int>(line.length());
                content += line.substr(
                         currentLine == startLine ?
                            std::min(
