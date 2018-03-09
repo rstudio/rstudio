@@ -87,6 +87,12 @@ if(MSVC)
 
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  # Use --as-needed when RSTUDIO_CONFIG_MONITOR_ONLY
+  if(RSTUDIO_CONFIG_MONITOR_ONLY)
+      foreach(TYPE EXE MODULE SHARED)
+        set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} -Wl,--as-needed -Wl,--no-undefined -Wl,--no-allow-shlib-undefined")
+      endforeach()
+  endif()
 endif()
 
 if(NOT DEFINED WINDRES)
