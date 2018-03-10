@@ -715,6 +715,10 @@ public class AceEditor implements DocDisplay,
       
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
+         // GWT throws an exception if we bind Ace using 'AceEditor.this' below
+         // so work around that by just creating a final reference and use that
+         final AceEditor editor = this;
+         
          completionManager = new DelegatingCompletionManager(this)
          {
             @Override
@@ -722,31 +726,31 @@ public class AceEditor implements DocDisplay,
             {
                // R completion manager
                managers.put(DocumentMode.Mode.R, new RCompletionManager(
-                     AceEditor.this,
-                     AceEditor.this,
+                     editor,
+                     editor,
                      new CompletionPopupPanel(),
                      server_,
                      new Filter(),
                      rContext_,
                      fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     AceEditor.this,
+                     editor,
                      false));
                
                // Python completion manager
                managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
-                     AceEditor.this,
-                     AceEditor.this,
+                     editor,
+                     editor,
                      new CompletionPopupPanel(),
                      server_,
                      new Filter(),
                      rContext_,
                      fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     AceEditor.this,
+                     editor,
                      false));
                
                // C++ completion manager
                managers.put(DocumentMode.Mode.C_CPP, new CppCompletionManager(
-                     AceEditor.this,
+                     editor,
                      new Filter(),
                      cppContext_));
             }
