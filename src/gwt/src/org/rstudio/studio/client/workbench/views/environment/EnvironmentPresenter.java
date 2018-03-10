@@ -582,7 +582,7 @@ public class EnvironmentPresenter extends BasePresenter
               "Confirm Load RData",
 
               "Do you want to load the R data file \"" + dataFilePath + "\" " +
-              "into the global environment?",
+              "into your global environment?",
 
               new ProgressOperation() {
                  public void execute(ProgressIndicator indicator)
