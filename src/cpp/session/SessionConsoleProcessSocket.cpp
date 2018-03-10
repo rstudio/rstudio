@@ -15,6 +15,7 @@
 
 #include <session/SessionConsoleProcessSocket.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
+#include <session/SessionConsoleProcessSocketPacket.hpp>
 
 #include "http/SessionTcpIpHttpConnectionListener.hpp"
 
@@ -223,8 +224,8 @@ Error ConsoleProcessSocket::stopListening(const std::string& terminalHandle)
    return Success();
 }
 
-Error ConsoleProcessSocket::sendText(const std::string& terminalHandle,
-                                     const std::string& message)
+Error ConsoleProcessSocket::sendRawText(const std::string& terminalHandle,
+                                        const std::string& message)
 {
    // do we know about this handle?
    ConsoleProcessSocketConnectionDetails details = connections_.get(terminalHandle);
@@ -253,6 +254,17 @@ Error ConsoleProcessSocket::sendText(const std::string& terminalHandle,
    return Success();
 }
 
+Error ConsoleProcessSocket::sendText(const std::string& terminalHandle,
+                                     const std::string& message)
+{
+   return sendRawText(terminalHandle, ConsoleProcessSocketPacket::textPacket(message));
+}
+
+Error ConsoleProcessSocket::sendPong(const std::string& terminalHandle)
+{
+   return sendRawText(terminalHandle, ConsoleProcessSocketPacket::keepAlivePacket());
+}
+
 void ConsoleProcessSocket::releaseAllConnections()
 {
    connections_.clear();
@@ -277,9 +289,15 @@ void ConsoleProcessSocket::onMessage(terminalServer* s,
       return;
    ConsoleProcessSocketConnectionDetails details = connections_.get(handle);
 
-   std::string message = msg->get_payload();
-   if (details.connectionCallbacks_.onReceivedInput)
-      details.connectionCallbacks_.onReceivedInput(message);
+   std::string payload = msg->get_payload();
+   if (ConsoleProcessSocketPacket::isKeepAlive(payload))
+   {
+      sendPong(handle);
+   }
+   else if (details.connectionCallbacks_.onReceivedInput)
+   {
+      details.connectionCallbacks_.onReceivedInput(ConsoleProcessSocketPacket::getMessage(payload));
+   }
 }
 
 void ConsoleProcessSocket::onClose(terminalServer* s, websocketpp::connection_hdl hdl)
