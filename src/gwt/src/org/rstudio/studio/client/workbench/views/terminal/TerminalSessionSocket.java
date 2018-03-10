@@ -160,11 +160,13 @@ public class TerminalSessionSocket
     * @param xterm Terminal emulator that provides user input, and displays output.
     */
    public TerminalSessionSocket(Session session,
-                                XTermWidget xterm)
+                                XTermWidget xterm,
+                                int webSocketPingInterval)
    {
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
+      webSocketPingInterval_ = webSocketPingInterval;
 
       // Show delay between receiving a keystroke and sending it to the 
       // terminal emulator; for diagnostics on laggy typing.
@@ -243,6 +245,10 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket closed");
                socket_ = null;
+               if (keepAliveTimer_ != null)
+               {
+                  keepAliveTimer_.cancel();
+               }
                session_.connectionDisconnected();
             }
 
@@ -264,19 +270,25 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket connected");
                callback.onConnected();
-               keepAliveTimer_ = new Timer() {
-                  @Override
-                  public void run() {
-                     if (socket_ != null) {
-                        Debug.logToConsole("Sending keepalive");
-                        socket_.send(TerminalSocketPacket.keepAlivePacket());
+               if (webSocketPingInterval_ > 0)
+               {
+                  keepAliveTimer_ = new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        if (socket_ != null)
+                        {
+                           socket_.send(TerminalSocketPacket.keepAlivePacket());
+                        }
+                        else
+                        {
+                           keepAliveTimer_.cancel();
+                        }
                      }
-                     else {
-                        keepAliveTimer_.cancel(); 
-                     }
-                  }
-               };
-               keepAliveTimer_.scheduleRepeating(30000);
+                  };
+                  keepAliveTimer_.scheduleRepeating(webSocketPingInterval_ * 1000);
+               }
             }
 
             @Override
@@ -468,7 +480,6 @@ public class TerminalSessionSocket
    
    public void receivedKeepAlive()
    {
-      Debug.logToConsole("Received Keep Alive");
    }
  
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -489,4 +500,5 @@ public class TerminalSessionSocket
          Pattern.create(PASSWORD_REGEX, "im");
    
    private Timer keepAliveTimer_;
+   private int webSocketPingInterval_;
 }

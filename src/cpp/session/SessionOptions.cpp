@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -229,7 +229,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "first project template path")
       ("default-rsconnect-server",
        value<std::string>(&defaultRSConnectServer_)->default_value(""),
-       "default RStudio Connect server URL");
+       "default RStudio Connect server URL")
+      (kWebSocketPingInterval,
+       value<int>(&webSocketPingSeconds_)->default_value(10),
+       "WebSocket keep-alive ping interval (seconds)");
 
    // allow options
    options_description allow("allow");
