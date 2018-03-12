@@ -266,7 +266,15 @@ int main(int argc, char* argv[])
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
-      
+
+#ifdef Q_OS_LINUX
+      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
+      // https://bugreports.qt.io/browse/QTBUG-67023
+      // https://bugreports.qt.io/browse/QTBUG-66346
+      static char noSandbox[] = "--no-sandbox";
+      arguments.push_back(noSandbox);
+#endif
+
       // re-assign command line arguments
       argc = (int) arguments.size();
       argv = &arguments[0];
