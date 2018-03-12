@@ -90,8 +90,6 @@
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
 {
-   browser()
-   
    # tokenize the line
    tokens <- .rs.python.tokenize(line)
    
@@ -1063,13 +1061,35 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    else
       "<unknown>"
    
-   # we have a Python object: generate HTML help for it
+   # we have a Python object: generate HTML help for it. we
+   # monkey-patch our own HTMLDoc instance so that the heading
+   # comes out a little more cleanly
+   #
+   # TODO: this might fit more naturally as a helper class
+   # in the reticulate package
    pydoc <- reticulate::import("pydoc", convert = TRUE)
-   html <- pydoc$html
+   objects <- reticulate::py_run_string("
+
+# Create HTML documentation object
+import pydoc
+html = pydoc.HTMLDoc()
+
+# Override the heading function
+def _heading(title, fgcol, bgcol, extra = ''):
+   return '''
+<table width=\"100%%\" cellspacing=0 cellpadding=2 border=0 summary=\"heading\">
+<tr><td><h2>%s</h2></td></tr>
+</table>
+   ''' % (title)
+
+html.heading = _heading
+", local = TRUE)
+   
+   html <- objects$html
    page <- html$page(pydoc$describe(resolved), html$document(resolved, name))
    
-   # post-process the documentation a bit (remove coloring)
-   page <- gsub("bgcolor=\"#[0-9a-fA-F]{6}\"", "", page)
+   # remove hard-coded background colors for rows
+   page <- gsub("\\s?bgcolor=\"#[0-9a-fA-F]{6}\"", "", page, perl = TRUE)
    
    writeLines(page, con = path)
    path
