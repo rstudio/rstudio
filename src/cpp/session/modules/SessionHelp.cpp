@@ -68,6 +68,7 @@ namespace {
 
 // save computed help url prefix for comparison in rHelpUrlHandler
 const char * const kHelpLocation = "/help";
+const char * const kPythonLocation = "/python";
 const char * const kCustomLocation = "/custom";
 const char * const kSessionLocation = "/session";
 
@@ -706,14 +707,14 @@ void handleHttpdRequest(const std::string& location,
       presentation::handlePresentationHelpRequest(request, kJsCallbacks, pResponse);
       return;
    }
-
+   
    // handle Rd file preview
    if (boost::algorithm::starts_with(path, "/preview"))
    {
       handleRdPreviewRequest(request, filter, pResponse);
       return;
    }
-
+   
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
@@ -867,6 +868,50 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    }
 }
 
+void handlePythonHelpRequest(const http::Request& request,
+                             http::Response* pResponse)
+{
+   // get URL (everything after 'python/' bit
+   std::string code = request.uri().substr(::strlen("/python/"));
+   if (code.empty())
+   {
+      pResponse->setError(http::status::BadRequest, "No file parameter");
+      return;
+   }
+
+   // construct HTML help file from requested object
+   std::string path;
+   Error error = r::exec::RFunction(".rs.python.generateHtmlHelp")
+         .addParam(code)
+         .call(&path);
+   if (error)
+      LOG_ERROR(error);
+   
+   if (path.empty())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+   
+   FilePath filePath = module_context::tempDir().complete(path);
+   if (!filePath.exists())
+   {
+      pResponse->setNotFoundError(request.uri());
+      return;
+   }
+
+   // read file contents and serve
+   std::string contents;
+   error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      LOG_ERROR(error);
+   
+   pResponse->setContentType("text/html");
+   pResponse->setNoCacheHeaders();
+   pResponse->setBody(contents, HelpContentsFilter(request));
+   
+}
+
 // the ShowHelp event will result in the Help pane requesting the specified
 // help url. we handle this request directly by calling the R httpd function
 // to dynamically form the correct http response
@@ -889,6 +934,15 @@ SEXP rs_previewRd(SEXP rdFileSEXP)
    return R_NilValue;
 }
 
+SEXP rs_showPythonHelp(SEXP codeSEXP)
+{
+   std::string code = r::sexp::safeAsString(codeSEXP);
+   boost::format fmt("python/%1%");
+   std::string url = boost::str(fmt % http::util::urlEncode(code, true));
+   ClientEvent event(client_events::kShowHelp, url);
+   module_context::enqueClientEvent(event);
+   return R_NilValue;
+}
 
 } // anonymous namespace
    
@@ -897,13 +951,8 @@ Error initialize()
    // determine whether we should provide headers to custom handlers
    s_provideHeaders = r::util::hasRequiredVersion("2.13");
 
-
-   // register previewRd function
-   R_CallMethodDef previewRdMethodDef ;
-   previewRdMethodDef.name = "rs_previewRd" ;
-   previewRdMethodDef.fun = (DL_FUNC)rs_previewRd ;
-   previewRdMethodDef.numArgs = 1;
-   r::routines::addCallMethod(previewRdMethodDef);
+   RS_REGISTER_CALL_METHOD(rs_previewRd, 1);
+   RS_REGISTER_CALL_METHOD(rs_showPythonHelp, 1);
 
    using boost::bind;
    using core::http::UriHandler;
@@ -914,6 +963,7 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
+      (bind(registerUriHandler, kPythonLocation, handlePythonHelpRequest))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();
    if (error)

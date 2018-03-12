@@ -35,8 +35,7 @@
    )
 })
 
-.rs.addJsonRpcHandler("python_go_to_definition", function(line,
-                                                          offset)
+.rs.addJsonRpcHandler("python_go_to_definition", function(line, offset)
 {
    inspect <- reticulate::import("inspect", convert = TRUE)
    
@@ -87,6 +86,38 @@
    
    return(FALSE)
    
+})
+
+.rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
+{
+   browser()
+   
+   # tokenize the line
+   tokens <- .rs.python.tokenize(line)
+   
+   # find the current token
+   n <- length(tokens); index <- n
+   while (index >= 1) {
+      if (tokens[[index]]$offset <= offset)
+         break
+      index <- index - 1
+   }
+   
+   # find the start of the expression
+   cursor <- .rs.python.tokenCursor(tokens)
+   cursor$moveToOffset(index)
+   if (!cursor$moveToStartOfEvaluation())
+      return(FALSE)
+   
+   # extract the text used for lookup of current object
+   startOffset <- cursor$tokenOffset()
+   endOffset <- tokens[[index]]$offset + nchar(tokens[[index]]$value) - 1L
+   text <- substring(line, startOffset, endOffset)
+   
+   # invoke help routine
+   .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+   
+   return(TRUE)
 })
 
 .rs.addFunction("reticulate.replInitialize", function()
@@ -983,4 +1014,64 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       else
          .rs.acCompletionTypes$UNKNOWN
    }, numeric(1))
+})
+
+.rs.addFunction("python.generateHtmlHelp", function(code)
+{
+   Encoding(code) <- "UTF-8"
+   
+   # remove a '.html' suffix if present
+   code <- sub("[.]html$", "", code)
+   
+   # check for pre-existing generated HTML
+   dir <- file.path(tempdir(), "reticulate-python-help")
+   if (!.rs.ensureDirectory(dir)) {
+      warning("Failed to create Python help directory", call. = FALSE)
+      return("")
+   }
+   
+   stem <- utils::URLencode(code, reserved = TRUE)
+   path <- file.path(dir, paste(stem, "html", sep = "."))
+   if (file.exists(path))
+      return(path)
+   
+   # no HTML file exists; attempt to generate it. try
+   # to evaluate the Python code supplied to gain access
+   # to the associated object. first attempt to just py_eval
+   # it; if that fails, try the more generic pydoc resolver
+   pydoc <- reticulate::import("pydoc", convert = TRUE)
+   methods <- list(
+      function() reticulate::py_eval(code),
+      function() pydoc$resolve(code)[[1]]
+   )
+   
+   resolved <- NULL
+   for (method in methods) {
+      resolved <- .rs.tryCatch(method())
+      if (!inherits(resolved, "error"))
+         break
+   }
+   
+   if (inherits(resolved, "error")) {
+      fmt <- "No Python documentation found for '%s'."
+      warning(sprintf(fmt, code), call. = FALSE)
+      return("")
+   }
+   
+   name <- if (reticulate::py_has_attr(resolved, "__name__"))
+      resolved[["__name__"]]
+   else
+      "<unknown>"
+   
+   # we have a Python object: generate HTML help for it
+   pydoc <- reticulate::import("pydoc", convert = TRUE)
+   html <- pydoc$html
+   page <- html$page(pydoc$describe(resolved), html$document(resolved, name))
+   
+   # post-process the documentation a bit (remove coloring)
+   page <- gsub("bgcolor=\"#[0-9a-fA-F]{6}\"", "", page)
+   
+   writeLines(page, con = path)
+   path
+  
 })

@@ -18,7 +18,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -42,6 +41,7 @@ import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -65,8 +65,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 // NOTE: This is mostly just a fork of the RCompletionManager code.
@@ -98,6 +96,7 @@ public class PythonCompletionManager implements CompletionManager
       });
    }
    
+   @Override
    public void onPaste(PasteEvent event)
    {
       popup_.hide();
@@ -124,7 +123,6 @@ public class PythonCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
-      sigTipManager_ = new SignatureToolTipManager(docDisplay_);
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
@@ -200,35 +198,6 @@ public class PythonCompletionManager implements CompletionManager
          }
       }));
       
-      handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
-      {
-         private boolean wasSigtipShowing_ = false;
-         
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            RCompletionToolTip toolTip = sigTipManager_.getToolTip();
-            
-            if (event.isAttached())
-            {
-               if (toolTip != null && toolTip.isShowing())
-               {
-                  wasSigtipShowing_ = true;
-                  toolTip.setVisible(false);
-               }
-               else
-               {
-                  wasSigtipShowing_ = false;
-               }
-            }
-            else
-            {
-               if (toolTip != null && wasSigtipShowing_)
-                  toolTip.setVisible(true);
-            }
-         }
-      }));
-      
       // hide the autocompletion popup if the user executes
       // an Ace editor command (e.g. insert pipe operator)
       handlers_.add(eventBus_.addHandler(
@@ -262,7 +231,6 @@ public class PythonCompletionManager implements CompletionManager
    public void detach()
    {
       handlers_.removeHandler();
-      sigTipManager_.detach();
       snippets_.detach();
       popup_.hide();
    }
@@ -281,11 +249,38 @@ public class PythonCompletionManager implements CompletionManager
    @Override
    public void goToHelp()
    {
-      // TODO
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            1000,
+            "Opening help...");
+      
+      server_.pythonGoToHelp(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean response)
+               {
+                  progress.dismiss();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  progress.dismiss();
+                  Debug.logError(error);
+               }
+            });
    }
    
    public void goToDefinition()
    {
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            1000,
+            "Finding definition...");
+      
       server_.pythonGoToDefinition(
             docDisplay_.getCurrentLine(),
             docDisplay_.getCursorPosition().getColumn(),
@@ -294,12 +289,13 @@ public class PythonCompletionManager implements CompletionManager
                @Override
                public void onResponseReceived(Boolean response)
                {
-                  // TODO: respond appropriately on error?
+                  progress.dismiss();
                }
                
                @Override
                public void onError(ServerError error)
                {
+                  progress.dismiss();
                   Debug.logError(error);
                }
             });
@@ -308,9 +304,6 @@ public class PythonCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       suggestTimer_.cancel();
-      
-      if (sigTipManager_.previewKeyDown(event))
-         return true;
       
       if (isDisabled())
          return false;
@@ -1125,8 +1118,6 @@ public class PythonCompletionManager implements CompletionManager
    private CompletionRequestContext context_ ;
    private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
-   
-   private final SignatureToolTipManager sigTipManager_;
    
    private NativeEvent nativeEvent_;
    

@@ -87,4 +87,10 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String line,
          int column,
          ServerRequestCallback<Boolean> requestCallback);
+   
+   void pythonGoToHelp(
+         String line,
+         int column,
+         ServerRequestCallback<Boolean> requestCallback);
+   
 }

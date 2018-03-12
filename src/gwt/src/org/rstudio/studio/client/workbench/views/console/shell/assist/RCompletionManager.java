@@ -371,7 +371,7 @@ public class RCompletionManager implements CompletionManager
       
       // delayed progress indicator
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_, 1000, "Searching for function definition...");
+            globalDisplay_, 1000, "Searching for definition...");
       
       server_.getObjectDefinition(
          lineWithPos.getLine(),
