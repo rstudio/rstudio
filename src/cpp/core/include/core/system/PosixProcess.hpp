@@ -50,7 +50,7 @@ public:
    bool hasRunningChildren();
 
    // Terminate all running children
-   void terminateAll();
+   void terminateAll(bool killChildProcs);
 
    // Wait for all children to exit. Returns false if the operation timed out
    bool wait(const boost::posix_time::time_duration& maxWait =

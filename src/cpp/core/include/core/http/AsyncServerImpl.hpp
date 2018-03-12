@@ -164,6 +164,9 @@ public:
 
    virtual Error run(std::size_t threadPoolSize = 1)
    {
+      if (running_)
+         return Success();
+
       try
       {
          // update state

@@ -1,7 +1,7 @@
 /*
  * Response.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -211,7 +211,7 @@ public:
             body_ = body_ + std::string(1024 - body_.length(), ' ');
          }
 
-         setContentLength(body_.length());
+         setContentLength(static_cast<int>(body_.length()));
          
          // return success
          return Success();

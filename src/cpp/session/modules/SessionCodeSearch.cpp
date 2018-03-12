@@ -1,7 +1,7 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -704,7 +704,7 @@ public:
          const FileInfo& fileInfo = (*it).fileInfo;
          if (fileInfo.isDirectory())
          {
-            int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+            int lastSlashIndex = static_cast<int>(fileInfo.absolutePath().rfind('/'));
 
             std::string fileName =
                   fileInfo.absolutePath().substr(lastSlashIndex + 1);
@@ -749,7 +749,7 @@ public:
          if (fileInfo.empty())
             continue;
 
-         int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+         int lastSlashIndex = static_cast<int>(fileInfo.absolutePath().rfind('/'));
 
          std::string fileName =
                fileInfo.absolutePath().substr(lastSlashIndex + 1);
@@ -1295,7 +1295,7 @@ int scoreMatch(std::string const& suggestion,
    int totalPenalty = 0;
 
    // Loop over the matches and assign a score
-   for (int j = 0, n = matches.size(); j < n; j++)
+   for (int j = 0, n = static_cast<int>(matches.size()); j < n; j++)
    {
       int matchPos = matches[j];
       int penalty = matchPos;
@@ -1331,7 +1331,7 @@ int scoreMatch(std::string const& suggestion,
       ++totalPenalty;
    
    // Penalize unmatched characters
-   totalPenalty += (query.size() - matches.size()) * query.size();
+   totalPenalty += static_cast<int>((query.size() - matches.size()) * query.size());
 
    return totalPenalty;
 }
@@ -1349,8 +1349,8 @@ void filterScores(std::vector< std::pair<int, int> >* pScore1,
                   std::vector< std::pair<int, int> >* pScore2,
                   int maxAmount)
 {
-   int s1_n = pScore1->size();
-   int s2_n = pScore2->size();
+   int s1_n = static_cast<int>(pScore1->size());
+   int s2_n = static_cast<int>(pScore2->size());
 
    int s1Count = 0;
    int s2Count = 0;
@@ -1565,7 +1565,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
-   std::size_t maxResults = safe_convert::numberTo<std::size_t>(maxResultsInt,
+   std::size_t maxResults = safe_convert::numberTo<int, std::size_t>(maxResultsInt,
                                                                 20);
 
    // object to return
@@ -1579,13 +1579,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    // TODO: Refactor searchSourceFiles, searchSource to no longer take maximum number
    // of results (since we want to grab everything possible then filter before
    // sending over the wire). Simiarly with the 'more*Available' bools
-   searchFiles(term, 1E2, true, &names, &paths, &moreFilesAvailable);
+   searchFiles(term, 100, true, &names, &paths, &moreFilesAvailable);
 
    // search source and convert to source items
    std::vector<SourceItem> srcItems;
    std::vector<r_util::RSourceItem> rSrcItems;
    bool moreSourceItemsAvailable = false;
-   searchSource(term, 1E2, false, &rSrcItems, &moreSourceItemsAvailable);
+   searchSource(term, 100, false, &rSrcItems, &moreSourceItemsAvailable);
    std::transform(rSrcItems.begin(),
                   rSrcItems.end(),
                   std::back_inserter(srcItems),
@@ -1633,7 +1633,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::size_t srcItemScoresSizeBefore = srcItemScores.size();
    std::size_t fileScoresSizeBefore = fileScores.size();
 
-   filterScores(&fileScores, &srcItemScores, maxResults);
+   filterScores(&fileScores, &srcItemScores, static_cast<int>(maxResults));
 
    moreFilesAvailable = fileScoresSizeBefore > fileScores.size();
    moreSourceItemsAvailable = srcItemScoresSizeBefore > srcItemScores.size();
@@ -2335,7 +2335,7 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
       return R_NilValue;
    
-   int n = suggestions.size();
+   int n = static_cast<int>(suggestions.size());
    std::vector<int> scores;
    scores.reserve(n);
    

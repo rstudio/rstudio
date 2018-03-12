@@ -65,7 +65,7 @@ void UnsavedFiles::update(const std::string& filename,
                 contents.data() + contents.length(),
                 buffContents);
       unsavedFile.Contents = buffContents;
-      unsavedFile.Length = contents.length();
+      unsavedFile.Length = static_cast<unsigned long>(contents.length());
 
       // add it to the list
       files_.push_back(unsavedFile);

@@ -1337,7 +1337,7 @@ Error initialize()
          LOG_ERROR(error);
       else
       {
-         s_currentRenderOutput = s_renderOutputs.size();
+         s_currentRenderOutput = static_cast<int>(s_renderOutputs.size());
          s_renderOutputs.reserve(kMaxRenderOutputs);
       }
    }

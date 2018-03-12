@@ -265,7 +265,7 @@ void Response::setBodyUnencoded(const std::string& body)
 {
    removeHeader("Content-Encoding");
    body_ = body;
-   setContentLength(body_.length());
+   setContentLength(static_cast<int>(body_.length()));
 }
    
    

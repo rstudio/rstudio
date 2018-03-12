@@ -28,7 +28,7 @@ inline Error sendSslRequest(const std::string& address,
                             const std::string& port,
                             bool verify,
                             const http::Request& request,
-                            http::Response* pResponse,)
+                            http::Response* pResponse)
 {
    // create client
    boost::asio::io_service ioService;

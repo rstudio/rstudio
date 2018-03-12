@@ -1,7 +1,7 @@
 /*
  * ViewerHistory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,7 @@ ViewerHistory::ViewerHistory()
 void ViewerHistory::add(const module_context::ViewerHistoryEntry& entry)
 {
    entries_.push_back(entry);
-   currentIndex_ = entries_.size() - 1;
+   currentIndex_ = static_cast<int>(entries_.size() - 1);
 }
 
 void ViewerHistory::clear()
@@ -77,7 +77,7 @@ void ViewerHistory::clearCurrent()
 
 bool ViewerHistory::hasNext() const
 {
-   int size = safe_convert::numberTo<int>(entries_.size() - 1, 0);
+   int size = safe_convert::numberTo<std::size_t, int>(entries_.size() - 1, 0);
    return currentIndex_ != -1 && currentIndex_ < size;
 }
 

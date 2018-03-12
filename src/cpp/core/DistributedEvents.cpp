@@ -59,6 +59,19 @@ Error fireDistributedEventImpl(const std::string& requestBody,
    return Success();
 }
 
+void formatEventRequest(const std::string& targetType,
+                        const std::string& target,
+                        const DistributedEvent& distEvt,
+                        json::Object* pObj)
+{
+   // construct the event to broadcast
+   (*pObj)[kDistEvtTargetType] = targetType;
+   (*pObj)[kDistEvtTarget]     = target;
+   (*pObj)[kDistEvtEventType]  = distEvt.type();
+   (*pObj)[kDistEvtEventData]  = distEvt.data();
+   (*pObj)[kDistEvtOrigin]     = distEvt.origin();
+}
+
 } // anonymous namespace
 
 Error fireDistributedEventAsync(boost::shared_ptr<http::AsyncConnection> pConnection)
@@ -116,16 +129,30 @@ Error emitDistributedEvent(const std::string& targetType,
 {
    // construct the event to broadcast
    json::Object event;
-   event[kDistEvtTargetType] = targetType;
-   event[kDistEvtTarget]     = target;
-   event[kDistEvtEventType]  = distEvt.type();
-   event[kDistEvtEventData]  = distEvt.data();
-   event[kDistEvtOrigin]     = distEvt.origin();
+   formatEventRequest(targetType, target, distEvt, &event);
 
    // and broadcast it!
    json::Value result;
+   return socket_rpc::invokeRpc(FilePath(kServerRpcSocketPath),
+                                kDistributedEventsEndpoint, event, &result);
+}
 
-   return socket_rpc::invokeRpc(FilePath(kServerRpcSocketPath), kDistributedEventsEndpoint, event, &result);
+Error emitDistributedEvent(const std::string& targetType,
+                           const std::string& target,
+                           const DistributedEvent& distEvt,
+                           const std::string& tcpAddress,
+                           const std::string& port,
+                           bool ssl,
+                           const std::string& baseUri)
+{
+   // construct the event to broadcast
+   json::Object event;
+   formatEventRequest(targetType, target, distEvt, &event);
+
+   // and broadcast it!
+   json::Value result;
+   return socket_rpc::invokeRpc(tcpAddress, port, ssl,
+                                baseUri + kDistributedEventsEndpoint, event, &result);
 }
 
 Error initializeAsync(DistributedEventAsyncHandler eventHandler)

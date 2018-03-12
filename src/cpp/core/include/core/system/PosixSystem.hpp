@@ -120,6 +120,7 @@ core::Error ipAddresses(std::vector<IpAddress>* pAddresses, bool includeIPv6 = f
 
 // core dump restriction
 core::Error restrictCoreDumps();
+core::Error enableCoreDumps();
 void printCoreDumpable(const std::string& context);
 
 // launching child processes
@@ -197,6 +198,9 @@ Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutPro
 // get the child processes of the specified process
 Error getChildProcesses(pid_t pid,
                         std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+
+// kill a process with a specific sign
+Error killProcess(pid_t pid, int signal);
 
 // no-signal version specified in System.hpp
 // but on posix we can send any signal we want
