@@ -29,6 +29,15 @@ class Job
 public:
    Job();
 
+   Job(const std::string& id, 
+       const std::string& name,
+       const std::string& status,
+       const std::string& group,
+       int progress, 
+       int max,
+       bool running,
+       bool completed);
+
    // job ID (machine-generated)
    std::string id();
 
@@ -55,7 +64,8 @@ public:
 
    // convert job to/from JSON
    core::json::Object toJson();
-   static Job fromJson(const core::json::Object& src);
+   static core::Error fromJson(const core::json::Object& src, 
+                               boost::shared_ptr<Job>* pJob);
 
 private:
    std::string id_;
@@ -63,8 +73,8 @@ private:
    std::string status_;
    std::string group_;
 
-   int max_;
    int progress_;
+   int max_;
 
    bool running_;
    bool completed_;

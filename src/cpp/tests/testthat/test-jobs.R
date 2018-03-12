@@ -24,9 +24,28 @@ test_that("jobs can be added", {
 
    # find job in the resultant list
    job <- jobs[[jobId]]
+   warning(jobs)
    expect_equal(name, job[["name"]])
 
    # clean up
    .rs.api.removeJob(jobId)
 })
 
+test_that("job progress is updated", {
+   jobId <- .rs.api.addJob(name = "job2", progressUnits = 100L)
+
+   .rs.api.setJobProgress(jobId, 50L)
+   .rs.api.addJobProgress(jobId, 10L)
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   job <- jobs[[jobId]]
+
+   expect_equal(job[["progress"]], 60L)
+})
+
+
+test_that("can't set progress of a non-ranged job", {
+   jobId <- .rs.api.addJob(name = "job3")
+
+   expect_error(.rs.api.addJobProgress(jobId, 10L))
+})

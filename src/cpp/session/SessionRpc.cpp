@@ -140,16 +140,25 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    // form argument list; convert from R to JSON
    core::json::Value rpcArgs;
    Error error = r::json::jsonValueFromObject(args, &rpcArgs);
+   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+      std::cout << ">>>" << std::endl;
    if (rpcArgs.type() == json::ObjectType)
    {
       // named pair parameters
       request.kwparams = rpcArgs.get_obj();
+      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+         core::json::writeFormatted(request.kwparams, std::cout);
    }
    else if (rpcArgs.type() == json::ArrayType)
    {
-      // object parameters
+      // array parameters
       request.params = rpcArgs.get_array();
+      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+         core::json::writeFormatted(request.params, std::cout);
    }
+   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+      std::cout << std::endl;
+
 
    // invoke handler and record response
    core::json::JsonRpcResponse response;
@@ -161,6 +170,14 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    if (rpcError)
    {
       r::exec::error(log::errorAsLogEntry(rpcError));
+   }
+
+   // emit formatted response if enabled
+   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+   {
+      std::cout << "<<<" << std::endl;
+      core::json::writeFormatted(response.getRawResponse(), std::cout);
+      std::cout << std::endl;
    }
 
    // convert JSON response back to R

@@ -17,6 +17,7 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/system/System.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -38,16 +39,55 @@ namespace {
 // map of job ID to jobs
 std::map<std::string, boost::shared_ptr<Job> > s_jobs;
 
-SEXP rs_addJob(SEXP name, SEXP status, SEXP progressUnits, SEXP actions,
-      SEXP estimate, SEXP estimateRemaining, SEXP running, SEXP autoRemove,
-      SEXP group) 
+SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
+      SEXP estimateSEXP, SEXP estimateRemainingSEXP, SEXP runningSEXP, SEXP autoRemoveSEXP,
+      SEXP groupSEXP) 
 {
-   return R_NilValue;
+   // convert to native types
+   std::string name   = r::sexp::safeAsString(nameSEXP, "");
+   std::string status = r::sexp::safeAsString(statusSEXP, "");
+   std::string group  = r::sexp::safeAsString(groupSEXP, "");
+   int progress       = r::sexp::asInteger(progressUnitsSEXP);
+   bool running       = r::sexp::asLogical(runningSEXP);
+   
+   // find an unused job id
+   std::string id;
+   do
+   {
+      id = core::system::generateShortenedUuid();
+   }
+   while(s_jobs.find(id) != s_jobs.end());
+
+   // create the job!
+   boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
+         id, name, status, group, 0 /* completed units */, progress, running, 
+         false /* job complete */);
+
+   // cache job and return its id
+   r::sexp::Protect protect;
+   s_jobs[id] = pJob;
+   return r::sexp::create(id, &protect);
+}
+
+
+SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
+{
+   std::string id = r::sexp::safeAsString(jobId, "");
+   int units = r::sexp::asInteger(unitsSEXP);
 }
       
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
+   json::Object result;
+
+   // convert all jobs to json
+   for (auto& job: s_jobs)
+   {
+      result[job.first] = job.second->toJson();
+   }
+
+   pResponse->setResult(result);
 
    return Success();
 }
@@ -61,7 +101,7 @@ core::Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_jobs", getJobs))
+      (bind(module_context::registerRpcMethod, "get_jobs", getJobs))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

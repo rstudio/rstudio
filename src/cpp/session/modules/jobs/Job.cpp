@@ -13,6 +13,9 @@
  *
  */
 
+#include <boost/make_shared.hpp>
+#include <core/json/JsonRpc.hpp>
+
 #include "Job.hpp"
 
 #define kJobId          "id"
@@ -30,9 +33,28 @@ namespace session {
 namespace modules { 
 namespace jobs {
 
+Job::Job(const std::string& id, 
+         const std::string& name,
+         const std::string& status,
+         const std::string& group,
+         int progress, 
+         int max,
+         bool running,
+         bool completed):
+   id_(id), 
+   name_(name),
+   status_(status),
+   group_(group),
+   progress_(progress),
+   max_(max),
+   running_(running),
+   completed_(completed)
+{
+}
+
 Job::Job():
-   max_(0),
    progress_(0),
+   max_(0),
    running_(false),
    completed_(false)
 {
@@ -78,14 +100,37 @@ bool Job::completed()
     return completed_;
 }
 
-core::json::Object Job::toJson()
+json::Object Job::toJson()
 {
-   return core::json::Object();
+   json::Object job;
+
+   job[kJobId]        = id_;
+   job[kJobName]      = name_;
+   job[kJobStatus]    = status_;
+   job[kJobProgress]  = progress_;
+   job[kJobMax]       = max_;
+   job[kJobRunning]   = running_;
+   job[kJobCompleted] = completed_;
+
+   return job;
 }
 
-Job Job::fromJson(const core::json::Object& src)
+Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
 {
-   return Job();
+   boost::shared_ptr<Job> pJob = boost::make_shared<Job>();
+   Error error = json::readObject(src,
+      kJobId,        &pJob->id_,
+      kJobName,      &pJob->name_,
+      kJobStatus,    &pJob->status_,
+      kJobProgress,  &pJob->progress_,
+      kJobMax,       &pJob->max_,
+      kJobRunning,   &pJob->running_,
+      kJobCompleted, &pJob->completed_);
+   if (error)
+      return error;
+
+   *pJobOut = pJob;
+   return Success();
 }
 
 

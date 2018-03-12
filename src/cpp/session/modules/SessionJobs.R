@@ -20,7 +20,7 @@
    # validate arguments
    if (missing(name))
       stop("Cannot add a job without a name.")
-   if (!is.integer(progressUnits) || progressUnits < 1L || progressUnits > 1000000L)
+   if (!is.integer(progressUnits) || progressUnits < 0L || progressUnits > 1000000L)
       stop("progressUnits must be an integer between 1 and 1000000, or 0 to disable progress.")
    if (isTRUE(estimateRemaining) && identical(progressUnits, 0))
       stop("Must specify progressUnits in order to estimate remaining time.")
