@@ -37,29 +37,8 @@
 
 .rs.addJsonRpcHandler("python_go_to_definition", function(line, offset)
 {
-   inspect <- reticulate::import("inspect", convert = TRUE)
-   
-   # tokenize the line
-   tokens <- .rs.python.tokenize(line)
-   
-   # find the current token
-   n <- length(tokens); index <- n
-   while (index >= 1) {
-      if (tokens[[index]]$offset <= offset)
-         break
-      index <- index - 1
-   }
-   
-   # find the start of the expression
-   cursor <- .rs.python.tokenCursor(tokens)
-   cursor$moveToOffset(index)
-   if (!cursor$moveToStartOfEvaluation())
-      return(FALSE)
-   
-   # extract the text used for lookup of current object
-   startOffset <- cursor$tokenOffset()
-   endOffset <- tokens[[index]]$offset + nchar(tokens[[index]]$value) - 1L
-   text <- substring(line, startOffset, endOffset)
+   # extract the line providing the object definition we're looking for
+   text <- .rs.python.extractCurrentExpression(line, offset)
    
    # try extracting this object
    object <- .rs.tryCatch(reticulate::py_eval(text, convert = FALSE))
@@ -72,6 +51,7 @@
       return(FALSE)
    
    # check to see if 'inspect' can find the object sources
+   inspect <- reticulate::import("inspect", convert = TRUE)
    info <- .rs.tryCatch(
       list(
          source = inspect$getsourcefile(object),
@@ -90,27 +70,7 @@
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
 {
-   # tokenize the line
-   tokens <- .rs.python.tokenize(line)
-   
-   # find the current token
-   n <- length(tokens); index <- n
-   while (index >= 1) {
-      if (tokens[[index]]$offset <= offset)
-         break
-      index <- index - 1
-   }
-   
-   # find the start of the expression
-   cursor <- .rs.python.tokenCursor(tokens)
-   cursor$moveToOffset(index)
-   if (!cursor$moveToStartOfEvaluation())
-      return(FALSE)
-   
-   # extract the text used for lookup of current object
-   startOffset <- cursor$tokenOffset()
-   endOffset <- tokens[[index]]$offset + nchar(tokens[[index]]$value) - 1L
-   text <- substring(line, startOffset, endOffset)
+   text <- .rs.python.extractCurrentExpression(line, offset)
    
    # invoke help routine
    .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
@@ -173,12 +133,17 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    list(
       
       list(
-         pattern = "[[:alpha:]_][[:alnum:]_]*",
+         pattern = sprintf("(?:%s)\\b", paste(.rs.python.keywords(), collapse = "|")),
+         type    = "keyword"
+      ),
+      
+      list(
+         pattern = "[[:alpha:]_][[:alnum:]_]*\\b",
          type    = "identifier"
       ),
       
       list(
-         pattern = "((\\d+[jJ]|((\\d+\\.\\d*|\\.\\d+)([eE][-+]?\\d+)?|\\d+[eE][-+]?\\d+)[jJ])|((\\d+\\.\\d*|\\.\\d+)([eE][-+]?\\d+)?|\\d+[eE][-+]?\\d+)|(0[xX][\\da-fA-F]+[lL]?|0[bB][01]+[lL]?|(0[oO][0-7]+)|(0[0-7]*)[lL]?|[1-9]\\d*[lL]?))",
+         pattern = "((\\d+[jJ]|((\\d+\\.\\d*|\\.\\d+)([eE][-+]?\\d+)?|\\d+[eE][-+]?\\d+)[jJ])|((\\d+\\.\\d*|\\.\\d+)([eE][-+]?\\d+)?|\\d+[eE][-+]?\\d+)|(0[xX][\\da-fA-F]+[lL]?|0[bB][01]+[lL]?|(0[oO][0-7]+)|(0[0-7]*)[lL]?|[1-9]\\d*[lL]?))\\b",
          type    = "number"
       ),
       
@@ -238,7 +203,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 
 .rs.addFunction("python.tokenize", function(
    code,
-   exclude = function(token) FALSE,
+   exclude = character(),
    keep.unknown = TRUE)
 {
    # vector of tokens
@@ -274,7 +239,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          
          # update our vector of tokens
          token <- .rs.python.token(rawToChar(match), rule$type, offset)
-         if (!exclude(token))
+         if (!token$type %in% exclude)
             tokens[[length(tokens) + 1]] <- token
          
          # update offset and break
@@ -287,7 +252,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       if (!matched) {
          # update tokens
          token <- .rs.python.token(rawToChar(raw[[offset]]), "unknown", offset)
-         if (keep.unknown && !exclude(token))
+         if (keep.unknown)
             tokens[[length(tokens) + 1]] <- token
          
          # update offset
@@ -529,7 +494,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       pieces <- c(pieces, "")
    
    # no '.' implies we're completing top-level modules
-   if (length(pieces) == 1) {
+   if (length(pieces) < 2) {
       completions <- .rs.python.listModules()
       return(.rs.python.completions(token, completions))
    }
@@ -822,7 +787,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    # tokenize the line and grab the last token
    tokens <- .rs.python.tokenize(
       code = line,
-      exclude = function(token) { token$type %in% c("whitespace", "comment") },
+      exclude = c("whitespace", "comment"),
       keep.unknown = FALSE
    )
    
@@ -1094,4 +1059,108 @@ html.heading = _heading
    writeLines(page, con = path)
    path
   
+})
+
+.rs.addFunction("python.extractCurrentExpression", function(line, offset)
+{
+   # tokenize the line
+   tokens <- .rs.python.tokenize(line, exclude = c("whitespace", "comment"))
+   
+   # find the current token
+   n <- length(tokens); index <- n
+   while (index >= 1) {
+      if (tokens[[index]]$offset <= offset)
+         break
+      index <- index - 1
+   }
+   
+   cursor <- .rs.python.tokenCursor(tokens)
+   cursor$moveToOffset(index)
+   
+   # try to move to the start of an expression
+   while (TRUE) {
+      
+      # move over matching brackets
+      while (cursor$bwdToMatchingBracket())
+         if (!cursor$moveToPreviousToken())
+            break
+      
+      # bail if we hit an operator or a ';' -- these
+      # are tokens that 'stop' a previous expression
+      if (cursor$tokenType() %in% c("operator", "keyword") ||
+          cursor$tokenValue() %in% c(";", ","))
+      {
+         cursor$moveToNextToken()
+         break
+      }
+      
+      # if we hit an opening bracket, check to see
+      # if there's an identifier before it. if not,
+      # this is defining a tuple or a list, and we
+      # should bail
+      if (cursor$tokenType() %in% "bracket" &&
+          cursor$cursorOffset() > 1)
+      {
+         peek <- tokens[[cursor$cursorOffset() - 1]]
+         if (peek$type %in% c("operator", "bracket", "keyword") ||
+             peek$value %in% c(";", ","))
+         {
+            cursor$moveToNextToken()
+            break
+         }
+      }
+      
+      # move back a token
+      if (!cursor$moveToPreviousToken())
+         break
+   }
+   
+   startOffset <- cursor$tokenOffset()
+   
+   # now find the end of the expression
+   while (TRUE) {
+      
+      # bail if we hit a '('
+      if (cursor$tokenValue() %in% c("(")) {
+         cursor$moveToPreviousToken()
+         break
+      }
+      
+      # skip other brackets
+      if (cursor$fwdToMatchingBracket())
+         if (!cursor$moveToNextToken())
+            break
+      
+      # bail if we hit an operator or a ';' -- these
+      # are tokens that 'stop' a previous expression
+      if (cursor$tokenType() %in% c("operator", "keyword") ||
+          cursor$tokenValue() %in% c(";", ","))
+      {
+         cursor$moveToPreviousToken()
+         break
+      }
+      
+      # move up a token
+      if (!cursor$moveToNextToken())
+         break
+   }
+   
+   endOffset <- cursor$tokenOffset() + nchar(cursor$tokenValue()) - 1
+   
+   # extract line of text providing the object to be looked at
+   substring(line, startOffset, endOffset)
+   
+})
+
+.rs.addFunction("python.keywords", function()
+{
+   keywords <- .rs.getVar("python.keywordList")
+   if (length(keywords))
+      return(keywords)
+   
+   keyword  <- reticulate::import("keyword", convert = TRUE)
+   kwlist <- keyword$kwlist
+   
+   .rs.setVar("python.keywordList", kwlist)
+   kwlist
 })
