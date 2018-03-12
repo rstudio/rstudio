@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
 
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
@@ -159,11 +160,13 @@ public class TerminalSessionSocket
     * @param xterm Terminal emulator that provides user input, and displays output.
     */
    public TerminalSessionSocket(Session session,
-                                XTermWidget xterm)
+                                XTermWidget xterm,
+                                int webSocketPingInterval)
    {
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
+      webSocketPingInterval_ = webSocketPingInterval;
 
       // Show delay between receiving a keystroke and sending it to the 
       // terminal emulator; for diagnostics on laggy typing.
@@ -242,13 +245,24 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket closed");
                socket_ = null;
+               if (keepAliveTimer_ != null)
+               {
+                  keepAliveTimer_.cancel();
+               }
                session_.connectionDisconnected();
             }
 
             @Override
             public void onMessage(String msg)
             {
-               onConsoleOutput(new ConsoleOutputEvent(msg));
+               if (TerminalSocketPacket.isKeepAlive(msg))
+               {
+                  receivedKeepAlive();
+               }
+               else
+               {
+                  onConsoleOutput(new ConsoleOutputEvent(TerminalSocketPacket.getMessage(msg)));
+               }
             }
 
             @Override
@@ -256,6 +270,25 @@ public class TerminalSessionSocket
             {
                diagnostic("WebSocket connected");
                callback.onConnected();
+               if (webSocketPingInterval_ > 0)
+               {
+                  keepAliveTimer_ = new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        if (socket_ != null)
+                        {
+                           socket_.send(TerminalSocketPacket.keepAlivePacket());
+                        }
+                        else
+                        {
+                           keepAliveTimer_.cancel();
+                        }
+                     }
+                  };
+                  keepAliveTimer_.scheduleRepeating(webSocketPingInterval_ * 1000);
+               }
             }
 
             @Override
@@ -320,7 +353,9 @@ public class TerminalSessionSocket
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
          if (socket_ != null)
-            socket_.send(input);
+         {
+            socket_.send(TerminalSocketPacket.textPacket(input));
+         }
          else
             diagnosticError("Tried to send user input over null websocket");
             
@@ -442,6 +477,10 @@ public class TerminalSessionSocket
    {
       return inputEchoTiming_.averageTimeMsg();
    }
+   
+   public void receivedKeepAlive()
+   {
+   }
  
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final Session session_;
@@ -459,4 +498,7 @@ public class TerminalSessionSocket
    
    public static final Pattern PASSWORD_PATTERN =
          Pattern.create(PASSWORD_REGEX, "im");
+   
+   private Timer keepAliveTimer_;
+   private int webSocketPingInterval_;
 }

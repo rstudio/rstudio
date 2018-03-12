@@ -71,6 +71,7 @@ set (SESSION_SOURCE_FILES
    SessionConsoleProcessInfo.cpp
    SessionConsoleProcessPersist.cpp
    SessionConsoleProcessSocket.cpp
+   SessionConsoleProcessSocketPacket.cpp
    SessionConsoleProcessTable.cpp
    SessionContentUrls.cpp
    SessionDirs.cpp
