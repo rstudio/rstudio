@@ -16,6 +16,9 @@
 #ifndef SESSION_JOBS_JOB_HPP
 #define SESSION_JOBS_JOB_HPP
 
+#include <string>
+#include <core/json/Json.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {      
@@ -65,7 +68,7 @@ private:
 
    bool running_;
    bool completed_;
-}
+};
 
 
 } // namespace jobs

@@ -13,6 +13,19 @@
  *
  */
 
+#include <string>
+
+#include <core/Error.hpp>
+#include <core/Exec.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+#include "Job.hpp"
+#include "SessionJobs.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -22,9 +35,37 @@ namespace jobs {
 
 namespace {
 
+// map of job ID to jobs
+std::map<std::string, boost::shared_ptr<Job> > s_jobs;
+
+SEXP rs_addJob(SEXP name, SEXP status, SEXP progressUnits, SEXP actions,
+      SEXP estimate, SEXP estimateRemaining, SEXP running, SEXP autoRemove,
+      SEXP group) 
+{
+   return R_NilValue;
+}
+      
+Error getJobs(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+
+   return Success();
+}
 
 } // anonymous namespace
 
+core::Error initialize()
+{
+   // register API handlers
+   RS_REGISTER_CALL_METHOD(rs_addJob, 9);
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_jobs", getJobs))
+      (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
+
+   return initBlock.execute();
+}
 
 } // namepsace jobs
 } // namespace modules

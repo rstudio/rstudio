@@ -27,7 +27,7 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
-
+core::Error initialize();
 
 } // namespace jobs
 } // namespace modules

@@ -80,11 +80,12 @@ bool Job::completed()
 
 core::json::Object Job::toJson()
 {
-
+   return core::json::Object();
 }
 
-Job job::fromJson(const core::json::Object& src)
+Job Job::fromJson(const core::json::Object& src)
 {
+   return Job();
 }
 
 
