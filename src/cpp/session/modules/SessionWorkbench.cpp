@@ -734,7 +734,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
          {
             // r -> python: activate the reticulate REPL
             Error error =
-                  module_context::enqueueConsoleInput("reticulate::py_repl()");
+                  module_context::enqueueConsoleInput("reticulate::repl_python()");
             if (error)
                LOG_ERROR(error);
          }
