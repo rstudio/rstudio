@@ -56,27 +56,6 @@ import com.google.inject.Singleton;
 public class DependencyManager implements InstallShinyEvent.Handler,
                                           PackageStateChangedHandler
 {
-   class DependencyBuilder
-   {
-      public DependencyBuilder()
-      {
-         dependencies_ = new ArrayList<Dependency>();
-      }
-      
-      public DependencyBuilder add(Dependency dependency)
-      {
-         dependencies_.add(dependency);
-         return this;
-      }
-      
-      public List<Dependency> get()
-      {
-         return dependencies_;
-      }
-      
-      private final List<Dependency> dependencies_;
-   }
-   
    class DependencyRequest
    {
       DependencyRequest(

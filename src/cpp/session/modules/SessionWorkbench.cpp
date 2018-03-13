@@ -704,9 +704,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    // check to see what language is active in main console
    using namespace r::exec;
    
-   // check to see what langauge is currently active (but default to r).
-   // TODO: R REPL can become active while reticulate is active if the
-   // debugger is tripped, so we should try to handle that
+   // check to see what langauge is currently active (but default to r)
    std::string activeLanguage = "r";
    if (reticulate::isReplActive())
       activeLanguage = "python";

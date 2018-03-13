@@ -410,7 +410,7 @@ public class CompletionRequester
             if (isTopLevelCompletionRequest())
             {
                // disable snippets if Python REPL is active for now
-               if (isConsole && !response.getLanguage().equals("R"))
+               if (isConsole && !response.getLanguage().equalsIgnoreCase("R"))
                {
                   addSnippetCompletions(token, newComp);
                }
