@@ -144,6 +144,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionTerminalShell.cpp
+   modules/SessionTests.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp

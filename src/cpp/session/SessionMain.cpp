@@ -142,6 +142,7 @@
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionTests.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionHistory.hpp"
@@ -508,6 +509,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
+      (modules::tests::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -654,6 +654,12 @@ public class TextEditingTargetWidget
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
+
+   private boolean isTestThatFile()
+   {
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_TESTTHAT_PREFIX);
+   }
    
    @Override
    public void setNotebookUIVisible(boolean visible)
