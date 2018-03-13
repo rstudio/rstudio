@@ -5053,6 +5053,25 @@ public class TextEditingTarget implements
          }
       }, "Run Shiny Application");
    }
+
+   private void runTestFile()
+   {
+      server_.startBuild("test-file", "", 
+         new SimpleRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean response)
+         {
+
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+         }
+
+      });
+   }
    
    private void runScript()
    {

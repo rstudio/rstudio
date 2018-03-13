@@ -470,6 +470,7 @@ public abstract class
    public abstract AppCommand roxygenizePackage();
    public abstract AppCommand checkPackage();
    public abstract AppCommand testPackage();
+   public abstract AppCommand testFile();
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();

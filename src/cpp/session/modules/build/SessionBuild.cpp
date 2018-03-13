@@ -708,10 +708,9 @@ private:
 
       else if (type == kTestFile)
       {
-         FilePath testsPath = packagePath.complete("tests");
+         FilePath testsPath = packagePath.complete("tests").complete("testthat").complete("test-config.R");
 
-         std::string testFileName = "test-config.R";
-         testFile(testsPath, testFileName, pkgOptions, cb);
+         testFile(testsPath, pkgOptions, cb);
       }
    }
 
@@ -1021,8 +1020,7 @@ private:
 
    }
 
-   void testFile(const FilePath& testsPath,
-                 const std::string& testFileName,
+   void testFile(const FilePath& testPath,
                  core::system::ProcessOptions pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
@@ -1042,18 +1040,16 @@ private:
       std::vector<std::string> rSourceCommands;
       
       boost::format fmt(
-         "setwd('%1%');"
-         "system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote('%3%')))"
+         "if (nchar('%1%')) library('%1%');"
+         "testthat::test_file('%2%')"
       );
 
       cmd << boost::str(fmt %
-                        testsPath.absolutePath() %
-                        rScriptPath.absolutePath() %
-                        testFileName);
+                        pkgInfo_.name() %
+                        testPath.absolutePath());
 
-      pkgOptions.workingDir = testsPath;
-      enqueCommandString("Sourcing R files in 'tests' directory");
-      successMessage_ = "\nTests complete";
+      enqueCommandString("Testing R file using 'testthat'");
+      successMessage_ = "\nTest complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      pkgOptions,
                                                      cb);
