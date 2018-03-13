@@ -737,22 +737,28 @@ public class AceEditor implements DocDisplay,
                      false));
                
                // Python completion manager
-               managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
-                     editor,
-                     editor,
-                     new CompletionPopupPanel(),
-                     server_,
-                     new Filter(),
-                     rContext_,
-                     fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     editor,
-                     false));
+               if (fileType_.isPython() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
+                        editor,
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        new Filter(),
+                        rContext_,
+                        fileType_.canExecuteChunks() ? rnwContext_ : null,
+                           editor,
+                           false));
+               }
                
                // C++ completion manager
-               managers.put(DocumentMode.Mode.C_CPP, new CppCompletionManager(
-                     editor,
-                     new Filter(),
-                     cppContext_));
+               if (fileType_.isC())
+               {
+                  managers.put(DocumentMode.Mode.C_CPP, new CppCompletionManager(
+                        editor,
+                        new Filter(),
+                        cppContext_));
+               }
             }
          };
       }
