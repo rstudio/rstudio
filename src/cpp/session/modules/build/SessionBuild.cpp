@@ -212,6 +212,7 @@ const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
+const char * const kTestFile = "test-file";
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
@@ -704,6 +705,14 @@ private:
          else
             testPackage(packagePath, pkgOptions, cb);
       }
+
+      else if (type == kTestFile)
+      {
+         FilePath testsPath = packagePath.complete("tests");
+
+         std::string testFileName = "test-config.R";
+         testFile(testsPath, testFileName, pkgOptions, cb);
+      }
    }
 
 
@@ -1002,6 +1011,45 @@ private:
       cmd << boost::str(fmt %
                         testsPath.absolutePath() %
                         rScriptPath.absolutePath());
+
+      pkgOptions.workingDir = testsPath;
+      enqueCommandString("Sourcing R files in 'tests' directory");
+      successMessage_ = "\nTests complete";
+      module_context::processSupervisor().runCommand(cmd,
+                                                     pkgOptions,
+                                                     cb);
+
+   }
+
+   void testFile(const FilePath& testsPath,
+                 const std::string& testFileName,
+                 core::system::ProcessOptions pkgOptions,
+                 const core::system::ProcessCallbacks& cb)
+   {
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // construct a shell command to execute
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      std::vector<std::string> rSourceCommands;
+      
+      boost::format fmt(
+         "setwd('%1%');"
+         "system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote('%3%')))"
+      );
+
+      cmd << boost::str(fmt %
+                        testsPath.absolutePath() %
+                        rScriptPath.absolutePath() %
+                        testFileName);
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
