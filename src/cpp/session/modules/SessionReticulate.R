@@ -642,9 +642,6 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    
    character()
    
-   # failed to find anything
-   return(character())
-   
 })
 
 .rs.addFunction("python.getNumpyFunctionArguments", function(object)
@@ -676,23 +673,22 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       # provide completions for main, builtins, keywords
       main     <- reticulate::import_main(convert = FALSE)
       builtins <- reticulate::import_builtins(convert = FALSE)
-      keyword  <- reticulate::import("keyword", convert = FALSE)
       
       # figure out object types for main, builtins
-      kwlist <- as.character(reticulate::py_to_r(keyword$kwlist))
-      candidates <- c(names(main), names(builtins), kwlist)
+      keywords <- .rs.python.keywords()
+      candidates <- c(names(main), names(builtins), keywords)
       
       source <- c(
          rep("reticulate:::import_main(convert = FALSE)", length(names(main))),
          rep("reticulate:::import_builtins(convert = FALSE)", length(names(builtins))),
-         rep("", length(kwlist))
+         rep("", length(keywords))
       )
       
       # figure out object types
       type <- c(
          .rs.python.inferObjectTypes(main, names(main)),
          .rs.python.inferObjectTypes(builtins, names(builtins)),
-         rep(.rs.acCompletionTypes$KEYWORD, length(kwlist))
+         rep(.rs.acCompletionTypes$KEYWORD, length(keywords))
       )
       
       completions <- .rs.python.completions(
@@ -1166,7 +1162,7 @@ html.heading = _heading
    if (length(keywords))
       return(keywords)
    
-   keyword  <- reticulate::import("keyword", convert = TRUE)
+   keyword <- reticulate::import("keyword", convert = TRUE)
    kwlist <- keyword$kwlist
    
    .rs.setVar("python.keywordList", kwlist)
