@@ -275,6 +275,15 @@ int main(int argc, char* argv[])
       arguments.push_back(noSandbox);
 #endif
 
+#ifdef Q_OS_MAC
+      // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
+      // be used too aggressively on Retina displays on macOS, with the side effect that the
+      // scrollbar doesn't auto-hide because a compositor layer is present.
+      // https://github.com/rstudio/rstudio/issues/1953
+      static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
+      arguments.push_back(disableCompositorPref);
+#endif
+
       // re-assign command line arguments
       argc = (int) arguments.size();
       argv = &arguments[0];
