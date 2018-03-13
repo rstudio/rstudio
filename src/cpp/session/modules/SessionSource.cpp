@@ -366,7 +366,7 @@ Error saveDocumentCore(const std::string& contents,
                           "Not all of the characters in " + path +
                           " could be encoded using " + pDoc->encoding() +
                           ". To save using a different encoding, choose \"File | "
-                          "Save with Encoding...\" from the main menu.");
+                          "Save with Encoding...\" from the main menu.\n");
       }
 
       // note whether the file existed prior to writing

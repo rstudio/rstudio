@@ -141,7 +141,7 @@ Error initialize()
    
    using boost::bind;
    using namespace module_context;
-   
+
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionRUtil.R"));
