@@ -516,7 +516,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    
    # add in metadata
    attr(completions, "token") <- token
-   attr(completions, "type") <- 21
+   attr(completions, "types") <- 21
    
    completions
 })
@@ -541,7 +541,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 {
    os <- reticulate::import("os", convert = TRUE)
    token <- gsub("^['\"]|['\"]$", "", token)
-   expanded <- path.expand(token)
+   expanded <- .rs.resolveAliasedPath(token)
    
    # find the index of the last slash -- everything following is
    # the completion token; everything before is the directory to

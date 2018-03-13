@@ -1521,6 +1521,13 @@ SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
       return r::sexp::create(output, &protect);
 }
 
+SEXP rs_resolveAliasedPath(SEXP pathSEXP)
+{
+   std::string path = r::sexp::asString(pathSEXP);
+   FilePath resolved = module_context::resolveAliasedPath(path);
+   r::sexp::Protect protect;
+   return r::sexp::create(resolved.absolutePath(), &protect);
+}
 
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
@@ -2591,6 +2598,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
    RS_REGISTER_CALL_METHOD(rs_base64encodeFile, 1);
    RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
+   
+   RS_REGISTER_CALL_METHOD(rs_resolveAliasedPath, 1);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
