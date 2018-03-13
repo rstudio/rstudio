@@ -14,13 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.rstudio.core.client.JsVectorBoolean;
 import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 
 import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -83,10 +90,10 @@ public class CompletionCache
       JsArrayInteger type       = original.getType();
       
       // Now, generate narrowed versions of the above
-      JsVectorString completionsNarrow = JsVectorString.createVector().cast();
-      JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
-      JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
-      JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
+      final JsVectorString completionsNarrow = JsVectorString.createVector().cast();
+      final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
+      final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
+      final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
       {
@@ -100,13 +107,58 @@ public class CompletionCache
          }
       }
       
+      // Finally, sort these based on score
+      List<Integer> indices = new ArrayList<Integer>();
+      for (int i = 0, n = completionsNarrow.size(); i < n; i++)
+         indices.add(i);
+      
+      // Sort our indices vector
+      Collections.sort(indices, new Comparator<Integer>()
+      {
+         @Override
+         public int compare(Integer lhs, Integer rhs)
+         {
+            int lhsType = typeNarrow.get(lhs);
+            int rhsType = typeNarrow.get(rhs);
+            
+            String lhsName = completionsNarrow.get(lhs);
+            String rhsName = completionsNarrow.get(rhs);
+            
+            int lhsScore = CodeSearchOracle.scoreMatch(lhsName, token, false);
+            int rhsScore = CodeSearchOracle.scoreMatch(rhsName, token, false);
+            
+            if (lhsType == RCompletionType.ARGUMENT) lhsType -= 3;
+            if (rhsType == RCompletionType.ARGUMENT) rhsType -= 3;
+            
+            if (lhsScore == rhsScore)
+               return lhsName.compareTo(rhsName);
+            
+            return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
+      
+      // Finally, re-arrange our vectors.
+      final JsVectorString completionsSorted = JsVectorString.createVector().cast();
+      final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
+      final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
+      final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
+      
+      for (int i = 0, n = indices.size(); i < n; i++)
+      {
+         int index = indices.get(i);
+         completionsSorted.push(completionsNarrow.get(index));
+         packagesSorted.push(packagesNarrow.get(index));
+         quoteSorted.push(quoteNarrow.get(index));
+         typeSorted.push(typeNarrow.get(index));
+      }
+      
       // And return the completion result
       return Completions.createCompletions(
             token,
-            completionsNarrow.cast(),
-            packagesNarrow.cast(),
-            quoteNarrow.cast(),
-            typeNarrow.cast(),
+            completionsSorted.cast(),
+            packagesSorted.cast(),
+            quoteSorted.cast(),
+            typeSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),
             original.getOverrideInsertParens(),
