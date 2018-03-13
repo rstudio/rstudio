@@ -875,7 +875,7 @@ void handlePythonHelpRequest(const http::Request& request,
    std::string code = request.uri().substr(::strlen("/python/"));
    if (code.empty())
    {
-      pResponse->setError(http::status::BadRequest, "No file parameter");
+      pResponse->setError(http::status::BadRequest, "Malformed URL");
       return;
    }
 
@@ -937,7 +937,7 @@ SEXP rs_previewRd(SEXP rdFileSEXP)
 SEXP rs_showPythonHelp(SEXP codeSEXP)
 {
    std::string code = r::sexp::safeAsString(codeSEXP);
-   boost::format fmt("python/%1%");
+   boost::format fmt("python/%1%.html");
    std::string url = boost::str(fmt % http::util::urlEncode(code, true));
    ClientEvent event(client_events::kShowHelp, url);
    module_context::enqueClientEvent(event);

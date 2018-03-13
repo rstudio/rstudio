@@ -59,22 +59,18 @@
       )
    )
    
-   if (!inherits(info, "error")) {
-      .rs.api.navigateToFile(info$source, info$line + 1L, 1L)
-      return(TRUE)
-   }
+   if (inherits(info, "error"))
+      return(FALSE)
    
-   return(FALSE)
+   .rs.api.navigateToFile(info$source, info$line + 1L, 1L)
+   return(TRUE)
    
 })
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
 {
    text <- .rs.python.extractCurrentExpression(line, offset)
-   
-   # invoke help routine
    .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
-   
    return(TRUE)
 })
 
@@ -1021,10 +1017,22 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return("")
    }
    
-   name <- if (reticulate::py_has_attr(resolved, "__name__"))
-      resolved[["__name__"]]
-   else
-      "<unknown>"
+   # the text provided by the user is likely an alias for
+   # the true definition location, so attempt to recover
+   # that from the object.
+   #
+   # TODO: should we maintain our cache of help topics
+   # within a session state directory, so they can be
+   # reloaded when RStudio is restarted?
+   name <- "<unknown>"
+   if (reticulate::py_has_attr(resolved, "__module__") &&
+       reticulate::py_has_attr(resolved, "__name__"))
+   {
+      module <- resolved[["__module__"]]
+      name   <- resolved[["__name__"]]
+      if (!is.null(module) && !is.null(name))
+         path <- file.path(dir, sprintf("%s.%s.html", module, name))
+   }
    
    # we have a Python object: generate HTML help for it. we
    # monkey-patch our own HTMLDoc instance so that the heading
