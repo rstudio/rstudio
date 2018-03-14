@@ -92,13 +92,19 @@ int GwtCallback::showMessageBox(int type,
    }
 
    // Make Enter invoke the default button, and ESC the cancel button.
-   // Guard against the case where the default button is the cancel button.
-   [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
-   if (cancelButton != defaultButton)
+   // If there's only one button, make sure Enter is the button used to
+   // dismiss the dialog. If there's multiple dialogs, accommodate the
+   // case where the default button may be the cancel button.
+   if ([dialogButtons count] == 1)
    {
+      [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
+   }
+   else
+   {
+      [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
       [[[alert buttons] objectAtIndex: cancelButton] setKeyEquivalent: @"\033"];
    }
-   
+
    [alert beginSheetModalForWindow: [[NSApplication sharedApplication] mainWindow] completionHandler: ^(NSModalResponse response) {
       [[NSApplication sharedApplication] stopModalWithCode: response];
    }];
