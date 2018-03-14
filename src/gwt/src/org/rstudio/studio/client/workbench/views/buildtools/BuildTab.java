@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -114,22 +115,27 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    public boolean isSuppressed()
    {
       return session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_NONE &&
-         !session_.getSessionInfo().getBuildEnabled();
+         !session_.getSessionInfo().getBuildEnabled() &&
+         !enabled_;
    }
    
    @Override
    public void onEnableBuild(EnableBuildEvent event)
    {
-      if (isSuppressed())
-         eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
+      if (isSuppressed()) {
+         enabled_ = true;
+         eventBus_.fireEvent(new UpdateTabPanelsEvent());
+      }
    }
 
    @Override
    public boolean closeable()
    {
-      return session_.getSessionInfo().getBuildEnabled();
+      return false;
    }
 
    private Session session_;
    private EventBus eventBus_;
+
+   private static boolean enabled_;
 }

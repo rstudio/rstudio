@@ -40,6 +40,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
+import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -305,10 +306,10 @@ public class PaneManager
 
             tabSet1TabPanel_.clear();
             tabSet2TabPanel_.clear();
-            populateTabPanel(tabNamesToTabs(evt.getValue().getTabSet1()),
-                             tabSet1TabPanel_, tabSet1MinPanel_);
-            populateTabPanel(tabNamesToTabs(evt.getValue().getTabSet2()),
-                             tabSet2TabPanel_, tabSet2MinPanel_);
+            tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
+            populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
+            tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+            populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
             
             manageLayoutCommands();
          }
@@ -377,6 +378,21 @@ public class PaneManager
                   manageLayoutCommands();
                }
             });
+
+      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, new UpdateTabPanelsEvent.Handler() {
+         public void onUpdateTabPanels(UpdateTabPanelsEvent event)
+         {
+            left_.replaceWindows(panes_.get(0), panes_.get(1));
+            right_.replaceWindows(panes_.get(2), panes_.get(3));
+
+            tabSet1TabPanel_.clear();
+            tabSet2TabPanel_.clear();
+            populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
+            populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
+            
+            manageLayoutCommands();      
+         }
+      });
       
       manageLayoutCommands();
       new ZoomedTabStateValue();
@@ -985,6 +1001,11 @@ public class PaneManager
 
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow);
 
+      if (persisterName == "TabSet1")
+         tabs1_ = tabs;
+      else if (persisterName == "TabSet2")
+         tabs2_ = tabs;
+
       populateTabPanel(tabs, tabPanel, minimized);
 
       frame.setFillWidget(tabPanel);
@@ -1231,4 +1252,7 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
+   
+   private ArrayList<Tab> tabs1_;
+   private ArrayList<Tab> tabs2_;
 }
