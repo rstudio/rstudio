@@ -1028,6 +1028,8 @@ private:
                  const core::system::ProcessCallbacks& cb)
    {
       s_buildEnabled = true;
+      ClientEvent event(client_events::kEnableBuild);
+      module_context::enqueClientEvent(event);
 
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
