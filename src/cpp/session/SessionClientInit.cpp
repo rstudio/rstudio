@@ -394,6 +394,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
 
+   sessionInfo["build_enabled"] = false;
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client
