@@ -107,6 +107,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.EnableBuildEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -948,6 +949,10 @@ public class ClientEventDispatcher
          {
             AskSecretEvent.Data data = event.getData();
             eventBus_.fireEvent(new AskSecretEvent(data));
+         }
+         else if (type == ClientEvent.EnableBuild)
+         {
+            eventBus_.fireEvent(new EnableBuildEvent());
          }
          else
          {

@@ -173,6 +173,7 @@ class ClientEvent extends JavaScriptObject
    public static final String OpenFileDialog = "open_file_dialog";
    public static final String ShowPageViewer = "show_page_viewer";
    public static final String AskSecret = "ask_secret";
+   public static final String EnableBuild = "enable_build";
    
    protected ClientEvent()
    {

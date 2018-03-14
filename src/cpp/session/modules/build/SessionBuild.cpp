@@ -108,6 +108,9 @@ namespace {
 // force a rebuild for those changes)
 bool s_forcePackageRebuild = false;
 
+// track if the build tab should be enabled on-demand.
+bool s_buildEnabled = false;
+
 bool isPackageHeaderFile(const FilePath& filePath)
 {
    if (projects::projectContext().hasProject() &&
@@ -1024,6 +1027,8 @@ private:
                  core::system::ProcessOptions pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
+      s_buildEnabled = true;
+
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
       if (error)
@@ -1915,6 +1920,11 @@ void onDeferredInit(bool newSession)
          }
       }
    }
+}
+
+bool buildEnabled()
+{
+   return s_buildEnabled;
 }
 
 Error initialize()

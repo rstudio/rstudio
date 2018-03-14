@@ -182,6 +182,7 @@ const int kOpenFileDialog = 163;
 const int kRemoveTerminal = 164;
 const int kShowPageViewerEvent = 165;
 const int kAskSecret = 166;
+const int kEnableBuild = 167;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -501,6 +502,8 @@ std::string ClientEvent::typeName() const
          return "show_page_viewer";
       case client_events::kAskSecret:
          return "ask_secret";
+      case client_events::kEnableBuild:
+         return "enable_build";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

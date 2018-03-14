@@ -394,7 +394,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
 
-   sessionInfo["build_enabled"] = false;
+   sessionInfo["build_enabled"] = modules::build::buildEnabled();
 
    module_context::events().onSessionInfo(&sessionInfo);
 
