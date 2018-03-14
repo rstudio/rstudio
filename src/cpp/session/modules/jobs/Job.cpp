@@ -142,6 +142,15 @@ void Job::setProgress(int units)
       progress_ = units;
 }
 
+void Job::setStatus(const std::string& status)
+{
+   status_ = status;
+}
+
+void Job::setRunning(bool running)
+{
+   running_ = running;
+}
 
 } // namepsace jobs
 } // namespace modules

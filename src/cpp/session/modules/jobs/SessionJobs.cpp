@@ -154,6 +154,28 @@ SEXP rs_addJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
    return R_NilValue;
 }
 
+SEXP rs_setJobStatus(SEXP jobSEXP, SEXP statusSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+
+   pJob->setStatus(r::sexp::safeAsString(statusSEXP));
+
+   return R_NilValue;
+}
+
+SEXP rs_setJobRunning(SEXP jobSEXP, SEXP runningSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+
+   pJob->setRunning(r::sexp::asLogical(runningSEXP));
+
+   return R_NilValue;
+}
+
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -179,6 +201,8 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_removeJob, 1);
    RS_REGISTER_CALL_METHOD(rs_setJobProgress, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
+   RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
+   RS_REGISTER_CALL_METHOD(rs_setJobRunning, 2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

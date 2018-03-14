@@ -63,6 +63,8 @@ public:
    bool completed();
 
    void setProgress(int units);
+   void setStatus(const std::string& status);
+   void setRunning(bool running);
 
    // convert job to/from JSON
    core::json::Object toJson();

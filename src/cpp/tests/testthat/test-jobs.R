@@ -44,9 +44,25 @@ test_that("job progress is updated", {
    expect_equal(job[["progress"]], 60L)
 })
 
-
 test_that("can't set progress of a non-ranged job", {
    jobId <- .rs.api.addJob(name = "job3")
 
    expect_error(.rs.api.addJobProgress(jobId, 10L))
+})
+
+test_that("property writes persist", {
+   jobId <- .rs.api.addJob(name = "job4", status = "initializing", 
+                           running = FALSE)
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_equal(jobs[[jobId]][["status"]], "initializing")
+   expect_equal(jobs[[jobId]][["running"]], FALSE)
+
+   .rs.api.setJobStatus(jobId, "executing")
+   .rs.api.setJobRunning(jobId, TRUE)
+   jobs <- .rs.invokeRpc("get_jobs")
+
+   expect_equal(jobs[[jobId]][["status"]], "executing")
+   expect_true(jobs[[jobId]][["running"]])
+
 })

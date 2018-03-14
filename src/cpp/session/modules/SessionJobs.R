@@ -52,3 +52,16 @@
    .Call("rs_addJobProgress", job, units)
 })
 
+.rs.addApiFunction("setJobStatus", function(job, status) {
+   if (missing(job))
+      stop("Must specify job ID to set status for.")
+   if (missing(status))
+      stop("Must specify job status to update.")
+   .Call("rs_setJobStatus", job, status)
+})
+
+.rs.addApiFunction("setJobRunning", function(job, running = TRUE) {
+   if (missing(job))
+      stop("Must specify job ID to change running state for.")
+   .Call("rs_setJobRunning", job, running)
+})
