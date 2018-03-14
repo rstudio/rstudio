@@ -91,22 +91,22 @@ var MarkdownHighlightRules = function() {
     // parser is a bit more strict about where '_' can appear
     var strongUnderscore = {
         token: ["text", "constant.numeric"],
-        regex: "(\\s+|^)(__.+?__)\\b"
+        regex: "(\\s+|^)(__\\S.+?\\S__)\\b"
     };
 
     var emphasisUnderscore = {
         token: ["text", "constant.language.boolean"],
-        regex: "(\\s+|^)(_(?=[^_])(?:(?:\\\\.)|(?:[^_\\\\]))*?_)\\b"
+        regex: "(\\s+|^)(_(?=[^\\s_])(?:(?:\\\\.)|(?:[^\\s_\\\\]))*?_)\\b"
     };
 
     var strongStars = {
         token: ["constant.numeric"],
-        regex: "([*][*].+?[*][*])"
+        regex: "([*][*]\\S.+?\\S[*][*])"
     };
 
     var emphasisStars = {
         token: ["constant.language.boolean"],
-        regex: "([*](?=[^*])(?:(?:\\\\.)|(?:[^*\\\\]))*?[*])"
+        regex: "([*](?=[^\\s*])(?:(?:\\\\.)|(?:[^\\s*\\\\]))*?[*])"
     };
 
     this.$rules = {
@@ -319,6 +319,9 @@ var MarkdownHighlightRules = function() {
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
+        }, { // MathJax $...$ (org-mode style)
+            token : ["latex.markup.list.string.begin","latex.support.function","latex.markup.list.string.end"],
+            regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         }, {
             include : "basic", noEscape: true
         }, { // Github style block
