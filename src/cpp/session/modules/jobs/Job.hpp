@@ -62,6 +62,8 @@ public:
    // whether the job has completed
    bool completed();
 
+   void setProgress(int units);
+
    // convert job to/from JSON
    core::json::Object toJson();
    static core::Error fromJson(const core::json::Object& src, 

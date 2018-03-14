@@ -15,7 +15,7 @@
 
 context("jobs")
 
-test_that("jobs can be added", {
+test_that("jobs can be added and removed", {
    # add a job
    jobId <- .rs.api.addJob(name = "job1")
 
@@ -24,11 +24,12 @@ test_that("jobs can be added", {
 
    # find job in the resultant list
    job <- jobs[[jobId]]
-   warning(jobs)
-   expect_equal(name, job[["name"]])
+   expect_equal("job1", job[["name"]])
 
    # clean up
    .rs.api.removeJob(jobId)
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_equal(NULL, jobs[[jobId]])
 })
 
 test_that("job progress is updated", {

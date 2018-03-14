@@ -29,3 +29,26 @@
    .Call("rs_addJob", name, status, progressUnits,
       actions, estimate, estimateRemaining, running, autoRemove, group)
 })
+
+.rs.addApiFunction("removeJob", function(job) {
+   if (missing(job))
+      stop("Must specify job ID to remove.")
+   .Call("rs_removeJob", job)
+})
+
+.rs.addApiFunction("setJobProgress", function(job, units) {
+   if (missing(job))
+      stop("Must specify job ID to set progress for.")
+   if (missing(units))
+      stop("Must specify number of progress units to set.")
+   .Call("rs_setJobProgress", job, units)
+})
+
+.rs.addApiFunction("addJobProgress", function(job, units) {
+   if (missing(job))
+      stop("Must specify job ID to add progress to.")
+   if (missing(units))
+      stop("Must specify number of progress units to add")
+   .Call("rs_addJobProgress", job, units)
+})
+

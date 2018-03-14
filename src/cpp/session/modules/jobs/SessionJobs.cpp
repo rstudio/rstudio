@@ -20,6 +20,7 @@
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp>
+#include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -38,6 +39,24 @@ namespace {
 
 // map of job ID to jobs
 std::map<std::string, boost::shared_ptr<Job> > s_jobs;
+
+bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
+{
+   std::string id = r::sexp::safeAsString(jobSEXP, "");
+   if (id.empty())
+   {
+      r::exec::error("A job ID must be specified.");
+      return false;
+   }
+   auto it = s_jobs.find(id);
+   if (it == s_jobs.end())
+   {
+      r::exec::error("Job ID '" + id + "' does not exist.");
+      return false;
+   }
+   *pJob = it->second;
+   return true;
+}
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
       SEXP estimateSEXP, SEXP estimateRemainingSEXP, SEXP runningSEXP, SEXP autoRemoveSEXP,
@@ -69,25 +88,84 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    return r::sexp::create(id, &protect);
 }
 
-
-SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
+SEXP rs_removeJob(SEXP jobSEXP)
 {
-   std::string id = r::sexp::safeAsString(jobId, "");
-   int units = r::sexp::asInteger(unitsSEXP);
+   boost::shared_ptr<Job> pJob;
+   if (lookupJob(jobSEXP, &pJob))
+   {
+      s_jobs.erase(s_jobs.find(pJob->id()));
+   }
+   return R_NilValue;
 }
       
+SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+
+   // test boundaries
+   int units = r::sexp::asInteger(unitsSEXP);
+   if (pJob->max() == 0)
+   {
+      r::exec::error("Cannot set progress for this job because it does not have a progress "
+                     "maximum defined.");
+      return R_NilValue;
+   }
+   if (units < pJob->progress())
+   {
+      r::exec::error("Progress cannot go backwards; specify a progress value more than the "
+                     "current progress.");
+      return R_NilValue;
+   }
+   pJob->setProgress(units);
+
+   return R_NilValue;
+}
+
+SEXP rs_addJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+
+   // test boundaries
+   int units = r::sexp::asInteger(unitsSEXP);
+   if (pJob->max() == 0)
+   {
+      r::exec::error("Cannot add more progress for this job because it does not have a progress "
+                     "maximum defined.");
+      return R_NilValue;
+   }
+   if (units < 0)
+   {
+      r::exec::error("Progress cannot go backwards; specify a positive progress value.");
+      return R_NilValue;
+   }
+
+   // clamp to maximum number of units specified by job
+   int total = pJob->progress() + units;
+   if (total > pJob->max()) 
+   {
+      total = pJob->max();
+   }
+   pJob->setProgress(total);
+
+   return R_NilValue;
+}
+
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   json::Object result;
+   json::Object jobs;
 
    // convert all jobs to json
    for (auto& job: s_jobs)
    {
-      result[job.first] = job.second->toJson();
+      jobs[job.first] = job.second->toJson();
    }
 
-   pResponse->setResult(result);
+   pResponse->setResult(jobs);
 
    return Success();
 }
@@ -98,6 +176,9 @@ core::Error initialize()
 {
    // register API handlers
    RS_REGISTER_CALL_METHOD(rs_addJob, 9);
+   RS_REGISTER_CALL_METHOD(rs_removeJob, 1);
+   RS_REGISTER_CALL_METHOD(rs_setJobProgress, 2);
+   RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

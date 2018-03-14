@@ -133,6 +133,15 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
    return Success();
 }
 
+void Job::setProgress(int units)
+{
+   // ensure units doesn't exceed the max
+   if (units > max())
+      progress_ = max_;
+   else
+      progress_ = units;
+}
+
 
 } // namepsace jobs
 } // namespace modules
