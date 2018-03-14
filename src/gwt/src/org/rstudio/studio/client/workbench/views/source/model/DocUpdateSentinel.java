@@ -1,7 +1,7 @@
 /*
  * DocUpdateSentinel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.ValueChangeHandlerManager;
@@ -130,64 +131,70 @@ public class DocUpdateSentinel
       docDisplay_.addFoldChangeHandler(this);
 
       // Web only
-      closeHandlerReg_ = Window.addWindowClosingHandler(new ClosingHandler()
+      if (!Desktop.isDesktop())
       {
-         public void onWindowClosing(ClosingEvent event)
+         closeHandlerReg_ = Window.addWindowClosingHandler(new ClosingHandler()
          {
-            if (changesPending_)
-               event.setMessage("Some of your source edits are still being " +
-                                "backed up. If you continue, your latest " +
-                                "changes may be lost. Do you want to continue?");
-         }
-      });
+            public void onWindowClosing(ClosingEvent event)
+            {
+               if (changesPending_)
+                  event.setMessage("Some of your source edits are still being " +
+                        "backed up. If you continue, your latest " +
+                        "changes may be lost. Do you want to continue?");
+            }
+         });
+      }
 
       // Desktop only
-      lastChanceSaveHandlerReg_ = events.addHandler(
-            LastChanceSaveEvent.TYPE,
-            new LastChanceSaveHandler() {
-               public void onLastChanceSave(LastChanceSaveEvent event)
-               {
-                  // We're quitting. Save one last time.
-                  final Token token = event.acquire();
-                  boolean saving = doSave(null, null, null,
-                                          new ProgressIndicator()
+      if (Desktop.isDesktop())
+      {
+         lastChanceSaveHandlerReg_ = events.addHandler(
+               LastChanceSaveEvent.TYPE,
+               new LastChanceSaveHandler() {
+                  public void onLastChanceSave(LastChanceSaveEvent event)
                   {
-                     public void onProgress(String message)
+                     // We're quitting. Save one last time.
+                     final Token token = event.acquire();
+                     boolean saving = doSave(null, null, null,
+                           new ProgressIndicator()
                      {
-                     }
-                     
-                     public void onProgress(String message, Operation onCancel)
+                        public void onProgress(String message)
+                        {
+                        }
+
+                        public void onProgress(String message, Operation onCancel)
+                        {
+                        }
+
+                        public void clearProgress()
+                        {
+                           // alternate way to signal completion. safe to quit
+                           token.release();
+                        }
+
+                        public void onCompleted()
+                        {
+                           // We saved successfully. We're safe to quit now.
+                           token.release();
+                        }
+
+                        public void onError(String message)
+                        {
+                           // The save didn't succeed. Oh well. Nothing we can
+                           // do but quit.
+                           token.release();
+                        }
+                     });
+
+                     if (!saving)
                      {
-                     }
-                     
-                     public void clearProgress()
-                     {
-                        // alternate way to signal completion. safe to quit
+                        // No save was performed (not needed). We're safe to quit
+                        // now, no need to wait for server requests to complete.
                         token.release();
                      }
-
-                     public void onCompleted()
-                     {
-                        // We saved successfully. We're safe to quit now.
-                        token.release();
-                     }
-
-                     public void onError(String message)
-                     {
-                        // The save didn't succeed. Oh well. Nothing we can
-                        // do but quit.
-                        token.release();
-                     }
-                  });
-
-                  if (!saving)
-                  {
-                     // No save was performed (not needed). We're safe to quit
-                     // now, no need to wait for server requests to complete.
-                     token.release();
                   }
-               }
-            });
+               });
+      }
    }
 
    public void withSavedDoc(final Command onSaved)
@@ -710,8 +717,18 @@ public class DocUpdateSentinel
    public void stop()
    {
       autosaver_.suspend();
-      closeHandlerReg_.removeHandler();
-      lastChanceSaveHandlerReg_.removeHandler();
+      
+      if (closeHandlerReg_ != null)
+      {
+         closeHandlerReg_.removeHandler();
+         closeHandlerReg_ = null;
+      }
+      
+      if (lastChanceSaveHandlerReg_ != null)
+      {
+         lastChanceSaveHandlerReg_.removeHandler();
+         lastChanceSaveHandlerReg_ = null;
+      }
    }
 
    public void revert()
@@ -771,7 +788,7 @@ public class DocUpdateSentinel
    private final DirtyState dirtyState_;
    private final EventBus eventBus_;
    private final DebouncedCommand autosaver_;
-   private final HandlerRegistration closeHandlerReg_;
+   private HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
                  propertyChangeHandlers_;
