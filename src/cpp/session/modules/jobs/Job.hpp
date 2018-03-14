@@ -24,6 +24,22 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
+enum JobState {
+   // invalid state sentry
+   JobInvalid    = 0,
+
+   // valid job states
+   JobIdle       = 1,
+   JobRunning    = 2,
+   JobSucceeded  = 3,
+   JobCancelled  = 4,
+   JobFailed     = 5,
+
+   // min/max valid state sentries
+   JobStateMin   = JobIdle,
+   JobStateMax   = JobFailed
+};
+
 class Job
 {
 public:
@@ -35,8 +51,7 @@ public:
        const std::string& group,
        int progress, 
        int max,
-       bool running,
-       bool completed);
+       JobState state);
 
    // job ID (machine-generated)
    std::string id();
@@ -56,20 +71,20 @@ public:
    // the total number of progress units
    int max();
 
-   // whether the job is currently executing
-   bool running();
-
-   // whether the job has completed
-   bool completed();
+   // the current state of the job
+   JobState state();
 
    void setProgress(int units);
    void setStatus(const std::string& status);
-   void setRunning(bool running);
+   void setState(JobState state);
 
    // convert job to/from JSON
    core::json::Object toJson();
    static core::Error fromJson(const core::json::Object& src, 
                                boost::shared_ptr<Job>* pJob);
+
+   static std::string stateAsString(JobState state);
+   static JobState stringAsState (const std::string& state);
 
 private:
    std::string id_;
@@ -77,12 +92,12 @@ private:
    std::string status_;
    std::string group_;
 
+   JobState state_;
+
    int progress_;
    int max_;
-
-   bool running_;
-   bool completed_;
 };
+
 
 
 } // namespace jobs

@@ -60,8 +60,11 @@
    .Call("rs_setJobStatus", job, status)
 })
 
-.rs.addApiFunction("setJobRunning", function(job, running = TRUE) {
+.rs.addApiFunction("setJobState", function(job, state = c("idle", "running", "succeeded",
+                                                          "cancelled", "failed")) {
    if (missing(job))
-      stop("Must specify job ID to change running state for.")
-   .Call("rs_setJobRunning", job, running)
+      stop("Must specify job ID to change state for.")
+   state <- match.arg(state)
+   .Call("rs_setJobState", job, state)
 })
+

@@ -23,8 +23,13 @@
 #define kJobStatus      "status"
 #define kJobProgress    "progress"
 #define kJobMax         "max"
-#define kJobRunning     "running"
-#define kJobCompleted   "completed"
+#define kJobState       "state"
+
+#define kJobStateIdle      "idle"
+#define kJobStateRunning   "running"
+#define kJobStateSucceeded "succeeded"
+#define kJobStateCancelled "cancelled"
+#define kJobStateFailed    "failed"
 
 using namespace rstudio::core;
 
@@ -39,24 +44,21 @@ Job::Job(const std::string& id,
          const std::string& group,
          int progress, 
          int max,
-         bool running,
-         bool completed):
+         JobState state):
    id_(id), 
    name_(name),
    status_(status),
    group_(group),
+   state_(state),
    progress_(progress),
-   max_(max),
-   running_(running),
-   completed_(completed)
+   max_(max)
 {
 }
 
 Job::Job():
+   state_(JobIdle),
    progress_(0),
-   max_(0),
-   running_(false),
-   completed_(false)
+   max_(0)
 {
 }
 
@@ -90,27 +92,25 @@ int Job::max()
     return max_;
 }
 
-bool Job::running()
+JobState Job::state()
 {
-    return running_;
-}
-
-bool Job::completed()
-{
-    return completed_;
+    return state_; 
 }
 
 json::Object Job::toJson()
 {
    json::Object job;
 
-   job[kJobId]        = id_;
-   job[kJobName]      = name_;
-   job[kJobStatus]    = status_;
-   job[kJobProgress]  = progress_;
-   job[kJobMax]       = max_;
-   job[kJobRunning]   = running_;
-   job[kJobCompleted] = completed_;
+   // fill out fields from local information
+   job[kJobId]       = id_;
+   job[kJobName]     = name_;
+   job[kJobStatus]   = status_;
+   job[kJobProgress] = progress_;
+   job[kJobMax]      = max_;
+   job[kJobState]    = static_cast<int>(state_);
+
+   // append description
+   job["state_description"] = stateAsString(state_);
 
    return job;
 }
@@ -118,16 +118,18 @@ json::Object Job::toJson()
 Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
 {
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>();
+   int state = static_cast<int>(JobIdle);
    Error error = json::readObject(src,
-      kJobId,        &pJob->id_,
-      kJobName,      &pJob->name_,
-      kJobStatus,    &pJob->status_,
-      kJobProgress,  &pJob->progress_,
-      kJobMax,       &pJob->max_,
-      kJobRunning,   &pJob->running_,
-      kJobCompleted, &pJob->completed_);
+      kJobId,       &pJob->id_,
+      kJobName,     &pJob->name_,
+      kJobStatus,   &pJob->status_,
+      kJobProgress, &pJob->progress_,
+      kJobMax,      &pJob->max_,
+      kJobState,    &state);
    if (error)
       return error;
+
+   pJob->setState(static_cast<JobState>(state));
 
    *pJobOut = pJob;
    return Success();
@@ -147,9 +149,34 @@ void Job::setStatus(const std::string& status)
    status_ = status;
 }
 
-void Job::setRunning(bool running)
+void Job::setState(JobState state)
 {
-   running_ = running;
+   state_ = state;
+}
+
+std::string Job::stateAsString(JobState state)
+{
+   switch(state)
+   {
+      case JobIdle:      return kJobStateIdle;
+      case JobRunning:   return kJobStateRunning;
+      case JobSucceeded: return kJobStateSucceeded;
+      case JobCancelled: return kJobStateCancelled;
+      case JobFailed:    return kJobStateFailed;
+      case JobInvalid:   return "";
+   }
+   return "";
+}
+
+JobState Job::stringAsState(const std::string& state)
+{
+   if (state == kJobStateIdle)            return JobIdle;
+   else if (state == kJobStateRunning)    return JobRunning;
+   else if (state == kJobStateSucceeded)  return JobSucceeded;
+   else if (state == kJobStateCancelled)  return JobCancelled;
+   else if (state == kJobStateFailed)     return JobFailed;
+
+   return JobInvalid;
 }
 
 } // namepsace jobs

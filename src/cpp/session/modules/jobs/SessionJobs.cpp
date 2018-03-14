@@ -67,7 +67,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    std::string status = r::sexp::safeAsString(statusSEXP, "");
    std::string group  = r::sexp::safeAsString(groupSEXP, "");
    int progress       = r::sexp::asInteger(progressUnitsSEXP);
-   bool running       = r::sexp::asLogical(runningSEXP);
+   JobState state     = r::sexp::asLogical(runningSEXP) ? JobRunning : JobIdle;
    
    // find an unused job id
    std::string id;
@@ -77,10 +77,10 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    }
    while(s_jobs.find(id) != s_jobs.end());
 
+
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
-         id, name, status, group, 0 /* completed units */, progress, running, 
-         false /* job complete */);
+         id, name, status, group, 0 /* completed units */, progress, state); 
 
    // cache job and return its id
    r::sexp::Protect protect;
@@ -165,13 +165,21 @@ SEXP rs_setJobStatus(SEXP jobSEXP, SEXP statusSEXP)
    return R_NilValue;
 }
 
-SEXP rs_setJobRunning(SEXP jobSEXP, SEXP runningSEXP)
+SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
 {
    boost::shared_ptr<Job> pJob;
    if (!lookupJob(jobSEXP, &pJob))
       return R_NilValue;
 
-   pJob->setRunning(r::sexp::asLogical(runningSEXP));
+   std::string state = r::sexp::safeAsString(stateSEXP);
+   JobState jobState = Job::stringAsState(state);
+   if (state.empty())
+   {
+      r::exec::error("The state '" + state + "' is not a valid job state.");
+      return R_NilValue;
+   }
+
+   pJob->setState(jobState);
 
    return R_NilValue;
 }
@@ -202,7 +210,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobProgress, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
-   RS_REGISTER_CALL_METHOD(rs_setJobRunning, 2);
+   RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
