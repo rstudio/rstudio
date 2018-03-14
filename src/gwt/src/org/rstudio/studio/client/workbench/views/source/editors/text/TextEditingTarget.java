@@ -1245,7 +1245,8 @@ public class TextEditingTarget implements
                                           fileType_,
                                           extendedType_,
                                           events_,
-                                          session_);
+                                          session_,
+                                          server_);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
@@ -5052,25 +5053,6 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
-   }
-
-   private void runTestFile()
-   {
-      server_.startBuild("test-file", "", 
-         new SimpleRequestCallback<Boolean>() {
-         @Override
-         public void onResponseReceived(Boolean response)
-         {
-
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            super.onError(error);
-         }
-
-      });
    }
    
    private void runScript()

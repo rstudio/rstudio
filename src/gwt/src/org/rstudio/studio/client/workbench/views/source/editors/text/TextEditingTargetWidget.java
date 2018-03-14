@@ -54,6 +54,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -62,6 +63,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -80,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -94,7 +97,8 @@ public class TextEditingTargetWidget
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
-                                  Session session)
+                                  Session session,
+                                  SourceServerOperations server)
    {
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -110,6 +114,7 @@ public class TextEditingTargetWidget
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
+      server_ = server;
       
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -348,6 +353,20 @@ public class TextEditingTargetWidget
       
       sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
+
+      testButton_ = new ToolbarButton(
+            "Run Test", 
+            commands_.debugContinue().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+               }
+            });
+
+      toolbar.addRightWidget(testButton_);
+      testButton_.setVisible(false);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
@@ -573,9 +592,9 @@ public class TextEditingTargetWidget
          commands_.executeCodeWithoutFocus().setEnabled(false);
       }
       
-      // don't show the run buttons for cpp files, or R files in Shiny
+      // don't show the run buttons for cpp files, or R files in Shiny/Tests
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !isShinyFile() && !(isScript && !terminalAllowed));
+            !(isShinyFile() || isTestThatFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
@@ -617,15 +636,26 @@ public class TextEditingTargetWidget
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
      
-      if (isShinyFile())
+      if (isShinyFile() || isTestThatFile())
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
          runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
          chunksButton_.setVisible(false);
+      }
+
+      testButton_.setVisible(false);
+      if (isShinyFile())
+      {
          shinyLaunchButton_.setVisible(true);
          setSourceButtonFromShinyState();
+      }
+      if (isTestThatFile())
+      {
+         shinyLaunchButton_.setVisible(false);
+         sourceButton_.setVisible(false);
+         testButton_.setVisible(true);
       }
       else
       {
@@ -658,7 +688,7 @@ public class TextEditingTargetWidget
    private boolean isTestThatFile()
    {
       return extendedType_ != null &&
-             extendedType_.startsWith(SourceDocument.XT_TESTTHAT_PREFIX);
+             extendedType_.startsWith(SourceDocument.XT_TEST_PREFIX);
    }
    
    @Override
@@ -694,7 +724,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile() || isTestThatFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
@@ -1153,6 +1183,7 @@ public class TextEditingTargetWidget
                   commands_.debugContinue().getImageResource());
          }
       }
+
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
    }
@@ -1266,6 +1297,25 @@ public class TextEditingTargetWidget
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
+
+   private void runTestFile()
+   {
+      server_.startBuild("test-file", "", 
+         new SimpleRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean response)
+         {
+
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+         }
+
+      });
+   }
    
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
@@ -1275,6 +1325,7 @@ public class TextEditingTargetWidget
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
+   private final SourceServerOperations server_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
@@ -1295,6 +1346,7 @@ public class TextEditingTargetWidget
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
+   private ToolbarButton testButton_;
    private ToolbarButton sourceMenuButton_;
    private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;
