@@ -362,6 +362,7 @@ public class TextEditingTargetWidget
                @Override
                public void onClick(ClickEvent event)
                {
+                  runTestFile();
                }
             });
 

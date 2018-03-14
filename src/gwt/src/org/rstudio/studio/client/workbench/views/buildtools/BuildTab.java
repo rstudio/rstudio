@@ -107,7 +107,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
          }
       });
       
-   
+      eventBus.addHandler(EnableBuildEvent.TYPE, this);
    }
    
    @Override
