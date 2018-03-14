@@ -69,7 +69,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
          "mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "ace/mode/sh", false, false);
+         "mode/sh", false, false);
    public static final EditorLanguage LANG_TOML = new EditorLanguage(
          "ace/mode/toml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(

@@ -61,7 +61,7 @@ var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightR
 var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlightRules;
-var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
+var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 
