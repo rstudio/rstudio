@@ -147,7 +147,7 @@ var ShHighlightRules = function() {
                         this.next = "";
                         return "string";
                     },
-                    regex: ".*$",
+                    regex: ".*$"
                 }],
                 indentedHeredoc: [{
                     token: "string",
@@ -162,7 +162,7 @@ var ShHighlightRules = function() {
                         this.next = "";
                         return "string";
                     },
-                    regex: ".*$",
+                    regex: ".*$"
                 }]
             }
         }, {
