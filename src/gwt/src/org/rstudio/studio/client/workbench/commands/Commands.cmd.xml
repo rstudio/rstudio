@@ -362,7 +362,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="cleanAll"/>
          <separator/>
          <cmd refid="testPackage"/>
-         <cmd refid="testFile"/>
          <separator/>
          <cmd refid="checkPackage"/>
          <separator/>
@@ -2838,12 +2837,6 @@ well as menu structures (for main menu and popup menus).
         desc="Run tests for package"
         windowMode="background"
         context="packageDevelopment"/>
-
-   <cmd id="testFile"
-        menuLabel="T_est File"
-        desc="Run tests from file"
-        windowMode="background"
-        context="packageDevelopment"/>
         
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
@@ -3053,6 +3046,11 @@ well as menu structures (for main menu and popup menus).
         desc="Run the Shiny application in the system's default Web browser"
         checkable="true"
         windowMode="background"/>
+
+   <cmd id="shinyRecordTest"
+        label="Record a Test for Shiny"
+        menuLabel="Record Test"
+        desc="Record test for the Shiny application"/>
 
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."

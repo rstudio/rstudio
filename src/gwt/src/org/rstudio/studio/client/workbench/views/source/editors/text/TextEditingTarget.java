@@ -6699,6 +6699,13 @@ public class TextEditingTarget implements
    {
       view_.showReadOnlyWarning(alternatives);
    }
+
+   @Handler
+   void onShinyRecordTest()
+   {
+      String code = "shinytest::recordTest(\"" + FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()) + "\")";
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
    
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

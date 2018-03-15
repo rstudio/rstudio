@@ -365,6 +365,7 @@ public class TextEditingTargetWidget
                   runTestFile();
                }
             });
+      testButton_.setTitle("Run test using the testthat package");
 
       toolbar.addRightWidget(testButton_);
       testButton_.setVisible(false);
@@ -595,7 +596,7 @@ public class TextEditingTargetWidget
       
       // don't show the run buttons for cpp files, or R files in Shiny/Tests
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !isShinyFile() && !(isScript && !terminalAllowed));
+            !(isShinyFile() || isTestThatFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
