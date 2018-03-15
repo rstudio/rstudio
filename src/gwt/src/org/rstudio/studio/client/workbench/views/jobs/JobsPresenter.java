@@ -16,9 +16,11 @@
 package org.rstudio.studio.client.workbench.views.jobs;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -31,6 +33,7 @@ public class JobsPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void updateJob(int type, Job job);
+      void setInitialJobs(JsObject jobs);
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -39,12 +42,15 @@ public class JobsPresenter extends BasePresenter
    public JobsPresenter(Display display, 
                         Binder binder,
                         Commands commands,
-                        EventBus events)
+                        EventBus events,
+                        Session session)
    {
       super(display);
       display_ = display;
       binder.bind(commands, this);
       events.addHandler(JobUpdatedEvent.TYPE, this);
+
+      display_.setInitialJobs(session.getSessionInfo().getJobState());
    }
 
    @Override

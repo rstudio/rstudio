@@ -29,6 +29,8 @@ namespace jobs {
 
 core::Error initialize();
 
+core::json::Object jobState();
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

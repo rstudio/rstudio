@@ -2,9 +2,14 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
+	.list
+	{
+		width: 100%;
+		padding: 10px;
+	}
 	</ui:style>
 	<g:ScrollPanel>
-		<g:VerticalPanel ui:field="list_">
+		<g:VerticalPanel styleName="{style.list}" ui:field="list_">
 		</g:VerticalPanel>
 	</g:ScrollPanel>
 </ui:UiBinder> 

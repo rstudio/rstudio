@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -461,6 +461,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native JsArray<ConnectionId> getActiveConnections() /*-{
       return this.active_connections;
+   }-*/;
+   
+   public final native JsObject getJobState() /*-{
+      return this.job_state;
    }-*/;
    
    public final native boolean getShowHelpHome() /*-{

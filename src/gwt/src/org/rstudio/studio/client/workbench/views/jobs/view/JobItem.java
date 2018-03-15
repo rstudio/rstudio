@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,10 +45,16 @@ public class JobItem extends Composite
    {
       // sync status and progress
       status_.setText(job.status);
-      progress_.setText(job.progress + "");
+      
+      if (job.max > 0)
+      {
+         double percent = ((double)job.progress / (double)job.max) * 100.0;
+         bar_.setWidth(percent + "%");
+      }
    }
    
    @UiField Label name_;
    @UiField Label status_;
-   @UiField Label progress_;
+   @UiField HTMLPanel progress_;
+   @UiField HTMLPanel bar_;
 }

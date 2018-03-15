@@ -36,6 +36,7 @@
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/build/SessionBuild.hpp"
+#include "modules/jobs/SessionJobs.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
@@ -393,6 +394,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["git_commit_large_file_size"] = options.gitCommitLargeFileSize();
 
    sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
+
+   sessionInfo["job_state"] = modules::jobs::jobState();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

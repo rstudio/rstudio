@@ -208,8 +208,7 @@ SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
    return R_NilValue;
 }
 
-Error getJobs(const json::JsonRpcRequest& request,
-              json::JsonRpcResponse* pResponse)
+json::Object jobsAsJson()
 {
    json::Object jobs;
 
@@ -219,12 +218,23 @@ Error getJobs(const json::JsonRpcRequest& request,
       jobs[job.first] = job.second->toJson();
    }
 
-   pResponse->setResult(jobs);
+   return jobs;
+}
+
+Error getJobs(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(jobsAsJson());
 
    return Success();
 }
 
 } // anonymous namespace
+
+core::json::Object jobState()
+{
+   return jobsAsJson();
+}
 
 core::Error initialize()
 {

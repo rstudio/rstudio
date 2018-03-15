@@ -17,11 +17,10 @@ import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -41,6 +40,7 @@ public class JobsPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       list_ = new JobsList();
+      list_.addStyleName("ace_editor_theme");
       return list_;
    }
 
@@ -73,5 +73,17 @@ public class JobsPane extends WorkbenchPane
       }
    }
    
+   @Override
+   public void setInitialJobs(JsObject jobs)
+   {
+      if (jobs == null)
+         return;
+
+      for (String id: jobs.iterableKeys())
+      {
+         list_.addJob((Job)jobs.getElement(id));
+      }
+   }
+
    JobsList list_;
 }
