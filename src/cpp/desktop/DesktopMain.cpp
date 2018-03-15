@@ -283,16 +283,13 @@ int main(int argc, char* argv[])
       static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
       arguments.push_back(disableCompositorPref);
       
-      // speculative fixes for rendering issues on macOS
+      // disable gpu rasterization. this appears to successfully work around
+      // some of the weird rendering issues seen while using RStudio.
+      //
       // https://bugs.chromium.org/p/chromium/issues/detail?id=773705
-      static char disableNativeGpuMemoryBuffers[] = "--disable-native-gpu-memory-buffers";
-      arguments.push_back(disableNativeGpuMemoryBuffers);
-      
-      static char disableZeroCopy[] = "--disable-zero-copy";
-      arguments.push_back(disableZeroCopy);
-      
-      static char disableGpuMemoryBufferVideoFrames[] = "--disable-gpu-memory-buffer-video-frames";
-      arguments.push_back(disableGpuMemoryBufferVideoFrames);
+      // https://github.com/rstudio/rstudio/issues/2093
+      static char disableGpuRasterization[] = "--disable-gpu-rasterization";
+      arguments.push_back(disableGpuRasterization);
 #endif
 
       // re-assign command line arguments
