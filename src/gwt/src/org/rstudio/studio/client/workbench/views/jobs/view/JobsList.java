@@ -44,6 +44,8 @@ public class JobsList extends Composite
    
    public void addJob(Job job)
    {
+      if (jobs_.containsKey(job.id))
+         return;
       JobItem item = new JobItem(job);
       jobs_.put(job.id, item);
       list_.add(item);

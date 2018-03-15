@@ -2,12 +2,29 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
+	.item
+	{
+		padding: 5px;	
+	}
 	
+	.metadata
+	{
+	 	margin-bottom: 2px;
+	}
+	
+	.name
+	{
+		font-weight: bold;	
+	}
 	</ui:style>
-	<g:VerticalPanel>
-		<g:HorizontalPanel>
-			<g:Label ui:field="name_"></g:Label>
-			<g:Label ui:field="status_"></g:Label>
+	<g:VerticalPanel styleName="{style.item}">
+		<g:HorizontalPanel styleName="{style.metadata}">
+		    <g:cell horizontalAlignment="ALIGN_LEFT">
+				<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
+            </g:cell>
+            <g:cell horizontalAlignment="ALIGN_RIGHT">
+			    <g:Label ui:field="status_"></g:Label>
+            </g:cell>
 		</g:HorizontalPanel>
 		<g:HorizontalPanel>
 			<g:Label ui:field="progress_"></g:Label>
