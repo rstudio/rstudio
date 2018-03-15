@@ -28,6 +28,13 @@
 #include "Job.hpp"
 #include "SessionJobs.hpp"
 
+enum JobUpdateType
+{
+   JobAdded   = 0,
+   JobUpdated = 1,
+   JobRemoved = 2
+};
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -39,6 +46,16 @@ namespace {
 
 // map of job ID to jobs
 std::map<std::string, boost::shared_ptr<Job> > s_jobs;
+
+// notify client that job has been updated
+void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
+{
+   json::Object data;
+   data["type"] = static_cast<int>(update);
+   data["job"]  = pJob->toJson();
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kJobUpdated, data));
+}
 
 bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 {
@@ -77,14 +94,16 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    }
    while(s_jobs.find(id) != s_jobs.end());
 
-
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
          id, name, status, group, 0 /* completed units */, progress, state); 
 
-   // cache job and return its id
-   r::sexp::Protect protect;
+   // cache job and notify client
    s_jobs[id] = pJob;
+   notifyClient(JobAdded, pJob);
+
+   // return job id
+   r::sexp::Protect protect;
    return r::sexp::create(id, &protect);
 }
 
@@ -93,6 +112,7 @@ SEXP rs_removeJob(SEXP jobSEXP)
    boost::shared_ptr<Job> pJob;
    if (lookupJob(jobSEXP, &pJob))
    {
+      notifyClient(JobRemoved, pJob);
       s_jobs.erase(s_jobs.find(pJob->id()));
    }
    return R_NilValue;
@@ -119,6 +139,7 @@ SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
       return R_NilValue;
    }
    pJob->setProgress(units);
+   notifyClient(JobUpdated, pJob);
 
    return R_NilValue;
 }
@@ -150,6 +171,7 @@ SEXP rs_addJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
       total = pJob->max();
    }
    pJob->setProgress(total);
+   notifyClient(JobUpdated, pJob);
 
    return R_NilValue;
 }
@@ -161,6 +183,7 @@ SEXP rs_setJobStatus(SEXP jobSEXP, SEXP statusSEXP)
       return R_NilValue;
 
    pJob->setStatus(r::sexp::safeAsString(statusSEXP));
+   notifyClient(JobUpdated, pJob);
 
    return R_NilValue;
 }
@@ -180,6 +203,7 @@ SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
    }
 
    pJob->setState(jobState);
+   notifyClient(JobUpdated, pJob);
 
    return R_NilValue;
 }

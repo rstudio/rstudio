@@ -949,6 +949,11 @@ public class ClientEventDispatcher
             AskSecretEvent.Data data = event.getData();
             eventBus_.fireEvent(new AskSecretEvent(data));
          }
+         else if (type == ClientEvent.JobUpdated)
+         {
+            JobUpdatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new JobUpdatedEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
