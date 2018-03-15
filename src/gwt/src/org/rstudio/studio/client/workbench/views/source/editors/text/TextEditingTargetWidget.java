@@ -362,10 +362,10 @@ public class TextEditingTargetWidget
                @Override
                public void onClick(ClickEvent event)
                {
-                  runTestFile();
+                  commands_.testFile().execute();
                }
             });
-      testButton_.setTitle("Run test using the testthat package");
+      testButton_.setTitle(commands_.testFile().getDesc());
 
       toolbar.addRightWidget(testButton_);
       testButton_.setVisible(false);
@@ -1298,25 +1298,6 @@ public class TextEditingTargetWidget
            
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
-   }
-
-   private void runTestFile()
-   {
-      server_.startBuild("test-file", target_.getPath(),
-         new SimpleRequestCallback<Boolean>() {
-         @Override
-         public void onResponseReceived(Boolean response)
-         {
-
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            super.onError(error);
-         }
-
-      });
    }
    
    private final TextEditingTarget target_;

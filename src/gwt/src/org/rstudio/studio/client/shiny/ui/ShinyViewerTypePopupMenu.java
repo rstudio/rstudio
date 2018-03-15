@@ -39,6 +39,7 @@ public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
       addItem(commands.shinyRunInBrowser().createMenuItem(false));
       addSeparator();
       addItem(commands.shinyRecordTest().createMenuItem(false));
+      addItem(commands.shinyRunAllTests().createMenuItem(false));
    }
 
    @Override

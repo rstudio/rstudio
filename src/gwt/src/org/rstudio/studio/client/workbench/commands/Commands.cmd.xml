@@ -362,6 +362,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="cleanAll"/>
          <separator/>
          <cmd refid="testPackage"/>
+         <cmd refid="testFile"/>
          <separator/>
          <cmd refid="checkPackage"/>
          <separator/>
@@ -2837,7 +2838,13 @@ well as menu structures (for main menu and popup menus).
         desc="Run tests for package"
         windowMode="background"
         context="packageDevelopment"/>
-        
+
+   <cmd id="testFile"
+        label="Run Test"
+        menuLabel="Run test for file"
+        desc="Run test using the testthat package"
+        visible="false"/>
+
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
         desc="Stop the current build"
@@ -3051,6 +3058,11 @@ well as menu structures (for main menu and popup menus).
         label="Record a Test for Shiny"
         menuLabel="Record Test"
         desc="Record test for the Shiny application"/>
+
+   <cmd id="shinyRunAllTests"
+        label="Run Tests for Shiny Application"
+        menuLabel="Run Tests"
+        desc="Run tests for Shiny application"/>
 
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."

@@ -6701,10 +6701,34 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onTestFile()
+   {
+      server_.startBuild("test-file", docUpdateSentinel_.getPath(),
+         new SimpleRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean response)
+         {
+
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+         }
+      });
+   }
+
+   @Handler
    void onShinyRecordTest()
    {
       String code = "shinytest::recordTest(\"" + FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()) + "\")";
       events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onShinyRunAllTests()
+   {
    }
    
    private StatusBar statusBar_;
