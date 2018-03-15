@@ -16,6 +16,12 @@ package org.rstudio.studio.client.workbench.views.jobs.model;
 
 public class JobConstants
 {
+   // job update types
+   public final static int JOB_ADDED   = 0;
+   public final static int JOB_UPDATED = 1;
+   public final static int JOB_REMOVED = 2;
+
+   // possible job states
    public final static int STATE_IDLE      = 1;
    public final static int STATE_RUNNING   = 2;
    public final static int STATE_SUCCEEDED = 3;

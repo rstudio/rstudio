@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<g:VerticalPanel>
+		<g:HorizontalPanel>
+			<g:Label ui:field="name_"></g:Label>
+			<g:Label ui:field="status_"></g:Label>
+		</g:HorizontalPanel>
+		<g:HorizontalPanel>
+			<g:Label ui:field="progress_"></g:Label>
+		</g:HorizontalPanel>
+	</g:VerticalPanel>
+</ui:UiBinder> 

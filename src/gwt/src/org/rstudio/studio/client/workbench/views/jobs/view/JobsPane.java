@@ -15,9 +15,13 @@
 package org.rstudio.studio.client.workbench.views.jobs.view;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -28,17 +32,46 @@ public class JobsPane extends WorkbenchPane
    public JobsPane()
    {
       super("Jobs");
+
+      // create widget
+      ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      return new Label("Jobs");
+      list_ = new JobsList();
+      return list_;
+   }
+
+   @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar mainToolbar = new Toolbar();
+      return mainToolbar;
    }
 
    @Override
    public void updateJob(int type, Job job)
    {
-      // TODO Auto-generated method stub
+      switch(type)
+      {
+         case JobConstants.JOB_ADDED:
+            list_.addJob(job);
+            break;
+
+         case JobConstants.JOB_REMOVED:
+            list_.removeJob(job);
+            break;
+
+         case JobConstants.JOB_UPDATED:
+            list_.updateJob(job);
+            break;
+            
+         default:
+            Debug.logWarning("Unrecognized job update type " + type);
+      }
    }
+   
+   JobsList list_;
 }
