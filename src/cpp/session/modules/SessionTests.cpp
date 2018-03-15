@@ -46,10 +46,14 @@ namespace {
 
 TestsFileType getTestType(const std::string& contents)
 {
-   if (contents.find("test_that(", 0) != std::string::npos)
-      return TestsTestThat;
+   size_t pos = contents.find("test_that(", 0);
+   if (pos == std::string::npos)
+      return TestsNone;
 
-   return TestsNone;
+   if (pos > 0 && !isspace(contents.at(pos - 1)))
+      return TestsNone;
+
+   return TestsTestThat;
 }
 
 std::string onDetectTestsSourceType(
