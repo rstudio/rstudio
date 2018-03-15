@@ -288,7 +288,14 @@ private:
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
-      if (config.buildType == r_util::kBuildTypePackage)
+      if (type == kTestFile)
+      {
+         options.environment = environment;
+         options.workingDir = buildTargetPath.parent();
+         FilePath testPath = FilePath(subType);
+         executePackageBuild(type, testPath, options, cb);
+      }
+      else if (config.buildType == r_util::kBuildTypePackage)
       {
          options.environment = environment;
          options.workingDir = buildTargetPath.parent();
@@ -317,13 +324,6 @@ private:
          options.environment = environment;
          options.workingDir = buildTargetPath.parent();
          executeCustomBuild(type, buildTargetPath, options, cb);
-      }
-      else if (type == kTestFile)
-      {
-         options.environment = environment;
-         options.workingDir = FilePath();
-         FilePath testPath = FilePath(subType);
-         executePackageBuild(type, testPath, options, cb);
       }
       else
       {
@@ -1056,6 +1056,7 @@ private:
       
       boost::format fmt(
          "if (nchar('%1%')) library('%1%');"
+         "message('Running: testthat::test_file(%2%)');"
          "testthat::test_file('%2%')"
       );
 
