@@ -2374,6 +2374,9 @@ assign(x = ".rs.acCompletionTypes",
    leftData <- .rs.getAnywhere(leftDataName, envir)
    rightData <- .rs.getAnywhere(rightDataName, envir)
    
+   if (!is.list(leftData) || !is.list(rightData))
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   
    if (cursorPos == "left" && !is.null(leftData))
    {
       completions <- .rs.selectFuzzyMatches(
