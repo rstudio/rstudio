@@ -14,13 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 
 public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
 {
@@ -29,19 +26,12 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
       void onJobUpdated(JobUpdatedEvent event);
    }
    
-   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public class Data 
-   {
-      public int type;
-      public Job job;
-   }
-
-   public JobUpdatedEvent(Data data)
+   public JobUpdatedEvent(JobUpdate data)
    {
       data_ = data;
    }
 
-   public Data getData()
+   public JobUpdate getData()
    {
       return data_;
    }
@@ -58,7 +48,7 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
       handler.onJobUpdated(this);
    }
 
-   private final Data data_;
+   private final JobUpdate data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

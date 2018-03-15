@@ -1,5 +1,5 @@
 /*
- * Job.java
+ * JobConstants.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,16 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-import jsinterop.annotations.JsType;
-import jsinterop.annotations.JsPackage;
-
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class Job
+public class JobConstants
 {
-   public String id;
-   public String name;
-   public String status;
-   public int state;
-   public int progress;
-   public int max;
+   public final static int STATE_IDLE      = 1;
+   public final static int STATE_RUNNING   = 2;
+   public final static int STATE_SUCCEEDED = 3;
+   public final static int STATE_CANCELLED = 4;
+   public final static int STATE_FAILED    = 5;
 }

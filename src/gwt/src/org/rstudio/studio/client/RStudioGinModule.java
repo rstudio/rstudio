@@ -172,6 +172,9 @@ import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
+import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.JobsTab;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
@@ -325,6 +328,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
       bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
+      bind(JobsPresenter.Display.class).to(JobsPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
@@ -344,6 +348,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Deploy", RSConnectDeployOutputTab.class);
       bindTab("Markers", MarkersOutputTab.class);
       bindTab("Terminal", TerminalTab.class);
+      bindTab("Jobs", JobsTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

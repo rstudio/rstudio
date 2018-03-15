@@ -1,5 +1,5 @@
 /*
- * Job.java
+ * JobUpdate.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -18,12 +18,8 @@ import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class Job
+public class JobUpdate
 {
-   public String id;
-   public String name;
-   public String status;
-   public int state;
-   public int progress;
-   public int max;
+   public Job job;
+   public int type;
 }
