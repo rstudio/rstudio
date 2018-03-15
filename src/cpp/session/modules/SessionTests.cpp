@@ -66,7 +66,7 @@ std::string onDetectTestsSourceType(
       switch(type)
       {
          case TestsNone:
-            return kTestsNone;
+            return std::string();
          case TestsTestThat:
             return kTestsTestThat;
          case TestsShinyTest:

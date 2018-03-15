@@ -595,7 +595,7 @@ public class TextEditingTargetWidget
       
       // don't show the run buttons for cpp files, or R files in Shiny/Tests
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !(isShinyFile() || isTestThatFile()) && !(isScript && !terminalAllowed));
+            !isShinyFile() && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
@@ -652,7 +652,7 @@ public class TextEditingTargetWidget
          shinyLaunchButton_.setVisible(true);
          setSourceButtonFromShinyState();
       }
-      if (isTestThatFile())
+      else if (isTestThatFile())
       {
          shinyLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
@@ -725,7 +725,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile() || isTestThatFile()) ? "" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
