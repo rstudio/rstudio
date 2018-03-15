@@ -22,6 +22,7 @@
 
 #include <core/Log.hpp>
 
+#include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
@@ -283,13 +284,44 @@ int main(int argc, char* argv[])
       static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
       arguments.push_back(disableCompositorPref);
       
-      // disable gpu rasterization. this appears to successfully work around
-      // some of the weird rendering issues seen while using RStudio.
+      // disable gpu rasterization for certain display configurations.
+      // this works around some of the rendering issues seen with RStudio.
       //
       // https://bugs.chromium.org/p/chromium/issues/detail?id=773705
       // https://github.com/rstudio/rstudio/issues/2093
-      static char disableGpuRasterization[] = "--disable-gpu-rasterization";
-      arguments.push_back(disableGpuRasterization);
+      //
+      // because the issue seems to only affect certain video cards on macOS
+      // High Sierra, we scope that change to that particular configuration
+      // for now (we can expand this list if more users report issues)
+      core::Version macVersion(QSysInfo::productVersion().toStdString());
+      if (macVersion.versionMajor() == 10 &&
+          macVersion.versionMinor() == 13)
+      {
+         core::system::ProcessResult processResult;
+         core::system::runCommand(
+                  "/usr/sbin/system_profiler SPDisplaysDataType",
+                  core::system::ProcessOptions(),
+                  &processResult);
+
+         std::string stdOut = processResult.stdOut;
+         if (!stdOut.empty())
+         {
+            std::vector<std::string> blackList = {
+               "NVIDIA GeForce GT 650M",
+               "NVIDIA GeForce GT 750M"
+            };
+
+            for (const std::string& entry : blackList)
+            {
+               if (stdOut.find(entry) != std::string::npos)
+               {
+                  static char disableGpuRasterization[] = "--disable-gpu-rasterization";
+                  arguments.push_back(disableGpuRasterization);
+                  break;
+               }
+            }
+         }
+      }
 #endif
 
       // re-assign command line arguments
