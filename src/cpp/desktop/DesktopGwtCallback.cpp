@@ -234,6 +234,8 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    return createAliasedPath(result);
 }
 
+#ifndef Q_OS_MAC
+
 namespace {
 
 QString getSaveFileNameImpl(QWidget* pParent,
@@ -354,6 +356,8 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    activateAndFocusOwner();
    return createAliasedPath(result);
 }
+
+#endif
 
 void GwtCallback::onClipboardSelectionChanged()
 {
