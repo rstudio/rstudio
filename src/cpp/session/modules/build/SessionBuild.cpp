@@ -601,6 +601,10 @@ private:
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
+      if (type == kTestFile || type == kTestPackage) {
+         parsers.add(testErrorParser(packagePath.complete("tests")));
+      }
+
       initErrorParser(packagePath, parsers);
 
       // make a copy of options so we can customize the environment

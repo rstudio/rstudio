@@ -256,6 +256,32 @@ std::vector<module_context::SourceMarker> parseGccErrors(
    return errors;
 }
 
+std::vector<module_context::SourceMarker> parseTestErrors(
+                                           const FilePath& basePath,
+                                           const std::string& output)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> errors;
+
+   try
+   {
+      std::string type = "error";
+      std::string line = "0";
+      std::string column = "0";
+      std::string message = "Test Error";
+      SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+                       basePath,
+                       core::safe_convert::stringTo<int>(line, 1),
+                       core::safe_convert::stringTo<int>(column, 1),
+                       core::html_utils::HTML(message),
+                       true);
+      errors.push_back(err);
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+
+   return errors;
+}
+
 } // anonymous namespace
 
 CompileErrorParser gccErrorParser(const FilePath& basePath)
@@ -266,6 +292,11 @@ CompileErrorParser gccErrorParser(const FilePath& basePath)
 CompileErrorParser rErrorParser(const FilePath& basePath)
 {
    return boost::bind(parseRErrors, basePath, _1);
+}
+
+CompileErrorParser testErrorParser(const FilePath& basePath)
+{
+   return boost::bind(parseTestErrors, basePath, _1);
 }
 
 
