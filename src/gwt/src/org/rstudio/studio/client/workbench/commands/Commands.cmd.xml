@@ -3057,7 +3057,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="shinyRecordTest"
         label="Record a Test for Shiny"
         menuLabel="Record Test"
-        desc="Record test for the Shiny application"/>
+        desc="Record test for Shiny application"/>
 
    <cmd id="shinyRunAllTests"
         label="Run Tests for Shiny Application"

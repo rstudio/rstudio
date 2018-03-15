@@ -216,6 +216,7 @@ const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
 const char * const kTestFile = "test-file";
+const char * const kTestShiny = "test-shiny";
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
@@ -294,6 +295,11 @@ private:
          options.workingDir = buildTargetPath.parent();
          FilePath testPath = FilePath(subType);
          executePackageBuild(type, testPath, options, cb);
+      }
+      else if (type == kTestShiny)
+      {
+         FilePath testPath = FilePath(subType);
+         testShiny(testPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypePackage)
       {
@@ -725,7 +731,6 @@ private:
       }
    }
 
-
    void buildSourcePackage(const FilePath& rBinDir,
                            const FilePath& packagePath,
                            const core::system::ProcessOptions& pkgOptions,
@@ -1068,6 +1073,44 @@ private:
       successMessage_ = "\nTest complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      pkgOptions,
+                                                     cb);
+
+   }
+
+   void testShiny(const FilePath& shinyPath,
+                  core::system::ProcessOptions testOptions,
+                  const core::system::ProcessCallbacks& cb)
+   {
+      s_buildEnabled = true;
+      ClientEvent event(client_events::kEnableBuild);
+      module_context::enqueClientEvent(event);
+
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // construct a shell command to execute
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      std::vector<std::string> rSourceCommands;
+      
+      boost::format fmt(
+         "shinytest::testApp('%1%')"
+      );
+
+      cmd << boost::str(fmt %
+                        shinyPath.absolutePath());
+
+      enqueCommandString("Testing Shiny application using 'testthat'");
+      successMessage_ = "\nTest complete";
+      module_context::processSupervisor().runCommand(cmd,
+                                                     testOptions,
                                                      cb);
 
    }

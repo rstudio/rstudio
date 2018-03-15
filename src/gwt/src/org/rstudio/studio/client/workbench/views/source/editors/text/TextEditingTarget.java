@@ -6729,6 +6729,20 @@ public class TextEditingTarget implements
    @Handler
    void onShinyRunAllTests()
    {
+      server_.startBuild("test-shiny", FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()),
+         new SimpleRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean response)
+         {
+
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+         }
+      });
    }
    
    private StatusBar statusBar_;
