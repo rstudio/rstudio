@@ -1301,7 +1301,7 @@ public class TextEditingTargetWidget
 
    private void runTestFile()
    {
-      server_.startBuild("test-file", "", 
+      server_.startBuild("test-file", target_.getPath(),
          new SimpleRequestCallback<Boolean>() {
          @Override
          public void onResponseReceived(Boolean response)

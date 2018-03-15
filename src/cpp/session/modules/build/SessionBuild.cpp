@@ -318,6 +318,13 @@ private:
          options.workingDir = buildTargetPath.parent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
+      else if (type == kTestFile)
+      {
+         options.environment = environment;
+         options.workingDir = FilePath();
+         FilePath testPath = FilePath(subType);
+         executePackageBuild(type, testPath, options, cb);
+      }
       else
       {
          terminateWithError("Unrecognized build type: " + config.buildType);
@@ -329,30 +336,33 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      // validate that this is a package
-      if (!r_util::isPackageDirectory(packagePath))
+      if (type != kTestFile)
       {
-         boost::format fmt ("ERROR: The build directory does "
-                            "not contain a DESCRIPTION\n"
-                            "file so cannot be built as a package.\n\n"
-                            "Build directory: %1%\n");
-         terminateWithError(boost::str(
-                 fmt % module_context::createAliasedPath(packagePath)));
-         return;
-      }
-
-      // get package info
-      Error error = pkgInfo_.read(packagePath);
-      if (error)
-      {
-         terminateWithError("Reading package DESCRIPTION", error);
-         return;
-      }
-
-      // if this package links to Rcpp then we run compileAttributes
-      if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
-         if (!compileRcppAttributes(packagePath))
+         // validate that this is a package
+         if (!r_util::isPackageDirectory(packagePath))
+         {
+            boost::format fmt ("ERROR: The build directory does "
+                               "not contain a DESCRIPTION\n"
+                               "file so cannot be built as a package.\n\n"
+                               "Build directory: %1%\n");
+            terminateWithError(boost::str(
+                    fmt % module_context::createAliasedPath(packagePath)));
             return;
+         }
+
+         // get package info
+         Error error = pkgInfo_.read(packagePath);
+         if (error)
+         {
+            terminateWithError("Reading package DESCRIPTION", error);
+            return;
+         }
+
+         // if this package links to Rcpp then we run compileAttributes
+         if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
+            if (!compileRcppAttributes(packagePath))
+               return;
+      }
 
       if (type == kRoxygenizePackage)
       {
@@ -711,9 +721,7 @@ private:
 
       else if (type == kTestFile)
       {
-         FilePath testsPath = packagePath.complete("tests").complete("testthat").complete("test-config.R");
-
-         testFile(testsPath, pkgOptions, cb);
+         testFile(packagePath, pkgOptions, cb);
       }
    }
 
