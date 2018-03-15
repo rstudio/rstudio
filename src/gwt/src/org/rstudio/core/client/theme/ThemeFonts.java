@@ -26,12 +26,12 @@ public class ThemeFonts
    
    public static String getProportionalFont()
    {
-      return fontLoader.getProportionalFont();
+      return fontLoader.getProportionalFont() + ", serif";
    }
 
    public static String getFixedWidthFont()
    {
-      return fontLoader.getFixedWidthFont();
+      return fontLoader.getFixedWidthFont() + ", monospace";
    }
 
    static interface ThemeFontLoader
