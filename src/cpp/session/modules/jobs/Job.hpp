@@ -54,32 +54,32 @@ public:
        JobState state);
 
    // job ID (machine-generated)
-   std::string id();
+   std::string id() const;
 
    // name of job (user-defined)
-   std::string name();
+   std::string name() const;
 
    // job status; updated throughout its lifetime
-   std::string status();
+   std::string status() const;
 
    // group job belongs to
-   std::string group();
+   std::string group() const;
 
    // the number of progress units that have been completed so far
-   int progress();
+   int progress() const;
 
    // the total number of progress units
-   int max();
+   int max() const;
 
    // the current state of the job
-   JobState state();
+   JobState state() const;
 
    void setProgress(int units);
    void setStatus(const std::string& status);
    void setState(JobState state);
 
    // convert job to/from JSON
-   core::json::Object toJson();
+   core::json::Object toJson() const;
    static core::Error fromJson(const core::json::Object& src, 
                                boost::shared_ptr<Job>* pJob);
 

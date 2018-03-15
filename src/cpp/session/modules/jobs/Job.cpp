@@ -62,42 +62,42 @@ Job::Job():
 {
 }
 
-std::string Job::id()
+std::string Job::id() const
 {
     return id_;
 }
 
-std::string Job::name()
+std::string Job::name() const
 {
     return name_;
 }
 
-std::string Job::status()
+std::string Job::status() const
 {
     return status_;
 }
 
-std::string Job::group()
+std::string Job::group() const
 {
     return group_;
 }
 
-int Job::progress()
+int Job::progress() const
 {
     return progress_;
 }
 
-int Job::max()
+int Job::max() const
 {
     return max_;
 }
 
-JobState Job::state()
+JobState Job::state() const
 {
     return state_; 
 }
 
-json::Object Job::toJson()
+json::Object Job::toJson() const
 {
    json::Object job;
 
