@@ -369,6 +369,22 @@ public class TextEditingTargetWidget
 
       toolbar.addRightWidget(testButton_);
       testButton_.setVisible(false);
+
+      compareTestButton_ = new ToolbarButton(
+            "Compare Test Results", 
+            commands_.shinyCompareFile().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  commands_.shinyCompareFile().execute();
+               }
+            });
+      compareTestButton_.setTitle(commands_.shinyCompareFile().getDesc());
+
+      toolbar.addRightWidget(compareTestButton_);
+      compareTestButton_.setVisible(false);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
@@ -596,7 +612,7 @@ public class TextEditingTargetWidget
       
       // don't show the run buttons for cpp files, or R files in Shiny/Tests
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !(isShinyFile() || isTestThatFile()) && !(isScript && !terminalAllowed));
+            !(isShinyFile() || isTestFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
@@ -638,7 +654,7 @@ public class TextEditingTargetWidget
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
      
-      if (isShinyFile() || isTestThatFile())
+      if (isShinyFile() || isTestFile())
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
@@ -648,6 +664,7 @@ public class TextEditingTargetWidget
       }
 
       testButton_.setVisible(false);
+      compareTestButton_.setVisible(false);
       if (isShinyFile())
       {
          shinyLaunchButton_.setVisible(true);
@@ -658,6 +675,12 @@ public class TextEditingTargetWidget
          shinyLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
          testButton_.setVisible(true);
+      }
+      else if (isShinyTestFile())
+      {
+         shinyLaunchButton_.setVisible(false);
+         sourceButton_.setVisible(false);
+         compareTestButton_.setVisible(true);
       }
       else
       {
@@ -687,10 +710,22 @@ public class TextEditingTargetWidget
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
 
-   private boolean isTestThatFile()
+   private boolean isTestFile()
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_TEST_PREFIX);
+   }
+
+   private boolean isTestThatFile()
+   {
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_TEST_TESTTHAT);
+   }
+
+   private boolean isShinyTestFile()
+   {
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_TEST_SHINYTEST);
    }
    
    @Override
@@ -1330,6 +1365,7 @@ public class TextEditingTargetWidget
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton testButton_;
+   private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;
    private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;

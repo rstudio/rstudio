@@ -181,4 +181,6 @@ public class SourceDocument extends JavaScriptObject
    public final static String XT_SHINY_SINGLE_EXE = "shiny-single-executable";
    public final static String XT_SHINY_DOCUMENT = "shiny-document";
    public final static String XT_TEST_PREFIX = "test-";
+   public final static String XT_TEST_TESTTHAT = "test-testthat";
+   public final static String XT_TEST_SHINYTEST = "test-shinytest";
 }
