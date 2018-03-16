@@ -71,6 +71,8 @@ CompileErrorParser rErrorParser(const core::FilePath& basePath);
 
 CompileErrorParser testthatErrorParser(const core::FilePath& basePath);
 
+CompileErrorParser shinytestErrorParser(const core::FilePath& basePath);
+
 } // namespace build
 } // namespace modules
 } // namespace session

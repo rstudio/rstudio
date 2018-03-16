@@ -601,6 +601,8 @@ private:
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
+
+      // add testthat and shinyteset result parsers
       if (type == kTestFile) {
          parsers.add(testthatErrorParser(packagePath.parent()));
       }
@@ -1088,9 +1090,15 @@ private:
                   core::system::ProcessOptions testOptions,
                   const core::system::ProcessCallbacks& cb)
    {
+      // enable build
       s_buildEnabled = true;
       ClientEvent event(client_events::kEnableBuild);
       module_context::enqueClientEvent(event);
+
+      // initialize parser
+      CompileErrorParsers parsers;
+      parsers.add(shinytestErrorParser(shinyPath));
+      initErrorParser(shinyPath, parsers);
 
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
