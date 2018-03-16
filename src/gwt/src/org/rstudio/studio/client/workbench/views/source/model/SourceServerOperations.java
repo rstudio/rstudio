@@ -243,4 +243,6 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
                                             ServerRequestCallback<Void> requestCallback);
+   
+   public void adaptToLanguage(String language, ServerRequestCallback<Void> requestCallback);
 }

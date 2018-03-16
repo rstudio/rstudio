@@ -207,7 +207,9 @@ public class HelpPane extends WorkbenchPane
                url = encodeURI(url);
             }
          }
-         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
+         
+         if (url.length)
+            thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
       
       $wnd.helpKeydown = function(e) {

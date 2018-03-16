@@ -356,6 +356,28 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                 new Command() { public void execute() {}});
    }
    
+   public void withReticulate(final String progressCaption,
+                              final String userPrompt,
+                              final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            new Dependency[] {
+                  // TODO: add reticulate 1.6 once on CRAN
+            },
+            true,
+            new CommandWithArg<Boolean>()
+            {
+               @Override
+               public void execute(Boolean succeeded)
+               {
+                  if (succeeded)
+                     command.execute();
+               }
+            });
+   }
+   
    @Override
    public void onPackageStateChanged(PackageStateChangedEvent event)
    {

@@ -592,7 +592,7 @@ public class TextEditingTarget implements
             }
             else
             {
-               docDisplay_.goToFunctionDefinition();
+               docDisplay_.goToDefinition();
             }
          }
       });
@@ -2051,6 +2051,11 @@ public class TextEditingTarget implements
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
    }
    
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+      // TODO: ensure 'reticulate' installed
+   }
 
    public void focus()
    {
@@ -4851,9 +4856,9 @@ public class TextEditingTarget implements
    } 
 
    @Handler
-   void onGoToFunctionDefinition()
+   void onGoToDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToDefinition();
    } 
    
    @Handler
@@ -4934,6 +4939,13 @@ public class TextEditingTarget implements
    private void sourceActiveDocument(final boolean echo)
    {
       docDisplay_.focus();
+      
+      // If this is a Python file, use reticulate.
+      if (fileType_.isPython())
+      {
+         sourcePython();
+         return;
+      }
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
@@ -5052,6 +5064,19 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void sourcePython()
+   {
+      saveThenExecute(null, () -> {
+         dependencyManager_.withReticulate(
+               "Executing Python",
+               "Sourcing Python scripts",
+               () -> {
+                  String command = "reticulate::source_python('" + getPath() + "')";
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
+               });
+      });
    }
    
    private void runScript()

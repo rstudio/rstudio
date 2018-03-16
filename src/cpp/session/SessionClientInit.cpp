@@ -32,6 +32,7 @@
 #include "modules/clang/SessionClang.hpp"
 #include "modules/SessionMarkers.hpp"
 #include "modules/SessionPlots.hpp"
+#include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
@@ -156,6 +157,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
+   
+   // get current console language
+   sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    // resumed
    sessionInfo["resumed"] = resumed; 

@@ -23,6 +23,10 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOper
 public interface ConsoleServerOperations extends CodeToolsServerOperations,
                                                  HistoryServerOperations
 {
+   // adapt to the language of code being sent to console
+   void adaptToLanguage(String language,
+                        ServerRequestCallback<Void> requestCallback);
+   
    // interrupt the current session
    void interrupt(ServerRequestCallback<Void> requestCallback);
 

@@ -15,12 +15,17 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -31,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -71,11 +77,15 @@ public class EditingTargetCodeExecution
    }
    
    @Inject
-   void initialize(EventBus events, UIPrefs prefs, Commands commands)
+   void initialize(EventBus events,
+                   UIPrefs prefs,
+                   Commands commands,
+                   SourceServerOperations server)
    {
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
+      server_ = server;
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
@@ -115,8 +125,19 @@ public class EditingTargetCodeExecution
          else
          {
             // if no selection, follow UI pref to see what to execute
-            selectionRange = getRangeFromBehavior(
-                  prefs_.executionBehavior().getValue());
+            // (Python code is always submitted line-by-line for now as
+            // we need special code to understand Python code structure still)
+            if (DocumentMode.isCursorInPythonMode(docDisplay_))
+            {
+               selectionRange = Range.fromPoints(
+                     Position.create(row, 0),
+                     Position.create(row, docDisplay_.getLength(row)));
+            }
+            else
+            {
+               selectionRange = getRangeFromBehavior(
+                     prefs_.executionBehavior().getValue());
+            }
          }
          
          // if we failed to discover a range, bail
@@ -143,7 +164,18 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         moveCursorAfterExecution(selectionRange, true);
+         if (DocumentMode.isCursorInPythonMode(docDisplay_))
+         {
+            // don't skip empty / blank lines when executing Python line-by-line
+            Position nextPos = Position.create(
+                  docDisplay_.getCursorPosition().getRow() + 1,
+                  0);
+            docDisplay_.setCursorPosition(nextPos);
+         }
+         else
+         {
+            moveCursorAfterExecution(selectionRange, true);
+         }
       }
    }
    
@@ -202,27 +234,26 @@ public class EditingTargetCodeExecution
                                              String functionWrapper,
                                              boolean onlyUseConsole)
    {
-      // allow console a chance to execute code if we aren't focused
-      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
-      {
-         events_.fireEvent(new ConsoleExecutePendingInputEvent(
-               commands_.executeCodeWithoutFocus().getId()));
-         return;
-      }
-      
       executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
    }
    
    private void executeRange(Range range, String functionWrapper, boolean onlyUseConsole)
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
+      String language = "R";
      
       setLastExecuted(range.getStart(), range.getEnd());
       
-      // trim intelligently
-      code = StringUtil.trimBlankLines(code);
-      if (code.length() == 0)
-         code = "\n";
+      // trim intelligently (don't trim blank lines for Python
+      // since those lines could signal the end of a block)
+      if (!DocumentMode.isSelectionInPythonMode(docDisplay_))
+      {
+         code = StringUtil.trimBlankLines(code);
+      }
+      else
+      {
+         language = "Python";
+      }
       
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
@@ -250,9 +281,12 @@ public class EditingTargetCodeExecution
       
       // send to console
       events_.fireEvent(new SendToConsoleEvent(
-                                  code, 
-                                  true, 
-                                  prefs_.focusConsoleAfterExec().getValue()));
+                                  code,
+                                  language,
+                                  true,
+                                  true,
+                                  prefs_.focusConsoleAfterExec().getValue(),
+                                  false));
    }
    
    public void executeBehavior(String executionBehavior)
@@ -472,5 +506,6 @@ public class EditingTargetCodeExecution
    private EventBus events_;
    private UIPrefs prefs_;
    private Commands commands_;
+   private SourceServerOperations server_;
 }
 

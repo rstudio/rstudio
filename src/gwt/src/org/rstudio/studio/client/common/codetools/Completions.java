@@ -30,7 +30,8 @@ public class Completions extends JavaScriptObject
                                                       boolean excludeOtherCompletions,
                                                       boolean overrideInsertParens,
                                                       boolean cacheable,
-                                                      String helpHandler)
+                                                      String helpHandler,
+                                                      String language)
    /*-{
       return {
          token: [token],
@@ -42,7 +43,8 @@ public class Completions extends JavaScriptObject
          excludeOtherCompletions: excludeOtherCompletions,
          overrideInsertParens: overrideInsertParens,
          cacheable: cacheable,
-         helpHandler: helpHandler
+         helpHandler: helpHandler,
+         language: language
       };
    }-*/;
 
@@ -115,6 +117,10 @@ public class Completions extends JavaScriptObject
    
    public final native String getHelpHandler() /*-{
       return this.helpHandler;
+   }-*/;
+   
+   public final native String getLanguage() /*-{
+      return this.language;
    }-*/;
    
    

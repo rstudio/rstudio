@@ -167,6 +167,7 @@
 #include "modules/mathjax/SessionMathJax.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
+#include "modules/SessionReticulate.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -508,6 +509,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
+      (modules::reticulate::initialize)
 
       // workers
       (workers::web_request::initialize)
