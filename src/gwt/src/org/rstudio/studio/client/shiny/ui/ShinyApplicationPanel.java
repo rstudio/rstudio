@@ -86,14 +86,9 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
          url = GWT.getHostPageBaseURL() + url;
       urlBox_.setText(url);
 
-      if (appParams_.getViewerOptions() == ShinyViewerOptions.SHINY_VIEWER_OPTIONS_NOTOOLS)
-      {
-         urlBox_.setVisible(false);
-         publishButton_.setVisible(false);
-         refreshButton_.setVisible(false);
-      }
+      boolean removeTolbar = appParams_.getViewerOptions() == ShinyViewerOptions.SHINY_VIEWER_OPTIONS_NOTOOLS;
 
-      showUrl(url);
+      showUrl(url, removeTolbar);
    }
    
    @Override
