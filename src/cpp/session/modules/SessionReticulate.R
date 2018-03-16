@@ -39,6 +39,8 @@
 {
    # extract the line providing the object definition we're looking for
    text <- .rs.python.extractCurrentExpression(line, offset)
+   if (!nzchar(text))
+      return(FALSE)
    
    # try extracting this object
    object <- .rs.tryCatch(reticulate::py_eval(text, convert = FALSE))
@@ -70,6 +72,9 @@
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
 {
    text <- .rs.python.extractCurrentExpression(line, offset)
+   if (!nzchar(text))
+      return(FALSE)
+   
    .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
    return(TRUE)
 })
@@ -1069,6 +1074,8 @@ html.heading = _heading
 {
    # tokenize the line
    tokens <- .rs.python.tokenize(line, exclude = c("whitespace", "comment"))
+   if (length(tokens) == 0)
+      return("")
    
    # find the current token
    n <- length(tokens); index <- n
