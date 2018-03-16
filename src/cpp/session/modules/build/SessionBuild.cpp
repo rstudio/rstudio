@@ -602,7 +602,7 @@ private:
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
       if (type == kTestFile || type == kTestPackage) {
-         parsers.add(testErrorParser(packagePath.complete("tests")));
+         parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
       }
 
       initErrorParser(packagePath, parsers);

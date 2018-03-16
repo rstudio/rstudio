@@ -256,7 +256,7 @@ std::vector<module_context::SourceMarker> parseGccErrors(
    return errors;
 }
 
-std::vector<module_context::SourceMarker> parseTestErrors(
+std::vector<module_context::SourceMarker> parseTestThatErrors(
                                            const FilePath& basePath,
                                            const std::string& output)
 {
@@ -265,7 +265,7 @@ std::vector<module_context::SourceMarker> parseTestErrors(
 
    try
    {
-      boost::regex re("^([^:]+):([0-9]+): ([a-zA-Z]+): (.*)$");
+      boost::regex re("\\[1m([^:\\n]+):([0-9]+):[^:\\n]+: ([^\\n]*)\\[22m");
 
       boost::sregex_iterator iter(output.begin(), output.end(), re);
       boost::sregex_iterator end;
@@ -278,8 +278,8 @@ std::vector<module_context::SourceMarker> parseTestErrors(
          
          file = match[1];
          line = match[2];
-         type = match[3];
-         message = match[4];
+         type = "failure";
+         message = match[3];
 
          std::string column = "0";
          SourceMarker err(module_context::sourceMarkerTypeFromString(type),
@@ -308,9 +308,9 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
    return boost::bind(parseRErrors, basePath, _1);
 }
 
-CompileErrorParser testErrorParser(const FilePath& basePath)
+CompileErrorParser testthatErrorParser(const FilePath& basePath)
 {
-   return boost::bind(parseTestErrors, basePath, _1);
+   return boost::bind(parseTestThatErrors, basePath, _1);
 }
 
 
