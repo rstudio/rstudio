@@ -893,22 +893,9 @@ void handlePythonHelpRequest(const http::Request& request,
       return;
    }
    
-   FilePath filePath = module_context::tempDir().complete(path);
-   if (!filePath.exists())
-   {
-      pResponse->setNotFoundError(request.uri());
-      return;
-   }
-
-   // read file contents and serve
-   std::string contents;
-   error = core::readStringFromFile(filePath, &contents);
-   if (error)
-      LOG_ERROR(error);
-   
+   FilePath filePath(path);
    pResponse->setContentType("text/html");
-   pResponse->setNoCacheHeaders();
-   pResponse->setBody(contents, HelpContentsFilter(request));
+   pResponse->setFile(filePath, request, HelpContentsFilter(request));
    
 }
 
