@@ -20,11 +20,18 @@ if [ "$1" == "--scope" ]; then
 
    # Remove the option and argument we just read
    shift 2
+elif [ "$1" == "--filter" ]; then
+
+   # used for filtering to a subset of R testthat tests
+   TEST_SCOPE="r"
+   TEST_FILTER="$2"
+   shift 2
 
 elif [ "$1" == "--help" ]; then 
    printf "Runs RStudio unit tests. Available flags: \n\n"
-   printf "--help   Show this help\n"
-   printf "--scope  Run only tests with the given scope (core, rsession, or r)\n\n"
+   printf "--help    Show this help\n"
+   printf "--scope   Run only tests with the given scope (core, rsession, or r)\n\n"
+   printf "--filter  Used instead of --scope to run a subset of R tests\n\n"
    printf "Any other options are passed to Valgrind."
    exit 0
 fi
@@ -71,16 +78,20 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
 
     $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
        --run-tests \
-       --config-file=$SESSION_CONF_FILE
+       --config-file="$SESSION_CONF_FILE"
     checkUnitTestFailure
 fi
    
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     echo Running 'r' tests...
 
-    ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
-        --run-script "testthat::test_dir('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat')" \
-        --config-file=$SESSION_CONF_FILE
+    if [ ! -z "$TEST_FILTER" ]; then
+        TESTTHAT_FILTER=", filter = '$TEST_FILTER'"
+    fi
+
+    "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
+        --run-script "testthat::test_dir('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat'$TESTTHAT_FILTER)" \
+        --config-file="$SESSION_CONF_FILE"
     checkUnitTestFailure
 fi
 
