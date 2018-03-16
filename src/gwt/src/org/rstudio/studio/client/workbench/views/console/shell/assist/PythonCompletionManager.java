@@ -38,6 +38,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -719,7 +720,26 @@ public class PythonCompletionManager implements CompletionManager
       if (selection == null)
          return false;
       
+      // get the current line
       String line = docDisplay_.getCurrentLineUpToCursor();
+      
+      // prepend some extra lines for more context if necessary
+      // (primarily for multi-line module imports)
+      int currentRow = docDisplay_.getCursorPosition().getRow();
+      
+      int prevRow = currentRow - 1;
+      for (; prevRow >= 0; prevRow--)
+      {
+         String prevLine = docDisplay_.getLine(prevRow);
+         if (prevLine.matches("^\\s*(?:#|$)"))
+            continue;
+         
+         line = prevLine + "\n" + line;
+         
+         Pattern commaPattern = Pattern.create(",\\s*$", "");
+         if (!commaPattern.test(prevLine))
+            break;
+      }
       
       // don't auto-complete within comments
       if (isLineInComment(line))

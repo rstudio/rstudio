@@ -752,7 +752,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       "import",            # 'import'
       "[[:space:]]+",      # separating spaces
       "\\(?",              # an optional opening bracket (tuple style)
-      "(.*)",              # the rest
+      "[[:space:]]*",      # optional spaces
+      "([^)]*)",           # the rest (including newlines)
       sep = ""
    )
    
