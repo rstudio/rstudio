@@ -51,7 +51,8 @@ public:
        const std::string& group,
        int progress, 
        int max,
-       JobState state);
+       JobState state,
+       bool autoRemove);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -73,6 +74,12 @@ public:
 
    // the current state of the job
    JobState state() const;
+
+   // whether the job is complete
+   bool complete() const;
+
+   // whether the job should be cleaned up automatically when complete
+   bool autoRemove() const;
 
    void setProgress(int units);
    void setStatus(const std::string& status);
@@ -96,6 +103,8 @@ private:
 
    int progress_;
    int max_;
+
+   bool autoRemove_;
 };
 
 

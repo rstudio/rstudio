@@ -44,21 +44,24 @@ Job::Job(const std::string& id,
          const std::string& group,
          int progress, 
          int max,
-         JobState state):
+         JobState state,
+         bool autoRemove):
    id_(id), 
    name_(name),
    status_(status),
    group_(group),
    state_(state),
    progress_(progress),
-   max_(max)
+   max_(max),
+   autoRemove_(autoRemove)
 {
 }
 
 Job::Job():
    state_(JobIdle),
    progress_(0),
-   max_(0)
+   max_(0),
+   autoRemove_(true)
 {
 }
 
@@ -142,6 +145,12 @@ void Job::setProgress(int units)
       progress_ = max_;
    else
       progress_ = units;
+
+   // update job state automatically
+   if (state_ == JobIdle && progress_ > 0 && progress_ < max_)
+      setState(JobRunning);
+   else if (state_ == JobRunning && progress_ == max_)
+      setState(JobSucceeded);
 }
 
 void Job::setStatus(const std::string& status)
@@ -152,6 +161,16 @@ void Job::setStatus(const std::string& status)
 void Job::setState(JobState state)
 {
    state_ = state;
+}
+
+bool Job::complete() const
+{
+   return state_ != JobIdle && state_ != JobRunning;
+}
+
+bool Job::autoRemove() const
+{
+   return autoRemove_;
 }
 
 std::string Job::stateAsString(JobState state)

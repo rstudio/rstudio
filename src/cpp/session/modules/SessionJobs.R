@@ -15,7 +15,7 @@
 
 .rs.addApiFunction("addJob", function(name, status = "", progressUnits = 0L,
       actions = NULL, estimate = 0L, estimateRemaining = FALSE, running = FALSE, 
-      autoRemove = FALSE, group = "") {
+      autoRemove = TRUE, group = "") {
 
    # validate arguments
    if (missing(name))

@@ -41,7 +41,11 @@ test_that("job progress is updated", {
    jobs <- .rs.invokeRpc("get_jobs")
    job <- jobs[[jobId]]
 
+   # progress should be updated
    expect_equal(job[["progress"]], 60L)
+
+   # adding progress to the job should put it in the running state
+   expect_equal(job[["state_description"]], "running")
 })
 
 test_that("can't set progress of a non-ranged job", {
@@ -65,4 +69,17 @@ test_that("property writes persist", {
    expect_equal(jobs[[jobId]][["state_description"]], "running")
 })
 
+test_that("auto remove property is respected", {
+   jobId <- .rs.api.addJob(name = "job5", autoRemove = FALSE)
+   .rs.api.setJobState(jobId, "succeeded")
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_equal(jobs[[jobId]][["id"]], jobId)
+
+   jobId <- .rs.api.addJob(name = "job6", autoRemove = TRUE)
+   .rs.api.setJobState(jobId, "succeeded")
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_equal(jobs[[jobId]], NULL)
+})
 

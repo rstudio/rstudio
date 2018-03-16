@@ -47,6 +47,7 @@ namespace {
 // map of job ID to jobs
 std::map<std::string, boost::shared_ptr<Job> > s_jobs;
 
+
 // notify client that job has been updated
 void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
 {
@@ -55,6 +56,26 @@ void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
    data["job"]  = pJob->toJson();
    module_context::enqueClientEvent(
          ClientEvent(client_events::kJobUpdated, data));
+}
+
+void removeJob(boost::shared_ptr<Job> pJob)
+{
+   notifyClient(JobRemoved, pJob);
+   s_jobs.erase(s_jobs.find(pJob->id()));
+}
+
+void processUpdate(boost::shared_ptr<Job> pJob)
+{
+   if (pJob->complete() && pJob->autoRemove())
+   {
+      // if this job is now complete, and the job wants to be removed when complete, remove it 
+      removeJob(pJob);
+   }
+   else
+   {
+      // otherwise, notify the client of the changes in the job
+      notifyClient(JobUpdated, pJob);
+   }
 }
 
 bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
@@ -85,6 +106,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    std::string group  = r::sexp::safeAsString(groupSEXP, "");
    int progress       = r::sexp::asInteger(progressUnitsSEXP);
    JobState state     = r::sexp::asLogical(runningSEXP) ? JobRunning : JobIdle;
+   bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
    
    // find an unused job id
    std::string id;
@@ -96,7 +118,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
 
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
-         id, name, status, group, 0 /* completed units */, progress, state); 
+         id, name, status, group, 0 /* completed units */, progress, state, autoRemove); 
 
    // cache job and notify client
    s_jobs[id] = pJob;
@@ -112,8 +134,7 @@ SEXP rs_removeJob(SEXP jobSEXP)
    boost::shared_ptr<Job> pJob;
    if (lookupJob(jobSEXP, &pJob))
    {
-      notifyClient(JobRemoved, pJob);
-      s_jobs.erase(s_jobs.find(pJob->id()));
+      removeJob(pJob);
    }
    return R_NilValue;
 }
@@ -138,8 +159,10 @@ SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
                      "current progress.");
       return R_NilValue;
    }
+
+   // add progress
    pJob->setProgress(units);
-   notifyClient(JobUpdated, pJob);
+   processUpdate(pJob);
 
    return R_NilValue;
 }
@@ -171,7 +194,7 @@ SEXP rs_addJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
       total = pJob->max();
    }
    pJob->setProgress(total);
-   notifyClient(JobUpdated, pJob);
+   processUpdate(pJob);
 
    return R_NilValue;
 }
@@ -183,7 +206,7 @@ SEXP rs_setJobStatus(SEXP jobSEXP, SEXP statusSEXP)
       return R_NilValue;
 
    pJob->setStatus(r::sexp::safeAsString(statusSEXP));
-   notifyClient(JobUpdated, pJob);
+   processUpdate(pJob);
 
    return R_NilValue;
 }
@@ -203,7 +226,7 @@ SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
    }
 
    pJob->setState(jobState);
-   notifyClient(JobUpdated, pJob);
+   processUpdate(pJob);
 
    return R_NilValue;
 }
