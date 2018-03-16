@@ -40,6 +40,7 @@ public:
     void setEchoMode(QLineEdit::EchoMode mode);
     void setNumbersOnly(bool numbersOnly);
     void setExtraOptionPrompt(const QString& prompt);
+    void setRequired(bool required);
 
     void setExtraOption(bool extraOption);
     bool extraOption();
@@ -49,6 +50,7 @@ public:
 private:
     Ui::InputDialog *ui;
     QPushButton* pOK_;
+    bool required_;
 };
 
 #endif // DESKTOPINPUTDIALOG_HPP

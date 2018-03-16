@@ -20,6 +20,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
@@ -29,7 +31,6 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
-import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.studio.client.common.dialog.DialogBuilderFactory;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -63,7 +64,27 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              final OperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, false, false, -1, -1, null,
+            title, label, initialValue, MessageDisplay.INPUT_REQUIRED_TEXT,
+            -1, -1, null,
+            new ProgressOperationWithInput<String>()
+            {
+               public void execute(String input, ProgressIndicator indicator)
+               {
+                  indicator.onCompleted();
+                  operation.execute(input);
+               }
+            },
+            null);
+   }
+
+   @Override
+   public void promptForText(String title, 
+                             String label, 
+                             int type,
+                             OperationWithInput<String> operation)
+   {
+      ((TextInput)GWT.create(TextInput.class)).promptForText(
+            title, label, "", type, -1, -1, null,
             new ProgressOperationWithInput<String>()
             {
                public void execute(String input, ProgressIndicator indicator)
@@ -82,7 +103,9 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              ProgressOperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, false, false, -1, -1, null, operation, null);
+            title, label, initialValue, 
+            MessageDisplay.INPUT_REQUIRED_TEXT,
+            -1, -1, null, operation, null);
    }
 
    @Override
@@ -98,8 +121,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue,
-            false,
-            false,
+            MessageDisplay.INPUT_REQUIRED_TEXT,
             selectionOffset,
             selectionLength,
             okButtonCaption,
@@ -121,8 +143,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue,
-            false,
-            false,
+            MessageDisplay.INPUT_REQUIRED_TEXT,
             selectionOffset,
             selectionLength,
             okButtonCaption,
@@ -135,7 +156,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                  String title,
                                  String label,
                                  String initialValue,
-                                 boolean usePasswordMask,
+                                 int type,
                                  String extraOptionPrompt,
                                  boolean extraOptionDefault,
                                  ProgressOperationWithInput<PromptWithOptionResult> okOperation,
@@ -145,7 +166,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue,
-            usePasswordMask,
+            type,
             extraOptionPrompt,
             extraOptionDefault,
             -1,
@@ -166,8 +187,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue == null ? "" : initialValue.toString(),
-            false,
-            true,
+            MessageDisplay.INPUT_NUMERIC,
             -1,
             -1,
             null,
