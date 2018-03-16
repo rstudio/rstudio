@@ -1087,7 +1087,7 @@ private:
 
    }
 
-   void testShiny(const FilePath& shinyPath,
+   void testShiny(FilePath& shinyPath,
                   core::system::ProcessOptions testOptions,
                   const core::system::ProcessCallbacks& cb,
                   const std::string& type)
@@ -1096,6 +1096,13 @@ private:
       s_buildEnabled = true;
       ClientEvent event(client_events::kEnableBuild);
       module_context::enqueClientEvent(event);
+
+      // normalize paths between all tests and single test
+      std::string shinyTestName = "";
+      if (type == kTestShinyFile) {
+        shinyTestName = shinyPath.filename();
+        shinyPath = shinyPath.parent().parent();
+      }
 
       // initialize parser
       CompileErrorParsers parsers;
@@ -1123,17 +1130,16 @@ private:
         );
 
         cmd << boost::str(fmt % shinyPath.absolutePath());
-      } else {
-        FilePath shinyAppPath = shinyPath.parent().parent();
-        std::string shinyTestName = shinyPath.filename();
-
+      } else if (type == kTestShinyFile) {
         boost::format fmt(
            "shinytest::testApp('%1%', '%2%')"
         );
 
         cmd << boost::str(fmt %
-                          shinyAppPath %
+                          shinyPath.absolutePath() %
                           shinyTestName);
+      } else {
+        terminateWithError("Shiny test type is unsupported.");
       }
 
       enqueCommandString("Testing Shiny application using 'shinytest'");
