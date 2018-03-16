@@ -26,4 +26,7 @@ public class Job
    public int state;
    public int progress;
    public int max;
+   public int recorded;
+   public int started;
+   public int completed;
 }

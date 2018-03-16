@@ -48,7 +48,7 @@ public class JobsList extends Composite
          return;
       JobItem item = new JobItem(job);
       jobs_.put(job.id, item);
-      list_.add(item);
+      list_.insert(item, 0);
    }
    
    public void removeJob(Job job)

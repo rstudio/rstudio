@@ -16,6 +16,11 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Toolbar;
@@ -79,9 +84,23 @@ public class JobsPane extends WorkbenchPane
       if (jobs == null)
          return;
 
+      // make an array of all the jobs on the server
+      ArrayList<Job> items = new ArrayList<Job>();
       for (String id: jobs.iterableKeys())
       {
-         list_.addJob((Job)jobs.getElement(id));
+         items.add((Job)jobs.getElement(id));
+      }
+      
+      // sort jobs by most recently recorded first
+      Collections.sort(items, (j1, j2) -> 
+      {
+          return j1.recorded - j2.recorded;
+      });
+      
+      // add each to the panel
+      for (Job job: items)
+      {
+         list_.addJob(job);
       }
    }
 
