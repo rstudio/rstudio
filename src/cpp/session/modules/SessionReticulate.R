@@ -752,7 +752,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       "import",            # 'import'
       "[[:space:]]+",      # separating spaces
       "\\(?",              # an optional opening bracket (tuple style)
-      "(.*)",              # the rest
+      "[[:space:]]*",      # optional whitespace
+      "([^)]*)",           # the rest (including whitespace)
       sep = ""
    )
    
@@ -765,12 +766,8 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       
       # figure out the text following the last comma (if any)
       token <- ""
-      if (nzchar(imports)) {
-         pieces <- strsplit(imports, ",[[:space:]]*")[[1]]
-         if (grepl(",[[:space:]]*$", imports))
-            pieces <- c(pieces, "")
-         token <- pieces[[length(pieces)]]
-      }
+      if (nzchar(imports))
+         token <- gsub(".*[[:space:],]", "", imports)
       
       return(.rs.python.getCompletionsImportsFrom(module, token))
       
