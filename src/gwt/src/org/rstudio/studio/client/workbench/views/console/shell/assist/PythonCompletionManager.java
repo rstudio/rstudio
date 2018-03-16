@@ -38,6 +38,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -63,6 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 // NOTE: This is mostly just a fork of the RCompletionManager code.
@@ -701,6 +703,127 @@ public class PythonCompletionManager implements CompletionManager
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
    
+   // this routine is primarily used to provide some extra context
+   // for argument completions and import completions; e.g. when
+   // the document contains:
+   //
+   //    from numpy import (
+   //       co|
+   //
+   // or, for function calls:
+   //
+   //    x = pandas.DataFrame(
+   //       da|
+   //
+   // to handle this, we attempt to walk back tokens until we
+   // see an opening bracket; if we do, we use that as the
+   // 'anchor' for completion. 
+   private String buildCompletionLine()
+   {
+      // move to current token
+      TokenIterator it = docDisplay_.createTokenIterator();
+      Token token = it.moveToPosition(docDisplay_.getCursorPosition());
+      if (token == null)
+         return docDisplay_.getCurrentLineUpToCursor();
+      
+      // move off of comments, text
+      while (token.hasType("text", "comment"))
+      {
+         token = it.stepBackward();
+         if (token == null)
+            return docDisplay_.getCurrentLineUpToCursor();
+      }
+      
+      // if we're on a ',' or a '(', assume that we may be
+      // within a function call, and attempt to provide the
+      // context for argument name completions
+      boolean maybeArgument =
+            token.valueEquals("(") ||
+            token.valueEquals(",");
+      
+      if (!maybeArgument)
+      {
+         TokenIterator clone = it.clone();
+         
+         Token peek = clone.stepBackward();
+         if (peek == null)
+            return docDisplay_.getCurrentLineUpToCursor();
+         
+         while (peek.hasType("text", "comment"))
+         {
+            peek = clone.stepBackward();
+            if (peek == null)
+               return docDisplay_.getCurrentLineUpToCursor();
+         }
+         
+         maybeArgument =
+               peek.valueEquals("(") ||
+               peek.valueEquals(",");
+         
+         if (!maybeArgument)
+            return docDisplay_.getCurrentLineUpToCursor();
+      }
+      
+      // start walking backwards until we see an 'anchor'
+      int cursorRow = docDisplay_.getCursorPosition().getRow();
+      int anchorRow = cursorRow;
+      for (int i = 0; i < 200; i++)
+      {
+         // skip matching brackets
+         if (it.bwdToMatchingToken())
+         {
+            if (it.stepBackward() == null)
+               break;
+            
+            continue;
+         }
+         
+         // if we hit a ':', check to see if it's at the end
+         // of the line. if so, we can exit
+         if (token.valueEquals(":"))
+         {
+            String line = docDisplay_.getLine(it.getCurrentTokenRow());
+            Pattern pattern = Pattern.create("[:]\\s*(?:#|$)", "");
+            if (pattern.test(line))
+               break;
+         }
+         
+         // if we hit an 'import' or a 'from', we can bail
+         if (token.valueEquals("from") || token.valueEquals("import"))
+            break;
+         
+         // if we hit an open bracket, use this line as the anchor
+         if (token.valueEquals("("))
+         {
+            // double-check that this is a function invocation, not a definition
+            int row = it.getCurrentTokenRow();
+            String line = docDisplay_.getLine(row);
+            Pattern pattern = Pattern.create("^\\s*def\\s+", "");
+            if (pattern.test(line))
+               break;
+            
+            // this appears to be a function invocation; use the anchor
+            anchorRow = row;
+            break;
+         }
+         
+         // attempt to step backward
+         token = it.stepBackward();
+         if (token == null)
+            break;
+      }
+      
+      // build the line to be used for completion
+      StringBuilder builder = new StringBuilder();
+      for (int i = anchorRow; i < cursorRow; i++)
+      {
+         builder.append(docDisplay_.getLine(i));
+      }
+      builder.append(docDisplay_.getCurrentLineUpToCursor());
+      
+      return builder.toString();
+   }
+   
    /**
     * If false, the suggest operation was aborted
     */
@@ -758,6 +881,9 @@ public class PythonCompletionManager implements CompletionManager
       
       if (completionCache_.satisfyRequest(line, context_))
          return true;
+      
+      // Try to look back a bit for extra completion context.
+      line = buildCompletionLine();
       
       server_.pythonGetCompletions(line, context_);
       return true;
