@@ -326,7 +326,7 @@ std::vector<module_context::SourceMarker> parseShinyTestErrors(
          std::string column = "0";
          type = "failure";
          message = match[0];
-         FilePath testFilePath = basePathResolved.complete(file + ".R");
+         FilePath testFilePath = basePathResolved.complete("tests").complete(file + ".R");
 
          SourceMarker err(module_context::sourceMarkerTypeFromString(type),
                           testFilePath,
