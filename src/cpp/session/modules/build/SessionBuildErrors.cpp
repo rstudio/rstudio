@@ -265,17 +265,31 @@ std::vector<module_context::SourceMarker> parseTestErrors(
 
    try
    {
-      std::string type = "error";
-      std::string line = "0";
-      std::string column = "0";
-      std::string message = "Test Error";
-      SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                       basePath,
-                       core::safe_convert::stringTo<int>(line, 1),
-                       core::safe_convert::stringTo<int>(column, 1),
-                       core::html_utils::HTML(message),
-                       true);
-      errors.push_back(err);
+      boost::regex re("^([^:]+):([0-9]+): ([a-zA-Z]+): (.*)$");
+
+      boost::sregex_iterator iter(output.begin(), output.end(), re);
+      boost::sregex_iterator end;
+      for (; iter != end; iter++)
+      {
+         boost::smatch match = *iter;
+         BOOST_ASSERT(match.size() == 4);
+
+         std::string file, line, type, message;
+         
+         file = match[1];
+         line = match[2];
+         type = match[3];
+         message = match[4];
+
+         std::string column = "0";
+         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+                          basePath.complete(file),
+                          core::safe_convert::stringTo<int>(line, 1),
+                          core::safe_convert::stringTo<int>(column, 1),
+                          core::html_utils::HTML(message),
+                          true);
+         errors.push_back(err);
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION;
 
