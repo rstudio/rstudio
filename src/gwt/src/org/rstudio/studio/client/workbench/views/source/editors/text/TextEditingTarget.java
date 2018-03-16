@@ -6703,7 +6703,19 @@ public class TextEditingTarget implements
    @Handler
    void onTestFile()
    {
-      server_.startBuild("test-file", docUpdateSentinel_.getPath(),
+      String buildCommand = "";
+      if (extendedType_ == SourceDocument.XT_TEST_SHINYTEST)
+         buildCommand = "test-shiny-file";
+      else if (extendedType_ == SourceDocument.XT_TEST_TESTTHAT)
+         buildCommand = "test-file";
+      else {
+         globalDisplay_.showErrorMessage(
+            "Error Running Test",
+            "This file was not recognized as test.");
+         return;
+      }
+
+      server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
          new SimpleRequestCallback<Boolean>() {
          @Override
          public void onResponseReceived(Boolean response)

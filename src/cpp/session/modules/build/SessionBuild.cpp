@@ -217,6 +217,7 @@ const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
+const char * const kTestShinyFile = "test-shiny-file";
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
@@ -296,10 +297,10 @@ private:
          FilePath testPath = FilePath(subType);
          executePackageBuild(type, testPath, options, cb);
       }
-      else if (type == kTestShiny)
+      else if (type == kTestShiny || type == kTestShinyFile)
       {
          FilePath testPath = FilePath(subType);
-         testShiny(testPath, options, cb);
+         testShiny(testPath, options, cb, type);
       }
       else if (config.buildType == r_util::kBuildTypePackage)
       {
@@ -1088,7 +1089,8 @@ private:
 
    void testShiny(const FilePath& shinyPath,
                   core::system::ProcessOptions testOptions,
-                  const core::system::ProcessCallbacks& cb)
+                  const core::system::ProcessCallbacks& cb,
+                  const std::string& type)
    {
       // enable build
       s_buildEnabled = true;
@@ -1115,14 +1117,26 @@ private:
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
-      boost::format fmt(
-         "shinytest::testApp('%1%')"
-      );
+      if (type == kTestShiny) {
+        boost::format fmt(
+           "shinytest::testApp('%1%')"
+        );
 
-      cmd << boost::str(fmt %
-                        shinyPath.absolutePath());
+        cmd << boost::str(fmt % shinyPath.absolutePath());
+      } else {
+        FilePath shinyAppPath = shinyPath.parent().parent();
+        std::string shinyTestName = shinyPath.filename();
 
-      enqueCommandString("Testing Shiny application using 'testthat'");
+        boost::format fmt(
+           "shinytest::testApp('%1%', '%2%')"
+        );
+
+        cmd << boost::str(fmt %
+                          shinyAppPath %
+                          shinyTestName);
+      }
+
+      enqueCommandString("Testing Shiny application using 'shinytest'");
       successMessage_ = "\nTest complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      testOptions,
