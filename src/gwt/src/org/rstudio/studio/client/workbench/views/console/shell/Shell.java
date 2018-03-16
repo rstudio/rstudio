@@ -384,6 +384,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  sendToConsoleImpl(event);
                }
             });
    }
