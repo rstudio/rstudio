@@ -701,9 +701,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void setRCompletionContext(RCompletionContext rContext)
+   public void setRCompletionContext(CompletionContext context)
    {
-      rContext_ = rContext;
+      context_ = context;
    }
 
    private void updateLanguage(boolean suppressCompletion)
@@ -731,7 +731,7 @@ public class AceEditor implements DocDisplay,
                      new CompletionPopupPanel(),
                      server_,
                      new Filter(),
-                     rContext_,
+                     context_,
                      fileType_.canExecuteChunks() ? rnwContext_ : null,
                      editor,
                      false));
@@ -745,10 +745,9 @@ public class AceEditor implements DocDisplay,
                         new CompletionPopupPanel(),
                         server_,
                         new Filter(),
-                        rContext_,
-                        fileType_.canExecuteChunks() ? rnwContext_ : null,
-                           editor,
-                           false));
+                        context_,
+                        editor,
+                        false));
                }
                
                // C++ completion manager
@@ -3969,7 +3968,7 @@ public class AceEditor implements DocDisplay,
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
-   private RCompletionContext rContext_ = null;
+   private CompletionContext context_ = null;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

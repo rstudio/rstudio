@@ -6292,7 +6292,7 @@ public class TextEditingTarget implements
       }
    };
    
-   private RCompletionContext rContext_ = new RCompletionContext() {
+   private CompletionContext rContext_ = new CompletionContext() {
 
       @Override
       public String getPath()

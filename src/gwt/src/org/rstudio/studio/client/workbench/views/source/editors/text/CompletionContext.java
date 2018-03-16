@@ -1,5 +1,5 @@
 /*
- * RCompletionContext.java
+ * CompletionContext.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-public interface RCompletionContext
+public interface CompletionContext
 {
    String getPath();
    String getId();

@@ -46,7 +46,6 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -59,13 +58,12 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
-import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 // NOTE: This is mostly just a fork of the RCompletionManager code.
 // In a perfect world, there would be a lot more code shared between
@@ -107,25 +105,21 @@ public class PythonCompletionManager implements CompletionManager
                                   CompletionPopupDisplay popup,
                                   CodeToolsServerOperations server,
                                   InitCompletionFilter initFilter,
-                                  RCompletionContext rContext,
-                                  RnwCompletionContext rnwContext,
+                                  CompletionContext rContext,
                                   DocDisplay docDisplay,
                                   boolean isConsole)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       input_ = input ;
-      navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
       rContext_ = rContext;
       initFilter_ = initFilter ;
-      rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
-      requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       completionCache_ = new CompletionCache();
       
@@ -216,13 +210,11 @@ public class PythonCompletionManager implements CompletionManager
    
    @Inject
    public void initialize(GlobalDisplay globalDisplay,
-                          FileTypeRegistry fileTypeRegistry,
                           EventBus eventBus,
                           HelpStrategy helpStrategy,
                           UIPrefs uiPrefs)
    {
       globalDisplay_ = globalDisplay;
-      fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
       uiPrefs_ = uiPrefs;
@@ -483,7 +475,6 @@ public class PythonCompletionManager implements CompletionManager
                   if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
-                     requester_.flushCache();
                      completionCache_.flush();
                      end = selection.getStart().movePosition(1, true);
                   }
@@ -701,7 +692,6 @@ public class PythonCompletionManager implements CompletionManager
       
       if (flushCache)
       {
-         requester_.flushCache();
          completionCache_.flush();
       }
    }
@@ -922,7 +912,6 @@ public class PythonCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return;
          
-         requester_.flushCache();
          completionCache_.flush();
          helpStrategy_.clearCache();
          
@@ -1092,16 +1081,13 @@ public class PythonCompletionManager implements CompletionManager
    }
    
    private GlobalDisplay globalDisplay_;
-   private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
    private HelpStrategy helpStrategy_;
    private UIPrefs uiPrefs_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;
-   private final NavigableSourceEditor navigableSourceEditor_;
    private final CompletionPopupDisplay popup_;
-   private final CompletionRequester requester_;
    private final InitCompletionFilter initFilter_;
    private final CompletionCache completionCache_;
    
@@ -1116,8 +1102,7 @@ public class PythonCompletionManager implements CompletionManager
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
-   private final RCompletionContext rContext_;
-   private final RnwCompletionContext rnwContext_;
+   private final CompletionContext rContext_;
    
    private NativeEvent nativeEvent_;
    

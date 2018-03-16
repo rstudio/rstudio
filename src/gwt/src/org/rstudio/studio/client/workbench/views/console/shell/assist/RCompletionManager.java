@@ -72,7 +72,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
@@ -127,7 +127,7 @@ public class RCompletionManager implements CompletionManager
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
-                             RCompletionContext rContext,
+                             CompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
                              boolean isConsole)
@@ -2230,7 +2230,7 @@ public class RCompletionManager implements CompletionManager
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
-   private final RCompletionContext rContext_;
+   private final CompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
    private final SignatureToolTipManager sigTipManager_;
