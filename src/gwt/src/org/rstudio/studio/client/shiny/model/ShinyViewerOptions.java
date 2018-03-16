@@ -1,7 +1,7 @@
 /*
- * ShinyViewerType.java
+ * ShinyViewerOptions.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,17 +16,10 @@ package org.rstudio.studio.client.shiny.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ShinyViewerType extends JavaScriptObject
+public class ShinyViewerOptions extends JavaScriptObject
 {
-   protected ShinyViewerType() {}
+   protected ShinyViewerOptions() {}
    
-   public final static int SHINY_VIEWER_USER = 0;
-   public final static int SHINY_VIEWER_NONE = 1;
-   public final static int SHINY_VIEWER_PANE = 2;
-   public final static int SHINY_VIEWER_WINDOW = 3;
-   public final static int SHINY_VIEWER_BROWSER = 4;
-
-   public final native int getViewerType() /*-{ 
-      return this.viewerType;
-   }-*/;
+   public final static int SHINY_VIEWER_OPTIONS_NONE = 0;
+   public final static int SHINY_VIEWER_OPTIONS_NOTOOLS = 1;
 }
