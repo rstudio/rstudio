@@ -13,6 +13,8 @@
  *
  */
 
+#include <ctime>
+
 #include <boost/make_shared.hpp>
 #include <core/json/JsonRpc.hpp>
 
@@ -24,6 +26,9 @@
 #define kJobProgress    "progress"
 #define kJobMax         "max"
 #define kJobState       "state"
+#define kJobRecorded    "recorded"
+#define kJobStarted     "started"
+#define kJobCompleted   "completed"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -50,17 +55,24 @@ Job::Job(const std::string& id,
    name_(name),
    status_(status),
    group_(group),
-   state_(state),
+   state_(JobIdle),
    progress_(progress),
    max_(max),
+   recorded_(::time(0)),
+   started_(0),
+   completed_(0),
    autoRemove_(autoRemove)
 {
+   setState(state);
 }
 
 Job::Job():
    state_(JobIdle),
    progress_(0),
    max_(0),
+   recorded_(::time(0)),
+   started_(0),
+   completed_(0),
    autoRemove_(true)
 {
 }
@@ -105,12 +117,15 @@ json::Object Job::toJson() const
    json::Object job;
 
    // fill out fields from local information
-   job[kJobId]       = id_;
-   job[kJobName]     = name_;
-   job[kJobStatus]   = status_;
-   job[kJobProgress] = progress_;
-   job[kJobMax]      = max_;
-   job[kJobState]    = static_cast<int>(state_);
+   job[kJobId]         = id_;
+   job[kJobName]       = name_;
+   job[kJobStatus]     = status_;
+   job[kJobProgress]   = progress_;
+   job[kJobMax]        = max_;
+   job[kJobState]      = static_cast<int>(state_);
+   job[kJobRecorded]   = static_cast<int64_t>(recorded_);
+   job[kJobStarted]    = static_cast<int64_t>(started_);
+   job[kJobCompleted]  = static_cast<int64_t>(completed_);
 
    // append description
    job["state_description"] = stateAsString(state_);
@@ -122,17 +137,25 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
 {
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>();
    int state = static_cast<int>(JobIdle);
+   boost::int64_t recorded = 0, started = 0, completed = 0;
    Error error = json::readObject(src,
-      kJobId,       &pJob->id_,
-      kJobName,     &pJob->name_,
-      kJobStatus,   &pJob->status_,
-      kJobProgress, &pJob->progress_,
-      kJobMax,      &pJob->max_,
-      kJobState,    &state);
+      kJobId,        &pJob->id_,
+      kJobName,      &pJob->name_,
+      kJobStatus,    &pJob->status_,
+      kJobProgress,  &pJob->progress_,
+      kJobMax,       &pJob->max_,
+      kJobRecorded,  &recorded,
+      kJobStarted,   &started,
+      kJobCompleted, &completed,
+      kJobState,     &state);
    if (error)
       return error;
 
-   pJob->setState(static_cast<JobState>(state));
+   // convert to types that aren't JSON friendly
+   pJob->state_     = static_cast<JobState>(state);
+   pJob->recorded_  = static_cast<time_t>(recorded);
+   pJob->started_   = static_cast<time_t>(started);
+   pJob->completed_ = static_cast<time_t>(started);
 
    *pJobOut = pJob;
    return Success();
@@ -160,7 +183,20 @@ void Job::setStatus(const std::string& status)
 
 void Job::setState(JobState state)
 {
+   // ignore if state doesn't change
+   if (state_ == state)
+      return;
+
+   // if transitioning away from idle, set start time
+   if (state_ == JobIdle && state != JobIdle)
+      started_ = ::time(0);
+
+   // record new state
    state_ = state;
+
+   // if transitioned to a complete state, save finished time
+   if (complete())
+      completed_ = ::time(0);
 }
 
 bool Job::complete() const
@@ -171,6 +207,21 @@ bool Job::complete() const
 bool Job::autoRemove() const
 {
    return autoRemove_;
+}
+
+time_t Job::recorded() const
+{
+   return recorded_;
+}
+
+time_t Job::started() const
+{
+   return started_;
+}
+
+time_t Job::completed() const
+{
+   return completed_;
 }
 
 std::string Job::stateAsString(JobState state)

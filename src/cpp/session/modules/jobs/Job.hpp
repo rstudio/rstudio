@@ -18,6 +18,7 @@
 
 #include <string>
 #include <core/json/Json.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rstudio {
 namespace session {
@@ -81,6 +82,11 @@ public:
    // whether the job should be cleaned up automatically when complete
    bool autoRemove() const;
 
+   // timing
+   time_t recorded() const;
+   time_t started() const;
+   time_t completed() const;
+
    void setProgress(int units);
    void setStatus(const std::string& status);
    void setState(JobState state);
@@ -103,6 +109,10 @@ private:
 
    int progress_;
    int max_;
+
+   time_t recorded_;   // when the job was added
+   time_t started_;    // when the job began executing
+   time_t completed_;  // when the job completed executing
 
    bool autoRemove_;
 };

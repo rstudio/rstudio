@@ -83,3 +83,20 @@ test_that("auto remove property is respected", {
    expect_equal(jobs[[jobId]], NULL)
 })
 
+
+test_that("job timers are started", {
+   jobId <- .rs.api.addJob(name = "job7", autoRemove = FALSE)
+
+   # complete job immediately
+   .rs.api.setJobState(jobId, "succeeded")
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   job <- jobs[[jobId]]
+
+   expect_true(job[["recorded"]] > 0)
+   expect_true(job[["started"]] > 0)
+   expect_true(job[["completed"]] > 0)
+   expect_true(job[["recorded"]] <= job[["started"]])
+   expect_true(job[["completed"]] <= job[["started"]])
+})
+
