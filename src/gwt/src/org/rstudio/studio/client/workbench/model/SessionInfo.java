@@ -133,6 +133,10 @@ public class SessionInfo extends JavaScriptObject
    public final native int getConsoleActionsLimit() /*-{
       return this.console_actions_limit;
    }-*/;
+   
+   public final native String getConsoleLanguage() /*-{
+      return this.console_language;
+   }-*/;
 
    public final native ClientInitState getClientState() /*-{
       return this.client_state;

@@ -699,15 +699,14 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &language);
    if (error)
       return error;
-   language = string_utils::toLower(language);
    
    // check to see what language is active in main console
    using namespace r::exec;
    
    // check to see what langauge is currently active (but default to r)
-   std::string activeLanguage = "r";
+   std::string activeLanguage = "R";
    if (reticulate::isReplActive())
-      activeLanguage = "python";
+      activeLanguage = "Python";
    
    // now, detect if we are transitioning languages
    if (language != activeLanguage)
@@ -726,9 +725,9 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
          conn.disconnect();
       });
       
-      if (activeLanguage == "r")
+      if (activeLanguage == "R")
       {
-         if (language == "python")
+         if (language == "Python")
          {
             // r -> python: activate the reticulate REPL
             Error error =
@@ -737,9 +736,9 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
                LOG_ERROR(error);
          }
       }
-      else if (activeLanguage == "python")
+      else if (activeLanguage == "Python")
       {
-         if (language == "r")
+         if (language == "R")
          {
             // python -> r: deactivate the reticulate REPL
             Error error =

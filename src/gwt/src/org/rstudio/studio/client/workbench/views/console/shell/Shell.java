@@ -133,6 +133,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
+      language_ = session.getSessionInfo().getConsoleLanguage();
 
       keyDownPreviewHandlers_ = new ArrayList<KeyDownPreviewHandler>() ;
       keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
@@ -317,8 +318,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       String prompt = event.getPrompt().getPromptText() ;
       boolean addToHistory = event.getPrompt().getAddToHistory() ;
+      language_ = event.getPrompt().getLanguage() ;
       
       consolePrompt(prompt, addToHistory) ;
+      
    }
 
    private void consolePrompt(String prompt, boolean addToHistory)
@@ -370,23 +373,31 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onSendToConsole(final SendToConsoleEvent event)
    {
-      server_.adaptToLanguage(
-            event.getLanguage(),
-            new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void response)
+      if (!StringUtil.equals(event.getLanguage(), language_))
+      {
+         server_.adaptToLanguage(
+               event.getLanguage(),
+               new ServerRequestCallback<Void>()
                {
-                  sendToConsoleImpl(event);
-               }
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     language_ = event.getLanguage();
+                     sendToConsoleImpl(event);
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  sendToConsoleImpl(event);
-               }
-            });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     sendToConsoleImpl(event);
+                  }
+               });
+      }
+      else
+      {
+         sendToConsoleImpl(event);
+      }
    }
    
    private void sendToConsoleImpl(final SendToConsoleEvent event)
@@ -756,6 +767,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private String lastPromptText_ ;
    private final UIPrefs prefs_;
  
+   private String language_ ;
+   
    private final CommandLineHistory historyManager_;
    private final CommandLineHistory browseHistoryManager_;
    
