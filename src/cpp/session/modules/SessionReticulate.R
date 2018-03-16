@@ -79,6 +79,45 @@
    return(TRUE)
 })
 
+.rs.addFunction("reticulate.matplotlib.showHook", function(...)
+{
+   # read device size
+   size <- dev.size(units = "in")
+   width <- size[1]; height <- size[2]
+   
+   # TODO: handle high-DPI displays
+   dpi <- 72L
+   
+   # TODO: get device requested from matplotlib?
+   # TODO: handle HTML content?
+   path <- tempfile("matplotlib-plot-", fileext = ".png")
+   
+   plt <- reticulate::import("matplotlib.pyplot", convert = TRUE)
+   
+   # resize the figure
+   figure <- plt$gcf()
+   figure$set_dpi(dpi)
+   figure$set_size_inches(width, height)
+   plt$savefig(path, dpi = figure$dpi)
+   
+   # now, read that in and create an R plot using e.g. image
+   data <- png::readPNG(path, native = TRUE, info = TRUE)
+   
+   # don't display margins and ensure R doesn't nudge margin size
+   opar <- par(
+      xaxt = "n", yaxt = "n",
+      xaxs = "i", yaxs = "i",
+      mar = c(0, 0, 0, 0),
+      oma = c(0, 0, 0, 0),
+      xpd = NA
+   )
+   on.exit(par(opar), add = TRUE)
+   
+   # generate raster
+   plot.new()
+   graphics::rasterImage(data, 0, 0, 1, 1)
+})
+
 .rs.addFunction("reticulate.replInitialize", function()
 {
    builtins <- reticulate::import_builtins(convert = FALSE)
@@ -95,6 +134,15 @@
       }
       help(...)
    }
+   
+   # install matplotlib hook if available
+   if (reticulate::py_module_available("matplotlib")) {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      plt <- matplotlib$pyplot
+      .rs.setVar("reticulate.matplotlib.show", plt$show)
+      plt$show <- .rs.reticulate.matplotlib.showHook
+   }
+      
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
@@ -108,6 +156,15 @@
    # restore old help method
    builtins <- reticulate::import_builtins(convert = FALSE)
    builtins$help <- .rs.getVar("reticulate.help")
+   
+   # restore matplotlib method
+   show <- .rs.getVar("reticulate.matplotlib.show")
+   if (!is.null(show)) {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      plt <- matplotlib$pyplot
+      plt$show <- show
+   }
+   
 })
 
 .rs.addFunction("reticulate.replIsActive", function()
