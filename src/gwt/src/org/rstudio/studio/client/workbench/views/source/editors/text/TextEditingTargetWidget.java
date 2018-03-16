@@ -356,7 +356,7 @@ public class TextEditingTargetWidget
 
       testButton_ = new ToolbarButton(
             "Run Test", 
-            commands_.debugContinue().getImageResource(), 
+            commands_.testFile().getImageResource(), 
             new ClickHandler() 
             {
                @Override
