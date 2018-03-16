@@ -65,6 +65,12 @@ public class JobsList extends Composite
          return;
       jobs_.get(job.id).update(job);
    }
+   
+   public void clear()
+   {
+      list_.clear();
+      jobs_.clear();
+   }
 
    @UiField VerticalPanel list_;
 

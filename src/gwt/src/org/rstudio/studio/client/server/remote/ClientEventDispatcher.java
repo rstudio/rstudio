@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
@@ -955,6 +956,11 @@ public class ClientEventDispatcher
          {
             JobUpdate data = event.getData();
             eventBus_.fireEvent(new JobUpdatedEvent(data));
+         }
+         else if (type == ClientEvent.JobRefresh)
+         {
+            JsObject data = event.getData();
+            eventBus_.fireEvent(new JobRefreshEvent(data));
          }
          else
          {

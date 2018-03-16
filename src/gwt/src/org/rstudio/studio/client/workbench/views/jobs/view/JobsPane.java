@@ -81,6 +81,9 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void setInitialJobs(JsObject jobs)
    {
+      // clear any current state
+      list_.clear();
+      
       if (jobs == null)
          return;
 

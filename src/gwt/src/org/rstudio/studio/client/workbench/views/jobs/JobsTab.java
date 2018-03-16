@@ -22,13 +22,15 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 
 public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
 {
    public abstract static class Shim 
         extends DelayLoadTabShim<JobsPresenter, JobsTab>
-        implements JobUpdatedEvent.Handler 
+        implements JobUpdatedEvent.Handler,
+                   JobRefreshEvent.Handler
    {
       
    }
@@ -47,6 +49,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       session_ = session;
       eventBus_ = eventBus;
       eventBus.addHandler(JobUpdatedEvent.TYPE, shim);
+      eventBus.addHandler(JobRefreshEvent.TYPE, shim);
    }
    
    private final Session session_;

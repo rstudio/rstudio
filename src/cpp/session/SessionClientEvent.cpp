@@ -183,6 +183,7 @@ const int kRemoveTerminal = 164;
 const int kShowPageViewerEvent = 165;
 const int kAskSecret = 166;
 const int kJobUpdated = 167;
+const int kJobRefresh = 168;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -504,6 +505,8 @@ std::string ClientEvent::typeName() const
          return "ask_secret";
       case client_events::kJobUpdated:
          return "job_updated";
+      case client_events::kJobRefresh:
+         return "job_refresh";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

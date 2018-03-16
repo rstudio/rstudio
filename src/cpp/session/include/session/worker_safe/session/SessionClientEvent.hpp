@@ -184,6 +184,7 @@ extern const int kRemoveTerminal;
 extern const int kShowPageViewerEvent;
 extern const int kAskSecret;
 extern const int kJobUpdated;
+extern const int kJobRefresh;
 }
    
 class ClientEvent

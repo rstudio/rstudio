@@ -23,12 +23,14 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.inject.Inject;
 
 public class JobsPresenter extends BasePresenter  
-                           implements JobUpdatedEvent.Handler
+                           implements JobUpdatedEvent.Handler,
+                                      JobRefreshEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -48,7 +50,6 @@ public class JobsPresenter extends BasePresenter
       super(display);
       display_ = display;
       binder.bind(commands, this);
-      events.addHandler(JobUpdatedEvent.TYPE, this);
 
       display_.setInitialJobs(session.getSessionInfo().getJobState());
    }
@@ -57,6 +58,12 @@ public class JobsPresenter extends BasePresenter
    public void onJobUpdated(JobUpdatedEvent event)
    {
       display_.updateJob(event.getData().type, event.getData().job);
+   }
+
+   @Override
+   public void onJobRefresh(JobRefreshEvent event)
+   {
+      display_.setInitialJobs(event.getData());
    }
    
    private final Display display_;

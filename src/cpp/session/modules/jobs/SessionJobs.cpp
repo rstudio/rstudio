@@ -252,6 +252,16 @@ Error getJobs(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+}
+
+void onResume(const Settings& settings)
+{
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kJobRefresh, jobsAsJson()));
+}
+
 } // anonymous namespace
 
 core::json::Object jobState()
@@ -268,6 +278,9 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
+
+   module_context::addSuspendHandler(module_context::SuspendHandler(
+            onSuspend, onResume));
 
    ExecBlock initBlock;
    initBlock.addFunctions()
