@@ -4428,7 +4428,7 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkRCPP()
    {
-      onInsertChunk("```{rcpp}\n\n```\n", 1, 0);
+      onInsertChunk("```{Rcpp}\n\n```\n", 1, 0);
    }
 
    @Handler
