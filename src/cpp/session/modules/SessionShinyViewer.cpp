@@ -98,8 +98,15 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          }
       }
 
+      std::string path = r::sexp::safeAsString(pathSEXP);
+      if (path.find("/shinytest/recorder") != std::string::npos ||
+          path.find("/shinytest/diffviewerapp") != std::string::npos)
+      {
+          viewertype = SHINY_VIEWER_WINDOW;
+      }
+
       enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
-                        r::sexp::safeAsString(pathSEXP),
+                        path,
                         viewertype);
    }
    catch(const r::exec::RErrorException& e)
