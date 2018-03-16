@@ -50,8 +50,8 @@ TestsFileType getTestType(const std::string& contents)
    if (pos != std::string::npos && !isspace(contents.at(pos - 1)))
       return TestsTestThat;
 
-   pos = contents.find("^app +<- +ShinyDriver\\$new", 0);
-   if (pos != std::string::npos)
+   pos = contents.find("app <- ShinyDriver$new(", 0);
+   if (pos == 0)
       return TestsShinyTest;
 
    return TestsNone;

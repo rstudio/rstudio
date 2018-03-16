@@ -372,16 +372,16 @@ public class TextEditingTargetWidget
 
       compareTestButton_ = new ToolbarButton(
             "Compare Test Results", 
-            commands_.shinyCompareFile().getImageResource(), 
+            commands_.shinyCompareTest().getImageResource(), 
             new ClickHandler() 
             {
                @Override
                public void onClick(ClickEvent event)
                {
-                  commands_.shinyCompareFile().execute();
+                  commands_.shinyCompareTest().execute();
                }
             });
-      compareTestButton_.setTitle(commands_.shinyCompareFile().getDesc());
+      compareTestButton_.setTitle(commands_.shinyCompareTest().getDesc());
 
       toolbar.addRightWidget(compareTestButton_);
       compareTestButton_.setVisible(false);
@@ -680,6 +680,7 @@ public class TextEditingTargetWidget
       {
          shinyLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
+         testButton_.setVisible(true);
          compareTestButton_.setVisible(true);
       }
       else

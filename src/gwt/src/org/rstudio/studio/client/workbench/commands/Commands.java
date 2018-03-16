@@ -529,7 +529,7 @@ public abstract class
    public abstract AppCommand shinyRunInBrowser();
    public abstract AppCommand shinyRecordTest();
    public abstract AppCommand shinyRunAllTests();
-   public abstract AppCommand shinyCompareFile();
+   public abstract AppCommand shinyCompareTest();
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();
