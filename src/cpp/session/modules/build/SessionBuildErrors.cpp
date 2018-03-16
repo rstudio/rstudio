@@ -265,6 +265,8 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
 
    try
    {
+      FilePath basePathResolved = module_context::resolveAliasedPath(basePath.absolutePath());
+
       boost::regex re("\\[1m([^:\\n]+):([0-9]+):[^:\\n]+: ([^\\n]*)\\[22m");
 
       boost::sregex_iterator iter(output.begin(), output.end(), re);
@@ -280,10 +282,11 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
          line = match[2];
          type = "failure";
          message = match[3];
+         FilePath testFilePath = basePathResolved.complete(file);
 
          std::string column = "0";
          SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                          basePath.complete(file),
+                          testFilePath,
                           core::safe_convert::stringTo<int>(line, 1),
                           core::safe_convert::stringTo<int>(column, 1),
                           core::html_utils::HTML(message),

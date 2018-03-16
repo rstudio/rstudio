@@ -601,7 +601,10 @@ private:
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
-      if (type == kTestFile || type == kTestPackage) {
+      if (type == kTestFile) {
+         parsers.add(testthatErrorParser(packagePath.parent()));
+      }
+      else if (type == kTestPackage) {
          parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
       }
 

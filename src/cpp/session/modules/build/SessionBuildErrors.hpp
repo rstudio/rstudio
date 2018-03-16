@@ -69,7 +69,7 @@ CompileErrorParser gccErrorParser(const core::FilePath& basePath);
 
 CompileErrorParser rErrorParser(const core::FilePath& basePath);
 
-CompileErrorParser testErrorParser(const core::FilePath& basePath);
+CompileErrorParser testthatErrorParser(const core::FilePath& basePath);
 
 } // namespace build
 } // namespace modules
