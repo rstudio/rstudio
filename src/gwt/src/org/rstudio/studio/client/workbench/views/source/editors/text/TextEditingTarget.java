@@ -6744,6 +6744,15 @@ public class TextEditingTarget implements
          }
       });
    }
+
+   @Handler
+   void onShinyCompareTest()
+   {
+      String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
+      String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
+      String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
    
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

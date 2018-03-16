@@ -241,6 +241,41 @@ public class TextEditingTargetWidget
    
    private StatusBarWidget statusBar_;
 
+   private void createTestToolbarButtons(Toolbar toolbar)
+   {
+      compareTestButton_ = new ToolbarButton(
+            "Compare Results", 
+            commands_.shinyCompareTest().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  commands_.shinyCompareTest().execute();
+               }
+            });
+      compareTestButton_.setTitle(commands_.shinyCompareTest().getDesc());
+
+      toolbar.addRightWidget(compareTestButton_);
+      compareTestButton_.setVisible(false);
+
+      testButton_ = new ToolbarButton(
+            "Run Test", 
+            commands_.testFile().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  commands_.testFile().execute();
+               }
+            });
+      testButton_.setTitle(commands_.testFile().getDesc());
+
+      toolbar.addRightWidget(testButton_);
+      testButton_.setVisible(false);
+   }
+
    private Toolbar createToolbar(TextFileType fileType)
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_, true);
@@ -354,37 +389,7 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
 
-      testButton_ = new ToolbarButton(
-            "Run Test", 
-            commands_.testFile().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  commands_.testFile().execute();
-               }
-            });
-      testButton_.setTitle(commands_.testFile().getDesc());
-
-      toolbar.addRightWidget(testButton_);
-      testButton_.setVisible(false);
-
-      compareTestButton_ = new ToolbarButton(
-            "Compare Test Results", 
-            commands_.shinyCompareTest().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  commands_.shinyCompareTest().execute();
-               }
-            });
-      compareTestButton_.setTitle(commands_.shinyCompareTest().getDesc());
-
-      toolbar.addRightWidget(compareTestButton_);
-      compareTestButton_.setVisible(false);
+      createTestToolbarButtons(toolbar);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {

@@ -3068,8 +3068,8 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="shinyCompareTest"
         label="Compare test results for Shiny application"
-        menuLabel="Test Results"
-        buttonLabel="Test Results"
+        menuLabel="Compare Results"
+        buttonLabel="Compare Results"
         desc="Compare test results for Shiny application"/>
 
    <cmd id="rsconnectDeploy"
