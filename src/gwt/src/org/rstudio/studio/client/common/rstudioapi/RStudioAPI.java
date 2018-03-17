@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -133,9 +133,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          title, 
          message, 
          prompt, 
-         false, 
+         MessageDisplay.INPUT_REQUIRED_TEXT,
          null, 
-         false, 
+         false,
          new ProgressOperationWithInput<PromptWithOptionResult>() {
             @Override
             public void execute(PromptWithOptionResult input,

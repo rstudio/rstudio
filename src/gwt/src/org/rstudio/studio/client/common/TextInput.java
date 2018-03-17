@@ -23,8 +23,7 @@ public interface TextInput
    public void promptForText(String title,
                              String label,
                              String initialValue,
-                             boolean usePasswordMask,
-                             boolean numbersOnly,
+                             int type,
                              int selectionStart,
                              int selectionLength,
                              String okButtonCaption,
@@ -35,7 +34,7 @@ public interface TextInput
                           String title,
                           String label,
                           String initialValue,
-                          boolean usePasswordMask,
+                          int type,
                           // Null or "" means don't prompt for remembering pw
                           String extraOptionPrompt,
                           boolean extraOptionDefault,

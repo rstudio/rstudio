@@ -22,7 +22,8 @@
 InputDialog::InputDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::InputDialog()),
-    pOK_(nullptr)
+    pOK_(nullptr),
+    required_(true)
 {
    ui->setupUi(this);
    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
@@ -88,6 +89,11 @@ void InputDialog::setNumbersOnly(bool numbersOnly)
       ui->lineEdit->setInputMask(QString());
 }
 
+void InputDialog::setRequired(bool required)
+{
+   required_ = required;
+}
+
 void InputDialog::setExtraOptionPrompt(const QString& prompt)
 {
    ui->extraOption->setVisible(!prompt.isEmpty());
@@ -106,7 +112,7 @@ bool InputDialog::extraOption()
 
 void InputDialog::done(int r)
 {
-   if (QDialog::Accepted == r) // ok was pressed
+   if (QDialog::Accepted == r && required_) // ok was pressed
    {
       if (ui->lineEdit->text().size() == 0)
       {

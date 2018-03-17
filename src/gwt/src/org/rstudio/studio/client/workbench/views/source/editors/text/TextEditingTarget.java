@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -4470,7 +4470,7 @@ public class TextEditingTarget implements
       globalDisplay_.promptForText(
          "Insert Section", 
          "Section label:", 
-         "", 
+         MessageDisplay.INPUT_OPTIONAL_TEXT, 
          new OperationWithInput<String>() {
             @Override
             public void execute(String label)
@@ -4490,7 +4490,9 @@ public class TextEditingTarget implements
                   label = label.substring(0, maxLabelLength-1);
                
                // prefix 
-               String prefix = "# " + label + " ";
+               String prefix = "# ";
+               if (!label.isEmpty())
+                  prefix = prefix + label + " ";
                
                // fill to maxLength (bit ensure at least 4 fill characters
                // so the section parser is sure to pick it up)
