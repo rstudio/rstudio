@@ -11,7 +11,7 @@ checkUnitTestFailure() {
 TEST_SCOPE=
 if [ "$1" == "--scope" ]; then 
    if [ "$#" == 1 ]; then 
-      printf "Specify scope (core, session, or r).\n"
+      printf "Specify scope (core, rsession, or r).\n"
       exit 1
    fi
 
@@ -28,11 +28,11 @@ elif [ "$1" == "--filter" ]; then
    shift 2
 
 elif [ "$1" == "--help" ]; then 
-   printf "Runs RStudio unit tests. Available flags: \n\n"
-   printf "--help    Show this help\n"
-   printf "--scope   Run only tests with the given scope (core, rsession, or r)\n\n"
-   printf "--filter  Used instead of --scope to run a subset of R tests\n\n"
-   printf "Any other options are passed to Valgrind."
+   printf "%s\n\n" "Runs RStudio unit tests. Available flags: "
+   printf "%s\n" "--help    Show this help"
+   printf "%s\n" "--scope   Run only tests with the given scope (core, rsession, or r)"
+   printf "%s\n\n" "--filter  Used instead of --scope to run a subset of R tests"
+   printf "%s\n" "Any other options are passed to Valgrind."
    exit 0
 fi
 
