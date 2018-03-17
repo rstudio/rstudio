@@ -14,6 +14,7 @@
  */
 
 #include <session/SessionConsoleProcessSocket.hpp>
+#include <session/SessionConsoleProcessSocketPacket.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -75,10 +76,10 @@ public:
       return (!err);
    }
 
-   bool sendText(const std::string& terminalHandle,
+   bool sendRawText(const std::string& terminalHandle,
                  const std::string& message)
    {
-      core::Error err = socket_.sendText(terminalHandle, message);
+      core::Error err = socket_.sendRawText(terminalHandle, message);
       return (!err);
    }
 
@@ -146,9 +147,9 @@ public:
    }
 
    // send a message to client of this connection
-   bool sendMessage(const std::string& msg)
+   bool sendRawMessage(const std::string& msg)
    {
-      return pServerSocket_->sendText(handle_, msg);
+      return pServerSocket_->sendRawText(handle_, msg);
    }
 
    std::string getReceived() const
@@ -168,8 +169,8 @@ private:
    bool didOpen_;
 };
 
-typedef websocketpp::client<websocketpp::config::asio_client> client;
-typedef client::message_ptr message_ptr;
+using client = websocketpp::client<websocketpp::config::asio_client>;
+using message_ptr = client::message_ptr;
 
 // Client-side websocket connection test class; used to verify a client
 // can connect to the websocket and send/receive data over the socket
@@ -289,7 +290,7 @@ public:
    bool sendText(const std::string& str)
    {
       websocketpp::lib::error_code ec;
-      client_.send(hdl_, str, websocketpp::frame::opcode::text, ec);
+      client_.send(hdl_, ConsoleProcessSocketPacket::textPacket(str), websocketpp::frame::opcode::text, ec);
       if (ec)
       {
          std::string error = ec.message();
@@ -432,7 +433,7 @@ context("websocket for interactive terminals")
       expect_true(pClient->gotOpened());
       expect_false(pClient->gotFailed());
 
-      expect_true(pConnection->sendMessage(msgString1));
+      expect_true(pConnection->sendRawMessage(msgString1));
       expect_true(pClient->getInput().compare(msgString1) == 0);
 
       expect_true(pClient->disconnectFromServer());
@@ -474,11 +475,11 @@ context("websocket for interactive terminals")
       expect_false(pClient2->gotFailed());
 
       // ---- send message to first connection ----
-      expect_true(pConnection1->sendMessage(msgString1));
+      expect_true(pConnection1->sendRawMessage(msgString1));
       expect_true(pClient1->getInput().compare(msgString1) == 0);
 
       // ---- send message to second connection ----
-      expect_true(pConnection2->sendMessage(msgString2));
+      expect_true(pConnection2->sendRawMessage(msgString2));
       expect_true(pClient2->getInput().compare(msgString2) == 0);
 
       // ---- cleanup ----
