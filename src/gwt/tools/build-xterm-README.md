@@ -1,12 +1,16 @@
 Updating xterm.js for RStudio
 =============================================================================
 
+NOTE: RStudio 1.1 and 1.2 use xterm.js 2.9.2. No more official development is happening on that code; they have moved on to xterm 3.x, which we will likely integrate for RStudio 1.3.
+
+As of March 19, 2018, we are using our own fork of xterm 2.9.2, at github.com/rstudio/xterm.js, for applying our own fixes.
+
 To take a new drop of xterm.js for RStudio's terminal, follow these steps.
 
 Getting the Code
 -----------------------------------------------------------------------------
 
-- Visit https://github.com/sourcelair/xterm.js/releases and get the hash of 
+- Visit https://github.com/rstudio/xterm.js/releases and get the hash of 
 the version to integrate.
 
 - In the RStudio source tree, change to `src/gwt/tools` and edit the shell
