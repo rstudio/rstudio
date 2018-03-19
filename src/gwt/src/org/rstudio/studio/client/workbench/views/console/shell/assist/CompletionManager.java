@@ -28,7 +28,7 @@ public interface CompletionManager extends KeyDownPreviewHandler,
    }
    
    void goToHelp();
-   void goToFunctionDefinition();
+   void goToDefinition();
    
    void codeCompletion();
    

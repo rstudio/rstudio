@@ -534,7 +534,6 @@ Error closeFileDescriptorsFrom(int fdStart)
    return Success();
 }
 
-
 } // anonymous namespace
 
 Error closeAllFileDescriptors()
@@ -547,13 +546,46 @@ Error closeNonStdFileDescriptors()
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
 
+namespace signal_safe {
+
+namespace {
+
+void closeFileDescriptorsFromSafe(int fdStart)
+{
+   // safe function is best effort - swallow all errors
+   // this is necessary when invoked in a signal handler or
+   // during a fork in multithreaded processes to prevent hangs
+
+   // get limit
+   struct rlimit rl;
+   if (::getrlimit(RLIMIT_NOFILE, &rl) < 0)
+      return;
+
+   if (rl.rlim_max == RLIM_INFINITY)
+      rl.rlim_max = 1024; // default on linux
+
+   // close file descriptors
+   for (int i=fdStart; i< (int)rl.rlim_max; i++)
+   {
+      ::close(i);
+   }
+}
+
+} // anonymous namespace
+
+void closeNonStdFileDescriptors()
+{
+   return closeFileDescriptorsFromSafe(STDERR_FILENO+1);
+}
+
+} // namespace signal_safe
+
 void closeStdFileDescriptors()
 {
    ::close(STDIN_FILENO);
    ::close(STDOUT_FILENO);
    ::close(STDERR_FILENO);
 }
-
 
 void attachStdFileDescriptorsToDevNull()
 {
@@ -717,7 +749,12 @@ void abort()
 
 Error terminateProcess(PidType pid)
 {
-   if (::kill(pid, SIGTERM))
+   return killProcess(pid, SIGTERM);
+}
+
+Error killProcess(PidType pid, int signal)
+{
+   if (::kill(pid, signal))
       return systemError(errno, ERROR_LOCATION);
    else
       return Success();
@@ -1361,6 +1398,7 @@ bool isProcessRunning(pid_t pid)
 {
    // the posix standard way of checking if a process
    // is running is to send the 0 signal to it
+   // requires root privilege if process is owned by another user
    int result = kill(pid, 0);
    return result == 0;
 }
@@ -1501,6 +1539,17 @@ Error restrictCoreDumps()
    // no ptrace core dumps permitted
 #ifndef __APPLE__
    int res = ::prctl(PR_SET_DUMPABLE, 0);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+#endif
+
+   return Success();
+}
+
+Error enableCoreDumps()
+{
+#ifndef __APPLE__
+   int res = ::prctl(PR_SET_DUMPABLE, 1);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);
 #endif

@@ -22,6 +22,7 @@
 #include "SessionMainProcess.hpp"
 
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionReticulate.hpp"
 
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
@@ -75,6 +76,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    bool isDefaultPrompt = 
       prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
+   data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+   
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
    

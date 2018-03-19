@@ -439,6 +439,9 @@ typedef boost::function<void(const core::system::FileChangeEvent&)> OnFileChange
 core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
                                                const OnFileChange& onFileChange);
 
+// enqueue new console input
+core::Error enqueueConsoleInput(const std::string& input);
+
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);   

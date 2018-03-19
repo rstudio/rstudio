@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ public:
 
    int capacity() const
    {
-      return historyBuffer_.capacity();
+      return static_cast<int>(historyBuffer_.capacity());
    }
 
    void setRemoveDuplicates(bool removeDuplicates);
@@ -70,7 +70,7 @@ public:
    
    int size() const
    {
-      return historyBuffer_.size();
+      return static_cast<int>(historyBuffer_.size());
    }
 
    void clear();

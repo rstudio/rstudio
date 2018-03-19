@@ -48,6 +48,7 @@
 #include <session/SessionTerminalShell.hpp>
 
 #include "SessionSpelling.hpp"
+#include "SessionReticulate.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -56,7 +57,6 @@ extern "C" SA_TYPE SaveAction;
 #ifdef RSTUDIO_SERVER
 #include <core/system/Crypto.hpp>
 #endif
-
 
 using namespace rstudio::core;
 
@@ -691,6 +691,65 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error adaptToLanguage(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get the requested language
+   std::string language;
+   Error error = json::readParams(request.params, &language);
+   if (error)
+      return error;
+   
+   // check to see what language is active in main console
+   using namespace r::exec;
+   
+   // check to see what langauge is currently active (but default to r)
+   std::string activeLanguage = "R";
+   if (reticulate::isReplActive())
+      activeLanguage = "Python";
+   
+   // now, detect if we are transitioning languages
+   if (language != activeLanguage)
+   {
+      // since it may take some time for the console input to be processed,
+      // we screen out consecutive transition attempts (otherwise we can
+      // get multiple interleaved attempts to launch the REPL with console
+      // input)
+      static boost::signals::connection conn;
+      if (conn.connected())
+         return Success();
+      
+      // establish the connection, and then simply disconnect once we
+      // receive the signal
+      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
+         conn.disconnect();
+      });
+      
+      if (activeLanguage == "R")
+      {
+         if (language == "Python")
+         {
+            // r -> python: activate the reticulate REPL
+            Error error =
+                  module_context::enqueueConsoleInput("reticulate::repl_python()");
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      else if (activeLanguage == "Python")
+      {
+         if (language == "R")
+         {
+            // python -> r: deactivate the reticulate REPL
+            Error error =
+                  module_context::enqueueConsoleInput("quit");
+         }
+      }
+   }
+   
+   return Success();
+}
+
 Error executeCode(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
@@ -996,6 +1055,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
+      (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))
       (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }

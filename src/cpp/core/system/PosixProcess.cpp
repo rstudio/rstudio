@@ -22,6 +22,8 @@
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 
+#include <core/system/PosixSystem.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -67,7 +69,7 @@ struct AsioProcessSupervisor::Impl
       return false;
    }
 
-   void terminateAll()
+   void terminateAll(bool killChildProcs)
    {
       // make a copy of our child map
       // we do this instead of iterating within a lock for processor efficiency
@@ -82,6 +84,14 @@ struct AsioProcessSupervisor::Impl
       // call terminate on all of our children
       BOOST_FOREACH(const boost::shared_ptr<AsioAsyncChildProcess>& pChild, childCopies)
       {
+         if (killChildProcs)
+         {
+            // kill child's chidlren
+            Error error = core::system::terminateChildProcesses(pChild->pid(), SIGKILL);
+            if (error)
+               LOG_ERROR(error);
+         }
+
          Error error = pChild->terminate();
          if (error)
             LOG_ERROR(error);
@@ -215,9 +225,9 @@ bool AsioProcessSupervisor::hasRunningChildren()
    return pImpl_->hasRunningChildren();
 }
 
-void AsioProcessSupervisor::terminateAll()
+void AsioProcessSupervisor::terminateAll(bool killChildProcs)
 {
-   return pImpl_->terminateAll();
+   return pImpl_->terminateAll(killChildProcs);
 }
 
 bool AsioProcessSupervisor::wait(const boost::posix_time::time_duration& maxWait)

@@ -168,6 +168,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public void verifyCppPrerequisites()
    {
    }
+   
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+   }
       
    @Override
    public Position search(String regex)

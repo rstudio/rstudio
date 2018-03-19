@@ -1,7 +1,7 @@
 /*
  * SessionRCompletions.cpp
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2009-2018 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -182,7 +182,7 @@ SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
 
    // TODO: wire up 'moreAvailable'
    modules::code_search::searchSource(token,
-                                      1E3,
+                                      1000,
                                       true,
                                       &items,
                                       &moreAvailable);

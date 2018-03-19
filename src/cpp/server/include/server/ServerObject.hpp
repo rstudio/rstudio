@@ -1,7 +1,7 @@
 /*
- * RCompletionContext.java
+ * ServerObject.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,10 +13,19 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+#ifndef SERVER_OBJECT_HPP
+#define SERVER_OBJECT_HPP
 
-public interface RCompletionContext
-{
-   String getPath();
-   String getId();
-}
+#include <core/http/AsyncServer.hpp>
+
+namespace rstudio {
+namespace server {
+
+// get server object
+boost::shared_ptr<core::http::AsyncServer> server();
+
+} // namespace server
+} // namespace rstudio
+
+#endif // SERVER_OBJECT_HPP
+

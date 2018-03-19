@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -205,7 +206,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                   "Other Delimiter",
                   "Please enter a single character delimiter.",
                   "",
-                  false,
+                  MessageDisplay.INPUT_REQUIRED_TEXT,
                   "",
                   false,
                   new ProgressOperationWithInput<PromptWithOptionResult>()

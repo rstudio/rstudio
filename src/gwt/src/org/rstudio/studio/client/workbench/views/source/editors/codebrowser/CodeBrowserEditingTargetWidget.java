@@ -126,7 +126,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             docDisplay_.setCursorPosition(position);
             
             // go to definition
-            docDisplay_.goToFunctionDefinition();
+            docDisplay_.goToDefinition();
          }
       });
        
@@ -151,7 +151,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
                }
                else if (event.getKeyCode() == 113) // F2
                {
-                  goToFunctionDefinition();
+                  goToDefinition();
                }
             }
             
@@ -170,7 +170,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          }
          
          @Override
-         public void goToFunctionDefinition()
+         public void goToDefinition()
          {
             // determine current line and cursor position
             InputEditorLineWithCursorPosition lineWithPos = 
@@ -399,7 +399,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));
-      menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
+      menu.addItem(commands_.goToDefinition().createMenuItem(false));
       ToolbarButton codeTools = new ToolbarButton("", icon, menu);
       codeTools.setTitle("Code Tools");
       toolbar.addLeftWidget(codeTools);

@@ -160,7 +160,8 @@ public:
    virtual void writeResponse(bool close = true)
    {
       // add extra response headers
-      response_.setHeader("Date", util::httpDate());
+      if (!response_.containsHeader("Date"))
+         response_.setHeader("Date", util::httpDate());
       if (close)
          response_.setHeader("Connection", "close");
 
@@ -193,7 +194,8 @@ public:
 
    virtual void writeResponseHeaders(Socket::Handler handler)
    {
-      response_.setHeader("Date", util::httpDate());
+      if (!response_.containsHeader("Date"))
+         response_.setHeader("Date", util::httpDate());
 
       // write only the header buffers
       socketOperations_->asyncWrite(response_.headerBuffers(), handler);

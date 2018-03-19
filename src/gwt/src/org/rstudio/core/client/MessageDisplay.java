@@ -1,7 +1,7 @@
 /*
  * MessageDisplay.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,12 @@ public abstract class MessageDisplay
    public final static int MSG_ERROR = 3;
    public final static int MSG_QUESTION = 4;
    public final static int MSG_POPUP_BLOCKED = 0;
-
+   
+   public final static int INPUT_REQUIRED_TEXT = 0;
+   public final static int INPUT_OPTIONAL_TEXT = 1;
+   public final static int INPUT_PASSWORD = 2;
+   public final static int INPUT_NUMERIC = 3;
+   
    public static class PromptWithOptionResult
    {
       public String input;
@@ -40,6 +45,11 @@ public abstract class MessageDisplay
    public abstract void promptForText(String title,
                                       String label,
                                       String initialValue,
+                                      OperationWithInput<String> operation);
+
+   public abstract void promptForText(String title,
+                                      String label,
+                                      int type,
                                       OperationWithInput<String> operation);
 
    public abstract void promptForText(String title,
@@ -77,7 +87,7 @@ public abstract class MessageDisplay
       promptForTextWithOption(title, 
                               label, 
                               initialValue, 
-                              true,
+                              MessageDisplay.INPUT_PASSWORD,
                               rememberPasswordPrompt,
                               rememberByDefault,
                               okOperation,
@@ -88,7 +98,7 @@ public abstract class MessageDisplay
          String title,
          String label,
          String initialValue,
-         boolean showPasswordMask,
+         int type,
          // Null or "" means don't show an extra option
          String extraOption,
          boolean extraOptionDefault,

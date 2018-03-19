@@ -22,6 +22,7 @@
 
 #include <core/Log.hpp>
 
+#include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
@@ -266,7 +267,63 @@ int main(int argc, char* argv[])
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
+
+#ifdef Q_OS_LINUX
+      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
+      // https://bugreports.qt.io/browse/QTBUG-67023
+      // https://bugreports.qt.io/browse/QTBUG-66346
+      static char noSandbox[] = "--no-sandbox";
+      arguments.push_back(noSandbox);
+#endif
+
+#ifdef Q_OS_MAC
+      // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
+      // be used too aggressively on Retina displays on macOS, with the side effect that the
+      // scrollbar doesn't auto-hide because a compositor layer is present.
+      // https://github.com/rstudio/rstudio/issues/1953
+      static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
+      arguments.push_back(disableCompositorPref);
       
+      // disable gpu rasterization for certain display configurations.
+      // this works around some of the rendering issues seen with RStudio.
+      //
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=773705
+      // https://github.com/rstudio/rstudio/issues/2093
+      //
+      // because the issue seems to only affect certain video cards on macOS
+      // High Sierra, we scope that change to that particular configuration
+      // for now (we can expand this list if more users report issues)
+      core::Version macVersion(QSysInfo::productVersion().toStdString());
+      if (macVersion.versionMajor() == 10 &&
+          macVersion.versionMinor() == 13)
+      {
+         core::system::ProcessResult processResult;
+         core::system::runCommand(
+                  "/usr/sbin/system_profiler SPDisplaysDataType",
+                  core::system::ProcessOptions(),
+                  &processResult);
+
+         std::string stdOut = processResult.stdOut;
+         if (!stdOut.empty())
+         {
+            std::vector<std::string> blackList = {
+               "NVIDIA GeForce GT 650M",
+               "NVIDIA GeForce GT 750M"
+            };
+
+            for (const std::string& entry : blackList)
+            {
+               if (stdOut.find(entry) != std::string::npos)
+               {
+                  static char disableGpuRasterization[] = "--disable-gpu-rasterization";
+                  arguments.push_back(disableGpuRasterization);
+                  break;
+               }
+            }
+         }
+      }
+#endif
+
       // re-assign command line arguments
       argc = (int) arguments.size();
       argv = &arguments[0];
@@ -298,7 +355,7 @@ int main(int argc, char* argv[])
          // get filename from command line arguments
          if (pApp->arguments().size() > 1)
          {
-            QString arg = pApp->arguments().last();
+            QString arg = pApp->arguments().at(1);
             if (arg != QString::fromUtf8(kRunDiagnosticsOption))
                filename = verifyAndNormalizeFilename(arg);
          }

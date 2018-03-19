@@ -18,9 +18,12 @@
 
 #include <core/json/Json.hpp>
 
-#define kServerRpcSocketPath "/tmp/rstudio-rserver/session-server-rpc.socket"
-#define kServerRpcSecretHeader "X-RS-Session-Server-RPC-Secret"
-#define kServerRpcSecretEnvVar "RS_SESSION_SERVER_RPC_SECRET"
+#define kServerRpcSocketPath          "/tmp/rstudio-rserver/session-server-rpc.socket"
+#define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
+#define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
+#define kRstudioRpcCookieHeader       "X-RS-Session-Server-RPC-Cookie"
+#define kRstudioRpcCookieEnvVar       "RS_SESSION_RPC_COOKIE"
+#define kRstudioMessageSignature      "X-RS-Message-Signature"
 
 namespace rstudio {
 namespace core {
@@ -37,6 +40,15 @@ core::Error invokeRpc(const FilePath& socketPath,
                       const std::string& endpoint,
                       const core::json::Object& request,
                       core::json::Value *pResult);
+
+Error invokeRpc(const std::string& address,
+                const std::string& port,
+                bool ssl,
+                const std::string& endpoint,
+                const json::Object& request,
+                json::Value *pResult);
+
+const std::string& secret();
 
 } // namespace socket_rpc
 } // namespace core

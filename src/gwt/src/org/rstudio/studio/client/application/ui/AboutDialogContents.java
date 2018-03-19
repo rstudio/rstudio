@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;

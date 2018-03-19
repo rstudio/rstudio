@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,8 @@
 
 #include <session/SessionTerminalShell.hpp>
 
-#include <boost/foreach.hpp>
-
 #include <core/Algorithm.hpp>
 #include <core/system/System.hpp>
-#include <core/Log.hpp>
-#include <core/Error.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include "SessionGit.hpp"
@@ -199,7 +195,7 @@ AvailableTerminalShells::AvailableTerminalShells()
 
 void AvailableTerminalShells::toJson(core::json::Array* pArray) const
 {
-   BOOST_FOREACH(const TerminalShell& shell, shells_)
+   for (const auto& shell : shells_)
    {
       pArray->push_back(shell.toJson());
    }
@@ -220,7 +216,7 @@ bool AvailableTerminalShells::getInfo(TerminalShell::TerminalShellType type,
          }
       }
    }
-   BOOST_FOREACH(const TerminalShell& shell, shells_)
+   for (const auto& shell : shells_)
    {
       if (shell.type == type)
       {
@@ -265,8 +261,8 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->name = "Bash";
    pShellInfo->type = TerminalShell::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
-   pShellInfo->args.push_back("bash");
-   pShellInfo->args.push_back("-l"); // act like a login shell
+   pShellInfo->args.emplace_back("bash");
+   pShellInfo->args.emplace_back("-l"); // act like a login shell
 #endif
    return true;
 }

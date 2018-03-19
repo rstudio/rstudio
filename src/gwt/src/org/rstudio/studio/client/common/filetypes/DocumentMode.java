@@ -19,6 +19,38 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class DocumentMode
 {
+   public enum Mode
+   {
+      R,
+      PYTHON,
+      C_CPP,
+      MARKDOWN,
+      TEX,
+      UNKNOWN
+   }
+   
+   public static Mode getModeForPosition(DocDisplay docDisplay,
+                                         Position position)
+   {
+      if (isPositionInRMode(docDisplay, position))
+         return Mode.R;
+      else if (isPositionInPythonMode(docDisplay, position))
+         return Mode.PYTHON;
+      else if (isPositionInCppMode(docDisplay, position))
+         return Mode.C_CPP;
+      else if (isPositionInMarkdownMode(docDisplay, position))
+         return Mode.MARKDOWN;
+      else if (isPositionInTexMode(docDisplay, position))
+         return Mode.TEX;
+      else
+         return Mode.UNKNOWN;
+   }
+   
+   public static Mode getModeForCursorPosition(DocDisplay docDisplay)
+   {
+      return getModeForPosition(docDisplay, docDisplay.getCursorPosition());
+   }
+   
    private static boolean isPositionInMode(DocDisplay docDisplay,
                                            Position position,
                                            String modeString)
@@ -28,7 +60,7 @@ public class DocumentMode
    }
    
    // Markdown Mode
-   private static boolean isPositionInMarkdownMode(DocDisplay docDisplay,
+   public static boolean isPositionInMarkdownMode(DocDisplay docDisplay,
                                                    Position position)
    {
       if (docDisplay.getFileType().isPlainMarkdown())
@@ -59,7 +91,7 @@ public class DocumentMode
    }
    
    // R Mode
-   private static boolean isPositionInRMode(DocDisplay docDisplay,
+   public static boolean isPositionInRMode(DocDisplay docDisplay,
                                             Position position)
    {
       if (docDisplay.getFileType().isR())
@@ -85,7 +117,7 @@ public class DocumentMode
    }
    
    // C++ Mode
-   private static boolean isPositionInCppMode(DocDisplay docDisplay,
+   public static boolean isPositionInCppMode(DocDisplay docDisplay,
                                               Position position)
    {    
       return isPositionInMode(
@@ -106,7 +138,7 @@ public class DocumentMode
    }
    
    // TeX Mode
-   private static boolean isPositionInTexMode(DocDisplay docDisplay,
+   public static boolean isPositionInTexMode(DocDisplay docDisplay,
                                                Position position)
    {
       TextFileType fileType = docDisplay.getFileType();
@@ -139,5 +171,33 @@ public class DocumentMode
       return isPositionInTexMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInTexMode(docDisplay, docDisplay.getSelectionEnd());
    }
+   
+   // Python Mode
+   public static boolean isPositionInPythonMode(DocDisplay docDisplay,
+                                                 Position position)
+   {
+      if (docDisplay.getFileType().isPython())
+         return true;
+      
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.PYTHON_LANG_MODE);
+      
+   }
+   
+   public static boolean isCursorInPythonMode(DocDisplay docDisplay)
+   {
+      return isPositionInPythonMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+   
+   public static boolean isSelectionInPythonMode(DocDisplay docDisplay)
+   {
+      return isPositionInPythonMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+   
 
 }

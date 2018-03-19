@@ -30,4 +30,8 @@ public class ConsolePrompt extends JavaScriptObject
    public final native boolean getAddToHistory() /*-{
       return this.history;
    }-*/;
+   
+   public final native String getLanguage() /*-{
+      return this.language;
+   }-*/;
 }

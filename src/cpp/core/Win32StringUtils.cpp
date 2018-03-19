@@ -32,7 +32,7 @@ std::string wideToUtf8(const std::wstring& value)
    const wchar_t * cstr = value.c_str();
    int chars = ::WideCharToMultiByte(CP_UTF8, 0,
                                      cstr, -1,
-                                     NULL, 0, NULL, NULL);
+                                     nullptr, 0, nullptr, nullptr);
    if (chars == 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -42,8 +42,8 @@ std::string wideToUtf8(const std::wstring& value)
    std::vector<char> result(chars, 0);
    chars = ::WideCharToMultiByte(CP_UTF8, 0,
                                  cstr, -1,
-                                 &(result[0]), result.size(),
-                                 NULL, NULL);
+                                 &(result[0]), static_cast<int>(result.size()),
+                                 nullptr, nullptr);
 
    return std::string(&(result[0]));
 }
@@ -70,7 +70,7 @@ std::wstring utf8ToWide(const std::string& value,
    std::vector<wchar_t> result(chars, 0);
    chars = ::MultiByteToWideChar(CP_UTF8, 0,
                                  cstr, -1,
-                                 &(result[0]), result.size());
+                                 &(result[0]), static_cast<int>(result.size()));
 
    return std::wstring(&(result[0]));
 }

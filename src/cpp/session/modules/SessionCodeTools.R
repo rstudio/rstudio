@@ -147,6 +147,10 @@
    {
      asNamespace(substring(namespaceName, nchar("namespace:") + 1))
    }
+   else if (identical(namespaceName, ".GlobalEnv"))
+   {
+      .GlobalEnv
+   }
    else
    {
      asNamespace(namespaceName)
@@ -2052,4 +2056,14 @@
    # read the names of the provided objects
    readLines(datalist, warn = FALSE)
    
+})
+
+.rs.addFunction("tryCatch", function(expr)
+{
+   tryCatch(expr, condition = identity)
+})
+
+.rs.addFunction("resolveAliasedPath", function(path)
+{
+   .Call("rs_resolveAliasedPath", path, PACKAGE = "(embedding)")
 })

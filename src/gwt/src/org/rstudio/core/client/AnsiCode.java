@@ -1,7 +1,7 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -467,12 +467,7 @@ public class AnsiCode
       }
       return getStyles();
    }
-   
-   public static boolean partialSequence(String code)
-   {
-      return (code.charAt(code.length() - 1) == 'm') ? false : true;
-   }
- 
+
    public static String clazzForColor(int color)
    {
       int index = ForeColorNum.WHITE;
@@ -656,6 +651,20 @@ public class AnsiCode
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
    
+   // RegEx to match complete SGR codes (colors, fonts, appearance)
+   public static final String SGR_REGEX =
+         "[\u001b\u009b]\\[(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[m]";
+   
+   // Match ANSI SGR escape sequences
+   public static final Pattern SGR_ESCAPE_PATTERN = Pattern.create(SGR_REGEX);
+   
+   // RegEx to match partial SGR codes (don't have final "m" yet)
+   public static final String SGR_PARTIAL_REGEX =
+         "[\u001b\u009b]\\[(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9]";
+   
+   // Match partial potential ANSI SGR escape sequences
+   public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
+    
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;

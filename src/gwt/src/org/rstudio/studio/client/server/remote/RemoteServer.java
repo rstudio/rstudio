@@ -511,12 +511,21 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void adaptToLanguage(String language,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(language));
+      sendRequest(RPC_SCOPE, ADAPT_TO_LANGUAGE, params, requestCallback);
+   }
+   
+   @Override
    public void executeCode(String code,
                            ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0,  new JSONString(code));
-      sendRequest(RPC_SCOPE, "execute_code", params, requestCallback);
+      sendRequest(RPC_SCOPE, EXECUTE_CODE, params, requestCallback);
    }
    
    public void getInitMessages(ServerRequestCallback<String> requestCallback)
@@ -934,6 +943,7 @@ public class RemoteServer implements Server
          String filePath,
          String documentId,
          String line,
+         boolean isConsole,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -949,11 +959,46 @@ public class RemoteServer implements Server
       params.set(9, new JSONString(filePath));
       params.set(10, new JSONString(documentId));
       params.set(11, new JSONString(line));
+      params.set(12, JSONBoolean.getInstance(isConsole));
       
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,
                   params,
                   requestCallback);
+   }
+   
+   public void pythonGetCompletions(String line,
+                                    ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .get();
+      
+      sendRequest(RPC_SCOPE, PYTHON_GET_COMPLETIONS, params, requestCallback);
+   }
+   
+   public void pythonGoToDefinition(String line,
+                                    int column,
+                                    ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .add(column)
+            .get();
+      
+      sendRequest(RPC_SCOPE, PYTHON_GO_TO_DEFINITION, params, requestCallback);
+   }
+   
+   public void pythonGoToHelp(String line,
+                              int column,
+                              ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .add(column)
+            .get();
+      
+      sendRequest(RPC_SCOPE, PYTHON_GO_TO_HELP, params, requestCallback);
    }
    
    public void getHelpAtCursor(String line, int cursorPos,
@@ -1154,22 +1199,26 @@ public class RemoteServer implements Server
    public void getCustomHelp(String helpHandler,
                              String topic, 
                              String source,
+                             String language,
                              ServerRequestCallback<HelpInfo.Custom> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(helpHandler));
       params.set(1, new JSONString(topic));
       params.set(2, new JSONString(source));
+      params.set(3, new JSONString(language));
       sendRequest(RPC_SCOPE, GET_CUSTOM_HELP, params, requestCallback);
    }
    
    public void getCustomParameterHelp(String helpHandler,
                                       String source,
+                                      String language,
                                       ServerRequestCallback<HelpInfo.Custom> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(helpHandler));
       params.set(1, new JSONString(source));
+      params.set(2, new JSONString(language));
       sendRequest(RPC_SCOPE, GET_CUSTOM_PARAMETER_HELP, params, requestCallback);
    }
 
@@ -5319,7 +5368,7 @@ public class RemoteServer implements Server
    private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
-   private static final String PING="ping";
+   private static final String PING = "ping";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
@@ -5341,6 +5390,8 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
+   private static final String ADAPT_TO_LANGUAGE = "adapt_to_language";
+   private static final String EXECUTE_CODE = "execute_code";
    private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
          "get_dplyr_join_completions_string";
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
@@ -5584,6 +5635,10 @@ public class RemoteServer implements Server
    
    private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
+   
+   private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
+   private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
+   private static final String PYTHON_GO_TO_HELP = "python_go_to_help";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";

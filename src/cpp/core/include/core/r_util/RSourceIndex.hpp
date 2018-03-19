@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,8 +128,8 @@ public:
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
-   int line() const { return core::safe_convert::numberTo<int>(line_,0); }
-   int column() const { return core::safe_convert::numberTo<int>(column_,0); }
+   int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
+   int column() const { return core::safe_convert::numberTo<std::size_t, int>(column_,0); }
 
    // support for RSourceIndex::search
 

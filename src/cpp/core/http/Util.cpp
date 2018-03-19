@@ -1,7 +1,7 @@
 /*
  * Util.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -220,8 +220,8 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
 {
    std::string encodedURL ;
       
-   int inputLength = in.length();
-   for (int i=0; i<inputLength; i++)
+   size_t inputLength = in.length();
+   for (size_t i=0; i<inputLength; i++)
    {
       char ch = in[i];
       

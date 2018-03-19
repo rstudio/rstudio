@@ -1,7 +1,7 @@
 /*
  * NotebookDocQueue.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -226,7 +226,7 @@ json::Object NotebookDocQueue::defaultChunkOptions() const
 
 int NotebookDocQueue::remainingUnits() const 
 {
-   return queue_.size();
+   return static_cast<int>(queue_.size());
 }
 
 int NotebookDocQueue::maxUnits() const

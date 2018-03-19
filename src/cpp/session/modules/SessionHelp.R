@@ -290,12 +290,23 @@ options(help_type = "html")
       return()
 })
 
-.rs.addJsonRpcHandler("get_custom_help", function(helpHandler, topic, source) {
-   
+.rs.addJsonRpcHandler("get_custom_help", function(helpHandler,
+                                                  topic,
+                                                  source,
+                                                  language)
+{
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
+   
+   # evaluate source using reticulate for Python language help
+   if (identical(language, "Python")) {
+      source <- tryCatch(
+         reticulate::py_eval(source, convert = FALSE),
+         error = function(e) NULL
+      )
+   }
    
    results <- helpHandlerFunc("completion", topic, source)
    if (!is.null(results))
@@ -304,12 +315,21 @@ options(help_type = "html")
    results 
 })
 
-.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
-   
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler,
+                                                            source,
+                                                            language)
+{
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
+   
+   if (identical(language, "Python")) {
+      source <- tryCatch(
+         reticulate::py_eval(source, convert = FALSE),
+         error = function(e) NULL
+      )
+   }
    
    results <- helpHandlerFunc("parameter", NULL, source)
    if (!is.null(results)) {
@@ -515,6 +535,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
+   # strip off a 'package:' prefix if necessary
+   if (is.character(from) && nzchar(from))
+      from <- sub("^package:", "", from)
+   
    if (type == .rs.acCompletionTypes$FUNCTION)
       .rs.showHelpTopicFunction(what, from)
    else if (type == .rs.acCompletionTypes$ARGUMENT)
@@ -527,9 +551,6 @@ options(help_type = "html")
 
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
 {
-   # Package may actually be a name from the search path, so strip that off.
-   package <- sub("^package:", "", package, perl = TRUE)
-   
    if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
@@ -570,18 +591,17 @@ options(help_type = "html")
 
 .rs.addFunction("showHelpTopic", function(topic, package)
 {
-   package <- sub("^package:", "", package)
    call <- .rs.makeHelpCall(topic, package)
    print(eval(call, envir = parent.frame()))
 })
 
 .rs.addJsonRpcHandler("search", function(query)
 {
-   exactMatch = help(query, help_type="html")
+   exactMatch = help(query, help_type = "html")
    if (length(exactMatch) == 1)
    {
       print(exactMatch)
-      return ()
+      return()
    }
    else
    {

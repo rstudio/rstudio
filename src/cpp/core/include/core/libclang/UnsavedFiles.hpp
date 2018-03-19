@@ -1,7 +1,7 @@
 /*
  * UnsavedFiles.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ public:
    void removeAll();
 
    CXUnsavedFile* unsavedFilesArray() { return &(files_[0]); }
-   unsigned numUnsavedFiles() { return files_.size(); }
+   unsigned numUnsavedFiles() { return static_cast<unsigned>(files_.size()); }
 
 private:
    // vector of unsaved files we pass to various clang functions

@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -595,7 +595,7 @@ public class TextEditingTarget implements
             }
             else
             {
-               docDisplay_.goToFunctionDefinition();
+               docDisplay_.goToDefinition();
             }
          }
       });
@@ -2055,6 +2055,11 @@ public class TextEditingTarget implements
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
    }
    
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+      // TODO: ensure 'reticulate' installed
+   }
 
    public void focus()
    {
@@ -3181,6 +3186,8 @@ public class TextEditingTarget implements
          doCommentUncomment("<!--", "-->");
       else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
          doCommentUncomment("<!--", "-->");
+      else if (DocumentMode.isSelectionInPythonMode(docDisplay_))
+         doCommentUncomment("#", null);
    }
    
    /**
@@ -3479,8 +3486,11 @@ public class TextEditingTarget implements
    @Handler
    void onReflowComment()
    {
-      if (DocumentMode.isSelectionInRMode(docDisplay_))
+      if (DocumentMode.isSelectionInRMode(docDisplay_) ||
+          DocumentMode.isSelectionInPythonMode(docDisplay_))
+      {
          doReflowComment("(#)");
+      }
       else if (DocumentMode.isSelectionInCppMode(docDisplay_))
       {
          String currentLine = docDisplay_.getLine(
@@ -4427,7 +4437,7 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkRCPP()
    {
-      onInsertChunk("```{rcpp}\n\n```\n", 1, 0);
+      onInsertChunk("```{Rcpp}\n\n```\n", 1, 0);
    }
 
    @Handler
@@ -4469,7 +4479,7 @@ public class TextEditingTarget implements
       globalDisplay_.promptForText(
          "Insert Section", 
          "Section label:", 
-         "", 
+         MessageDisplay.INPUT_OPTIONAL_TEXT, 
          new OperationWithInput<String>() {
             @Override
             public void execute(String label)
@@ -4489,7 +4499,9 @@ public class TextEditingTarget implements
                   label = label.substring(0, maxLabelLength-1);
                
                // prefix 
-               String prefix = "# " + label + " ";
+               String prefix = "# ";
+               if (!label.isEmpty())
+                  prefix = prefix + label + " ";
                
                // fill to maxLength (bit ensure at least 4 fill characters
                // so the section parser is sure to pick it up)
@@ -4855,9 +4867,9 @@ public class TextEditingTarget implements
    } 
 
    @Handler
-   void onGoToFunctionDefinition()
+   void onGoToDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToDefinition();
    } 
    
    @Handler
@@ -4938,6 +4950,13 @@ public class TextEditingTarget implements
    private void sourceActiveDocument(final boolean echo)
    {
       docDisplay_.focus();
+      
+      // If this is a Python file, use reticulate.
+      if (fileType_.isPython())
+      {
+         sourcePython();
+         return;
+      }
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
@@ -5056,6 +5075,19 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void sourcePython()
+   {
+      saveThenExecute(null, () -> {
+         dependencyManager_.withReticulate(
+               "Executing Python",
+               "Sourcing Python scripts",
+               () -> {
+                  String command = "reticulate::source_python('" + getPath() + "')";
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
+               });
+      });
    }
    
    private void runScript()
@@ -6271,7 +6303,7 @@ public class TextEditingTarget implements
       }
    };
    
-   private RCompletionContext rContext_ = new RCompletionContext() {
+   private CompletionContext rContext_ = new CompletionContext() {
 
       @Override
       public String getPath()

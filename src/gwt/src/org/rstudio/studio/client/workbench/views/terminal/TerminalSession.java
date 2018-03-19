@@ -38,6 +38,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
@@ -82,7 +84,7 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = new Value<>(info.getHasChildProcs());
       
       setTitle(info.getTitle());
-      socket_ = new TerminalSessionSocket(this, this);
+      socket_ = new TerminalSessionSocket(this, this, sessionInfo_.getWebSocketPingInterval());
 
       setHeight("100%");
    }
@@ -90,11 +92,13 @@ public class TerminalSession extends XTermWidget
    @Inject
    private void initialize(WorkbenchServerOperations server,
                            EventBus events,
+                           final Session session,
                            UIPrefs uiPrefs)
    {
       server_ = server;
       eventBus_ = events; 
       uiPrefs_ = uiPrefs;
+      sessionInfo_ = session.getSessionInfo();
    } 
 
    /**
@@ -855,4 +859,5 @@ public class TerminalSession extends XTermWidget
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
    private UIPrefs uiPrefs_;
+   private SessionInfo sessionInfo_;
 }

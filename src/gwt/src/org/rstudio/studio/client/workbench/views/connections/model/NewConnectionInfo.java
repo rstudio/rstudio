@@ -16,8 +16,6 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 
-import java.util.ArrayList;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class NewConnectionInfo extends JavaScriptObject

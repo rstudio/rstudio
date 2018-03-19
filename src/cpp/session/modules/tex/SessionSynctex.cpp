@@ -1,7 +1,7 @@
 /*
  * SessionSynctex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -255,11 +255,13 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
          // top of the user-visible content (in case the page is
          // scrolled down from the top)
          core::tex::PdfLocation contLoc = synctex.topOfPageContent(page);
-         x = std::max((float)x, contLoc.x());
-         y = std::max((float)y, contLoc.y());
+         x = std::max(static_cast<float>(x), contLoc.x());
+         y = std::max(static_cast<float>(y), contLoc.y());
       }
 
-      core::tex::PdfLocation pdfLocation(page, x, y, width, height);
+      core::tex::PdfLocation pdfLocation(page,
+            static_cast<float>(x), static_cast<float>(y),
+            static_cast<float>(width), static_cast<float>(height));
 
       core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
       applyInverseConcordance(&srcLoc);

@@ -47,6 +47,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String filePath,
          String documentId,
          String line,
+         boolean isConsole,
          ServerRequestCallback<Completions> completions);
    
    void getDplyrJoinCompletions(
@@ -77,5 +78,19 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          ServerRequestCallback<JsObject> callback);
    
    void executeUserCommand(String name, ServerRequestCallback<Void> callback);
-         
+   
+   void pythonGetCompletions(
+         String line,
+         ServerRequestCallback<Completions> requestCallback);
+   
+   void pythonGoToDefinition(
+         String line,
+         int column,
+         ServerRequestCallback<Boolean> requestCallback);
+   
+   void pythonGoToHelp(
+         String line,
+         int column,
+         ServerRequestCallback<Boolean> requestCallback);
+   
 }

@@ -35,6 +35,8 @@ var Buffer = (function () {
     };
     Buffer.prototype.resize = function (newCols, newRows) {
         if (this._lines.length === 0) {
+            this.scrollTop = 0;
+            this.scrollBottom = newRows - 1;
             return;
         }
         if (this._terminal.cols < newCols) {
