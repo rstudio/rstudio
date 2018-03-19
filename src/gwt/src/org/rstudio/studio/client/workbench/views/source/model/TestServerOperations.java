@@ -16,11 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
-public interface TestServerOperations extends BuildServerOperations
+public interface TestServerOperations
 {
-   void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> requestCallback);
+   void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback);
    
-   void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> requestCallback);
+   void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback);
 }

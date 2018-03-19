@@ -115,7 +115,7 @@ Error installShinyTestDependencies(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
          boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing ShinyTest Dependencies", console_process::InteractionNever);
+            "Installing shinytest dependencies", console_process::InteractionNever);
 
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;

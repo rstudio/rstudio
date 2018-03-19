@@ -722,7 +722,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       String message = "Using shinytest";
       Dependency[] dependencies = new Dependency[] {
-         Dependency.cranPackage("shinytest", "1.3")
+         Dependency.cranPackage("shinytest", "1.2")
       };
 
       if (useTestThat) {

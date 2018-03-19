@@ -6703,6 +6703,36 @@ public class TextEditingTarget implements
       view_.showReadOnlyWarning(alternatives);
    }
 
+   void installShinyTestDependencies(final Command success) {
+      server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess process)
+         {
+            final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
+            dialog.showModal();
+            
+            process.addProcessExitHandler(new ProcessExitEvent.Handler()
+            {
+               @Override
+               public void onProcessExit(ProcessExitEvent event)
+               {
+                  if (event.getExitCode() == 0)
+                  {
+                     success.execute();
+                  }
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage("Failed to install additional dependencies", error.getUserMessage());
+         }
+      });
+   }
+
    void checkTestPackageDependencies(final Command success, boolean isTestThat) {
       dependencyManager_.withTestPackage(
          new Command()
@@ -6717,45 +6747,19 @@ public class TextEditingTarget implements
                      @Override
                      public void onResponseReceived(Boolean hasPackageDependencies)
                      {
-                        if (!hasPackageDependencies)
+                        if (hasPackageDependencies)
                            success.execute();
                         else {
                            globalDisplay_.showYesNoMessage(
                               GlobalDisplay.MSG_WARNING,
-                              "Additional Package Dependencies",
-                              "The package shinytest has additional system dependencies.\n\n" +
+                              "Install Shinytest Dependencies",
+                              "The package shinytest requires additional system dependencies.\n\n" +
                               "Install additional system dependencies?",
                               new Operation()
                               {
                                  public void execute()
                                  {
-                                    server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
-                                    @Override
-                                    public void onResponseReceived(ConsoleProcess process)
-                                    {
-                                       final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
-                                       dialog.showModal();
-                                       
-                                       process.addProcessExitHandler(new ProcessExitEvent.Handler()
-                                       {
-                                          @Override
-                                          public void onProcessExit(ProcessExitEvent event)
-                                          {
-                                             if (event.getExitCode() == 0)
-                                             {
-                                                success.execute();
-                                             }
-                                          }
-                                       });
-                                    }
-                                    
-                                    @Override
-                                    public void onError(ServerError error)
-                                    {
-                                       Debug.logError(error);
-                                       globalDisplay_.showErrorMessage("Failed to install additional dependencies", error.getMessage());
-                                    }
-                                 });
+                                    installShinyTestDependencies(success);
                                  }
                               },
                               false);

@@ -16,16 +16,14 @@
 .rs.addJsonRpcHandler("has_shinytest_dependencies", function() {
 
    if (.rs.isPackageInstalled("shinytest")) {
-      if (!exists("dependenciesInstalled", envir = asNamespace("shinytest")))
+      if (!exists("dependenciesInstalled", envir = asNamespace("shinytest"))) {
          # assume dependencies installed if shinytest does not provide dependencies state
          .rs.scalar(TRUE)
-      }
-      else {
+      } else {
          shinytestDepsInstalled <- get("dependenciesInstalled", envir = asNamespace("shinytest"))()
          .rs.scalar(shinytestDepsInstalled)
       }
-   }
-   else {
+   } else {
       .rs.scalar(FALSE)
    }
 
