@@ -27,6 +27,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -80,6 +81,55 @@ std::string onDetectTestsSourceType(
 
 } // anonymous namespace
 
+Error installShinyTestDependencies(const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
+{
+   // Prepare the command
+   std::string cmd;
+   cmd.append("shinytest::installDependencies()");
+
+   // R binary
+   FilePath rProgramPath;
+   Error error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            "Installing ShinyTest Dependencies", console_process::InteractionNever);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            pCPI);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
 Error initialize()
 {
    using namespace module_context;
@@ -88,6 +138,10 @@ Error initialize()
    events().onDetectSourceExtendedType.connect(onDetectTestsSourceType);
 
    ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionTests.R"))
+      (bind(registerRpcMethod, "install_shinytest_dependencies", installShinyTestDependencies));
+
    return initBlock.execute();
 }
 
