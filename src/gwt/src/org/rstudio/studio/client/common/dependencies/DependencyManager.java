@@ -737,7 +737,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing Tests",
         message, 
         dependencies, 
-        true, // update shinytest if needed
+        true, // update package if needed
         new CommandWithArg<Boolean>()
         {
            @Override

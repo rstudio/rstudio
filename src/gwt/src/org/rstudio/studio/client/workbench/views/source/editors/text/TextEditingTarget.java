@@ -6753,7 +6753,7 @@ public class TextEditingTarget implements
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },
-         true
+         false
       );
    }
 
@@ -6782,7 +6782,7 @@ public class TextEditingTarget implements
                });
             }
          },
-         true
+         false
       );
    }
 
@@ -6801,7 +6801,7 @@ public class TextEditingTarget implements
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },
-         true
+         false
       );
    }
    

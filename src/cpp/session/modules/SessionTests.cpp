@@ -47,7 +47,7 @@ namespace {
 TestsFileType getTestType(const std::string& contents)
 {
    size_t pos = contents.find("test_that(", 0);
-   if (pos != std::string::npos && !isspace(contents.at(pos - 1)))
+   if (pos != std::string::npos && (pos == 0 || isspace(contents.at(pos - 1))))
       return TestsTestThat;
 
    pos = contents.find("app <- ShinyDriver$new(", 0);
