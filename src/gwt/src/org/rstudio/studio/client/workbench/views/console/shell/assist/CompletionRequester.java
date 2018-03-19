@@ -125,7 +125,7 @@ public class CompletionRequester
          // otherwise, produce a new completion list
          if (diff.length() > 0 && !diff.endsWith("::"))
          {
-            callback.onResponseReceived(narrow(token, diff, cachedResult)) ;
+            callback.onResponseReceived(narrow(cachedResult.token + diff, diff, cachedResult)) ;
             return true;
          }
       }
