@@ -5271,6 +5271,22 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  HAS_SHINYTEST_HAS_DEPENDENCIES,
+                  callback);
+   }
+   
+   @Override
+   public void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback)
+   {
+      sendRequest(RPC_SCOPE,
+                  INSTALL_SHINYTEST_DEPENDENCIES,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5691,4 +5707,7 @@ public class RemoteServer implements Server
    private static final String GET_NEW_ODBC_CONNECTION_CONTEXT = "get_new_odbc_connection_context";
    private static final String UNINSTALL_ODBC_DRIVER = "uninstall_odbc_driver";
    private static final String UPDATE_ODBC_INSTALLERS = "update_odbc_installers";
+
+   private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
+   private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
 }

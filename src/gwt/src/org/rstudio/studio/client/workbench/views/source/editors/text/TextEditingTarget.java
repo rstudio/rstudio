@@ -67,6 +67,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.*;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -167,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
@@ -6700,6 +6703,79 @@ public class TextEditingTarget implements
       view_.showReadOnlyWarning(alternatives);
    }
 
+   void checkTestPackageDependencies(final Command success, boolean isTestThat) {
+      dependencyManager_.withTestPackage(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               if (isTestThat)
+                  success.execute();
+               else {
+                  server_.hasShinyTestDependenciesInstalled(new ServerRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean hasPackageDependencies)
+                     {
+                        if (!hasPackageDependencies)
+                           success.execute();
+                        else {
+                           globalDisplay_.showYesNoMessage(
+                              GlobalDisplay.MSG_WARNING,
+                              "Additional Package Dependencies",
+                              "The package shinytest has additional system dependencies.\n\n" +
+                              "Install additional system dependencies?",
+                              new Operation()
+                              {
+                                 public void execute()
+                                 {
+                                    server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
+                                    @Override
+                                    public void onResponseReceived(ConsoleProcess process)
+                                    {
+                                       final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
+                                       dialog.showModal();
+                                       
+                                       process.addProcessExitHandler(new ProcessExitEvent.Handler()
+                                       {
+                                          @Override
+                                          public void onProcessExit(ProcessExitEvent event)
+                                          {
+                                             if (event.getExitCode() == 0)
+                                             {
+                                                success.execute();
+                                             }
+                                          }
+                                       });
+                                    }
+                                    
+                                    @Override
+                                    public void onError(ServerError error)
+                                    {
+                                       Debug.logError(error);
+                                       globalDisplay_.showErrorMessage("Failed to install additional dependencies", error.getMessage());
+                                    }
+                                 });
+                                 }
+                              },
+                              false);
+                        }
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        globalDisplay_.showErrorMessage("Failed to check for additional dependencies", error.getMessage());
+                     }
+                  });
+               }
+            }
+         },
+         isTestThat
+      );
+   }
+
    @Handler
    void onTestFile()
    {
@@ -6714,7 +6790,7 @@ public class TextEditingTarget implements
       final String buildCommand = (extendedType_ == SourceDocument.XT_TEST_SHINYTEST) ?
          "test-shiny-file" : "test-file";
 
-      dependencyManager_.withTestPackage(
+      checkTestPackageDependencies(
          new Command()
          {
             @Override
@@ -6743,7 +6819,7 @@ public class TextEditingTarget implements
    @Handler
    void onShinyRecordTest()
    {
-      dependencyManager_.withTestPackage(
+      checkTestPackageDependencies(
          new Command()
          {
             @Override
@@ -6760,7 +6836,7 @@ public class TextEditingTarget implements
    @Handler
    void onShinyRunAllTests()
    {
-      dependencyManager_.withTestPackage(
+      checkTestPackageDependencies(
          new Command()
          {
             @Override
@@ -6789,7 +6865,7 @@ public class TextEditingTarget implements
    @Handler
    void onShinyCompareTest()
    {
-      dependencyManager_.withTestPackage(
+      checkTestPackageDependencies(
          new Command()
          {
             @Override

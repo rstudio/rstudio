@@ -733,21 +733,22 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          message = "Using testthat";
       }
 
-     withDependencies(
-        "Preparing Tests",
-        message, 
-        dependencies, 
-        true, // update package if needed
-        new CommandWithArg<Boolean>()
-        {
-           @Override
-           public void execute(Boolean succeeded)
-           {
-              if (succeeded)
-                 command.execute();
-           }
-        }
-     );
+      withDependencies(
+         "Preparing Tests",
+         message, 
+         dependencies, 
+         true, // update package if needed
+         new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean succeeded)
+            {
+               if (succeeded) {
+                  command.execute();
+               }
+            }
+         }
+      );
    }
 
    private Dependency[] connectionPackageDependenciesArray(String packageName,
