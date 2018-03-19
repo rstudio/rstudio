@@ -15,7 +15,12 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
+
+import java.util.HashSet;
+
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class PythonFileType extends TextFileType
 {
@@ -45,5 +50,23 @@ public class PythonFileType extends TextFileType
             false, // scope tree
             false  // preview from R
             );
+   }
+   
+   @Override
+   public HashSet<AppCommand> getSupportedCommands(Commands commands)
+   {
+      HashSet<AppCommand> pythonCommands = super.getSupportedCommands(commands);
+      
+      pythonCommands.remove(commands.extractFunction());
+      pythonCommands.remove(commands.extractLocalVariable());
+      pythonCommands.remove(commands.reformatCode());
+      pythonCommands.remove(commands.renameInScope());
+      pythonCommands.remove(commands.profileCode());
+      pythonCommands.remove(commands.profileCodeWithoutFocus());
+      pythonCommands.remove(commands.showDiagnosticsActiveDocument());
+      pythonCommands.remove(commands.showDiagnosticsProject());
+      pythonCommands.remove(commands.reindent());
+      
+      return pythonCommands;
    }
 }

@@ -3482,8 +3482,11 @@ public class TextEditingTarget implements
    @Handler
    void onReflowComment()
    {
-      if (DocumentMode.isSelectionInRMode(docDisplay_))
+      if (DocumentMode.isSelectionInRMode(docDisplay_) ||
+          DocumentMode.isSelectionInPythonMode(docDisplay_))
+      {
          doReflowComment("(#)");
+      }
       else if (DocumentMode.isSelectionInCppMode(docDisplay_))
       {
          String currentLine = docDisplay_.getLine(
