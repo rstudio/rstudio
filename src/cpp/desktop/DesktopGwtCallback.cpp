@@ -846,7 +846,7 @@ QString GwtCallback::promptForText(QString title,
       dialog.move(x, parentGeom.top() + 75);
    }
 
-   if (type == InputPassword)
+   if (type == InputNumeric)
       dialog.setNumbersOnly(true);
 
    if (!defaultValue.isEmpty())
