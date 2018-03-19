@@ -564,6 +564,7 @@ public class PythonCompletionManager implements CompletionManager
          // and is not a prefix match of any other suggestion, then implicitly
          // apply that.
          // TODO
+         @SuppressWarnings("unused")
          QualifiedName selectedItem = popup_.getSelectedValue();
          
          if (c == ' ')
@@ -1081,6 +1082,7 @@ public class PythonCompletionManager implements CompletionManager
          boolean textFollowingCursorIsClosingParen = false;
 
          String value = qualifiedName.name;
+         @SuppressWarnings("unused")
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          if (qualifiedName.type == RCompletionType.DIRECTORY)
@@ -1157,6 +1159,7 @@ public class PythonCompletionManager implements CompletionManager
       private final String line_;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
+      @SuppressWarnings("unused")
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
@@ -1170,6 +1173,7 @@ public class PythonCompletionManager implements CompletionManager
          return StringUtil.notNull(rContext_.getPath());
    }
    
+   @SuppressWarnings("unused")
    private String getSourceDocumentId()
    {
       if (rContext_ != null)

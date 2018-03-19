@@ -16,17 +16,13 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardIntermediatePage;
-import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetPage;
 
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Widget;

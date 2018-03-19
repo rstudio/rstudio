@@ -16,50 +16,25 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.rstudioapi.DialogHtmlSanitizer;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.regexp.shared.MatchResult;
-import com.google.gwt.regexp.shared.RegExp;
-import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.TextBoxBase;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -126,6 +101,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    {
    }
 
+   @SuppressWarnings("unused")
    private ConnectionsServerOperations server_;
 
    private Widget mainWidget_;
@@ -145,6 +121,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    @UiField
    HTMLPanel warningPanel_;
 
+   @SuppressWarnings("unused")
    private OperationWithInput<Boolean> nextPageEnabledOperation_;
 
    private ConnectionOptions options_;

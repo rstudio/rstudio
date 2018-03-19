@@ -623,6 +623,7 @@ public class HelpPane extends WorkbenchPane
       
       RepeatingCommand navigateCommand = new RepeatingCommand() {
          
+         @SuppressWarnings("unused")
          private HandlerRegistration handler_ = frame_.addLoadHandler(new LoadHandler()
          {
             @Override
