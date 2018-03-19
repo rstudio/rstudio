@@ -6719,6 +6719,7 @@ public class TextEditingTarget implements
                   if (event.getExitCode() == 0)
                   {
                      success.execute();
+                     dialog.closeDialog();
                   }
                }
             });
