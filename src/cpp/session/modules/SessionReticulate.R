@@ -712,8 +712,19 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    lhs <- substring(token, 1, last - 1)
    rhs <- substring(token, last + 1)
    
-   # try evaluating the left-hand side
-   object <- tryCatch(reticulate::py_eval(lhs, convert = FALSE), error = identity)
+   # try evaluating the left-hand side (avoid evaluation of
+   # arrays, tuples, and dictionary literals)
+   evaluation <-
+      if (.rs.startsWith(lhs, "[") && .rs.endsWith(lhs, "]"))
+         "[]"
+      else if (.rs.startsWith(lhs, "{") && .rs.endsWith(lhs, "}"))
+         "{}"
+      else if (.rs.startsWith(lhs, "(") && .rs.endsWith(lhs, ")"))
+         "()"
+      else
+         lhs
+   
+   object <- tryCatch(reticulate::py_eval(evaluation, convert = FALSE), error = identity)
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
@@ -846,7 +857,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
          # skip matching brackets
          if (cursor$bwdToMatchingBracket()) {
             if (!cursor$moveToPreviousToken())
-               return(.rs.python.emptyCompletions())
+               break
             next
          }
          
@@ -886,7 +897,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       # skip matching brackets
       if (cursor$bwdToMatchingBracket()) {
          if (!cursor$moveToPreviousToken())
-            return(.rs.python.emptyCompletions())
+            break
          next
       }
       
