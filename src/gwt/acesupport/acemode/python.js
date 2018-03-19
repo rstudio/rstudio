@@ -56,9 +56,11 @@ var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighligh
 var PythonFoldMode = require("ace/mode/folding/pythonic").FoldMode;
 var Range = require("ace/range").Range;
 
-var Mode = function() {
+var Mode = function(suppressHighlighting, session) {
     this.HighlightRules = PythonHighlightRules;
     this.foldingRules = new PythonFoldMode("\\:");
+    this.$session = session;
+    this.$lines = session.doc.$lines;
 };
 oop.inherits(Mode, TextMode);
 
@@ -72,39 +74,78 @@ oop.inherits(Mode, TextMode);
    };
 
     this.getNextLineIndent = function(state, line, tab) {
+
         var indent = this.$getIndent(line);
 
         var tokenizedLine = this.getTokenizer().getLineTokens(line, state);
         var tokens = tokenizedLine.tokens;
 
-        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+        if (tokens.length && tokens[tokens.length - 1].type == "comment") {
             return indent;
         }
 
         if (state == "start") {
+
+            // indent following open brackets and ':'
             var match = line.match(/^.*[\{\(\[\:]\s*$/);
             if (match) {
                 indent += tab;
             }
+
+            // deindent following things that alter control flow
+            if (/^\s*(?:break|continue|pass|raise|return)\b/.test(line)) {
+                if (/\t$/.test(indent)) {
+                    indent = indent.substring(0, indent.length - 1);
+                } else {
+                    indent = indent.substring(0, indent.length - this.$session.getTabSize());
+                }
+            }
+
         }
 
         return indent;
     };
 
-    var outdents = {
-        "pass": 1,
-        "return": 1,
-        "raise": 1,
-        "break": 1,
-        "continue": 1
-    };
-    
     this.checkOutdent = function(state, line, input) {
-        return false;
+        return /start$/.test(state) && input === ':';
     };
 
-    this.autoOutdent = function(state, doc, row) {
-        return;
+    this.autoOutdent = function(state, session, row) {
+
+        var line = this.$lines[row];
+        var indent = line.match(/^\s*/)[0];
+
+        // figure out the 'anchor' to search for. note that
+        // 'else:' can be attached to either an 'if:' or a 'try:'
+        var anchor = null;
+        if (/^\s*else\b/.test(line))
+            anchor = /^\s*(?:try|if)\b/;
+        else if (/^\s*elif\b/.test(line))
+            anchor = /^\s*if\b/;
+        else if (/^\s*(?:except|finally)\b/.test(line))
+            anchor = /^\s*try\b/;
+
+        // bail if we don't have an appropriate anchor to search for
+        if (anchor == null)
+            return;
+
+        // look backwards through the document for our anchor
+        for (var i = row - 1; i >= 0; i--) {
+
+            // bail in non-start states (skip multiline strings)
+            var state = session.getState(i);
+            if (!/start$/.test(state))
+                continue;
+
+            // check our anchor and apply indent on match
+            var prev = this.$lines[i];
+            if (anchor.test(prev)) {
+                var replacement = prev.match(/^\s*/)[0];
+                session.replace(new Range(row, 0, row, indent.length), replacement);
+                return;
+            }
+        }
+
     };
 
     this.$id = "mode/python";
