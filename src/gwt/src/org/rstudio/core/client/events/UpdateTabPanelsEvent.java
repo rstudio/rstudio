@@ -23,6 +23,11 @@ public class UpdateTabPanelsEvent extends GwtEvent<UpdateTabPanelsEvent.Handler>
    {
       void onUpdateTabPanels(UpdateTabPanelsEvent event);
    }
+
+   public UpdateTabPanelsEvent(string activeTab)
+   {
+      activeTab_ = activeTab;
+   }
    
    @Override
    public Type<Handler> getAssociatedType()
@@ -35,6 +40,12 @@ public class UpdateTabPanelsEvent extends GwtEvent<UpdateTabPanelsEvent.Handler>
    {
       handler.onUpdateTabPanels(this);
    }
+   
+   public String getActiveTab() {
+      return activeTab_;
+   }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+
+   private String activeTab_;
 }

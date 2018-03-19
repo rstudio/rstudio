@@ -122,7 +122,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    {
       if (isSuppressed()) {
          enabled_ = true;
-         eventBus_.fireEvent(new UpdateTabPanelsEvent());
+         eventBus_.fireEvent(new UpdateTabPanelsEvent("Build"));
       }
    }
 

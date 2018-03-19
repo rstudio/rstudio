@@ -390,7 +390,9 @@ public class PaneManager
             populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
             populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
             
-            manageLayoutCommands();      
+            manageLayoutCommands();  
+
+            activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
          }
       });
       
