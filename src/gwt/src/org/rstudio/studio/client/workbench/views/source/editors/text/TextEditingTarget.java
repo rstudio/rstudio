@@ -3182,6 +3182,8 @@ public class TextEditingTarget implements
          doCommentUncomment("<!--", "-->");
       else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
          doCommentUncomment("<!--", "-->");
+      else if (DocumentMode.isSelectionInPythonMode(docDisplay_))
+         doCommentUncomment("#", null);
    }
    
    /**
