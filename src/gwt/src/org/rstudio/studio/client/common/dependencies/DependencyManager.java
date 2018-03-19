@@ -705,7 +705,39 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         new Dependency[] {
            Dependency.cranPackage("odbc", "1.1.5")
         }, 
-        true, // update keyring if needed
+        true, // update odbc if needed
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+
+   public void withTestPackage(final Command command, boolean useTestThat)
+   {
+      String message = "Using shinytest";
+      Dependency[] dependencies = new Dependency[] {
+         Dependency.cranPackage("shinytest", "1.3")
+      };
+
+      if (useTestThat) {
+         dependencies = new Dependency[] {
+            Dependency.cranPackage("testthat", "2.0.0")
+         };
+
+         message = "Using testthat";
+      }
+
+     withDependencies(
+        "Preparing Tests",
+        message, 
+        dependencies, 
+        true, // update shinytest if needed
         new CommandWithArg<Boolean>()
         {
            @Override

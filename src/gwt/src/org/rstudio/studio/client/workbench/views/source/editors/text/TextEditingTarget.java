@@ -6703,67 +6703,106 @@ public class TextEditingTarget implements
    @Handler
    void onTestFile()
    {
-      String buildCommand = "";
-      if (extendedType_ == SourceDocument.XT_TEST_SHINYTEST)
-         buildCommand = "test-shiny-file";
-      else if (extendedType_ == SourceDocument.XT_TEST_TESTTHAT)
-         buildCommand = "test-file";
-      else {
+      if (extendedType_ != SourceDocument.XT_TEST_SHINYTEST &&
+          extendedType_ != SourceDocument.XT_TEST_TESTTHAT) {
          globalDisplay_.showErrorMessage(
             "Error Running Test",
             "This file was not recognized as test.");
          return;
       }
 
-      server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
-         new SimpleRequestCallback<Boolean>() {
-         @Override
-         public void onResponseReceived(Boolean response)
-         {
+      final String buildCommand = (extendedType_ == SourceDocument.XT_TEST_SHINYTEST) ?
+         "test-shiny-file" : "test-file";
 
-         }
-
-         @Override
-         public void onError(ServerError error)
+      dependencyManager_.withTestPackage(
+         new Command()
          {
-            super.onError(error);
-         }
-      });
+            @Override
+            public void execute()
+            {
+               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         extendedType_ == SourceDocument.XT_TEST_TESTTHAT
+      );
    }
 
    @Handler
    void onShinyRecordTest()
    {
-      String code = "shinytest::recordTest(\"" + FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()) + "\")";
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      dependencyManager_.withTestPackage(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               String code = "shinytest::recordTest(\"" + FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()) + "\")";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+         },
+         true
+      );
    }
 
    @Handler
    void onShinyRunAllTests()
    {
-      server_.startBuild("test-shiny", FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()),
-         new SimpleRequestCallback<Boolean>() {
-         @Override
-         public void onResponseReceived(Boolean response)
+      dependencyManager_.withTestPackage(
+         new Command()
          {
+            @Override
+            public void execute()
+            {
+               server_.startBuild("test-shiny", FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
 
-         }
+                  }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            super.onError(error);
-         }
-      });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         true
+      );
    }
 
    @Handler
    void onShinyCompareTest()
    {
-      String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
-      String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
-      String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      dependencyManager_.withTestPackage(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
+               String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
+               String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+         },
+         true
+      );
    }
    
    private StatusBar statusBar_;
