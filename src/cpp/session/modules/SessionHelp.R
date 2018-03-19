@@ -315,12 +315,21 @@ options(help_type = "html")
    results 
 })
 
-.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
-   
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler,
+                                                            source,
+                                                            language)
+{
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
+   
+   if (identical(language, "Python")) {
+      source <- tryCatch(
+         reticulate::py_eval(source, convert = FALSE),
+         error = function(e) NULL
+      )
+   }
    
    results <- helpHandlerFunc("parameter", NULL, source)
    if (!is.null(results)) {

@@ -42,6 +42,7 @@ public interface HelpServerOperations
    
    void getCustomParameterHelp(String helpHandler,
                                String source,
+                               String language,
                                ServerRequestCallback<HelpInfo.Custom> requestCallback);
    
    void showCustomHelpTopic(String helpHandler, String topic, String source);

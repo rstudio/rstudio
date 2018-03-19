@@ -178,6 +178,7 @@ public class HelpStrategy
          server_.getCustomParameterHelp(
                                selectedItem.helpHandler,
                                selectedItem.source,
+                               selectedItem.language,
                new ServerRequestCallback<HelpInfo.Custom>() {
             @Override
             public void onError(ServerError error)

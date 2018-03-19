@@ -1212,11 +1212,13 @@ public class RemoteServer implements Server
    
    public void getCustomParameterHelp(String helpHandler,
                                       String source,
+                                      String language,
                                       ServerRequestCallback<HelpInfo.Custom> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(helpHandler));
       params.set(1, new JSONString(source));
+      params.set(2, new JSONString(language));
       sendRequest(RPC_SCOPE, GET_CUSTOM_PARAMETER_HELP, params, requestCallback);
    }
 
