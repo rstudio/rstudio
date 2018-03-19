@@ -1199,12 +1199,14 @@ public class RemoteServer implements Server
    public void getCustomHelp(String helpHandler,
                              String topic, 
                              String source,
+                             String language,
                              ServerRequestCallback<HelpInfo.Custom> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(helpHandler));
       params.set(1, new JSONString(topic));
       params.set(2, new JSONString(source));
+      params.set(3, new JSONString(language));
       sendRequest(RPC_SCOPE, GET_CUSTOM_HELP, params, requestCallback);
    }
    

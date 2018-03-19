@@ -290,12 +290,23 @@ options(help_type = "html")
       return()
 })
 
-.rs.addJsonRpcHandler("get_custom_help", function(helpHandler, topic, source) {
-   
+.rs.addJsonRpcHandler("get_custom_help", function(helpHandler,
+                                                  topic,
+                                                  source,
+                                                  language)
+{
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
+   
+   # evaluate source using reticulate for Python language help
+   if (identical(language, "Python")) {
+      source <- tryCatch(
+         reticulate::py_eval(source, convert = FALSE),
+         error = function(e) NULL
+      )
+   }
    
    results <- helpHandlerFunc("completion", topic, source)
    if (!is.null(results))

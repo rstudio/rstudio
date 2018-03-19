@@ -35,9 +35,10 @@ public interface HelpServerOperations
                ServerRequestCallback<JsArrayString> requestCallback) ;
    
    void getCustomHelp(String helpHandler,
-         String topic, 
-         String source,
-         ServerRequestCallback<HelpInfo.Custom> requestCallback);
+                      String topic,
+                      String source,
+                      String language,
+                      ServerRequestCallback<HelpInfo.Custom> requestCallback);
    
    void getCustomParameterHelp(String helpHandler,
                                String source,
