@@ -362,7 +362,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="cleanAll"/>
          <separator/>
          <cmd refid="testPackage"/>
-         <cmd refid="testFile"/>
          <separator/>
          <cmd refid="checkPackage"/>
          <separator/>

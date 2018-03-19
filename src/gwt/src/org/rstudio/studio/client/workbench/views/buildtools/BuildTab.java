@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.UpdateTabPanelsEvent;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -122,6 +123,11 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    {
       if (isSuppressed()) {
          enabled_ = true;
+
+         RStudioGinjector.INSTANCE.getCommands().stopBuild().restore();
+         RStudioGinjector.INSTANCE.getCommands().stopBuild().setEnabled(true);
+         RStudioGinjector.INSTANCE.getCommands().stopBuild().setVisible(true);
+
          eventBus_.fireEvent(new UpdateTabPanelsEvent("Build"));
       }
    }
