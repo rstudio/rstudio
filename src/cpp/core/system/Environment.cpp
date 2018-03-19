@@ -1,7 +1,7 @@
 /*
  * Environment.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,7 @@
 
 #include <core/system/Environment.hpp>
 
-#include <algorithm>
-
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #ifdef _WIN32
 #define kPathSeparator ";"
@@ -54,7 +51,7 @@ std::string getenv(const Options& environment, const std::string& name)
 void getModifiedEnv(const Options& extraVars, Options* pEnv)
 {
    core::system::environment(pEnv);
-   BOOST_FOREACH(const Option& var, extraVars)
+   for (const auto& var : extraVars)
    {
       core::system::setenv(pEnv, var.first, var.second);
    }

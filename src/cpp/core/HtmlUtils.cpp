@@ -18,13 +18,11 @@
 #include <core/system/System.hpp>
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/StringUtils.hpp>
 
 #include <core/http/Util.hpp>
 
@@ -56,7 +54,7 @@ std::string defaultTitle(const std::string& htmlContent)
 Base64ImageFilter::Base64ImageFilter(const FilePath& basePath)
    : boost::iostreams::regex_filter(
        boost::regex(
-        "(<\\s*[Ii][Mm][Gg] [^\\>]*[Ss][Rr][Cc]\\s*=\\s*)([\"'])(.*?)(\\2)"),
+             R"((<\s*[Ii][Mm][Gg] [^\>]*[Ss][Rr][Cc]\s*=\s*)(["'])(.*?)(\2))"),
         boost::bind(&Base64ImageFilter::toBase64Image, this, _1)),
      basePath_(basePath)
 {
@@ -138,7 +136,7 @@ TextRange findClosestRange(std::string::const_iterator pos,
 {
    TextRange closestRange = ranges.front();
 
-   BOOST_FOREACH(const TextRange& range, ranges)
+   for (const auto& range : ranges)
    {
       if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
          closestRange = range;
@@ -201,17 +199,16 @@ void HtmlPreserver::preserve(std::string* pInput)
 
    // substitute guids for all of the matched ranges
    std::string modifiedInput;
-   for (std::vector<TextRange>::iterator it = ranges.begin();
-        it != ranges.end(); it++)
+   for (auto& range : ranges)
    {
-      if (it->process)
+      if (range.process)
       {
-         modifiedInput += std::string(it->begin, it->end);
+         modifiedInput += std::string(range.begin, range.end);
       }
       else
       {
          std::string guid = core::system::generateUuid();
-         std::string html = std::string(it->begin, it->end);
+         std::string html = std::string(range.begin, range.end);
          preserved_[guid] = html;
          modifiedInput += guid;
       }
@@ -224,8 +221,8 @@ void HtmlPreserver::preserve(std::string* pInput)
 
 void HtmlPreserver::restore(std::string* pOutput)
 {
-   typedef std::pair<std::string,std::string> StringPair;
-   BOOST_FOREACH(const StringPair& preserve, preserved_)
+   using StringPair = std::pair<std::string,std::string>;
+   for (const auto& preserve : preserved_)
    {
       boost::algorithm::replace_first(*pOutput,
                                       preserve.first,

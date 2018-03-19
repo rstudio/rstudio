@@ -1,7 +1,7 @@
 /*
  * ProgramOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,11 @@
 
 #include <core/ProgramOptions.hpp>
 
-#include <string>
 #include <iostream>
-
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
-#include <core/ProgramStatus.hpp>
 #include <core/system/System.hpp>
 
 using namespace boost::program_options ;
@@ -39,8 +35,7 @@ bool validateOptionsProvided(const variables_map& vm,
                              const options_description& optionsDescription,
                              const std::string& configFile = std::string())
 {
-   BOOST_FOREACH( const boost::shared_ptr<option_description>& pOptionsDesc, 
-                  optionsDescription.options() )
+   for (const auto& pOptionsDesc : optionsDescription.options())
    {
       std::string optionName = pOptionsDesc->long_name();
       if ( !(vm.count(optionName)) )
@@ -87,14 +82,14 @@ void parseCommandLine(variables_map& vm,
    command_line_parser parser(argc, const_cast<char**>(argv));
    parser.options(commandLineOptions);
    parser.positional(optionsDescription.positionalOptions);
-   if (pUnrecognized != NULL)
+   if (pUnrecognized != nullptr)
       parser.allow_unregistered();
    parsed_options parsed = parser.run();
    store(parsed, vm);
    notify(vm) ;
 
    // collect unrecognized if necessary
-   if (pUnrecognized != NULL)
+   if (pUnrecognized != nullptr)
    {
       *pUnrecognized = collect_unrecognized(parsed.options,
                                             include_positional);

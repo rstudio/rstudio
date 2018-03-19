@@ -1,7 +1,7 @@
 /*
  * GitGraph.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,6 @@
 #include <algorithm>
 
 #include <core/GitGraph.hpp>
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/SafeConvert.hpp>
 
@@ -92,12 +89,12 @@ Line GitGraph::addCommit(const std::string& commit,
    // If this commit isn't the parent of a previously seen node, then we'll
    // definitely be adding one or more columns to the right of all the
    // existing columns.
-   Line::iterator insertNewColumnsAt = pendingLine_.end();
+   auto insertNewColumnsAt = pendingLine_.end();
 
    // Counts how many of the parents have been assigned to columns.
    size_t parentsUsed = 0;
 
-   for (Line::iterator it = pendingLine_.begin();
+   for (auto it = pendingLine_.begin();
         it != pendingLine_.end();
         it++)
    {
@@ -147,12 +144,12 @@ Line GitGraph::addCommit(const std::string& commit,
     */
 
    // First remove all columns that have empty postCommit--these terminated.
-   Line::iterator newEnd = std::remove_if(
+   auto newEnd = std::remove_if(
          pendingLine_.begin(), pendingLine_.end(), &isColumnTerminating);
    pendingLine_.erase(newEnd, pendingLine_.end());
 
    // Now copy all of the postCommits to preCommit.
-   BOOST_FOREACH(Column& column, pendingLine_)
+   for (auto& column : pendingLine_)
    {
       column.preCommit = column.postCommit;
    }
