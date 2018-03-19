@@ -65,6 +65,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -113,6 +114,7 @@ public class TextEditingTargetWidget
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
+      shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
       handlerManager_ = new HandlerManager(this);
       server_ = server;
       
@@ -311,6 +313,13 @@ public class TextEditingTargetWidget
       knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
+
+      ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
+      if (fileType.canKnitToHTML()) {
+         shinyLaunchButton_ = new ToolbarButton(shinyTestMenu, true);
+         toolbar.addLeftWidget(shinyLaunchButton_);
+      }
+
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
@@ -443,11 +452,12 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(chunksButton_);
       
       ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
-      shinyLaunchButton_ = new ToolbarButton(
-                       shinyLaunchMenu, 
-                       true);
+      if (!fileType.canKnitToHTML()) {
+         shinyLaunchButton_ = new ToolbarButton(shinyLaunchMenu, true);
+         toolbar.addRightWidget(shinyLaunchButton_);
+      }
       shinyLaunchButton_.setVisible(false);
-      toolbar.addRightWidget(shinyLaunchButton_);
+
       if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
@@ -1068,6 +1078,10 @@ public class TextEditingTargetWidget
             RmdOutput.TYPE_SHINY);
    
       String docType = isPresentation ? "Presentation" : "Document";
+
+      if (!isPresentation) {
+         shinyLaunchButton_.setVisible(true);
+      }
       
       knitCommandText_ = "Run " + docType;
       knitDocumentButton_.setTitle("View the current " + docType.toLowerCase() + 
@@ -1349,6 +1363,7 @@ public class TextEditingTargetWidget
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
+   private final ShinyTestPopupMenu shinyTestMenu_;
    private final SourceServerOperations server_;
    private String extendedType_;
    private String publishPath_;

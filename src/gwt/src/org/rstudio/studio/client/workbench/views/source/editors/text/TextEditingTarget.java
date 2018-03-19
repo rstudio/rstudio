@@ -6830,7 +6830,14 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               String code = "shinytest::recordTest(\"" + FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()) + "\")";
+               String shinyAppPath = FilePathUtils.dirFromFile(docUpdateSentinel_.getPath());
+
+               if (fileType_.canKnitToHTML())
+               {
+                  shinyAppPath = docUpdateSentinel_.getPath();
+               }
+
+               String code = "shinytest::recordTest(\"" + shinyAppPath + "\")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },
