@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -23,9 +22,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -506,6 +502,7 @@ public class EditingTargetCodeExecution
    private EventBus events_;
    private UIPrefs prefs_;
    private Commands commands_;
+   @SuppressWarnings("unused")
    private SourceServerOperations server_;
 }
 
