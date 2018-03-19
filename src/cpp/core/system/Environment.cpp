@@ -15,6 +15,8 @@
 
 #include <core/system/Environment.hpp>
 
+#include <algorithm>
+
 #include <boost/bind.hpp>
 
 #ifdef _WIN32
