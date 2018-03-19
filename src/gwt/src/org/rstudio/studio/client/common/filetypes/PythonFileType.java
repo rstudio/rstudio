@@ -40,7 +40,7 @@ public class PythonFileType extends TextFileType
             false, // knit to HTML
             false, // compile PDF
             false, // execute chunks
-            true,  // auto-indent
+            false,  // auto-indent
             false, // check spelling
             false, // scope tree
             false  // preview from R
