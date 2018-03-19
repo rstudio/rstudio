@@ -5284,7 +5284,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE,
                   INSTALL_SHINYTEST_DEPENDENCIES,
-                  callback);
+                  new ConsoleProcessCallbackAdapter(callback));
    }
 
    private String clientId_;
