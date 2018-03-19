@@ -814,10 +814,9 @@ int GwtCallback::showMessageBox(int type,
 QString GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
-                                   bool usePasswordMask,
+                                   int inputType,
                                    QString extraOptionPrompt,
                                    bool extraOptionByDefault,
-                                   bool numbersOnly,
                                    int selectionStart,
                                    int selectionLength,
                                    QString okButtonCaption)
@@ -825,6 +824,9 @@ QString GwtCallback::promptForText(QString title,
    InputDialog dialog(pOwner_->asWidget());
    dialog.setWindowTitle(title);
    dialog.setCaption(caption);
+   InputType type = static_cast<InputType>(inputType);
+   bool usePasswordMask = type == InputPassword;
+   dialog.setRequired(type == InputRequiredText);
 
    if (usePasswordMask)
       dialog.setEchoMode(QLineEdit::Password);
@@ -844,8 +846,9 @@ QString GwtCallback::promptForText(QString title,
       dialog.move(x, parentGeom.top() + 75);
    }
 
-   if (numbersOnly)
+   if (type == InputNumeric)
       dialog.setNumbersOnly(true);
+
    if (!defaultValue.isEmpty())
    {
       dialog.setTextValue(defaultValue);
