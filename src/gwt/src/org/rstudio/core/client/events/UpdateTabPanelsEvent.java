@@ -24,7 +24,7 @@ public class UpdateTabPanelsEvent extends GwtEvent<UpdateTabPanelsEvent.Handler>
       void onUpdateTabPanels(UpdateTabPanelsEvent event);
    }
 
-   public UpdateTabPanelsEvent(string activeTab)
+   public UpdateTabPanelsEvent(String activeTab)
    {
       activeTab_ = activeTab;
    }
