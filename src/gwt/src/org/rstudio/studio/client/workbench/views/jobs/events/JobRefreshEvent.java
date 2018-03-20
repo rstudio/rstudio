@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 
 import com.google.gwt.event.shared.EventHandler;

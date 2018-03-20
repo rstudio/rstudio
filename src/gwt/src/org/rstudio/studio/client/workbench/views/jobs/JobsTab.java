@@ -17,9 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
@@ -40,18 +38,9 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
    @Inject
    public JobsTab(final Shim shim, 
                         Binder binder,
-                        Commands commands,
-                        EventBus eventBus,
-                        Session session)
+                        Commands commands)
    {
       super("Jobs", shim);
       binder.bind(commands, shim);
-      session_ = session;
-      eventBus_ = eventBus;
-      eventBus.addHandler(JobUpdatedEvent.TYPE, shim);
-      eventBus.addHandler(JobRefreshEvent.TYPE, shim);
    }
-   
-   private final Session session_;
-   private final EventBus eventBus_;
 }

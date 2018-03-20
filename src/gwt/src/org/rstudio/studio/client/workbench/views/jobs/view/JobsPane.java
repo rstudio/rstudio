@@ -25,7 +25,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
