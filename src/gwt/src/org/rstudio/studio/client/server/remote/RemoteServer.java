@@ -142,6 +142,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -250,6 +252,16 @@ public class RemoteServer implements Server
          };
       }
       
+      // initialize user home path on init
+      eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            userHomePath_ = getUserHomePath(session_.getSessionInfo());
+         }
+      });
+      
       // create server event listener
       serverEventListener_ = new RemoteServerEventListener(this, 
                                                            externalListener);
@@ -353,6 +365,15 @@ public class RemoteServer implements Server
          array.set(i, new JSONNumber(what.get(i)));
       params.set(index, array);
    }
+   
+   
+   // extract user home path from session info (we don't expose this as a
+   // helper function on SessionInfo just because paths on the client are
+   // typically aliased, and we want to avoid potentially mixing aliased
+   // and unaliased paths in other contexts)
+   private static final native String getUserHomePath(SessionInfo info) /*-{
+      return info.user_home_path;
+   }-*/;
    
    // accept application agreement
    public void acceptAgreement(Agreement agreement, 
@@ -1386,7 +1407,7 @@ public class RemoteServer implements Server
    {
       String path = file.getPath();
       if (path.startsWith("~"))
-         path = session_.getSessionInfo().getUserHomePath() + path.substring(1);
+         path = userHomePath_ + path.substring(1);
       return path;
    }
 
@@ -5332,6 +5353,7 @@ public class RemoteServer implements Server
 
    private String clientId_;
    private String clientVersion_ = "";
+   private String userHomePath_;
    private boolean listeningForEvents_;
    private boolean disconnected_;
 
