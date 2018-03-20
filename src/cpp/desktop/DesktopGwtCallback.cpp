@@ -504,11 +504,6 @@ QString GwtCallback::fixedWidthFont()
    return options().fixedWidthFont();
 }
 
-QString GwtCallback::getUriForPath(QString path)
-{
-   return QUrl::fromLocalFile(resolveAliasedPath(path)).toString();
-}
-
 void GwtCallback::onWorkbenchInitialized(QString scratchPath)
 {
    workbenchInitialized();
