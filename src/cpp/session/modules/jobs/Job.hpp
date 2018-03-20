@@ -82,6 +82,10 @@ public:
    // whether the job should be cleaned up automatically when complete
    bool autoRemove() const;
 
+   // add and retrieve output
+   void addOutput(const std::string& output, bool error); 
+   core::json::Array output(int position);
+
    // timing
    time_t recorded() const;
    time_t started() const;
@@ -99,7 +103,13 @@ public:
    static std::string stateAsString(JobState state);
    static JobState stringAsState (const std::string& state);
 
+   // remove any persisted state
+   void cleanup();
+
 private:
+   core::FilePath jobCacheFolder();
+   core::FilePath outputCacheFile();
+
    std::string id_;
    std::string name_;
    std::string status_;

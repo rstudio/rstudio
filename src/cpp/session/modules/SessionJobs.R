@@ -68,3 +68,7 @@
    .Call("rs_setJobState", job, state)
 })
 
+.rs.addApiFunction("addJobOutput", function(job, output, error = FALSE) {
+   .Call("rs_addJobOutput", job, output, error)
+})
+

@@ -100,3 +100,13 @@ test_that("job timers are started", {
    expect_true(job[["completed"]] <= job[["started"]])
 })
 
+test_that("job output is persisted", {
+   jobId <- .rs.api.addJob(name = "job8", autoRemove = FALSE, running = TRUE)
+   .rs.api.addJobOutput(jobId, "NormalOutput1")
+   .rs.api.addJobOutput(jobId, "NormalOutput2")
+   .rs.api.addJobOutput(jobId, "ErrorOutput", error = TRUE)
+   .rs.api.setJobState(jobId, "failed")
+   output <- .rs.invokeRpc("job_output", jobId, 0L)
+   expect_true(length(output) == 3)
+})
+

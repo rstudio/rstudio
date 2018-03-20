@@ -18,6 +18,8 @@
 #include <boost/make_shared.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
 #include "Job.hpp"
 
 #define kJobId          "id"
@@ -240,6 +242,105 @@ time_t Job::started() const
 time_t Job::completed() const
 {
    return completed_;
+}
+
+FilePath Job::jobCacheFolder()
+{
+   return module_context::sessionScratchPath().complete("jobs");
+}
+
+FilePath Job::outputCacheFile()
+{
+   return jobCacheFolder().complete(id_ + "-output.json");
+}
+
+void Job::addOutput(const std::string& output, bool asError)
+{
+   // look up output file
+   Error error;
+   FilePath outputFile = outputCacheFile();
+
+   // create parent folder if necessary
+   if (!outputFile.parent().exists())
+   {
+      error = outputFile.parent().ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+
+   // open output file for writing
+   boost::shared_ptr<std::ostream> file;
+   error = outputFile.open_w(&file, false /* don't truncate */);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // create json array with output and write it to the file
+   json::Array contents;
+   contents.push_back(output);
+   contents.push_back(asError);
+   json::write(contents, *file);
+
+   // append a newline (the file is newline-delimited JSON)
+   *file << std::endl;
+}
+
+json::Array Job::output(int position)
+{
+   // read the lines from the file
+   json::Array output;
+   FilePath outputFile = outputCacheFile();
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = outputFile.open_r(&pIfs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+
+   try
+   {
+      int line = 0;
+      std::string content;
+      json::Value val;
+
+      // reading eof can trigger a failbit
+      pIfs->exceptions(std::istream::badbit);
+
+      // read each line; parse it as JSON and add it to the output array if it's past the sought
+      // position
+      while (!pIfs->eof())
+      {
+         std::getline(*pIfs, content);
+         if (++line > position)
+         {
+            if (json::parse(content, &val))
+            {
+               output.push_back(val);
+            }
+         }
+      }
+   }
+   catch(const std::exception& e)
+   {
+      error = systemError(boost::system::errc::io_error, 
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", outputFile.absolutePath());
+      LOG_ERROR(error);
+   }
+
+   return output;
+}
+
+void Job::cleanup()
+{
+   outputCacheFile().removeIfExists();
 }
 
 std::string Job::stateAsString(JobState state)

@@ -61,6 +61,7 @@ void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
 void removeJob(boost::shared_ptr<Job> pJob)
 {
    notifyClient(JobRemoved, pJob);
+   pJob->cleanup();
    s_jobs.erase(s_jobs.find(pJob->id()));
 }
 
@@ -231,6 +232,16 @@ SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
    return R_NilValue;
 }
 
+SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+
+   pJob->addOutput(r::sexp::safeAsString(outputSEXP), r::sexp::asLogical(errorSEXP));
+   return R_NilValue;
+}
+
 json::Object jobsAsJson()
 {
    json::Object jobs;
@@ -248,6 +259,27 @@ Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(jobsAsJson());
+
+   return Success();
+}
+
+Error jobOutput(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   // extract job ID
+   std::string id;
+   int position;
+   Error error = json::readParams(request.params, &id, &position);
+   if (error)
+      return error;
+
+   // look up in cache
+   auto it = s_jobs.find(id);
+   if (it == s_jobs.end())
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   // show output
+   pResponse->setResult(it->second->output(position));
 
    return Success();
 }
@@ -278,6 +310,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
+   RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
@@ -285,6 +318,7 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(module_context::registerRpcMethod, "get_jobs", getJobs))
+      (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();
