@@ -29,6 +29,7 @@
 #define kJobRecorded    "recorded"
 #define kJobStarted     "started"
 #define kJobCompleted   "completed"
+#define kJobElapsed     "elapsed"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -127,7 +128,24 @@ json::Object Job::toJson() const
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
 
-   // append description
+   // amend with computed elapsed time
+   if (started_ > recorded_ && started_ > completed_)
+   {
+      // job is started but not finished; emit the running time
+      job[kJobElapsed] = static_cast<int64_t>(::time(0) - started_);
+   }
+   else if (completed_ > started_)
+   {
+      // job is completed; emit the total time spent running it
+      job[kJobElapsed] = static_cast<int64_t>(completed_ - started_);
+   }
+   else
+   {
+      // job hasn't even been started yet so hasn't spent any time running
+      job[kJobElapsed] = 0;
+   }
+
+   // amend running state description
    job["state_description"] = stateAsString(state_);
 
    return job;

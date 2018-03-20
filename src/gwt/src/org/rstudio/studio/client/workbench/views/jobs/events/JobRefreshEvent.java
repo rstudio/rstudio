@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,12 +27,12 @@ public class JobRefreshEvent extends GwtEvent<JobRefreshEvent.Handler>
       void onJobRefresh(JobRefreshEvent event);
    }
    
-   public JobRefreshEvent(JsObject data)
+   public JobRefreshEvent(JobState data)
    {
       data_ = data;
    }
 
-   public JsObject getData()
+   public JobState getData()
    {
       return data_;
    }
@@ -48,7 +49,7 @@ public class JobRefreshEvent extends GwtEvent<JobRefreshEvent.Handler>
       handler.onJobRefresh(this);
    }
 
-   private final JsObject data_;
+   private final JobState data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -19,13 +19,13 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 

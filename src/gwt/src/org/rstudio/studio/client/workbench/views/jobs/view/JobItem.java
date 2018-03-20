@@ -14,13 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import java.util.Date;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,23 +43,53 @@ public class JobItem extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
+      
+      // no ranged progress
+      if (job.max <= 0)
+      {
+        progressHost_.setVisible(false);
+      }
       update(job);
    }
    
    public void update(Job job)
    {
+      // cache reference to job
+      job_ = job;
+
       // sync status and progress
       status_.setText(job.status);
       
-      if (job.max > 0)
+      if (job.max > 0 && progressHost_.isVisible())
       {
          double percent = ((double)job.progress / (double)job.max) * 100.0;
          bar_.setWidth(percent + "%");
       }
+      
+      // sync elapsed time to current time
+      syncTime((int)((new Date()).getTime() * 0.001));
    }
+   
+   public void syncTime(int timestamp)
+   {
+      // if job is not running, we have nothing to do
+      if (job_.state == JobConstants.STATE_IDLE)
+      {
+         elapsed_.setText("");
+         return;
+      }
+      
+      // display the server's understanding of elapsed time plus the amount of
+      // time that has elapsed on the client
+      elapsed_.setText(StringUtil.conciseElaspedTime(job_.elapsed + (timestamp - job_.received)));
+   }
+   
+   private Job job_;
    
    @UiField Label name_;
    @UiField Label status_;
+   @UiField Label elapsed_;
+   @UiField HorizontalPanel progressHost_;
    @UiField HTMLPanel progress_;
    @UiField HTMLPanel bar_;
 }

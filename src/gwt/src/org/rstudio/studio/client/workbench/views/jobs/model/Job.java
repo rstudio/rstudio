@@ -20,13 +20,36 @@ import jsinterop.annotations.JsPackage;
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class Job
 {
+   // the job's unique ID 
    public String id;
+   
+   // the job's name; not necessarily unique
    public String name;
+   
+   // the current status of the job
    public String status;
+   
+   // the job's state (idle, running, completed, etc.)
    public int state;
+   
+   // the number of progress units the job has completed so far
    public int progress;
+   
+   // the total number of progress units to be completed
    public int max;
+   
+   // the time the job was recorded in the system
    public int recorded;
+   
+   // the time the job started execution
    public int started;
+   
+   // the time the job was completed 
    public int completed;
+   
+   // the time the job has spent running so far
+   public int elapsed;
+   
+   // the time the browser (client) received the job
+   public int received;
 }

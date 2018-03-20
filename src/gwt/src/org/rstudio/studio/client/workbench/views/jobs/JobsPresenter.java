@@ -25,6 +25,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 
 import com.google.inject.Inject;
 
@@ -50,20 +51,26 @@ public class JobsPresenter extends BasePresenter
       super(display);
       display_ = display;
       binder.bind(commands, this);
-
-      display_.setInitialJobs(session.getSessionInfo().getJobState());
+      setJobState(session.getSessionInfo().getJobState());
    }
 
    @Override
    public void onJobUpdated(JobUpdatedEvent event)
    {
+      JobState.recordReceived(event.getData().job);
       display_.updateJob(event.getData().type, event.getData().job);
    }
 
    @Override
    public void onJobRefresh(JobRefreshEvent event)
    {
-      display_.setInitialJobs(event.getData());
+      setJobState(event.getData());
+   }
+   
+   private void setJobState(JobState state)
+   {
+      state.recordReceived();
+      display_.setInitialJobs(state);
    }
    
    private final Display display_;

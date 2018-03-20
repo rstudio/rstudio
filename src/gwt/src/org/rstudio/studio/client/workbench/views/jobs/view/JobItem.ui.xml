@@ -57,6 +57,11 @@
 	{
 		background-color: #058005;
 	}
+	
+	.elapsed
+	{
+		opacity: 0.8;	
+	}
 
 	</ui:style>
 	<g:VerticalPanel styleName="{style.item}">
@@ -68,10 +73,11 @@
 			    <g:Label ui:field="status_"></g:Label>
             </g:cell>
 		</g:HorizontalPanel>
-		<g:HorizontalPanel styleName="{style.progressHost}">
+		<g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
 			<g:HTMLPanel styleName="{style.progress}" ui:field="progress_">
 				<g:HTMLPanel styleName="{style.bar}" ui:field="bar_"></g:HTMLPanel>
 			</g:HTMLPanel>
 		</g:HorizontalPanel>
+		<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
 	</g:VerticalPanel>
 </ui:UiBinder> 
