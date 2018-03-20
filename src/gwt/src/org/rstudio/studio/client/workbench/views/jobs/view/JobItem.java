@@ -17,15 +17,19 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.Date;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -36,6 +40,21 @@ public class JobItem extends Composite
 
    interface JobItemUiBinder extends UiBinder<Widget, JobItem>
    {
+   }
+   
+   public interface JobResources extends ClientBundle
+   {
+      @Source("idle_2x.png")
+      ImageResource jobIdle();
+
+      @Source("running_2x.png")
+      ImageResource jobRunning();
+
+      @Source("succeeded_2x.png")
+      ImageResource jobSucceeded();
+
+      @Source("failed_2x.png")
+      ImageResource jobFailed();
    }
 
    public JobItem(Job job)
@@ -66,6 +85,24 @@ public class JobItem extends Composite
          bar_.setWidth(percent + "%");
       }
       
+      // sync image
+      switch(job.state)
+      {
+         case JobConstants.STATE_IDLE:
+            state_.setResource(new ImageResource2x(RESOURCES.jobIdle()));
+            break;
+         case JobConstants.STATE_RUNNING:
+            state_.setResource(new ImageResource2x(RESOURCES.jobRunning()));
+            break;
+         case JobConstants.STATE_CANCELLED:
+         case JobConstants.STATE_FAILED:
+            state_.setResource(new ImageResource2x(RESOURCES.jobFailed()));
+            break;
+         case JobConstants.STATE_SUCCEEDED:
+            state_.setResource(new ImageResource2x(RESOURCES.jobSucceeded()));
+            break;
+      }
+      
       // sync elapsed time to current time
       syncTime((int)((new Date()).getTime() * 0.001));
    }
@@ -79,17 +116,24 @@ public class JobItem extends Composite
          return;
       }
       
+      // only use timestamp if job is still running
+      int delta = 0;
+      if (job_.state == JobConstants.STATE_RUNNING)
+         delta = timestamp - job_.received;
+      
       // display the server's understanding of elapsed time plus the amount of
       // time that has elapsed on the client
-      elapsed_.setText(StringUtil.conciseElaspedTime(job_.elapsed + (timestamp - job_.received)));
+      elapsed_.setText(StringUtil.conciseElaspedTime(job_.elapsed + delta));
    }
    
    private Job job_;
+   private static final JobResources RESOURCES = GWT.create(JobResources.class);
    
+   @UiField HTMLPanel bar_;
+   @UiField HTMLPanel progress_;
+   @UiField HorizontalPanel progressHost_;
+   @UiField Image state_;
+   @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
-   @UiField Label elapsed_;
-   @UiField HorizontalPanel progressHost_;
-   @UiField HTMLPanel progress_;
-   @UiField HTMLPanel bar_;
 }

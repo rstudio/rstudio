@@ -27,6 +27,7 @@
 	.progressHost
 	{
 		width: 100%;	
+		margin-bottom: 3px;
 	}
 	
 	.progress
@@ -61,8 +62,15 @@
 	.elapsed
 	{
 		opacity: 0.8;	
+		margin-left: 3px;
 	}
-
+	
+	.state
+	{
+		width: 20px;
+		height: 18px;
+		border: 0px;
+	}
 	</ui:style>
 	<g:VerticalPanel styleName="{style.item}">
 		<g:HorizontalPanel styleName="{style.metadata}">
@@ -78,6 +86,13 @@
 				<g:HTMLPanel styleName="{style.bar}" ui:field="bar_"></g:HTMLPanel>
 			</g:HTMLPanel>
 		</g:HorizontalPanel>
-		<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+		<g:HorizontalPanel>
+		    <g:cell verticalAlignment="ALIGN_MIDDLE">
+				<g:Image styleName="{style.state}" ui:field="state_"></g:Image>
+		    </g:cell>
+		    <g:cell verticalAlignment="ALIGN_MIDDLE">
+				<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+		    </g:cell>
+		</g:HorizontalPanel>
 	</g:VerticalPanel>
 </ui:UiBinder> 
