@@ -1183,3 +1183,79 @@ html.heading = _heading
    .rs.setVar("python.keywordList", kwlist)
    kwlist
 })
+
+# $ title      : chr "DataFrame"
+# $ signature  : chr "DataFrame()"
+# $ description: chr "Two-dimensional size-mutable, potentially heterogeneous tabular data"
+.rs.addFunction("python.getHelp", function(topic, source)
+{
+   object <- .rs.tryCatch(reticulate::py_eval(source, convert = TRUE))
+   if (inherits(object, "error"))
+      return(NULL)
+   
+   handler <- reticulate:::help_completion_handler.python.builtin.object
+   .rs.tryCatch(reticulate::py_suppress_warnings(handler(topic, object)))
+})
+
+# $ args            : chr [1:9] "cls" "path" "header" "sep" ...
+# $ arg_descriptions: Named chr [1:9] "cls" "path" "header" "sep" ...
+.rs.addFunction("python.getParameterHelp", function(source)
+{
+   error <- list(args = character(), arg_descriptions = character())
+   object <- .rs.tryCatch(reticulate::py_eval(source, convert = FALSE))
+   if (inherits(object, "error"))
+      return(error)
+   
+   # extract argument names using inspect
+   inspect <- reticulate::import("inspect", convert = TRUE)
+   spec <- inspect$getargspec(object)
+   args <- spec$args
+   
+   # attempt to scrape parameter documentation
+   docs <- reticulate::py_get_attr(object, "__doc__", silent = TRUE)
+   if (inherits(docs, "python.builtin.object"))
+      docs <- reticulate::py_to_r(docs)
+   if (is.null(docs))
+      docs <- ""
+   
+   lines <- strsplit(docs, "\n", fixed = TRUE)[[1]]
+   
+   arg_descriptions <- lapply(args, function(arg) {
+      tryCatch({
+         # try to find the line where the parameter documentation starts
+         pattern <- sprintf("^\\s*%s\\s*:", arg)
+         index <- grep(pattern, lines)
+         if (!length(index))
+            return("")
+         index <- index[[1]]
+         line <- lines[[index]]
+         
+         # split into argument name, initial part of description
+         desc <- ""
+         colon <- regexpr(":", line, fixed = TRUE)
+         if (colon != -1L)
+            desc <- substring(line, colon + 1)
+         
+         # now, look to see if the documentation spans multiple lines
+         # consume lines of greater indent that the current
+         indent <- regexpr("(?:\\S|$)", line)
+         start <- end <- index + 1
+         while (TRUE) {
+            if (regexpr("(?:\\S|$)", lines[[end]]) <= indent)
+               break
+            end <- end + 1
+         }
+         
+         if (start != end)
+            desc <- c(desc, lines[start:(end - 1L)])
+         
+         paste(gsub("^\\s*|\\s*$", "", desc), collapse = "\n")
+         
+      }, error = function(e) "")
+   })
+   
+   list(
+      args             = as.character(args),
+      arg_descriptions = as.character(arg_descriptions)
+   )
+})
