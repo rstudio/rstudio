@@ -755,4 +755,50 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>We are building sites \342\200\246</span>", ele.getInnerHTML());
       Assert.assertEquals("We are building sites \342\200\246", vc.toString());       
    }
+
+   public void testMultiCarriageReturnsWithoutColorsMultiSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("123");
+      vc.submit("x \r");
+      vc.submit("456");
+      vc.submit("x \r");
+      vc.submit("789");
+      Assert.assertEquals("<span>789x </span>", ele.getInnerHTML());
+      Assert.assertEquals("789x ", vc.toString());
+   }
+   
+   public void testMultiCarriageReturnWithoutColors()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("123" + "x \r" + "456" + "x \r" + "789");
+      Assert.assertEquals("<span>789x </span>", ele.getInnerHTML());
+      Assert.assertEquals("789x ", vc.toString());
+   }
+
+   public void testMultiCarriageReturnWithColors()
+   {
+      // https://github.com/rstudio/rstudio/issues/2387
+      // cat(c(crayon::red("123"), "x \r", crayon::red("456"), "x \r", crayon::red("789\n")), sep = "")
+      String red = AnsiCode.CSI + AnsiCode.ForeColorNum.RED + AnsiCode.SGR;
+      String reset = AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR;
+      
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit(red + "123" + reset + "x \r" +
+                red + "456" + reset + "x \r" +
+                red + "789");
+      
+      Debug.logToConsole("InnerHtml=[" + ele.getInnerHTML() + "]");
+      Debug.logToConsole("String=[" + vc.toString() + "]");
+      
+      String expected = 
+            "<span class=\"" + AnsiCode.clazzForColor(AnsiCode.ForeColorNum.RED) +
+            "\">789</span><span>x </span>"; 
+      
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("789x ", vc.toString());
+   }
 }
