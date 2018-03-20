@@ -1,7 +1,7 @@
 /*
- * BuildStartedEvent.java
+ * TestsStartedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,39 +12,41 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.buildtools.events;
+
+package org.rstudio.studio.client.tests.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BuildStartedEvent extends GwtEvent<BuildStartedEvent.Handler>
+public class TestsStartedEvent extends GwtEvent<TestsStartedEvent.Handler>
 {  
    public static class Data extends JavaScriptObject
-   { 
+   {
       protected Data()
-      {
+      {  
       }
       
-      public final native String getType() /*-{
-         return this.type;
-      }-*/;
-      
-      public final native String getSubType() /*-{
-         return this.sub_type;
+      public final native String getTargetFile() /*-{
+         return this.target_file;
       }-*/;
    }
-
+   
    public interface Handler extends EventHandler
    {
-      void onBuildStarted(BuildStartedEvent event);
+      void onTestsStarted(TestsStartedEvent event);
    }
 
-   public BuildStartedEvent(Data data)
+   public TestsStartedEvent(Data data)
    {
       data_ = data;
    }
-  
+
+   public String getTargetFile()
+   {
+      return data_.getTargetFile();
+   }
+    
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -54,19 +56,9 @@ public class BuildStartedEvent extends GwtEvent<BuildStartedEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onBuildStarted(this);
+      handler.onTestsStarted(this);
    }
-
-   public String getType()
-   {
-      return data_.getType();
-   }
-
-   public String getSubType()
-   {
-      return data_.getSubType();
-   }
-
+   
    private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();

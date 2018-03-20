@@ -32,12 +32,10 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.buildtools.events.EnableBuildEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 
 
 public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
-                      implements EnableBuildEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
    
@@ -106,40 +104,14 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                shim.initialize(buildState);           
          }
       });
-      
-      eventBus.addHandler(EnableBuildEvent.TYPE, this);
    }
    
    @Override
    public boolean isSuppressed()
    {
-      return session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_NONE &&
-         !session_.getSessionInfo().getBuildEnabled() &&
-         !enabled_;
-   }
-   
-   @Override
-   public void onEnableBuild(EnableBuildEvent event)
-   {
-      if (isSuppressed()) {
-         enabled_ = true;
-
-         RStudioGinjector.INSTANCE.getCommands().stopBuild().restore();
-         RStudioGinjector.INSTANCE.getCommands().stopBuild().setEnabled(true);
-         RStudioGinjector.INSTANCE.getCommands().stopBuild().setVisible(true);
-
-         eventBus_.fireEvent(new UpdateTabPanelsEvent("Build"));
-      }
-   }
-
-   @Override
-   public boolean closeable()
-   {
-      return false;
+      return session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_NONE;
    }
 
    private Session session_;
    private EventBus eventBus_;
-
-   private static boolean enabled_;
 }

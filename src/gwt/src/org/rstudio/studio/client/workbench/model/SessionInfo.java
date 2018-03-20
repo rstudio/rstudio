@@ -550,8 +550,4 @@ public class SessionInfo extends JavaScriptObject
    public final native String getRLibsUser() /*-{
       return this.r_libs_user;
    }-*/;
-
-   public final native boolean getBuildEnabled() /*-{
-      return this.build_enabled;
-   }-*/;
 }

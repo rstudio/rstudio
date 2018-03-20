@@ -1,5 +1,5 @@
 /*
- * EnableBuildEvent.java
+ * TestsCompletedEvent.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,22 +12,31 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.buildtools.events;
+
+package org.rstudio.studio.client.tests.events;
+
+import org.rstudio.studio.client.tests.model.TestsResult;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EnableBuildEvent extends GwtEvent<EnableBuildEvent.Handler>
+public class TestsCompletedEvent extends GwtEvent<TestsCompletedEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onEnableBuild(EnableBuildEvent event);
-   }
-   
-   public EnableBuildEvent()
-   {
+      void onTestsCompleted(TestsCompletedEvent event);
    }
 
+   public TestsCompletedEvent(TestsResult result)
+   {
+      result_ = result;
+   }
+
+   public TestsResult getResult()
+   {
+      return result_;
+   }
+    
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -37,8 +46,10 @@ public class EnableBuildEvent extends GwtEvent<EnableBuildEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onEnableBuild(this);
+      handler.onTestsCompleted(this);
    }
+   
+   private final TestsResult result_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

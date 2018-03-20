@@ -69,11 +69,7 @@ public class BuildCommands
          commands.buildAll().remove();
          commands.rebuildAll().remove();
          commands.cleanAll().remove();
-
-         if (!sessionInfo.getBuildEnabled()) {
-            commands.stopBuild().remove();
-         }
-         
+         commands.stopBuild().remove();
          commands.activateBuild().remove();
          commands.layoutZoomBuild().remove();
       }

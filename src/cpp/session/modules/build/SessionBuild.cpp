@@ -108,9 +108,6 @@ namespace {
 // force a rebuild for those changes)
 bool s_forcePackageRebuild = false;
 
-// track if the build tab should be enabled on-demand.
-bool s_buildEnabled = false;
-
 bool isPackageHeaderFile(const FilePath& filePath)
 {
    if (projects::projectContext().hasProject() &&
@@ -240,7 +237,10 @@ private:
 
    void start(const std::string& type, const std::string& subType)
    {
-      ClientEvent event(client_events::kBuildStarted);
+      json::Object dataJson;
+      dataJson["type"] = type;
+      dataJson["sub_type"] = subType;
+      ClientEvent event(client_events::kBuildStarted, dataJson);
       module_context::enqueClientEvent(event);
 
       isRunning_ = true;
@@ -1050,10 +1050,6 @@ private:
                  core::system::ProcessOptions pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
-      s_buildEnabled = true;
-      ClientEvent event(client_events::kEnableBuild);
-      module_context::enqueClientEvent(event);
-
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
       if (error)
@@ -1092,11 +1088,6 @@ private:
                   const core::system::ProcessCallbacks& cb,
                   const std::string& type)
    {
-      // enable build
-      s_buildEnabled = true;
-      ClientEvent event(client_events::kEnableBuild);
-      module_context::enqueClientEvent(event);
-
       // normalize paths between all tests and single test
       std::string shinyTestName = "";
       if (type == kTestShinyFile) {
@@ -2009,11 +2000,6 @@ void onDeferredInit(bool newSession)
          }
       }
    }
-}
-
-bool buildEnabled()
-{
-   return s_buildEnabled;
 }
 
 Error initialize()

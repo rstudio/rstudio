@@ -96,6 +96,10 @@ import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.tests.events.TestsCompletedEvent;
+import org.rstudio.studio.client.tests.events.TestsOutputEvent;
+import org.rstudio.studio.client.tests.events.TestsStartedEvent;
+import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -107,7 +111,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.EnableBuildEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -454,7 +457,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.BuildStarted)
          {
-            eventBus_.fireEvent(new BuildStartedEvent());
+            BuildStartedEvent.Data buildStartedData = event.getData();
+            eventBus_.fireEvent(new BuildStartedEvent(buildStartedData));
          }
          else if (type == ClientEvent.BuildOutput)
          {
@@ -950,9 +954,20 @@ public class ClientEventDispatcher
             AskSecretEvent.Data data = event.getData();
             eventBus_.fireEvent(new AskSecretEvent(data));
          }
-         else if (type == ClientEvent.EnableBuild)
+         else if (type == ClientEvent.TestsStarted)
          {
-            eventBus_.fireEvent(new EnableBuildEvent());
+            TestsStartedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new TestsStartedEvent(data));
+         }
+         else if (type == ClientEvent.TestsOutput)
+         {
+            CompileOutput data = event.getData();
+            eventBus_.fireEvent(new TestsOutputEvent(data));
+         }
+         else if (type == ClientEvent.TestsCompleted)
+         {
+            TestsResult result = event.getData();
+            eventBus_.fireEvent(new TestsCompletedEvent(result));
          }
          else
          {
