@@ -14,9 +14,13 @@
  */
 
 #include "DesktopWebView.hpp"
+
+#include <QMenu>
 #include <QNetworkReply>
 #include <QStyleFactory>
-#include <QMenu>
+
+#include <QWebEngineContextMenuData>
+#include <QWebEngineSettings>
 
 #include <core/system/Environment.hpp>
 
@@ -133,27 +137,59 @@ void WebView::closeEvent(QCloseEvent*)
 {
 }
 
-void WebView::contextMenuEvent(QContextMenuEvent *event)
+void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
-   // retrieve the context menu Qt wants to show
-   QMenu* menu = page()->createStandardContextMenu();
-
-   // list of actions we don't want it to show
-   std::vector<QWebEnginePage::WebAction> blockedActions = 
+   QMenu* menu = new QMenu(this);
+   const auto& data = webPage()->contextMenuData();
+ 
+   if (data.mediaUrl().isValid())
    {
-      QWebEnginePage::Back, 
-      QWebEnginePage::Forward,
-      QWebEnginePage::ViewSource,
-      QWebEnginePage::Reload
-   };
-
-   // remove each from the menu if present
-   for (auto action: blockedActions)
-   {
-      menu->removeAction(page()->action(action));
+      switch (data.mediaType())
+      {
+      case QWebEngineContextMenuData::MediaTypeImage:
+         menu->addAction(webPage()->action(QWebEnginePage::DownloadImageToDisk));
+         menu->addAction(webPage()->action(QWebEnginePage::CopyImageUrlToClipboard));
+         menu->addAction(webPage()->action(QWebEnginePage::CopyImageToClipboard));
+         break;
+      case QWebEngineContextMenuData::MediaTypeAudio:
+      case QWebEngineContextMenuData::MediaTypeVideo:
+         menu->addAction(webPage()->action(QWebEnginePage::DownloadMediaToDisk));
+         menu->addAction(webPage()->action(QWebEnginePage::CopyMediaUrlToClipboard));
+         menu->addAction(webPage()->action(QWebEnginePage::ToggleMediaPlayPause));
+         menu->addAction(webPage()->action(QWebEnginePage::ToggleMediaLoop));
+         break;
+      case QWebEngineContextMenuData::MediaTypeFile:
+         menu->addAction(webPage()->action(QWebEnginePage::DownloadLinkToDisk));
+         menu->addAction(webPage()->action(QWebEnginePage::CopyMediaUrlToClipboard));
+         break;
+      default:
+         break;
+      }
    }
+   else
+   {
+      if (!data.selectedText().isEmpty())
+      {
+         if (data.isContentEditable())
+         {
+            menu->addAction(webPage()->action(QWebEnginePage::Cut));
+         }
+         menu->addAction(webPage()->action(QWebEnginePage::Copy));
+      }
 
-   // show the menu
+      menu->addAction(webPage()->action(QWebEnginePage::Paste));
+      menu->addSeparator();
+      menu->addAction(webPage()->action(QWebEnginePage::SelectAll));
+   }
+   
+#ifndef NDEBUG
+   menu->addSeparator();
+   menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
+   menu->addAction(webPage()->action(QWebEnginePage::InspectElement));
+#endif
+   
+   menu->setAttribute(Qt::WA_DeleteOnClose, true);
+   
    menu->exec(event->globalPos());
 }
 
