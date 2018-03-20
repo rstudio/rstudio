@@ -1067,13 +1067,16 @@ private:
       
       boost::format fmt(
          "if (nchar('%1%')) library('%1%');"
-         "message('Running: testthat::test_file(%2%)');"
          "testthat::test_file('%2%')"
       );
 
+      std::string testPathEscaped = 
+         string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
+            testPath.absolutePath()));
+
       cmd << boost::str(fmt %
                         pkgInfo_.name() %
-                        testPath.absolutePath());
+                        testPathEscaped);
 
       enqueCommandString("Testing R file using 'testthat'");
       successMessage_ = "\nTest complete";
@@ -1095,13 +1098,29 @@ private:
         shinyPath = shinyPath.parent().parent();
       }
 
+      // get temp path to store rds results
+      FilePath tempPath;
+      Error error = FilePath::tempFilePath(&tempPath);
+      if (error)
+      {
+         terminateWithError("Find temp dir", error);
+         return;
+      }
+      error = tempPath.ensureDirectory();
+      if (error)
+      {
+         terminateWithError("Creating temp dir", error);
+         return;
+      }
+      FilePath tempRdsFile = tempPath.complete(core::system::generateUuid() + ".rds");
+
       // initialize parser
       CompileErrorParsers parsers;
-      parsers.add(shinytestErrorParser(shinyPath));
+      parsers.add(shinytestErrorParser(shinyPath, tempRdsFile));
       initErrorParser(shinyPath, parsers);
 
       FilePath rScriptPath;
-      Error error = module_context::rScriptPath(&rScriptPath);
+      error = module_context::rScriptPath(&rScriptPath);
       if (error)
       {
          terminateWithError("Locating R script", error);
@@ -1117,18 +1136,23 @@ private:
       
       if (type == kTestShiny) {
         boost::format fmt(
-           "shinytest::testApp('%1%')"
-        );
-
-        cmd << boost::str(fmt % shinyPath.absolutePath());
-      } else if (type == kTestShinyFile) {
-        boost::format fmt(
-           "shinytest::testApp('%1%', '%2%')"
+           "result <- shinytest::testApp('%1%');"
+           "saveRDS(result, '%2%')"
         );
 
         cmd << boost::str(fmt %
                           shinyPath.absolutePath() %
-                          shinyTestName);
+                          tempRdsFile.absolutePath());
+      } else if (type == kTestShinyFile) {
+        boost::format fmt(
+           "result <- shinytest::testApp('%1%', '%2%');"
+           "saveRDS(result, '%3%')"
+        );
+
+        cmd << boost::str(fmt %
+                          shinyPath.absolutePath() %
+                          shinyTestName %
+                          tempRdsFile.absolutePath());
       } else {
         terminateWithError("Shiny test type is unsupported.");
       }

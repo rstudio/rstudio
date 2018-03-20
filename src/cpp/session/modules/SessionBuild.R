@@ -78,6 +78,9 @@ options(buildtools.with = .rs.withBuildTools)
    .rs.haveRequiredRSvnRev(70462)
 })
 
-
+.rs.addFunction("readShinytestResultRds", function(rdsPath) {
+   failures <- Filter(function(e) !identical(e$pass, TRUE), readRDS(rdsPath)$results)
+   sapply(failures, function(e) e$name)
+})
 
 

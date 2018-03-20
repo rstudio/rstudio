@@ -1228,6 +1228,10 @@ public class TextEditingTarget implements
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
                                                           extendedType_, 
                                                           fileType_);
+
+      boolean isTest = extendedType_ == SourceDocument.XT_TEST_SHINYTEST ||
+                       extendedType_ == SourceDocument.XT_TEST_TESTTHAT;
+      commands_.testFile().setEnabled(isTest);
       
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
@@ -6816,14 +6820,6 @@ public class TextEditingTarget implements
    @Handler
    void onTestFile()
    {
-      if (extendedType_ != SourceDocument.XT_TEST_SHINYTEST &&
-          extendedType_ != SourceDocument.XT_TEST_TESTTHAT) {
-         globalDisplay_.showErrorMessage(
-            "Error Running Test",
-            "This file was not recognized as test.");
-         return;
-      }
-
       final String buildCommand = (extendedType_ == SourceDocument.XT_TEST_SHINYTEST) ?
          "test-shiny-file" : "test-file";
 
@@ -6869,7 +6865,7 @@ public class TextEditingTarget implements
                   shinyAppPath = docUpdateSentinel_.getPath();
                }
 
-               String code = "shinytest::recordTest(\"" + shinyAppPath + "\")";
+               String code = "shinytest::recordTest(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          },

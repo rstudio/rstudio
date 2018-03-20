@@ -262,7 +262,7 @@ public class TextEditingTargetWidget
       compareTestButton_.setVisible(false);
 
       testButton_ = new ToolbarButton(
-            "Run Test", 
+            "Run Tests", 
             commands_.testFile().getImageResource(), 
             new ClickHandler() 
             {
