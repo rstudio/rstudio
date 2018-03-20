@@ -260,7 +260,7 @@ public class VirtualConsole
                   parent_.insertAfter(range.element, overlap.element);
             }
          }
-         else if (start <= l && end <= r && end >= l)
+         else if (start <= l && end <= r && end > l)
          {
             // overlapping on the right side of the new range
             int delta = end - l;
