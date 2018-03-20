@@ -37,6 +37,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
@@ -1377,16 +1378,25 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
    }
+   
+   // this method is private as we generally don't want to expose
+   // non-aliased paths to other parts of the client codebase
+   // (most client-side APIs assume paths are aliased)
+   private final String resolveAliasedPath(FileSystemItem file)
+   {
+      String path = file.getPath();
+      if (path.startsWith("~"))
+         path = session_.getSessionInfo().getUserHomePath() + path.substring(1);
+      return path;
+   }
 
    public String getFileUrl(FileSystemItem file)
    {
-//      // TODO: need to be asynchronous for desktop
-//      if (Desktop.isDesktop())
-//      {
-//         return Desktop.getFrame().getUriForPath(file.getPath());
-//      }
-      
-      if (!file.isDirectory())
+      if (Desktop.isDesktop())
+      {
+         return "file://" + resolveAliasedPath(file);
+      }
+      else if (!file.isDirectory())
       {
          if (file.isWithinHome())
          {

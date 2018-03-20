@@ -56,6 +56,10 @@ public class SessionInfo extends JavaScriptObject
    public final native String getUserIdentity() /*-{
       return this.userIdentity;
    }-*/;
+   
+   public final native String getUserHomePath() /*-{
+      return this.user_home_path;
+   }-*/;
 
    public final native String getSessionId() /*-{
       return this.session_id;
@@ -550,4 +554,5 @@ public class SessionInfo extends JavaScriptObject
    public final native String getRLibsUser() /*-{
       return this.r_libs_user;
    }-*/;
+   
 }
