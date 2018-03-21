@@ -418,8 +418,11 @@ int main(int argc, char* argv[])
          scriptsPath = currentPath.complete("desktop");
          devMode = true;
 #ifdef _WIN32
-         if (version.architecture() == ArchX64)
+         if (version.architecture() == ArchX64 &&
+             installPath.complete("session/x64").exists())
+         {
             sessionPath = installPath.complete("session/x64/rsession");
+         }
 #endif
       }
 
@@ -432,8 +435,11 @@ int main(int argc, char* argv[])
 
          // check for win64 binary on windows
 #ifdef _WIN32
-         if (version.architecture() == ArchX64)
+         if (version.architecture() == ArchX64 &&
+             installPath.complete("bin/x64").exists())
+         {
             sessionPath = installPath.complete("bin/x64/rsession");
+         }
 #endif
 
          // check for running in a bundle on OSX

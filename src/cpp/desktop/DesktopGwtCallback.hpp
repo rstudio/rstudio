@@ -222,7 +222,7 @@ public Q_SLOTS:
 
    void installRtools(QString version, QString installerPath);
 
-   std::string getDisplayDpi();
+   QString getDisplayDpi();
 
 private:
    Synctex& synctex();
