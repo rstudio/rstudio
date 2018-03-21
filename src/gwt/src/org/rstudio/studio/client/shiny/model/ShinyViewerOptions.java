@@ -22,4 +22,5 @@ public class ShinyViewerOptions extends JavaScriptObject
    
    public final static int SHINY_VIEWER_OPTIONS_NONE = 0;
    public final static int SHINY_VIEWER_OPTIONS_NOTOOLS = 1;
+   public final static int SHINY_VIEWER_OPTIONS_WIDE = 2;
 }

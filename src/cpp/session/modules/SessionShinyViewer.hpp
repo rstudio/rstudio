@@ -35,6 +35,7 @@ const int SHINY_VIEWER_BROWSER = 4;
 
 const int SHINY_VIEWER_OPTIONS_NONE = 0;
 const int SHINY_VIEWER_OPTIONS_NOTOOLS = 1;
+const int SHINY_VIEWER_OPTIONS_WIDE = 2;
 
 core::Error initialize();
                        

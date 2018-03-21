@@ -108,6 +108,10 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
           viewertype = SHINY_VIEWER_WINDOW;
           options = SHINY_VIEWER_OPTIONS_NOTOOLS;
       }
+      if (path.find("/shinytest/recorder") != std::string::npos)
+      {
+          options |= SHINY_VIEWER_OPTIONS_WIDE;
+      }
 
       enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
                         path,

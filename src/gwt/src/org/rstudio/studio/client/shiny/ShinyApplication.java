@@ -36,6 +36,7 @@ import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
+import org.rstudio.studio.client.shiny.model.ShinyViewerOptions;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -438,10 +439,14 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          params_ = params;
       if (win == null || (!isRefresh && !isChrome))
       {
+         int width = 910;
+         if ((params.getViewerOptions() & ShinyViewerOptions.SHINY_VIEWER_OPTIONS_WIDE) > 0) {
+            width += 300;
+         }
          // If there's no window yet, or we're switching apps in a browser
          // other than Chrome, do a normal open
          satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
-                                         params_, new Size(960,1100));   
+                                         params_, new Size(width, 1100));   
       } 
       else if (isChrome)
       {
