@@ -261,18 +261,21 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(compareTestButton_);
       compareTestButton_.setVisible(false);
 
+      AppCommand testCommand = extendedType_ == SourceDocument.XT_TEST_TESTTHAT ? 
+         commands_.testTestthatFile() : commands_.testShinytestFile();
+
       testButton_ = new ToolbarButton(
             "Run Tests", 
-            commands_.testFile().getImageResource(), 
+            testCommand.getImageResource(), 
             new ClickHandler() 
             {
                @Override
                public void onClick(ClickEvent event)
                {
-                  commands_.testFile().execute();
+                  testCommand.execute();
                }
             });
-      testButton_.setTitle(commands_.testFile().getDesc());
+      testButton_.setTitle(testCommand.getDesc());
 
       toolbar.addRightWidget(testButton_);
       testButton_.setVisible(false);

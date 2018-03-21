@@ -1229,9 +1229,8 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
 
-      boolean isTest = extendedType_ == SourceDocument.XT_TEST_SHINYTEST ||
-                       extendedType_ == SourceDocument.XT_TEST_TESTTHAT;
-      commands_.testFile().setEnabled(isTest);
+      commands_.testTestthatFile().setEnabled(extendedType_ == SourceDocument.XT_TEST_TESTTHAT);
+      commands_.testShinytestFile().setEnabled(extendedType_ == SourceDocument.XT_TEST_SHINYTEST);
       
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
@@ -6790,8 +6789,8 @@ public class TextEditingTarget implements
                            globalDisplay_.showYesNoMessage(
                               GlobalDisplay.MSG_WARNING,
                               "Install Shinytest Dependencies",
-                              "The package shinytest requires additional system dependencies.\n\n" +
-                              "Install additional system dependencies?",
+                              "The package shinytest requires additional components to run.\n\n" +
+                              "Install additional components?",
                               new Operation()
                               {
                                  public void execute()
@@ -6818,10 +6817,9 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onTestFile()
+   void onTestTestthatFile()
    {
-      final String buildCommand = (extendedType_ == SourceDocument.XT_TEST_SHINYTEST) ?
-         "test-shiny-file" : "test-file";
+      final String buildCommand = "test-file";
 
       checkTestPackageDependencies(
          new Command()
@@ -6845,7 +6843,38 @@ public class TextEditingTarget implements
                });
             }
          },
-         extendedType_ == SourceDocument.XT_TEST_TESTTHAT
+         true
+      );
+   }
+
+   @Handler
+   void onTestShinytestFile()
+   {
+      final String buildCommand = "test-shiny-file";
+
+      checkTestPackageDependencies(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         false
       );
    }
 
