@@ -155,7 +155,8 @@ int GwtCallback::showMessageBox(int type,
       [[[alert buttons] objectAtIndex: cancelButton] setKeyEquivalent: @"\033"];
    }
 
-   [alert beginSheetModalForWindow: [[NSApplication sharedApplication] mainWindow] completionHandler: ^(NSModalResponse response) {
+   NSView* pView = reinterpret_cast<NSView*>(pOwner_->asWidget()->winId());
+   [alert beginSheetModalForWindow: [pView window] completionHandler: ^(NSModalResponse response) {
       [[NSApplication sharedApplication] stopModalWithCode: response];
    }];
    

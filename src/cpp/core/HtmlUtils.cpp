@@ -221,7 +221,6 @@ void HtmlPreserver::preserve(std::string* pInput)
 
 void HtmlPreserver::restore(std::string* pOutput)
 {
-   using StringPair = std::pair<std::string,std::string>;
    for (const auto& preserve : preserved_)
    {
       boost::algorithm::replace_first(*pOutput,

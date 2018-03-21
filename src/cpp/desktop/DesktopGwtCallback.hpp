@@ -100,7 +100,6 @@ public Q_SLOTS:
    QJsonObject getCursorPosition();
    bool doesWindowExistAtCursorPosition();
 
-   QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
    void showFile(QString path);
@@ -223,7 +222,7 @@ public Q_SLOTS:
 
    void installRtools(QString version, QString installerPath);
 
-   std::string getDisplayDpi();
+   QString getDisplayDpi();
 
 private:
    Synctex& synctex();

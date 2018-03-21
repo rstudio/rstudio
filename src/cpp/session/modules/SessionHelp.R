@@ -295,18 +295,14 @@ options(help_type = "html")
                                                   source,
                                                   language)
 {
+   # use own handler for Python language help
+   if (identical(language, "Python"))
+      return(.rs.python.getHelp(topic, source))
+   
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
-   
-   # evaluate source using reticulate for Python language help
-   if (identical(language, "Python")) {
-      source <- tryCatch(
-         reticulate::py_eval(source, convert = FALSE),
-         error = function(e) NULL
-      )
-   }
    
    results <- helpHandlerFunc("completion", topic, source)
    if (!is.null(results))
@@ -319,17 +315,14 @@ options(help_type = "html")
                                                             source,
                                                             language)
 {
+   # use own handler for Python language help
+   if (identical(language, "Python"))
+      return(.rs.python.getParameterHelp(source))
+   
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
    if (!is.function(helpHandlerFunc))
       return()
-   
-   if (identical(language, "Python")) {
-      source <- tryCatch(
-         reticulate::py_eval(source, convert = FALSE),
-         error = function(e) NULL
-      )
-   }
    
    results <- helpHandlerFunc("parameter", NULL, source)
    if (!is.null(results)) {

@@ -79,6 +79,45 @@
    return(TRUE)
 })
 
+.rs.addFunction("reticulate.matplotlib.showHook", function(...)
+{
+   # read device size
+   size <- dev.size(units = "in")
+   width <- size[1]; height <- size[2]
+   
+   # TODO: handle high-DPI displays
+   dpi <- 72L
+   
+   # TODO: get device requested from matplotlib?
+   # TODO: handle HTML content?
+   path <- tempfile("matplotlib-plot-", fileext = ".png")
+   
+   plt <- reticulate::import("matplotlib.pyplot", convert = TRUE)
+   
+   # resize the figure
+   figure <- plt$gcf()
+   figure$set_dpi(dpi)
+   figure$set_size_inches(width, height)
+   plt$savefig(path, dpi = figure$dpi)
+   
+   # now, read that in and create an R plot using e.g. image
+   data <- png::readPNG(path, native = TRUE, info = TRUE)
+   
+   # don't display margins and ensure R doesn't nudge margin size
+   opar <- par(
+      xaxt = "n", yaxt = "n",
+      xaxs = "i", yaxs = "i",
+      mar = c(0, 0, 0, 0),
+      oma = c(0, 0, 0, 0),
+      xpd = NA
+   )
+   on.exit(par(opar), add = TRUE)
+   
+   # generate raster
+   plot.new()
+   graphics::rasterImage(data, 0, 0, 1, 1)
+})
+
 .rs.addFunction("reticulate.replInitialize", function()
 {
    builtins <- reticulate::import_builtins(convert = FALSE)
@@ -95,6 +134,17 @@
       }
       help(...)
    }
+   
+   # install matplotlib hook if available
+   if (requireNamespace("png", quietly = TRUE) &&
+       reticulate::py_module_available("matplotlib"))
+   {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      plt <- matplotlib$pyplot
+      .rs.setVar("reticulate.matplotlib.show", plt$show)
+      plt$show <- .rs.reticulate.matplotlib.showHook
+   }
+      
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
@@ -108,6 +158,15 @@
    # restore old help method
    builtins <- reticulate::import_builtins(convert = FALSE)
    builtins$help <- .rs.getVar("reticulate.help")
+   
+   # restore matplotlib method
+   show <- .rs.getVar("reticulate.matplotlib.show")
+   if (!is.null(show)) {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      plt <- matplotlib$pyplot
+      plt$show <- show
+   }
+   
 })
 
 .rs.addFunction("reticulate.replIsActive", function()
@@ -1182,4 +1241,80 @@ html.heading = _heading
    
    .rs.setVar("python.keywordList", kwlist)
    kwlist
+})
+
+# $ title      : chr "DataFrame"
+# $ signature  : chr "DataFrame()"
+# $ description: chr "Two-dimensional size-mutable, potentially heterogeneous tabular data"
+.rs.addFunction("python.getHelp", function(topic, source)
+{
+   object <- .rs.tryCatch(reticulate::py_eval(source, convert = TRUE))
+   if (inherits(object, "error"))
+      return(NULL)
+   
+   handler <- reticulate:::help_completion_handler.python.builtin.object
+   .rs.tryCatch(reticulate::py_suppress_warnings(handler(topic, object)))
+})
+
+# $ args            : chr [1:9] "cls" "path" "header" "sep" ...
+# $ arg_descriptions: Named chr [1:9] "cls" "path" "header" "sep" ...
+.rs.addFunction("python.getParameterHelp", function(source)
+{
+   error <- list(args = character(), arg_descriptions = character())
+   object <- .rs.tryCatch(reticulate::py_eval(source, convert = FALSE))
+   if (inherits(object, "error"))
+      return(error)
+   
+   # extract argument names using inspect
+   inspect <- reticulate::import("inspect", convert = TRUE)
+   spec <- inspect$getargspec(object)
+   args <- spec$args
+   
+   # attempt to scrape parameter documentation
+   docs <- reticulate::py_get_attr(object, "__doc__", silent = TRUE)
+   if (inherits(docs, "python.builtin.object"))
+      docs <- reticulate::py_to_r(docs)
+   if (is.null(docs))
+      docs <- ""
+   
+   lines <- strsplit(docs, "\n", fixed = TRUE)[[1]]
+   
+   arg_descriptions <- lapply(args, function(arg) {
+      tryCatch({
+         # try to find the line where the parameter documentation starts
+         pattern <- sprintf("^\\s*%s\\s*:", arg)
+         index <- grep(pattern, lines)
+         if (!length(index))
+            return("")
+         index <- index[[1]]
+         line <- lines[[index]]
+         
+         # split into argument name, initial part of description
+         desc <- ""
+         colon <- regexpr(":", line, fixed = TRUE)
+         if (colon != -1L)
+            desc <- substring(line, colon + 1)
+         
+         # now, look to see if the documentation spans multiple lines
+         # consume lines of greater indent that the current
+         indent <- regexpr("(?:\\S|$)", line)
+         start <- end <- index + 1
+         while (TRUE) {
+            if (regexpr("(?:\\S|$)", lines[[end]]) <= indent)
+               break
+            end <- end + 1
+         }
+         
+         if (start != end)
+            desc <- c(desc, lines[start:(end - 1L)])
+         
+         paste(gsub("^\\s*|\\s*$", "", desc), collapse = "\n")
+         
+      }, error = function(e) "")
+   })
+   
+   list(
+      args             = as.character(args),
+      arg_descriptions = as.character(arg_descriptions)
+   )
 })

@@ -37,6 +37,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
@@ -141,6 +142,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -249,6 +252,16 @@ public class RemoteServer implements Server
          };
       }
       
+      // initialize user home path on init
+      eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            userHomePath_ = getUserHomePath(session_.getSessionInfo());
+         }
+      });
+      
       // create server event listener
       serverEventListener_ = new RemoteServerEventListener(this, 
                                                            externalListener);
@@ -352,6 +365,15 @@ public class RemoteServer implements Server
          array.set(i, new JSONNumber(what.get(i)));
       params.set(index, array);
    }
+   
+   
+   // extract user home path from session info (we don't expose this as a
+   // helper function on SessionInfo just because paths on the client are
+   // typically aliased, and we want to avoid potentially mixing aliased
+   // and unaliased paths in other contexts)
+   private static final native String getUserHomePath(SessionInfo info) /*-{
+      return info.user_home_path;
+   }-*/;
    
    // accept application agreement
    public void acceptAgreement(Agreement agreement, 
@@ -1377,16 +1399,25 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
    }
+   
+   // this method is private as we generally don't want to expose
+   // non-aliased paths to other parts of the client codebase
+   // (most client-side APIs assume paths are aliased)
+   private final String resolveAliasedPath(FileSystemItem file)
+   {
+      String path = file.getPath();
+      if (path.startsWith("~"))
+         path = userHomePath_ + path.substring(1);
+      return path;
+   }
 
    public String getFileUrl(FileSystemItem file)
    {
-//      // TODO: need to be asynchronous for desktop
-//      if (Desktop.isDesktop())
-//      {
-//         return Desktop.getFrame().getUriForPath(file.getPath());
-//      }
-      
-      if (!file.isDirectory())
+      if (Desktop.isDesktop())
+      {
+         return "file://" + resolveAliasedPath(file);
+      }
+      else if (!file.isDirectory())
       {
          if (file.isWithinHome())
          {
@@ -5352,6 +5383,7 @@ public class RemoteServer implements Server
 
    private String clientId_;
    private String clientVersion_ = "";
+   private String userHomePath_;
    private boolean listeningForEvents_;
    private boolean disconnected_;
 

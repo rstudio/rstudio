@@ -504,11 +504,6 @@ QString GwtCallback::fixedWidthFont()
    return options().fixedWidthFont();
 }
 
-QString GwtCallback::getUriForPath(QString path)
-{
-   return QUrl::fromLocalFile(resolveAliasedPath(path)).toString();
-}
-
 void GwtCallback::onWorkbenchInitialized(QString scratchPath)
 {
    workbenchInitialized();
@@ -1362,9 +1357,10 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
-std::string GwtCallback::getDisplayDpi()
+QString GwtCallback::getDisplayDpi()
 {
-   return safe_convert::numberToString(getDpi());
+   return QString::fromStdString(
+            safe_convert::numberToString(getDpi()));
 }
 
 } // namespace desktop

@@ -129,6 +129,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
+   // user home path
+   sessionInfo["user_home_path"] = session::options().userHomePath().absolutePath();
+   
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
    

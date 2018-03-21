@@ -67,7 +67,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void doesWindowExistAtCursorPosition(CommandWithArg<Boolean> callback);
    void getCursorPosition(CommandWithArg<Point> callback);
    
-   String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);

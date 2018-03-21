@@ -252,6 +252,11 @@ int main(int argc, char* argv[])
       // prepare command line arguments
       static std::vector<char*> arguments(argv, argv + argc);
       
+      // enable viewport meta (allows us to control / restrict
+      // certain touch gestures)
+      static char enableViewport[] = "--enable-viewport";
+      arguments.push_back(enableViewport);
+      
 #ifndef NDEBUG
       // disable web security for development builds (so we can
       // get access to sourcemaps)
@@ -418,8 +423,11 @@ int main(int argc, char* argv[])
          scriptsPath = currentPath.complete("desktop");
          devMode = true;
 #ifdef _WIN32
-         if (version.architecture() == ArchX64)
+         if (version.architecture() == ArchX64 &&
+             installPath.complete("session/x64").exists())
+         {
             sessionPath = installPath.complete("session/x64/rsession");
+         }
 #endif
       }
 
@@ -432,8 +440,11 @@ int main(int argc, char* argv[])
 
          // check for win64 binary on windows
 #ifdef _WIN32
-         if (version.architecture() == ArchX64)
+         if (version.architecture() == ArchX64 &&
+             installPath.complete("bin/x64").exists())
+         {
             sessionPath = installPath.complete("bin/x64/rsession");
+         }
 #endif
 
          // check for running in a bundle on OSX
