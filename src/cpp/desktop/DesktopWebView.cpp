@@ -15,6 +15,8 @@
 
 #include "DesktopWebView.hpp"
 
+#include <QApplication>
+#include <QClipboard>
 #include <QMenu>
 #include <QNetworkReply>
 #include <QStyleFactory>
@@ -168,16 +170,23 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    }
    else
    {
-      if (!data.selectedText().isEmpty())
-      {
-         if (data.isContentEditable())
-         {
-            menu->addAction(webPage()->action(QWebEnginePage::Cut));
-         }
-         menu->addAction(webPage()->action(QWebEnginePage::Copy));
-      }
-
-      menu->addAction(webPage()->action(QWebEnginePage::Paste));
+      // always show cut / copy / paste, but only enable cut / copy if there
+      // is some selected text, and only enable paste if there is something
+      // on the clipboard. note that this isn't perfect -- the highlighted
+      // text may not correspond to the context menu click target -- but
+      // in general users who want to copy text will right-click on the
+      // selection, rather than elsewhere on the screen.
+      auto* cut   = webPage()->action(QWebEnginePage::Cut);
+      auto* copy  = webPage()->action(QWebEnginePage::Copy);
+      auto* paste = webPage()->action(QWebEnginePage::Paste);
+      
+      cut->setEnabled(data.isContentEditable() && !data.selectedText().isEmpty());
+      copy->setEnabled(!data.selectedText().isEmpty());
+      paste->setEnabled(QApplication::clipboard()->mimeData()->hasText());
+      
+      menu->addAction(cut);
+      menu->addAction(copy);
+      menu->addAction(paste);
       menu->addSeparator();
       menu->addAction(webPage()->action(QWebEnginePage::SelectAll));
    }
