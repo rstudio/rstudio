@@ -352,8 +352,9 @@ void MenuActionBinder::onHideMenu()
 
 WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), parent)
 {
+   // NOTE: CTRL means META on macOS
    pMinimize_ = addAction(QString::fromUtf8("Minimize"));
-   pMinimize_->setShortcut(QKeySequence(QString::fromUtf8("Meta+M")));
+   pMinimize_->setShortcut(Qt::CTRL + Qt::Key_M);
    connect(pMinimize_, SIGNAL(triggered()),
            this, SLOT(onMinimize()));
 
