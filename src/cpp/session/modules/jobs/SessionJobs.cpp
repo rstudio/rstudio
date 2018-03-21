@@ -238,7 +238,11 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    if (!lookupJob(jobSEXP, &pJob))
       return R_NilValue;
 
-   pJob->addOutput(r::sexp::safeAsString(outputSEXP), r::sexp::asLogical(errorSEXP));
+   // save output to job
+   std::string output = r::sexp::safeAsString(outputSEXP);
+   bool error = r::sexp::asLogical(errorSEXP);
+   pJob->addOutput(output, error);
+
    return R_NilValue;
 }
 
@@ -284,6 +288,33 @@ Error jobOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error setJobListening(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // extract job ID
+   std::string id;
+   bool listening;
+   Error error = json::readParams(request.params, &id, &listening);
+   if (error)
+      return error;
+
+   // look up in cache
+   auto it = s_jobs.find(id);
+   if (it == s_jobs.end())
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   // if listening started, return the output so far
+   if (listening)
+   {
+      pResponse->setResult(it->second->output(0));
+   }
+
+   // begin/end listening
+   it->second->setListening(listening);
+
+   return Success();
+}
+
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
 }
@@ -319,6 +350,7 @@ core::Error initialize()
    initBlock.addFunctions()
       (bind(module_context::registerRpcMethod, "get_jobs", getJobs))
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
+      (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

@@ -64,7 +64,8 @@ Job::Job(const std::string& id,
    recorded_(::time(0)),
    started_(0),
    completed_(0),
-   autoRemove_(autoRemove)
+   autoRemove_(autoRemove),
+   listening_(false)
 {
    setState(state);
 }
@@ -76,7 +77,8 @@ Job::Job():
    recorded_(::time(0)),
    started_(0),
    completed_(0),
-   autoRemove_(true)
+   autoRemove_(true),
+   listening_(false)
 {
 }
 
@@ -219,6 +221,11 @@ void Job::setState(JobState state)
       completed_ = ::time(0);
 }
 
+void Job::setListening(bool listening)
+{
+   listening_ = listening;
+}
+
 bool Job::complete() const
 {
    return state_ != JobIdle && state_ != JobRunning;
@@ -259,6 +266,19 @@ void Job::addOutput(const std::string& output, bool asError)
    // look up output file
    Error error;
    FilePath outputFile = outputCacheFile();
+
+
+   // let the client know, if the client happens to be listening (the client doesn't listen by
+   // default because listening to all jobs simultaneously could produce an overwhelming number of
+   // client events)
+   if (listening_)
+   {
+      json::Array data;
+      data.push_back(output);
+      data.push_back(asError);
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kJobUpdated, data));
+   }
 
    // create parent folder if necessary
    if (!outputFile.parent().exists())

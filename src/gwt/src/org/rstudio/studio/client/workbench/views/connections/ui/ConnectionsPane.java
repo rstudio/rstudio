@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,8 +28,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.layout.client.Layout.AnimationCallback;
-import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -37,7 +35,6 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -60,6 +57,7 @@ import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
+import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -92,10 +90,6 @@ public class ConnectionsPane extends WorkbenchPane
 
       // track activation events to update the toolbar
       eventBus_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
-      
-      // create main panel
-      mainPanel_ = new LayoutPanel();
-      mainPanel_.addStyleName("ace_editor_theme");
       
       // create data grid
       keyProvider_ = new ProvidesKey<Connection>() {
@@ -182,19 +176,13 @@ public class ConnectionsPane extends WorkbenchPane
       dataProvider_ = new ListDataProvider<Connection>();
       dataProvider_.addDataDisplay(connectionsDataGrid_);
       
-      // add data grid to main panel
-      mainPanel_.add(connectionsDataGrid_);
-      mainPanel_.setWidgetTopBottom(connectionsDataGrid_, 0, Unit.PX, 0, Unit.PX);
-      mainPanel_.setWidgetLeftRight(connectionsDataGrid_, 0, Unit.PX, 0, Unit.PX);
-
-      
       // create connection explorer, add it, and hide it
       connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
       
-      mainPanel_.add(connectionExplorer_);
-      mainPanel_.setWidgetTopBottom(connectionExplorer_, 0, Unit.PX, 0, Unit.PX);
-      mainPanel_.setWidgetLeftRight(connectionExplorer_, -5000, Unit.PX, 5000, Unit.PX);
+      // create main panel
+      mainPanel_ = new SlidingLayoutPanel(connectionsDataGrid_, connectionExplorer_);
+      mainPanel_.addStyleName("ace_editor_theme");
   
       // create widget
       ensureWidget();
@@ -268,18 +256,12 @@ public class ConnectionsPane extends WorkbenchPane
       
       installConnectionExplorerToolbar(connection);
       
-      transitionMainPanel(
-              connectionsDataGrid_,
-              connectionExplorer_,
-              true,
-              true,
-              new Command() {
-               @Override
-               public void execute()
-               {
-                  connectionExplorer_.onResize();
-               }
-      });
+      // show the right panel (connection explorer)
+      mainPanel_.slideWidgets(
+            SlidingLayoutPanel.Direction.SlideRight, true, () ->
+            {
+               connectionExplorer_.onResize();
+            });
    }
    
    @Override
@@ -312,19 +294,9 @@ public class ConnectionsPane extends WorkbenchPane
  
       installConnectionsToolbar();
       
-      transitionMainPanel(
-              connectionExplorer_,
-              connectionsDataGrid_,
-              false,
-              animate,
-              new Command() {
-                @Override
-                public void execute()
-                {
-                   
-                  
-                }
-             });
+      // show the left panel (connection explorer)
+      mainPanel_.slideWidgets(
+            SlidingLayoutPanel.Direction.SlideLeft, animate, () -> {});
    }
    
    
@@ -491,68 +463,6 @@ public class ConnectionsPane extends WorkbenchPane
    }
 
    
-   private void transitionMainPanel(
-                        final Widget from,
-                        final Widget to,
-                        boolean rightToLeft,
-                        boolean animate,
-                        final Command onComplete)
-   {
-      assert from != to;
-
-      int width = getOffsetWidth();
-
-      mainPanel_.setWidgetLeftWidth(from,
-            0, Unit.PX,
-            width, Unit.PX);
-      mainPanel_.setWidgetLeftWidth(to,
-            rightToLeft ? width : -width, Unit.PX,
-                  width, Unit.PX);
-      mainPanel_.forceLayout();
-
-      mainPanel_.setWidgetLeftWidth(from,
-            rightToLeft ? -width : width, Unit.PX,
-                  width, Unit.PX);
-      mainPanel_.setWidgetLeftWidth(to,
-            0, Unit.PX,
-            width, Unit.PX);
-
-      to.setVisible(true);
-      from.setVisible(true);
-      
-      final Command completeLayout = new Command() {
-
-         @Override
-         public void execute()
-         {
-            mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
-            from.setVisible(false);
-            mainPanel_.forceLayout();
-            onComplete.execute();
-         }
-         
-      };
-      
-      if (animate)
-      {
-         mainPanel_.animate(300, new AnimationCallback()
-         {
-            public void onAnimationComplete()
-            {
-               completeLayout.execute();
-            }
-   
-            public void onLayout(Layer layer, double progress)
-            {
-            }
-         });
-      }
-      else
-      {
-         completeLayout.execute();
-      }
-   }
-   
    private void installConnectionsToolbar()
    {
       toolbar_.removeAllWidgets();
@@ -660,7 +570,7 @@ public class ConnectionsPane extends WorkbenchPane
    
    
    private Toolbar toolbar_;
-   private final LayoutPanel mainPanel_;
+   private final SlidingLayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
    private final SingleSelectionModel<Connection> selectionModel_;
    private final ConnectionExplorer connectionExplorer_;

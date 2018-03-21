@@ -5271,6 +5271,16 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void setJobListening(String id, boolean listening,
+                               ServerRequestCallback<JsArray<JsArrayEx>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      params.set(1, JSONBoolean.getInstance(listening));
+      sendRequest(RPC_SCOPE, "set_job_listening", params, callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;

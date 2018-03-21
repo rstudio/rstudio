@@ -185,6 +185,7 @@ extern const int kShowPageViewerEvent;
 extern const int kAskSecret;
 extern const int kJobUpdated;
 extern const int kJobRefresh;
+extern const int kJobOutput;
 }
    
 class ClientEvent

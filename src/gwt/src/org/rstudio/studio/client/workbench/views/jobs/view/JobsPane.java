@@ -22,9 +22,13 @@ import java.util.Collections;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -44,14 +48,23 @@ public class JobsPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       list_ = new JobsList();
-      list_.addStyleName("ace_editor_theme");
-      return list_;
+      output_  = new Label("Output");
+      
+      panel_ = new SlidingLayoutPanel(list_, output_);
+      panel_.addStyleName("ace_editor_theme");
+      return panel_;
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
       Toolbar mainToolbar = new Toolbar();
+      ToolbarButton viewOutput = new ToolbarButton("Info", 
+            ThemeResources.INSTANCE.infoSmall2x(), evt ->
+         {
+            panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> {});
+         });
+      mainToolbar.addLeftWidget(viewOutput);
       return mainToolbar;
    }
 
@@ -107,4 +120,6 @@ public class JobsPane extends WorkbenchPane
    }
 
    JobsList list_;
+   Widget output_;
+   SlidingLayoutPanel panel_;
 }

@@ -82,6 +82,9 @@ public:
    // whether the job should be cleaned up automatically when complete
    bool autoRemove() const;
 
+   // whether the client is listening to the job
+   void setListening(bool listening);
+
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
    core::json::Array output(int position);
@@ -125,6 +128,7 @@ private:
    time_t completed_;  // when the job completed executing
 
    bool autoRemove_;
+   bool listening_;
 };
 
 
