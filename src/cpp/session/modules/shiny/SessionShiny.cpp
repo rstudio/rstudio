@@ -95,7 +95,7 @@ std::string onDetectShinySourceType(
       switch(type)
       {
          case ShinyNone:
-            return kShinyTypeNone;
+            return std::string();
          case ShinyDirectory:
             return kShinyTypeDirectory;
          case ShinySingleFile:

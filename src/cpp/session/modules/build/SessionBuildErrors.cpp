@@ -27,6 +27,8 @@
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -256,6 +258,92 @@ std::vector<module_context::SourceMarker> parseGccErrors(
    return errors;
 }
 
+std::vector<module_context::SourceMarker> parseTestThatErrors(
+                                           const FilePath& basePath,
+                                           const std::string& output)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> errors;
+
+   try
+   {
+      FilePath basePathResolved = module_context::resolveAliasedPath(basePath.absolutePath());
+
+      boost::regex re("\\[1m([^:\\n]+):([0-9]+):[^:\\n]+: ([^\\n]*)\\[22m");
+
+      boost::sregex_iterator iter(output.begin(), output.end(), re);
+      boost::sregex_iterator end;
+      for (; iter != end; iter++)
+      {
+         boost::smatch match = *iter;
+         BOOST_ASSERT(match.size() == 4);
+
+         std::string file, line, type, message;
+         
+         file = match[1];
+         line = match[2];
+         type = "failure";
+         message = match[3];
+         FilePath testFilePath = basePathResolved.complete(file);
+
+         std::string column = "0";
+         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+                          testFilePath,
+                          core::safe_convert::stringTo<int>(line, 1),
+                          core::safe_convert::stringTo<int>(column, 1),
+                          core::html_utils::HTML(message),
+                          true);
+         errors.push_back(err);
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+
+   return errors;
+}
+
+std::vector<module_context::SourceMarker> parseShinyTestErrors(
+                                           const FilePath& basePath,
+                                           const FilePath& rdsPath,
+                                           const std::string& output)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> errors;
+
+   try
+   {
+      FilePath basePathResolved = module_context::resolveAliasedPath(basePath.absolutePath());
+
+      std::vector<std::string> failed;
+      r::exec::RFunction rFunc(".rs.readShinytestResultRds", rdsPath.absolutePath());
+      Error error = rFunc.call(&failed);
+      if (error) 
+         LOG_ERROR(error);
+
+      for (size_t idxFailed = 0; idxFailed < failed.size(); idxFailed++)
+      {
+         std::string file, line, type, message;
+         
+         file = failed.at(idxFailed);
+         line = "0";
+         std::string column = "0";
+         type = "failure";
+         message = std::string("Differences detected in " + file + ".");
+         FilePath testFilePath = basePathResolved.complete("tests").complete(file + ".R");
+
+         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+                          testFilePath,
+                          core::safe_convert::stringTo<int>(line, 1),
+                          core::safe_convert::stringTo<int>(column, 1),
+                          core::html_utils::HTML(message),
+                          true);
+         errors.push_back(err);
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+
+   return errors;
+}
+
 } // anonymous namespace
 
 CompileErrorParser gccErrorParser(const FilePath& basePath)
@@ -268,6 +356,15 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
    return boost::bind(parseRErrors, basePath, _1);
 }
 
+CompileErrorParser testthatErrorParser(const FilePath& basePath)
+{
+   return boost::bind(parseTestThatErrors, basePath, _1);
+}
+
+CompileErrorParser shinytestErrorParser(const FilePath& basePath, const FilePath& rdsPath)
+{
+   return boost::bind(parseShinyTestErrors, basePath, rdsPath, _1);
+}
 
 } // namespace build
 } // namespace modules

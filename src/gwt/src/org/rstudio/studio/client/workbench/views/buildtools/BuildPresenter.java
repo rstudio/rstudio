@@ -307,6 +307,11 @@ public class BuildPresenter extends BasePresenter
    {
       startBuild("test-package");
    }
+
+   void onTestTestthatFile()
+   {
+      startBuild("test-file");
+   }
    
    void onRebuildAll()
    {

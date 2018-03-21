@@ -75,6 +75,7 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
+import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -280,4 +281,5 @@ public interface RStudioGinjector extends Ginjector
    AceThemes getAceThemes();
    AddinsCommandManager getAddinsCommandManager();
    DependencyManager getDependencyManager();
+   ShinyTestPopupMenu getShinyTestPopupMenu();
 }

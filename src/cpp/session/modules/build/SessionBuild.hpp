@@ -32,6 +32,8 @@ namespace build {
 core::json::Value buildStateAsJson();
 
 core::Error initialize();
+
+bool buildEnabled();
                        
 } // namespace build
 } // namespace modules

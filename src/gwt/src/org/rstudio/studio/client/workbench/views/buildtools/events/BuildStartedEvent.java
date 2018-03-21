@@ -14,18 +14,35 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class BuildStartedEvent extends GwtEvent<BuildStartedEvent.Handler>
 {  
+   public static class Data extends JavaScriptObject
+   { 
+      protected Data()
+      {
+      }
+      
+      public final native String getType() /*-{
+         return this.type;
+      }-*/;
+      
+      public final native String getSubType() /*-{
+         return this.sub_type;
+      }-*/;
+   }
+
    public interface Handler extends EventHandler
    {
       void onBuildStarted(BuildStartedEvent event);
    }
 
-   public BuildStartedEvent()
+   public BuildStartedEvent(Data data)
    {
+      data_ = data;
    }
   
    @Override
@@ -39,6 +56,18 @@ public class BuildStartedEvent extends GwtEvent<BuildStartedEvent.Handler>
    {
       handler.onBuildStarted(this);
    }
+
+   public String getType()
+   {
+      return data_.getType();
+   }
+
+   public String getSubType()
+   {
+      return data_.getSubType();
+   }
+
+   private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

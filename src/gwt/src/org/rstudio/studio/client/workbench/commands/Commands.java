@@ -471,6 +471,8 @@ public abstract class
    public abstract AppCommand roxygenizePackage();
    public abstract AppCommand checkPackage();
    public abstract AppCommand testPackage();
+   public abstract AppCommand testTestthatFile();
+   public abstract AppCommand testShinytestFile();
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
@@ -527,6 +529,9 @@ public abstract class
    public abstract AppCommand shinyRunInPane();
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
+   public abstract AppCommand shinyRecordTest();
+   public abstract AppCommand shinyRunAllTests();
+   public abstract AppCommand shinyCompareTest();
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();

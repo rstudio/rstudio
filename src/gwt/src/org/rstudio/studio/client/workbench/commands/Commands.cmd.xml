@@ -2844,6 +2844,18 @@ well as menu structures (for main menu and popup menus).
         windowMode="background"
         context="packageDevelopment"/>
 
+   <cmd id="testTestthatFile"
+        label="Run Tests"
+        menuLabel="Run tests for file"
+        buttonLabel="Run Tests"
+        desc="Run tests using the testthat package"/>
+
+   <cmd id="testShinytestFile"
+        label="Run Test"
+        menuLabel="Run test for file"
+        buttonLabel="Run Test"
+        desc="Run test using the shinytest package"/>
+
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
         desc="Stop the current build"
@@ -3052,6 +3064,24 @@ well as menu structures (for main menu and popup menus).
         desc="Run the Shiny application in the system's default Web browser"
         checkable="true"
         windowMode="background"/>
+
+   <cmd id="shinyRecordTest"
+        label="Record a test for Shiny"
+        menuLabel="Record Test"
+        buttonLabel="Record Test"
+        desc="Record test for Shiny application"/>
+
+   <cmd id="shinyRunAllTests"
+        label="Run tests for Shiny application"
+        menuLabel="Run Tests"
+        buttonLabel="Run Tests"
+        desc="Run tests for Shiny application"/>
+
+   <cmd id="shinyCompareTest"
+        label="Compare test results for Shiny application"
+        menuLabel="Compare Results"
+        buttonLabel="Compare Results"
+        desc="Compare test results for Shiny application"/>
 
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."

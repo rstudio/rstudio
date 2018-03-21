@@ -46,7 +46,7 @@ namespace {
 FilePath s_pendingShinyPath;
 
 void enqueueStartEvent(const std::string& url, const std::string& path,
-                     int viewerType)
+                     int viewerType, int options)
 {
    FilePath shinyPath(path);
    if (module_context::safeCurrentPath() == shinyPath &&
@@ -65,6 +65,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
    dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
+   dataJson["options"] = options;
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -98,9 +99,24 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          }
       }
 
+      int options = SHINY_VIEWER_OPTIONS_NONE;
+
+      std::string path = r::sexp::safeAsString(pathSEXP);
+      if (path.find("/shinytest/recorder") != std::string::npos ||
+          path.find("/shinytest/diffviewerapp") != std::string::npos)
+      {
+          viewertype = SHINY_VIEWER_WINDOW;
+          options = SHINY_VIEWER_OPTIONS_NOTOOLS;
+      }
+      if (path.find("/shinytest/recorder") != std::string::npos)
+      {
+          options |= SHINY_VIEWER_OPTIONS_WIDE;
+      }
+
       enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
-                        r::sexp::safeAsString(pathSEXP),
-                        viewertype);
+                        path,
+                        viewertype,
+                        options);
    }
    catch(const r::exec::RErrorException& e)
    {

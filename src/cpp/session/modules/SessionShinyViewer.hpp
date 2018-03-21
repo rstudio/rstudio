@@ -33,6 +33,10 @@ const int SHINY_VIEWER_PANE = 2;
 const int SHINY_VIEWER_WINDOW = 3;
 const int SHINY_VIEWER_BROWSER = 4;
 
+const int SHINY_VIEWER_OPTIONS_NONE = 0;
+const int SHINY_VIEWER_OPTIONS_NOTOOLS = 1;
+const int SHINY_VIEWER_OPTIONS_WIDE = 2;
+
 core::Error initialize();
                        
 } // namespace shiny_viewer

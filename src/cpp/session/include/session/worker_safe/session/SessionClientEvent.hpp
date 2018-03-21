@@ -183,6 +183,9 @@ extern const int kOpenFileDialog;
 extern const int kRemoveTerminal;
 extern const int kShowPageViewerEvent;
 extern const int kAskSecret;
+extern const int kTestsStarted;
+extern const int kTestsOutput;
+extern const int kTestsCompleted;
 }
    
 class ClientEvent
