@@ -28,3 +28,16 @@
    }
 
 })
+
+.rs.addJsonRpcHandler("has_shinytest_results", function(appPath, testName) {
+
+   result <- dir.exists(
+      file.path(
+         appPath,
+         "tests",
+         paste(testName, "current", sep = "-")
+      )
+   )
+
+   .rs.scalar(result)
+})

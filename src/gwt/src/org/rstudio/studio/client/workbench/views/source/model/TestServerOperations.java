@@ -22,4 +22,6 @@ public interface TestServerOperations
    void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback);
    
    void installShinyTestDependencies(ServerRequestCallback<ConsoleProcess> callback);
+
+   void hasShinyTestResults(String shinyApp, String testName, ServerRequestCallback<Boolean> callback);
 }

@@ -5336,6 +5336,20 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(callback));
    }
 
+   @Override
+   public void hasShinyTestResults(String shinyApp, String testName, ServerRequestCallback<Boolean> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(shinyApp));
+      params.set(1, new JSONString(testName));
+
+      sendRequest(RPC_SCOPE,
+                  HAS_SHINYTEST_RESULTS,
+                  params,
+                  true,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5765,4 +5779,5 @@ public class RemoteServer implements Server
 
    private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
    private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
+   private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
 }

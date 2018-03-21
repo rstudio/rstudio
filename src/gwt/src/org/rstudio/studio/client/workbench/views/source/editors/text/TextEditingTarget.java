@@ -1229,9 +1229,6 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
 
-      commands_.testTestthatFile().setEnabled(extendedType_ == SourceDocument.XT_TEST_TESTTHAT);
-      commands_.testShinytestFile().setEnabled(extendedType_ == SourceDocument.XT_TEST_SHINYTEST);
-      
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       docUpdateSentinel_ = new DocUpdateSentinel(
@@ -6934,20 +6931,43 @@ public class TextEditingTarget implements
    @Handler
    void onShinyCompareTest()
    {
-      checkTestPackageDependencies(
-         new Command()
+      final String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
+      final String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
+
+      server_.hasShinyTestResults(appDir, testName, new ServerRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean hasResults)
          {
-            @Override
-            public void execute()
-            {
-               String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
-               String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
-               String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+            if (!hasResults) {
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO, 
+                  "No Failed Results", 
+                  "There are no failed tests to compare."
+               );
             }
-         },
-         false
-      );
+            else {
+               checkTestPackageDependencies(
+                  new Command()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
+                        events_.fireEvent(new SendToConsoleEvent(code, true));
+                     }
+                  },
+                  false
+               );
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage("Failed to check if results are available", error.getUserMessage());
+         }
+      });
    }
    
    private StatusBar statusBar_;
