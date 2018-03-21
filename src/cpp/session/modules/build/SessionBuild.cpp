@@ -394,7 +394,7 @@ private:
          }
 
          // get package info
-         Error error = pkgInfo_.read(packagePath);
+         error = pkgInfo_.read(packagePath);
          if (error)
          {
             terminateWithError("Reading package DESCRIPTION", error);
