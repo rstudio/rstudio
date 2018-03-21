@@ -60,6 +60,24 @@ namespace session {
 
 namespace {
 
+std::string preflightPackageBuildErrorMessage(
+      const std::string& message,
+      const FilePath& buildDirectory)
+{
+   std::string fmt = 1 + R"EOF(
+ERROR: Package build failed.
+
+%1%
+
+Build directory: %2%
+)EOF";
+   
+   auto formatter = boost::format(fmt)
+         % message
+         % module_context::createAliasedPath(buildDirectory);
+   return boost::str(formatter);
+}
+
 std::string quoteString(const std::string& str)
 {
    return "'" + str + "'";
@@ -319,21 +337,20 @@ private:
          terminateWithError("Unrecognized build type: " + config.buildType);
       }
    }
-
+   
    void executePackageBuild(const std::string& type,
                             const FilePath& packagePath,
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
       // validate that this is a package
-      if (!r_util::isPackageDirectory(packagePath))
+      if (!packagePath.childPath("DESCRIPTION").exists())
       {
-         boost::format fmt ("ERROR: The build directory does "
-                            "not contain a DESCRIPTION\n"
-                            "file so cannot be built as a package.\n\n"
-                            "Build directory: %1%\n");
-         terminateWithError(boost::str(
-                 fmt % module_context::createAliasedPath(packagePath)));
+         std::string message =
+               "The build directory does not contain a DESCRIPTION file and so "
+               "cannot be built as a package.";
+         
+         terminateWithError(preflightPackageBuildErrorMessage(message, packagePath));
          return;
       }
 
@@ -341,7 +358,18 @@ private:
       Error error = pkgInfo_.read(packagePath);
       if (error)
       {
-         terminateWithError("Reading package DESCRIPTION", error);
+         // check to see if this was a parse error; if so, report that
+         std::string parseError = error.getProperty("parse-error");
+         if (!parseError.empty())
+         {
+            std::string message = "Failed to parse DESCRIPTION: " + parseError;
+            terminateWithError(preflightPackageBuildErrorMessage(message, packagePath));
+         }
+         else
+         {
+            terminateWithError("reading package DESCRIPTION", error);
+         }
+         
          return;
       }
 
