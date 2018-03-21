@@ -252,6 +252,11 @@ int main(int argc, char* argv[])
       // prepare command line arguments
       static std::vector<char*> arguments(argv, argv + argc);
       
+      // enable viewport meta (allows us to control / restrict
+      // certain touch gestures)
+      static char enableViewport[] = "--enable-viewport";
+      arguments.push_back(enableViewport);
+      
 #ifndef NDEBUG
       // disable web security for development builds (so we can
       // get access to sourcemaps)
