@@ -136,7 +136,9 @@
    }
    
    # install matplotlib hook if available
-   if (reticulate::py_module_available("matplotlib")) {
+   if (requireNamespace("png", quietly = TRUE) &&
+       reticulate::py_module_available("matplotlib"))
+   {
       matplotlib <- reticulate::import("matplotlib", convert = TRUE)
       plt <- matplotlib$pyplot
       .rs.setVar("reticulate.matplotlib.show", plt$show)
