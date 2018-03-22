@@ -18,6 +18,8 @@ import java.util.Date;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
@@ -35,7 +37,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class JobItem extends Composite
 {
-
    private static JobItemUiBinder uiBinder = GWT.create(JobItemUiBinder.class);
 
    interface JobItemUiBinder extends UiBinder<Widget, JobItem>
@@ -55,13 +56,22 @@ public class JobItem extends Composite
 
       @Source("failed_2x.png")
       ImageResource jobFailed();
+
+      @Source("select_2x.png")
+      ImageResource jobSelect();
    }
 
-   public JobItem(Job job)
+   public JobItem(final Job job)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
+      select_.setResource(new ImageResource2x(RESOURCES.jobSelect()));
+      select_.addClickHandler(evt -> 
+      {
+         RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+               new JobSelectionEvent(job.id));
+      });
       
       update(job);
    }
@@ -133,6 +143,7 @@ public class JobItem extends Composite
    @UiField HTMLPanel bar_;
    @UiField HTMLPanel progress_;
    @UiField HorizontalPanel progressHost_;
+   @UiField Image select_;
    @UiField Image state_;
    @UiField Label elapsed_;
    @UiField Label name_;

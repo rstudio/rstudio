@@ -280,7 +280,7 @@ void Job::addOutput(const std::string& output, bool asError)
       data.push_back(type);
       data.push_back(output);
       module_context::enqueClientEvent(
-            ClientEvent(client_events::kJobUpdated, data));
+            ClientEvent(client_events::kJobOutput, data));
    }
 
    // create parent folder if necessary

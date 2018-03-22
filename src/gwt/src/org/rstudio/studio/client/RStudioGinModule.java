@@ -174,6 +174,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOper
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.JobsTab;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
@@ -418,6 +419,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AddinsServerOperations.class).to(RemoteServer.class);
       bind(ProjectTemplateServerOperations.class).to(RemoteServer.class);
       bind(ObjectExplorerServerOperations.class).to(RemoteServer.class);
+      bind(JobsServerOperations.class).to(RemoteServer.class);
       bind(DesktopInfo.class).asEagerSingleton();
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;

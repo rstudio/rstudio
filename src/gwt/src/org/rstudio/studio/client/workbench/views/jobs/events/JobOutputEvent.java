@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class JobOutputEvent extends GwtEvent<JobOutputEvent.Handler>
 {
-   public class Data extends JavaScriptObject
+   public static class Data extends JavaScriptObject
    {
       protected Data() 
       {

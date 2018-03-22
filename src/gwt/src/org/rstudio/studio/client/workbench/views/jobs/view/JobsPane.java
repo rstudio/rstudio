@@ -63,12 +63,6 @@ public class JobsPane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar mainToolbar = new Toolbar();
-      ToolbarButton viewOutput = new ToolbarButton("Info", 
-            ThemeResources.INSTANCE.infoSmall2x(), evt ->
-         {
-            panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> {});
-         });
-      mainToolbar.addLeftWidget(viewOutput);
       return mainToolbar;
    }
 
@@ -124,35 +118,34 @@ public class JobsPane extends WorkbenchPane
    }
 
    @Override
-   public void showJobOutput(Job job, JsArray<JobOutput> output)
+   public void showJobOutput(String id, JsArray<JobOutput> output)
    {
-      // show the output pane
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> 
-      {
-         output_.clearAll();
-         output_.compileStarted(null);
+      // cleear any existing output in the pane
+      output_.clearOutput();
 
-         // display all the output, but don't scroll as we go
-         for (int i = 0; i < output.length(); i++)
-         {
-            output_.showOutput(CompileOutput.create(
-                  output.get(i).type(), 
-                  output.get(i).output()), false /* scroll */);
-         }
-         
-         // scroll to show all output so far
-         output_.scrollToBottom();
-      });
+      // display all the output, but don't scroll as we go
+      for (int i = 0; i < output.length(); i++)
+      {
+         output_.showOutput(CompileOutput.create(
+               output.get(i).type(), 
+               output.get(i).output()), false /* scroll */);
+      }
       
-      // save job
-      current_ = job;
+      // scroll to show all output so far
+      output_.scrollToBottom();
+
+      // show the output pane
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> {});
+      
+      // save job id as current job
+      current_ = id;
    }
 
    @Override
    public void addJobOutput(String id, int type, String output)
    {
       // make sure this output belongs to the job currently being displayed
-      if (current_ == null || id != current_.id)
+      if (current_ == null || id != current_)
       {
          Debug.logWarning("Attempt to show output for incorrect job '" + 
                           id + "'.");
@@ -163,7 +156,7 @@ public class JobsPane extends WorkbenchPane
       output_.showOutput(CompileOutput.create(type, output), true /* scroll */);
    }
 
-   Job current_;
+   String current_;
    JobsList list_;
    CompilePanel output_;
    SlidingLayoutPanel panel_;

@@ -3,7 +3,7 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
 
-    @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+	@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 
 	@external rstudio-themes-dark;
 
@@ -72,28 +72,45 @@
 		height: 18px;
 		border: 0px;
 	}
+	
+	.outer
+	{
+		width: 100%;
+	}
+	
+	.select
+	{
+		cursor: pointer;
+	}
 	</ui:style>
-	<g:VerticalPanel styleName="{style.item}">
-		<g:HorizontalPanel styleName="{style.metadata}">
-		    <g:cell horizontalAlignment="ALIGN_LEFT">
-				<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
-            </g:cell>
-            <g:cell horizontalAlignment="ALIGN_RIGHT">
-			    <g:Label ui:field="status_"></g:Label>
-            </g:cell>
+	<g:FocusPanel>
+		<g:HorizontalPanel styleName="{style.outer}">
+			<g:VerticalPanel styleName="{style.item}">
+				<g:HorizontalPanel styleName="{style.metadata}">
+					<g:cell horizontalAlignment="ALIGN_LEFT">
+						<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
+					</g:cell>
+					<g:cell horizontalAlignment="ALIGN_RIGHT">
+						<g:Label ui:field="status_"></g:Label>
+					</g:cell>
+				</g:HorizontalPanel>
+				<g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
+					<g:HTMLPanel styleName="{style.progress}" ui:field="progress_">
+						<g:HTMLPanel styleName="{style.bar}" ui:field="bar_"></g:HTMLPanel>
+					</g:HTMLPanel>
+				</g:HorizontalPanel>
+				<g:HorizontalPanel>
+					<g:cell verticalAlignment="ALIGN_MIDDLE">
+						<g:Image styleName="{style.state}" ui:field="state_"></g:Image>
+					</g:cell>
+					<g:cell verticalAlignment="ALIGN_MIDDLE">
+						<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+					</g:cell>
+				</g:HorizontalPanel>
+			</g:VerticalPanel>
+			<g:cell verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_RIGHT">
+				<g:Image styleName="{style.select}" ui:field="select_"></g:Image>
+			</g:cell>
 		</g:HorizontalPanel>
-		<g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
-			<g:HTMLPanel styleName="{style.progress}" ui:field="progress_">
-				<g:HTMLPanel styleName="{style.bar}" ui:field="bar_"></g:HTMLPanel>
-			</g:HTMLPanel>
-		</g:HorizontalPanel>
-		<g:HorizontalPanel>
-		    <g:cell verticalAlignment="ALIGN_MIDDLE">
-				<g:Image styleName="{style.state}" ui:field="state_"></g:Image>
-		    </g:cell>
-		    <g:cell verticalAlignment="ALIGN_MIDDLE">
-				<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
-		    </g:cell>
-		</g:HorizontalPanel>
-	</g:VerticalPanel>
+	</g:FocusPanel>
 </ui:UiBinder> 

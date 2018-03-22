@@ -18,6 +18,9 @@ package org.rstudio.studio.client.workbench.views.jobs;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -25,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
@@ -36,13 +40,14 @@ import com.google.inject.Inject;
 public class JobsPresenter extends BasePresenter  
                            implements JobUpdatedEvent.Handler,
                                       JobRefreshEvent.Handler,
-                                      JobOutputEvent.Handler
+                                      JobOutputEvent.Handler,
+                                      JobSelectionEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
       void updateJob(int type, Job job);
       void setInitialJobs(JsObject jobs);
-      void showJobOutput(Job job, JsArray<JobOutput> output);
+      void showJobOutput(String id, JsArray<JobOutput> output);
       void addJobOutput(String id, int type, String output);
    }
    
@@ -54,11 +59,13 @@ public class JobsPresenter extends BasePresenter
                         Binder binder,
                         Commands commands,
                         EventBus events,
-                        Session session)
+                        Session session,
+                        GlobalDisplay globalDisplay)
    {
       super(display);
       display_ = display;
       server_ = server;
+      globalDisplay_ = globalDisplay;
       binder.bind(commands, this);
       setJobState(session.getSessionInfo().getJobState());
    }
@@ -89,6 +96,29 @@ public class JobsPresenter extends BasePresenter
       display_.setInitialJobs(state);
    }
    
+   @Override
+   public void onJobSelection(final JobSelectionEvent event)
+   {
+      server_.setJobListening(event.id(), true, new ServerRequestCallback<JsArray<JobOutput>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<JobOutput> output)
+         {
+            display_.showJobOutput(event.id(), output);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            // CONSIDER: this error is unlikely, but it'd be nicer to show the
+            // job output anyway, with a non-modal error in it
+            globalDisplay_.showErrorMessage("Cannot retrieve job output", 
+                  error.getMessage());
+         }
+      });
+   }
+
    private final JobsServerOperations server_;
    private final Display display_;
+   private final GlobalDisplay globalDisplay_;
 }
