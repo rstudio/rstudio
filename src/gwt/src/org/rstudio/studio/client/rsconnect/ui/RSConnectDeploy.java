@@ -97,6 +97,7 @@ public class RSConnectDeploy extends Composite
       String appErrorPanel();
       String appWarningIcon();
       String controlLabel();
+      String deployIllustration();
       String deployLabel();
       String descriptionPanel();
       String fileList();
