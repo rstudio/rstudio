@@ -269,25 +269,42 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
    {
       FilePath basePathResolved = module_context::resolveAliasedPath(basePath.absolutePath());
 
-      boost::regex re("\\[1m([^:\\n]+):([0-9]+):[^:\\n]+: ([^\\n]*)\\[22m");
+      boost::regex re("\\[[0-9]+m([^:\\n]+):([0-9]+): ?([^:\\n]+): ([^\\n]*)\\[[0-9]+m");
 
       boost::sregex_iterator iter(output.begin(), output.end(), re);
       boost::sregex_iterator end;
       for (; iter != end; iter++)
       {
          boost::smatch match = *iter;
-         BOOST_ASSERT(match.size() == 4);
+         BOOST_ASSERT(match.size() == 5);
 
-         std::string file, line, type, message;
+         std::string file, line, type, message, marker, prefix;
          
          file = match[1];
          line = match[2];
-         type = "failure";
-         message = match[3];
+         type = match[3];
+
+         if (type.find("error") != std::string::npos) {
+            marker = "error";
+            prefix = "error: ";
+         } else if (type.find("failure") != std::string::npos) {
+            marker = "error";
+            prefix = "failure: ";
+         } else if (type.find("warning") != std::string::npos) {
+            marker = "warning";
+            prefix = "warning: ";
+         } else if (type.find("skip") != std::string::npos) {
+            marker = "info";
+            prefix = "skip: ";
+         } else {
+            marker = "info";
+         }
+
+         message = prefix + match[4];
          FilePath testFilePath = basePathResolved.complete(file);
 
          std::string column = "0";
-         SourceMarker err(module_context::sourceMarkerTypeFromString(type),
+         SourceMarker err(module_context::sourceMarkerTypeFromString(marker),
                           testFilePath,
                           core::safe_convert::stringTo<int>(line, 1),
                           core::safe_convert::stringTo<int>(column, 1),
