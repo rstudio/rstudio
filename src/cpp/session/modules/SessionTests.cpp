@@ -32,6 +32,7 @@
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #define kTestsNone           "none"
 #define kTestsTestThat       "test-testthat"
