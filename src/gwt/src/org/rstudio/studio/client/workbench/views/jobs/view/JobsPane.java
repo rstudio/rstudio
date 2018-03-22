@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
@@ -23,13 +24,14 @@ import java.util.Collections;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.core.client.JsArray;
@@ -40,9 +42,21 @@ public class JobsPane extends WorkbenchPane
                       implements JobsPresenter.Display
 {
    @Inject
-   public JobsPane()
+   public JobsPane(Commands commands,
+                   final EventBus events)
    {
       super("Jobs");
+
+      allJobs_ = new ToolbarButton(
+            commands.helpBack().getImageResource(), evt ->
+      {
+         // deselect current job 
+         events.fireEvent(new JobSelectionEvent(current_, false));
+      });
+      allJobs_.setTitle("View all jobs");
+      
+      toolbar_ = new Toolbar();
+      installMainToolbar();
 
       // create widget
       ensureWidget();
@@ -56,14 +70,14 @@ public class JobsPane extends WorkbenchPane
 
       panel_ = new SlidingLayoutPanel(list_, output_);
       panel_.addStyleName("ace_editor_theme");
+      
       return panel_;
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar mainToolbar = new Toolbar();
-      return mainToolbar;
+      return toolbar_;
    }
 
    @Override
@@ -135,7 +149,10 @@ public class JobsPane extends WorkbenchPane
       output_.scrollToBottom();
 
       // show the output pane
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> {});
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> 
+      {
+         installJobToolbar();
+      });
       
       // save job id as current job
       current_ = id;
@@ -155,9 +172,47 @@ public class JobsPane extends WorkbenchPane
       // add the output
       output_.showOutput(CompileOutput.create(type, output), true /* scroll */);
    }
+   
 
-   String current_;
-   JobsList list_;
+   @Override
+   public void hideJobOutput(String id)
+   {
+      // make sure this output belongs to the job currently being displayed
+      if (current_ == null || id != current_)
+      {
+         Debug.logWarning("Attempt to hide output for incorrect job '" + 
+                          id + "'.");
+         return;
+      }
+      
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft, true, () -> 
+      {
+         installMainToolbar();
+      });
+      
+      current_ = null;
+   }
+
+   // Private methods ---------------------------------------------------------
+   
+   private void installJobToolbar()
+   {
+      toolbar_.removeAllWidgets();
+      toolbar_.addLeftWidget(allJobs_);
+   }
+   
+   private void installMainToolbar()
+   {
+      toolbar_.removeAllWidgets();
+   }
+
+   // widgets
    CompilePanel output_;
+   JobsList list_;
    SlidingLayoutPanel panel_;
+   Toolbar toolbar_;
+   ToolbarButton allJobs_;
+
+   // internal state
+   String current_;
 }

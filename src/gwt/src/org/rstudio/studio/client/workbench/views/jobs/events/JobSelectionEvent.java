@@ -24,14 +24,20 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
       void onJobSelection(JobSelectionEvent event);
    }
    
-   public JobSelectionEvent(String id)
+   public JobSelectionEvent(String id, boolean selected)
    {
       id_ = id;
+      selected_ = selected;
    }
 
    public String id()
    {
       return id_;
+   }
+   
+   public boolean selected()
+   {
+      return selected_;
    }
 
    @Override
@@ -47,6 +53,7 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
    }
 
    private final String id_;
+   private final boolean selected_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

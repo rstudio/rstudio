@@ -70,7 +70,7 @@ public class JobItem extends Composite
       select_.addClickHandler(evt -> 
       {
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new JobSelectionEvent(job.id));
+               new JobSelectionEvent(job.id, true));
       });
       
       update(job);

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -49,6 +50,7 @@ public class JobsPresenter extends BasePresenter
       void setInitialJobs(JsObject jobs);
       void showJobOutput(String id, JsArray<JobOutput> output);
       void addJobOutput(String id, int type, String output);
+      void hideJobOutput(String id);
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -99,12 +101,46 @@ public class JobsPresenter extends BasePresenter
    @Override
    public void onJobSelection(final JobSelectionEvent event)
    {
-      server_.setJobListening(event.id(), true, new ServerRequestCallback<JsArray<JobOutput>>()
+      if (event.selected())
+      {
+         selectJob(event.id());
+      }
+      else
+      {
+         unselectJob(event.id());
+      }
+   }
+   
+   private void unselectJob(final String id)
+   {
+      server_.setJobListening(id, false, new ServerRequestCallback<JsArray<JobOutput>>()
       {
          @Override
          public void onResponseReceived(JsArray<JobOutput> output)
          {
-            display_.showJobOutput(event.id(), output);
+            display_.hideJobOutput(id);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            // if we couldn't turn off listening on the server, it's not a big
+            // deal (we'll ignore output from the job if we don't recognize it),
+            // so hide the output anyway and don't complain to the user
+            display_.hideJobOutput(id);
+            Debug.logError(error);
+         }
+      });
+   }
+   
+   private void selectJob(final String id)
+   {
+      server_.setJobListening(id, true, new ServerRequestCallback<JsArray<JobOutput>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<JobOutput> output)
+         {
+            display_.showJobOutput(id, output);
          }
          
          @Override
