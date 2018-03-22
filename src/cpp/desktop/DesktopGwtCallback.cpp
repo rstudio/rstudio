@@ -225,6 +225,7 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
+   dialog.setResolveSymlinks(false);
 
    QString result;
    if (dialog.exec() == QDialog::Accepted)
