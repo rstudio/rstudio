@@ -67,7 +67,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void doesWindowExistAtCursorPosition(CommandWithArg<Boolean> callback);
    void getCursorPosition(CommandWithArg<Point> callback);
    
-   String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);
@@ -116,10 +115,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void promptForText(String title,
                       String label,
                       String initialValue,
-                      boolean usePasswordMask,
+                      int type,
                       String rememberPasswordPrompt,
                       boolean rememberByDefault,
-                      boolean numbersOnly,
                       int selectionStart,
                       int selectionLength,
                       String okButtonCaption,

@@ -30,10 +30,12 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    {
       protected Data() {}
       
-      public final native String getCode() /*-{ return this["code"]; }-*/;
+      public final native String getCode()        /*-{ return this["code"];      }-*/;
+      public final native String getLanguage()    /*-{ return this["language"];  }-*/;
       
       public final native boolean shouldExecute() /*-{ return !!this["execute"]; }-*/;
-      public final native boolean shouldFocus() /*-{ return !!this["focus"]; }-*/;
+      public final native boolean shouldRaise()   /*-{ return !!this["raise"];   }-*/;
+      public final native boolean shouldFocus()   /*-{ return !!this["focus"];   }-*/;
       public final native boolean shouldAnimate() /*-{ return !!this["animate"]; }-*/;
    }
   
@@ -53,8 +55,11 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    
    public SendToConsoleEvent(Data data)
    {
-      this(data.getCode(),
+      this(
+            data.getCode(),
+            data.getLanguage(),
             data.shouldExecute(),
+            data.shouldRaise(),
             data.shouldFocus(),
             data.shouldAnimate());
    }
@@ -73,16 +78,33 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
                              boolean focus,
                              boolean animate)
    {
+      this(code, "R", execute, raise, focus, animate);
+   }
+   
+   public SendToConsoleEvent(String code,
+                             String language,
+                             boolean execute, 
+                             boolean raise,
+                             boolean focus,
+                             boolean animate)
+   {
       code_ = code;
+      language_ = language;
       execute_ = execute;
       raise_ = raise;
       focus_ = focus;
       animate_ = animate;
    }
+   
 
    public String getCode()
    {
       return code_;
+   }
+   
+   public String getLanguage()
+   {
+      return language_;
    }
 
    public boolean shouldExecute()
@@ -125,6 +147,7 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    }
 
    private String code_;
+   private String language_;
    private boolean execute_;
    private boolean focus_;
    private boolean raise_;

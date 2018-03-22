@@ -2057,3 +2057,13 @@
    readLines(datalist, warn = FALSE)
    
 })
+
+.rs.addFunction("tryCatch", function(expr)
+{
+   tryCatch(expr, condition = identity)
+})
+
+.rs.addFunction("resolveAliasedPath", function(path)
+{
+   .Call("rs_resolveAliasedPath", path, PACKAGE = "(embedding)")
+})

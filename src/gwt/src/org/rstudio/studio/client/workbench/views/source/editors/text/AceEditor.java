@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -67,6 +68,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -78,7 +80,9 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.DelegatingCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -697,48 +701,70 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void setRCompletionContext(RCompletionContext rContext)
+   public void setRCompletionContext(CompletionContext context)
    {
-      rContext_ = rContext;
+      context_ = context;
    }
 
    private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
          return;
-
+      
       CompletionManager completionManager;
-      if (!suppressCompletion)
+      
+      if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
-         if (fileType_.getEditorLanguage().useRCompletion())
+         // GWT throws an exception if we bind Ace using 'AceEditor.this' below
+         // so work around that by just creating a final reference and use that
+         final AceEditor editor = this;
+         
+         completionManager = new DelegatingCompletionManager(this)
          {
-            completionManager = new RCompletionManager(
-                  this,
-                  this,
-                  new CompletionPopupPanel(),
-                  server_,
-                  new Filter(),
-                  rContext_,
-                  fileType_.canExecuteChunks() ? rnwContext_ : null,
-                  this,
-                  false);
-
-            // if this is cpp then we use our own completion manager
-            // that can optionally delegate to the R completion manager
-            if (fileType_.isC() || fileType_.isRmd())
+            @Override
+            protected void initialize(Map<Mode, CompletionManager> managers)
             {
-               completionManager = new CppCompletionManager(
-                                                     this,
-                                                     new Filter(),
-                                                     cppContext_,
-                                                     completionManager);
+               // R completion manager
+               managers.put(DocumentMode.Mode.R, new RCompletionManager(
+                     editor,
+                     editor,
+                     new CompletionPopupPanel(),
+                     server_,
+                     new Filter(),
+                     context_,
+                     fileType_.canExecuteChunks() ? rnwContext_ : null,
+                     editor,
+                     false));
+               
+               // Python completion manager
+               if (fileType_.isPython() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
+                        editor,
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        new Filter(),
+                        context_,
+                        editor,
+                        false));
+               }
+               
+               // C++ completion manager
+               if (fileType_.isC())
+               {
+                  managers.put(DocumentMode.Mode.C_CPP, new CppCompletionManager(
+                        editor,
+                        new Filter(),
+                        cppContext_));
+               }
             }
-         }
-         else
-            completionManager = new NullCompletionManager();
+         };
       }
       else
+      {
          completionManager = new NullCompletionManager();
+      }
 
       updateLanguage(completionManager);
    }
@@ -1126,9 +1152,9 @@ public class AceEditor implements DocDisplay,
       completionManager_.goToHelp();
    }
 
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {
-      completionManager_.goToFunctionDefinition();
+      completionManager_.goToDefinition();
    }
 
    class PrintIFrame extends DynamicIFrame
@@ -3236,9 +3262,18 @@ public class AceEditor implements DocDisplay,
    @Override
    public Range getMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
    {
-      if (!DocumentMode.isSelectionInRMode(this))
-         return null;
-
+      if (DocumentMode.isSelectionInRMode(this))
+      {
+         return rMultiLineExpr(pos, startRowLimit, endRowLimit);
+      }
+      else
+      {
+         return getParagraph(pos, startRowLimit, endRowLimit);
+      }
+   }
+   
+   private Range rMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
+   {
       // create token cursor (will be used to walk tokens as needed)
       TokenCursor c = getSession().getMode().getCodeModel().getTokenCursor();
       
@@ -3443,7 +3478,7 @@ public class AceEditor implements DocDisplay,
       
       return range;
    }
-
+   
    // ---- Annotation related operations
 
    public JsArray<AceAnnotation> getAnnotations()
@@ -3933,7 +3968,7 @@ public class AceEditor implements DocDisplay,
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
-   private RCompletionContext rContext_ = null;
+   private CompletionContext context_ = null;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

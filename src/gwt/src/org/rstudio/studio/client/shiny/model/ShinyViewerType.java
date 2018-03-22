@@ -25,7 +25,7 @@ public class ShinyViewerType extends JavaScriptObject
    public final static int SHINY_VIEWER_PANE = 2;
    public final static int SHINY_VIEWER_WINDOW = 3;
    public final static int SHINY_VIEWER_BROWSER = 4;
-   
+
    public final native int getViewerType() /*-{ 
       return this.viewerType;
    }-*/;

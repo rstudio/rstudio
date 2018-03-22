@@ -225,6 +225,7 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
+   dialog.setResolveSymlinks(false);
 
    QString result;
    if (dialog.exec() == QDialog::Accepted)
@@ -233,6 +234,8 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    activateAndFocusOwner();
    return createAliasedPath(result);
 }
+
+#ifndef Q_OS_MAC
 
 namespace {
 
@@ -354,6 +357,8 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    activateAndFocusOwner();
    return createAliasedPath(result);
 }
+
+#endif
 
 void GwtCallback::onClipboardSelectionChanged()
 {
@@ -498,11 +503,6 @@ QString GwtCallback::proportionalFont()
 QString GwtCallback::fixedWidthFont()
 {
    return options().fixedWidthFont();
-}
-
-QString GwtCallback::getUriForPath(QString path)
-{
-   return QUrl::fromLocalFile(resolveAliasedPath(path)).toString();
 }
 
 void GwtCallback::onWorkbenchInitialized(QString scratchPath)
@@ -810,10 +810,9 @@ int GwtCallback::showMessageBox(int type,
 QString GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
-                                   bool usePasswordMask,
+                                   int inputType,
                                    QString extraOptionPrompt,
                                    bool extraOptionByDefault,
-                                   bool numbersOnly,
                                    int selectionStart,
                                    int selectionLength,
                                    QString okButtonCaption)
@@ -821,6 +820,9 @@ QString GwtCallback::promptForText(QString title,
    InputDialog dialog(pOwner_->asWidget());
    dialog.setWindowTitle(title);
    dialog.setCaption(caption);
+   InputType type = static_cast<InputType>(inputType);
+   bool usePasswordMask = type == InputPassword;
+   dialog.setRequired(type == InputRequiredText);
 
    if (usePasswordMask)
       dialog.setEchoMode(QLineEdit::Password);
@@ -840,8 +842,9 @@ QString GwtCallback::promptForText(QString title,
       dialog.move(x, parentGeom.top() + 75);
    }
 
-   if (numbersOnly)
+   if (type == InputNumeric)
       dialog.setNumbersOnly(true);
+
    if (!defaultValue.isEmpty())
    {
       dialog.setTextValue(defaultValue);
@@ -1355,9 +1358,10 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
-std::string GwtCallback::getDisplayDpi()
+QString GwtCallback::getDisplayDpi()
 {
-   return safe_convert::numberToString(getDpi());
+   return QString::fromStdString(
+            safe_convert::numberToString(getDpi()));
 }
 
 } // namespace desktop

@@ -23,12 +23,12 @@ var oop = require("ace/lib/oop");
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
-var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHighlightRules;
+var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
-var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
+var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var Utils = require("mode/utils");
@@ -160,6 +160,8 @@ var RMarkdownHighlightRules = function() {
    this.$rules["yaml-start"].push({
       defaultToken: "text.nospell"
    });
+
+   this.normalizeRules();
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 

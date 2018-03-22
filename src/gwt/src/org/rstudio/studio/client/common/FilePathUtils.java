@@ -37,6 +37,14 @@ public class FilePathUtils
             fileName.substring(0, idx) :
             fileName;
    }
+
+   public static String parent(String path)
+   {
+      int idx = path.lastIndexOf("/");
+      return idx > 0 ?
+            path.substring(0, idx) :
+            path;
+   }
    
    public static boolean pathIsAbsolute(String path)
    {

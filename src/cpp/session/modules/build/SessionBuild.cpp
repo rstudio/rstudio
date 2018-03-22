@@ -60,6 +60,24 @@ namespace session {
 
 namespace {
 
+std::string preflightPackageBuildErrorMessage(
+      const std::string& message,
+      const FilePath& buildDirectory)
+{
+   std::string fmt = 1 + R"EOF(
+ERROR: Package build failed.
+
+%1%
+
+Build directory: %2%
+)EOF";
+   
+   auto formatter = boost::format(fmt)
+         % message
+         % module_context::createAliasedPath(buildDirectory);
+   return boost::str(formatter);
+}
+
 std::string quoteString(const std::string& str)
 {
    return "'" + str + "'";
@@ -212,6 +230,9 @@ const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
+const char * const kTestFile = "test-file";
+const char * const kTestShiny = "test-shiny";
+const char * const kTestShinyFile = "test-shiny-file";
 
 class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
@@ -234,7 +255,10 @@ private:
 
    void start(const std::string& type, const std::string& subType)
    {
-      ClientEvent event(client_events::kBuildStarted);
+      json::Object dataJson;
+      dataJson["type"] = type;
+      dataJson["sub_type"] = subType;
+      ClientEvent event(client_events::kBuildStarted, dataJson);
       module_context::enqueClientEvent(event);
 
       isRunning_ = true;
@@ -284,7 +308,19 @@ private:
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
-      if (config.buildType == r_util::kBuildTypePackage)
+      if (type == kTestFile)
+      {
+         options.environment = environment;
+         options.workingDir = buildTargetPath.parent();
+         FilePath testPath = FilePath(subType);
+         executePackageBuild(type, testPath, options, cb);
+      }
+      else if (type == kTestShiny || type == kTestShinyFile)
+      {
+         FilePath testPath = FilePath(subType);
+         testShiny(testPath, options, cb, type);
+      }
+      else if (config.buildType == r_util::kBuildTypePackage)
       {
          options.environment = environment;
          options.workingDir = buildTargetPath.parent();
@@ -319,36 +355,57 @@ private:
          terminateWithError("Unrecognized build type: " + config.buildType);
       }
    }
-
+   
    void executePackageBuild(const std::string& type,
                             const FilePath& packagePath,
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      // validate that this is a package
-      if (!r_util::isPackageDirectory(packagePath))
+      if (type != kTestFile)
       {
-         boost::format fmt ("ERROR: The build directory does "
-                            "not contain a DESCRIPTION\n"
-                            "file so cannot be built as a package.\n\n"
-                            "Build directory: %1%\n");
-         terminateWithError(boost::str(
-                 fmt % module_context::createAliasedPath(packagePath)));
-         return;
-      }
-
-      // get package info
-      Error error = pkgInfo_.read(packagePath);
-      if (error)
-      {
-         terminateWithError("Reading package DESCRIPTION", error);
-         return;
-      }
-
-      // if this package links to Rcpp then we run compileAttributes
-      if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
-         if (!compileRcppAttributes(packagePath))
+         // validate that this is a package
+         if (!packagePath.childPath("DESCRIPTION").exists())
+         {
+            std::string message =
+                  "The build directory does not contain a DESCRIPTION file and so "
+                  "cannot be built as a package.";
+            
+            terminateWithError(preflightPackageBuildErrorMessage(message, packagePath));
             return;
+         }
+
+         // get package info
+         Error error = pkgInfo_.read(packagePath);
+         if (error)
+         {
+            // check to see if this was a parse error; if so, report that
+            std::string parseError = error.getProperty("parse-error");
+            if (!parseError.empty())
+            {
+               std::string message = "Failed to parse DESCRIPTION: " + parseError;
+               terminateWithError(preflightPackageBuildErrorMessage(message, packagePath));
+            }
+            else
+            {
+               terminateWithError("reading package DESCRIPTION", error);
+            }
+            
+            return;
+         }
+
+         // get package info
+         error = pkgInfo_.read(packagePath);
+         if (error)
+         {
+            terminateWithError("Reading package DESCRIPTION", error);
+            return;
+         }
+
+         // if this package links to Rcpp then we run compileAttributes
+         if (pkgInfo_.linkingTo().find("Rcpp") != std::string::npos)
+            if (!compileRcppAttributes(packagePath))
+               return;
+      }
 
       if (type == kRoxygenizePackage)
       {
@@ -581,6 +638,15 @@ private:
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
+
+      // add testthat and shinyteset result parsers
+      if (type == kTestFile) {
+         parsers.add(testthatErrorParser(packagePath.parent()));
+      }
+      else if (type == kTestPackage) {
+         parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
+      }
+
       initErrorParser(packagePath, parsers);
 
       // make a copy of options so we can customize the environment
@@ -704,8 +770,12 @@ private:
          else
             testPackage(packagePath, pkgOptions, cb);
       }
-   }
 
+      else if (type == kTestFile)
+      {
+         testFile(packagePath, pkgOptions, cb);
+      }
+   }
 
    void buildSourcePackage(const FilePath& rBinDir,
                            const FilePath& packagePath,
@@ -1008,6 +1078,125 @@ private:
       successMessage_ = "\nTests complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      pkgOptions,
+                                                     cb);
+
+   }
+
+   void testFile(const FilePath& testPath,
+                 core::system::ProcessOptions pkgOptions,
+                 const core::system::ProcessCallbacks& cb)
+   {
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // construct a shell command to execute
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      std::vector<std::string> rSourceCommands;
+      
+      boost::format fmt(
+         "if (nchar('%1%')) library('%1%');"
+         "testthat::test_file('%2%')"
+      );
+
+      std::string testPathEscaped = 
+         string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
+            testPath.absolutePath()));
+
+      cmd << boost::str(fmt %
+                        pkgInfo_.name() %
+                        testPathEscaped);
+
+      enqueCommandString("Testing R file using 'testthat'");
+      successMessage_ = "\nTest complete";
+      module_context::processSupervisor().runCommand(cmd,
+                                                     pkgOptions,
+                                                     cb);
+
+   }
+
+   void testShiny(FilePath& shinyPath,
+                  core::system::ProcessOptions testOptions,
+                  const core::system::ProcessCallbacks& cb,
+                  const std::string& type)
+   {
+      // normalize paths between all tests and single test
+      std::string shinyTestName = "";
+      if (type == kTestShinyFile) {
+        shinyTestName = shinyPath.filename();
+        shinyPath = shinyPath.parent().parent();
+      }
+
+      // get temp path to store rds results
+      FilePath tempPath;
+      Error error = FilePath::tempFilePath(&tempPath);
+      if (error)
+      {
+         terminateWithError("Find temp dir", error);
+         return;
+      }
+      error = tempPath.ensureDirectory();
+      if (error)
+      {
+         terminateWithError("Creating temp dir", error);
+         return;
+      }
+      FilePath tempRdsFile = tempPath.complete(core::system::generateUuid() + ".rds");
+
+      // initialize parser
+      CompileErrorParsers parsers;
+      parsers.add(shinytestErrorParser(shinyPath, tempRdsFile));
+      initErrorParser(shinyPath, parsers);
+
+      FilePath rScriptPath;
+      error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError("Locating R script", error);
+         return;
+      }
+
+      // construct a shell command to execute
+      shell_utils::ShellCommand cmd(rScriptPath);
+      cmd << "--slave";
+      cmd << "--vanilla";
+      cmd << "-e";
+      std::vector<std::string> rSourceCommands;
+      
+      if (type == kTestShiny) {
+        boost::format fmt(
+           "result <- shinytest::testApp('%1%');"
+           "saveRDS(result, '%2%')"
+        );
+
+        cmd << boost::str(fmt %
+                          shinyPath.absolutePath() %
+                          tempRdsFile.absolutePath());
+      } else if (type == kTestShinyFile) {
+        boost::format fmt(
+           "result <- shinytest::testApp('%1%', '%2%');"
+           "saveRDS(result, '%3%')"
+        );
+
+        cmd << boost::str(fmt %
+                          shinyPath.absolutePath() %
+                          shinyTestName %
+                          tempRdsFile.absolutePath());
+      } else {
+        terminateWithError("Shiny test type is unsupported.");
+      }
+
+      enqueCommandString("Testing Shiny application using 'shinytest'");
+      successMessage_ = "\nTest complete";
+      module_context::processSupervisor().runCommand(cmd,
+                                                     testOptions,
                                                      cb);
 
    }

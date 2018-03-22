@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.model.ShinyViewerOptions;
 
 public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
                                    implements ShinyApplicationPresenter.Display
@@ -58,12 +59,13 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       popoutButton.setText("Open in Browser");
       toolbar.addLeftWidget(popoutButton);
 
+      
       toolbar.addLeftSeparator();
-      ToolbarButton refreshButton = 
+      refreshButton_ = 
             commands.reloadShinyApp().createToolbarButton();
-      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
-      refreshButton.getElement().getStyle().setMarginTop(1, Unit.PX);
-      toolbar.addLeftWidget(refreshButton);
+      refreshButton_.setLeftImage(commands.viewerRefresh().getImageResource());
+      refreshButton_.getElement().getStyle().setMarginTop(1, Unit.PX);
+      toolbar.addLeftWidget(refreshButton_);
       
       publishButton_ = new RSConnectPublishButton(
             RSConnectPublishButton.HOST_SHINY_APP,
@@ -84,7 +86,9 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
          url = GWT.getHostPageBaseURL() + url;
       urlBox_.setText(url);
 
-      showUrl(url);
+      boolean removeTolbar = (appParams_.getViewerOptions() & ShinyViewerOptions.SHINY_VIEWER_OPTIONS_NOTOOLS) > 0;
+
+      showUrl(url, removeTolbar);
    }
    
    @Override
@@ -122,4 +126,5 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
    private RSConnectPublishButton publishButton_;
+   private ToolbarButton refreshButton_;
 }

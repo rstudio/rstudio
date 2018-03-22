@@ -101,7 +101,21 @@ if(UNIX)
       add_definitions(-D_FORTIFY_SOURCE=2)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
       add_definitions(-fPIC)
+      if(CMAKE_BUILD_TYPE STREQUAL Debug)
+         add_definitions(-D_GLIBCXX_ASSERTIONS)
+      endif()
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -Wl,-z,relro,-z,now")
+   endif()
+
+   # other useful gcc diagnostics
+   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_definitions(-Wlogical-op)
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0.0)
+         add_definitions(-Wduplicated-cond)
+         add_definitions(-Wduplicated-branches)
+         add_definitions(-Wrestrict)
+         add_definitions(-Wnull-dereference)
+      endif()
    endif()
 
 # Win32 specific global directives

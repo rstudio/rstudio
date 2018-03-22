@@ -65,6 +65,7 @@ public interface EditingTarget extends IsWidget,
    boolean canCompilePdf();
    
    void verifyCppPrerequisites();
+   void verifyPythonPrerequisites();
 
    void focus();
    void onActivate();

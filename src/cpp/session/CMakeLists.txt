@@ -71,6 +71,7 @@ set (SESSION_SOURCE_FILES
    SessionConsoleProcessInfo.cpp
    SessionConsoleProcessPersist.cpp
    SessionConsoleProcessSocket.cpp
+   SessionConsoleProcessSocketPacket.cpp
    SessionConsoleProcessTable.cpp
    SessionContentUrls.cpp
    SessionDirs.cpp
@@ -134,6 +135,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionProjectTemplate.cpp
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
+   modules/SessionReticulate.cpp
    modules/SessionRHooks.cpp
    modules/SessionRParser.cpp
    modules/SessionRPubs.cpp
@@ -144,6 +146,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionTerminalShell.cpp
+   modules/SessionTests.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp

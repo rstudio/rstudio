@@ -127,7 +127,7 @@ core::Error iconvstr(const std::string& value,
 
    void* handle = ::Riconv_open(to.c_str(), from.c_str());
    if (handle == (void*)(-1))
-      return systemError(errno, ERROR_LOCATION);
+      return systemError(R_ERRNO, ERROR_LOCATION);
 
    const char* pIn = value.data();
    size_t inBytes = value.size();
@@ -145,20 +145,20 @@ core::Error iconvstr(const std::string& value,
 
       if (result == (size_t)(-1))
       {
-         if ((errno == EILSEQ || errno == EINVAL) && allowSubstitution)
+         if ((R_ERRNO == EILSEQ || R_ERRNO == EINVAL) && allowSubstitution)
          {
             output.push_back('?');
             pIn++;
             inBytes--;
          }
-         else if (errno == E2BIG && pInOrig != pIn)
+         else if (R_ERRNO == E2BIG && pInOrig != pIn)
          {
             continue;
          }
          else
          {
             ::Riconv_close(handle);
-            Error error = systemError(errno, ERROR_LOCATION);
+            Error error = systemError(R_ERRNO, ERROR_LOCATION);
             error.addProperty("str", value);
             error.addProperty("len", value.length());
             error.addProperty("from", from);

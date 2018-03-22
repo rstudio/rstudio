@@ -37,8 +37,8 @@ then
    fi
 
    # remove openssl softlinks
-   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
-   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.10
+   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.10
 fi
 
 # clear error termination state

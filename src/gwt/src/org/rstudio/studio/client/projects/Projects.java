@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -313,7 +314,7 @@ public class Projects implements OpenProjectFileHandler,
                null /*newPackageOptions*/,
                null /*newShinyAppOptions*/,
                null /*projectTemplateOptions*/,
-               event.getTutorialCommand());
+               event.getCallContext());
 
          createNewProject(newProject, saveChanges);
       }
@@ -337,7 +338,7 @@ public class Projects implements OpenProjectFileHandler,
                null/*newPackageOptions*/,
                null/*newShinyAppOptions*/,
                null/*projectTemplateOptions*/,
-               event.getTutorialCommand());
+               event.getCallContext());
          
          createNewProject(newProject, false/*saveChanges*/);
       }
@@ -354,7 +355,7 @@ public class Projects implements OpenProjectFileHandler,
                                               boolean success,
                                               String resultMessage)
    {
-      if (StringUtil.isNullOrEmpty(newProject.getInvokedByTutorialApi()))
+      if (newProject.getCallContext() == null)
       {
          // not triggered by Tutorial Api, nobody to report to
          return;
@@ -362,8 +363,8 @@ public class Projects implements OpenProjectFileHandler,
       
       eventBus_.fireEvent(new ApplicationTutorialEvent(
             success ? ApplicationTutorialEvent.API_SUCCESS : ApplicationTutorialEvent.API_ERROR,
-            newProject.getInvokedByTutorialApi(),
-            resultMessage)); 
+            resultMessage,
+            newProject.getCallContext()));
    }
 
    private void createNewProject(final NewProjectResult newProject,
@@ -905,7 +906,7 @@ public class Projects implements OpenProjectFileHandler,
    @Override
    public void onSwitchToProject(final SwitchToProjectEvent event)
    {
-      switchToProject(event.getProject(), event.getForceSaveAll(), event.getInvokedByTutorialApi());
+      switchToProject(event.getProject(), event.getForceSaveAll(), event.getCallContext());
    }
    
    @Override
@@ -955,11 +956,11 @@ public class Projects implements OpenProjectFileHandler,
       switchToProject(projectFilePath, false, null);
    }
    
-   private void switchToProject(final String projectFilePath, 
+   private void switchToProject(final String projectFilePath,
                                 final boolean forceSaveAll,
-                                final String invokedByTutorialApi)
+                                final TutorialApiCallContext callContext)
    {
-      final boolean allowCancel = StringUtil.isNullOrEmpty(invokedByTutorialApi);
+      final boolean allowCancel = (callContext == null);
       
       // validate that the switch will actually work
       projServer_.validateProjectPath(
@@ -977,7 +978,7 @@ public class Projects implements OpenProjectFileHandler,
                   new ApplicationQuit.QuitContext() {
                   public void onReadyToQuit(final boolean saveChanges)
                   {
-                     applicationQuit_.performQuit(invokedByTutorialApi, saveChanges, projectFilePath);
+                     applicationQuit_.performQuit(callContext, saveChanges, projectFilePath);
                   }
                });
             }

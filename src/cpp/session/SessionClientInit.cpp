@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@
 #include "modules/clang/SessionClang.hpp"
 #include "modules/SessionMarkers.hpp"
 #include "modules/SessionPlots.hpp"
+#include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
@@ -129,6 +130,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
+   // user home path
+   sessionInfo["user_home_path"] = session::options().userHomePath().absolutePath();
+   
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
    
@@ -157,6 +161,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
+   
+   // get current console language
+   sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    // resumed
    sessionInfo["resumed"] = resumed; 
@@ -321,6 +328,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();
+   sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
 
    // publishing may be disabled globally or just for external services, and
    // via configuration options or environment variables

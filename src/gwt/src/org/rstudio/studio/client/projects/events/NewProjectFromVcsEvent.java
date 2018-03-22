@@ -1,7 +1,7 @@
 /*
  * NewProjectFromVcsEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 
 public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Handler>
 {
@@ -25,24 +26,19 @@ public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Hand
       void onNewProjectFromVcsEvent(NewProjectFromVcsEvent event);
    }
 
-   public NewProjectFromVcsEvent(String tutorialCommand,
-                                 String vcsId,
+   public NewProjectFromVcsEvent(String vcsId,
                                  String repoUrl,
                                  String dirName,
                                  String destDir,
-                                 String username)
+                                 String username,
+                                 TutorialApiCallContext callContext)
    {
-      tutorialCommand_ = tutorialCommand;
       vcsId_ = vcsId;
       repoUrl_ = repoUrl;
       dirName_ = dirName;
       destDir_ = destDir;
       username_ = username;
-   }
-
-   public String getTutorialCommand()
-   {
-      return tutorialCommand_;
+      callContext_ = callContext;
    }
 
    public String getVcsId()
@@ -69,7 +65,12 @@ public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Hand
    {
       return username_;
    }
-
+   
+   public TutorialApiCallContext getCallContext()
+   {
+      return callContext_;
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -84,10 +85,10 @@ public class NewProjectFromVcsEvent extends GwtEvent<NewProjectFromVcsEvent.Hand
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 
-   private final String tutorialCommand_;
    private final String vcsId_;
    private final String repoUrl_;
    private final String dirName_;
    private final String destDir_;
    private final String username_;
+   private final TutorialApiCallContext callContext_;
 }

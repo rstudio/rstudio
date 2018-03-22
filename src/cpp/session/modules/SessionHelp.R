@@ -290,7 +290,14 @@ options(help_type = "html")
       return()
 })
 
-.rs.addJsonRpcHandler("get_custom_help", function(helpHandler, topic, source) {
+.rs.addJsonRpcHandler("get_custom_help", function(helpHandler,
+                                                  topic,
+                                                  source,
+                                                  language)
+{
+   # use own handler for Python language help
+   if (identical(language, "Python"))
+      return(.rs.python.getHelp(topic, source))
    
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)
@@ -304,7 +311,13 @@ options(help_type = "html")
    results 
 })
 
-.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler,
+                                                            source,
+                                                            language)
+{
+   # use own handler for Python language help
+   if (identical(language, "Python"))
+      return(.rs.python.getParameterHelp(source))
    
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
                                error = function(e) NULL)

@@ -97,9 +97,18 @@ public:
    // stop listening to given terminal handle
    core::Error stopListening(const std::string& terminalHandle);
 
-   // send text to client
+   // send raw text to client
+   core::Error sendRawText(const std::string& terminalHandle,
+                           const std::string& message);
+
+   // send text packet to client
    core::Error sendText(const std::string& terminalHandle,
                         const std::string& message);
+
+   // send keepalive response to client; we're not using low-level WebSocket
+   // ping/pong as that isn't accessible from JavaScript apps; so we're just doing a
+   // simple message exchange to keep proxies from killing an idle terminal
+   core::Error sendPong(const std::string& terminalHandle);
 
    // network port for websocket listener; 0 means no port
    int port() const;

@@ -52,12 +52,6 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
    
-#ifdef Q_OS_MAC
-   // disable scrollbars entirely for now as otherwise they persist indefinitely
-   // and look terribly ugly (pending a better fix / workaround)
-   settings()->setAttribute(QWebEngineSettings::ShowScrollBars, false);
-#endif
-
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
 }
@@ -416,23 +410,7 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 
 void WebPage::triggerAction(WebAction action, bool checked)
 {
-   // swallow copy events when the selection is empty
-   if (action == QWebEnginePage::Copy || action == QWebEnginePage::Cut)
-   {
-      runJavaScript(
-               QStringLiteral("window.desktopHooks.isSelectionEmpty()"),
-               [&](const QVariant& emptySelection)
-      {
-         if (emptySelection.toBool())
-            return;
-
-         QWebEnginePage::triggerAction(action, checked);
-      });
-   }
-   else
-   {
-      QWebEnginePage::triggerAction(action, checked);
-   }
+   QWebEnginePage::triggerAction(action, checked);
 }
 
 } // namespace desktop

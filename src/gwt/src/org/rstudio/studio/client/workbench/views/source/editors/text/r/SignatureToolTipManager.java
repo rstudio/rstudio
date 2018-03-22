@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -125,7 +126,8 @@ public class SignatureToolTipManager
          @Override
          public void onCursorChanged(final CursorChangedEvent event)
          {
-            beginMonitoring();
+            if (!monitoring_)
+               return;
                
             // Defer so that anchors can update
             Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
@@ -171,7 +173,6 @@ public class SignatureToolTipManager
          {
             if (!event.isAttached())
             {
-               coordinates_ = null;
                completionPosition_ = null;
                anchor_ = null;
             }
@@ -305,25 +306,37 @@ public class SignatureToolTipManager
       return coordinates_ != null;
    }
    
-   Position getLookupPosition()
+   private Position getLookupPosition()
    {
       if (coordinates_ == null)
       {
-         Position position = docDisplay_.getCursorPosition();
-         
-         // Nudge the cursor column if the cursor currently lies
-         // upon a closing paren.
-         if (docDisplay_.getCharacterAtCursor() == ')' &&
-             position.getColumn() != 0)
-         {
-            position = Position.create(
-                  position.getRow(),
-                  position.getColumn() - 1);
-         }
-         
-         return position;
+         return getLookupPositionCursor();
       }
-      
+      else
+      {
+         return getLookupPositionMouseCoordinates();
+      }
+   }
+   
+   private Position getLookupPositionCursor()
+   {
+      Position position = docDisplay_.getCursorPosition();
+
+      // Nudge the cursor column if the cursor currently lies
+      // upon a closing paren.
+      if (docDisplay_.getCharacterAtCursor() == ')' &&
+            position.getColumn() != 0)
+      {
+         position = Position.create(
+               position.getRow(),
+               position.getColumn() - 1);
+      }
+
+      return position;
+   }
+   
+   private Position getLookupPositionMouseCoordinates()
+   {
       return docDisplay_.screenCoordinatesToDocumentPosition(
             coordinates_.getMouseX(),
             coordinates_.getMouseY());
@@ -393,7 +406,10 @@ public class SignatureToolTipManager
                coordinates_.getMouseY());
          
          AceEditorNative nativeEditor = AceEditorNative.getEditor(el);
-         if (nativeEditor != null && nativeEditor != editor.getWidget().getEditor())
+         if (nativeEditor == null)
+            return;
+         
+         if (nativeEditor != editor.getWidget().getEditor())
             return;
       }
       
@@ -432,6 +448,28 @@ public class SignatureToolTipManager
       if (cursor.valueEquals("("))
          if (!cursor.moveToPreviousToken())
             return;
+      
+      // Now, double-check that the bounding box associated with
+      // the document row actually correspond to the mouse position.
+      // This is necessary as Ace will 'clamp' the screen row to
+      // actual positions available in the document.
+      if (isMouseDrivenEvent())
+      {
+         Position cursorPos = cursor.currentPosition();
+         ScreenCoordinates coordinates =
+               editor.documentPositionToScreenCoordinates(cursorPos);
+
+         int rowTop = coordinates.getPageY();
+         int rowBottom = coordinates.getPageY() +
+               editor.getWidget().getEditor().getRenderer().getLineHeight();
+
+         if (coordinates_.getMouseY() < rowTop ||
+             coordinates_.getMouseY() > rowBottom)
+         {
+            toolTip_.hide();
+            return;
+         }
+      }
       
       // Cache the cursor position -- this should be the first
       // token prior to a '(', forming the active call.

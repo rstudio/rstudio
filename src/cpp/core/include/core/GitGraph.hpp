@@ -1,7 +1,7 @@
 /*
  * GitGraph.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,8 +55,6 @@ public:
    // Prints out a machine-parsable string representation of this row
    std::string string() const;
 };
-
-typedef std::vector<Line> Lines;
 
 // Encapsulates the state and logic used to build up a graph,
 // based on repeated calls with commit-and-parent info.

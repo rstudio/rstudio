@@ -182,9 +182,12 @@ const int kOpenFileDialog = 163;
 const int kRemoveTerminal = 164;
 const int kShowPageViewerEvent = 165;
 const int kAskSecret = 166;
-const int kJobUpdated = 167;
-const int kJobRefresh = 168;
-const int kJobOutput = 169;
+const int kTestsStarted = 167;
+const int kTestsOutput = 168;
+const int kTestsCompleted = 169;
+const int kJobUpdated = 170;
+const int kJobRefresh = 171;
+const int kJobOutput = 172;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -504,6 +507,12 @@ std::string ClientEvent::typeName() const
          return "show_page_viewer";
       case client_events::kAskSecret:
          return "ask_secret";
+      case client_events::kTestsStarted:
+         return "tests_started";
+      case client_events::kTestsOutput:
+         return "tests_output";
+      case client_events::kTestsCompleted:
+         return "tests_completed";
       case client_events::kJobUpdated:
          return "job_updated";
       case client_events::kJobRefresh:

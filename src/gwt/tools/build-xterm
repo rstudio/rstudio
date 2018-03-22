@@ -4,14 +4,14 @@ set -e
 
 # Get the xterm.js repo and checkout specific commit
 if [ ! -d "./xterm.js" ]; then
-    git clone git@github.com:sourcelair/xterm.js.git xterm.js
+    git clone git@github.com:rstudio/xterm.js.git xterm.js
 fi
 
 cd xterm.js
 git clean -dfx
 
-# xterm version 2.9.2
-git checkout ea07bf8
+# xterm version 2.9.2; with RStudio patches
+git checkout fd873c86
 
 XTERM_DIST_DIR=./dist
 XTERM_ADDONS_DIR=./dist/addons

@@ -33,6 +33,7 @@ public abstract class
    public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
+   public abstract AppCommand newPythonDoc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
    public abstract AppCommand newRShinyApp();
@@ -84,7 +85,7 @@ public abstract class
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand executeSetupChunk();
    public abstract AppCommand goToHelp();
-   public abstract AppCommand goToFunctionDefinition();
+   public abstract AppCommand goToDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand markdownHelp();
@@ -470,6 +471,8 @@ public abstract class
    public abstract AppCommand roxygenizePackage();
    public abstract AppCommand checkPackage();
    public abstract AppCommand testPackage();
+   public abstract AppCommand testTestthatFile();
+   public abstract AppCommand testShinytestFile();
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
@@ -526,6 +529,9 @@ public abstract class
    public abstract AppCommand shinyRunInPane();
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
+   public abstract AppCommand shinyRecordTest();
+   public abstract AppCommand shinyRunAllTests();
+   public abstract AppCommand shinyCompareTest();
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();

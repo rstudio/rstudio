@@ -162,6 +162,7 @@ import org.rstudio.studio.client.workbench.views.output.rsconnectdeploy.RSConnec
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
+import org.rstudio.studio.client.workbench.views.output.tests.TestsOutputTab;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
@@ -349,6 +350,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Deploy", RSConnectDeployOutputTab.class);
       bindTab("Markers", MarkersOutputTab.class);
       bindTab("Terminal", TerminalTab.class);
+      bindTab("Tests", TestsOutputTab.class);
       bindTab("Jobs", JobsTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;

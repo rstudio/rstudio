@@ -1,7 +1,7 @@
 /*
  * TextEntryModalDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -24,10 +26,9 @@ public class TextEntryModalDialog extends ModalDialog<String>
    public TextEntryModalDialog(String title,
                                String caption,
                                String defaultValue,
-                               boolean usePasswordMask,
+                               int type,
                                String extraOptionPrompt,
                                boolean extraOptionDefault,
-                               boolean numbersOnly,
                                int selectionIndex,
                                int selectionLength, String okButtonCaption,
                                int width,
@@ -35,13 +36,21 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                Operation cancelOperation)
    {
       super(title, okOperation, cancelOperation);
-      numbersOnly_ = numbersOnly;
+      type_ = type;
       selectionIndex_ = selectionIndex;
       selectionLength_ = selectionLength;
       width_ = width;
-      textBox_ = usePasswordMask ? new PasswordTextBox() :
-                 numbersOnly ? new NumericTextBox() :
-                 new TextBox();
+      switch(type)
+      {
+         case MessageDisplay.INPUT_PASSWORD:
+            textBox_ = new PasswordTextBox();
+            break;
+         case MessageDisplay.INPUT_NUMERIC:
+            textBox_ = new NumericTextBox();
+            break;
+         default:
+            textBox_ = new TextBox();
+      }
       textBox_.setWidth("100%");
       DomUtils.disableAutoBehavior(textBox_);
       captionLabel_ = new Label(caption);
@@ -100,7 +109,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
    @Override
    protected boolean validate(String input)
    {
-      if (input.length() == 0)
+      if (input.length() == 0 && type_ != MessageDisplay.INPUT_OPTIONAL_TEXT)
       {
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                   "Error",
@@ -111,7 +120,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
          return false;
       }
 
-      if (numbersOnly_)
+      if (type_ == MessageDisplay.INPUT_NUMERIC)
       {
          try
          {
@@ -144,7 +153,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
    private Label captionLabel_;
    private TextBox textBox_;
    private CheckBox extraOption_;
-   private final boolean numbersOnly_;
    private final int selectionIndex_;
    private final int selectionLength_;
+   private final int type_;
 }

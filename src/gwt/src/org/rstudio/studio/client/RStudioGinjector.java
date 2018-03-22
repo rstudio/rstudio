@@ -75,6 +75,7 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
+import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -99,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowserModel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -155,6 +157,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditor aceEditor);
    void injectMembers(DesktopFileDialogs desktopFileDialogs);
    void injectMembers(RCompletionManager rCompletionManager);
+   void injectMembers(PythonCompletionManager pythonCompletionManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
@@ -278,4 +281,5 @@ public interface RStudioGinjector extends Ginjector
    AceThemes getAceThemes();
    AddinsCommandManager getAddinsCommandManager();
    DependencyManager getDependencyManager();
+   ShinyTestPopupMenu getShinyTestPopupMenu();
 }

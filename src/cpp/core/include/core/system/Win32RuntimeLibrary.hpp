@@ -1,7 +1,7 @@
 /*
- * RCompletionContext.java
+ * Win32RuntimeLibrary.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,10 +13,19 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+#ifndef CORE_WIN32_RUNTIME_LIBRARY_HPP
+#define CORE_WIN32_RUNTIME_LIBRARY_HPP
 
-public interface RCompletionContext
-{
-   String getPath();
-   String getId();
-}
+namespace rstudio {
+namespace core {
+namespace runtime {
+
+int errorNumber();
+
+} // end namespace runtime
+} // end namespace core
+} // end namespace rstudio
+
+#define MSVC_ERRNO (::rstudio::core::runtime::errorNumber())
+
+#endif /* CORE_WIN32_RUNTIME_LIBRARY_HPP */

@@ -33,11 +33,20 @@ class MainWindow;
 class BrowserWindow;
 class Synctex;
 
-enum PendingQuit {
-   PendingQuitNone = 0,
-   PendingQuitAndExit = 1,
-   PendingQuitAndRestart = 2,
+enum PendingQuit 
+{
+   PendingQuitNone             = 0,
+   PendingQuitAndExit          = 1,
+   PendingQuitAndRestart       = 2,
    PendingQuitRestartAndReload = 3
+};
+
+enum InputType 
+{
+   InputRequiredText = 0,
+   InputOptionalText = 1,
+   InputPassword     = 2,
+   InputNumeric      = 3
 };
 
 class GwtCallback : public QObject
@@ -91,7 +100,6 @@ public Q_SLOTS:
    QJsonObject getCursorPosition();
    bool doesWindowExistAtCursorPosition();
 
-   QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
    void showFile(QString path);
@@ -144,10 +152,9 @@ public Q_SLOTS:
    QString promptForText(QString title,
                          QString caption,
                          QString defaultValue,
-                         bool usePasswordMask,
+                         int type,
                          QString rememberPasswordPrompt,
                          bool rememberByDefault,
-                         bool numbersOnly,
                          int selectionStart,
                          int selectionLength,
                          QString okButtonCaption);
@@ -215,7 +222,7 @@ public Q_SLOTS:
 
    void installRtools(QString version, QString installerPath);
 
-   std::string getDisplayDpi();
+   QString getDisplayDpi();
 
 private:
    Synctex& synctex();

@@ -103,7 +103,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void syncDiagnosticsPrefs();
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
    void setCppCompletionContext(CppCompletionContext cppContext);
-   void setRCompletionContext(RCompletionContext rContext);
+   void setRCompletionContext(CompletionContext rContext);
    String getCode();
    JsArrayString getLines();
    JsArrayString getLines(int startRow, int endRow);
@@ -114,7 +114,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void print();
    void codeCompletion();
    void goToHelp();
-   void goToFunctionDefinition();
+   void goToDefinition();
    String getSelectionValue();
    String getCurrentLine();
    String getCurrentLineUpToCursor();

@@ -43,6 +43,7 @@ public class RmdFloatOption extends RmdNullableOption
       initWidget(panel);
    }
 
+   @SuppressWarnings("unlikely-arg-type")
    @Override
    public boolean valueIsDefault()
    {

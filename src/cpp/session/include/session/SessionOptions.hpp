@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -510,6 +510,11 @@ public:
       return defaultRSConnectServer_;
    }
 
+   int webSocketPingInterval() const
+   {
+      return webSocketPingSeconds_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -601,6 +606,7 @@ private:
    std::string firstProjectTemplatePath_;
    std::string signingKey_;
    bool verifySignatures_;
+   int webSocketPingSeconds_;
 
    // r
    std::string coreRSourcePath_;

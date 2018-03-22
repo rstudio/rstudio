@@ -133,6 +133,8 @@ oop.inherits(Mode, MarkdownMode);
          return "C_CPP";
       else if (mode === "yaml")
          return "YAML";
+      else if (mode === "python")
+         return "Python";
       else
          return "Markdown";
    };

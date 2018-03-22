@@ -18,6 +18,13 @@
 
 #include <string>
 
+#ifdef _WIN32
+# include <core/system/Win32RuntimeLibrary.hpp>
+# define R_ERRNO MSVC_ERRNO
+#else
+# define R_ERRNO errno
+#endif
+
 namespace rstudio {
 namespace core {
    class FilePath;
@@ -28,7 +35,7 @@ namespace core {
 namespace rstudio {
 namespace r {
 namespace util {
-   
+
 std::string expandFileName(const std::string& name);
    
 std::string fixPath(const std::string& path);

@@ -142,6 +142,7 @@
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionTests.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionHistory.hpp"
@@ -168,6 +169,7 @@
 #include "modules/mathjax/SessionMathJax.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
+#include "modules/SessionReticulate.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -509,6 +511,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
+      (modules::reticulate::initialize)
+      (modules::tests::initialize)
       (modules::jobs::initialize)
 
       // workers

@@ -72,7 +72,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
@@ -82,7 +82,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
@@ -128,7 +127,7 @@ public class RCompletionManager implements CompletionManager
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
-                             RCompletionContext rContext,
+                             CompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
                              boolean isConsole)
@@ -307,7 +306,7 @@ public class RCompletionManager implements CompletionManager
             new SimpleRequestCallback<Void>("Help"));
    }
    
-   public void goToFunctionDefinition()
+   public void goToDefinition()
    {   
       // check for a file-local definition (intra-file navigation -- using
       // the active scope tree)
@@ -372,7 +371,7 @@ public class RCompletionManager implements CompletionManager
       
       // delayed progress indicator
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_, 1000, "Searching for function definition...");
+            globalDisplay_, 1000, "Searching for definition...");
       
       server_.getObjectDefinition(
          lineWithPos.getLine(),
@@ -521,7 +520,7 @@ public class RCompletionManager implements CompletionManager
          else if (keycode == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
-            goToFunctionDefinition();
+            goToDefinition();
             return true;
          }
       }
@@ -600,7 +599,7 @@ public class RCompletionManager implements CompletionManager
                }
                else if (keycode == 113) // F2
                {
-                  goToFunctionDefinition();
+                  goToDefinition();
                   return true;
                }
             }
@@ -1294,6 +1293,7 @@ public class RCompletionManager implements CompletionManager
             filePath,
             docId,
             line,
+            isConsole_,
             implicit,
             context_);
 
@@ -2003,7 +2003,7 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         String completionToken = getCurrentCompletionToken();
+         String completionToken = token_;
          
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
@@ -2196,54 +2196,6 @@ public class RCompletionManager implements CompletionManager
       helpRequest_.schedule(milliseconds);
    }
    
-   String getCurrentCompletionToken()
-   {
-      AceEditor editor = (AceEditor) docDisplay_;
-      if (editor == null)
-         return "";
-      
-      // TODO: Better handling of completions within markdown mode, e.g.
-      // `r foo`
-      if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
-         return token_;
-      
-      Position cursorPos = editor.getCursorPosition();
-      Token currentToken = editor.getSession().getTokenAt(cursorPos);
-      if (currentToken == null)
-         return "";
-      
-      // If the user has inserted some spaces, the cursor might now lie
-      // on a 'text' token. In that case, find the previous token and
-      // use that for completion.
-      String suffix = "";
-      if (currentToken.getValue().trim().isEmpty())
-      {
-         suffix = currentToken.getValue();
-         TokenIterator it = editor.createTokenIterator();
-         it.moveToPosition(cursorPos);
-         Token token = it.stepBackward();
-         if (token != null)
-         {
-            // don't allow spaces after roxygen keywords
-            boolean isRoxygen =
-                  token.hasType("keyword") &&
-                  token.hasType("virtual-comment");
-            if (!isRoxygen)
-               currentToken = token;
-         }
-      }
-      
-      // Exclude non-string and non-identifier tokens.
-      if (currentToken.hasType("operator", "comment", "text", "punctuation"))
-         return "";
-      
-      String tokenValue = currentToken.getValue();
-      
-      String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
-      
-      return subsetted + suffix;
-   }
-   
    private boolean isDisabled()
    {
       // Disable the completion manager while a snippet tabstop
@@ -2266,6 +2218,7 @@ public class RCompletionManager implements CompletionManager
    private final CompletionPopupDisplay popup_ ;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;
+   
    // Prevents completion popup from being dismissed when you merely
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;
@@ -2277,7 +2230,7 @@ public class RCompletionManager implements CompletionManager
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
-   private final RCompletionContext rContext_;
+   private final CompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
    private final SignatureToolTipManager sigTipManager_;

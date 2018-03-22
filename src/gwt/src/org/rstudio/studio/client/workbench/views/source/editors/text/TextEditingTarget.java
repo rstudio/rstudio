@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.*;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -167,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
@@ -592,7 +595,7 @@ public class TextEditingTarget implements
             }
             else
             {
-               docDisplay_.goToFunctionDefinition();
+               docDisplay_.goToDefinition();
             }
          }
       });
@@ -1225,7 +1228,7 @@ public class TextEditingTarget implements
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
                                                           extendedType_, 
                                                           fileType_);
-      
+
       themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
       
       docUpdateSentinel_ = new DocUpdateSentinel(
@@ -1245,7 +1248,8 @@ public class TextEditingTarget implements
                                           fileType_,
                                           extendedType_,
                                           events_,
-                                          session_);
+                                          session_,
+                                          server_);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
@@ -2051,6 +2055,11 @@ public class TextEditingTarget implements
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
    }
    
+   @Override
+   public void verifyPythonPrerequisites()
+   {
+      // TODO: ensure 'reticulate' installed
+   }
 
    public void focus()
    {
@@ -3177,6 +3186,8 @@ public class TextEditingTarget implements
          doCommentUncomment("<!--", "-->");
       else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
          doCommentUncomment("<!--", "-->");
+      else if (DocumentMode.isSelectionInPythonMode(docDisplay_))
+         doCommentUncomment("#", null);
    }
    
    /**
@@ -3475,8 +3486,11 @@ public class TextEditingTarget implements
    @Handler
    void onReflowComment()
    {
-      if (DocumentMode.isSelectionInRMode(docDisplay_))
+      if (DocumentMode.isSelectionInRMode(docDisplay_) ||
+          DocumentMode.isSelectionInPythonMode(docDisplay_))
+      {
          doReflowComment("(#)");
+      }
       else if (DocumentMode.isSelectionInCppMode(docDisplay_))
       {
          String currentLine = docDisplay_.getLine(
@@ -4423,7 +4437,7 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkRCPP()
    {
-      onInsertChunk("```{rcpp}\n\n```\n", 1, 0);
+      onInsertChunk("```{Rcpp}\n\n```\n", 1, 0);
    }
 
    @Handler
@@ -4465,7 +4479,7 @@ public class TextEditingTarget implements
       globalDisplay_.promptForText(
          "Insert Section", 
          "Section label:", 
-         "", 
+         MessageDisplay.INPUT_OPTIONAL_TEXT, 
          new OperationWithInput<String>() {
             @Override
             public void execute(String label)
@@ -4485,7 +4499,9 @@ public class TextEditingTarget implements
                   label = label.substring(0, maxLabelLength-1);
                
                // prefix 
-               String prefix = "# " + label + " ";
+               String prefix = "# ";
+               if (!label.isEmpty())
+                  prefix = prefix + label + " ";
                
                // fill to maxLength (bit ensure at least 4 fill characters
                // so the section parser is sure to pick it up)
@@ -4851,9 +4867,9 @@ public class TextEditingTarget implements
    } 
 
    @Handler
-   void onGoToFunctionDefinition()
+   void onGoToDefinition()
    {
-      docDisplay_.goToFunctionDefinition();
+      docDisplay_.goToDefinition();
    } 
    
    @Handler
@@ -4934,6 +4950,13 @@ public class TextEditingTarget implements
    private void sourceActiveDocument(final boolean echo)
    {
       docDisplay_.focus();
+      
+      // If this is a Python file, use reticulate.
+      if (fileType_.isPython())
+      {
+         sourcePython();
+         return;
+      }
 
       // If the document being sourced is a Shiny file, run the app instead.
       if (fileType_.isR() && 
@@ -5052,6 +5075,19 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void sourcePython()
+   {
+      saveThenExecute(null, () -> {
+         dependencyManager_.withReticulate(
+               "Executing Python",
+               "Sourcing Python scripts",
+               () -> {
+                  String command = "reticulate::source_python('" + getPath() + "')";
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
+               });
+      });
    }
    
    private void runScript()
@@ -6267,7 +6303,7 @@ public class TextEditingTarget implements
       }
    };
    
-   private RCompletionContext rContext_ = new RCompletionContext() {
+   private CompletionContext rContext_ = new CompletionContext() {
 
       @Override
       public String getPath()
@@ -6697,6 +6733,241 @@ public class TextEditingTarget implements
    public void setIntendedAsReadOnly(List<String> alternatives)
    {
       view_.showReadOnlyWarning(alternatives);
+   }
+
+   void installShinyTestDependencies(final Command success) {
+      server_.installShinyTestDependencies(new ServerRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess process)
+         {
+            final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
+            dialog.showModal();
+            
+            process.addProcessExitHandler(new ProcessExitEvent.Handler()
+            {
+               @Override
+               public void onProcessExit(ProcessExitEvent event)
+               {
+                  if (event.getExitCode() == 0)
+                  {
+                     success.execute();
+                     dialog.closeDialog();
+                  }
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage("Failed to install additional dependencies", error.getUserMessage());
+         }
+      });
+   }
+
+   void checkTestPackageDependencies(final Command success, boolean isTestThat) {
+      dependencyManager_.withTestPackage(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               if (isTestThat)
+                  success.execute();
+               else {
+                  server_.hasShinyTestDependenciesInstalled(new ServerRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean hasPackageDependencies)
+                     {
+                        if (hasPackageDependencies)
+                           success.execute();
+                        else {
+                           globalDisplay_.showYesNoMessage(
+                              GlobalDisplay.MSG_WARNING,
+                              "Install Shinytest Dependencies",
+                              "The package shinytest requires additional components to run.\n\n" +
+                              "Install additional components?",
+                              new Operation()
+                              {
+                                 public void execute()
+                                 {
+                                    installShinyTestDependencies(success);
+                                 }
+                              },
+                              false);
+                        }
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        globalDisplay_.showErrorMessage("Failed to check for additional dependencies", error.getMessage());
+                     }
+                  });
+               }
+            }
+         },
+         isTestThat
+      );
+   }
+
+   @Handler
+   void onTestTestthatFile()
+   {
+      final String buildCommand = "test-file";
+
+      checkTestPackageDependencies(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         true
+      );
+   }
+
+   @Handler
+   void onTestShinytestFile()
+   {
+      final String buildCommand = "test-shiny-file";
+
+      checkTestPackageDependencies(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         false
+      );
+   }
+
+   @Handler
+   void onShinyRecordTest()
+   {
+      checkTestPackageDependencies(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               String shinyAppPath = FilePathUtils.dirFromFile(docUpdateSentinel_.getPath());
+
+               if (fileType_.canKnitToHTML())
+               {
+                  shinyAppPath = docUpdateSentinel_.getPath();
+               }
+
+               String code = "shinytest::recordTest(\"" + shinyAppPath.replace("\"", "\\\"") + "\")";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+         },
+         false
+      );
+   }
+
+   @Handler
+   void onShinyRunAllTests()
+   {
+      checkTestPackageDependencies(
+         new Command()
+         {
+            @Override
+            public void execute()
+            {
+               server_.startBuild("test-shiny", FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()),
+                  new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean response)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                  }
+               });
+            }
+         },
+         false
+      );
+   }
+
+   @Handler
+   void onShinyCompareTest()
+   {
+      final String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
+      final String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
+
+      server_.hasShinyTestResults(appDir, testName, new ServerRequestCallback<Boolean>() {
+         @Override
+         public void onResponseReceived(Boolean hasResults)
+         {
+            if (!hasResults) {
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO, 
+                  "No Failed Results", 
+                  "There are no failed tests to compare."
+               );
+            }
+            else {
+               checkTestPackageDependencies(
+                  new Command()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
+                        events_.fireEvent(new SendToConsoleEvent(code, true));
+                     }
+                  },
+                  false
+               );
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage("Failed to check if results are available", error.getUserMessage());
+         }
+      });
    }
    
    private StatusBar statusBar_;

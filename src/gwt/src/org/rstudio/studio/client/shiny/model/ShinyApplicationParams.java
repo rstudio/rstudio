@@ -51,6 +51,10 @@ public class ShinyApplicationParams extends JavaScriptObject
    public final native String getState() /*-{
       return this.state;
    }-*/;
+
+   public final native int getViewerOptions() /*-{
+      return this.options;
+   }-*/;
    
    public final native void setState(String state) /*-{
       this.state = state;

@@ -67,7 +67,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           MarkersOutputTab markersTab,
                           WorkbenchTab terminalTab,
                           EventBus events,
-                          ToolbarButton goToWorkingDirButton)
+                          ToolbarButton goToWorkingDirButton,
+                          WorkbenchTab testsTab)
    {
       super(owner, parentWindow);
       owner_ = owner;
@@ -80,6 +81,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       terminalTab_ = terminalTab;
+      testsTab_ = testsTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -170,6 +172,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          public void onEnsureHidden(EnsureHiddenEvent event)
          {
             renderRmdTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
+
+      testsTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            testsTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(testsTab_);
+         }
+      });
+      testsTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            testsTabVisible_ = false;
             managePanels();
             if (!consoleOnly_)
                selectTab(0);
@@ -280,7 +305,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !sourceCppTabVisible_ &&
                             !renderRmdTabVisible_ &&
                             !deployContentTabVisible_ &&
-                            !markersTabVisible_;
+                            !markersTabVisible_ &&
+                            !testsTabVisible_;
       
       if (consoleOnly)
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
@@ -305,6 +331,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(deployContentTab_);
          if (markersTabVisible_)
             tabs.add(markersTab_);
+         if (testsTabVisible_)
+            tabs.add(testsTab_);
 
          setTabs(tabs);
       }
@@ -401,4 +429,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean consoleOnly_;
    private UIPrefs uiPrefs_;
    private Session session_;
+   private final WorkbenchTab testsTab_;
+   private boolean testsTabVisible_;
 }

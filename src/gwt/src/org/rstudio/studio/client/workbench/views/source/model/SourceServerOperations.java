@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
@@ -54,7 +55,9 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 PresentationServerOperations,
                                                 LintServerOperations,
                                                 RSConnectServerOperations,
-                                                ObjectExplorerServerOperations
+                                                ObjectExplorerServerOperations,
+                                                TestServerOperations,
+                                                CryptoServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -243,4 +246,6 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
                                             ServerRequestCallback<Void> requestCallback);
+   
+   public void adaptToLanguage(String language, ServerRequestCallback<Void> requestCallback);
 }

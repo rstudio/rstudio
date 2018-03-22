@@ -125,7 +125,7 @@ public class CompletionRequester
          // otherwise, produce a new completion list
          if (diff.length() > 0 && !diff.endsWith("::"))
          {
-            callback.onResponseReceived(narrow(token, diff, cachedResult)) ;
+            callback.onResponseReceived(narrow(cachedResult.token + diff, diff, cachedResult)) ;
             return true;
          }
       }
@@ -296,7 +296,7 @@ public class CompletionRequester
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
       }
 
       CompletionResult result = new CompletionResult(
@@ -336,6 +336,7 @@ public class CompletionRequester
          final String filePath,
          final String documentId,
          final String line,
+         final boolean isConsole,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -358,6 +359,7 @@ public class CompletionRequester
             filePath,
             documentId,
             line,
+            isConsole,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -381,7 +383,7 @@ public class CompletionRequester
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
                if (comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
             
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
@@ -400,13 +402,19 @@ public class CompletionRequester
             // Get other server completions
             for (int i = 0; i < comp.length(); i++)
                if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
             
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
             if (isTopLevelCompletionRequest())
-               addSnippetCompletions(token, newComp);
+            {
+               // disable snippets if Python REPL is active for now
+               if (isConsole && !response.getLanguage().equalsIgnoreCase("R"))
+               {
+                  addSnippetCompletions(token, newComp);
+               }
+            }
             
             // Remove duplicates
             newComp = resolveDuplicates(newComp);
@@ -637,6 +645,7 @@ public class CompletionRequester
          final String filePath,
          final String documentId,
          final String line,
+         final boolean isConsole,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -660,6 +669,7 @@ public class CompletionRequester
                filePath,
                documentId,
                line,
+               isConsole,
                requestCallback);
       }
    }
@@ -694,6 +704,7 @@ public class CompletionRequester
                   false,
                   false,
                   true,
+                  null,
                   null);
             
             // Unlike other completion types, Sweave completions are not
@@ -747,30 +758,33 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      public QualifiedName(
-            String name, String source, boolean shouldQuote, int type)
+      public QualifiedName(String name,
+                           String source,
+                           boolean shouldQuote,
+                           int type)
       {
-         this(name, source, shouldQuote, type, null);
+         this(name, source, shouldQuote, type, null, "R");
       }
       
-      public QualifiedName(
-            String name, String source, boolean shouldQuote, int type, String helpHandler)
+      
+      public QualifiedName(String name, String source)
+      {
+         this(name, source, false, RCompletionType.UNKNOWN, null, "R");
+      }
+      
+      public QualifiedName(String name,
+                           String source,
+                           boolean shouldQuote,
+                           int type,
+                           String helpHandler,
+                           String language)
       {
          this.name = name;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
          this.helpHandler = helpHandler;
-         
-      }
-      
-      public QualifiedName(String name, String source)
-      {
-         this.name = name;
-         this.source = source;
-         this.shouldQuote = false;
-         this.type = RCompletionType.UNKNOWN;
-         this.helpHandler = null;
+         this.language = language;
       }
       
       public static QualifiedName createSnippet(String name)
@@ -780,7 +794,8 @@ public class CompletionRequester
                "snippet",
                false,
                RCompletionType.SNIPPET,
-               null);
+               null,
+               "R");
       }
       
       @Override
@@ -988,7 +1003,9 @@ public class CompletionRequester
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
-      public final String helpHandler;
+      public final String helpHandler ;
+      public final String language ;
+      
       private static final FileTypeRegistry FILE_TYPE_REGISTRY =
             RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
