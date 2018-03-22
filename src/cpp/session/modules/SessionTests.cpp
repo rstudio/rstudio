@@ -26,6 +26,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionRUtil.hpp>
