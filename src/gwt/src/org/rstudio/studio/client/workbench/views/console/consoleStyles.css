@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external popupContent;
-@external ace_sb, ace_cursor, ace_hidden, ace_tooltip;
+@external ace_sb, ace_cursor, ace_hidden;
 
 @external rstudio-themes-flat;
 @external rstudio-themes-dark-menus;
@@ -172,10 +172,4 @@
 	padding: 4px;
 	font-style: italic;
 	color: #888888;
-}
-
-.ace_tooltip {
-	max-width: 400px;
-	max-height: 300px;
-	overflow: hidden;
 }
