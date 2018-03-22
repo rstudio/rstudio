@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -104,6 +105,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 Commands commands,
                 UIPrefs uiPrefs, 
                 ErrorManager errorManager,
+                DependencyManager dependencyManager,
                 ConsoleEditorProvider tracker)
    {
       super() ;
@@ -115,6 +117,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_ = display ;
       commands_ = commands;
       errorManager_ = errorManager;
+      dependencyManager_ = dependencyManager;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
@@ -372,6 +375,23 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
+   {
+      if (event.getLanguage().equals("Python"))
+      {
+         dependencyManager_.withReticulate(
+               "Executing Python code",
+               "Executing Python code",
+               () -> {
+                  onSendToConsoleImpl(event);
+               });
+      }
+      else
+      {
+         onSendToConsoleImpl(event);
+      }
+   }
+   
+   private void onSendToConsoleImpl(final SendToConsoleEvent event)
    {
       if (!StringUtil.equals(event.getLanguage(), language_))
       {
@@ -757,6 +777,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private final Display view_ ;
    private final Commands commands_;
    private final ErrorManager errorManager_;
+   private final DependencyManager dependencyManager_;
    private final InputEditorDisplay input_ ;
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
