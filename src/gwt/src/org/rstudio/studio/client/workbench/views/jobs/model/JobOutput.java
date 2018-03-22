@@ -1,5 +1,5 @@
 /*
- * JobsServerOperations.java
+ * JobOutput.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,14 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import com.google.gwt.core.client.JavaScriptObject;
 
-import com.google.gwt.core.client.JsArray;
-
-public interface JobsServerOperations
+public class JobOutput extends JavaScriptObject
 {
-   void setJobListening(String id, boolean listening,
-                        ServerRequestCallback<JsArray<JobOutput> > output);
-}
+   protected JobOutput()
+   {
+   }
+   
+   public final native int type() /*-{
+      return this[0];
+   }-*/;
 
-  
+   public final native String output() /*-{
+      return this[1];
+   }-*/;
+}

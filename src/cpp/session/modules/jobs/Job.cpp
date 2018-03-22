@@ -266,7 +266,9 @@ void Job::addOutput(const std::string& output, bool asError)
    // look up output file
    Error error;
    FilePath outputFile = outputCacheFile();
-
+   int type = asError ? 
+            module_context::kCompileOutputError : 
+            module_context::kCompileOutputNormal;
 
    // let the client know, if the client happens to be listening (the client doesn't listen by
    // default because listening to all jobs simultaneously could produce an overwhelming number of
@@ -274,8 +276,9 @@ void Job::addOutput(const std::string& output, bool asError)
    if (listening_)
    {
       json::Array data;
+      data.push_back(id_);
+      data.push_back(type);
       data.push_back(output);
-      data.push_back(asError);
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobUpdated, data));
    }
@@ -302,8 +305,8 @@ void Job::addOutput(const std::string& output, bool asError)
 
    // create json array with output and write it to the file
    json::Array contents;
+   contents.push_back(type);
    contents.push_back(output);
-   contents.push_back(asError);
    json::write(contents, *file);
 
    // append a newline (the file is newline-delimited JSON)
