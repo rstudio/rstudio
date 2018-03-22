@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 
 public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
 {
@@ -29,14 +30,14 @@ public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
    {
       project_ = project;
       forceSaveAll_ = forceSaveAll;
-      invokedByTutorialApi_ = null;
+      callContext_ = null;
    }
    
-   public SwitchToProjectEvent(String project, boolean forceSaveAll, String invokedByTutorialApi)
+   public SwitchToProjectEvent(String project, boolean forceSaveAll, TutorialApiCallContext callContext)
    {
       project_ = project;
       forceSaveAll_ = forceSaveAll;
-      invokedByTutorialApi_ = invokedByTutorialApi;
+      callContext_ = callContext;
    }
    
    public String getProject()
@@ -46,7 +47,10 @@ public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
    
    public boolean getForceSaveAll() { return forceSaveAll_; }
    
-   public String getInvokedByTutorialApi() { return invokedByTutorialApi_; }
+   public TutorialApiCallContext getCallContext()
+   {
+      return callContext_;
+   }
    
    @Override
    protected void dispatch(SwitchToProjectHandler handler)
@@ -62,5 +66,5 @@ public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
    
    private final String project_;
    private final boolean forceSaveAll_;
-   private final String invokedByTutorialApi_;
+   private final TutorialApiCallContext callContext_;
 }

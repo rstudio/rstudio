@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -333,33 +334,33 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
-   public void performQuit(String invokedByTutorialApi, boolean saveChanges)
+   public void performQuit(TutorialApiCallContext callContext, boolean saveChanges)
    {
-      performQuit(invokedByTutorialApi, saveChanges, null, null);
+      performQuit(callContext, saveChanges, null, null);
    }
    
-   public void performQuit(String invokedByTutorialApi,
+   public void performQuit(TutorialApiCallContext callContext,
                            boolean saveChanges,
                            String switchToProject)
    {
-      performQuit(invokedByTutorialApi, saveChanges, switchToProject, null);
+      performQuit(callContext, saveChanges, switchToProject, null);
    }
    
-   public void performQuit(String invokedByTutorialApi,
+   public void performQuit(TutorialApiCallContext callContext,
                            boolean saveChanges,
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(invokedByTutorialApi, null, saveChanges, switchToProject, switchToRVersion);
+      performQuit(callContext, null, saveChanges, switchToProject, switchToRVersion);
    }
    
-   public void performQuit(String invokedByTutorialApi,
+   public void performQuit(TutorialApiCallContext callContext,
                            String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion)
    {
-      performQuit(invokedByTutorialApi,
+      performQuit(callContext,
                   progressMessage,
                   saveChanges, 
                   switchToProject, 
@@ -367,14 +368,14 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   null);
    }
    
-   public void performQuit(String invokedByTutorialApi,
+   public void performQuit(TutorialApiCallContext callContext,
                            String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
                            RVersionSpec switchToRVersion,
                            Command onQuitAcknowledged)
    {
-      new QuitCommand(invokedByTutorialApi,
+      new QuitCommand(callContext,
                       progressMessage,
                       saveChanges, 
                       switchToProject,
@@ -673,19 +674,19 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    }
    
    private class QuitCommand implements Command 
-   { 
-      public QuitCommand(String invokedByTutorialApi,
+   {
+      public QuitCommand(TutorialApiCallContext callContext,
                          String progressMessage,
                          boolean saveChanges, 
                          String switchToProject,
                          RVersionSpec switchToRVersion,
                          Command onQuitAcknowledged)
       {
+         callContext_ = callContext;
          progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
          switchToRVersion_ = switchToRVersion;
-         invokedByTutorialApi_ = invokedByTutorialApi;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -741,10 +742,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                            if (switchToProject_ == null)
                               progress.dismiss();
                            
-                           if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                           if (callContext_ != null)
                            {
                               eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                    ApplicationTutorialEvent.API_SUCCESS, invokedByTutorialApi_));
+                                    ApplicationTutorialEvent.API_SUCCESS, callContext_));
                            }
                            
                            // fire onQuitAcknowledged
@@ -767,12 +768,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                      {
                         progress.dismiss();
                         
-                        if (!StringUtil.isNullOrEmpty(invokedByTutorialApi_))
+                        if (callContext_ != null)
                         {
                            eventBus_.fireEvent(new ApplicationTutorialEvent(
                                  ApplicationTutorialEvent.API_ERROR,
-                                 invokedByTutorialApi_,
-                                 message));
+                                 message,
+                                 callContext_));
                         }
                         if (Desktop.isDesktop())
                         {
@@ -798,11 +799,11 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }
       }
 
+      private final TutorialApiCallContext callContext_;
       private final boolean saveChanges_;
       private final String switchToProject_;
       private final RVersionSpec switchToRVersion_;
       private final String progressMessage_;
-      private final String invokedByTutorialApi_;
       private final Command onQuitAcknowledged_;
    }
 

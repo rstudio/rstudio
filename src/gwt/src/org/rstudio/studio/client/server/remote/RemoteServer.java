@@ -49,6 +49,7 @@ import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
@@ -3012,8 +3013,8 @@ public class RemoteServer implements Server
             {
                eventBus_.fireEvent(new ApplicationTutorialEvent(
                      ApplicationTutorialEvent.API_ERROR,
-                     "rpc",
-                     error.getEndUserMessage()));
+                     error.getEndUserMessage(),
+                     new TutorialApiCallContext("rpc", null)));
                
                // no global handlers processed it, send on to caller
                responseHandler.onResponseReceived(RpcResponse.create(error));

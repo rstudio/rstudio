@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 
 public class NewProjectResult
@@ -27,7 +28,7 @@ public class NewProjectResult
                            NewPackageOptions newPackageOptions,
                            NewShinyAppOptions newShinyAppOptions,
                            ProjectTemplateOptions projectTemplateOptions,
-                           String invokedByTutorialApi)
+                           TutorialApiCallContext callContext)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
@@ -38,7 +39,7 @@ public class NewProjectResult
       newPackageOptions_ = newPackageOptions;
       newShinyAppOptions_ = newShinyAppOptions;
       projectTemplateOptions_ = projectTemplateOptions;
-      invokedByTutorialApi_ = invokedByTutorialApi;
+      callContext_ = callContext;
    }
    
    public String getProjectFile()
@@ -107,11 +108,11 @@ public class NewProjectResult
    }
 
    /**
-    * @return If invoked via Tutorial Api, name of the invoker, otherwise null
+    * @return If invoked via Tutorial Api, context info about the call, otherwise null
     */
-   public String getInvokedByTutorialApi()
+   public TutorialApiCallContext getCallContext()
    {
-      return invokedByTutorialApi_;
+      return callContext_;
    }
 
    private final boolean createGitRepo_;
@@ -124,5 +125,5 @@ public class NewProjectResult
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
    private final ProjectTemplateOptions projectTemplateOptions_;
-   private final String invokedByTutorialApi_;
+   private final TutorialApiCallContext callContext_;
 }

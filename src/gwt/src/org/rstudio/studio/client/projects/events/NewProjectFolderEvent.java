@@ -1,7 +1,7 @@
 /*
  * NewProjectFolderEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 
 public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handler>
 {
@@ -25,20 +26,15 @@ public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handle
       void onNewProjectFolderEvent(NewProjectFolderEvent event);
    }
 
-   public NewProjectFolderEvent(String tutorialCommand,
-                                String dirName,
+   public NewProjectFolderEvent(String dirName,
                                 String destDir,
-                                boolean createRepo)
+                                boolean createRepo,
+                                TutorialApiCallContext callContext)
    {
-      tutorialCommand_ = tutorialCommand;
       dirName_ = dirName;
       destDir_ = destDir;
       createRepo_ = createRepo;
-   }
-
-   public String getTutorialCommand()
-   {
-      return tutorialCommand_;
+      callContext_ = callContext;
    }
 
    public String getDirName()
@@ -55,6 +51,14 @@ public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handle
    {
       return createRepo_;
    }
+   
+   /**
+    * @return info about api call that triggered this event, or null if not triggered by api
+    */
+   public TutorialApiCallContext getCallContext()
+   {
+      return callContext_;
+   }
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -70,8 +74,8 @@ public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handle
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 
-   private final String tutorialCommand_;
    private final String dirName_;
    private final String destDir_;
    private final boolean createRepo_;
+   private final TutorialApiCallContext callContext_;
 }
