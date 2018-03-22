@@ -63,11 +63,6 @@ public class JobItem extends Composite
       
       name_.setText(job.name);
       
-      // no ranged progress
-      if (job.max <= 0)
-      {
-        progressHost_.setVisible(false);
-      }
       update(job);
    }
    
@@ -79,7 +74,13 @@ public class JobItem extends Composite
       // sync status and progress
       status_.setText(job.status);
       
-      if (job.max > 0 && progressHost_.isVisible())
+      // show progress bar if the job is running
+      progressHost_.setVisible(
+            job.max > 0 && 
+            job_.state == JobConstants.STATE_RUNNING);
+      
+      // udpate progress bar if it's showing
+      if (progressHost_.isVisible())
       {
          double percent = ((double)job.progress / (double)job.max) * 100.0;
          bar_.setWidth(percent + "%");
