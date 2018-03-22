@@ -1,7 +1,7 @@
 /*
  * ApplicationTutorialEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
 
 import com.google.gwt.event.shared.EventHandler;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 
 @JavaScriptSerializable
 public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
@@ -34,11 +35,11 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
    // Supported values for Data.message
    
    // API request failed
-   // {"message": "error": "api": "<APINAME>", "result": "<API-SPECIFIC>"}
+   // {"message": "error": "api": "<APINAME>", "result": "<API-SPECIFIC>", "callerID": "caller-supplied"}
    public static final String API_ERROR = "error";
    
    // API request succeeded
-   // {"message": "success": "api": "<APINAME>"}
+   // {"message": "success": "api": "<APINAME>", "callerID": "caller-supplied"}
    public static final String API_SUCCESS = "success";
 
    // Some type of file save operation was initiated. Doesn't guarantee it was successful.
@@ -51,6 +52,7 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
       public String message;
       public String api;
       public String result;
+      public String callerID;
    }
 
    public ApplicationTutorialEvent()
@@ -69,19 +71,21 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
       data_.message = message;
    }
 
-   public ApplicationTutorialEvent(String message, String api)
+   public ApplicationTutorialEvent(String message, TutorialApiCallContext callContext)
    {
       data_ = new Data();
       data_.message = message;
-      data_.api = api;
+      data_.api = callContext.getApi();
+      data_.callerID = callContext.getCallerID();
    }
 
-   public ApplicationTutorialEvent(String message, String api, String result)
+   public ApplicationTutorialEvent(String message, String result, TutorialApiCallContext callContext)
    {
       data_ = new Data();
       data_.message = message;
-      data_.api = api;
+      data_.api = callContext.getApi();
       data_.result = result;
+      data_.callerID = callContext.getCallerID();
    }
 
    @Override
