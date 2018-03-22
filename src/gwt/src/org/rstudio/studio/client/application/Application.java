@@ -241,19 +241,28 @@ public class Application implements ApplicationEventHandlers
    @Handler
    void onShowAboutDialog()
    {
-      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+      if (aboutDialog_ == null)
       {
-         @Override
-         public void onResponseReceived(ProductInfo info)
+         server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
          {
-            AboutDialog about = new AboutDialog(info);
-            about.showModal();
-         }
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
+            @Override
+            public void onResponseReceived(ProductInfo info)
+            {
+               aboutDialog_ = new AboutDialog(info);
+               aboutDialog_.showModal();
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      else
+      {
+         aboutDialog_.center();
+         aboutDialog_.showModal();
+      }
    }
    
    @Handler
@@ -1095,6 +1104,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
    private final Provider<ProductEditionInfo> pEdition_;
+   
+   private AboutDialog aboutDialog_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 
