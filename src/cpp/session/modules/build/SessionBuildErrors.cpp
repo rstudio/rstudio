@@ -278,7 +278,7 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
          boost::smatch match = *iter;
          BOOST_ASSERT(match.size() == 5);
 
-         std::string file, line, type, message, marker, prefix;
+         std::string file, line, type, message, marker;
          
          file = match[1];
          line = match[2];
@@ -286,21 +286,15 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
 
          if (type.find("error") != std::string::npos) {
             marker = "error";
-            prefix = "error: ";
          } else if (type.find("failure") != std::string::npos) {
             marker = "error";
-            prefix = "failure: ";
          } else if (type.find("warning") != std::string::npos) {
             marker = "warning";
-            prefix = "warning: ";
-         } else if (type.find("skip") != std::string::npos) {
-            marker = "info";
-            prefix = "skip: ";
          } else {
             marker = "info";
          }
 
-         message = prefix + match[4];
+         message = match[4];
          FilePath testFilePath = basePathResolved.complete(file);
 
          std::string column = "0";
