@@ -168,17 +168,6 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
     pAppLauncher_->launchRStudio(args, initialDir);
 }
 
-void MainWindow::onCloseWindowShortcut()
-{
-   webPage()->runJavaScript(
-            QStringLiteral("window.desktopHooks.isCommandEnabled('closeSourceDoc')"),
-            [&](QVariant closeSourceDocEnabled)
-   {
-      if (!closeSourceDocEnabled.toBool())
-         close();
-   });
-}
-
 void MainWindow::onWorkbenchInitialized()
 {
    //QTimer::singleShot(300, this, SLOT(resetMargins()));

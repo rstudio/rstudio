@@ -60,7 +60,6 @@ Q_SIGNALS:
    void firstWorkbenchInitialized();
 
 protected Q_SLOTS:
-   void onCloseWindowShortcut();
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);
