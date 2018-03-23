@@ -95,7 +95,23 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
+#ifdef Q_OS_MAC
+   if (pEvent->key() == Qt::Key_W &&
+       pEvent->modifiers() == Qt::CTRL)
+   {
+      // on macOS, intercept Cmd+W and emit the window close signal
+      onCloseWindowShortcut();
+   }
+   else
+   {
+      // pass other key events through to WebEngine
+      QWebEngineView::keyPressEvent(pEvent);
+   }
+#else
+
    QWebEngineView::keyPressEvent(pEvent);
+   
+#endif
 }
 
 void WebView::openFile(QString fileName)
@@ -132,6 +148,14 @@ qreal WebView::dpiAwareZoomFactor()
 
 bool WebView::event(QEvent* event)
 {
+   if (event->type() == QEvent::ShortcutOverride)
+   {
+      // take a first crack at shortcuts
+      QKeyEvent *pKeyEvent = dynamic_cast<QKeyEvent*>(event);
+      if (pKeyEvent != nullptr)
+         keyPressEvent(pKeyEvent);
+      return true;
+   }
    return this->QWebEngineView::event(event);
 }
 

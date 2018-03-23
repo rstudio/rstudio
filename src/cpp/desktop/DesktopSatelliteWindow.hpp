@@ -47,7 +47,6 @@ public Q_SLOTS:
 
 
 protected Q_SLOTS:
-   void onCloseWindowShortcut();
    void finishLoading(bool ok) override;
 
 protected:
