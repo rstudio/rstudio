@@ -151,9 +151,7 @@ bool WebView::event(QEvent* event)
    if (event->type() == QEvent::ShortcutOverride)
    {
       // take a first crack at shortcuts
-      QKeyEvent *pKeyEvent = dynamic_cast<QKeyEvent*>(event);
-      if (pKeyEvent != nullptr)
-         keyPressEvent(pKeyEvent);
+      keyPressEvent(static_cast<QKeyEvent*>(event));
       return true;
    }
    return this->QWebEngineView::event(event);
