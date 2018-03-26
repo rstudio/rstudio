@@ -242,7 +242,8 @@ context("ProcessTests")
       std::string expectedOutput = "Hello\nworld!\n";
 
       boost::unique_lock<boost::mutex> lock(mutex);
-      bool timedOut = !signal.timed_wait<boost::posix_time::seconds>(lock, boost::posix_time::seconds(5));
+      bool timedOut = !signal.timed_wait<boost::posix_time::seconds>(lock, boost::posix_time::seconds(5),
+                                                                     [&](){return exitCode == 0;});
 
       CHECK(!timedOut);
       CHECK(exitCode == 0);
@@ -310,7 +311,7 @@ context("ProcessTests")
       REQUIRE_FALSE(error);
 
       // ensure we set the hard limit
-      error = core::system::setResourceLimit(core::system::FilesLimit, hard);
+      error = core::system::setResourceLimit(core::system::FilesLimit, ::fmin(10000, hard));
       REQUIRE_FALSE(error);
 
       // spawn amount of processes proportional to the hard limit
