@@ -1290,98 +1290,20 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
          if (pid == -1)
             continue;
 
-         // confirm the cmdline file exists for this pid
-         boost::format fmt("/proc/%1%/cmdline");
-         FilePath cmdlineFile = FilePath(boost::str(fmt % pDirent->d_name));
-         if (!cmdlineFile.exists())
-            continue;
-
-         // read the cmdline
-         std::string cmdline;
-         Error error = core::readStringFromFile(cmdlineFile, &cmdline);
+         ProcessInfo info;
+         Error error = processInfo(safe_convert::stringTo<pid_t>(pDirent->d_name, -1), &info);
          if (error)
          {
             LOG_ERROR(error);
             continue;
          }
-         boost::algorithm::trim(cmdline);
-
-         // confirm we have a command line
-         if (cmdline.empty())
-            continue;
-
-         // just keep first part of the command line (the rest represent the
-         // program arguments)
-         size_t pos = cmdline.find('\0');
-         if (pos != std::string::npos)
-            cmdline = cmdline.substr(0, pos);
-
-         // confirm the stat file exists for this pid
-         boost::format statFmt("/proc/%1%/stat");
-         FilePath statFile = FilePath(boost::str(statFmt % pDirent->d_name));
-         if (!statFile.exists())
-            continue;
 
          // check if this is the process we are filtering on
-         if (process.empty() || FilePath(cmdline).filename() == process)
+         if (process.empty() || info.exe == process)
          {
-            // stat the file to determine it's owner
-            struct stat st;
-            if (::stat(cmdlineFile.absolutePath().c_str(), &st) == -1)
+            if (!filter || filter(info))
             {
-               Error error = systemError(errno, ERROR_LOCATION);
-               error.addProperty("path", cmdlineFile);
-               LOG_ERROR(error);
-               continue;
-            }
-
-            // get the username
-            core::system::user::User user;
-            Error error = core::system::user::userFromId(st.st_uid, &user);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            // read the stat fields for other relevant process info
-            std::string statStr;
-            error = core::readStringFromFile(statFile, &statStr);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-
-            std::vector<std::string> statFields;
-            boost::algorithm::split(statFields, statStr,
-                                    boost::is_any_of(" "),
-                                    boost::algorithm::token_compress_on);
-
-            if (statFields.size() < 5)
-            {
-               LOG_WARNING_MESSAGE("Expected at least 5 stat fields but read: " + safe_convert::numberToString<size_t>(statFields.size()));
-               continue;
-            }
-
-            // get process parent id
-            std::string ppidStr = statFields[3];
-            pid_t ppid = safe_convert::stringTo<pid_t>(ppidStr, -1);
-
-            // get process group id
-            std::string pgrpStr = statFields[4];
-            pid_t pgrp = safe_convert::stringTo<pid_t>(pgrpStr, -1);
-
-            // add a process info
-            ProcessInfo pi;
-            pi.pid = pid;
-            pi.ppid = ppid;
-            pi.pgrp = pgrp;
-            pi.username = user.username;
-
-            if (!filter || filter(pi))
-            {
-               pInfo->push_back(pi);
+               pInfo->push_back(info);
             }
          }
       }
@@ -1390,6 +1312,91 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
 
    if (pDir != NULL)
       ::closedir(pDir);
+
+   return Success();
+}
+
+Error processInfo(pid_t pid, ProcessInfo* pInfo)
+{
+   std::string pidStr = safe_convert::numberToString(pid);
+
+   // confirm the cmdline file exists for this pid
+   boost::format fmt("/proc/%1%/cmdline");
+   FilePath cmdlineFile = FilePath(boost::str(fmt % pidStr));
+   if (!cmdlineFile.exists())
+      return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+
+   // read the cmdline
+   std::string cmdline;
+   Error error = core::readStringFromFile(cmdlineFile, &cmdline);
+   if (error)
+      return error;
+   boost::algorithm::trim(cmdline);
+
+   // confirm we have a command line
+   if (cmdline.empty())
+      return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+
+   // just keep first part of the command line (the rest represent the
+   // program arguments)
+   size_t pos = cmdline.find('\0');
+   if (pos != std::string::npos)
+      cmdline = cmdline.substr(0, pos);
+
+   // confirm the stat file exists for this pid
+   boost::format statFmt("/proc/%1%/stat");
+   FilePath statFile = FilePath(boost::str(statFmt % pidStr));
+   if (!statFile.exists())
+      return systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+
+   // stat the file to determine it's owner
+   struct stat st;
+   if (::stat(cmdlineFile.absolutePath().c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", cmdlineFile);
+      return error;
+   }
+
+   // get the username
+   core::system::user::User user;
+   error = core::system::user::userFromId(st.st_uid, &user);
+   if (error)
+      return error;
+
+   // read the stat fields for other relevant process info
+   std::string statStr;
+   error = core::readStringFromFile(statFile, &statStr);
+   if (error)
+      return error;
+
+   std::vector<std::string> statFields;
+   boost::algorithm::split(statFields, statStr,
+                           boost::is_any_of(" "),
+                           boost::algorithm::token_compress_on);
+
+   if (statFields.size() < 5)
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         "Expected at least 5 stat fields but read: " +
+                            safe_convert::numberToString<size_t>(statFields.size()),
+                         ERROR_LOCATION);
+   }
+
+   // get process parent id
+   std::string ppidStr = statFields[3];
+   pid_t ppid = safe_convert::stringTo<pid_t>(ppidStr, -1);
+
+   // get process group id
+   std::string pgrpStr = statFields[4];
+   pid_t pgrp = safe_convert::stringTo<pid_t>(pgrpStr, -1);
+
+   // set process info fields
+   pInfo->pid = pid;
+   pInfo->ppid = ppid;
+   pInfo->pgrp = pgrp;
+   pInfo->username = user.username;
+   pInfo->exe = FilePath(cmdline).filename();
 
    return Success();
 }
