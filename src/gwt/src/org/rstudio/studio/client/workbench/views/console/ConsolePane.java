@@ -1,7 +1,7 @@
 /*
  * ConsolePane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,14 @@ import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
 {
+   enum ConsoleMode
+   {
+      Normal,     // typical R console mode
+      Debug,      // ongoing debugging session
+      Profiler,   // ongoing profile session
+      Job         // ongoing asynchronous job
+   };
+   
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
                       final EventBus events,
@@ -48,7 +56,7 @@ public class ConsolePane extends WorkbenchPane
       consoleProvider_ = consoleProvider ;
       commands_ = commands;
       session_ = session;
-      debugMode_ = false;
+      mode_ = ConsoleMode.Normal;
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -133,7 +141,7 @@ public class ConsolePane extends WorkbenchPane
    {
       // initialize the debug toolbar--generally this hides it until debug state
       // is entered.
-      setDebugMode(debugMode_);
+      syncSecondaryToolbar();
 
       shell_ = consoleProvider_.get() ;
       return (Widget) shell_.getDisplay() ;
@@ -160,15 +168,15 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void setDebugMode(boolean debugMode)
    {
-      debugMode_ = debugMode;
-      loadDebugToolsIntoSecondaryToolbar();
+      mode_ = debugMode ? ConsoleMode.Debug : ConsoleMode.Normal;
+      syncSecondaryToolbar();
    }
 
    @Override
    public void setProfilerMode(boolean profilerMode)
    {
-      profilerMode_ = profilerMode;
-      loadDebugToolsIntoSecondaryToolbar();
+      mode_ = profilerMode ? ConsoleMode.Profiler : ConsoleMode.Normal;
+      syncSecondaryToolbar();
       
       Scheduler.get().scheduleFinally(new ScheduledCommand()
       {
@@ -179,31 +187,59 @@ public class ConsolePane extends WorkbenchPane
       });
    }
    
-   private void loadDebugToolsIntoSecondaryToolbar()
+   private void syncSecondaryToolbar()
    {      
-      setSecondaryToolbarVisible(debugMode_ || profilerMode_);
+      // show the toolbar if we're not in normal mode
+      setSecondaryToolbarVisible(mode_ != ConsoleMode.Normal);
+
+      // clean up toolbar in preparation for switching modes
       secondaryToolbar_.removeAllWidgets();
+
       
-      if (debugMode_)
+      switch(mode_)
       {
-         secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
-         if (session_.getSessionInfo().getHaveAdvancedStepCommands())
-         {
-            secondaryToolbar_.addLeftSeparator();
-            secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
-            secondaryToolbar_.addLeftSeparator();
-            secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
-         }
-         secondaryToolbar_.addLeftSeparator();
-         secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
-         secondaryToolbar_.addLeftSeparator();
-         secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
+        case Debug:
+           initDebugToolbar();
+           break;
+
+        case Profiler:
+           initProfilerToolbar();
+           break;
+        
+        case Job:
+           initJobToolbar();
+           break;
+        
+        case Normal:
+           // no work necessary here, we won't show the toolbar
+           break;
       }
+   }
+   
+   private void initDebugToolbar()
+   {
+      secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
+      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+      {
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+         secondaryToolbar_.addLeftSeparator();
+         secondaryToolbar_.addLeftWidget(commands_.debugFinish().createToolbarButton());
+      }
+      secondaryToolbar_.addLeftSeparator();
+      secondaryToolbar_.addLeftWidget(commands_.debugContinue().createToolbarButton());
+      secondaryToolbar_.addLeftSeparator();
+      secondaryToolbar_.addLeftWidget(commands_.debugStop().createToolbarButton());
+   }
+   
+   private void initProfilerToolbar()
+   {
+      secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
+   }
+   
+   private void initJobToolbar()
+   {
       
-      if (profilerMode_)
-      {
-         secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
-      }
    }
    
    private Provider<Shell> consoleProvider_ ;
@@ -214,7 +250,6 @@ public class ConsolePane extends WorkbenchPane
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
    private Image profilerInterruptButton_;
-   private boolean debugMode_;
-   private boolean profilerMode_;
+   private ConsoleMode mode_;
    private SecondaryToolbar secondaryToolbar_;
 }
