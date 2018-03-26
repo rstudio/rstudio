@@ -118,6 +118,22 @@ bool GwtWindow::event(QEvent* pEvent)
    return BrowserWindow::event(pEvent);
 }
 
+void GwtWindow::onCloseWindowShortcut()
+{
+   // check to see if the window has desktop hooks (not all GWT windows do); if it does, check to
+   // see whether it has a closeSourceDoc() command we should be executing instead
+   webPage()->runJavaScript(
+            QStringLiteral(
+               "if (window.desktopHooks) "
+               " window.desktopHooks.isCommandEnabled('closeSourceDoc');"
+               "else false"),
+            [&](QVariant closeSourceDocEnabled)
+   {
+      if (!closeSourceDocEnabled.toBool())
+         close();
+   });
+}
+
 
 } // namespace desktop
 } // namespace rstudio

@@ -99,12 +99,14 @@ struct ProcessInfo
    PidType ppid;
    PidType pgrp;
    std::string username;
+   std::string exe;
 };
 
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,
                         ProcessFilter filter = ProcessFilter());
+core::Error processInfo(pid_t pid, ProcessInfo* pInfo);
 
 bool isProcessRunning(pid_t pid);
 

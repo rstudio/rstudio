@@ -24,6 +24,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/PosixProcess.hpp>
 #include <core/system/PosixChildProcess.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/Thread.hpp>
 
 #include <tests/TestThat.hpp>
@@ -241,7 +242,8 @@ context("ProcessTests")
       std::string expectedOutput = "Hello\nworld!\n";
 
       boost::unique_lock<boost::mutex> lock(mutex);
-      bool timedOut = !signal.timed_wait<boost::posix_time::seconds>(lock, boost::posix_time::seconds(5));
+      bool timedOut = !signal.timed_wait<boost::posix_time::seconds>(lock, boost::posix_time::seconds(5),
+                                                                     [&](){return exitCode == 0;});
 
       CHECK(!timedOut);
       CHECK(exitCode == 0);
@@ -289,14 +291,42 @@ context("ProcessTests")
    {
       IoServiceFixture fixture;
 
+      std::string asioType;
+      #if defined(BOOST_ASIO_HAS_IOCP)
+        asioType = "iocp" ;
+      #elif defined(BOOST_ASIO_HAS_EPOLL)
+        asioType = "epoll" ;
+      #elif defined(BOOST_ASIO_HAS_KQUEUE)
+        asioType = "kqueue" ;
+      #elif defined(BOOST_ASIO_HAS_DEV_POLL)
+        asioType = "/dev/poll" ;
+      #else
+        asioType = "select" ;
+      #endif
+      std::cout << "Using asio type: " << asioType << std::endl;
+
+      // determine open files limit
+      RLimitType soft, hard;
+      Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+      REQUIRE_FALSE(error);
+
+      // ensure we set the hard limit
+      error = core::system::setResourceLimit(core::system::FilesLimit, ::fmin(10000, hard));
+      REQUIRE_FALSE(error);
+
+      // spawn amount of processes proportional to the hard limit
+      const int numProcs = ::fmin(hard / 6, 1000);
+      std::cout << "Spawning " << numProcs << " child procs" << std::endl;
+
       // create new supervisor
       AsioProcessSupervisor supervisor(fixture.ioService);
-
-      const int numProcs = 1000;
 
       int exitCodes[numProcs];
       std::string outputs[numProcs];
       std::atomic<int> numExited(0);
+      int numError = 0;
+
+      Error lastError;
       for (int i = 0; i < numProcs; ++i)
       {
          // set exit code to some initial bad value to ensure it is properly set when
@@ -321,11 +351,21 @@ context("ProcessTests")
          callbacks.onStdout = boost::bind(&appendOutput, _2, outputs + i);
 
          // run program
-         supervisor.runProgram("/bin/echo", args, options, callbacks);
+         Error error = supervisor.runProgram("/bin/echo", args, options, callbacks);
+         if (error)
+         {
+            numError++;
+            lastError = error;
+         }
       }
 
+      if (lastError)
+         std::cout << lastError.summary() << " " << lastError.location().asString() << std::endl;
+
+      CHECK(numError == 0);
+
       // wait for processes to exit
-      bool success = supervisor.wait(boost::posix_time::seconds(10));
+      bool success = supervisor.wait(boost::posix_time::seconds(60));
       CHECK(success);
 
       // check to make sure all processes really exited

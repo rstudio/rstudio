@@ -364,7 +364,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             progressCaption,
             userPrompt,
             new Dependency[] {
-                  // TODO: add reticulate 1.6 once on CRAN
+                  Dependency.cranPackage("reticulate", "1.6"),
+                  Dependency.cranPackage("png", "0.1-7")
             },
             true,
             new CommandWithArg<Boolean>()

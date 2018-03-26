@@ -1,7 +1,7 @@
 /*
  * Desktop.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,12 @@ import com.google.gwt.core.client.GWT;
 public class Desktop
 {
    public static native boolean isDesktop() /*-{
+      // we're in desktop mode if the program mode is explicitly set that way;
+      // as a fallback, check for the desktop object injected by Qt
+      return $wnd.program_mode === "desktop" || !!$wnd.desktop;
+   }-*/;
+   
+   public static native boolean isDesktopReady() /*-{
       return !!$wnd.desktop;
    }-*/;
 

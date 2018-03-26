@@ -49,6 +49,35 @@ using namespace rstudio::desktop;
 
 namespace {
 
+// attempt to remove stale lockfiles that might inhibit
+// RStudio startup (currently Windows only). returns
+// an error only when a stale lockfile exists, but
+// we could not successfully remove it
+Error removeStaleOptionsLockfile()
+{
+#ifndef Q_OS_WIN32
+   return Success();
+#else
+   std::string appData = core::system::getenv("APPDATA");
+   if (appData.empty())
+      return Success();
+
+   FilePath appDataPath(appData);
+   if (!appDataPath.exists())
+      return Success();
+
+   FilePath lockFilePath = appDataPath.childPath("RStudio/desktop.ini.lock");
+   if (!lockFilePath.exists())
+      return Success();
+
+   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   if (diff < 10)
+      return Success();
+
+   return lockFilePath.remove();
+#endif
+}
+
 void initializeSharedSecret()
 {
    sharedSecret = QString::number(rand())
@@ -243,6 +272,12 @@ int main(int argc, char* argv[])
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
+      // attempt to remove stale lockfiles, as they can impede
+      // application startup
+      error = removeStaleOptionsLockfile();
       if (error)
          LOG_ERROR(error);
 

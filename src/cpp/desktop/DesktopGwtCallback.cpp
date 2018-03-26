@@ -535,6 +535,8 @@ void GwtCallback::showFile(QString path)
    desktop::openUrl(QUrl::fromLocalFile(path));
 }
 
+#ifndef Q_OS_MAC
+
 void GwtCallback::showWordDoc(QString path)
 {
 #ifdef Q_OS_WIN32
@@ -552,6 +554,8 @@ void GwtCallback::showWordDoc(QString path)
    showFile(path);
 #endif
 }
+
+#endif
 
 void GwtCallback::showPptPresentation(QString path)
 {

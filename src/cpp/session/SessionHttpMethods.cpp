@@ -847,8 +847,12 @@ void registerGwtHandlers()
    // initialize gwt symbol maps
    gwt::initializeSymbolMaps(options.wwwSymbolMapsPath());
 
+   // declare program mode in JS init block (for GWT boot time access)
+   std::string initJs = "window.program_mode = \"" + options.programMode() + "\";\n";
+
    // set default handler
-   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), "/");
+   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), "/",
+         http::UriFilterFunction(), initJs);
 }
 
 std::string nextSessionUrl()

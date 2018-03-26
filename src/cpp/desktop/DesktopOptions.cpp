@@ -64,7 +64,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
       win->restoreGeometry(settings_.value(key).toByteArray());
    else
    {
-      QSize size = QSize(1024, 768).boundedTo(
+      QSize size = QSize(1200, 900).boundedTo(
             QApplication::desktop()->availableGeometry().size());
       if (size.width() > 800 && size.height() > 500)
       {

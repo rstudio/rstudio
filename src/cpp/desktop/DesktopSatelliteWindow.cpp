@@ -43,11 +43,6 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
    connect(zoomOutShortcut, SIGNAL(activated()), this, SLOT(zoomOut()));
 }
 
-void SatelliteWindow::onCloseWindowShortcut()
-{
-   close();
-}
-
 void SatelliteWindow::finishLoading(bool ok)
 {
    BrowserWindow::finishLoading(ok);

@@ -35,6 +35,29 @@ RS_BEGIN_NAMESPACE(desktop)
 
 RS_BEGIN_NAMESPACE()
 
+static const char* const s_openWordDocumentFormatString = 1 + R"EOF(
+tell application "Microsoft Word"
+   activate
+   set reopened to false
+   repeat with i from 1 to (count of documents)
+      set docPath to full name of document i
+      if POSIX path of docPath is equal to "%@" then
+         set w to active window of document i
+         set h to horizontal percent scrolled of w
+         set v to vertical percent scrolled of w
+         close document i
+         set d to open file name docPath with read only
+         set reopened to true
+         set w to active window of d
+         set horizontal percent scrolled of w to h
+         set vertical percent scrolled of w to v
+         exit repeat
+      end if
+   end repeat
+   if not reopened then open file name POSIX file "%@" with read only
+end tell
+)EOF";
+
 enum MessageType
 {
    MSG_POPUP_BLOCKED = 0,
@@ -259,6 +282,49 @@ QString GwtCallback::getExistingDirectory(const QString& qCaption,
    [panel setCanCreateDirectories: true];
    
    return runFileDialog(panel);
+}
+
+void GwtCallback::showWordDoc(QString qPath)
+{
+   if (qPath.isEmpty())
+      return;
+   
+   NSString* path = qPath.toNSString();
+   bool opened = false;
+   
+   // create the structure describing the doc to open
+   path = resolveAliasedPath(path);
+   
+   // figure out if word is installed
+   if ([[NSWorkspace sharedWorkspace] fullPathForApplication:@"Microsoft Word"]!= nil)
+   {
+      NSString* openDocFormat = [NSString stringWithUTF8String: s_openWordDocumentFormatString];
+      NSString* openDocScript = [NSString stringWithFormat: openDocFormat, path, path];
+      NSAppleScript* openDoc = [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+      
+      if ([openDoc executeAndReturnError: nil] != nil)
+      {
+         opened = true;
+      }
+   }
+   
+   if (!opened)
+   {
+      // the AppleScript failed (or Word wasn't found), so try an alternate
+      // method of opening the document.
+      CFURLRef urls[1];
+      urls[0] = (CFURLRef)[NSURL fileURLWithPath: path];
+      CFArrayRef docArr =
+      CFArrayCreate(kCFAllocatorDefault, (const void**)&urls, 1,
+                    &kCFTypeArrayCallBacks);
+      
+      // ask the OS to open the doc for us in an appropriate viewer
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      if (status != noErr)
+      {
+         showFile(qPath);
+      }
+   }
 }
 
 

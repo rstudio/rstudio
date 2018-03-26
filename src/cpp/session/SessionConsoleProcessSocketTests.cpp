@@ -300,6 +300,17 @@ public:
       return true;
    }
 
+   void waitForConnectionOrError()
+   {
+      while (!gotOpened() && !gotFailed())
+      {
+         blockingwait(50);
+      }
+      blockingwait(10);
+      expect_true(gotOpened());
+      expect_false(gotFailed());
+   }
+
    std::string getInput() { blockingwait(50); return input_; }
    bool gotOpened() { return gotOpened_; }
    bool gotClosed() { return gotClosed_; }
@@ -381,12 +392,7 @@ context("websocket for interactive terminals")
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
-      while (!pClient->gotOpened() && !pClient->gotFailed())
-      {
-      }
-
-      expect_true(pClient->gotOpened());
-      expect_false(pClient->gotFailed());
+      pClient->waitForConnectionOrError();
 
       expect_true(pClient->disconnectFromServer());
       expect_true(pSocket->stopServer());
@@ -402,12 +408,7 @@ context("websocket for interactive terminals")
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
-      while (!pClient->gotOpened() && !pClient->gotFailed())
-      {
-      }
-
-      expect_true(pClient->gotOpened());
-      expect_false(pClient->gotFailed());
+      pClient->waitForConnectionOrError();
 
       expect_true(pClient->sendText(msgString1));
       expect_true(pConnection->getReceived().compare(msgString1) == 0);
@@ -426,12 +427,7 @@ context("websocket for interactive terminals")
       expect_true(pConnection->listen());
       expect_true(pClient->connectToServer());
 
-      while (!pClient->gotOpened() && !pClient->gotFailed())
-      {
-      }
-
-      expect_true(pClient->gotOpened());
-      expect_false(pClient->gotFailed());
+      pClient->waitForConnectionOrError();
 
       expect_true(pConnection->sendRawMessage(msgString1));
       expect_true(pClient->getInput().compare(msgString1) == 0);
@@ -454,11 +450,7 @@ context("websocket for interactive terminals")
       expect_true(pConnection1->listen());
       expect_true(pClient1->connectToServer());
 
-      while (!pClient1->gotOpened() && !pClient1->gotFailed())
-      {
-      }
-      expect_true(pClient1->gotOpened());
-      expect_false(pClient1->gotFailed());
+      pClient1->waitForConnectionOrError();
 
       // ---- second connection ----
       shared_ptr<SocketConnection> pConnection2 =
@@ -468,11 +460,7 @@ context("websocket for interactive terminals")
       expect_true(pConnection2->listen());
       expect_true(pClient2->connectToServer());
 
-      while (!pClient2->gotOpened() && !pClient2->gotFailed())
-      {
-      }
-      expect_true(pClient2->gotOpened());
-      expect_false(pClient2->gotFailed());
+      pClient2->waitForConnectionOrError();
 
       // ---- send message to first connection ----
       expect_true(pConnection1->sendRawMessage(msgString1));
