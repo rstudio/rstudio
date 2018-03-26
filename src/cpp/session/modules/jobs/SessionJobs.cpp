@@ -47,7 +47,6 @@ namespace {
 // map of job ID to jobs
 std::map<std::string, boost::shared_ptr<Job> > s_jobs;
 
-
 // notify client that job has been updated
 void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
 {
@@ -325,6 +324,16 @@ void onResume(const Settings& settings)
          ClientEvent(client_events::kJobRefresh, jobsAsJson()));
 }
 
+void onClientInit()
+{
+   // when a new client connects, we should stop emitting streaming output from any job currently
+   // doing so since the old client is no longer listening
+   for (auto& job: s_jobs)
+   {
+      job.second->setListening(false);
+   }
+}
+
 } // anonymous namespace
 
 core::json::Object jobState()
@@ -345,6 +354,7 @@ core::Error initialize()
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
+   module_context::events().onClientInit.connect(onClientInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
