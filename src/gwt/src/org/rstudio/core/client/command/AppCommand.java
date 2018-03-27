@@ -107,12 +107,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public AppCommand()
    {
-      if (Desktop.hasDesktopMenuCallbacks())
+      if (Desktop.isDesktop())
       {
-         addEnabledChangedHandler((command) ->
-            DesktopMenuCallback.setCommandEnabled(id_, enabled_));
-         addVisibleChangedHandler((command) ->
-            DesktopMenuCallback.setCommandVisible(id_, visible_));
+         addEnabledChangedHandler((command) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
+         addVisibleChangedHandler((command) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
       }
    }
 
@@ -186,6 +184,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          enabled_ = enabled;
          handlers_.fireEvent(new EnabledChangedEvent(this));
       }
+    
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setCommandEnabled(id_, enabled_);
    }
 
    public boolean isVisible()
@@ -200,6 +201,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this));
       }
+      
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setCommandVisible(id_, visible_);
    }
    
    /**
@@ -230,10 +234,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (!isCheckable())
          return;
+      
       checked_ = checked;
-
-      // sync desktop menus
-      if (Desktop.hasDesktopMenuCallbacks())
+      if (Desktop.isDesktop())
          DesktopMenuCallback.setCommandChecked(id_, checked_);
    }
 
@@ -384,9 +387,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
-
-      // sync with desktop frame
-      if (Desktop.hasDesktopMenuCallbacks())
+      if (Desktop.isDesktop())
          DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 
