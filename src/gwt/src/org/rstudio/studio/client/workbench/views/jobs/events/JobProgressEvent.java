@@ -1,5 +1,5 @@
 /*
- * JobUpdatedEvent.java
+ * JobProgressEvent.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,28 +14,52 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
+public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onJobUpdated(JobUpdatedEvent event);
+      void onJobProgress(JobProgressEvent event);
    }
    
-   public JobUpdatedEvent(JobUpdate data)
+   // constructor used when there's no progress
+   public JobProgressEvent()
    {
-      JobState.recordReceived(data.job);
-      data_ = data;
+      name_ = null;
+      units_ = 0;
+      max_ = 0;
+      elapsed_ = 0;
+   }
+   
+   // constructor used when jobs are running
+   public JobProgressEvent(String name, int units, int max, int elapsed)
+   {
+      name_ = name;
+      units_ = units;
+      max_ = max;
+      elapsed_ = elapsed;
    }
 
-   public JobUpdate getData()
+   public int units()
    {
-      return data_;
+      return units_;
+   }
+   
+   public int max()
+   {
+      return max_;
+   }
+   
+   public int elapsed()
+   {
+      return elapsed_;
+   }
+   
+   public String name()
+   {
+      return name_;
    }
 
    @Override
@@ -47,10 +71,13 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onJobUpdated(this);
+      handler.onJobProgress(this);
    }
 
-   private final JobUpdate data_;
+   private final String name_;
+   private final int units_;
+   private final int max_;
+   private final int elapsed_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -24,11 +24,11 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
@@ -40,9 +40,10 @@ import com.google.inject.Inject;
 
 public class JobsPresenter extends BasePresenter  
                            implements JobUpdatedEvent.Handler,
-                                      JobRefreshEvent.Handler,
+                                      JobInitEvent.Handler,
                                       JobOutputEvent.Handler,
-                                      JobSelectionEvent.Handler
+                                      JobSelectionEvent.Handler,
+                                      JobElapsedTickEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -51,6 +52,7 @@ public class JobsPresenter extends BasePresenter
       void showJobOutput(String id, JsArray<JobOutput> output);
       void addJobOutput(String id, int type, String output);
       void hideJobOutput(String id);
+      void syncElapsedTime(int timestamp);
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -61,7 +63,6 @@ public class JobsPresenter extends BasePresenter
                         Binder binder,
                         Commands commands,
                         EventBus events,
-                        Session session,
                         GlobalDisplay globalDisplay)
    {
       super(display);
@@ -69,20 +70,18 @@ public class JobsPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       binder.bind(commands, this);
-      setJobState(session.getSessionInfo().getJobState());
    }
 
    @Override
    public void onJobUpdated(JobUpdatedEvent event)
    {
-      JobState.recordReceived(event.getData().job);
       display_.updateJob(event.getData().type, event.getData().job);
    }
 
    @Override
-   public void onJobRefresh(JobRefreshEvent event)
+   public void onJobInit(JobInitEvent event)
    {
-      setJobState(event.getData());
+      setJobState(event.state());
    }
    
    @Override
@@ -90,12 +89,6 @@ public class JobsPresenter extends BasePresenter
    {
       display_.addJobOutput(event.getData().id(), 
             event.getData().type(), event.getData().output());
-   }
-   
-   private void setJobState(JobState state)
-   {
-      state.recordReceived();
-      display_.setInitialJobs(state);
    }
    
    @Override
@@ -109,6 +102,19 @@ public class JobsPresenter extends BasePresenter
       {
          unselectJob(event.id());
       }
+   }
+   
+   @Override
+   public void onJobElapsedTick(JobElapsedTickEvent event)
+   {
+      display_.syncElapsedTime(event.timestamp());
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
+   private void setJobState(JobState state)
+   {
+      display_.setInitialJobs(state);
    }
    
    private void unselectJob(final String id)

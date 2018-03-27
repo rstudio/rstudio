@@ -1,5 +1,5 @@
 /*
- * JobUpdatedEvent.java
+ * JobElapsedTick.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,30 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
+public class JobElapsedTickEvent extends GwtEvent<JobElapsedTickEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onJobUpdated(JobUpdatedEvent event);
+      void onJobElapsedTick(JobElapsedTickEvent event);
    }
    
-   public JobUpdatedEvent(JobUpdate data)
+   public JobElapsedTickEvent(int timestamp)
    {
-      JobState.recordReceived(data.job);
-      data_ = data;
+      timestamp_ = timestamp;
    }
 
-   public JobUpdate getData()
+   public int timestamp()
    {
-      return data_;
+      return timestamp_;
    }
-
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,10 +43,10 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onJobUpdated(this);
+      handler.onJobElapsedTick(this);
    }
 
-   private final JobUpdate data_;
+   private final int timestamp_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

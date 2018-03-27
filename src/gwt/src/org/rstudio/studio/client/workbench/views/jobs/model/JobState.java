@@ -23,6 +23,26 @@ public class JobState extends JsObject
    protected JobState()
    {
    }
+   
+   public final Job getJob(String id)
+   {
+      return getElement(id);
+   }
+   
+   public final void updateJob(Job job)
+   {
+      setElement(job.id, job);
+   }
+   
+   public final void addJob(Job job)
+   {
+      updateJob(job);
+   }
+   
+   public final void removeJob(Job job)
+   {
+      unset(job.id);
+   }
 
    public final void recordReceived()
    {

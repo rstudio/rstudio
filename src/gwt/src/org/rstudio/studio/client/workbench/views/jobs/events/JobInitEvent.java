@@ -1,5 +1,5 @@
 /*
- * JobUpdatedEvent.java
+ * JobInitEvent.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -15,29 +15,28 @@
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
+public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onJobUpdated(JobUpdatedEvent event);
+      void onJobInit(JobInitEvent event);
    }
    
-   public JobUpdatedEvent(JobUpdate data)
+   public JobInitEvent(JobState state)
    {
-      JobState.recordReceived(data.job);
-      data_ = data;
+      state.recordReceived();
+      state_ = state;
    }
 
-   public JobUpdate getData()
+   public JobState state()
    {
-      return data_;
+      return state_;
    }
-
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,10 +46,10 @@ public class JobUpdatedEvent extends GwtEvent<JobUpdatedEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onJobUpdated(this);
+      handler.onJobInit(this);
    }
 
-   private final JobUpdate data_;
+   private final JobState state_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

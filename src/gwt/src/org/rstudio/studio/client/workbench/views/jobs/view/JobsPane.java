@@ -193,6 +193,12 @@ public class JobsPane extends WorkbenchPane
       current_ = null;
    }
 
+   @Override
+   public void syncElapsedTime(int timestamp)
+   {
+      list_.syncElapsedTime(timestamp);
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void installJobToolbar()

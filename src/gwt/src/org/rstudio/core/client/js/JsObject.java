@@ -62,6 +62,10 @@ public class JsObject extends JavaScriptObject
       this[key] = value;
    }-*/;
 
+   public final native <T> void setElement(String key, T value) /*-{
+      this[key] = value;
+   }-*/;
+
    public final native String getString(String key) /*-{
       return this[key];
    }-*/;
