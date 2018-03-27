@@ -605,7 +605,7 @@ Error getOpenFds(pid_t pid, std::vector<unsigned int> *pFds)
       return systemError(errno, ERROR_LOCATION);
 
    // get the list of open fds
-   struct proc_fdinfo* procFdInfo = (struct proc_fdinfo*)malloc(bufferSize);
+   struct proc_fdinfo* procFdInfo = static_cast<struct proc_fdinfo*>(malloc(bufferSize));
    if (!procFdInfo)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
@@ -717,12 +717,12 @@ void closeFileDescriptorsFromParent(int pipeFd, unsigned int fdStart, rlim_t fdL
          break;
 
       // determine which fd was just read from the parent
-      int res = (int)(*buffer);
+      int res = static_cast<int>(*buffer);
       if (res == -1)
          break; // indicates no more fds are open by the process
 
       readDescriptors = true;
-      unsigned int fd = (unsigned int) res;
+      unsigned int fd = static_cast<unsigned int>(res);
 
       // close the reported fd if it is in range
       if (fd >= fdStart && fd < fdLimit)
