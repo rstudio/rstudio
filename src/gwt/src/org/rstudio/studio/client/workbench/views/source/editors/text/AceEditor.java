@@ -425,7 +425,7 @@ public class AceEditor implements DocDisplay,
          public void onFocus(FocusEvent event)
          {
             String id = AceEditor.this.getWidget().getElement().getId();
-            MainWindowObject.lastFocusedEditor().set(id);
+            MainWindowObject.lastFocusedEditorId().set(id);
          }
       });
       

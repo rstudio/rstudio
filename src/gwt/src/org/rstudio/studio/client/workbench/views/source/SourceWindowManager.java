@@ -213,14 +213,18 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       
       // signal that this window has focus
       if (WindowEx.get().getDocument().hasFocus())
-         MainWindowObject.lastFocusedWindow().set(getSourceWindowId());
+      {
+         MainWindowObject.lastFocusedWindow().set(WindowEx.getNative());
+         MainWindowObject.lastFocusedWindowId().set(getSourceWindowId());
+      }
       
       WindowEx.addFocusHandler(new FocusHandler()
       {
          @Override
          public void onFocus(FocusEvent event)
          {
-            MainWindowObject.lastFocusedWindow().set(getSourceWindowId());
+            MainWindowObject.lastFocusedWindow().set(WindowEx.getNative());
+            MainWindowObject.lastFocusedWindowId().set(getSourceWindowId());
          }
       });
    }
@@ -273,12 +277,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public String getLastFocusedSourceWindowId()
    {
-      return MainWindowObject.lastFocusedSourceWindow().get();
+      return MainWindowObject.lastFocusedSourceWindowId().get();
    }
    
    public String getLastFocusedWindowId()
    {
-      return MainWindowObject.lastFocusedWindow().get();
+      return MainWindowObject.lastFocusedWindowId().get();
    }
    
    public int getSourceWindowOrdinal()
@@ -788,7 +792,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   ? ""
                   : sourceWindowId(event.originWindowName());
 
-            MainWindowObject.lastFocusedSourceWindow().set(id);
+            MainWindowObject.lastFocusedSourceWindowId().set(id);
          }
       });
    }
@@ -1285,7 +1289,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private WindowEx getLastFocusedSourceWindow()
    {
       String lastFocusedSourceWindow =
-            MainWindowObject.lastFocusedSourceWindow().get();
+            MainWindowObject.lastFocusedSourceWindowId().get();
             
       // if the last window focused was the main one, or there's no longer an
       // addressable window, there's nothing to do

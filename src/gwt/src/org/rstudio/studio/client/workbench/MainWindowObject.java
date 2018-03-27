@@ -91,9 +91,21 @@ public class MainWindowObject<T>
    
    // Helper Classes ----
    
-   public static final MainWindowObject<String> lastFocusedEditor()
+   public static final MainWindowObject<Window> lastFocusedWindow()
    {
-      return new MainWindowObject<String>(LAST_FOCUSED_EDITOR, new DefaultProvider<String>()
+      return new MainWindowObject<Window>(LAST_FOCUSED_WINDOW, new DefaultProvider<Window>()
+      {
+         @Override
+         public Window defaultValue()
+         {
+            return null;
+         }
+      });
+   }
+   
+   public static final MainWindowObject<String> lastFocusedEditorId()
+   {
+      return new MainWindowObject<String>(LAST_FOCUSED_EDITOR_ID, new DefaultProvider<String>()
       {
          @Override
          public String defaultValue()
@@ -103,9 +115,9 @@ public class MainWindowObject<T>
       });
    }
    
-   public static final MainWindowObject<String> lastFocusedWindow()
+   public static final MainWindowObject<String> lastFocusedWindowId()
    {
-      return new MainWindowObject<String>(LAST_FOCUSED_WINDOW, new DefaultProvider<String>()
+      return new MainWindowObject<String>(LAST_FOCUSED_WINDOW_ID, new DefaultProvider<String>()
       {
          @Override
          public String defaultValue()
@@ -115,9 +127,9 @@ public class MainWindowObject<T>
       });
    }
    
-   public static final MainWindowObject<String> lastFocusedSourceWindow()
+   public static final MainWindowObject<String> lastFocusedSourceWindowId()
    {
-      return new MainWindowObject<String>(LAST_FOCUSED_SOURCE_WINDOW, new DefaultProvider<String>()
+      return new MainWindowObject<String>(LAST_FOCUSED_SOURCE_WINDOW_ID, new DefaultProvider<String>()
       {
          @Override
          public String defaultValue()
@@ -139,8 +151,11 @@ public class MainWindowObject<T>
       });
    }
    
-   private static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
-   private static final String LAST_FOCUSED_WINDOW        = "last_focused_window";
-   private static final String LAST_FOCUSED_SOURCE_WINDOW = "last_focused_source_window";
-   private static final String R_ADDINS                   = "r_addins";
+   // Private methods ----
+   
+   private static final String LAST_FOCUSED_WINDOW           = "last_focused_window";
+   private static final String LAST_FOCUSED_WINDOW_ID        = "last_focused_window_id";
+   private static final String LAST_FOCUSED_EDITOR_ID        = "last_focused_editor_id";
+   private static final String LAST_FOCUSED_SOURCE_WINDOW_ID = "last_focused_source_window_id";
+   private static final String R_ADDINS                      = "r_addins";
 }

@@ -190,11 +190,16 @@ void MainWindow::quit()
 
 void MainWindow::invokeCommand(QString commandId)
 {
-   QString command =
-         QString::fromUtf8("window.desktopHooks.invokeCommand('") +
-         commandId +
-         QString::fromUtf8("');");
-
+#ifdef Q_OS_MAC
+   QString fmt = QStringLiteral(R"EOF(
+      var wnd = window.$RStudio.last_focused_window || window;
+      wnd.desktopHooks.invokeCommand('%1')
+   )EOF");
+#else
+   QString fmt = QStringLiteral("window.desktopHooks.invokeCommand('%1')");
+#endif
+   
+   QString command = fmt.arg(commandId);
    webPage()->runJavaScript(command);
 }
 

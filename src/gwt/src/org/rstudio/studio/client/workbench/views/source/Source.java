@@ -679,7 +679,7 @@ public class Source implements InsertSourceHandler,
    
    private boolean consoleEditorHadFocusLast()
    {
-      String id = MainWindowObject.lastFocusedEditor().get();
+      String id = MainWindowObject.lastFocusedEditorId().get();
       return "rstudio_console_input".equals(id);
    }
    
