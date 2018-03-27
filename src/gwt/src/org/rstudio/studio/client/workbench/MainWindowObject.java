@@ -98,7 +98,7 @@ public class MainWindowObject<T>
          @Override
          public Window defaultValue()
          {
-            return null;
+            return ownWindow();
          }
       });
    }
@@ -152,6 +152,8 @@ public class MainWindowObject<T>
    }
    
    // Private methods ----
+   
+   private static final native Window ownWindow() /*-{ return $wnd; }-*/;
    
    private static final String LAST_FOCUSED_WINDOW           = "last_focused_window";
    private static final String LAST_FOCUSED_WINDOW_ID        = "last_focused_window_id";
