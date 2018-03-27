@@ -606,13 +606,13 @@ Error getOpenFds(pid_t pid, std::vector<unsigned int> *pFds)
 
    // get the list of open fds
    struct proc_fdinfo* procFdInfo = (struct proc_fdinfo*)malloc(bufferSize);
-   if (!procFDInfo)
+   if (!procFdInfo)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFdInfo, bufferSize);
-   int numFds = bufferSize / PROC_PIDLISTFD_SIZE;
+   int filledSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFdInfo, bufferSize);
+   int numFds = filledSize / PROC_PIDLISTFD_SIZE;
 
-   for(int i = 0; i < numberOfProcFDs; ++i)
+   for (int i = 0; i < numFds; ++i)
    {
       pFds->push_back(procFdInfo[i].proc_fd);
    }
