@@ -27,6 +27,10 @@ public class Desktop
    public static native boolean isDesktopReady() /*-{
       return !!$wnd.desktop;
    }-*/;
+   
+   public static native boolean hasDesktopMenuCallbacks() /*-{
+      return !!$wnd.desktopMenuCallback;
+   }-*/;
 
    public static DesktopFrame getFrame()
    {

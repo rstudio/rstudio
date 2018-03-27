@@ -107,7 +107,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public AppCommand()
    {
-      if (Desktop.isDesktopReady())
+      if (Desktop.hasDesktopMenuCallbacks())
       {
          addEnabledChangedHandler((command) ->
             DesktopMenuCallback.setCommandEnabled(id_, enabled_));
@@ -233,7 +233,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       checked_ = checked;
 
       // sync desktop menus
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopMenuCallbacks())
          DesktopMenuCallback.setCommandChecked(id_, checked_);
    }
 
@@ -386,7 +386,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       menuLabel_ = menuLabel;
 
       // sync with desktop frame
-      if (Desktop.isDesktopReady())
+      if (Desktop.hasDesktopMenuCallbacks())
          DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 
