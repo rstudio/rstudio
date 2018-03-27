@@ -91,7 +91,10 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
 
 void ApplicationLaunch::activateWindow()
 {
-   activate((HWND)winId());
+   if (pMainWindow_)
+      activate((HWND) pMainWindow_->winId());
+   else
+      activate((HWND) winId());
 }
 
 QString ApplicationLaunch::startupOpenFileRequest() const
@@ -151,12 +154,7 @@ bool ApplicationLaunch::sendMessage(QString filename)
                                                        0));
       if (::IsWindow(hwnd))
       {
-         HWND hwndPopup = ::GetLastActivePopup(hwnd);
-         if (::IsWindow(hwndPopup))
-            hwnd = hwndPopup;
-         ::SetForegroundWindow(hwnd);
-         if (::IsIconic(hwnd))
-            ::ShowWindow(hwnd, SW_RESTORE);
+         activate(hwnd);
 
          if (!filename.isEmpty())
          {
