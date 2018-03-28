@@ -66,8 +66,6 @@ protected Q_SLOTS:
 
 protected:
    void closeEvent(QCloseEvent*) override;
-   double getZoomLevel() override;
-   void setZoomLevel(double zoomLevel) override;
 
 // private interface for SessionLauncher
 private:

@@ -39,8 +39,6 @@ public:
 
    void activateSatelliteWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);
-   void setDpiAwareZoomFactor(qreal factor);
-   qreal dpiAwareZoomFactor();
 
    bool event(QEvent* event) override;
 
@@ -65,7 +63,6 @@ protected Q_SLOTS:
 private:
    QUrl baseUrl_;
    WebPage* pWebPage_;
-   double dpiZoomScaling_;
 };
 
 } // namespace desktop

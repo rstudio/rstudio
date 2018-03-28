@@ -1215,12 +1215,13 @@ QString GwtCallback::getZoomLevels()
 
 double GwtCallback::getZoomLevel()
 {
-   return options().zoomLevel();
+   return desktopInfo().getZoomLevel();
 }
 
 void GwtCallback::setZoomLevel(double zoomLevel)
 {
    options().setZoomLevel(zoomLevel);
+   desktopInfo().setZoomLevel(zoomLevel);
 }
 
 void GwtCallback::showLicenseDialog()
