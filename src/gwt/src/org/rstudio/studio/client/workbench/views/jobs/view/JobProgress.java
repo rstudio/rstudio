@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
 
@@ -38,13 +39,15 @@ public class JobProgress extends Composite
    public JobProgress()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      
+      progress_.setHeight("10px");
    }
    
    @Override
    public void showProgress(GlobalJobProgress progress)
    {
       name_.setText(progress.name());
-      progress_.setText(progress.units() + "/" + progress.max());
+      progress_.setProgress(progress.units(), progress.max());
       started_ = progress.started();
    }
 
@@ -56,7 +59,7 @@ public class JobProgress extends Composite
    }
 
    @UiField Label name_;
-   @UiField Label progress_;
+   @UiField ProgressBar progress_;
    @UiField Label elapsed_;
    
    private int started_;

@@ -18,6 +18,7 @@ import java.util.Date;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -29,8 +30,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -85,15 +84,15 @@ public class JobItem extends Composite
       status_.setText(job.status);
       
       // show progress bar if the job is running
-      progressHost_.setVisible(
+      progress_.setVisible(
             job.max > 0 && 
             job_.state == JobConstants.STATE_RUNNING);
       
       // udpate progress bar if it's showing
-      if (progressHost_.isVisible())
+      if (progress_.isVisible())
       {
          double percent = ((double)job.progress / (double)job.max) * 100.0;
-         bar_.setWidth(percent + "%");
+         progress_.setProgress(percent);
       }
       
       // sync image
@@ -140,9 +139,7 @@ public class JobItem extends Composite
    private Job job_;
    private static final JobResources RESOURCES = GWT.create(JobResources.class);
    
-   @UiField HTMLPanel bar_;
-   @UiField HTMLPanel progress_;
-   @UiField HorizontalPanel progressHost_;
+   @UiField ProgressBar progress_;
    @UiField Image select_;
    @UiField Image state_;
    @UiField Label elapsed_;

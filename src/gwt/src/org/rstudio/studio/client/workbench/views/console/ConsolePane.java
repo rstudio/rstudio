@@ -286,6 +286,10 @@ public class ConsolePane extends WorkbenchPane
    {
       progress_ = progressProvider_.get();
       secondaryToolbar_.addLeftWidget(progress_.asWidget());
+      secondaryToolbar_.setLeftWidgetWidth(progress_.asWidget(), "100%");
+      
+      // TODO: this leaves the secondary toolbar stuck at 100%; we need to clear
+      // it when returning to one of the other toolbar modes
    }
 
    private Provider<Shell> consoleProvider_ ;

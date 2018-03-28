@@ -1,11 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
-
-	@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
-
-	@external rstudio-themes-dark;
 
 	.item
 	{
@@ -29,36 +26,7 @@
 		width: 100%;	
 		margin-bottom: 3px;
 	}
-	
-	.progress
-	{
-		height: 1.5em;	
-		border: 1px solid THEME_DEFAULT_BORDER;
-		border-radius: 3px;
-		position: relative;
-		width: 100%;
-	}
-	
-	.bar
-	{
-		position: absolute;
-		height: 1.5em;
-		top: 0;
-		left: 0;
-		width: 0;
-		background-color: #20E020;
-	}
-	
-	.rstudio-themes-dark .progress
-	{
-		border: 1px solid THEME_DARKGREY_BORDER;
-	}
 
-	.rstudio-themes-dark .bar
-	{
-		background-color: #058005;
-	}
-	
 	.elapsed
 	{
 		opacity: 0.8;	
@@ -94,11 +62,8 @@
 						<g:Label ui:field="status_"></g:Label>
 					</g:cell>
 				</g:HorizontalPanel>
-				<g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
-					<g:HTMLPanel styleName="{style.progress}" ui:field="progress_">
-						<g:HTMLPanel styleName="{style.bar}" ui:field="bar_"></g:HTMLPanel>
-					</g:HTMLPanel>
-				</g:HorizontalPanel>
+				<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
+				</rw:ProgressBar>
 				<g:HorizontalPanel>
 					<g:cell verticalAlignment="ALIGN_MIDDLE">
 						<g:Image styleName="{style.state}" ui:field="state_"></g:Image>

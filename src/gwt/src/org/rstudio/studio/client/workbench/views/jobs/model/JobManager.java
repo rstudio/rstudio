@@ -213,9 +213,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       }
       
       events_.fireEvent(new JobProgressEvent(name, 
-            progress,                           // number of units completed
-            numJobs * 100,   // total number of units, 100 per job 
-            jobs.get(idxFirst).started)         // time progress set started
+            progress,                     // number of units completed
+            numJobs * 100,                // total number of units, 100 per job 
+            jobs.get(idxFirst).started)   // time progress set started
       );
    }
 

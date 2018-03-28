@@ -174,6 +174,12 @@ public class Toolbar extends Composite
       return widget;
    }
    
+   public void setLeftWidgetWidth(Widget w, String width)
+   {
+      leftToolbarPanel_.setCellWidth(w, width);
+      leftToolbarPanel_.setWidth("100%");
+   }
+   
    public interface MenuSource
    {
       ToolbarPopupMenu getMenu();
