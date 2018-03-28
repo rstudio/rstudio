@@ -15,11 +15,14 @@
 
 #include "DesktopUtils.hpp"
 
+#include <QDesktopServices>
 #include <QPushButton>
 #include <QTimer>
-#include <QDesktopServices>
+#include <QWebEnginePage>
+#include <QWebEngineContextMenuData>
 
 #include <core/FileSerializer.hpp>
+#include <core/HtmlUtils.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopOptions.hpp"
@@ -343,6 +346,49 @@ QFileDialog::Options standardFileDialogOptions()
 }
 
 #endif
+
+void saveImageAs(QWebEnginePage* page,
+                 GwtCallback* callbacks,
+                 QUrl url)
+{
+   QString defaultPath;
+   if (url.scheme() == QStringLiteral("data"))
+   {
+      using namespace core::html_utils;
+
+      DataUri data;
+      core::Error error = parseDataUri(url.toString().toStdString(), &data);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         QMimeDatabase db;
+         QMimeType mimeType = db.mimeTypeForName(QString::fromStdString(data.mediaType));
+         QString suffix = mimeType.preferredSuffix();
+         if (!suffix.isEmpty())
+            defaultPath = QStringLiteral(".%1").arg(mimeType.preferredSuffix());
+      }
+   }
+   else
+   {
+      defaultPath = url.fileName();
+   }
+
+   QString path = callbacks->getSaveFileName(
+            QStringLiteral("Save as"),
+            QStringLiteral("Save"),
+            QString(),
+            QString(),
+            false);
+
+   if (path.isEmpty())
+      return;
+
+   page->download(url, path);
+   
+}
 
 } // namespace desktop
 } // namespace rstudio

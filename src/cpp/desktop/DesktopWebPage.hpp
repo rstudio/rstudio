@@ -92,6 +92,7 @@ public:
    void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
 
 public Q_SLOTS:
+   void downloadRequested(QWebEngineDownloadItem*);
    bool shouldInterruptJavaScript();
    void closeRequested();
 

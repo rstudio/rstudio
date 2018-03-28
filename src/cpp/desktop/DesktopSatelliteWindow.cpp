@@ -43,6 +43,11 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
    connect(zoomOutShortcut, SIGNAL(activated()), this, SLOT(zoomOut()));
 }
 
+void SatelliteWindow::saveImageAs(QUrl url)
+{
+   desktop::saveImageAs(webPage(), &gwtCallback_, url);
+}
+
 void SatelliteWindow::finishLoading(bool ok)
 {
    BrowserWindow::finishLoading(ok);

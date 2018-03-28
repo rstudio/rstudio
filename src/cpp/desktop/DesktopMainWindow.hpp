@@ -19,8 +19,10 @@
 #include <vector>
 
 #include <QProcess>
-#include <QtGui>
 #include <QSessionManager>
+#include <QWebEngineContextMenuData>
+
+#include <QtGui>
 
 #include "DesktopInfo.hpp"
 #include "DesktopGwtCallback.hpp"
@@ -60,6 +62,7 @@ Q_SIGNALS:
    void firstWorkbenchInitialized();
 
 protected Q_SLOTS:
+   void saveImageAs(QUrl url);
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);

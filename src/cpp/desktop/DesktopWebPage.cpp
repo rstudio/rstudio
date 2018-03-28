@@ -54,7 +54,10 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
    
    defaultSaveDir_ = QDir::home();
+   
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
+   connect(profile(), SIGNAL(downloadRequested(QWebEngineDownloadItem*)),
+           this, SLOT(downloadRequested(QWebEngineDownloadItem*)));
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
@@ -205,6 +208,11 @@ void WebPage::closeRequested()
    // invoked when close is requested via script (i.e. window.close()); honor
    // this request by closing the window in which the view is hosted
    view()->window()->close();
+}
+
+void WebPage::downloadRequested(QWebEngineDownloadItem* item)
+{
+   item->accept();
 }
 
 bool WebPage::shouldInterruptJavaScript()

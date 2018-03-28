@@ -86,6 +86,8 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
       size.setHeight(size.height()-75);
       resize(size);
    }
+   
+   show();
 }
 
 void SecondaryWindow::manageCommandState()

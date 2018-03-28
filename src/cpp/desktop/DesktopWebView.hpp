@@ -18,6 +18,7 @@
 
 #include <QtGui>
 #include <QWebEngineView>
+#include <QWebEngineContextMenuData>
 
 #include "DesktopWebPage.hpp"
 
@@ -47,7 +48,8 @@ public:
    void contextMenuEvent(QContextMenuEvent* event) override;
 
 Q_SIGNALS:
-  void onCloseWindowShortcut();
+   void saveImageAs(QWebEngineContextMenuData data);
+   void onCloseWindowShortcut();
 
 public Q_SLOTS:
 

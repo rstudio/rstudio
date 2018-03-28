@@ -16,28 +16,30 @@
 #ifndef DESKTOP_SECONDARY_WINDOW_HPP
 #define DESKTOP_SECONDARY_WINDOW_HPP
 
-#include <QMainWindow>
 #include "DesktopBrowserWindow.hpp"
+
+#include <QMainWindow>
+#include <QWebEngineContextMenuData>
 
 namespace rstudio {
 namespace desktop {
 
 class SecondaryWindow : public BrowserWindow
 {
-    Q_OBJECT
+   Q_OBJECT
 public:
-    explicit SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
-                             QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
-                             bool allowExternalNavigate = false);
+   explicit SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
+                            QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
+                            bool allowExternalNavigate = false);
 
 protected Q_SLOTS:
-    virtual void manageCommandState();
+   virtual void manageCommandState();
 
 private:
-    QAction* back_;
-    QAction* forward_;
-    QAction* reload_;
-    QAction* print_;
+   QAction* back_;
+   QAction* forward_;
+   QAction* reload_;
+   QAction* print_;
 };
 
 } // namespace desktop

@@ -44,7 +44,7 @@ public:
 Q_SIGNALS:
 
 public Q_SLOTS:
-
+   void saveImageAs(QUrl url);
 
 protected Q_SLOTS:
    void finishLoading(bool ok) override;

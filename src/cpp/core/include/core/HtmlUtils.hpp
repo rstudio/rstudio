@@ -27,6 +27,14 @@ namespace rstudio {
 namespace core {
 namespace html_utils {
    
+struct DataUri
+{
+   std::string data;
+   std::string mediaType;
+   bool base64;
+};
+
+Error parseDataUri(const std::string& uri, DataUri* pData);
 
 class HTML
 {

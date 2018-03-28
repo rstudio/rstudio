@@ -15,6 +15,8 @@
 
 #include <core/HtmlUtils.hpp>
 
+#include <algorithm>
+
 #include <core/system/System.hpp>
 
 #include <boost/format.hpp>
@@ -30,6 +32,49 @@ namespace rstudio {
 namespace core {
 namespace html_utils {
 
+// parses a data URL, having the format 'data:[<mediatype>][;base64],<data>
+#define kDataUriPart ("data:")
+#define kBase64UriPart (";base64,")
+
+Error parseDataUri(const std::string& uri, DataUri* pData)
+{
+   // ensure this is a data URI
+   auto dataIndex = uri.find(kDataUriPart);
+   if (dataIndex != 0)
+      return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   
+   // parse the media string
+   auto mediaStart = ::strlen(kDataUriPart);
+   auto mediaEnd = uri.find_first_of(",;", mediaStart);
+   if (mediaEnd == std::string::npos)
+      return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+   std::string mediaType = string_utils::substring(uri, mediaStart, mediaEnd);
+   
+   // check to see if data is base64 encoded
+   auto isBase64 = false;
+   auto dataStart = mediaEnd + 1;
+   if (uri[mediaEnd] == ';')
+   {
+      const char* begin = uri.data() + mediaEnd;
+      const char* end   = uri.data() + mediaEnd + ::strlen(kBase64UriPart);
+      auto match = std::mismatch(begin, end, kBase64UriPart);
+      if (match.first != end)
+         return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+      
+      isBase64 = true;
+      dataStart = mediaEnd + ::strlen(kBase64UriPart);
+   }
+   
+   // the rest is the data
+   std::string data = uri.substr(dataStart);
+   
+   pData->data = data;
+   pData->mediaType = mediaType;
+   pData->base64 = isBase64;
+   
+   return Success();
+   
+}
 
 HTML::HTML(const std::string& text, bool isHTML)
 {

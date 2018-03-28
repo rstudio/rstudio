@@ -34,6 +34,7 @@ namespace rstudio {
 namespace desktop {
 
 class MainWindow;
+class GwtCallback;
 
 void reattachConsoleIfNecessary();
 
@@ -101,6 +102,10 @@ double getDpiZoomScaling();
 int getDpi();
 
 QFileDialog::Options standardFileDialogOptions();
+
+void saveImageAs(QWebEnginePage* page,
+                 GwtCallback* callbacks,
+                 QUrl url);
 
 } // namespace desktop
 } // namespace rstudio

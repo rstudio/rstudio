@@ -24,6 +24,7 @@
 #include <boost/format.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/HtmlUtils.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
@@ -123,6 +124,9 @@ MainWindow::MainWindow(QUrl url) :
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
+   
+   connect(webView(), SIGNAL(saveImageAs(QWebEngineContextMenuData)),
+           this, SLOT(saveImageAs()));
 
    connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
            this, SLOT(commitDataRequest(QSessionManager&)),
@@ -166,6 +170,11 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
                                const std::string& initialDir)
 {
     pAppLauncher_->launchRStudio(args, initialDir);
+}
+
+void MainWindow::saveImageAs(QUrl url)
+{
+   desktop::saveImageAs(webPage(), &gwtCallback_, url);
 }
 
 void MainWindow::onWorkbenchInitialized()

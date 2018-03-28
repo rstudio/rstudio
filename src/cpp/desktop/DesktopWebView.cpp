@@ -25,6 +25,7 @@
 #include <QWebEngineSettings>
 
 #include <core/system/Environment.hpp>
+#include <core/HtmlUtils.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -150,15 +151,17 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
    QMenu* menu = new QMenu(this);
    const auto& data = webPage()->contextMenuData();
- 
+   
+   // action to take in response to 'Save Image As...' context menu click
    if (data.mediaUrl().isValid())
    {
       switch (data.mediaType())
       {
       case QWebEngineContextMenuData::MediaTypeImage:
-         menu->addAction(webPage()->action(QWebEnginePage::DownloadImageToDisk));
-         menu->addAction(webPage()->action(QWebEnginePage::CopyImageUrlToClipboard));
+         
          menu->addAction(webPage()->action(QWebEnginePage::CopyImageToClipboard));
+         menu->addAction(webPage()->action(QWebEnginePage::CopyImageUrlToClipboard));
+         menu->addAction(tr("Save Image As..."), [=]() { emit saveImageAs(data.mediaUrl()); });         
          break;
       case QWebEngineContextMenuData::MediaTypeAudio:
       case QWebEngineContextMenuData::MediaTypeVideo:
