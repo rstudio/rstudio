@@ -23,6 +23,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/optional.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -42,6 +43,22 @@ T stringTo(const std::string& str, T defaultValue)
    {
       return defaultValue;
    }
+}
+
+template <typename T>
+boost::optional<T> stringTo(const std::string& str)
+{
+   boost::optional<T> result;
+
+   try
+   {
+      result = boost::lexical_cast<T>(str);
+   }
+   catch(boost::bad_lexical_cast&)
+   {
+   }
+
+   return result;
 }
 
 template <typename T>
@@ -102,6 +119,22 @@ TOutput numberTo(TInput input, TOutput defaultValue)
    {
       return defaultValue;
    }
+}
+
+template <typename TInput, typename TOutput>
+boost::optional<TOutput> numberTo(TInput input)
+{
+   boost::optional<TOutput> result;
+
+   try
+   {
+      result = boost::numeric_cast<TOutput>(input);
+   }
+   catch(...)
+   {
+   }
+
+   return result;
 }
 
 } // namespace safe_convert
