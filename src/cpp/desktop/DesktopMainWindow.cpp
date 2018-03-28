@@ -192,9 +192,14 @@ void MainWindow::invokeCommand(QString commandId)
 {
 #ifdef Q_OS_MAC
    QString fmt = QStringLiteral(R"EOF(
-      var wnd = window.$RStudio.last_focused_window || window;
-      wnd.desktopHooks.invokeCommand('%1')
-   )EOF");
+var wnd;
+try {
+   wnd = window.$RStudio.last_focused_window;
+} catch (e) {
+   wnd = window;
+}
+wnd.desktopHooks.invokeCommand('%1');
+)EOF");
 #else
    QString fmt = QStringLiteral("window.desktopHooks.invokeCommand('%1')");
 #endif
