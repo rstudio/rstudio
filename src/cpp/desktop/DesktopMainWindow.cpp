@@ -283,16 +283,6 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    });
 }
 
-double MainWindow::getZoomLevel()
-{
-   return options().zoomLevel();
-}
-
-void MainWindow::setZoomLevel(double zoomLevel)
-{
-   options().setZoomLevel(zoomLevel);
-}
-
 void MainWindow::setMenuBar(QMenuBar *pMenubar)
 {
    delete menuBar();

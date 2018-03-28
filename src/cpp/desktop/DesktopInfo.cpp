@@ -36,10 +36,11 @@ namespace desktop {
 
 namespace {
 
-QString s_platform           = kUnknown;
-QString s_version            = kUnknown;
-QString s_sumatraPdfExePath  = kUnknown;
-double  s_zoomLevel          = 1.0;
+QString s_platform             = kUnknown;
+QString s_version              = kUnknown;
+QString s_sumatraPdfExePath    = kUnknown;
+int     s_chromiumDevtoolsPort = -1;
+double  s_zoomLevel            = 1.0;
 
 QString getFixedWidthFontList()
 {
@@ -197,7 +198,11 @@ QString DesktopInfo::getFixedWidthFontList()
 
 void DesktopInfo::setFixedWidthFontList(QString list)
 {
-   fixedWidthFontList() = list;
+   if (fixedWidthFontList() != list)
+   {
+      fixedWidthFontList() = list;
+      emit fixedWidthFontListChanged(list);
+   }
 }
 
 QString DesktopInfo::getFixedWidthFont()
@@ -228,7 +233,11 @@ QString DesktopInfo::getSumatraPdfExePath()
 
 void DesktopInfo::setSumatraPdfExePath(QString path)
 {
-   s_sumatraPdfExePath = path;
+   if (s_sumatraPdfExePath != path)
+   {
+      s_sumatraPdfExePath = path;
+      emit sumatraPdfExePathChanged(path);
+   }
 }
 
 double DesktopInfo::getZoomLevel()
@@ -238,18 +247,26 @@ double DesktopInfo::getZoomLevel()
 
 void DesktopInfo::setZoomLevel(double zoomLevel)
 {
-   s_zoomLevel = zoomLevel;
+   if (zoomLevel != s_zoomLevel)
+   {
+      s_zoomLevel = zoomLevel;
+      emit zoomLevelChanged(zoomLevel);
+   }
 }
 
 int DesktopInfo::getChromiumDevtoolsPort()
 {
-   std::string port = core::system::getenv("QTWEBENGINE_REMOTE_DEBUGGING");
-   return safe_convert::stringTo<int>(port, 0);
+   return s_chromiumDevtoolsPort;
 }
 
 void DesktopInfo::setChromiumDevtoolsPort(int port)
 {
-   core::system::setenv("QT_WEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
+   if (s_chromiumDevtoolsPort != port)
+   {
+      s_chromiumDevtoolsPort = port;
+      core::system::setenv("QT_WEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
+      emit chromiumDevtoolsPortChanged(port);
+   }
 }
 
 } // end namespace desktop

@@ -35,8 +35,7 @@ GwtWindow::GwtWindow(bool showToolbar,
                      QString name,
                      QUrl baseUrl,
                      QWidget* pParent) :
-   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent),
-   zoomLevel_(options().zoomLevel())
+   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent)
 {
    // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
    double levels[] = {
@@ -55,7 +54,8 @@ void GwtWindow::zoomActualSize()
 {
    if (isDuplicateZoomRequest(&lastZoomTimer_))
       return;
-   setZoomLevel(1);
+   
+   options().setZoomLevel(1);
    webView()->setZoomFactor(1);
 }
 
@@ -65,11 +65,11 @@ void GwtWindow::zoomIn()
       return;
    
    // get next greatest value
-   std::vector<double>::const_iterator it = std::upper_bound(
-            zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
+   double zoomLevel = options().zoomLevel();
+   auto it = std::upper_bound(zoomLevels_.begin(), zoomLevels_.end(), zoomLevel);
    if (it != zoomLevels_.end())
    {
-      setZoomLevel(*it);
+      options().setZoomLevel(*it);
       webView()->setZoomFactor(*it);
    }
 }
@@ -80,11 +80,11 @@ void GwtWindow::zoomOut()
       return;
    
    // get next smallest value
-   std::vector<double>::const_iterator it = std::lower_bound(
-            zoomLevels_.begin(), zoomLevels_.end(), getZoomLevel());
+   double zoomLevel = options().zoomLevel();
+   auto it = std::lower_bound(zoomLevels_.begin(), zoomLevels_.end(), zoomLevel);
    if (it != zoomLevels_.begin() && it != zoomLevels_.end())
    {
-      setZoomLevel(*(it - 1));
+      options().setZoomLevel(*(it - 1));
       webView()->setZoomFactor(*(it - 1));
    }
 }
@@ -92,22 +92,6 @@ void GwtWindow::zoomOut()
 void GwtWindow::finishLoading(bool succeeded)
 {
    BrowserWindow::finishLoading(succeeded);
-
-   if (!succeeded)
-       return;
-
-   if (getZoomLevel() != webView()->dpiAwareZoomFactor())
-      webView()->setDpiAwareZoomFactor(getZoomLevel());
-}
-
-double GwtWindow::getZoomLevel()
-{
-   return zoomLevel_;
-}
-
-void GwtWindow::setZoomLevel(double zoomLevel)
-{
-   zoomLevel_ = zoomLevel;
 }
 
 bool GwtWindow::event(QEvent* pEvent)

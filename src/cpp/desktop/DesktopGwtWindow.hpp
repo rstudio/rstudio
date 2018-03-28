@@ -44,8 +44,6 @@ protected Q_SLOTS:
 
 protected:
    bool event(QEvent* pEvent) override;
-   virtual double getZoomLevel();
-   virtual void setZoomLevel(double zoomLevel);
 
 private:
    virtual void onActivated()
