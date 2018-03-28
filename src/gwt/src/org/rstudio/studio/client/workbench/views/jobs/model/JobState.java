@@ -60,4 +60,10 @@ public class JobState extends JsObject
       int timestamp = (int)((new Date()).getTime() * 0.001);
       job.received = timestamp;     
    }
+
+   public final static JobState create()
+   {
+      return (JobState)JsObject.createJsObject();
+   }
+   
 }

@@ -21,8 +21,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 
@@ -31,9 +32,10 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
    public abstract static class Shim 
         extends DelayLoadTabShim<JobsPresenter, JobsTab>
         implements JobUpdatedEvent.Handler,
-                   JobRefreshEvent.Handler,
                    JobOutputEvent.Handler,
-                   JobSelectionEvent.Handler
+                   JobSelectionEvent.Handler,
+                   JobInitEvent.Handler,
+                   JobElapsedTickEvent.Handler
    {
       
    }
@@ -49,8 +51,9 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       super("Jobs", shim);
       binder.bind(commands, shim);
       events.addHandler(JobUpdatedEvent.TYPE, shim);
-      events.addHandler(JobRefreshEvent.TYPE, shim);
       events.addHandler(JobOutputEvent.TYPE, shim);
       events.addHandler(JobSelectionEvent.TYPE, shim);
+      events.addHandler(JobInitEvent.TYPE, shim);
+      events.addHandler(JobElapsedTickEvent.TYPE, shim);
    }
 }

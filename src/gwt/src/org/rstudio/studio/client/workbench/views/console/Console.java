@@ -29,12 +29,15 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
+import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
 public class Console
@@ -49,8 +52,10 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
-      void setDebugMode(boolean debugMode);
-      void setProfilerMode(boolean profilerMode);
+      void enterMode(ConsolePane.ConsoleMode mode);
+      void leaveMode(ConsolePane.ConsoleMode mode);
+      ConsolePane.ConsoleMode mode();
+      void showProgress(GlobalJobProgress progress);
    }
    
    @Inject
@@ -94,11 +99,11 @@ public class Console
             switch (event.getEventType())
             {
                case START:
-                  view.setProfilerMode(true);
+                  view.enterMode(ConsoleMode.Profiler);
                   profilerFadeInHelper_.beginShow();
                   break;
                case STOP:
-                  view.setProfilerMode(false);
+                  view.leaveMode(ConsoleMode.Profiler);
                   profilerFadeInHelper_.hide();
                   break;
                default:
@@ -122,7 +127,10 @@ public class Console
          @Override
          public void onDebugModeChanged(DebugModeChangedEvent event)
          {
-            view.setDebugMode(event.debugging());
+            if (event.debugging())
+               view.enterMode(ConsoleMode.Debug);
+            else
+               view.leaveMode(ConsoleMode.Debug);
          }
       });
       
@@ -134,6 +142,17 @@ public class Console
          {
             activateConsole(event.getFocusWindow());
          }
+      });
+      
+      events.addHandler(JobProgressEvent.TYPE, (JobProgressEvent event) ->
+      {
+         if (event.hasProgress())
+         {
+            view.enterMode(ConsoleMode.Job);
+            view.showProgress(event.progress());
+         }
+         else
+            view.leaveMode(ConsoleMode.Job);
       });
    }
    

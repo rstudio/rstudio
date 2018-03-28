@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
@@ -28,18 +31,33 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
+@Singleton
 public class JobManager implements JobRefreshEvent.Handler,
-                                   JobUpdatedEvent.Handler
+                                   JobUpdatedEvent.Handler,
+                                   SessionInitHandler
 {
    @Inject
-   public JobManager(Session session,
+   public JobManager(Provider<Session> pSession,
                      EventBus events)
    {
       events_ = events;
-      setJobState(session.getSessionInfo().getJobState());
+      pSession_ = pSession;
+      state_ = JobState.create();
+      events.addHandler(SessionInitEvent.TYPE, this);
+      events.addHandler(JobRefreshEvent.TYPE, this);
+      events.addHandler(JobUpdatedEvent.TYPE, this);
    }
    
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      Session session = pSession_.get();
+      setJobState(session.getSessionInfo().getJobState());
+   }
+
    @Override
    public void onJobRefresh(JobRefreshEvent event)
    {
@@ -53,10 +71,6 @@ public class JobManager implements JobRefreshEvent.Handler,
       switch(event.getData().type)
       {
          case JobConstants.JOB_ADDED:
-            // if adding a running job, add it to the progress set
-            if (job.state == JobConstants.STATE_RUNNING)
-               addProgress(job);
-            
             state_.addJob(job);
             break;
 
@@ -65,13 +79,6 @@ public class JobManager implements JobRefreshEvent.Handler,
             break;
 
          case JobConstants.JOB_UPDATED:
-            if (state_.hasKey(job.id) &&
-                state_.getJob(job.id).state != JobConstants.STATE_RUNNING &&
-                job.state == JobConstants.STATE_RUNNING)
-            {
-               // this job was idle, but now it's running
-               addProgress(job);
-            }
             state_.updateJob(job);
             break;
             
@@ -81,96 +88,143 @@ public class JobManager implements JobRefreshEvent.Handler,
       
       // start timing jobs
       syncTimer();
+      
+      // update global status 
+      emitJobProgress();
    }
 
    // Private methods ---------------------------------------------------------
    
    /**
-    * Adds a job to the progress set. The progress set defines the set of jobs
-    * we show a global progress indicator for.
+    * Emits a progress event summarizing all of the current progress. 
     * 
-    * @param job
+    * Decides which jobs to emit progress for by considering all of the jobs
+    * with overlapping start/end times. This ensures that e.g. if you start
+    * Job A, Job B, and Job C, then completing Job A (while B and C are still
+    * running) won't suddenly cause your progress meter to go backwards when
+    * Job A drops out of the list of running jobs.
+    * 
+    * Some jobs may not have ranged progress; that is, they are simply running
+    * or not running. In this case, the progress is reported in terms of the
+    * number of jobs.
     */
-   private void addProgress(Job job)
-   {
-      
-   }
-   
    private void emitJobProgress()
    {
-      ArrayList<Job> running = new ArrayList<Job>();
+      boolean running = false;
       
-      // find all the running jobs
+      // flatten job list to an array while looking for a running job
+      ArrayList<Job> jobs = new ArrayList<Job>();
       for (String id: state_.iterableKeys())
       {
+         // push job into array
          Job job = state_.getJob(id);
+         jobs.add(job);
+         
+         // remember if we found a running job
          if (job.state == JobConstants.STATE_RUNNING)
-            running.add(job);
+            running = true;
       }
       
-      // if no jobs are running, emit empty progress event
-      if (running.isEmpty())
+      // if we didn't find any running job, then we have no progress to report 
+      if (!running)
       {
          events_.fireEvent(new JobProgressEvent());
          return;
       }
       
-      // compute name; if only one job is running, it's the name of that job
-      String name;
-      if (running.size() == 1)
-         name = running.get(0).name;
-      else 
-         name = running.size() + " jobs";
+      // Now we need to find all of the jobs that overlap with the first running
+      // job. This is done as follows:
+      // 
+      // 1. Sort all of the jobs by the time they started
+      // 2. Find the currently running job that started first
+      // 3. Work backwards (old jobs) until we find one that does not overlap
+      // 4. Work forwards (new jobs) until we find one that does not overlap
       
-      // flag to see if we're measuring individual units or job counts
-      boolean jobUnits = false;
+      // sort by start time
+      Collections.sort(jobs, (Job j1, Job j2) -> {
+         return j2.started - j1.started;
+      });
       
-      // compute units
-      int max = 0;
-      for (int i = 0; i < running.size(); i++)
+      // find index of first running job
+      int idxRunning;
+      for (idxRunning = 0; idxRunning < jobs.size(); idxRunning++)
       {
-         // if this job doesn't have ranged progress, then we can't show ranged
-         // progress 
-         if (running.get(i).max == 0)
-         {
-            // no progress max
-            max = 0;
-            
-            // however, if we have more than one job--
-            if (running.size() > 1)
-            {
-               // then our max is the number of jobs, and each unit is one job
-               // TODO: this needs to account for completed jobs
-               max = running.size();
-               jobUnits = true;
-            }
+         if (jobs.get(idxRunning).state == JobConstants.STATE_RUNNING)
             break;
-         }
       }
       
-      int units = 0;
-      if (jobUnits)
+      // starting at that index, we need to work backwards to find completed
+      // jobs that overlap
+      int idxFirst;
+      for (idxFirst = idxRunning; idxFirst > 0; idxFirst--)
       {
-         units = running.size();
+         // consider the job to the left of the progress set
+         Job job = jobs.get(idxFirst - 1);
+
+         // if this job finished before the set started, then it is not in the
+         // set
+         if (job.completed < jobs.get(idxFirst).started)
+            break;
+         
+         // if this job did not start, it is not in the set
+         if (job.started == 0)
+            break;
       }
-      else if (max > 0)
+      
+      // now we need to walk forwards to find other jobs that overlap
+      int idxLast;
+      for (idxLast = idxRunning; idxLast < jobs.size() - 1; idxLast++)
       {
-         for (int i = 0; i < running.size(); i++)
-         {
-            units += running.get(i).progress;
-         }
+         // consider the job to the right of the progress set
+         Job job = jobs.get(idxLast + 1);
+
+         // if this job has not started, it is not in the progress set
+         if (job.started == 0)
+            break;
       }
 
-      int elapsed = 0;
-      events_.fireEvent(new JobProgressEvent(name, units, max, elapsed));
+      // compute name; if only one job is running, it's the name of that job
+      String name;
+      if (idxFirst == idxLast)
+         name = jobs.get(idxFirst).name;
+      else 
+         name = (idxLast - idxFirst) + " jobs";
+      
+      // compute progress units
+      int progress = 0;
+      for (int i = idxFirst; i <= idxLast; i++)
+      {
+         Job job = jobs.get(i);
+         int max = job.max; 
+         
+         if (max == 0)
+         {
+            // if the job does not have its own progress units, treat it as
+            // all-or-nothing
+            progress += job.completed > 0 ? 100 : 0;
+         }
+         else
+         {
+            // the job has its own progress units; scale them to 0 - 100
+            progress += (int)(((double)job.progress / (double)job.max) * (double)100);
+         }
+      }
+      
+      events_.fireEvent(new JobProgressEvent(name, 
+            progress,                     // number of units completed
+            (idxLast - idxFirst) * 100,   // total number of units, 100 per job 
+            jobs.get(idxFirst).started)   // time progress set started
+      );
    }
 
    private void setJobState(JobState state)
    {
+      state_ = state;
       events_.fireEvent(new JobInitEvent(state_));
       
-      // start timing jobs
+      // start timing jobs and emitting progress
       syncTimer();
+      emitJobProgress();
    }
    
    private void syncTimer()
@@ -195,7 +249,8 @@ public class JobManager implements JobRefreshEvent.Handler,
       }
    };
 
-   private ArrayList<Job> progress_;
    private JobState state_;
+
    private final EventBus events_;
+   private final Provider<Session> pSession_;
 }

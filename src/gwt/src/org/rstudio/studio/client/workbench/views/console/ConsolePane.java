@@ -23,6 +23,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -33,6 +36,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
+import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
 
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
@@ -47,16 +52,21 @@ public class ConsolePane extends WorkbenchPane
    
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
+                      Provider<JobProgressPresenter> progressProvider,
                       final EventBus events,
                       Commands commands,
                       Session session)
    {
       super("Console");
 
-      consoleProvider_ = consoleProvider ;
+      consoleProvider_ = consoleProvider;
+      progressProvider_ = progressProvider;
       commands_ = commands;
       session_ = session;
-      mode_ = ConsoleMode.Normal;
+      
+      // the secondary toolbar can have several possible states that obscure
+      // each other; we keep track of the stack here
+      mode_ = new LinkedList<ConsoleMode>();
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -166,37 +176,70 @@ public class ConsolePane extends WorkbenchPane
    }
 
    @Override
-   public void setDebugMode(boolean debugMode)
+   public void enterMode(ConsoleMode mode)
    {
-      mode_ = debugMode ? ConsoleMode.Debug : ConsoleMode.Normal;
+      // ignore if this mode is already in the stack
+      if (mode_.contains(mode))
+         return;
+      
+      // add to the node stack
+      mode_.add(mode);
+
+      // show the toolbar corresponding to the mode
+      syncSecondaryToolbar();
+      
+      // if switching into debug mode, sync cursor state too
+      if (mode == ConsoleMode.Debug)
+      {
+         Scheduler.get().scheduleFinally(new ScheduledCommand()
+         {
+            public void execute()
+            {
+               ensureCursorVisible();
+            }
+         });
+      }
+   }
+
+   @Override
+   public void leaveMode(ConsoleMode mode)
+   {
+      // the mode may not be at the top of the stack, and at most one mode of
+      // each type may be in the stack, so it's safe to just remove all
+      // instances of the mode from the queue
+      mode_.removeIf((ConsoleMode t) -> 
+      {
+         return t == mode;
+      });
+      
+      // show the new topmost mode in the stack
       syncSecondaryToolbar();
    }
 
    @Override
-   public void setProfilerMode(boolean profilerMode)
+   public ConsoleMode mode()
    {
-      mode_ = profilerMode ? ConsoleMode.Profiler : ConsoleMode.Normal;
-      syncSecondaryToolbar();
-      
-      Scheduler.get().scheduleFinally(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            ensureCursorVisible();
-         }
-      });
+      if (mode_.isEmpty())
+         return ConsoleMode.Normal;
+      return mode_.peek();
+   }
+   
+   @Override
+   public void showProgress(GlobalJobProgress progress)
+   {
+      JobProgressPresenter widget = progressProvider_.get();
+      widget.showProgress(progress);
    }
    
    private void syncSecondaryToolbar()
    {      
       // show the toolbar if we're not in normal mode
-      setSecondaryToolbarVisible(mode_ != ConsoleMode.Normal);
+      setSecondaryToolbarVisible(mode() != ConsoleMode.Normal);
 
       // clean up toolbar in preparation for switching modes
       secondaryToolbar_.removeAllWidgets();
 
-      
-      switch(mode_)
+      switch(mode())
       {
         case Debug:
            initDebugToolbar();
@@ -239,10 +282,12 @@ public class ConsolePane extends WorkbenchPane
    
    private void initJobToolbar()
    {
-      
+      JobProgressPresenter progress = progressProvider_.get();
+      secondaryToolbar_.addLeftWidget(progress.asWidget());
    }
-   
+
    private Provider<Shell> consoleProvider_ ;
+   private Provider<JobProgressPresenter> progressProvider_;
    private final Commands commands_;
    private Shell shell_;
    private Session session_;
@@ -250,6 +295,6 @@ public class ConsolePane extends WorkbenchPane
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
    private Image profilerInterruptButton_;
-   private ConsoleMode mode_;
+   private Queue<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
 }

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
+import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -27,39 +29,27 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
    // constructor used when there's no progress
    public JobProgressEvent()
    {
-      name_ = null;
-      units_ = 0;
-      max_ = 0;
-      elapsed_ = 0;
+      progress_ = null;
    }
    
-   // constructor used when jobs are running
-   public JobProgressEvent(String name, int units, int max, int elapsed)
+   public JobProgressEvent(String name, int units, int max, int started)
    {
-      name_ = name;
-      units_ = units;
-      max_ = max;
-      elapsed_ = elapsed;
+      progress_ = new GlobalJobProgress(name, units, max, started);
    }
 
-   public int units()
+   public JobProgressEvent(GlobalJobProgress progress)
    {
-      return units_;
+      progress_ = progress;
    }
    
-   public int max()
+   public boolean hasProgress()
    {
-      return max_;
+      return progress_ != null;
    }
    
-   public int elapsed()
+   public GlobalJobProgress progress()
    {
-      return elapsed_;
-   }
-   
-   public String name()
-   {
-      return name_;
+      return progress_;
    }
 
    @Override
@@ -73,11 +63,8 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
    {
       handler.onJobProgress(this);
    }
-
-   private final String name_;
-   private final int units_;
-   private final int max_;
-   private final int elapsed_;
+   
+   private final GlobalJobProgress progress_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
