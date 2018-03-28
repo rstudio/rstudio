@@ -65,7 +65,7 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)
       QString cmd = QString::fromUtf8("if (window.opener && "
-         "window.opener.unregisterDesktopChildWindow))"
+         "window.opener.unregisterDesktopChildWindow)"
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
