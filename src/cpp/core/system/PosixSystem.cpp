@@ -500,23 +500,29 @@ namespace {
 // constructs with Win32 no-ops to creep in (since this is used on
 // Posix for forking and has no purpose on Win32)
 
+// There is no fully reliable and cross-platform way to do this, see:
+//
+// Various potential mechanisms include:
+//
+//  - closefrom
+//  - fcntl(0, F_MAXFD)
+//  - sysconf(_SC_OPEN_MAX)
+//  - getrlimit(RLIMIT_NOFILE, &rl)
+//  - gettdtablesize
+//  - read from /proc/self/fd, /proc/<pid>/fd, or /dev/fd
+//
+// Note that the above functions may return either -1 or MAX_INT, in
+// which case substituting/truncating to an appropriate number (1024?)
+// is still required
+
+#if !defined(__APPLE__) && !defined(HAVE_PROCSELF)
+// worst case scenario - close all file descriptors possible
+// this can be EXTREMELY slow when max fd is set to a high value
+// note: this conditional should actually never be true
+// as all linux systems have /proc/self - this is perserved in the codebase
+// as a remainder of what was being done in the recent past
 Error closeFileDescriptorsFrom(int fdStart)
 {
-   // There is no fully reliable and cross-platform way to do this, see:
-   //
-   // Various potential mechanisms include:
-   //
-   //  - closefrom
-   //  - fcntl(0, F_MAXFD)
-   //  - sysconf(_SC_OPEN_MAX)
-   //  - getrlimit(RLIMIT_NOFILE, &rl)
-   //  - gettdtablesize
-   //  - read from /proc/self/fd, /proc/<pid>/fd, or /dev/fd
-   //
-   // Note that the above functions may return either -1 or MAX_INT, in
-   // which case substituting/truncating to an appropriate number (1024?)
-   // is still required
-
    // get limit
    struct rlimit rl;
    if (::getrlimit(RLIMIT_NOFILE, &rl) < 0)
@@ -533,8 +539,88 @@ Error closeFileDescriptorsFrom(int fdStart)
 
    return Success();
 }
+#else
+// read the file descriptors from a virtual directory listing,
+// iteratore over them and close - much faster than the above method
+Error closeFileDescriptorsFrom(int fdStart)
+{
+   std::vector<unsigned int> fds;
+   Error error = getOpenFds(&fds);
+   if (error)
+      return error;
+
+   for (int fd : fds)
+   {
+      if (fd >= fdStart)
+      {
+         if (::close(fd) < 0 && errno != EBADF)
+            return systemError(errno, ERROR_LOCATION);
+      }
+   }
+
+   return Success();
+}
+#endif
 
 } // anonymous namespace
+
+Error getOpenFds(std::vector<unsigned int>* pFds)
+{
+   return getOpenFds(getpid(), pFds);
+}
+
+#ifndef __APPLE__
+Error getOpenFds(pid_t pid, std::vector<unsigned int>* pFds)
+{
+   std::string pidStr = safe_convert::numberToString(pid);
+   boost::format fmt("/proc/%1%/fd");
+   FilePath fdDir = FilePath(boost::str(fmt % pidStr));
+
+   std::vector<FilePath> children;
+   Error error = fdDir.children(&children);
+   if (error)
+      return error;
+
+   for (const FilePath& child : children)
+   {
+      try
+      {
+         unsigned int fd = boost::lexical_cast<unsigned int>(child.filename());
+         pFds->push_back(fd);
+      }
+      catch (boost::bad_lexical_cast& err)
+      {
+         LOG_ERROR(systemError(boost::system::errc::invalid_argument, err.what(), ERROR_LOCATION));
+      }
+   }
+
+   return Success();
+}
+#else
+Error getOpenFds(pid_t pid, std::vector<unsigned int> *pFds)
+{
+   // get size of the buffer needed to hold the list of fds
+   int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
+   if (bufferSize == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // get the list of open fds
+   struct proc_fdinfo* procFdInfo = static_cast<struct proc_fdinfo*>(malloc(bufferSize));
+   if (!procFdInfo)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   int filledSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFdInfo, bufferSize);
+   int numFds = filledSize / PROC_PIDLISTFD_SIZE;
+
+   for (int i = 0; i < numFds; ++i)
+   {
+      pFds->push_back(procFdInfo[i].proc_fd);
+   }
+
+   free(procFdInfo);
+   return Success();
+}
+#endif
 
 Error closeAllFileDescriptors()
 {
@@ -546,26 +632,62 @@ Error closeNonStdFileDescriptors()
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
 
+Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, unsigned int fdStart)
+{
+   std::size_t written;
+
+   std::vector<unsigned int> fds;
+   Error error = getOpenFds(childPid, &fds);
+   if (!error)
+   {
+      for (unsigned int fd : fds)
+      {
+
+         error = posixCall<std::size_t>(boost::bind(::write,
+                                                    pipeFd,
+                                                    &fd,
+                                                    4),
+                                        ERROR_LOCATION,
+                                        &written);
+         if (error)
+            return error;
+      }
+   }
+
+   // write message close (-1) even if we failed to retrieve pids above
+   // this prevents the child from being stuck in limbo or interpreting its
+   // actual stdin as fds
+   int close = -1;
+   Error closeError = posixCall<std::size_t>(boost::bind(::write,
+                                                         pipeFd,
+                                                         &close,
+                                                         4),
+                                             ERROR_LOCATION,
+                                             &written);
+
+   if (error)
+      return error;
+
+   return closeError;
+}
+
 namespace signal_safe {
 
 namespace {
 
-void closeFileDescriptorsFromSafe(int fdStart)
+// worst case scenario - close all file descriptors possible
+// this can be EXTREMELY slow when max fd is set to a high value
+void closeFileDescriptorsFromSafe(unsigned int fdStart, rlim_t fdLimit)
 {
    // safe function is best effort - swallow all errors
    // this is necessary when invoked in a signal handler or
    // during a fork in multithreaded processes to prevent hangs
 
-   // get limit
-   struct rlimit rl;
-   if (::getrlimit(RLIMIT_NOFILE, &rl) < 0)
-      return;
-
-   if (rl.rlim_max == RLIM_INFINITY)
-      rl.rlim_max = 1024; // default on linux
+   if (fdLimit == RLIM_INFINITY)
+      fdLimit = 1024; // default on linux
 
    // close file descriptors
-   for (int i=fdStart; i< (int)rl.rlim_max; i++)
+   for (unsigned int i = fdStart; i < fdLimit; ++i)
    {
       ::close(i);
    }
@@ -573,9 +695,44 @@ void closeFileDescriptorsFromSafe(int fdStart)
 
 } // anonymous namespace
 
-void closeNonStdFileDescriptors()
+void closeNonStdFileDescriptors(unsigned int fdLimit)
 {
-   return closeFileDescriptorsFromSafe(STDERR_FILENO+1);
+   closeFileDescriptorsFromSafe(STDERR_FILENO+1, fdLimit);
+}
+
+void closeFileDescriptorsFromParent(int pipeFd, unsigned int fdStart, rlim_t fdLimit)
+{
+   // read fds that we own from parent process pipe until we've read them all
+   // the parent must give us this list because we cannot fetch it ourselves
+   // in a signal-safe way, but we can read from the pipe safely
+   bool readDescriptors = false;
+
+   char buffer[4];
+   while (true)
+   {
+      ssize_t bytesRead = ::read(pipeFd, buffer, 4);
+
+      // check for error
+      if (bytesRead == -1 || bytesRead == 0)
+         break;
+
+      // determine which fd was just read from the parent
+      int res = static_cast<int>(*buffer);
+      if (res == -1)
+         break; // indicates no more fds are open by the process
+
+      readDescriptors = true;
+      unsigned int fd = static_cast<unsigned int>(res);
+
+      // close the reported fd if it is in range
+      if (fd >= fdStart && fd < fdLimit)
+         ::close(fd);
+   }
+
+   // if no descriptors could be read from the parent for whatever reason,
+   // fall back to the slow close method detailed above
+   if (!readDescriptors)
+      closeFileDescriptorsFromSafe(fdStart, fdLimit);
 }
 
 } // namespace signal_safe
