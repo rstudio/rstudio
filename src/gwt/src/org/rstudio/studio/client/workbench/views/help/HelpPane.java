@@ -1,7 +1,7 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,6 +66,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -699,7 +700,9 @@ public class HelpPane extends WorkbenchPane
    public void popout()
    {
       String href = getContentWindow().getLocationHref() ;     
-      globalDisplay_.openWindow(href);
+      NewWindowOptions options = new NewWindowOptions();
+      options.setName("helppanepopout_" + popoutCount_++);
+      globalDisplay_.openWebMinimalWindow(href, false, 0, 0, options);
    }
    
    @Override
@@ -782,4 +785,5 @@ public class HelpPane extends WorkbenchPane
    private boolean navigated_;
    private boolean initialized_;
    private String targetUrl_;
+   private static int popoutCount_ = 0;
 }
