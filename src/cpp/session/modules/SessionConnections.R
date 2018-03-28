@@ -831,11 +831,11 @@ options(connectionObserver = list(
 })
 
 .rs.addJsonRpcHandler("update_odbc_installers", function() {
+   installerUrl <- getOption("connections-installer")
    connectionsWarning <- NULL
 
    # once per session, attempt to download driver updates
-   if (!is.null(getOption("connections-installer"))) {
-      installerUrl <- getOption("connections-installer")
+   if (!is.null(installerUrl)) {
       installerHostName <- gsub("https?://|/[^:].+$", "", installerUrl)
 
       connectionsWarning <- tryCatch({
