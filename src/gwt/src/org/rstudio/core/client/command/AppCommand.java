@@ -184,9 +184,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          enabled_ = enabled;
          handlers_.fireEvent(new EnabledChangedEvent(this));
       }
-    
-      if (Desktop.isDesktop())
-         DesktopMenuCallback.setCommandEnabled(id_, enabled_);
    }
 
    public boolean isVisible()
@@ -201,9 +198,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          visible_ = visible;
          handlers_.fireEvent(new VisibleChangedEvent(this));
       }
-      
-      if (Desktop.isDesktop())
-         DesktopMenuCallback.setCommandVisible(id_, visible_);
    }
    
    /**
