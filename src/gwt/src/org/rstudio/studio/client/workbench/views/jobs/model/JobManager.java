@@ -182,13 +182,15 @@ public class JobManager implements JobRefreshEvent.Handler,
          if (job.started == 0)
             break;
       }
+      
+      int numJobs = (idxLast - idxFirst) + 1;
 
       // compute name; if only one job is running, it's the name of that job
       String name;
       if (idxFirst == idxLast)
          name = jobs.get(idxFirst).name;
       else 
-         name = (idxLast - idxFirst) + " jobs";
+         name =  numJobs + " jobs";
       
       // compute progress units
       int progress = 0;
@@ -211,9 +213,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       }
       
       events_.fireEvent(new JobProgressEvent(name, 
-            progress,                     // number of units completed
-            (idxLast - idxFirst) * 100,   // total number of units, 100 per job 
-            jobs.get(idxFirst).started)   // time progress set started
+            progress,                           // number of units completed
+            numJobs * 100,   // total number of units, 100 per job 
+            jobs.get(idxFirst).started)         // time progress set started
       );
    }
 

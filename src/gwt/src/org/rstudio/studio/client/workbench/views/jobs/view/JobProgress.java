@@ -51,6 +51,7 @@ public class JobProgress extends Composite
    @Override
    public void updateElapsed(int timestamp)
    {
+      // TODO: this should not be diffing times from the client and the server
       elapsed_.setText(StringUtil.conciseElaspedTime(timestamp - started_));
    }
 

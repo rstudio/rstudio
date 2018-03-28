@@ -227,8 +227,9 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void showProgress(GlobalJobProgress progress)
    {
-      JobProgressPresenter widget = progressProvider_.get();
-      widget.showProgress(progress);
+      // show progress if we're in progress mode
+      if (progress_ != null)
+         progress_.showProgress(progress);
    }
    
    private void syncSecondaryToolbar()
@@ -238,6 +239,7 @@ public class ConsolePane extends WorkbenchPane
 
       // clean up toolbar in preparation for switching modes
       secondaryToolbar_.removeAllWidgets();
+      progress_ = null;
 
       switch(mode())
       {
@@ -282,12 +284,13 @@ public class ConsolePane extends WorkbenchPane
    
    private void initJobToolbar()
    {
-      JobProgressPresenter progress = progressProvider_.get();
-      secondaryToolbar_.addLeftWidget(progress.asWidget());
+      progress_ = progressProvider_.get();
+      secondaryToolbar_.addLeftWidget(progress_.asWidget());
    }
 
    private Provider<Shell> consoleProvider_ ;
    private Provider<JobProgressPresenter> progressProvider_;
+   JobProgressPresenter progress_;
    private final Commands commands_;
    private Shell shell_;
    private Session session_;
