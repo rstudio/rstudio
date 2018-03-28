@@ -633,10 +633,9 @@ void GwtCallback::openMinimalWindow(QString name,
           (name == QString::fromUtf8("_rstudio_viewer_zoom"));
 
       browser = new BrowserWindow(false, !isViewerZoomWindow, name);
-      browser->setAttribute(Qt::WA_DeleteOnClose);
-      browser->setAttribute(Qt::WA_QuitOnClose, false);
-      browser->connect(browser->webView(), SIGNAL(onCloseWindowShortcut()),
-                       browser, SLOT(onCloseRequested()));
+      browser->setAttribute(Qt::WA_DeleteOnClose, true);
+      browser->setAttribute(Qt::WA_QuitOnClose, true);
+      connect(this, &GwtCallback::destroyed, browser, &BrowserWindow::close);
       if (named)
          s_windowTracker.addWindow(name, browser);
 
