@@ -583,14 +583,14 @@ Error getOpenFds(pid_t pid, std::vector<unsigned int>* pFds)
 
    for (const FilePath& child : children)
    {
-      try
+      boost::optional<unsigned int> fd = safe_convert::stringTo<unsigned int>(child.filename());
+      if (fd)
       {
-         unsigned int fd = boost::lexical_cast<unsigned int>(child.filename());
-         pFds->push_back(fd);
+         pFds->push_back(fd.get());
       }
-      catch (boost::bad_lexical_cast& err)
+      else
       {
-         LOG_ERROR(systemError(boost::system::errc::invalid_argument, err.what(), ERROR_LOCATION));
+         LOG_ERROR_MESSAGE("Invalid fd filename: " + child.absolutePath());
       }
    }
 

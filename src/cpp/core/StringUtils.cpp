@@ -515,11 +515,10 @@ bool parseVersion(const std::string& str, uint64_t* pVersion)
 
    for (size_t i = 0; i < chunks.size() && i < 4; i++)
    {
-      uint16_t value = core::safe_convert::stringTo<uint16_t>(
-            chunks[i], std::numeric_limits<uint16_t>::max());
-      if (value == std::numeric_limits<uint16_t>::max())
+      boost::optional<uint16_t> value = core::safe_convert::stringTo<uint16_t>(chunks[i]);
+      if (!value)
          return false;
-      version += static_cast<uint64_t>(value) << ((3-i) * 16);
+      version += static_cast<uint64_t>(value.get()) << ((3-i) * 16);
    }
    if (pVersion)
       *pVersion = version;
