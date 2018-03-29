@@ -236,7 +236,7 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
 
    // values we will fill in
    std::string declaringClass, methodName, fileName;
-   int lineNumber = -1, fragmentId = -1;
+   int lineNumber = -1;
 
    std::string steFilename = se.fileName;
    std::string symbolData = pImpl_->loadOneSymbol(strongName, se.methodName);
@@ -316,25 +316,6 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
             // use symbolMap in this case
             lineNumber = safe_convert::stringTo<int>(parts[4], lineNumber);
          }
-
-         fragmentId = safe_convert::stringTo<int>(parts[5], fragmentId);
-      }
-   }
-
-   // anonymous function, try to use <fragmentNum>.js:line to determine
-   // fragment id
-   if (fragmentId == -1 && !steFilename.empty())
-   {
-      // fragment identifier encoded in filename
-      boost::regex re(".*(\\d+)\\.js");
-      boost::smatch match;
-      if (regex_utils::search(steFilename, match, re))
-      {
-         fragmentId = safe_convert::stringTo<int>(match[1], fragmentId);
-      }
-      else if (boost::algorithm::contains(steFilename, strongName))
-      {
-         fragmentId = 0;
       }
    }
 
