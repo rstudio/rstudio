@@ -436,14 +436,6 @@ Error ChildProcess::run()
    int fdError[2] = {0,0};
    int fdMaster = 0;
 
-   // get rlimit for max files
-   // in the thread-safe fork approach, this needs to be provided
-   // to the child to properly close its files in an async-safe way
-   RLimitType soft, hard;
-   Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
-   if (error)
-      return error;
-
    // build args (on heap so they stay around after exec)
    // create set of args to pass (needs to include the cmd)
    // this is done before calling fork as it is unsafe to use fork in multithreaded programs
@@ -451,9 +443,18 @@ Error ChildProcess::run()
    std::vector<std::string> args;
    args.push_back(exe_);
    args.insert(args.end(), args_.begin(), args_.end());
+   
    using core::system::ProcessArgs;
-   ProcessArgs* pProcessArgs = new ProcessArgs(args);
+   std::shared_ptr<ProcessArgs> pProcessArgs = std::make_shared<ProcessArgs>(args);
    ProcessArgs* pEnvironment = NULL;
+
+   // get rlimit for max files
+   // in the thread-safe fork approach, this needs to be provided
+   // to the child to properly close its files in an async-safe way
+   RLimitType soft, hard;
+   Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+   if (error)
+      return error;
 
    if (options_.environment)
    {
@@ -776,8 +777,6 @@ Error ChildProcess::run()
          // record pipe handles
          pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
       }
-
-      delete pProcessArgs;
 
       if (options_.threadSafe)
       {
