@@ -26,11 +26,16 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.Point;
 
 public class WindowEx extends JavaScriptObject
 {
+   public static native Window getNative() /*-{
+      return $wnd;
+   }-*/;
+   
    public static native WindowEx get() /*-{
       return $wnd;
    }-*/;

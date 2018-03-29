@@ -16,6 +16,7 @@
 #include "DesktopSatelliteWindow.hpp"
 
 #include <QShortcut>
+#include <QWebChannel>
 
 namespace rstudio {
 namespace desktop {
@@ -31,6 +32,10 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
 
    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
+   // bind GWT callbacks
+   auto* channel = webPage()->webChannel();
+   channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   
    // satellites don't have a menu, so connect zoom keyboard shortcuts
    // directly
    // NOTE: CTRL implies META on macOS

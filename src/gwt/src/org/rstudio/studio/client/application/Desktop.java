@@ -27,7 +27,7 @@ public class Desktop
    public static native boolean isDesktopReady() /*-{
       return !!$wnd.desktop;
    }-*/;
-
+   
    public static DesktopFrame getFrame()
    {
       return desktopFrame_;

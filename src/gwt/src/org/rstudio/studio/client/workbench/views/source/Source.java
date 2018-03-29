@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -50,6 +51,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -611,6 +613,16 @@ public class Source implements InsertSourceHandler,
          }
       });
       
+      // on macOS, we need to aggressively re-sync commands when a new
+      // window is selected (since the main menu applies to both main
+      // window and satellites)
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         WindowEx.addFocusHandler((FocusEvent event) -> {
+            manageCommands(true);
+         });
+      }
+      
       restoreDocuments(session);
       
       // get the key to use for active tab persistence; use ordinal-based key
@@ -679,7 +691,7 @@ public class Source implements InsertSourceHandler,
    
    private boolean consoleEditorHadFocusLast()
    {
-      String id = MainWindowObject.lastFocusedEditor().get();
+      String id = MainWindowObject.lastFocusedEditorId().get();
       return "rstudio_console_input".equals(id);
    }
    
@@ -3556,6 +3568,11 @@ public class Source implements InsertSourceHandler,
 
    private void manageCommands()
    {
+      manageCommands(false);
+   }
+   
+   private void manageCommands(boolean forceSync)
+   {
       boolean hasDocs = editors_.size() > 0;
 
       commands_.closeSourceDoc().setEnabled(hasDocs);
@@ -3567,26 +3584,43 @@ public class Source implements InsertSourceHandler,
       commands_.switchToTab().setEnabled(hasDocs);
       commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs);
 
-      HashSet<AppCommand> newCommands =
-            activeEditor_ != null ? activeEditor_.getSupportedCommands()
-                                  : new HashSet<AppCommand>();
-            
-      HashSet<AppCommand> commandsToEnable = new HashSet<AppCommand>(newCommands);
-      commandsToEnable.removeAll(activeCommands_);
-
-      HashSet<AppCommand> commandsToDisable = new HashSet<AppCommand>(activeCommands_);
-      commandsToDisable.removeAll(newCommands);
-
-      for (AppCommand command : commandsToEnable)
+      HashSet<AppCommand> newCommands = activeEditor_ != null
+            ? activeEditor_.getSupportedCommands()
+            : new HashSet<AppCommand>();
+      
+      if (forceSync)
       {
-         command.setEnabled(true);
-         command.setVisible(true);
+         for (AppCommand command : activeCommands_)
+         {
+            command.setEnabled(false);
+            command.setVisible(false);
+         }
+         
+         for (AppCommand command : newCommands)
+         {
+            command.setEnabled(true);
+            command.setVisible(true);
+         }
       }
-
-      for (AppCommand command : commandsToDisable)
+      else
       {
-         command.setEnabled(false);
-         command.setVisible(false);
+         HashSet<AppCommand> commandsToEnable = new HashSet<AppCommand>(newCommands);
+         commandsToEnable.removeAll(activeCommands_);
+
+         HashSet<AppCommand> commandsToDisable = new HashSet<AppCommand>(activeCommands_);
+         commandsToDisable.removeAll(newCommands);
+
+         for (AppCommand command : commandsToEnable)
+         {
+            command.setEnabled(true);
+            command.setVisible(true);
+         }
+
+         for (AppCommand command : commandsToDisable)
+         {
+            command.setEnabled(false);
+            command.setVisible(false);
+         }
       }
       
       // commands which should always be visible even when disabled
