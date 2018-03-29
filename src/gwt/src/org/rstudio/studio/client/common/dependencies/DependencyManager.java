@@ -723,7 +723,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing " + name,
         "Using " + name, 
         new Dependency[] {
-           Dependency.cranPackage("odbc", "1.1.5")
+           Dependency.cranPackage("odbc", "1.1.5"),
+           Dependency.cranPackage("rstudioapi", "0.5")
         }, 
         true, // update odbc if needed
         new CommandWithArg<Boolean>()
