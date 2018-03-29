@@ -48,19 +48,22 @@ public class JobProgress extends Composite
    {
       name_.setText(progress.name());
       progress_.setProgress(progress.units(), progress.max());
-      started_ = progress.started();
+      jobProgress_ = progress;
    }
 
    @Override
    public void updateElapsed(int timestamp)
    {
-      // TODO: this should not be diffing times from the client and the server
-      elapsed_.setText(StringUtil.conciseElaspedTime(timestamp - started_));
+      if (jobProgress_ == null)
+         return;
+      
+      int delta = timestamp - jobProgress_.received();
+      elapsed_.setText(StringUtil.conciseElaspedTime(jobProgress_.elapsed() + delta));
    }
 
    @UiField Label name_;
    @UiField ProgressBar progress_;
    @UiField Label elapsed_;
    
-   private int started_;
+   private GlobalJobProgress jobProgress_;
 }

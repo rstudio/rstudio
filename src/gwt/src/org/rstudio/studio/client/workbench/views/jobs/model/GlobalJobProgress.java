@@ -14,17 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-/**
- * Represents progress for all currently running jobs
- */
 public class GlobalJobProgress
 {
-   public GlobalJobProgress(String name, int units, int max, int started)
+   /**
+    * An object that summarizes the progress of all the currently running jobs
+    * 
+    * @param name The name of the job(s) running
+    * @param units The total number of progress units completed
+    * @param max The total number of progress units remaining
+    * @param elapsed The time that has elapsed on the server
+    * @param received The time that the client last received an update
+    */
+   public GlobalJobProgress(String name, int units, int max, 
+                            int elapsed, int received)
    {
       name_ = name;
       units_ = units;
       max_ = max;
-      started_ = started;
+      elapsed_ = elapsed;
+      received_ = received;
    }
    
    public int units()
@@ -37,18 +45,29 @@ public class GlobalJobProgress
       return max_;
    }
    
-   public int started()
+   public int elapsed()
    {
-      return started_;
+      return elapsed_;
    }
    
+   public int received()
+   {
+      return received_;
+   }
+
    public String name()
    {
       return name_;
+   }
+   
+   public double percent()
+   {
+      return ((double)units() / (double) max()) * 100;
    }
 
    private final String name_;
    private final int units_;
    private final int max_;
-   private final int started_;
+   private final int elapsed_;
+   private final int received_;
 }

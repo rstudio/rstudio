@@ -92,11 +92,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       // update global status 
       emitJobProgress();
    }
-
-   // Private methods ---------------------------------------------------------
    
    /**
-    * Emits a progress event summarizing all of the current progress. 
+    * Creates a progress event summarizing progress for a given state.
     * 
     * Decides which jobs to emit progress for by considering all of the jobs
     * with overlapping start/end times. This ensures that e.g. if you start
@@ -107,17 +105,21 @@ public class JobManager implements JobRefreshEvent.Handler,
     * Some jobs may not have ranged progress; that is, they are simply running
     * or not running. In this case, the progress is reported in terms of the
     * number of jobs.
+    * 
+    * @param state Job state to summarize
+    * @return Progress of running jobs, or null if no progress.
+    * 
     */
-   private void emitJobProgress()
+   public static GlobalJobProgress summarizeProgress(JobState state)
    {
       boolean running = false;
       
       // flatten job list to an array while looking for a running job
       ArrayList<Job> jobs = new ArrayList<Job>();
-      for (String id: state_.iterableKeys())
+      for (String id: state.iterableKeys())
       {
          // push job into array
-         Job job = state_.getJob(id);
+         Job job = state.getJob(id);
          jobs.add(job);
          
          // remember if we found a running job
@@ -128,8 +130,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       // if we didn't find any running job, then we have no progress to report 
       if (!running)
       {
-         events_.fireEvent(new JobProgressEvent());
-         return;
+         return null;
       }
       
       // Now we need to find all of the jobs that overlap with the first running
@@ -142,7 +143,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       
       // sort by start time
       Collections.sort(jobs, (Job j1, Job j2) -> {
-         return j2.started - j1.started;
+         return j1.started - j2.started;
       });
       
       // find index of first running job
@@ -197,7 +198,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       for (int i = idxFirst; i <= idxLast; i++)
       {
          Job job = jobs.get(i);
-         int max = job.max; 
+         int max = job.max;
          
          if (max == 0)
          {
@@ -212,11 +213,32 @@ public class JobManager implements JobRefreshEvent.Handler,
          }
       }
       
-      events_.fireEvent(new JobProgressEvent(name, 
+      // compute elapsed time on the server; start with the time that has
+      // elapsed between the time the first job started and the time the last
+      // job started
+      int elapsed = jobs.get(idxLast).started - jobs.get(idxFirst).started;
+      
+      // add the time that has elapsed since the last job started
+      elapsed += jobs.get(idxLast).elapsed;
+      
+      // add the time that has elapsed since the last job started
+      // elapsed += jobs.get(idxLast).elapsed;
+      
+      return new GlobalJobProgress(
+            name,                         // title of progress
             progress,                     // number of units completed
             numJobs * 100,                // total number of units, 100 per job 
-            jobs.get(idxFirst).started)   // time progress set started
+            elapsed,                      // time elapsed so far
+            jobs.get(idxLast).received    // received time
       );
+   }
+
+   // Private methods ---------------------------------------------------------
+   
+   private void emitJobProgress()
+   {
+      GlobalJobProgress progress = summarizeProgress(state_);
+      events_.fireEvent(new JobProgressEvent(progress));
    }
 
    private void setJobState(JobState state)

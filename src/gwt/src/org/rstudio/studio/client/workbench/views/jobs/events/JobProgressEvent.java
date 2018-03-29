@@ -32,11 +32,6 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
       progress_ = null;
    }
    
-   public JobProgressEvent(String name, int units, int max, int started)
-   {
-      progress_ = new GlobalJobProgress(name, units, max, started);
-   }
-
    public JobProgressEvent(GlobalJobProgress progress)
    {
       progress_ = progress;
