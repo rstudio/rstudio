@@ -193,13 +193,16 @@ public class JobManager implements JobRefreshEvent.Handler,
       else 
          name =  numJobs + " jobs";
       
-      // compute progress units
+      // compute total progress units and longest running job
       int progress = 0;
+      int elapsed = 0;
+      int idxElapsed = 0;
       for (int i = idxFirst; i <= idxLast; i++)
       {
          Job job = jobs.get(i);
          int max = job.max;
          
+         // compute progress units
          if (max == 0)
          {
             // if the job does not have its own progress units, treat it as
@@ -211,15 +214,18 @@ public class JobManager implements JobRefreshEvent.Handler,
             // the job has its own progress units; scale them to 0 - 100
             progress += (int)(((double)job.progress / (double)job.max) * (double)100);
          }
+         
+         // compute elapsed time
+         if (elapsed == 0 || job.elapsed > elapsed)
+         {
+            elapsed = job.elapsed;
+            idxElapsed = i;
+         }
       }
       
-      // compute elapsed time on the server; start with the time that has
-      // elapsed between the time the first job started and the time the last
-      // job started
-      int elapsed = jobs.get(idxLast).started - jobs.get(idxFirst).started;
-      
-      // add the time that has elapsed since the last job started
-      elapsed += jobs.get(idxLast).elapsed;
+      // add to the elapsed time the time that has elapsed between the time the
+      // first job started and the time the longest running job started
+      elapsed += (jobs.get(idxElapsed).started - jobs.get(idxFirst).started);
       
       // add the time that has elapsed since the last job started
       // elapsed += jobs.get(idxLast).elapsed;

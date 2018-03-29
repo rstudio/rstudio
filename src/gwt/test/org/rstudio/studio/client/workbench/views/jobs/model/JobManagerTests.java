@@ -111,6 +111,66 @@ public class JobManagerTests extends GWTTestCase
    }
 
    /**
+    * Tests nested jobs: a running job during which a second job started and
+    * then finished
+    */
+   public void testNested()
+   {
+      // Completed job
+      JobState state = JobState.create();
+      Job job1 = new Job()
+      {{
+         id = "1";
+         name = "Job1";
+         started = 5;
+         elapsed = 10;
+         received = 50;
+         completed = 15;
+         progress = 10;
+         max = 10;
+         state = JobConstants.STATE_SUCCEEDED;
+      }};
+      state.addJob(job1);
+      
+      // Outer job: started first, still running
+      Job job2 = new Job()
+      {{
+         id = "2";
+         name = "Job2";
+         started = 10;
+         elapsed = 40;
+         received = 50;
+         completed = 0;
+         progress = 4;
+         max = 10;
+         state = JobConstants.STATE_RUNNING;
+      }};
+      state.addJob(job2);
+      
+      // Inner job: started second, but completed
+      Job job3 = new Job()
+      {{
+         id = "3";
+         name = "Job3";
+         started = 20;
+         elapsed = 10;
+         received = 50;
+         completed = 10;
+         progress = 0;
+         max = 0;
+         state = JobConstants.STATE_SUCCEEDED;
+      }};
+      state.addJob(job3);
+      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      
+      // Two completed jobs, one at 40% = 240 / 300 = 80%
+      Assert.assertEquals(80, progress.percent(), 0.01);
+      
+      // Total elapsed time is the time from the start of the first job to the
+      // start of the second job (5), plus the second job's elapsed time (40)
+      Assert.assertEquals(45, progress.elapsed());
+   }
+   /**
     * Tests a complicated situation:
     * 
     * - 2 completed jobs
