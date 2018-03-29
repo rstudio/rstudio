@@ -164,9 +164,8 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    }
 
    // convert JSON response back to R
-   SEXP result = R_NilValue;
    r::sexp::Protect protect;
-   result = r::sexp::create(response.result(), &protect);
+   SEXP result = r::sexp::create(response.result(), &protect);
 
    // raise an R error if the RPC returns an error
    if (response.error().type() == json::ObjectType)

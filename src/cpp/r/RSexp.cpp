@@ -379,9 +379,8 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    
    // loop over the attributes and fill in the variable vector
    SEXP attr = R_NilValue; 
-   SEXP nextAttr = R_NilValue;
    size_t i = 0;
-   for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
+   for (SEXP nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
    {
       pProtect->add(attr);
       pVariables->push_back(std::make_pair(names.at(i), attr));

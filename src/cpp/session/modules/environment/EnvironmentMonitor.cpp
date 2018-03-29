@@ -150,20 +150,19 @@ void EnvironmentMonitor::checkForChanges()
    std::for_each(currentEnv.begin(), currentEnv.end(),
                  boost::bind(addUnevaledPromise, &currentPromises, _1));
 
-   bool refreshEnqueued = false;
    if (!initialized_)
    {
       if (refreshOnInit_ ||
           getMonitoredEnvironment() == R_GlobalEnv)
       {
          enqueRefreshEvent();
-         refreshEnqueued = true;
       }
       initialized_ = true;
       refreshOnInit_ = false;
    }
    else
    {
+      bool refreshEnqueued = false;
       if (currentEnv != lastEnv_)
       {
          // optimize for empty currentEnv (user reset workspace) or empty
