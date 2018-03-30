@@ -83,7 +83,14 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 
 #endif // Q_OS_MAC
 
-   if (commandId == QStringLiteral("zoomActualSize"))
+   // this silly branch exists just so one doesn't have to worry about whether
+   // we should be prefixing with 'else' in later conditionals
+   if (false)
+   {
+   }
+   
+#ifndef Q_OS_MAC
+   else if (commandId == QStringLiteral("zoomActualSize"))
    {
       // NOTE: CTRL implies META on macOS
       pAction = menuStack_.top()->addAction(
@@ -111,6 +118,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                SIGNAL(zoomOut()),
                QKeySequence::ZoomOut);
    }
+#endif
    
 #ifdef Q_OS_MAC
    // NOTE: even though we seem to be using Meta as a modifier key here, Qt

@@ -3969,6 +3969,33 @@ public class Source implements InsertSourceHandler,
       openAdjacentFile(false);
    }
    
+   @Handler
+   public void onZoomIn()
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().zoomIn();
+      }
+   }
+   
+   @Handler
+   public void onZoomOut()
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().zoomOut();
+      }
+   }
+   
+   @Handler
+   public void onZoomActualSize()
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().zoomActualSize();
+      }
+   }
+   
    private void openAdjacentFile(final boolean forward)
    {
       // ensure we have an editor and a titled document is open

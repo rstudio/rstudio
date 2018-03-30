@@ -14,6 +14,7 @@
  */
 
 #include "DesktopGwtCallback.hpp"
+#include "DesktopGwtWindow.hpp"
 
 #ifdef _WIN32
 #include <shlobj.h>
@@ -63,7 +64,7 @@ bool s_ignoreNextClipboardSelectionChange;
 
 extern QString scratchPath;
 
-GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
+GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
      pSynctex_(nullptr),
@@ -1221,6 +1222,21 @@ void GwtCallback::setZoomLevel(double zoomLevel)
 {
    options().setZoomLevel(zoomLevel);
    desktopInfo().setZoomLevel(zoomLevel);
+}
+
+void GwtCallback::zoomIn()
+{
+   pOwner_->zoomIn();
+}
+
+void GwtCallback::zoomOut()
+{
+   pOwner_->zoomOut();
+}
+
+void GwtCallback::zoomActualSize()
+{
+   pOwner_->zoomActualSize();
 }
 
 void GwtCallback::showLicenseDialog()
