@@ -57,8 +57,13 @@ namespace desktop {
 
 namespace {
 WindowTracker s_windowTracker;
+
+#ifdef Q_OS_LINUX
 QString s_globalMouseSelection;
+bool s_clipboardMonitoringEnabled;
 bool s_ignoreNextClipboardSelectionChange;
+#endif
+
 } // end anonymous namespace
 
 extern QString scratchPath;
@@ -69,18 +74,28 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner)
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
-    QClipboard* clipboard = QApplication::clipboard();
-
-    // listen for clipboard selection change events (X11 only)
 #ifdef Q_OS_LINUX
-    QObject::connect(
-             clipboard, SIGNAL(selectionChanged()),
-             this, SLOT(onClipboardSelectionChanged()));
-#endif
+   // listen for clipboard selection change events (X11 only)
+   // TODO: expose user-facing UI for enabling / disabling
+   s_clipboardMonitoringEnabled =
+         core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty();
 
-    // initialize the global selection
-    if (clipboard->supportsSelection())
-        s_globalMouseSelection = clipboard->text(QClipboard::Selection);
+   if (s_clipboardMonitoringEnabled)
+   {
+      QClipboard* clipboard = QApplication::clipboard();
+      if (clipboard->supportsSelection())
+      {
+         QObject::connect(
+                  clipboard, SIGNAL(selectionChanged()),
+                  this, SLOT(onClipboardSelectionChanged()));
+
+         // initialize the global selection
+         const QMimeData* mimeData = clipboard->mimeData(QClipboard::Selection);
+         if (mimeData->hasText())
+            s_globalMouseSelection = mimeData->text();
+      }
+   }
+#endif
 }
 
 Synctex& GwtCallback::synctex()
@@ -362,6 +377,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
 
 void GwtCallback::onClipboardSelectionChanged()
 {
+#ifdef Q_OS_LINUX
     // for some reason, Qt can get stalled querying the clipboard
     // while a modal is active, so disable any such behavior here
     if (QApplication::activeModalWidget() != nullptr)
@@ -386,7 +402,7 @@ void GwtCallback::onClipboardSelectionChanged()
 
        // when one clicks on an Ace instance, a hidden length-one selection
        // will sneak in here -- explicitly screen those out
-       if (text == QString::fromUtf8("\x01"))
+       if (text == QStringLiteral("\x01"))
        {
           // ignore the next clipboard change (just in case modifying it below triggers
           // this slot recursively)
@@ -401,7 +417,7 @@ void GwtCallback::onClipboardSelectionChanged()
           s_globalMouseSelection = text;
        }
     }
-
+#endif
 }
 
 void GwtCallback::doAction(const QKeySequence& keys)
@@ -469,15 +485,21 @@ QString GwtCallback::getClipboardText()
 
 void GwtCallback::setGlobalMouseSelection(QString selection)
 {
-    QClipboard* clipboard = QApplication::clipboard();
-    if (clipboard->supportsSelection())
-        clipboard->setText(selection, QClipboard::Selection);
-    s_globalMouseSelection = selection;
+#ifdef Q_OS_LINUX
+   QClipboard* clipboard = QApplication::clipboard();
+   if (clipboard->supportsSelection())
+      clipboard->setText(selection, QClipboard::Selection);
+   s_globalMouseSelection = selection;
+#endif
 }
 
 QString GwtCallback::getGlobalMouseSelection()
 {
-    return s_globalMouseSelection;
+#ifdef Q_OS_LINUX
+   return s_globalMouseSelection;
+#else
+   return QString();
+#endif
 }
 
 QJsonObject GwtCallback::getCursorPosition()
