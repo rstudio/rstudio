@@ -227,9 +227,6 @@ public class JobManager implements JobRefreshEvent.Handler,
       // first job started and the time the longest running job started
       elapsed += (jobs.get(idxElapsed).started - jobs.get(idxFirst).started);
       
-      // add the time that has elapsed since the last job started
-      // elapsed += jobs.get(idxLast).elapsed;
-      
       return new GlobalJobProgress(
             name,                         // title of progress
             progress,                     // number of units completed
