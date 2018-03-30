@@ -83,9 +83,17 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 
 #endif // Q_OS_MAC
 
-   if (commandId == QStringLiteral("zoomActualSize"))
+   // this silly branch exists just so one doesn't have to worry about whether
+   // we should be prefixing with 'else' in later conditionals
+   if (false)
    {
-      // NOTE: CTRL implies META on macOS
+   }
+   
+   // on macOS, these bindings are hooked up on the GWT side (mainly to ensure
+   // that zoom requests targetted to a GWT window work as expected)
+#ifndef Q_OS_MAC
+   else if (commandId == QStringLiteral("zoomActualSize"))
+   {
       pAction = menuStack_.top()->addAction(
                QIcon(),
                label,
@@ -111,6 +119,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                SIGNAL(zoomOut()),
                QKeySequence::ZoomOut);
    }
+#endif
    
 #ifdef Q_OS_MAC
    // NOTE: even though we seem to be using Meta as a modifier key here, Qt

@@ -21,12 +21,11 @@
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"
-#include "DesktopGwtCallbackOwner.hpp"
 
 namespace rstudio {
 namespace desktop {
 
-class BrowserWindow : public QMainWindow, public GwtCallbackOwner
+class BrowserWindow : public QMainWindow
 {
     Q_OBJECT
 public:
@@ -45,14 +44,13 @@ protected Q_SLOTS:
      void setProgress(int p);
      virtual void finishLoading(bool);
 
-protected:
+public:
      void avoidMoveCursorIfNecessary();
 
-     // implement GwtCallbackOwner
-     QWidget* asWidget() override;
-     WebPage* webPage() override;
-     void postWebViewEvent(QEvent *event) override;
-     void triggerPageAction(QWebEnginePage::WebAction action) override;
+     QWidget* asWidget();
+     WebPage* webPage();
+     void postWebViewEvent(QEvent *event);
+     void triggerPageAction(QWebEnginePage::WebAction action);
      void closeEvent(QCloseEvent *event) override;
 
 protected:

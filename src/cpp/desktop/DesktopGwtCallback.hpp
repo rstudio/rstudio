@@ -18,9 +18,9 @@
 
 #include <QObject>
 #include <QClipboard>
+#include <QKeySequence>
 #include <QJsonObject>
-
-#include "DesktopGwtCallbackOwner.hpp"
+#include <QPrinter>
 
 #ifdef Q_OS_WIN32
 #include "DesktopWordViewer.hpp"
@@ -30,7 +30,7 @@ namespace rstudio {
 namespace desktop {
 
 class MainWindow;
-class BrowserWindow;
+class GwtWindow;
 class Synctex;
 
 enum PendingQuit 
@@ -54,7 +54,7 @@ class GwtCallback : public QObject
    Q_OBJECT
 
 public:
-   GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner);
+   GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner);
 
    int collectPendingQuitRequest();
 
@@ -183,6 +183,10 @@ public Q_SLOTS:
    QString getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
+   
+   void zoomIn();
+   void zoomOut();
+   void zoomActualSize();
 
    void showLicenseDialog();
    QString getInitMessages();
@@ -233,7 +237,7 @@ private:
    void doAction(const QKeySequence& keys);
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
-   GwtCallbackOwner* pOwner_;
+   GwtWindow* pOwner_;
    Synctex* pSynctex_;
    int pendingQuit_;
    QString printText_;

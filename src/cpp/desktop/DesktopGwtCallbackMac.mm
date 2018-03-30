@@ -14,6 +14,7 @@
  */
 
 #include "DesktopGwtCallback.hpp"
+#include "DesktopGwtWindow.hpp"
 #include "DesktopUtils.hpp"
 
 #import <AppKit/NSApplication.h>

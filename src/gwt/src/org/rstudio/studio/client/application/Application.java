@@ -219,7 +219,6 @@ public class Application implements ApplicationEventHandlers
       }) ;
    }  
    
-   
    @Handler
    public void onShowToolbar()
    {

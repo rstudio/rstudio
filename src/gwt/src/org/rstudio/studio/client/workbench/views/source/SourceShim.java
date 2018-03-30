@@ -133,6 +133,16 @@ public class SourceShim extends Composite
       public abstract void onOpenNextFileOnFilesystem();
       @Handler
       public abstract void onOpenPreviousFileOnFilesystem();
+      
+      // NOTE: These aren't really Source-level commands, but we
+      // need them to be registered for both the whole application
+      // as well as popped-out source windows.
+      @Handler
+      public abstract void onZoomIn();
+      @Handler
+      public abstract void onZoomOut();
+      @Handler
+      public abstract void onZoomActualSize();
      
       
       @Override
