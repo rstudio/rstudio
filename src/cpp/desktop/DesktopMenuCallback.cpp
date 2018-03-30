@@ -89,10 +89,11 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    {
    }
    
+   // on macOS, these bindings are hooked up on the GWT side (mainly to ensure
+   // that zoom requests targetted to a GWT window work as expected)
 #ifndef Q_OS_MAC
    else if (commandId == QStringLiteral("zoomActualSize"))
    {
-      // NOTE: CTRL implies META on macOS
       pAction = menuStack_.top()->addAction(
                QIcon(),
                label,
