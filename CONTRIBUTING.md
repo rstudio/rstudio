@@ -22,7 +22,7 @@ Label your issue with **bug**. We appreciate you taking the time to file a repor
 
 You're also welcome to submit ideas for enhancements to RStudio. When doing so, please [search the issue list](https://github.com/rstudio/rstudio/issues) to see if the enhancement has already been filed. If it has, vote for it (add a reaction to it) and optionally add a comment with your perspective on the idea. 
 
-If you're the first to propose the enhancement, describe it in as much detail as you can, and label your issue with **enhancement**. 
+See our [guide to writing feature requests](https://github.com/rstudio/rstudio/wiki/Writing-Good-Feature-Requests) for more on how to write a great feature request.
 
 ## RStudio Pro
 
