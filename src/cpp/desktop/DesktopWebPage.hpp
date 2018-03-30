@@ -100,7 +100,7 @@ protected:
    void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message,
                                  int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
-   bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame) override;
+   bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
 
 private:
    void handleBase64Download(QUrl url);
@@ -109,7 +109,6 @@ private:
    QUrl baseUrl_;
    QString viewerUrl_;
    QString shinyDialogUrl_;
-   bool navigated_;
    bool allowExternalNav_;
    std::queue<PendingWindow> pendingWindows_;
    QDir defaultSaveDir_;

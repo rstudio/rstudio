@@ -44,7 +44,6 @@ std::mutex s_mutex;
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
       QWebEnginePage(new WebProfile, parent),
       baseUrl_(baseUrl),
-      navigated_(false),
       allowExternalNav_(allowExternalNavigate)
 {
    settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
@@ -218,15 +217,22 @@ void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel /*level*/, 
    qDebug() << message;
 }
 
-bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType navType, bool isMainFrame)
+// NOTE: NavigationType is unreliable, as per:
+//
+//    https://bugreports.qt.io/browse/QTBUG-56805
+//
+// so we avoid querying it here.
+bool WebPage::acceptNavigationRequest(const QUrl &url,
+                                      NavigationType /* navType*/,
+                                      bool isMainFrame)
 {
-   if (url.toString() == QString::fromUtf8("about:blank"))
+   if (url.toString() == QStringLiteral("about:blank"))
       return true;
 
-   if (url.scheme() != QString::fromUtf8("http")
-       && url.scheme() != QString::fromUtf8("https")
-       && url.scheme() != QString::fromUtf8("mailto")
-       && url.scheme() != QString::fromUtf8("data"))
+   if (url.scheme() != QStringLiteral("http") &&
+       url.scheme() != QStringLiteral("https") &&
+       url.scheme() != QStringLiteral("mailto") &&
+       url.scheme() != QStringLiteral("data"))
    {
       qDebug() << url.toString();
       return false;
@@ -237,57 +243,52 @@ bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType navType, b
    bool isLocal = host == "localhost" || host == "127.0.0.1";
 
    if ((baseUrl_.isEmpty() && isLocal) ||
-       (url.scheme() == baseUrl_.scheme()
-        && url.host() == baseUrl_.host()
-        && url.port() == baseUrl_.port()))
+       (url.scheme() == baseUrl_.scheme() &&
+        url.host() == baseUrl_.host() &&
+        url.port() == baseUrl_.port()))
    {
-      navigated_ = true;
       return true;
    }
    // allow local viewer urls to be handled internally by Qt
    else if (isLocal && !viewerUrl_.isEmpty() &&
             url.toString().startsWith(viewerUrl_))
    {
-      navigated_ = true;
       return true;
    }
    // allow shiny dialog urls to be handled internally by Qt
    else if (isLocal && !shinyDialogUrl_.isEmpty() &&
             url.toString().startsWith(shinyDialogUrl_))
    {
-      navigated_ = true;
       return true;
    }
    else
    {
-      if (url.scheme() == QString::fromUtf8("data") &&
-          (navType == QWebEnginePage::NavigationTypeLinkClicked ||
-           navType == QWebEnginePage::NavigationTypeFormSubmitted))
+      bool navigated = false;
+      
+      if (url.scheme() == QStringLiteral("data"))
       {
          handleBase64Download(url);
       }
       else if (allowExternalNav_)
       {
          // if allowing external navigation, follow this (even if a link click)
-         navigated_ = true;
          return true;
       }
       else if (boost::algorithm::ends_with(host, ".youtube.com") ||
                boost::algorithm::ends_with(host, ".vimeo.com")   ||
                boost::algorithm::ends_with(host, ".c9.ms"))
       {
-         navigated_ = true;
          return true;
       }
-      else if (navType == QWebEnginePage::NavigationTypeLinkClicked)
+      else
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
          desktop::openUrl(url);
-         navigated_ = true;
+         navigated = true;
       }
 
-      if (!navigated_)
+      if (!navigated)
          this->view()->window()->deleteLater();
 
       return false;
