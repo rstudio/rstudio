@@ -321,8 +321,8 @@ context("ProcessTests")
       // create new supervisor
       AsioProcessSupervisor supervisor(fixture.ioService);
 
-      int exitCodes[numProcs];
-      std::string outputs[numProcs];
+      int exitCodes[1000];
+      std::string outputs[1000];
       std::atomic<int> numExited(0);
       int numError = 0;
 
