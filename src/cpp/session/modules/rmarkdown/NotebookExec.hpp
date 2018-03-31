@@ -43,6 +43,9 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+core::Error copyLibDirForOutput(const core::FilePath& file,
+   const std::string& docId, const std::string& nbCtxId);
+
 class ChunkExecContext : public NotebookCapture
 {
 public:
