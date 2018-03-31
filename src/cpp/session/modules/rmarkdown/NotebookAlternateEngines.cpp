@@ -19,6 +19,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookWorkingDir.hpp"
+#include "NotebookHtmlWidgets.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
@@ -540,6 +541,41 @@ Error runUserDefinedEngine(const std::string& docId,
       
       return Success();
    };
+
+   // helper function for emitting an html widget
+   auto emitHtmlWidget = [&](const std::string& path) -> Error
+   {
+      Error error;
+
+      FilePath sourcePath = module_context::resolveAliasedPath(path);
+      FilePath targetPath = notebook::chunkOutputFile(
+               docId,
+               chunkId,
+               nbCtxId,
+               ChunkOutputHtml);
+
+      error = targetPath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      error = sourcePath.move(targetPath);
+      if (error)
+         return error;
+
+      error = copyLibDirForOutput(sourcePath, docId, nbCtxId);
+      if (error)
+         return error;
+
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               nbCtxId,
+               ordinal++,
+               ChunkOutputHtml,
+               targetPath);
+
+      return Success();
+   };
    
    // output will be captured by engine, but evaluation errors may be
    // emitted directly to console, so capture those. note that the reticulate
@@ -597,7 +633,17 @@ Error runUserDefinedEngine(const std::string& docId,
    {
       emitText(asString(outputSEXP), kChunkConsoleOutput);
    }
-   
+   else if (inherits(outputSEXP, "htmlwidget"))
+   {
+      // render htmlwidget to file
+      SEXP pathSEXP = R_NilValue;
+      Protect protect;
+      error = RFunction(".rs.printHtmlWidgetToFile")
+         .addParam(outputSEXP)
+         .call(&pathSEXP, &protect);
+
+      emitHtmlWidget(asString(pathSEXP));
+   }
    // evaluate-style (list) output
    else if (isList(outputSEXP))
    {

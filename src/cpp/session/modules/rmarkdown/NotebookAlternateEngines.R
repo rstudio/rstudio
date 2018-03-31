@@ -107,3 +107,8 @@
    knitrEngine(mergedOptions)
    
 })
+
+.rs.addFunction("printHtmlWidgetToFile", function(x)
+{
+   htmltools::html_print(htmltools::as.tags(x, standalone=TRUE), viewer = function(...) {})
+})
