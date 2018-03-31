@@ -811,8 +811,8 @@ int GwtCallback::showMessageBox(int type,
       pMsgBox->close();
 
    QMessageBox msgBox(pOwner_->asWidget());
-   msgBox.setText(caption);
-   msgBox.setInformativeText(message);
+   msgBox.setWindowTitle(caption);
+   msgBox.setText(message);
    msgBox.setIcon(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)));
    msgBox.setWindowFlags(Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
