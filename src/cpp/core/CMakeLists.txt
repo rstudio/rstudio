@@ -212,7 +212,7 @@ if (UNIX)
       )
    set(CORE_INCLUDE_DIRS
       ${CORE_INCLUDE_DIRS}
-      ${OPENSSL_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIR}
    )
 
    if(RSTUDIO_SERVER)
