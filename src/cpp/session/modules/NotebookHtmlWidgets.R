@@ -281,8 +281,6 @@
                                             libraryFolder,
                                             chunkOptions)
 {
-   message(">> initHtmlCapture")
-   
    # cache context
    .rs.rnb.setHtmlCaptureContext(
       outputFolder = outputFolder,
