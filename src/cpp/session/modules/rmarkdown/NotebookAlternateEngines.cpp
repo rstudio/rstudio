@@ -541,41 +541,6 @@ Error runUserDefinedEngine(const std::string& docId,
       
       return Success();
    };
-
-   // helper function for emitting an html widget
-   auto emitHtmlWidget = [&](const std::string& path) -> Error
-   {
-      Error error;
-
-      FilePath sourcePath = module_context::resolveAliasedPath(path);
-      FilePath targetPath = notebook::chunkOutputFile(
-               docId,
-               chunkId,
-               nbCtxId,
-               ChunkOutputHtml);
-
-      error = targetPath.parent().ensureDirectory();
-      if (error)
-         return error;
-
-      error = sourcePath.move(targetPath);
-      if (error)
-         return error;
-
-      error = copyLibDirForOutput(sourcePath, docId, nbCtxId);
-      if (error)
-         return error;
-
-      enqueueChunkOutput(
-               docId,
-               chunkId,
-               nbCtxId,
-               ordinal++,
-               ChunkOutputHtml,
-               targetPath);
-
-      return Success();
-   };
    
    // output will be captured by engine, but evaluation errors may be
    // emitted directly to console, so capture those. note that the reticulate
@@ -638,11 +603,9 @@ Error runUserDefinedEngine(const std::string& docId,
       // render htmlwidget to file
       SEXP pathSEXP = R_NilValue;
       Protect protect;
-      error = RFunction(".rs.printHtmlWidgetToFile")
+      error = RFunction("print")
          .addParam(outputSEXP)
          .call(&pathSEXP, &protect);
-
-      emitHtmlWidget(asString(pathSEXP));
    }
    // evaluate-style (list) output
    else if (isList(outputSEXP))
@@ -749,8 +712,13 @@ Error executeAlternateEngineChunk(const std::string& docId,
                                   const core::FilePath& workingDir,
                                   const std::string& engine,
                                   const std::string& code,
-                                  const json::Object& jsonChunkOptions)
+                                  const ChunkOptions& chunkOptions,
+                                  ExecScope execScope,
+                                  int pixelWidth,
+                                  int charWidth)
 {
+   json::Object jsonChunkOptions  = chunkOptions.mergedOptions();
+
    // read json chunk options
    std::map<std::string, std::string> options;
    for (json::Object::const_iterator it = jsonChunkOptions.begin();
@@ -764,14 +732,6 @@ Error executeAlternateEngineChunk(const std::string& docId,
    // set working directory
    DirCapture dir;
    dir.connectDir(docId, workingDir);
-
-   // connect to capture htmlwidgets
-   FilePath cachePath = notebook::chunkOutputPath(docId, chunkId, notebook::ContextExact);
-   HtmlCapture htmlCapture;
-   htmlCapture.connectHtmlCapture(
-      cachePath,
-      cachePath.parent().complete(kChunkLibDir),
-      jsonChunkOptions);
    
    // handle some engines with their own custom routines
    Error error = Success();
@@ -800,12 +760,18 @@ Error executeAlternateEngineChunk(const std::string& docId,
       }
       else
       {
+         // connect to capture html file output
+         ChunkExecContext htmlCaptureContext(
+            docId, chunkId, nbCtxId, execScope,
+            workingDir, chunkOptions, pixelWidth, charWidth);
+         htmlCaptureContext.connect();
+
          runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
+
+         // release htmlwidget capture
+         htmlCaptureContext.disconnect();
       }
    }
-
-   // release htmlwidget capture
-   htmlCapture.disconnect();
 
    // release working directory
    dir.disconnect();
