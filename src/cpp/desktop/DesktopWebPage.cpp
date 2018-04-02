@@ -19,6 +19,7 @@
 
 #include <core/Thread.hpp>
 
+#include <QFileDialog>
 #include <QWebEngineSettings>
 
 #include "DesktopWindowTracker.hpp"
@@ -39,6 +40,21 @@ namespace {
 WindowTracker s_windowTracker;
 std::mutex s_mutex;
 
+void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
+{
+   // request directory from user
+   QString downloadPath = QFileDialog::getSaveFileName(
+            nullptr,
+            QStringLiteral("Save File"),
+            downloadItem->path());
+   
+   if (downloadPath.isEmpty())
+      return;
+   
+   downloadItem->setPath(downloadPath);
+   downloadItem->accept();
+}
+
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
@@ -54,6 +70,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
+   connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
