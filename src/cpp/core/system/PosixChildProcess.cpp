@@ -447,6 +447,14 @@ Error ChildProcess::run()
    ProcessArgs* pProcessArgs = new ProcessArgs(args);
    ProcessArgs* pEnvironment = NULL;
 
+   // get rlimit for max files
+   // in the thread-safe fork approach, this needs to be provided
+   // to the child to properly close its files in an async-safe way
+   RLimitType soft, hard;
+   Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
+   if (error)
+      return error;
+
    if (options_.environment)
    {
       // build env (on heap, see comment above)
@@ -718,7 +726,7 @@ Error ChildProcess::run()
          // the child from clobbering the parent's FDs
          // and actually prevents potential missed child exits caused by
          // clobbering of FDs affecting epoll calls
-         signal_safe::closeNonStdFileDescriptors();
+         signal_safe::closeFileDescriptorsFromParent(STDIN_FILENO, STDERR_FILENO+1, hard);
       }
 
       if (options_.environment)
@@ -770,6 +778,19 @@ Error ChildProcess::run()
       }
 
       delete pProcessArgs;
+
+      if (options_.threadSafe)
+      {
+         // send the list of the child proc's fds to the child so
+         // it can properly close its unneeded fds in a fast manner
+         Error error = closeChildFileDescriptorsFrom(pid, fdInput[WRITE], STDERR_FILENO+1);
+         if (error)
+         {
+            // we simply log the error instead of returning it because it did not prevent
+            // us from spawning the process
+            LOG_ERROR(error);
+         }
+      }
 
       return Success();
    }

@@ -17,8 +17,6 @@
 
 #include <QToolBar>
 #include <QWebChannel>
-#include <QWebEngineScript>
-#include <QWebEngineScriptCollection>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -45,48 +43,10 @@ MainWindow::MainWindow(QUrl url) :
 {
    pToolbar_->setVisible(false);
 
-   // create web channel and bind GWT callbacks
-   auto* channel = new QWebChannel(this);
+   // bind GWT callbacks
+   auto* channel = webPage()->webChannel();
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
-   channel->registerObject(QStringLiteral("desktopInfo"), &desktopInfo());
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
-   webPage()->setWebChannel(channel);
-
-   // load qwebchannel.js
-   QFile webChannelJsFile(QStringLiteral(":/qtwebchannel/qwebchannel.js"));
-   if (!webChannelJsFile.open(QFile::ReadOnly))
-      qDebug() << "Failed to open qwebchannel.js!";
-
-   QString webChannelJs = QString::fromUtf8(webChannelJsFile.readAll());
-   webChannelJsFile.close();
-
-   // append our WebChannel initialization code
-   const char* webChannelInit = R"EOF(
-      new QWebChannel(qt.webChannelTransport, function(channel) {
-
-         // export channel objects to the main window
-         for (var key in channel.objects) {
-            window[key] = channel.objects[key];
-         }
-
-         // notify that we're finished initialization and load
-         // GWT sources if necessary
-         window.qt.webChannelReady = true;
-         if (typeof window.rstudioDelayLoadApplication == "function") {
-            window.rstudioDelayLoadApplication();
-            window.rstudioDelayLoadApplication = null;
-         }
-      });
-   )EOF";
-
-   webChannelJs.append(QString::fromUtf8(webChannelInit));
-
-   QWebEngineScript script;
-   script.setName(QStringLiteral("qwebchannel"));
-   script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-   script.setWorldId(QWebEngineScript::MainWorld);
-   script.setSourceCode(webChannelJs);
-   webPage()->scripts().insert(script);
 
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
@@ -230,11 +190,21 @@ void MainWindow::quit()
 
 void MainWindow::invokeCommand(QString commandId)
 {
-   QString command =
-         QString::fromUtf8("window.desktopHooks.invokeCommand('") +
-         commandId +
-         QString::fromUtf8("');");
-
+#ifdef Q_OS_MAC
+   QString fmt = QStringLiteral(R"EOF(
+var wnd;
+try {
+   wnd = window.$RStudio.last_focused_window;
+} catch (e) {
+   wnd = window;
+}
+wnd.desktopHooks.invokeCommand('%1');
+)EOF");
+#else
+   QString fmt = QStringLiteral("window.desktopHooks.invokeCommand('%1')");
+#endif
+   
+   QString command = fmt.arg(commandId);
    webPage()->runJavaScript(command);
 }
 
@@ -281,16 +251,6 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
          });
       }
    });
-}
-
-double MainWindow::getZoomLevel()
-{
-   return options().zoomLevel();
-}
-
-void MainWindow::setZoomLevel(double zoomLevel)
-{
-   options().setZoomLevel(zoomLevel);
 }
 
 void MainWindow::setMenuBar(QMenuBar *pMenubar)

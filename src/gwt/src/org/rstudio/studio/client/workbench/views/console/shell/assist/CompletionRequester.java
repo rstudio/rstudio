@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -410,7 +411,11 @@ public class CompletionRequester
             if (isTopLevelCompletionRequest())
             {
                // disable snippets if Python REPL is active for now
-               if (isConsole && !response.getLanguage().equalsIgnoreCase("R"))
+               boolean noSnippets =
+                     isConsole &&
+                     !StringUtil.equals(response.getLanguage(), ConsoleLanguageTracker.LANGUAGE_R);
+               
+               if (!noSnippets)
                {
                   addSnippetCompletions(token, newComp);
                }

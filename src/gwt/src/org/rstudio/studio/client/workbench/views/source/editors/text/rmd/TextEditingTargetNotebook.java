@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -272,6 +273,7 @@ public class TextEditingTargetNotebook
          Session session,
          UIPrefs prefs,
          Commands commands,
+         ConsoleLanguageTracker languageTracker,
          Provider<SourceWindowManager> pSourceWindowManager,
          DependencyManager dependencyManager)
    {
@@ -281,6 +283,7 @@ public class TextEditingTargetNotebook
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
+      languageTracker_ = languageTracker;
       pSourceWindowManager_ = pSourceWindowManager;
       queue_ = new NotebookQueueState(docDisplay_, editingTarget_, 
             docUpdateSentinel_, server, events, this);
@@ -410,6 +413,18 @@ public class TextEditingTargetNotebook
    }
    
    public void executeChunk(final Scope chunk)
+   {
+      // note that all chunks (including Python chunks) execute
+      // within the 'R' scope. this primarily implies ensuring
+      // that a reticulate REPL (if any) is deactivated before
+      // attempting to run a chunk of code, and the underlying
+      // notebook logic will ensure Python chunks use reticulate
+      languageTracker_.adaptToLanguage(
+            ConsoleLanguageTracker.LANGUAGE_R,
+            () -> { executeChunkImpl(chunk); });
+   }
+   
+   private void executeChunkImpl(final Scope chunk)
    {
       // maximize the source pane if we haven't yet this session
       if (!maximizedPane_ && 
@@ -1845,6 +1860,7 @@ public class TextEditingTargetNotebook
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;
    private Commands commands_;
+   private ConsoleLanguageTracker languageTracker_;
    private NotebookHtmlRenderer htmlRenderer_;
 
    private RMarkdownServerOperations server_;

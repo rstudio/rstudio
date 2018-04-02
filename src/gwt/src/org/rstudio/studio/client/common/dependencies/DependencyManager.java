@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -211,10 +211,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
               session_.getSessionInfo().setKnitParamsAvailable(true);
               session_.getSessionInfo().setRMarkdownPackageAvailable(true);
               session_.getSessionInfo().setKnitWorkingDirAvailable(true);
-              
-              // TODO (jmcphers): Enable this once we require rmarkdown 1.8.10+
-              // and pandoc 2.0.5+
-              // session_.getSessionInfo().setPptAvailable(true);
+              session_.getSessionInfo().setPptAvailable(true);
               
               // restore removed commands
               commands_.knitWithParameters().restore();
@@ -230,17 +227,17 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("highr", "0.3"));
       deps.add(Dependency.cranPackage("markdown", "0.7"));
-      deps.add(Dependency.cranPackage("stringr", "0.6"));
+      deps.add(Dependency.cranPackage("stringr", "1.2.0"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
-      deps.add(Dependency.cranPackage("knitr", "1.14"));
+      deps.add(Dependency.cranPackage("knitr", "1.18"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
       deps.add(Dependency.cranPackage("rprojroot", "1.0"));
-      deps.add(Dependency.cranPackage("rmarkdown", "1.6"));
+      deps.add(Dependency.cranPackage("rmarkdown", "1.9"));
       return deps;
    }
    
@@ -726,7 +723,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing " + name,
         "Using " + name, 
         new Dependency[] {
-           Dependency.cranPackage("odbc", "1.1.5")
+           Dependency.cranPackage("odbc", "1.1.5"),
+           Dependency.cranPackage("rstudioapi", "0.5")
         }, 
         true, // update odbc if needed
         new CommandWithArg<Boolean>()

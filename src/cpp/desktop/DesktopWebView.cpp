@@ -36,8 +36,7 @@ namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebEngineView(parent),
-    baseUrl_(baseUrl),
-    dpiZoomScaling_(getDpiZoomScaling())
+    baseUrl_(baseUrl)
 {
 #ifdef Q_OS_LINUX
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
@@ -130,20 +129,6 @@ void WebView::openFile(QString fileName)
 #endif
 
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
-}
-
-// QWebEngineView doesn't respect the system DPI and always renders as though
-// it were at 96dpi. To work around this, we take the user-specified zoom level
-// and scale it by a DPI-determined constant before applying it to the view.
-// See: https://bugreports.qt-project.org/browse/QTBUG-29571
-void WebView::setDpiAwareZoomFactor(qreal factor)
-{
-   setZoomFactor(factor * dpiZoomScaling_);
-}
-
-qreal WebView::dpiAwareZoomFactor()
-{
-   return zoomFactor() / dpiZoomScaling_;
 }
 
 bool WebView::event(QEvent* event)

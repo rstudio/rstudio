@@ -22,7 +22,7 @@ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.0.2m.zip
 set BOOST_FILES=boost-1.65.1-win-msvc14.zip
 
-set PANDOC_VERSION=1.19.2.1
+set PANDOC_VERSION=2.1.3
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 

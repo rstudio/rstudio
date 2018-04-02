@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # errors shouldn't cause script to exit
-set +e 
+set +e
 
 # add rserver user account
 useradd -r rstudio-server
@@ -14,11 +14,11 @@ ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 mkdir -p /etc/rstudio
 if ! test -f /etc/rstudio/rserver.conf
 then
-  printf '# Server Configuration File\n\n' > /etc/rstudio/rserver.conf
+   printf '# Server Configuration File\n\n' > /etc/rstudio/rserver.conf
 fi
 if ! test -f /etc/rstudio/rsession.conf
 then
-  printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
+   printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
 fi
 
 # create var directories
@@ -33,32 +33,44 @@ mkdir -p /var/lib/rstudio-server/proxy
 # suspend all sessions
 rstudio-server force-suspend-all
 
-# create openssl softlinks based off SuSE version 
-if test -f /etc/SuSE-release
+# if /etc/os-release exists, source it to learn a bit more about what platform
+# we're on
+if test -f /etc/os-release
+then
+   . /etc/os-release
+fi
+
+# create openssl softlinks based off SuSE version
+if test -f /etc/SuSE-release || test "$ID_LIKE" = "suse"
 then
 
-  # discover the version of OpenSSL that we expect to find on this system
-  compare_versions () { test "$(echo "$@" | tr " " "\\n" | sort -V | head -n 1)" != "$1"; }
-  version_number=$(grep "VERSION" /etc/SuSE-release | sed 's/[^0-9,.]*//g')
-  if compare_versions "$version_number" "11"
-  then
-    sslversion=1.0.0
-  else
-    sslversion=0.9.8
-  fi
+   # if we weren't provided a version by /etc/os-release, then
+   # try to find it in /etc/SuSE-release
+   if test -z "$VERSION_ID"; then
+      VERSION_ID="$(grep "VERSION" /etc/SuSE-release | sed 's/[^0-9,.]*//g')"
+   fi
 
-  # look for these libraries in the common places
-  for dir in /usr/lib64 /lib64 /usr/lib /lib
-  do
-    if test -f $dir/libssl.so.$sslversion -a -f $dir/libcrypto.so.$sslversion
-    then
-      for file in libssl.so libcrypto.so
-      do
-        ln -s -f $dir/$file.$sslversion "${CMAKE_INSTALL_PREFIX}"/bin/$file.10
-      done
-      break
-    fi
-  done
+   # discover the version of OpenSSL that we expect to find on this system
+   compare_versions () { test "$(echo "$@" | tr " " "\\n" | sort -V | head -n 1)" != "$1"; }
+   if compare_versions "$VERSION_ID" "11"
+   then
+      sslversion=1.0.0
+   else
+      sslversion=0.9.8
+   fi
+
+   # look for these libraries in the common places
+   for dir in /usr/lib64 /lib64 /usr/lib /lib
+   do
+      if test -f $dir/libssl.so.$sslversion -a -f $dir/libcrypto.so.$sslversion
+      then
+         for file in libssl.so libcrypto.so
+         do
+            ln -s -f $dir/$file.$sslversion "${CMAKE_INSTALL_PREFIX}"/bin/$file.10
+         done
+         break
+      fi
+   done
 
 fi
 

@@ -142,15 +142,18 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
       
-      if (session_.getSessionInfo().getShowUserHomePage())
+      if (!Desktop.isDesktop())
       {
-         spaced(showServerHomePage_);
-         add(showServerHomePage_);
-         lessSpaced(reuseSessionsForProjectLinks_);  
+         if (session_.getSessionInfo().getShowUserHomePage())
+         {
+            spaced(showServerHomePage_);
+            add(showServerHomePage_);
+            lessSpaced(reuseSessionsForProjectLinks_);  
+         }
+         
+         if (session_.getSessionInfo().getMultiSession())
+            add(reuseSessionsForProjectLinks_);
       }
-      
-      if (session_.getSessionInfo().getMultiSession())
-         add(reuseSessionsForProjectLinks_);
       
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);

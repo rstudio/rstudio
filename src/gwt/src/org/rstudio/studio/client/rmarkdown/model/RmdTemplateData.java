@@ -256,7 +256,7 @@ public class RmdTemplateData
             format_extension: "pptx",
             format_options: [ "toc", "fig_width", "fig_height", "fig_caption", 
                               "df_print", "smart"],
-            format_notes: "PowerPoint output requires Pandoc 2.0.5; previewing requires an installation of Powerpoint or OpenOffice."
+            format_notes: "PowerPoint previewing requires an installation of PowerPoint or OpenOffice."
             }
          ],
          template_options: [

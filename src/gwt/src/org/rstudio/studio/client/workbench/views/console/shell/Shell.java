@@ -25,7 +25,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -106,7 +105,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 UIPrefs uiPrefs, 
                 ErrorManager errorManager,
                 DependencyManager dependencyManager,
-                ConsoleEditorProvider tracker)
+                ConsoleEditorProvider editorProvider,
+                ConsoleLanguageTracker languageTracker)
    {
       super() ;
 
@@ -122,7 +122,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
-      tracker.setConsoleEditor(input_);
+      editorProvider_ = editorProvider;
+      languageTracker_ = languageTracker;
+      
+      editorProvider.setConsoleEditor(input_);
+      
       
       prefs_.surroundSelection().bind(new CommandWithArg<String>()
       {
@@ -136,7 +140,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
-      language_ = session.getSessionInfo().getConsoleLanguage();
 
       keyDownPreviewHandlers_ = new ArrayList<KeyDownPreviewHandler>() ;
       keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
@@ -321,10 +324,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       String prompt = event.getPrompt().getPromptText() ;
       boolean addToHistory = event.getPrompt().getAddToHistory() ;
-      language_ = event.getPrompt().getLanguage() ;
-      
       consolePrompt(prompt, addToHistory) ;
-      
    }
 
    private void consolePrompt(String prompt, boolean addToHistory)
@@ -393,31 +393,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    private void onSendToConsoleImpl(final SendToConsoleEvent event)
    {
-      if (!StringUtil.equals(event.getLanguage(), language_))
-      {
-         server_.adaptToLanguage(
-               event.getLanguage(),
-               new ServerRequestCallback<Void>()
-               {
-                  @Override
-                  public void onResponseReceived(Void response)
-                  {
-                     language_ = event.getLanguage();
-                     sendToConsoleImpl(event);
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                     sendToConsoleImpl(event);
-                  }
-               });
-      }
-      else
-      {
-         sendToConsoleImpl(event);
-      }
+      languageTracker_.adaptToLanguage(
+            event.getLanguage(),
+            () -> { sendToConsoleImpl(event); }
+            );
    }
    
    private void sendToConsoleImpl(final SendToConsoleEvent event)
@@ -787,8 +766,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
    private final UIPrefs prefs_;
- 
-   private String language_ ;
+   
+   private final ConsoleEditorProvider editorProvider_;
+   private final ConsoleLanguageTracker languageTracker_;
    
    private final CommandLineHistory historyManager_;
    private final CommandLineHistory browseHistoryManager_;

@@ -17,11 +17,65 @@
 
 #include <QApplication>
 #include <QToolBar>
+#include <QWebChannel>
+#include <QWebEngineScript>
+#include <QWebEngineScriptCollection>
 
+#include "DesktopInfo.hpp"
 #include "DesktopOptions.hpp"
 
 namespace rstudio {
 namespace desktop {
+
+namespace {
+
+void initializeWebchannel(BrowserWindow* pWindow)
+{
+   auto* page = pWindow->webView()->webPage();
+   
+   // create web channel
+   auto* channel = new QWebChannel(pWindow);
+   channel->registerObject(QStringLiteral("desktopInfo"), &desktopInfo());
+   page->setWebChannel(channel);
+   
+   // load qwebchannel.js
+   QFile webChannelJsFile(QStringLiteral(":/qtwebchannel/qwebchannel.js"));
+   if (!webChannelJsFile.open(QFile::ReadOnly))
+      qWarning() << "Failed to load qwebchannel.js";
+
+   QString webChannelJs = QString::fromUtf8(webChannelJsFile.readAll());
+   webChannelJsFile.close();
+
+   // append our WebChannel initialization code
+   const char* webChannelInit = 1 + R"EOF(
+new QWebChannel(qt.webChannelTransport, function(channel) {
+
+   // export channel objects to the main window
+   for (var key in channel.objects) {
+      window[key] = channel.objects[key];
+   }
+
+   // notify that we're finished initialization and load
+   // GWT sources if necessary
+   window.qt.webChannelReady = true;
+   if (typeof window.rstudioDelayLoadApplication == "function") {
+      window.rstudioDelayLoadApplication();
+      window.rstudioDelayLoadApplication = null;
+   }
+});
+   )EOF";
+
+   webChannelJs.append(QString::fromUtf8(webChannelInit));
+
+   QWebEngineScript script;
+   script.setName(QStringLiteral("qwebchannel"));
+   script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+   script.setWorldId(QWebEngineScript::MainWorld);
+   script.setSourceCode(webChannelJs);
+   page->scripts().insert(script);
+}
+
+} // end anonymous namespace
 
 BrowserWindow::BrowserWindow(bool showToolbar,
                              bool adjustTitle,
@@ -41,11 +95,12 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
-
+   
+   initializeWebchannel(this);
+   
    // set zoom factor
    double zoomLevel = options().zoomLevel();
-   if (zoomLevel != pView_->dpiAwareZoomFactor())
-      pView_->setDpiAwareZoomFactor(options().zoomLevel());
+   pView_->setZoomFactor(zoomLevel);
 
    // Kind of a hack to new up a toolbar and not attach it to anything.
    // Once it is clear what secondary browser windows look like we can
@@ -66,7 +121,7 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)
       QString cmd = QString::fromUtf8("if (window.opener && "
-         "window.opener.unregisterDesktopChildWindow))"
+         "window.opener.unregisterDesktopChildWindow)"
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));

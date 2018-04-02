@@ -154,6 +154,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
    
+   void zoomIn();
+   void zoomOut();
+   void zoomActualSize();
+   
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);
    void getLicenseStatusMessage(CommandWithArg<String> callback);

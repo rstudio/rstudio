@@ -605,6 +605,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
       </shortcutgroup>
+      <shortcutgroup name="View">
+         <shortcut refid="zoomIn" value="Meta+=" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="zoomOut" value="Meta+-" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="zoomActualSize" value="Meta+0" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+      </shortcutgroup>
       <shortcutgroup name="Panes">
          <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim"/>
          <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
@@ -2698,7 +2703,8 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="openDeveloperConsole"
         menuLabel="Open Developer Console"
-        rebindable="false"/>
+        rebindable="false"
+        windowMode="main"/>
         
    <cmd id="reloadUi"
         menuLabel="Reload UI"

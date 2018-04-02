@@ -22,6 +22,7 @@
 typedef DWORD PidType;
 #else  // UNIX
 #include <sys/types.h>
+#include <sys/resource.h>
 typedef pid_t PidType;
 #endif
 
@@ -66,10 +67,25 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 Error closeAllFileDescriptors();
 Error closeNonStdFileDescriptors();
 
+// retrieves a list of file descriptors opened by the specified child process
+// and sends each fd to the child via pipe so that the child can signal-safely
+// close the fds
+Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, unsigned int fdStart);
+
+// gets the list of open fds for the current process
+Error getOpenFds(std::vector<unsigned int>* pFds);
+
+// gets the list of open fds for the specified process
+Error getOpenFds(pid_t pid, std::vector<unsigned int>* pFds);
+
 namespace signal_safe {
 
 // thread and signal-safe version of closeNonStdFileDescriptors()
-void closeNonStdFileDescriptors();
+void closeNonStdFileDescriptors(rlim_t fdLimit);
+
+// close file descriptors given to us by our parent process
+// must be paired with a call to closeChildFileDescriptorsFrom in the parent
+void closeFileDescriptorsFromParent(int pipeFd, unsigned int fdStart, rlim_t fdLimit);
 
 } // namespace signal_safe
 
