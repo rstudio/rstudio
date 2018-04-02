@@ -764,6 +764,14 @@ Error executeAlternateEngineChunk(const std::string& docId,
    // set working directory
    DirCapture dir;
    dir.connectDir(docId, workingDir);
+
+   // connect to capture htmlwidgets
+   FilePath cachePath = notebook::chunkOutputPath(docId, chunkId, notebook::ContextExact);
+   HtmlCapture htmlCapture;
+   htmlCapture.connectHtmlCapture(
+      cachePath,
+      cachePath.parent().complete(kChunkLibDir),
+      jsonChunkOptions);
    
    // handle some engines with their own custom routines
    Error error = Success();
@@ -795,6 +803,9 @@ Error executeAlternateEngineChunk(const std::string& docId,
          runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
       }
    }
+
+   // release htmlwidget capture
+   htmlCapture.disconnect();
 
    // release working directory
    dir.disconnect();
