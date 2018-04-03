@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QClipboard>
 #include <QKeySequence>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QPrinter>
 
@@ -187,6 +188,8 @@ public Q_SLOTS:
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   
+   void setBackgroundColor(QJsonArray rgbColor);
 
    void showLicenseDialog();
    QString getInitMessages();

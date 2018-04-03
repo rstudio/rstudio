@@ -19,6 +19,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
 
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.Command;
 
 /**
@@ -157,6 +158,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   
+   void setBackgroundColor(JsArrayInteger rgbColor);
    
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);

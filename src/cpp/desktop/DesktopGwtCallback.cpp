@@ -1272,6 +1272,16 @@ void GwtCallback::zoomActualSize()
    pOwner_->zoomActualSize();
 }
 
+void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
+{
+   int red   = rgbColor.at(0).toInt();
+   int green = rgbColor.at(1).toInt();
+   int blue  = rgbColor.at(2).toInt();
+   
+   QColor color = QColor::fromRgb(red, green, blue);
+   pOwner_->webPage()->setBackgroundColor(color);
+}
+
 void GwtCallback::showLicenseDialog()
 {
    activation().showLicenseDialog(false /*showQuitButton*/);
