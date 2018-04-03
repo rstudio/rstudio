@@ -14,16 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.StaticDataResource;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
@@ -174,6 +179,21 @@ public class AceThemes
          public void run()
          {
             events_.fireEvent(new EditorThemeChangedEvent(themeName));
+            
+            // synchronize the effective background color with the desktop
+            if (Desktop.isDesktop())
+            {
+               Element el = Document.get().getElementById("rstudio_container");
+               Style style = DomUtils.getComputedStyles(el);
+               String color = style.getBackgroundColor();
+               RGBColor parsed = RGBColor.fromCss(color);
+               
+               JsArrayInteger colors = JsArrayInteger.createArray(3).cast();
+               colors.set(0, parsed.red());
+               colors.set(1, parsed.green());
+               colors.set(2, parsed.blue());
+               Desktop.getFrame().setBackgroundColor(colors);
+            }
          }
       }.schedule(100);
    }
