@@ -70,17 +70,20 @@ public Q_SLOTS:
                            const QString& label,
                            const QString& dir,
                            const QString& filter,
-                           bool canChooseDirectories);
+                           bool canChooseDirectories,
+                           bool focusOwner);
 
    QString getSaveFileName(const QString& caption,
                            const QString& label,
                            const QString& dir,
                            const QString& defaultExtension,
-                           bool forceDefaultExtension);
+                           bool forceDefaultExtension,
+                           bool focusOwner);
 
    QString getExistingDirectory(const QString& caption,
                                 const QString& label,
-                                const QString& dir);
+                                const QString& dir,
+                                bool focusOwner);
 
    void onClipboardSelectionChanged();
 
