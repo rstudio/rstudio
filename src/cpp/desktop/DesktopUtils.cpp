@@ -178,6 +178,7 @@ bool showYesNoDialog(QMessageBox::Icon icon,
    if (informativeText.length() > 0)
       messageBox.setInformativeText(informativeText);
    messageBox.setWindowModality(Qt::WindowModal);
+   messageBox.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
    // initialize buttons
    QPushButton* pYes = messageBox.addButton(QMessageBox::Yes);
@@ -207,6 +208,7 @@ void showMessageBox(QMessageBox::Icon icon,
    if (informativeText.length() > 0)
       messageBox.setInformativeText(informativeText);
    messageBox.setWindowModality(Qt::WindowModal);
+   messageBox.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
    messageBox.addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
    messageBox.exec();
 }

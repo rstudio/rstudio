@@ -343,6 +343,7 @@ void SessionLauncher::onLaunchError(QString message)
       QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                            desktop::activation().editionName(), message);
       errorMsg.addButton(QMessageBox::Close);
+      errorMsg.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
       errorMsg.exec();
    }
   qApp->exit(EXIT_FAILURE);
