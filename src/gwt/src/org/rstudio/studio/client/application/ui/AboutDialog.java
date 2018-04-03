@@ -1,7 +1,7 @@
 /*
  * AboutDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ public class AboutDialog extends ModalDialogBase
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
+      info_ = info;
       setText("About " + editionInfo_.editionName());
       ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
@@ -42,14 +43,27 @@ public class AboutDialog extends ModalDialogBase
          });
          addLeftButton(licenseButton);
       }
-      contents_ = new AboutDialogContents(info, editionInfo_);
+      contents_ = new AboutDialogContents(info_, editionInfo_);
       setWidth("600px");
+      firstTimeShown_ = true;
    }
 
    @Override
    protected Widget createMainWidget()
    {
       return contents_;
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
+      if (!firstTimeShown_ && editionInfo_.proLicense() && Desktop.isDesktop())
+      {
+         // update license status display every time About dialog is shown
+         contents_ = new AboutDialogContents(info_, editionInfo_);
+      }
+      firstTimeShown_ = false;
+      super.onDialogShown();
    }
 
    @Inject
@@ -58,6 +72,8 @@ public class AboutDialog extends ModalDialogBase
       editionInfo_ = editionInfo;
    } 
    
+   private boolean firstTimeShown_;
+   private ProductInfo info_;
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
 }

@@ -65,11 +65,15 @@ Q_SIGNALS:
    void launchFirstSession();
    void launchError(QString message);
    void detectLicense();
+   void updateLicenseWarningBar(QString message);
 
 public:
 
    // license has been lost while using the program
    void emitLicenseLostSignal();
+
+   // no longer need to show a license warning bar
+   void emitUpdateLicenseWarningBarSignal(QString message);
 
    // start a session after validating initial license
    void emitLaunchFirstSession();

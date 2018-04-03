@@ -156,6 +156,9 @@ Error SessionLauncher::launchFirstSession()
                          pMainWindow_,
                          SLOT(onLicenseLost(QString)));
 
+   pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
+                         pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
+
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
    {
