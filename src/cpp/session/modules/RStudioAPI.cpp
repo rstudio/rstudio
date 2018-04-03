@@ -141,8 +141,8 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    int type = r::sexp::asInteger(typeSEXP);
    std::string caption = r::sexp::asString(captionSEXP);
    std::string label = r::sexp::asString(labelSEXP);
-   std::string path = r::sexp::asString(pathSEXP);
-   std::string filter = r::sexp::asString(filterSEXP);
+   std::string path = r::sexp::safeAsString(pathSEXP);
+   std::string filter = r::sexp::safeAsString(filterSEXP);
    bool existing = r::sexp::asLogical(existingSEXP);
    
    // default to all files when filter is empty
