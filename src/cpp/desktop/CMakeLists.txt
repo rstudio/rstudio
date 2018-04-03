@@ -151,7 +151,6 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkIOService.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopProgressActivator.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
@@ -189,7 +188,6 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 set(DESKTOP_SOURCE_FILES
   DesktopActivationOverlay.cpp
   DesktopBrowserWindow.cpp
-  DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
   DesktopInfo.cpp
@@ -197,10 +195,8 @@ set(DESKTOP_SOURCE_FILES
   DesktopMain.cpp
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp
-  DesktopNetworkIOService.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
-  DesktopURLDownloader.cpp
   DesktopUtils.cpp
   DesktopWebPage.cpp
   DesktopWebView.cpp
