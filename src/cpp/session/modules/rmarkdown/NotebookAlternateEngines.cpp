@@ -449,7 +449,8 @@ Error runUserDefinedEngine(const std::string& docId,
                            const std::string& nbCtxId,
                            const std::string& engine,
                            const std::string& code,
-                           json::Object options)
+                           json::Object options,
+                           ChunkExecContext& htmlCaptureContext)
 {
    using namespace r::sexp;
    using namespace r::exec;
@@ -466,6 +467,9 @@ Error runUserDefinedEngine(const std::string& docId,
    error = cachePath.resetDirectory();
    if (error)
       return error;
+
+   // save code for preview rendering
+   htmlCaptureContext.onConsoleInput(code);
    
    // default to 'error=FALSE' when unset
    if (!options.count("error"))
@@ -766,7 +770,8 @@ Error executeAlternateEngineChunk(const std::string& docId,
             workingDir, chunkOptions, pixelWidth, charWidth);
          htmlCaptureContext.connect();
 
-         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
+         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions,
+            htmlCaptureContext);
 
          // release htmlwidget capture
          htmlCaptureContext.disconnect();
