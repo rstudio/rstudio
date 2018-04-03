@@ -197,7 +197,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopMenuCallback.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
-  DesktopURLDownloader.cpp
   DesktopUtils.cpp
   DesktopWebPage.cpp
   DesktopWebView.cpp
