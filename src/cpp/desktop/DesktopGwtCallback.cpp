@@ -816,6 +816,7 @@ int GwtCallback::showMessageBox(int type,
    msgBox.setIcon(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)));
    msgBox.setWindowFlags(Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
+   msgBox.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
    msgBox.setTextFormat(Qt::PlainText);
 
    QStringList buttonList = buttons.split(QChar::fromLatin1('|'));
