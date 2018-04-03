@@ -294,6 +294,13 @@ void MainWindow::onLicenseLost(QString licenseMessage)
             QString::fromUtf8("');"));
 }
 
+void MainWindow::onUpdateLicenseWarningBar(QString message)
+{
+   webView()->page()->runJavaScript(
+            QString::fromUtf8("window.desktopHooks.updateLicenseWarningBar('") + message +
+            QString::fromUtf8("');"));
+}
+
 // private interface for SessionLauncher
 
 void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)

@@ -55,6 +55,7 @@ public Q_SLOTS:
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
    void onLicenseLost(QString licenseMessage);
+   void onUpdateLicenseWarningBar(QString message);
 
 Q_SIGNALS:
    void firstWorkbenchInitialized();

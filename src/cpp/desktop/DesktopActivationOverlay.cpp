@@ -76,6 +76,11 @@ void DesktopActivation::emitLicenseLostSignal()
    emit licenseLost(QString::fromStdString(currentLicenseStateMessage()));
 }
 
+void DesktopActivation::emitUpdateLicenseWarningBarSignal(QString message)
+{
+   emit updateLicenseWarningBar(message);
+}
+
 void DesktopActivation::emitLaunchFirstSession()
 {
    emit launchFirstSession();
