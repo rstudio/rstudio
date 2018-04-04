@@ -87,8 +87,9 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
       if (clipboard->supportsSelection())
       {
          QObject::connect(
-                  clipboard, SIGNAL(selectionChanged()),
-                  this, SLOT(onClipboardSelectionChanged()));
+                  clipboard, &QClipboard::selectionChanged,
+                  this, &GwtCallback::onClipboardSelectionChanged,
+                  Qt::DirectConnection);
 
          // initialize the global selection
          const QMimeData* mimeData = clipboard->mimeData(QClipboard::Selection);
