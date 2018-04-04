@@ -40,7 +40,12 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
    // directly
    // NOTE: CTRL implies META on macOS
    QShortcut* zoomActualSizeShortcut = new QShortcut(Qt::CTRL + Qt::Key_0, this);
+#ifdef Q_OS_MAC
+   QShortcut* zoomInShortcut = new QShortcut(Qt::CTRL + Qt::Key_Equal, this);
+#else
    QShortcut* zoomInShortcut = new QShortcut(QKeySequence::ZoomIn, this);
+#endif
+   
    QShortcut* zoomOutShortcut = new QShortcut(QKeySequence::ZoomOut, this);
    
    connect(zoomActualSizeShortcut, SIGNAL(activated()), this, SLOT(zoomActualSize()));
