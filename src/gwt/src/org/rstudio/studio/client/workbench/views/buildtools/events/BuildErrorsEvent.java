@@ -36,6 +36,10 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
       public final native JsArray<SourceMarker> getErrors() /*-{
          return this.errors;
       }-*/;
+
+      public final native boolean openErrorList() /*-{
+         return this.open_error_list;
+      }-*/;
    }
 
    
@@ -52,6 +56,11 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
    public String getBaseDirectory()
    {
       return data_.getBaseDirectory();
+   }
+
+   public boolean openErrorList()
+   {
+      return data_.openErrorList();
    }
    
    public JsArray<SourceMarker> getErrors()
