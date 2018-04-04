@@ -1248,7 +1248,7 @@ html.heading = _heading
 # $ description: chr "Two-dimensional size-mutable, potentially heterogeneous tabular data"
 .rs.addFunction("python.getHelp", function(topic, source)
 {
-   object <- .rs.tryCatch(reticulate::py_eval(source, convert = TRUE))
+   object <- .rs.tryCatch(reticulate::py_eval(source, convert = FALSE))
    if (inherits(object, "error"))
       return(NULL)
    
