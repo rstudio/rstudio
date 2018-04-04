@@ -40,8 +40,9 @@ var YamlHighlightRules = function() {
     this.$rules = {
         "start" : [
             {
-                token : "comment",
-                regex : "#.*$"
+                // NOTE: YAML inline comments must be preceded by whitespace
+                token : ["whitespace", "comment"],
+                regex : "(^|\\s+)(#.*)$"
             }, {
                 token : "list.markup",
                 regex : /^(?:-{3}|\.{3})\s*(?=#|$)/
