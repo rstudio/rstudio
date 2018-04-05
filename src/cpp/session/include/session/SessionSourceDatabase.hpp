@@ -176,6 +176,7 @@ public:
    static const char * const SourceDocumentTypeRMarkdown;
    static const char * const SourceDocumentTypeRHTML;
    static const char * const SourceDocumentTypeCpp;
+   static const char * const SourceDocumentTypeJS;
    
 };
 

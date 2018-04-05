@@ -322,6 +322,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeSubsequentChunks());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
+      dynamicCommands_.add(commands.previewJS());
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands.knitDocument());

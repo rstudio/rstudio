@@ -4921,6 +4921,13 @@ public class TextEditingTarget implements
       }
       return code.toString();
    }
+   
+   @Handler
+   void onPreviewJS()
+   {
+      previewJS();
+   }
+   
 
    @Handler
    void onSourceActiveDocument()
@@ -5239,6 +5246,17 @@ public class TextEditingTarget implements
             String previewURL = "help/preview?file=";
             previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
             events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
+         }
+      });
+   }
+   
+   void previewJS()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            globalDisplay_.showErrorMessage("RStudio", "preview js");
          }
       });
    }
@@ -6051,6 +6069,10 @@ public class TextEditingTarget implements
                if (fileType_.isRd())
                {
                   previewRd();
+               }
+               else if (fileType_.isJS())
+               {
+                  previewJS();
                }
                else if (fileType_.canPreviewFromR())
                {

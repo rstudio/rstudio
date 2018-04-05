@@ -37,6 +37,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -401,6 +402,9 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
 
+      previewButton_ = commands_.previewJS().createToolbarButton(false);
+      toolbar.addRightWidget(previewButton_);
+      
       createTestToolbarButtons(toolbar);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
@@ -613,6 +617,8 @@ public class TextEditingTargetWidget
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canSourceOnSave = fileType.canSourceOnSave();
+      if (canSourceOnSave && fileType.isJS()) 
+         canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
@@ -644,7 +650,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || canPreviewFromR)
+      if (fileType.isRd() || fileType.isJS() || canPreviewFromR)
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
@@ -652,6 +658,8 @@ public class TextEditingTargetWidget
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());   
      
+      previewButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
+      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
                                    !isPlainMarkdown && 
@@ -785,7 +793,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
-      if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
+      if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || editor_.getFileType().canPreviewFromR())
       {
          String preview = editor_.getFileType().getPreviewButtonText();
          srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
@@ -1395,6 +1403,7 @@ public class TextEditingTargetWidget
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
+   private ToolbarButton previewButton_;
    private ToolbarButton testButton_;
    private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;

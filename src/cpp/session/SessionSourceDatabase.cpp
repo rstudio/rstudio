@@ -72,6 +72,7 @@ const char * const SourceDocument::SourceDocumentTypeRSource   = "r_source";
 const char * const SourceDocument::SourceDocumentTypeRMarkdown = "r_markdown";
 const char * const SourceDocument::SourceDocumentTypeRHTML     = "r_html";
 const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
+const char * const SourceDocument::SourceDocumentTypeJS        = "js";
 
 namespace {
 
