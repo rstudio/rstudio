@@ -568,6 +568,7 @@ public class Workbench implements BusyHandler,
                   initialFilePath,
                   filter,
                   false,
+                  false,
                   onSelected);
          }
          else
@@ -579,6 +580,7 @@ public class Workbench implements BusyHandler,
                   initialFilePath,
                   "",
                   false,
+                  false,
                   onSelected);
          }
       }
@@ -589,6 +591,7 @@ public class Workbench implements BusyHandler,
                label,
                fsContext_,
                initialFilePath,
+               false,
                onSelected);
       }
       else

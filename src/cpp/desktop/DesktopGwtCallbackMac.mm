@@ -200,7 +200,8 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
                                      const QString& qLabel,
                                      const QString& qDir,
                                      const QString& qDefaultExtension,
-                                     bool forceDefaultExtension)
+                                     bool forceDefaultExtension,
+                                     bool focusOwner)
 {
    NSString* caption          = qCaption.toNSString();
    NSString* label            = qLabel.toNSString();
@@ -265,7 +266,8 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
 
 QString GwtCallback::getExistingDirectory(const QString& qCaption,
                                           const QString& qLabel,
-                                          const QString& qDir)
+                                          const QString& qDir,
+                                          bool focusOwner)
 {
    NSString* caption = qCaption.toNSString();
    NSString* label = qLabel.toNSString();

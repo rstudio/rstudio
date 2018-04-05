@@ -38,6 +38,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String dir,
                         String filter,
                         boolean canChooseDirectories,
+                        boolean focusOpener,
                         CommandWithArg<String> callback);
    
    void getSaveFileName(String caption,
@@ -45,11 +46,13 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String dir, 
                         String defaultExtension, 
                         boolean forceDefaultExtension,
+                        boolean focusOpener,
                         CommandWithArg<String> callback);
    
    void getExistingDirectory(String caption,
                              String label,
                              String dir,
+                             boolean focusOpener,
                              CommandWithArg<String> callback);
    
    void undo();

@@ -157,6 +157,19 @@ public class DesktopFileDialogs implements FileDialogs
                         final boolean canChooseDirectories,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
+      openFile(caption, label, fsContext, initialFilePath, filter, canChooseDirectories, true, operation);
+   }
+   
+   public void openFile(final String caption,
+                        final String label,
+                        final FileSystemContext fsContext,
+                        final FileSystemItem initialFilePath,
+                        final String filter,
+                        final boolean canChooseDirectories,
+                        final boolean focusOpener,
+                        final ProgressOperationWithInput<FileSystemItem> operation)
+   {
+   
       new FileDialogOperation()
       {
          @Override
@@ -176,6 +189,7 @@ public class DesktopFileDialogs implements FileDialogs
                   StringUtil.notNull(dir),
                   StringUtil.notNull(filter),
                   canChooseDirectories,
+                  focusOpener,
                   fileName -> 
                   {
                      if (fileName != null)
@@ -207,6 +221,18 @@ public class DesktopFileDialogs implements FileDialogs
                         final boolean forceDefaultExtension,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
+      saveFile(caption, buttonLabel, fsContext, initialFilePath, defaultExtension, forceDefaultExtension, true, operation);
+   }
+   
+   public void saveFile(final String caption,
+                        final String buttonLabel,
+                        final FileSystemContext fsContext,
+                        final FileSystemItem initialFilePath,
+                        final String defaultExtension,
+                        final boolean forceDefaultExtension,
+                        final boolean focusOwner,
+                        final ProgressOperationWithInput<FileSystemItem> operation)
+   {
       new FileDialogOperation()
       {
          @Override
@@ -220,6 +246,7 @@ public class DesktopFileDialogs implements FileDialogs
                   StringUtil.notNull(dir),
                   StringUtil.notNull(defaultExtension),
                   forceDefaultExtension,
+                  focusOwner,
                   fileName ->
                   {
                      if (fileName != null)
@@ -249,6 +276,16 @@ public class DesktopFileDialogs implements FileDialogs
                             final FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
+      chooseFolder(caption, label, fsContext, initialDir, true, operation);
+   }
+   
+   public void chooseFolder(final String caption,
+                            final String label,
+                            final FileSystemContext fsContext,
+                            final FileSystemItem initialDir,
+                            final boolean focusOwner,
+                            ProgressOperationWithInput<FileSystemItem> operation)
+   {
       new FileDialogOperation()
       {
          @Override
@@ -260,10 +297,11 @@ public class DesktopFileDialogs implements FileDialogs
                   StringUtil.notNull(caption),
                   StringUtil.notNull(label),
                   initialDir != null ? StringUtil.notNull(initialDir.getPath()) : "",
+                  focusOwner,
                   directory -> 
-                     {
-                        onCompleted.execute(directory);
-                     });
+                  {
+                     onCompleted.execute(directory);
+                  });
          }
       }.execute(caption, fsContext, null, operation);
    }
