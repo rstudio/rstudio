@@ -24,17 +24,11 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
@@ -44,7 +38,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
@@ -69,8 +62,6 @@ public class TestsOutputPresenter extends BusyPresenter
       view_.setHasLogs(false);
       server_ = server;
       paneManager_ = paneManager;
-      commands_ = commands;
-      events_ = events;
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -185,6 +176,4 @@ public class TestsOutputPresenter extends BusyPresenter
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
    private final PaneManager paneManager_;
-   private final Commands commands_;
-   private final EventBus events_;
 }
