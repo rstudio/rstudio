@@ -32,7 +32,10 @@ core::Error executeAlternateEngineChunk(const std::string& docId,
                                   const core::FilePath& workingDir,
                                   const std::string& engine,
                                   const std::string& code,
-                                  const core::json::Object& jsonChunkOptions);
+                                  const ChunkOptions& chunkOptions,
+                                  ExecScope execScope,
+                                  int pixelWidth,
+                                  int charWidth);
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

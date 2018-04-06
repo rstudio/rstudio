@@ -442,7 +442,8 @@ private:
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
                unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
-               engine, innerCode, options.mergedOptions());
+               engine, innerCode, options, execUnit_->execScope(),
+               docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)
             {
                LOG_ERROR(execError);

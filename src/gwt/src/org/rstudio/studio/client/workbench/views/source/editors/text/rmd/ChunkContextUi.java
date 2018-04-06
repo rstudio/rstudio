@@ -228,7 +228,8 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          return new SetupChunkOptionsPopupPanel();
       
       String engine = getEngine(row);
-      if (!engine.toLowerCase().equals("r"))
+      if (!engine.toLowerCase().equals("r") &&
+          !engine.toLowerCase().equals("d3"))
          return new CustomEngineChunkOptionsPopupPanel(engine_);
       
       return new DefaultChunkOptionsPopupPanel(engine_);

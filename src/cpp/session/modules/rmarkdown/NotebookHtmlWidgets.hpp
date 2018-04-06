@@ -41,8 +41,8 @@ public:
          const core::FilePath& outputFolder,
          const core::FilePath& libraryFolder,
          const rstudio::core::json::Object& chunkOptions);
-private:
    void disconnect();
+private:
 };
 
 core::Error initHtmlWidgets();
