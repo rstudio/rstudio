@@ -515,6 +515,11 @@ public:
       return webSocketPingSeconds_;
    }
 
+   int webSocketConnectTimeout() const
+   {
+      return webSocketConnectTimeout_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -607,6 +612,7 @@ private:
    std::string signingKey_;
    bool verifySignatures_;
    int webSocketPingSeconds_;
+   int webSocketConnectTimeout_;
 
    // r
    std::string coreRSourcePath_;

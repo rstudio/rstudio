@@ -232,7 +232,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "default RStudio Connect server URL")
       (kWebSocketPingInterval,
        value<int>(&webSocketPingSeconds_)->default_value(10),
-       "WebSocket keep-alive ping interval (seconds)");
+       "WebSocket keep-alive ping interval (seconds)")
+      (kWebSocketConnectTimeout,
+       value<int>(&webSocketConnectTimeout_)->default_value(5),
+       "WebSocket initial connection timeout (seconds)");
 
    // allow options
    options_description allow("allow");

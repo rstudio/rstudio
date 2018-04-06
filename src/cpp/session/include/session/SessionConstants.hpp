@@ -65,6 +65,7 @@
 #define kWwwPortSessionOption             "www-port"
 
 #define kWebSocketPingInterval            "websocket-ping-seconds"
+#define kWebSocketConnectTimeout          "websocket-connect-timeout"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

@@ -328,6 +328,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
+   sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 
    // publishing may be disabled globally or just for external services, and
    // via configuration options or environment variables
