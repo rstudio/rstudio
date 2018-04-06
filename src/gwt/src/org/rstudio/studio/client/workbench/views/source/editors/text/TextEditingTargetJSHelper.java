@@ -14,10 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.ConsoleDispatcher;
-import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.inject.Inject;
 
@@ -30,22 +35,76 @@ public class TextEditingTargetJSHelper
    }
    
    @Inject
-   void initialize(GlobalDisplay globalDisplay, ConsoleDispatcher consoleDispatcher)
+   void initialize(EventBus eventBus, SourceServerOperations server)
    {
-      globalDisplay_ = globalDisplay;
-      consoleDispatcher_ = consoleDispatcher;
+      eventBus_ = eventBus;
+      server_ = server;
    }
+   
    
    public void previewJS(EditingTarget editingTarget)
    {
-      globalDisplay_.showErrorMessage("Preview JS", editingTarget.getPath());
+      JsPreview jsPreview = parseJSPreview();
+      if (jsPreview != null && jsPreview.pkg.equals("r2d3"))
+      {
+         server_.getMinimalSourcePath(
+            editingTarget.getPath(), 
+            new SimpleRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String path)
+               {
+                  String command = "r2d3::r2d3(" + jsPreview.args + 
+                        ", script=\"" + path + "\")";
+                  eventBus_.fireEvent(new SendToConsoleEvent(command, true));
+               }
+            });
+      }
+   }
+   
+   private JsPreview parseJSPreview()
+   {
+      Iterable<String> lines = StringUtil.getLineIterator(docDisplay_.getCode());
+      for (String line : lines)
+      {
+         line = line.trim();
+         if (line.length() == 0)
+         {
+            continue;
+         }
+         else if (line.startsWith("//"))
+         {
+            Match match = jsPreviewPattern_.match(line, 0);
+            if (match != null)
+            {
+               if (match.hasGroup(1) && match.hasGroup(2))
+                  return new JsPreview(match.getGroup(1), match.getGroup(2));               
+            }
+            
+         }   
+      }
+      
+      return null;
    }
    
    
-   @SuppressWarnings("unused")
-   private ConsoleDispatcher consoleDispatcher_;
-   private GlobalDisplay globalDisplay_;
+   private class JsPreview 
+   {
+      public JsPreview(String pkg, String args)
+      {
+         this.pkg = pkg;
+         this.args = args;
+      }
+      
+      public final String pkg;
+      public final String args;
+   }
    
+   private static final Pattern jsPreviewPattern_ = 
+         Pattern.create("^//\\s*!preview\\s+(\\w+) (.*)$");
+   
+  
+   private EventBus eventBus_; 
    private DocDisplay docDisplay_;
+   private SourceServerOperations server_;
   
 }
