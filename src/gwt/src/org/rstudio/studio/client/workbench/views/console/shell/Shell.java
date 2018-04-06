@@ -122,7 +122,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
-      editorProvider_ = editorProvider;
       languageTracker_ = languageTracker;
       
       editorProvider.setConsoleEditor(input_);
@@ -767,7 +766,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private String lastPromptText_ ;
    private final UIPrefs prefs_;
    
-   private final ConsoleEditorProvider editorProvider_;
    private final ConsoleLanguageTracker languageTracker_;
    
    private final CommandLineHistory historyManager_;

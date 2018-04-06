@@ -22,11 +22,12 @@
 #include <QFileDialog>
 #include <QWebEngineSettings>
 
-#include "DesktopWindowTracker.hpp"
+#include "DesktopDownloadItemHelper.hpp"
+#include "DesktopMainWindow.hpp"
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"
-#include "DesktopMainWindow.hpp"
 #include "DesktopWebProfile.hpp"
+#include "DesktopWindowTracker.hpp"
 
 using namespace rstudio::core;
 
@@ -51,8 +52,7 @@ void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
    if (downloadPath.isEmpty())
       return;
    
-   downloadItem->setPath(downloadPath);
-   downloadItem->accept();
+   DownloadHelper::manageDownload(downloadItem, downloadPath);
 }
 
 } // anonymous namespace
