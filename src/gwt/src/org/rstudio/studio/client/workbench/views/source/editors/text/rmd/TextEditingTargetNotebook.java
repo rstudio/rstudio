@@ -395,6 +395,28 @@ public class TextEditingTargetNotebook
    public void executeChunks(final String jobDesc, 
                              final List<ChunkExecUnit> chunks)
    {
+      final Command executeChunksCommand = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            queue_.executeChunks(jobDesc, chunks);
+         }
+      };
+      Command executeChunksCommandWithChecks = executeChunksCommand;
+
+      for (ChunkExecUnit chunk : chunks) {
+         if (isD3Chunk(chunk.getScope())) {
+            executeChunksCommandWithChecks = new Command() {
+               @Override
+               public void execute()
+               {
+                  dependencyManager_.withD3(executeChunksCommand);
+               }
+            };
+         }
+      }
+
       if (queue_.isExecuting())
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
@@ -404,14 +426,7 @@ public class TextEditingTargetNotebook
                "for execution to complete.");
          return;
       }
-      docUpdateSentinel_.withSavedDoc(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            queue_.executeChunks(jobDesc, chunks);
-         }
-      });
+      docUpdateSentinel_.withSavedDoc(executeChunksCommandWithChecks);
    }
    
    public void executeChunk(final Scope chunk)
