@@ -772,6 +772,26 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       );
    }
 
+   public void withD3(final Command command)
+   {
+      withDependencies(
+            "Preparing D3",
+            "Using D3",
+            new Dependency[] {
+               Dependency.cranPackage("r2d3", "0.1")
+            },
+            true,
+            new CommandWithArg<Boolean>()
+            {
+               @Override
+               public void execute(Boolean succeeded)
+               {
+                  if (succeeded)
+                     command.execute();
+               }
+            });
+   }
+
    private Dependency[] connectionPackageDependenciesArray(String packageName,
                                                            String packageVersion)
    {

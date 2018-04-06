@@ -26,6 +26,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
@@ -423,6 +425,14 @@ public class TextEditingTargetNotebook
             ConsoleLanguageTracker.LANGUAGE_R,
             () -> { executeChunkImpl(chunk); });
    }
+
+   private boolean isD3Chunk(Scope scope)
+   {
+      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
+      Pattern reD3 = Pattern.create("\\{d3( |\\})");
+      Match match = reD3.match(labelText, 0);
+      return match != null;
+   }
    
    private void executeChunkImpl(final Scope chunk)
    {
@@ -433,8 +443,8 @@ public class TextEditingTargetNotebook
          pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
          maximizedPane_ = true;
       }
-      
-      docUpdateSentinel_.withSavedDoc(new Command() 
+
+      final Command runChunkCommand = new Command() 
       {
          @Override
          public void execute()
@@ -457,7 +467,23 @@ public class TextEditingTargetNotebook
                      NotebookQueueUnit.EXEC_MODE_SINGLE));
             }
          }
-      });
+      };
+
+      Command runChunkCommandWithEngine = runChunkCommand;
+
+      Command runD3ChunkCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            dependencyManager_.withD3(runChunkCommand);
+         }
+      };
+
+      if (isD3Chunk(chunk)) {
+         runChunkCommandWithEngine = runD3ChunkCommand;
+      }
+      
+      docUpdateSentinel_.withSavedDoc(runChunkCommandWithEngine);
    }
    
    public void manageCommands()
