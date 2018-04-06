@@ -443,6 +443,7 @@ public class TextEditingTarget implements
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
                                                   docDisplay_);
+      jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
@@ -5256,7 +5257,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            globalDisplay_.showErrorMessage("RStudio", "preview js");
+            jsHelper_.previewJS(TextEditingTarget.this);
          }
       });
    }
@@ -7023,6 +7024,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
+   private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
