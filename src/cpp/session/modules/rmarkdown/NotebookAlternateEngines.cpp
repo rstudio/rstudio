@@ -19,6 +19,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookWorkingDir.hpp"
+#include "NotebookHtmlWidgets.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
@@ -448,7 +449,8 @@ Error runUserDefinedEngine(const std::string& docId,
                            const std::string& nbCtxId,
                            const std::string& engine,
                            const std::string& code,
-                           json::Object options)
+                           json::Object options,
+                           ChunkExecContext& htmlCaptureContext)
 {
    using namespace r::sexp;
    using namespace r::exec;
@@ -465,6 +467,9 @@ Error runUserDefinedEngine(const std::string& docId,
    error = cachePath.resetDirectory();
    if (error)
       return error;
+
+   // save code for preview rendering
+   htmlCaptureContext.onConsoleInput(code);
    
    // default to 'error=FALSE' when unset
    if (!options.count("error"))
@@ -597,7 +602,15 @@ Error runUserDefinedEngine(const std::string& docId,
    {
       emitText(asString(outputSEXP), kChunkConsoleOutput);
    }
-   
+   else if (inherits(outputSEXP, "htmlwidget"))
+   {
+      // render htmlwidget to file
+      SEXP pathSEXP = R_NilValue;
+      Protect protect;
+      error = RFunction("print")
+         .addParam(outputSEXP)
+         .call(&pathSEXP, &protect);
+   }
    // evaluate-style (list) output
    else if (isList(outputSEXP))
    {
@@ -703,8 +716,13 @@ Error executeAlternateEngineChunk(const std::string& docId,
                                   const core::FilePath& workingDir,
                                   const std::string& engine,
                                   const std::string& code,
-                                  const json::Object& jsonChunkOptions)
+                                  const ChunkOptions& chunkOptions,
+                                  ExecScope execScope,
+                                  int pixelWidth,
+                                  int charWidth)
 {
+   json::Object jsonChunkOptions  = chunkOptions.mergedOptions();
+
    // read json chunk options
    std::map<std::string, std::string> options;
    for (json::Object::const_iterator it = jsonChunkOptions.begin();
@@ -746,7 +764,17 @@ Error executeAlternateEngineChunk(const std::string& docId,
       }
       else
       {
-         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions);
+         // connect to capture html file output
+         ChunkExecContext htmlCaptureContext(
+            docId, chunkId, nbCtxId, execScope,
+            workingDir, chunkOptions, pixelWidth, charWidth);
+         htmlCaptureContext.connect();
+
+         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions,
+            htmlCaptureContext);
+
+         // release htmlwidget capture
+         htmlCaptureContext.disconnect();
       }
    }
 

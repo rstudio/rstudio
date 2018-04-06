@@ -205,6 +205,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.RD.getTypeId().equals(getTypeId());
    }
    
+   public boolean isJS()
+   {
+      return FileTypeRegistry.JS.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isRmd()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
@@ -299,6 +304,11 @@ public class TextFileType extends EditableFileType
       results.add(commands.goToLine());
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
+      
+      if (isJS())
+      {
+         results.add(commands.previewJS());
+      }
       
       if ((canExecuteCode() && !isScript()) || isC())
       {

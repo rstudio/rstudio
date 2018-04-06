@@ -379,6 +379,26 @@ void onClientInit()
       viewerNavigate(s_currentUrl, 0, s_isHTMLWidget, false);
 }
 
+#define kJSPreviewable "js-previewable"
+
+std::string onDetectJSSourceType(
+      boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeJS))
+   {
+      static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+ .*$");
+      std::string contents = pDoc->contents();
+      if (regex_utils::search(contents.begin(), contents.end(), rePreviewComment))
+      {
+         if (module_context::isPackageInstalled("r2d3"))
+            return kJSPreviewable;
+      }
+   }
+
+   return std::string();
+}
+
+
 } // anonymous namespace
 
 Error initialize()
@@ -393,6 +413,9 @@ Error initialize()
    using namespace module_context;
    events().onClientInit.connect(onClientInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   module_context::events().onDetectSourceExtendedType
+                                        .connect(onDetectJSSourceType);
 
    // set ggvis.renderer to svg in desktop mode
    if ((session::options().programMode() == kSessionProgramModeDesktop) &&

@@ -26,6 +26,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/Error.hpp>
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -60,6 +61,29 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 }
 
 } // anonymous namespace
+
+core::Error copyLibDirForOutput(const core::FilePath& file,
+   const std::string& docId, const std::string& nbCtxId)
+{
+   Error error = Success();
+
+   FilePath fileLib = file.parent().complete(kChunkLibDir);
+   if (fileLib.exists())
+   {
+      std::string docPath;
+      source_database::getPath(docId, &docPath);
+      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId, nbCtxId)
+                                   .complete(kChunkLibDir));
+      if (error)
+         LOG_ERROR(error);
+
+      error = fileLib.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return error;
+}
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
@@ -303,19 +327,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
 
    // check to see if the file has an accompanying library folder; if so, move
    // it to the global library folder
-   FilePath fileLib = file.parent().complete(kChunkLibDir);
-   if (fileLib.exists())
-   {
-      std::string docPath;
-      source_database::getPath(docId_, &docPath);
-      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId_, nbCtxId_)
-                                   .complete(kChunkLibDir));
-      if (error)
-         LOG_ERROR(error);
-      error = fileLib.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
+   copyLibDirForOutput(file, docId_, nbCtxId_);
 
    // if output sidecar file was provided, write it out
    if (!sidecar.empty())
