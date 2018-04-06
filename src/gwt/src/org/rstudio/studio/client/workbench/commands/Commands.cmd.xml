@@ -237,6 +237,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <cmd refid="sendToTerminal"/>
          <separator/>
+         <cmd refid="previewJS"/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <separator/>
@@ -688,6 +689,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Execute">
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
+         <shortcut refid="previewJS" value="Cmd+Shift+Enter"/>;
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
@@ -1634,6 +1636,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Source _File..."
         desc="Source the contents of an R file"
         windowMode="main"/>
+      
+   <cmd id="previewJS"
+        buttonLabel="Preview"
+        menuLabel="Preview JS"
+        desc="Preview the active JavaScript document"/>   
         
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"

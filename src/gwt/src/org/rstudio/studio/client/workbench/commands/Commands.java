@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand closeAllSourceDocs();
    public abstract AppCommand executeAllCode();
    public abstract AppCommand sourceFile();
+   public abstract AppCommand previewJS();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
    public abstract AppCommand executeCode();
