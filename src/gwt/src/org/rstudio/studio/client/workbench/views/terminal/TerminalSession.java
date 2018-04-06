@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -84,7 +85,10 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = new Value<>(info.getHasChildProcs());
       
       setTitle(info.getTitle());
-      socket_ = new TerminalSessionSocket(this, this, sessionInfo_.getWebSocketPingInterval());
+      socket_ = new TerminalSessionSocket(
+            this, this, 
+            sessionInfo_.getWebSocketPingInterval(),
+            sessionInfo_.getWebSocketConnectTimeout());
 
       setHeight("100%");
    }
@@ -93,12 +97,14 @@ public class TerminalSession extends XTermWidget
    private void initialize(WorkbenchServerOperations server,
                            EventBus events,
                            final Session session,
-                           UIPrefs uiPrefs)
+                           UIPrefs uiPrefs,
+                           GlobalDisplay globalDisplay)
    {
       server_ = server;
       eventBus_ = events; 
       uiPrefs_ = uiPrefs;
       sessionInfo_ = session.getSessionInfo();
+      globalDisplay_ = globalDisplay;
    } 
 
    /**
@@ -180,7 +186,7 @@ public class TerminalSession extends XTermWidget
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
-               public void onConnected()
+               public void onConnected(String message)
                {
                   consoleProcess_.start(new ServerRequestCallback<Void>()
                   {
@@ -192,6 +198,12 @@ public class TerminalSession extends XTermWidget
                         sendUserInput();
                         eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                         callback.onSuccess(true /*connected*/);
+                        
+                        if (!StringUtil.isNullOrEmpty(message))
+                        {
+                           globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                                                      "Terminal Connected", message);
+                        }
                      }
 
                      @Override
@@ -199,6 +211,11 @@ public class TerminalSession extends XTermWidget
                      {
                         disconnect(false);
                         callback.onFailure(error.getUserMessage());
+                        if (!StringUtil.isNullOrEmpty(message))
+                        {
+                           globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                                                      "Terminal Failed to Connect", message);
+                        }
                      }
                   });
 
@@ -860,4 +877,5 @@ public class TerminalSession extends XTermWidget
    private EventBus eventBus_;
    private UIPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
+   private GlobalDisplay globalDisplay_;
 }

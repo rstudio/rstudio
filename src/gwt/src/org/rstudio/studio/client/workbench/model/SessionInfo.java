@@ -379,6 +379,10 @@ public class SessionInfo extends JavaScriptObject
       return this.websocket_ping_interval;
    }-*/;
    
+   public final native int getWebSocketConnectTimeout() /*-{
+      return this.websocket_connect_timeout;
+   }-*/;
+   
    public final native boolean getAllowExternalPublish() /*-{
       return this.allow_external_publish;
    }-*/;
