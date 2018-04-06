@@ -244,12 +244,14 @@ public class TerminalSessionSocket
             public void onClose(CloseEvent event)
             {
                diagnostic("WebSocket closed");
-               socket_ = null;
-               if (keepAliveTimer_ != null)
+               if (socket_ != null)
                {
-                  keepAliveTimer_.cancel();
+                  // if socket is already null then we're probably in the middle of switching to RPC
+                  // and don't want to kill the terminal in the middle of doing so
+                  socket_ = null;
+                  keepAliveTimer_ = null;
+                  session_.connectionDisconnected();
                }
-               session_.connectionDisconnected();
             }
 
             @Override
@@ -296,6 +298,7 @@ public class TerminalSessionSocket
             {
                diagnosticError("WebSocket connect error, switching to RPC");
                socket_ = null;
+               keepAliveTimer_ = null;
                
                // Unable to connect client to server via websocket; let server
                // know we'll be using rpc, instead
