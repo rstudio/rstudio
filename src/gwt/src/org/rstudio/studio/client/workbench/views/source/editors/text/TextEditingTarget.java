@@ -6073,7 +6073,8 @@ public class TextEditingTarget implements
                }
                else if (fileType_.isJS())
                {
-                  previewJS();
+                  if (extendedType_ == SourceDocument.XT_JS_PREVIEWABLE)
+                     previewJS();
                }
                else if (fileType_.canPreviewFromR())
                {

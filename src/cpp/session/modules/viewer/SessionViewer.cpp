@@ -389,7 +389,10 @@ std::string onDetectJSSourceType(
       static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+ .*$");
       std::string contents = pDoc->contents();
       if (regex_utils::search(contents.begin(), contents.end(), rePreviewComment))
-         return kJSPreviewable;
+      {
+         if (module_context::isPackageInstalled("r2d3"))
+            return kJSPreviewable;
+      }
    }
 
    return std::string();
