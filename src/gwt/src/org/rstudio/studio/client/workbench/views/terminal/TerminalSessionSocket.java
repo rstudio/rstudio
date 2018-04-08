@@ -72,9 +72,8 @@ public class TerminalSessionSocket
    {
       /**
        * Callback when connection has been made.
-       * @param message additional info about the connection, may be null
        */
-      void onConnected(String message);
+      void onConnected();
    
    
       /**
@@ -234,7 +233,7 @@ public class TerminalSessionSocket
       if (consoleProcess.getProcessInfo().getZombie())
       {
          diagnostic("Zombie, not reconnecting");
-         callback.onConnected(null /*message*/);
+         callback.onConnected();
          return;
       }
 
@@ -249,7 +248,7 @@ public class TerminalSessionSocket
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
          diagnostic("Connected with RPC");
-         callback.onConnected(null /*message*/);
+         callback.onConnected();
          break;
          
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
@@ -318,7 +317,7 @@ public class TerminalSessionSocket
             {
                connectWebSocketTimer_.cancel();
                diagnostic("WebSocket connected");
-               callback.onConnected(null);
+               callback.onConnected();
                if (webSocketPingInterval_ > 0)
                {
                   keepAliveTimer_.scheduleRepeating(webSocketPingInterval_ * 1000);
@@ -362,18 +361,14 @@ public class TerminalSessionSocket
          public void onResponseReceived(Void response)
          {
             diagnostic("Switched to RPC");
-            connectCallback_.onConnected("Unable to connect with WebSockets so terminal " +
-                  "performance will be reduced. If WebSockets cannot be enabled in your environment, " +
-                  "disable them in Tools / Global Options / Terminal preferences. This will avoid terminal " +
-                  "startup delay and suppress this message.");
+            connectCallback_.onConnected();
          }
       
          @Override
          public void onError(ServerError error)
          {
-            connectCallback_.onError("Terminal unable to use WebSockets and failed to " +
-                  "switch to HTTP mode. Turn off WebSockets via Tools / " +
-                  "Global Options / Terminal preferences and try to start the terminal again.");
+            diagnostic("Failed to switch to RPC: " + error.getMessage());
+            connectCallback_.onError("Terminal failed to connect. Please try again.");
          }
       });
    }      

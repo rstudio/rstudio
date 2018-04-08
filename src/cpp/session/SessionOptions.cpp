@@ -234,7 +234,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        value<int>(&webSocketPingSeconds_)->default_value(10),
        "WebSocket keep-alive ping interval (seconds)")
       (kWebSocketConnectTimeout,
-       value<int>(&webSocketConnectTimeout_)->default_value(5),
+       value<int>(&webSocketConnectTimeout_)->default_value(3),
        "WebSocket initial connection timeout (seconds)");
 
    // allow options
