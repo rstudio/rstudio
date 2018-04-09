@@ -33,7 +33,7 @@ RUN yum install -y \
     postgresql-devel \
     R \
     rpmdevtools \
-    rpmsign \
+    rpm-sign \
     sudo \
     wget \
     xml-commons-apis \
