@@ -45,6 +45,5 @@
     <orderEntry type="library" name="libs" level="project" />
     <orderEntry type="library" name="2.8.1" level="project" />
     <orderEntry type="library" name="javadoc" level="project" />
-    <orderEntry type="library" name="Selenium 2.37" level="project" />
   </component>
 </module>

@@ -43,8 +43,6 @@
 
    <path id="test.class.path">
       <pathelement location="{build.dir}"/>
-      <fileset dir="${lib.dir}/selenium/2.37.0" includes="*.jar"/>
-      <fileset dir="${lib.dir}/selenium/2.37.0/libs" includes="*.jar"/>
    </path>
 
    <path id="unittest.class.path">
@@ -217,35 +215,6 @@
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
       <delete dir="${extras.dir}" failonerror="false" />
-   </target>
-
-   <target name="test" description="Runs Selenium tests" depends="build-tests">
-      <parallel>
-         <daemons>
-            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-mac" os="Mac OS X" />
-            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-win.exe" os="Windows NT" />
-            <exec executable="${lib.dir}/selenium/chromedriver/2.7/chromedriver-linux" os="Linux" />
-         </daemons>
-         <sequential>
-            <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
-               <classpath>
-                  <pathelement location="${src.dir}"/>
-                  <path refid="test.class.path"/>
-               </classpath>
-               <arg value="org.rstudio.studio.selenium.RStudioTestSuite"/>
-            </java>
-         </sequential>
-      </parallel>
-   </target>
-
-   <target name="build-tests" description="Builds Selenium tests">
-      <javac srcdir="test" includes="org/rstudio/studio/selenium/**" encoding="utf-8"
-             destdir="${build.dir}"
-             source="1.8" target="1.8" nowarn="true" deprecation="true"
-             debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false">
-         <classpath refid="test.class.path"/>
-      </javac>
    </target>
 
    <target name="build-unittests" description="Builds JUnit unit tests">
