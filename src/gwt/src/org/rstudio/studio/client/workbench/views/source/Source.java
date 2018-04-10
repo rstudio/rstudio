@@ -1246,6 +1246,24 @@ public class Source implements InsertSourceHandler,
       });
    }
    
+   @Handler
+   public void onNewD3Doc()
+   {
+      newSourceDocWithTemplate(
+         FileTypeRegistry.JS, 
+         "", 
+         "d3.js",
+         Position.create(0, 0),
+         new CommandWithArg<EditingTarget> () {
+           @Override
+           public void execute(EditingTarget target)
+           {
+              target.verifyD3Prerequisites(); 
+           }
+         }
+      );
+   }
+   
    
    @Handler
    public void onNewSweaveDoc()

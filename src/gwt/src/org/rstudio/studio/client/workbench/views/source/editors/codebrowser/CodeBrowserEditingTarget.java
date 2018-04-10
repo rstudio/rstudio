@@ -473,6 +473,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void verifyD3Prerequisites()
+   {
+   }
+   
+   @Override
    public void focus()
    {
       docDisplay_.focus();

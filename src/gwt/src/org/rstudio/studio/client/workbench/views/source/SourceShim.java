@@ -80,6 +80,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewPythonDoc();
       @Handler
+      public abstract void onNewD3Doc();
+      @Handler
       public abstract void onNewSweaveDoc();
       @Handler
       public abstract void onNewRMarkdownDoc();

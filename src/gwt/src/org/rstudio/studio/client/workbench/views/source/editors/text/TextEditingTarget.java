@@ -2061,6 +2061,23 @@ public class TextEditingTarget implements
    {
       // TODO: ensure 'reticulate' installed
    }
+   
+   @Override
+   public void verifyD3Prerequisites()
+   {
+      verifyD3Prequisites(null);
+   }
+   
+   private void verifyD3Prequisites(final Command command) 
+   {
+      dependencyManager_.withR2D3("Previewing D3 scripts", new Command() {
+         @Override
+         public void execute() {
+            if (command != null)
+               command.execute();
+         }
+      });
+   }
 
    public void focus()
    {
@@ -5253,13 +5270,19 @@ public class TextEditingTarget implements
    
    void previewJS()
    {
-      saveThenExecute(null, new Command() {
+      verifyD3Prequisites(new Command() {
          @Override
          public void execute()
          {
-            jsHelper_.previewJS(TextEditingTarget.this);
+            saveThenExecute(null, new Command() {
+               @Override
+               public void execute()
+               {
+                  jsHelper_.previewJS(TextEditingTarget.this);
+               }
+            });
          }
-      });
+      }); 
    }
    
    void renderRmd()

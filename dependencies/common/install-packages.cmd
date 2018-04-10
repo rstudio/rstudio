@@ -11,6 +11,7 @@ set PATH=%PATH%;%CD%\tools
 
 call:install rsconnect master --no-build-vignettes
 REM call:install rmarkdown master --no-build-vignettes
+call:install r2d3 master --no-build-vignettes
 
 GOTO:EOF
 

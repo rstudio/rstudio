@@ -66,6 +66,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 # install rsconnect master
 # install rmarkdown master
+install r2d3 master
 
 # back to install-dir
 cd $INSTALL_DIR

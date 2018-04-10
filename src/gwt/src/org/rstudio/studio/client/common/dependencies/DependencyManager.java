@@ -126,6 +126,29 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                        silentEmbeddedUpdate,
                        onComplete);
    }
+   
+   public void withR2D3(String userAction, final Command command)
+   {
+      withDependencies(
+        "R2D3",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("htmltools", "0.3.6"),
+            Dependency.cranPackage("htmlwidgets", "1.0", true),
+            Dependency.embeddedPackage("r2d3")
+         },
+         false,
+         new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+      );
+   }
 
    public void withPackrat(String userAction, final Command command)
    {

@@ -48,6 +48,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
             <cmd refid="newPythonDoc"/>
+            <cmd refid="newD3Doc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
@@ -847,9 +848,14 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newPythonDoc"
-        menuLabel="_Python File"
-        desc="Create a new Python file"
+        menuLabel="_Python Script"
+        desc="Create a new Python script"
         rebindable="false"/>
+        
+   <cmd id="newD3Doc"
+        menuLabel="_D3 Script"
+        desc="Create a new D3 script"
+        rebindable="false"/>     
         
    <cmd id="rcppHelp"
         desc="Help on using Rcpp"
@@ -885,7 +891,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newRDocumentationDoc"
-        menuLabel="R _Documentation"
+        menuLabel="R Doc_umentation"
         desc="Create a new Rd documentation file"
         rebindable="false"/>
         
