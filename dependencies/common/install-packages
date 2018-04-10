@@ -62,7 +62,7 @@ PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
 rm -f $PACKAGE_ARCHIVE_PATTERN
 
 # build package without vignettes, since vignettes may need e.g. knitr to build
-R CMD build --no-vignettes "$PACKAGE_BUILD_OPTIONS" "$PACKAGE"
+R CMD build --no-build-vignettes "$PACKAGE_BUILD_OPTIONS" "$PACKAGE"
 
 # modify filename to include SHA1
 PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
