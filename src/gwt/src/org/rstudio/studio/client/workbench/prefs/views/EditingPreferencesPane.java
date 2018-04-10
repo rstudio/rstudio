@@ -202,6 +202,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
       displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", 
             prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
        

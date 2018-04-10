@@ -6570,6 +6570,11 @@ public class TextEditingTarget implements
                {
                   docDisplay.setSurroundSelectionPref(string);
                }}));
+      releaseOnDismiss.add(prefs.enableTextDrag().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setDragEnabled(arg);
+               }}));
       
    }
    

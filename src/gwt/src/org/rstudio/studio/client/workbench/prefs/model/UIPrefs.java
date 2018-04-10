@@ -483,6 +483,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // ignore whitespace in git diff
          gitDiffIgnoreWhitespace().setGlobalValue(
                newUiPrefs.gitDiffIgnoreWhitespace().getGlobalValue());
+         
+         // allow drag and drop of text in the editor
+         enableTextDrag().setGlobalValue(
+               newUiPrefs.enableTextDrag().getGlobalValue());
       }
       else if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
       {
