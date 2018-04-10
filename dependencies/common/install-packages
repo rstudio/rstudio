@@ -30,7 +30,7 @@ PACKAGE_BUILD_OPTIONS=$3
 # git clone if necessary
 if [ ! -d "$PACKAGE_DIR" ]
 then
-  if [ -z "$RSTUDIO_GITHUB_LOGIN" ]; then
+  if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
       # no supplied credentials, clone directly
       git clone "https://github.com/rstudio/$PACKAGE.git"
   else
