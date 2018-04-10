@@ -235,6 +235,11 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void forceLineHighlighting()
    {
    }
+   
+   @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {  
+   }
 
    public void focus()
    {

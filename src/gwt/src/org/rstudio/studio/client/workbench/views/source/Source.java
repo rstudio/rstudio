@@ -1253,12 +1253,13 @@ public class Source implements InsertSourceHandler,
          FileTypeRegistry.JS, 
          "", 
          "d3.js",
-         Position.create(0, 0),
+         Position.create(5, 0),
          new CommandWithArg<EditingTarget> () {
            @Override
            public void execute(EditingTarget target)
            {
               target.verifyD3Prerequisites(); 
+              target.setSourceOnSave(true);
            }
          }
       );

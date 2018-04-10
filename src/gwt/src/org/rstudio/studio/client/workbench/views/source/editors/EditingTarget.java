@@ -86,6 +86,8 @@ public interface EditingTarget extends IsWidget,
    
    void forceLineHighlighting();
    
+   void setSourceOnSave(boolean sourceOnSave);
+   
    void setCursorPosition(Position position);
    void ensureCursorVisible();
    
