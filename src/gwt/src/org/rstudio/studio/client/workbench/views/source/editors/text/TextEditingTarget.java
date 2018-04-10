@@ -2032,7 +2032,16 @@ public class TextEditingTarget implements
 
    public HashSet<AppCommand> getSupportedCommands()
    {
-      return fileType_.getSupportedCommands(commands_);
+      // start with the set of commands supported by the file type
+      HashSet<AppCommand> commands = fileType_.getSupportedCommands(commands_);
+      
+      // if the file has a path, it can also be renamed
+      if (getPath() != null)
+      {
+         commands.add(commands_.renameSourceDoc());
+      }
+      
+      return commands;
    }
    
    @Override
