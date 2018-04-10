@@ -16,7 +16,9 @@ pipeline {
   stages {
     stage('dependencies') {
       steps {
-        bat 'cd dependencies/windows && install-dependencies.cmd && cd ../..'
+        withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+          bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && install-dependencies.cmd && cd ../..'
+        }
       }
     }
     stage('build'){
