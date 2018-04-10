@@ -24,7 +24,7 @@ set PACKAGE_BUILD_OPTIONS=%3
 REM git clone if necessary
 set PACKAGE_DIR="%PACKAGE%"
 if not exist "%PACKAGE_DIR%" (
-   if [%RSTUDIO_GITHUB_LOGIN%] == [] (
+   if "%RSTUDIO_GITHUB_LOGIN%" == "" (
       git clone "https://github.com/rstudio/%PACKAGE%.git"
    ) else (
       git clone "https://%RSTUDIO_GITHUB_LOGIN%@github.com/rstudio/%PACKAGE%.git"
