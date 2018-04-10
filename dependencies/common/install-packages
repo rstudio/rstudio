@@ -3,7 +3,7 @@
 #
 # install-packages
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,13 @@ PACKAGE_BUILD_OPTIONS=$3
 # git clone if necessary
 if [ ! -d "$PACKAGE_DIR" ]
 then
-  git clone https://github.com/rstudio/$PACKAGE.git
+  if [ -z "$RSTUDIO_GITHUB_LOGIN" ]; then
+      # no supplied credentials, clone directly
+      git clone "https://github.com/rstudio/$PACKAGE.git"
+  else
+      # credentials supplied, use them
+      git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/rstudio/$PACKAGE.git"
+  fi
 fi
 
 # clean and checkout target branch
