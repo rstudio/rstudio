@@ -186,7 +186,7 @@ public class TerminalSession extends XTermWidget
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
-               public void onConnected(String message)
+               public void onConnected()
                {
                   consoleProcess_.start(new ServerRequestCallback<Void>()
                   {
@@ -198,12 +198,6 @@ public class TerminalSession extends XTermWidget
                         sendUserInput();
                         eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                         callback.onSuccess(true /*connected*/);
-                        
-                        if (!StringUtil.isNullOrEmpty(message))
-                        {
-                           globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                                      "Terminal Connected", message);
-                        }
                      }
 
                      @Override
@@ -211,14 +205,8 @@ public class TerminalSession extends XTermWidget
                      {
                         disconnect(false);
                         callback.onFailure(error.getUserMessage());
-                        if (!StringUtil.isNullOrEmpty(message))
-                        {
-                           globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                                                      "Terminal Failed to Connect", message);
-                        }
                      }
                   });
-
                }
 
                @Override
@@ -226,6 +214,11 @@ public class TerminalSession extends XTermWidget
                {
                   disconnect(false);
                   callback.onFailure(errorMsg);
+                  if (!StringUtil.isNullOrEmpty(errorMsg))
+                  {
+                     globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                           "Terminal Failed to Connect", errorMsg);
+                  }
                }
             });
          }
