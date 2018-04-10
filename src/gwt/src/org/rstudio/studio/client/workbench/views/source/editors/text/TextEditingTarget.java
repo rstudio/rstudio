@@ -1049,8 +1049,7 @@ public class TextEditingTarget implements
    @Override
    public void setSourceOnSave(boolean sourceOnSave)
    {
-      view_.getSourceOnSave().setValue(sourceOnSave);
-      docUpdateSentinel_.setSourceOnSave(sourceOnSave, null);
+      view_.getSourceOnSave().setValue(sourceOnSave, true);
    }
    
    @Override
