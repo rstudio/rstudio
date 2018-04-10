@@ -195,6 +195,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public void forceLineHighlighting()
    {
    }
+   
+   @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {  
+   }
 
    @Handler
    void onPrintSourceDoc()

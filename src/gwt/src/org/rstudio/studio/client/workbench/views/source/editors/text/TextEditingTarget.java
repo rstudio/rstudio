@@ -1047,6 +1047,12 @@ public class TextEditingTarget implements
    }
    
    @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {
+      view_.getSourceOnSave().setValue(sourceOnSave, true);
+   }
+   
+   @Override
    public void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,

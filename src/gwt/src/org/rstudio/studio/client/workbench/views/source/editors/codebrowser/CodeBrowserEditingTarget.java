@@ -605,6 +605,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {  
+   }
+   
+   @Override
    public boolean onBeforeDismiss()
    {
       return true;
