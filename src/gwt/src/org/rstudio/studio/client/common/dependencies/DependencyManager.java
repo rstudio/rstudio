@@ -137,7 +137,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             Dependency.cranPackage("htmlwidgets", "1.0", true),
             Dependency.embeddedPackage("r2d3")
          },
-         false,
+         true,
          new CommandWithArg<Boolean>()
         {
            @Override
