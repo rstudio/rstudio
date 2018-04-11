@@ -70,6 +70,7 @@ public abstract class
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertChunkR();
    public abstract AppCommand insertChunkBash();
+   public abstract AppCommand insertChunkD3();
    public abstract AppCommand insertChunkPython();
    public abstract AppCommand insertChunkRCPP();
    public abstract AppCommand insertChunkStan(); 

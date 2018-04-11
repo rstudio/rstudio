@@ -4515,6 +4515,12 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onInsertChunkD3()
+   {
+      onInsertChunk("```{d3}\n\n```\n", 1, 0);
+   }
+
+   @Handler
    void onInsertSection()
    {
       globalDisplay_.promptForText(
