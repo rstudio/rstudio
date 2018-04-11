@@ -776,8 +776,16 @@ public class TextEditingTarget implements
                public void onDocTabDragStateChanged(
                      DocTabDragStateChangedEvent e)
                {
-                  docDisplay_.setDragEnabled(e.getState() == 
-                        DocTabDragStateChangedEvent.STATE_NONE);
+                  // enable text drag/drop only while we're not dragging tabs
+                  boolean enabled = e.getState() == 
+                        DocTabDragStateChangedEvent.STATE_NONE;
+                  
+                  // disable drag/drop if disabled in preferences
+                  if (enabled)
+                     enabled = prefs.enableTextDrag().getValue();
+                  
+                  // update editor surface
+                  docDisplay_.setDragEnabled(enabled);
                }
             });
       
