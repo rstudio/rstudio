@@ -1270,6 +1270,16 @@ void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
    pOwner_->webPage()->setBackgroundColor(color);
 }
 
+bool GwtCallback::getEnableAccessibility()
+{
+   return options().enableAccessibility();
+}
+
+void GwtCallback::setEnableAccessibility(bool enable)
+{
+   options().setEnableAccessibility(enable);
+}
+
 void GwtCallback::showLicenseDialog()
 {
    activation().showLicenseDialog(false /*showQuitButton*/);

@@ -194,6 +194,9 @@ public Q_SLOTS:
    
    void setBackgroundColor(QJsonArray rgbColor);
 
+   bool getEnableAccessibility();
+   void setEnableAccessibility(bool enable);
+
    void showLicenseDialog();
    QString getInitMessages();
    QString getLicenseStatusMessage();
