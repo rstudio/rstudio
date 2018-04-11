@@ -1,19 +1,14 @@
-// !preview r2d3 data=data.frame(x = rnorm(50), y = rnorm(50))
+// !preview r2d3 data=c(0.3, 0.6, 0.8, 0.95, 0.40, 0.20)
 //
 // R2D3: https://rstudio.github.io/r2d3
 //
 
-const padding = 25;
+var barHeight = Math.floor(height / data.length);
 
-const x_scale = d3.scaleLinear().range([padding, width - padding]);
-x_scale.domain(d3.extent(data, d => d.x));
-
-const y_scale = d3.scaleLinear().range([height - padding, padding]);
-y_scale.domain(d3.extent(data, d => d.y));
-    
-svg.selectAll('.scatter_points')
+svg.selectAll('rect')
   .data(data)
-  .enter().append('circle')
-    .attr('cx', d => x_scale(d.x))
-    .attr('cy', d => y_scale(d.y))
-    .attr('r', 5);
+  .enter().append('rect')
+    .attr('width', function(d) { return d * width; })
+    .attr('height', barHeight)
+    .attr('y', function(d, i) { return i * barHeight; })
+    .attr('fill', 'steelblue');
