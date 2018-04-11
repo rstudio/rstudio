@@ -4675,7 +4675,12 @@ public class TextEditingTarget implements
                         @Override
                         public void execute()
                         {
-                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                           // compute the language for this chunk
+                           String language = "R";
+                           if (DocumentMode.isPositionInPythonMode(docDisplay_, position))
+                              language = "Python";
+
+                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
                         }
                      });
             }
@@ -4834,7 +4839,13 @@ public class TextEditingTarget implements
             else if (!range.isEmpty())
             {
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+
+               // compute the language for this chunk
+               String language = "R";
+               if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+                  language = "Python";
+
+               events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
             docDisplay_.collapseSelection(true);
          }

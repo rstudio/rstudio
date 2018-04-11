@@ -663,7 +663,7 @@ Error runUserDefinedEngine(const std::string& docId,
                continue;
             }
          }
-         else if (isString(elSEXP))
+         else if (isString(elSEXP) || isNumeric(elSEXP))
          {
             // plain old console text output -- emit as-is
             Error error = emitText(asString(elSEXP), kChunkConsoleOutput);

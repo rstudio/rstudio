@@ -251,11 +251,18 @@ public class TextEditingTargetChunks
    
    private boolean isExecutableKnitrEngine(String engine)
    {
-      // TODO: only enable non-R engine work for notebooks for now
-      if (!target_.getDocDisplay().showChunkOutputInline())
-         return engine.equalsIgnoreCase("r");
-      
-      return RE_RUNNABLE_ENGINES.indexOf(engine.toLowerCase() + "|") != -1;
+      if (target_.getDocDisplay().showChunkOutputInline())
+      {
+         // treat all chunks as executable in notebook mode
+         return true;
+      }
+      else
+      {
+         // when executing chunks in the R console, only R and Python chunks are
+         // executable
+         return engine.equalsIgnoreCase("r") ||
+                engine.equalsIgnoreCase("python");
+      }
    }
    
    private final TextEditingTarget target_;
@@ -268,10 +275,6 @@ public class TextEditingTargetChunks
    private UIPrefs prefs_;
 
    private int lastRow_;
-   
-   // runnable engines within the R Notebook mode
-   private static final String RE_RUNNABLE_ENGINES =
-         "r|rscript|rcpp|python|ruby|perl|bash|sh|stan|sql|d3|";
    
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow
