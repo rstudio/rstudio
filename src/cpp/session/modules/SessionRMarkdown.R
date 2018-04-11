@@ -143,9 +143,13 @@
    )
 })
 
+.rs.addFunction("getTemplateDetails", function(templateYaml) {
+   yaml::yaml.load_file(templateYaml)
+})
+
 # given a path to a folder on disk, return information about the R Markdown
 # template in that folder.
-.rs.addFunction("getTemplateDetails", function(path) {
+.rs.addFunction("getTemplateYamlFile", function(path) {
    # check for required files
    templateYaml <- file.path(path, "template.yaml")
    skeletonPath <- file.path(path, "skeleton")
@@ -158,14 +162,14 @@
    if (!file.exists(file.path(skeletonPath, "skeleton.Rmd")))
       return(NULL)
 
-   # load template details from YAML
-   templateDetails <- yaml::yaml.load_file(templateYaml)
+   # will need to enforce create_dir if there are multiple files in /skeleton/
+   multiFile = length(list.files(skeletonPath)) > 1 
 
-   # enforce create_dir if there are multiple files in /skeleton/
-   if (length(list.files(skeletonPath)) > 1) 
-      templateDetails$create_dir <- TRUE
-
-   templateDetails
+   # return metadata; we won't parse until the client requests template files
+   list(
+      template_yaml = .rs.scalar(templateYaml),
+      multi_file    = .rs.scalar(multiFile)
+   )
 })
 
 

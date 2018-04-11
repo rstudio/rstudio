@@ -9,10 +9,7 @@
 	<classpathentry kind="lib" path="lib/gin/2.1.2/guice-assistedinject-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/gin/2.1.2/guice-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/gin/2.1.2/javax.inject.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/2.37.0/selenium-java-2.37.0-srcs.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/2.37.0/selenium-java-2.37.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
-	<classpathentry kind="lib" path="lib/selenium/2.37.0/libs/guava-15.0.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/2.8.1/gwt-api-checker.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/2.8.1/gwt-dev.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/2.8.1/gwt-user.jar"/>

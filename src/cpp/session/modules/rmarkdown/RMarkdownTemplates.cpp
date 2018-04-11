@@ -1,7 +1,7 @@
 /*
  * RMarkdownTemplates.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -87,38 +87,30 @@ class Worker : public ppe::Worker
    {
       json::Object dataJson;
 
-      std::string name;
-      std::string description;
-      std::string createDir = "default";
+      std::string templateYaml;
+      bool multiFile;
 
-      SEXP templateDetails;
+      SEXP templateFile;
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(
-         ".rs.getTemplateDetails", 
+         ".rs.getTemplateYamlFile", 
            string_utils::utf8ToSystem(templateDir.absolutePath()))
-         .call(&templateDetails, &protect);
+         .call(&templateFile, &protect);
 
       // .rs.getTemplateDetails may return null if the template is not
       // well-formed
-      if (error || TYPEOF(templateDetails) == NILSXP)
+      if (error || TYPEOF(templateFile) == NILSXP)
          return;
 
-      r::sexp::getNamedListElement(templateDetails,
-                                   "name", &name);
-      r::sexp::getNamedListElement(templateDetails,
-                                   "description", &description);
-
-      bool createDirFlag = false;
-      error = r::sexp::getNamedListElement(templateDetails,
-                                           "create_dir",
-                                           &createDirFlag);
-      createDir = createDirFlag ? "true" : "false";
+      r::sexp::getNamedListElement(templateFile,
+                                   "template_yaml", &templateYaml);
+      r::sexp::getNamedListElement(templateFile,
+                                   "multi_file", &multiFile);
 
       dataJson["package_name"] = pkgName;
       dataJson["path"] = templateDir.absolutePath();
-      dataJson["name"] = name;
-      dataJson["description"] = description;
-      dataJson["create_dir"] = createDir;
+      dataJson["template_yaml"] = templateYaml;
+      dataJson["multi_file"] = multiFile;
 
       s_templates.push_back(dataJson);
    }
@@ -137,7 +129,62 @@ public:
 Error getRmdTemplates(const json::JsonRpcRequest&,
                       json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(s_templates);
+   Error error;
+   json::Array result;
+   for (auto &it: s_templates)
+   {
+      // skip if not an object type
+      if (it.type() != json::ObjectType)
+         continue;
+
+      // if we already know this template's name, no need to re-parse
+      json::Object& item = it.get_obj();
+      if (item.find("name") != item.end())
+      {
+         result.push_back(item);
+         continue;
+      }
+
+      // read filename and directory info
+      bool multiFile = false;
+      std::string templateYaml;
+      error = json::readObject(item, 
+            "multi_file",    &multiFile,
+            "template_yaml", &templateYaml);
+      if (error)
+         continue;
+
+      // read template details
+      SEXP templateDetails;
+      r::sexp::Protect protect;
+      error = r::exec::RFunction(
+         ".rs.getTemplateDetails", string_utils::utf8ToSystem(templateYaml))
+         .call(&templateDetails, &protect);
+      if (error)
+         continue;
+
+      // load template name/description
+      std::string name;
+      std::string description;
+      bool createDirFlag;
+      r::sexp::getNamedListElement(templateDetails,
+                                   "name", &name);
+      r::sexp::getNamedListElement(templateDetails,
+                                   "description", &description);
+      r::sexp::getNamedListElement(templateDetails,
+                                   "create_dir", &createDirFlag);
+
+      // append to metadata already known
+      item["name"] = name;
+      item["description"] = description;
+
+      // force directory creation if multi file
+      item["create_dir"] = (createDirFlag || multiFile) ? "true" : "false";
+
+      // save result to be delivered to client
+      result.push_back(item);
+   }
+   pResponse->setResult(result);
    return Success();
 }
 
