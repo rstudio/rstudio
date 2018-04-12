@@ -4517,7 +4517,17 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkD3()
    {
-      onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
+      if (notebook_ != null) {
+         Scope setupScope = notebook_.getSetupChunkScope();
+
+         if (setupScope == null)
+         {
+            onInsertChunk("```{r setup}\nlibrary(r2d3)\n```\n\n```{d3 data=}\n\n```\n", 4, 12);
+         }
+         else {
+            onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
+         }
+      }
    }
 
    @Handler
