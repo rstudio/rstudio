@@ -702,12 +702,7 @@ options(connectionObserver = list(
       sep = ""
    )
 
-   .rs.enqueClientEvent("send_to_console", list(
-      "code" = .rs.scalar(consoleCommand),
-      "execute" = .rs.scalar(TRUE),
-      "focus" = .rs.scalar(FALSE),
-      "animate" = .rs.scalar(FALSE)
-   ))
+   .rs.api.sendToConsole(consoleCommand, echo = FALSE, execute = TRUE, focus = FALSE)
 
    .rs.success()
 })
