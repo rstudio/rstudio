@@ -355,6 +355,7 @@ public class TextEditingTargetWidget
          insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
       }
 
+      insertChunksMenu.addItem(commands_.insertChunkD3().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkPython().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkRCPP().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));

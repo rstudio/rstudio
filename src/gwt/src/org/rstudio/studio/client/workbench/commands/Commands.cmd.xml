@@ -1517,6 +1517,11 @@ well as menu structures (for main menu and popup menus).
         desc="Insert a new Bash chunk"
         context="editor"/>
 
+   <cmd id="insertChunkD3"
+        menuLabel="D3"
+        desc="Insert a new D3 chunk"
+        context="editor"/>
+
    <cmd id="insertChunkPython"
         menuLabel="Python"
         desc="Insert a new Python chunk"
