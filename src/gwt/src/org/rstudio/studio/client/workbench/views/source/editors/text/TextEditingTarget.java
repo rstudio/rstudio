@@ -4517,7 +4517,7 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkD3()
    {
-      onInsertChunk("```{d3}\n\n```\n", 1, 0);
+      onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
    }
 
    @Handler
