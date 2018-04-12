@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("scalarListFromList", function(l)
+.rs.addFunction("scalarListFromList", function(l, expressions = FALSE)
 {
    # hint that every non-list element of the hierarchical list l
    # is a scalar value if it is of length 1
@@ -29,6 +29,8 @@
             Encoding(ele) <- "UTF-8"
          .rs.scalar(ele)
       }
+      else if (identical(expressions, TRUE) && (is.expression(ele) || is.call(ele)))
+         .rs.scalarListFromList(list(expr = eval(ele)))$expr
       else
          ele
    })
