@@ -320,6 +320,11 @@ options(connectionObserver = list(
       read.dcf(fullPath)
    })
 
+   valueOrDefault <- function(name, data, default) {
+      cols <- colnames(data)
+      ifelse(name %in% cols, data[,name], default)
+   }
+
    valueOrEmpty <- function(name, data) {
       cols <- colnames(data)
       ifelse(name %in% cols, data[,name], "")
@@ -329,6 +334,16 @@ options(connectionObserver = list(
       tryCatch({
          installer <- installers[[installerName]]
          cols <- colnames(installer)
+
+         warning <- gsub(
+            "\n",
+            " ",
+            valueOrDefault(
+               paste("Warning", .Platform$OS.type, sep = "."),
+               installer,
+               valueOrEmpty("Warning", installer)
+            )
+         )
 
          list(
             package = .rs.scalar(NULL),
@@ -347,7 +362,7 @@ options(connectionObserver = list(
             odbcDownload = .rs.scalar(installer[,"Download"]),
             odbcFile = .rs.scalar(valueOrEmpty("File", installer)),
             odbcLibrary = .rs.scalar(valueOrEmpty("Library", installer)),
-            odbcWarning = .rs.scalar(gsub("\n", " ", valueOrEmpty("Warning", installer))),
+            odbcWarning = .rs.scalar(warning),
             odbcInstallPath = .rs.scalar(.rs.connectionOdbcInstallPath()),
             odbcMD5 = .rs.scalar(gsub("\n", " ", valueOrEmpty("MD5", installer))),
             hasInstaller = .rs.scalar(TRUE)
