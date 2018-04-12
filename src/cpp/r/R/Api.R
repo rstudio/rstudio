@@ -402,7 +402,8 @@
       code = .rs.scalar(code),
       echo = .rs.scalar(as.logical(echo)),
       execute = .rs.scalar(as.logical(execute)),
-      focus = .rs.scalar(as.logical(focus))
+      focus = .rs.scalar(as.logical(focus)),
+      language = "R"
    )
 
    .rs.enqueClientEvent("send_to_console", data)
